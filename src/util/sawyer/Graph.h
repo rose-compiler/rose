@@ -961,6 +961,35 @@ public:
         return next;
     }
 
+    /** Erases all edges connecting two vertices.
+     *
+     *  Given two vertex iterators, erase all edges whose source is the first vertex and whose target is the second vertex.
+     *
+     *  Time complexity is linear in the number of incoming or outgoing edges (whichever is smaller). */
+    void eraseEdges(const VertexNodeIterator &source, const VertexNodeIterator &target) {
+        ASSERT_forbid(source==vertices().end());
+        ASSERT_forbid(target==vertices().end());
+        if (source->nOutEdges() < target->nInEdges()) {
+            EdgeNodeIterator iter = source->outEdges().begin();
+            while (iter != source->outEdges().end()) {
+                if (iter->target() == target) {
+                    iter = eraseEdge(iter);
+                } else {
+                    ++iter;
+                }
+            }
+        } else {
+            EdgeNodeIterator iter = target->inEdges().begin();
+            while (iter != target->inEdges().end()) {
+                if (iter->source() == source) {
+                    iter = eraseEdge(iter);
+                } else {
+                    ++iter;
+                }
+            }
+        }
+    }
+    
     /** Erases a vertex and its incident edges.
      *
      *  The vertex specified by the iterator (which must not be a one-past-last iterator) is erased from the graph along with

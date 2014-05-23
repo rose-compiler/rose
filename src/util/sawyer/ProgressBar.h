@@ -75,7 +75,7 @@ namespace ProgressBarSettings {
  * @code
  *  void f() {
  *      int total = 200;
- *      ProgressBar<int> progress("test", total);
+ *      ProgressBar<int> progress(total, mlog[INFO], "test");
  *      for (int i=0; i<total; ++i, ++progress)
  *          do_some_work();
  *  }
@@ -84,9 +84,10 @@ namespace ProgressBarSettings {
  *  The progress bar is created with a name and capacity. As the progress bar is incremented the bar will increase.  Messages
  *  printed while the progress bar is active do not interfere with the progress bar. When the progress bar object is destroyed
  *  the progress bar disappears. */
-template<typename T>
+template<typename T, typename S=std::string>
 class ProgressBar {
 public:
+    typedef S Suffix;
     typedef T ValueType;
 private:
     struct Position {
@@ -101,6 +102,7 @@ private:
     Position value_;
     ProgressBarImpl bar_;
     bool showValue_;
+    Suffix suffix_;
 
 public:
     /** Construct spinning progress bar.  A progress bar without a capacity results in a "spinner" that moves back and
@@ -151,6 +153,17 @@ public:
         bar_.shouldSpin_ = isEmpty();
         configUpdated();
     }
+    /** @} */
+
+    /** Property: suffix.
+     *
+     *  This user-defined object provides the suffix for the progress bar.  It will be appended to the progress bar string with
+     *  the <code>std::ostream</code>'s <code><<</code> operator. It should not contain any line feeds.
+     *
+     *  @{ */
+    Suffix& suffix() { return suffix_; }
+    const Suffix& suffix() const { return suffix_; }
+    ProgressBar& suffix(const Suffix &suffix) { suffix_ = suffix; return *this; }
     /** @} */
 
     /** Value of progress bar as a ratio of completeness clipped between 0 and 1.  A progress bar that is backward (min value
@@ -288,7 +301,7 @@ protected:
     void valueUpdated() {
         if (showValue_) {
             std::ostringstream ss;
-            ss <<value_.curValue;
+            ss <<value_.curValue <<suffix_;
             bar_.suffix_ = ss.str();
         } else {
             bar_.suffix_.clear();
@@ -299,7 +312,7 @@ protected:
         if (showValue_) {
             std::ostringstream ss;
             ss <<value_.curValue;
-            bar_.suffix_ = ss.str();
+            bar_.suffix_ = ss.str() <<suffix_;
         } else {
             bar_.suffix_.clear();
         }
@@ -308,8 +321,8 @@ protected:
 };
 
 // try not to get negative values when subtracting because they might behave strangely if T is something weird.
-template <typename T>
-double ProgressBar<T>::ratio() const {
+template <typename T, typename S>
+double ProgressBar<T, S>::ratio() const {
     if (isEmpty()) {
         return value_.curValue <= value_.leftValue ? 0.0 : 1.0;
     } else if (isBackward()) {
@@ -331,16 +344,16 @@ double ProgressBar<T>::ratio() const {
     }
 }
 
-template <typename T>
-void ProgressBar<T>::increment(ValueType delta) {
+template <typename T, typename S>
+void ProgressBar<T, S>::increment(ValueType delta) {
     ValueType oldValue = value_.curValue;
     value_.curValue += delta;
     if (oldValue!=value_.curValue)
         valueUpdated();
 }
 
-template <typename T>
-void ProgressBar<T>::decrement(ValueType delta) {
+template <typename T, typename S>
+void ProgressBar<T, S>::decrement(ValueType delta) {
     ValueType oldValue = value_.curValue;
     value_.curValue -= delta;
     if (oldValue!=value_.curValue)
