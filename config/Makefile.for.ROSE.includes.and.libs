@@ -186,7 +186,7 @@ if USING_INTEL_COMPILER
 #  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
 ROSE_INTEL_COMPILER_MATH_LIBS =
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
+#    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
 endif
 ROSE_INTEL_COMPILER_MATH_LIBS += -lm
 endif
@@ -294,6 +294,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
      -I$(top_srcdir)/src/midend/abstractMemoryObject \
+     -I$(top_srcdir)/src/midend/abstractLayer \
      -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/programTransformation/astInlining \
      -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \

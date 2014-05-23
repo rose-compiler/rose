@@ -1297,9 +1297,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // Only unparse using the AST if this was not able to be unparsed from the token stream.
           if (outputStatementAsTokens == false)
              {
+            // DQ (4/1/2014): Suggested fix to prevent unparsing of C style comments in Fortran 
+            // codes when using the verbose modes.
             // DQ (12/1/2013): Not clear if this is helpful or not (but it communicates in the 
             // unparsed code what statements were unparse using either the AST or the token stream).
-               if ( SgProject::get_verbose() > 0 )
+            // if ( SgProject::get_verbose() > 0 )
+               if ( SgProject::get_verbose() > 0 && SageInterface::getProject()->get_C_only() == true)
                   {
                     string s = "/* Unparsing from the AST stmt = " + stmt->class_name() + " */ ";
                     curprint (s);
@@ -4311,7 +4314,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
         break;
       }
     case SgOmpClause::e_omp_default_shared:
-      {   
+      {
         curprint(string("shared"));
         break;
       }   
