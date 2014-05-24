@@ -274,14 +274,14 @@ $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
 # build executables using nvcc
 $(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
 	@$(RTH_RUN) \
-		TITLE="nvcc $(notdir $<) [$@.passed]" \
-		CMD="nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
+		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
 	@$(RTH_RUN) \
-		TITLE="nvcc $(notdir $<) [$@.passed]" \
-		CMD="nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
+		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 
@@ -306,6 +306,12 @@ $(OMP_ACC_DIFF_FILES):$(PASSING_OMP_ACC_TEST_CUDA_Files)
 # We cannot run the diff since the function names of an outlined function has a random integer numbers
 ompacc_diff_check: $(OMP_ACC_DIFF_FILES)
 
+if USE_CUDA
+cuda_PROGRAM = $(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files) 
+else
+cuda_PROGRAM =
+endif 
+
 if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------	
 # Only for C or CXX tests will main()
@@ -319,10 +325,11 @@ $(PASSING_C_TEST_Executables): %.out: %.o
 	$(LIBTOOL) --mode=link $(CC) $< -o $@ $(MY_FINAL_LINK)
 $(PASSING_CXX_TEST_Executables): %.out: %.o 
 	$(LIBTOOL) --mode=link $(CXX) $< -o $@ $(MY_FINAL_LINK)
+# check_PROGRAMS does not work!!	
 check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
-TESTS =  $(check_PROGRAM)
+TESTS =  $(check_PROGRAM) $(cuda_PROGRAM)
 check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
@@ -366,7 +373,8 @@ $(PASSING_CXX_TEST_Executables): %.out: %.o
 check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
-TESTS =  $(check_PROGRAM)
+TESTS =  $(check_PROGRAM)  $(cuda_PROGRAM)
+
 check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
@@ -390,6 +398,7 @@ endif
 # USE gcc GOMP library
 else
 
+TESTS =  $(cuda_PROGRAM)
 #-------------compile only --------------------------------	
 check-local: roseomp \
 		$(PASSING_C_TEST_Objects) $(C_TEST_OBJECT_REQUIRED_TO_RUN) $(PASSING_OMP_ACC_TEST_CUDA_Files) \
