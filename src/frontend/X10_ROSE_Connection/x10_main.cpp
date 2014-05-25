@@ -203,7 +203,7 @@ CreateJvm(const struct Commandline a_cmdline)
   std::string jvm_max_heap = "-Xmx" + a_cmdline.jvm_max_heap;
   std::string file_encoding = "-Dfile.encoding=UTF-8";
   std::string x10_dist = "-Dx10.dist=" + std::string(X10_INSTALL_PATH);
-  std::string x10c_ecj_jar = "-Dx10c.ecj.jar=ecj.jar";
+  std::string x10c_ecj_jar = "-Dx10c.ecj.jar=ecj-4.3.2.jar";
   std::string x10c_math_jar = "-Dx10c.math.jar=commons-math3-3.2.jar";
   std::string classpath =
       "-Djava.class.path=" +
