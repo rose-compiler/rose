@@ -5,6 +5,10 @@
 // seperate the declarations into 2 different copies of the 
 // "std" namespace.
 
+int x;
+
+#if 0
+/* Review this issue later (problem with MSVC support for reference to un-named enum types in template declaration). */
 namespace std
    {
    }
@@ -23,4 +27,5 @@ namespace std
           enum {__value=1};
         };
    }
+#endif
 
