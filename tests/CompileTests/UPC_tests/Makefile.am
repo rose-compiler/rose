@@ -229,6 +229,39 @@ testSharedMemoryDSL_26: sharedMemoryDSL
 testSharedMemoryDSL_27: sharedMemoryDSL
 	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_27.c
 
+testSharedMemoryDSL_28: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_28.c
+
+testSharedMemoryDSL_29: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_29.c
+
+testSharedMemoryDSL_30: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_30.c
+
+testSharedMemoryDSL_31: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_31.c
+
+testSharedMemoryDSL_32: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_32.c
+
+testSharedMemoryDSL_33: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_33.c
+
+testSharedMemoryDSL_34: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_34.c
+
+testSharedMemoryDSL_35: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_35.c
+
+testSharedMemoryDSL_36: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_36.c
+
+testSharedMemoryDSL_37: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_37.c
+
+testSharedMemoryDSL_38: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_38.c
+
 # DQ (4/30/2014): List of test codes to test the shared memory DSL work.
 SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_1 testSharedMemoryDSL_2 testSharedMemoryDSL_3 testSharedMemoryDSL_4 testSharedMemoryDSL_5 \
@@ -236,7 +269,9 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_11 testSharedMemoryDSL_12 testSharedMemoryDSL_13 testSharedMemoryDSL_14 testSharedMemoryDSL_15 \
    testSharedMemoryDSL_16 testSharedMemoryDSL_17 testSharedMemoryDSL_18 testSharedMemoryDSL_19 testSharedMemoryDSL_20 \
    testSharedMemoryDSL_21 testSharedMemoryDSL_22 testSharedMemoryDSL_23 testSharedMemoryDSL_24 testSharedMemoryDSL_25 \
-   testSharedMemoryDSL_26 testSharedMemoryDSL_27
+   testSharedMemoryDSL_26 testSharedMemoryDSL_27 testSharedMemoryDSL_28 testSharedMemoryDSL_29 testSharedMemoryDSL_30 \
+   testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34 \
+   testSharedMemoryDSL_36 testSharedMemoryDSL_37 testSharedMemoryDSL_38
 
 testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
 

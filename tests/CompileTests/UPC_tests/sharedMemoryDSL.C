@@ -10,13 +10,73 @@
 
 InheritedAttribute::InheritedAttribute()
    {
-  // It appears that I might not need this (at least for the simple cases).
+     isSharedTypeExpression = false;
    }
+
+void
+InheritedAttribute::set_SharedTypeExpression( bool value )
+   {
+     isSharedTypeExpression = value;
+   }
+
+bool
+InheritedAttribute::get_SharedTypeExpression()
+   {
+     return isSharedTypeExpression;
+   }
+
+InheritedAttribute::InheritedAttribute( const InheritedAttribute & X )
+   {
+     isSharedTypeExpression = X.isSharedTypeExpression;
+   }
+
+
 
 SynthesizedAttribute::SynthesizedAttribute()
    {
-  // It appears that I might not need this (at least for the simple cases).
+     isSharedTypeExpression    = false;
+     isMarkedForTransformation = false;
+     node                      = NULL;
    }
+
+SynthesizedAttribute::SynthesizedAttribute( SgNode* n )
+   {
+     isSharedTypeExpression    = false;
+     isMarkedForTransformation = false;
+     node                      = n;
+   }
+
+SynthesizedAttribute::SynthesizedAttribute( const SynthesizedAttribute & X )
+   {
+     isSharedTypeExpression    = X.isSharedTypeExpression;
+     isMarkedForTransformation = X.isMarkedForTransformation;
+     node                      = X.node;
+   }
+
+void
+SynthesizedAttribute::set_SharedTypeExpression( bool value )
+   {
+     isSharedTypeExpression = value;
+   }
+
+bool
+SynthesizedAttribute::get_SharedTypeExpression()
+   {
+     return isSharedTypeExpression;
+   }
+
+void
+SynthesizedAttribute::set_MarkedForTransformation(bool value)
+   {
+     isMarkedForTransformation = value;
+   }
+
+bool
+SynthesizedAttribute::get_MarkedForTransformation()
+   {
+     return isMarkedForTransformation;
+   }
+
 
 
 std::vector<SgNode*> &
@@ -140,7 +200,7 @@ Traversal::transformExpression(SgExpression* exp)
      SgExpression* returnExp = NULL;
  
 #if 0
-     printf ("In transformExpression(): exp = %p = %s \n",exp,exp->class_name().c_str());
+     printf ("***** In transformExpression(): exp = %p = %s \n",exp,exp->class_name().c_str());
 #endif
 
      SgGlobal*         globalScope          = SageInterface::getGlobalScope(exp);
@@ -267,6 +327,73 @@ Traversal::evaluateInheritedAttribute (
              }
         }
 
+  // DQ (5/24/2014): Added more general support for detecting expressions that need to be transformed.
+     SgExpression* expression = isSgExpression(astNode);
+     if (expression != NULL)
+        {
+          bool skipTransformation = false;
+          SgBinaryOp* parentBinaryOp = isSgBinaryOp(expression->get_parent());
+          SgArrowExp* parentArrowExp = isSgArrowExp(expression->get_parent());
+          SgDotExp*   parentDotExp = isSgDotExp(expression->get_parent());
+       // if (parentArrowExp != NULL)
+          if (parentArrowExp != NULL || parentDotExp != NULL)
+             {
+            // Check if the current expression is the lhs or rhs of the parentArrowExp.
+               bool expressionIsLhs = (expression == parentBinaryOp->get_lhs_operand());
+               bool expressionIsRhs = (expression == parentBinaryOp->get_rhs_operand());
+               ROSE_ASSERT(expressionIsLhs == true || expressionIsRhs == true);
+#if 0
+               printf ("In evaluateInheritedAttribute(): SgArrowExp: expressionIsLhs = %s expressionIsRhs = %s \n",expressionIsLhs ? "true" : "false",expressionIsRhs ? "true" : "false");
+#endif
+               skipTransformation = (expressionIsRhs == true);
+             }
+#if 0
+          printf ("In evaluateInheritedAttribute(): SgArrowExp: skipTransformation = %s \n",skipTransformation ? "true" : "false");
+#endif
+       // Reset the isSharedTypeExpression variable.
+          inheritedAttribute.set_SharedTypeExpression(false);
+
+          SgType* type = expression->get_type();
+          if (isSharedType(type) == true && skipTransformation == false)
+             {
+            // This might be a better way to identify expressions that should be transformed.
+#if 0
+               printf ("In evaluateInheritedAttribute(): found expression with shared type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
+               SgPointerType* pointerType = isSgPointerType(type);
+               SgModifierType* modifierType = isSgModifierType(type);
+
+               if (modifierType != NULL)
+                  {
+                    SgType* base_type = modifierType->get_base_type();
+                    ROSE_ASSERT(base_type != NULL);
+#if 0
+                    printf ("found SgModifierType: base_type = %p = %s \n",base_type,base_type->class_name().c_str(),base_type->unparseToString().c_str());
+#endif
+                    SgPointerType* pointerType = isSgPointerType(base_type);
+                    if (pointerType != NULL)
+                       {
+#if 0
+                         printf ("Found SgModifierType: base_type is a SgPointerType \n");
+#endif
+                       }
+                      else
+                       {
+                         modifierType = NULL;
+                       }
+                  }
+
+            // if (pointerType != NULL)
+               if (pointerType != NULL || modifierType != NULL)
+                  {
+#if 0
+                    printf ("@@@@@ In evaluateInheritedAttribute(): Found a shared pointer type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
+                    inheritedAttribute.set_SharedTypeExpression(true);
+                  }
+             }
+        }
+
   // Also need to investigate anything hiding types but which would NOT be traversed as part of the AST.
   // typedefs (base types), function parameters (handled in SgInitializedName case), function return types, 
   // template details (for C++), etc.
@@ -285,12 +412,16 @@ Traversal::evaluateSynthesizedAttribute (
      printf ("In evaluateSynthesizedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
-     SynthesizedAttribute localResult;
+     SynthesizedAttribute localResult(astNode);
 
+#if 0
   // We want to find and test all SgPointerDerefExp IR nodes.
      SgPointerDerefExp* pointerDerefExp = isSgPointerDerefExp(astNode);
      if (pointerDerefExp != NULL)
         {
+
+#error "DEAD CODE!"
+
           SgType* type = pointerDerefExp->get_type();
 #if 0
           printf ("SgPointerDerefExp: type                           = %p = %s \n",type,type->class_name().c_str());
@@ -307,12 +438,14 @@ Traversal::evaluateSynthesizedAttribute (
              {
             // SgType* type = varRefExp->get_type();
                SgType* type = pointerDerefExp->get_operand()->get_type();
-#if 0
+#if 1
                printf ("SgPointerDerefExp: (SgVarRefExp|SgDotExp|SgArrowExp|SgFunctionCallExp): pointerDerefExp->get_operand()->get_type(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
                if (isSharedType(type) == true)
                   {
                  // Found a reference to a variable that will we want to transform (post order traversal).
+
+#error "DEAD CODE!"
 
                  // The transformation we want is to introduce a new subtree using the varRefExp.
                  // SgExpression* newSubtree = transformExpression(varRefExp);
@@ -329,10 +462,12 @@ Traversal::evaluateSynthesizedAttribute (
 #endif
                   }
 
+#error "DEAD CODE!"
+
             // DQ (5/20/2014): See test2014_27.c for where this is required.
                if (arrowExp != NULL)
                   {
-#if 0
+#if 1
                     printf ("This is SgArrowExp, so check if the LHS type is an shared pointer \n");
 #endif
                     SgExpression* lhs = arrowExp->get_lhs_operand();
@@ -357,6 +492,10 @@ Traversal::evaluateSynthesizedAttribute (
              }
             else
              {
+
+#error "DEAD CODE!"
+
+            // This handles the case of more arbrtrary expressions of type "shared" and their transformation.
 #if 0
                printf ("case of NOT a SgVarRefExp or SgDotExp or SgArrowExp \n");
 #endif
@@ -382,6 +521,9 @@ Traversal::evaluateSynthesizedAttribute (
 #if 0
                          printf ("Nested: Found a SgPointerDerefExp in SgPointerDerefExp with shared type: dereferencedExpression = %p (perform transformation) (not yet implemented) \n",dereferencedExpression);
 #endif
+
+#error "DEAD CODE!"
+
                       // The transformation we want is to introduce a new subtree using the varRefExp.
                       // SgExpression* newSubtree = transformExpression(varRefExp);
                       // SgExpression* newSubtree = transformExpression(dereferencedExpression);
@@ -400,6 +542,9 @@ Traversal::evaluateSynthesizedAttribute (
                          printf ("Nested case of shared type expression that is not a SgVarRefExp is not implemented \n");
                          ROSE_ASSERT(false);
 #endif
+
+#error "DEAD CODE!"
+
                        }
                       else
                        {
@@ -412,7 +557,10 @@ Traversal::evaluateSynthesizedAttribute (
                   }
                  else
                   {
-#if 1
+
+#error "DEAD CODE!"
+
+#if 0
                     printf ("case of NOT a SgPointerDerefExp is not implemented \n");
 #endif
 #if 0
@@ -421,7 +569,11 @@ Traversal::evaluateSynthesizedAttribute (
 #endif
                   }
              }
+
+#error "DEAD CODE!"
+
         }
+#endif
 
 #if 0
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
@@ -432,17 +584,31 @@ Traversal::evaluateSynthesizedAttribute (
         }
 #endif
 
+#if 0
   // DQ (4/29/2014): Kinds of IR nodes that can have references to typedefs to shared pointers.
      SgVarRefExp*       varRefExp = isSgVarRefExp(astNode);
      SgDotExp*          dotExp    = isSgDotExp(astNode);
      SgArrowExp*        arrowExp  = isSgArrowExp(astNode);
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
 
+#error "DEAD CODE!"
+
      if (varRefExp != NULL)
         {
           SgType* type = varRefExp->get_type();
 #if 0
-          printf ("SgVarRefExp: varRefExp = %p type = %p = %s \n",varRefExp,type,type->class_name().c_str());
+          SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+          std::string name = variableSymbol->get_name();
+          printf ("SgVarRefExp: varRefExp = %p type = %p = %s name = %s \n",varRefExp,type,type->class_name().c_str(),name.c_str());
+          if (isSgPointerType(type) != NULL)
+             {
+               SgPointerType* pointerType = isSgPointerType(type);
+               ROSE_ASSERT(pointerType != NULL);
+               SgType* base_type = pointerType->get_base_type();
+               ROSE_ASSERT(base_type != NULL);
+
+               printf ("SgVarRefExp: SgPointerType: varRefExp = %p base_type = %p = %s name = %s \n",varRefExp,base_type,base_type->class_name().c_str(),name.c_str());
+             }
 #endif
           SgTypedefType* typedefType = isSgTypedefType(type);
           if (typedefType != NULL)
@@ -456,47 +622,80 @@ Traversal::evaluateSynthesizedAttribute (
                   }
              }
 
+#error "DEAD CODE!"
+
        // DQ (5/19/2014): missing transformations of SgVarRefExp of type shared pointers.
           if (isSharedType(type) == true)
              {
 #if 0
-               printf ("Found varRefExp with shared pointer type (not transformed yet) \n");
+                printf ("Found varRefExp = %p with shared pointer type (not transformed yet) \n",varRefExp);
 #endif
-#if 0
+#if 1
             // DQ (5/20/2014): This fails for /test2014_11.upc
             // The transformation we want is to introduce a new subtree using the varRefExp.
                SgExpression* parentExpression = isSgExpression(varRefExp->get_parent());
                ROSE_ASSERT(parentExpression != NULL);
 #endif
-#if 0
+#if 1
             // Skip the transformation of the SgVarRefExp is we will see it as a SgPointerDerefExp as we proceed up the AST.
-               SgPointerDerefExp* pointerDerefExp = isSgPointerDerefExp(parentExpression);
-               if (pointerDerefExp == NULL)
+               SgPointerDerefExp* parentPointerDerefExp = isSgPointerDerefExp(parentExpression);
+               SgArrowExp*        parentArrowExp        = isSgArrowExp(parentExpression);
+               SgDotExp*          parentDotExp          = isSgDotExp(parentExpression);
+#if 1
+               if (parentPointerDerefExp == NULL)
+#else
+               if (parentPointerDerefExp == NULL && parentArrowExp == NULL && parentDotExp == NULL)
+#endif
                   {
-                    printf ("This is NOT a SgPointerDerefExp: so OK to transform \n");
+                    ROSE_ASSERT(parentExpression != NULL);
 
-               SgExpression* newSubtree = transformExpression(varRefExp);
-               ROSE_ASSERT(newSubtree != NULL);
+#error "DEAD CODE!"
+
+                    printf ("This is NOT a SgPointerDerefExp: so OK to transform: parentExpression = %p = %s \n",parentExpression,parentExpression->class_name().c_str());
+
+                    bool isLValue = varRefExp->isLValue();
+
+                    printf ("isLValue            = %s \n",isLValue ? "true" : "false");
+                    printf ("isUsedAsLValue      = %s \n",varRefExp->isUsedAsLValue() ? "true" : "false");
+                 // printf ("isChildUsedAsLValue = %s \n",varRefExp->isChildUsedAsLValue() ? "true" : "false");
+                    printf ("lvalue              = %s \n",varRefExp->get_lvalue() ? "true" : "false");
+
+                    if (varRefExp->get_lvalue() == false)
+                       {
+
+#error "DEAD CODE!"
+
+#if 1
+                         SgExpression* newSubtree = transformExpression(varRefExp);
+                         ROSE_ASSERT(newSubtree != NULL);
 #if 0
-               printf ("***** SgVarRefExp: BEFORE: parentExpression = %p = %s newSubtree = %p = %s = %s \n",parentExpression,parentExpression->class_name().c_str(),newSubtree,newSubtree->class_name().c_str(),newSubtree->unparseToString().c_str());
+                         printf ("***** SgVarRefExp: BEFORE: parentExpression = %p = %s newSubtree = %p = %s = %s \n",parentExpression,parentExpression->class_name().c_str(),newSubtree,newSubtree->class_name().c_str(),newSubtree->unparseToString().c_str());
 #endif
-            // Set the new subtree into the SgPointerDerefExp's operand.
-               parentExpression->replace_expression(varRefExp,newSubtree);
+                      // Set the new subtree into the SgPointerDerefExp's operand.
+                         parentExpression->replace_expression(varRefExp,newSubtree);
 
-            // DQ (5/20/2014): We can sometimes have to set the lvalue flag.
-               newSubtree->set_lvalue(varRefExp->get_lvalue());
-               varRefExp->set_lvalue(false);
+                      // DQ (5/20/2014): We can sometimes have to set the lvalue flag.
+                         newSubtree->set_lvalue(varRefExp->get_lvalue());
+                         varRefExp->set_lvalue(false);
                
-               printf ("BEFORE: Reset the parent \n");
+                         printf ("BEFORE: Reset the parent \n");
 
-            // pointerDerefExp->set_operand(newSubtree);
-            // newSubtree->set_parent(pointerDerefExp);
-               newSubtree->set_parent(parentExpression);
+                      // pointerDerefExp->set_operand(newSubtree);
+                      // newSubtree->set_parent(pointerDerefExp);
+                         newSubtree->set_parent(parentExpression);
 
-               printf ("AFTER: Reset the parent parentExpression = %p \n",parentExpression);
+                         printf ("AFTER: Reset the parent parentExpression = %p \n",parentExpression);
 #if 0
-               printf ("***** SgVarRefExp: AFTER: parentExpression = %p = %s = %s \n",parentExpression,parentExpression->class_name().c_str(),parentExpression->unparseToString().c_str());
+                         printf ("***** SgVarRefExp: AFTER: parentExpression = %p = %s = %s \n",parentExpression,parentExpression->class_name().c_str(),parentExpression->unparseToString().c_str());
 #endif
+#endif
+                       }
+                      else
+                       {
+                         printf ("Skipping transformation of l-value: varRefExp = %p \n",varRefExp);
+                       }
+#error "DEAD CODE!"
+
                   }
                  else
                   {
@@ -504,9 +703,158 @@ Traversal::evaluateSynthesizedAttribute (
                   }
 #endif
              }
+
+#error "DEAD CODE!"
+
+        }
+#endif
+
+
+  // DQ (5/24/2014): This is the newer version of the logic to control where expresion are transformed.
+  // This version makes better use of the inherited attribute and uses it to set the synthesized 
+  // attribute.  Then we seperately look at the child attributes and use the marking in the child 
+  // synthesized attribute to trigger the transformations.
+     bool isSharedTypeExpression = inheritedAttribute.get_SharedTypeExpression();
+     SgExpression* expression = isSgExpression(astNode);
+     if (expression != NULL)
+        {
+#if 0
+          printf ("In evaluateSynthesizedAttribute(): expression = %p = %s isSharedTypeExpression = %s \n",expression,expression->class_name().c_str(),isSharedTypeExpression ? "true" : "false");
+#endif
+          if (isSharedTypeExpression == true)
+             {
+#if 0
+               printf ("In evaluateSynthesizedAttribute(): mark as shared type expression = %p = %s lvalue = %s \n",expression,expression->class_name().c_str(),expression->get_lvalue() ? "true" : "false");
+#endif
+               localResult.set_SharedTypeExpression(true);
+               if (expression->get_lvalue() == false)
+                  {
+#if 0
+                    printf ("&&&&& In evaluateSynthesizedAttribute(): transform expression = %p = %s lvalue = %s \n",expression,expression->class_name().c_str(),expression->get_lvalue() ? "true" : "false");
+#endif
+                    localResult.set_MarkedForTransformation(true);
+                  }
+             }
         }
 
   // Need to look at other kinds of expression that can hold shared types: e.g. SgArrayRefExp
+
+     bool skip_transformation_of_children = false;
+
+     SgAssignOp* assignOp = isSgAssignOp(astNode);
+     if (assignOp != NULL)
+        {
+#if 0
+          printf ("Found SgAssignOp: check for matching transformation of lhs and rhs expressions \n");
+#endif
+          for (SynthesizedAttributesList::iterator i = childAttributes.begin(); i != childAttributes.end(); i++)
+             {
+               ROSE_ASSERT((*i).node != NULL);
+               SgExpression* child_expression = isSgExpression((*i).node);
+               if (child_expression != NULL)
+                  {
+#if 0
+                    printf ("Evaluate matching of types on the child nodes of the AST (child = %p = %s) shared type = %s lvalue = %s marked for transformation = %s \n",
+                       child_expression,child_expression->class_name().c_str(),(*i).get_SharedTypeExpression() ? "true" : "false",
+                       child_expression->get_lvalue() ? "true" : "false",(*i).get_MarkedForTransformation() ? "true" : "false");
+#endif
+                    if ( (*i).get_SharedTypeExpression() == true )
+                       {
+                         if (child_expression->get_lvalue() == true)
+                            {
+                              if ( (*i).get_MarkedForTransformation() == false )
+                                 {
+#if 0
+                                   printf ("This SgAssignOp has shared type lhs expression not marked for transformation (skip transformation of rhs to match types) \n");
+#endif
+                                   skip_transformation_of_children = true;
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+                            }
+                       }
+                  }
+             }
+#if 0
+          printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
+#endif
+          if (skip_transformation_of_children == true)
+             {
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (5/25/2014): Iterate over the child attributes and determin if any transformations are required to the AST.
+     for (SynthesizedAttributesList::iterator i = childAttributes.begin(); i != childAttributes.end(); i++)
+        {
+       // if ( (*i).get_SharedTypeExpression() == true )
+          if ( (*i).get_MarkedForTransformation() == true )
+             {
+            // This is where we have to call for the transformation on the child node of the AST.
+
+               ROSE_ASSERT((*i).node != NULL);
+#if 0
+               printf ("This is where we have to call for the transformation on the child nodes of the AST (child = %p = %s) \n",(*i).node,(*i).node->class_name().c_str());
+#endif
+#if 1
+               SgExpression* expression_to_transform = isSgExpression((*i).node);
+               SgExpression* parentExpression = isSgExpression(expression_to_transform->get_parent());
+
+            // DQ (5/25/2014): We don't have to 
+            // ROSE_ASSERT(parentExpression != NULL);
+               if (parentExpression != NULL)
+                  {
+                    if (skip_transformation_of_children == false)
+                       {
+                         SgExpression* newSubtree = transformExpression(expression_to_transform);
+                         ROSE_ASSERT(newSubtree != NULL);
+#if 0
+                         printf ("***** expression_to_transform = %p = %s BEFORE: parentExpression = %p = %s newSubtree = %p = %s = %s \n",
+                              expression_to_transform,expression_to_transform->class_name().c_str(),
+                              parentExpression,parentExpression->class_name().c_str(),newSubtree,newSubtree->class_name().c_str(),newSubtree->unparseToString().c_str());
+#endif
+                      // Set the new subtree into the SgPointerDerefExp's operand.
+                         parentExpression->replace_expression(expression_to_transform,newSubtree);
+
+                      // DQ (5/20/2014): We can sometimes have to set the lvalue flag.
+                         newSubtree->set_lvalue(expression_to_transform->get_lvalue());
+                         expression_to_transform->set_lvalue(false);
+#if 0               
+                         printf ("BEFORE: Reset the parent \n");
+#endif
+                      // pointerDerefExp->set_operand(newSubtree);
+                      // newSubtree->set_parent(pointerDerefExp);
+                         newSubtree->set_parent(parentExpression);
+#if 0
+                         printf ("AFTER: Reset the parent parentExpression = %p \n",parentExpression);
+#endif
+#if 0
+                         printf ("***** expression_to_transform = %p = %s AFTER: parentExpression = %p = %s = %s \n",
+                              expression_to_transform,expression_to_transform->class_name().c_str(),
+                              parentExpression,parentExpression->class_name().c_str(),parentExpression->unparseToString().c_str());
+#endif
+                       }
+                  }
+#endif
+#if 0
+                printf ("Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
+             }
+        }
 
      return localResult;
    }
@@ -516,6 +864,8 @@ void
 fixupNodesWithTypes(SgProject* project,Traversal & traversal)
    {
   // This step does the transformations on types as a final step.
+  // It must be done last because we use the marking of types as shared
+  // to first do all of the transformations of relevant expressions.
 
 #if 0
      printf ("Transform the types in IR nodes where we detected shared types \n");
@@ -609,7 +959,7 @@ int main( int argc, char * argv[] )
      generateDOT(*project,"_before_transformation");
 #endif
 #if 0
-     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
 #endif
 #if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)

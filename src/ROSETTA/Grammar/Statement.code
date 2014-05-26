@@ -11324,13 +11324,15 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
           SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
           if (definingClassDeclaration != NULL)
                parentScope = definingClassDeclaration->get_definition();
-
+#if 0
+       // DQ (5/20/2014): This results in an untolerable amount of output spew from Boost test codes.
           if (parentScope != NULL)
              {
                printf ("SgMemberFunctionDeclaration::get_class_scope(): memberFunction = %p = %s = %s classDeclaration = %p = %s = %s \n",
                     this,this->class_name().c_str(),SageInterface::get_name(this).c_str(),
                     classDeclaration,classDeclaration->class_name().c_str(),SageInterface::get_name(classDeclaration).c_str());
              }
+#endif
        // ROSE_ASSERT(parentScope != NULL);
         }
        else
