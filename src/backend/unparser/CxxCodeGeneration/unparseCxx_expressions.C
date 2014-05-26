@@ -260,6 +260,10 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
    {
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
 
+#if 0
+     printf ("In unparseTemplateName(): templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+#endif
+
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
 
   // DQ (5/7/2013): I think these should be false so that the full type will be output.
@@ -489,11 +493,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
           unp->u_exprStmt->curprint(" > ");
         }
+       else
+        {
+       // DQ (5/26/2014): In the case of a template instantiation with empty template argument list, output
+       // a " " to be consistant with the behavior when there is a non-empty template argument list.
+       // This is a better fix for the template issue that Robb pointed out and that was fixed last week.
+          unp->u_exprStmt->curprint(" ");
+        }
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
