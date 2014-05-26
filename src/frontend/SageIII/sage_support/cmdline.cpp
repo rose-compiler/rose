@@ -1949,6 +1949,7 @@ void
 Rose::Cmdline::Java::
 ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
 {
+  project->set_Java_only(false);
   bool is_java_only =
       CommandlineProcessing::isOption(
           argv,
