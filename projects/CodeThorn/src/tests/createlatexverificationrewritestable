@@ -1,0 +1,19 @@
+#!/bin/bash 
+# create latex table for verification runtimes of poly-codes (requires *.stats files to be available)
+
+outputfile=all-rewrite.stats.tex
+
+echo "Benchmark & States & ArrayUpd & ElimMinusOp & ElimAssign & AddReord & CF & VarElim \\\\\hline\hline" > ${outputfile}
+allstatsfiles1=`ls polyhedralTest-size16*/*/*/*.stats | tr "\n" " "`
+allstatsfiles2=`ls polyhedralTest-size16*/*/*/*/*.stats | tr "\n" " "`
+allstatsfiles="${allstatsfiles1} ${allstatsfiles2}"
+for stat in $allstatsfiles; do
+  #mybasename=`basename "$stat"|sed 's/.stats//g'|tr "_" "-"`
+  mybasename=`echo "$stat"|sed 's/.stats//g'|tr "_" "-"`
+  echo -n "$mybasename & " >> ${outputfile}
+  estates=`grep "Sizes," $stat | cut -f3 -d,`
+  line2=`grep "rewrite-stats," $stat | sed 's/rewrite-stats,//g'| tr "," "&"`
+   echo "${estates} & $line2\\\\\hline" >> ${outputfile}
+done
+
+echo "generated file ${outputfile}"

@@ -11,6 +11,7 @@
 
 using namespace std;
 
+namespace CodeThorn {
 std::string nodeTypeName(SgNode* node);
 std::string astTermToMultiLineString(SgNode* node,int sep=1, int pos=0);
 std::string astTermWithNullValuesToString(SgNode* node);
@@ -21,5 +22,6 @@ std::string dotFragmentToDot(string fragment);
 std::string astTermWithNullValuesToDotFragment(SgNode* root) ;
 std::string astTermToDot(RoseAst::iterator start, RoseAst::iterator end);
 std::string functionAstTermsWithNullValuesToDot(SgNode* root);
+}
 
 #endif

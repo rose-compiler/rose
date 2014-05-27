@@ -184,17 +184,17 @@ void jacobi( )
 
     /* Copy new solution into old */
     {
-	  // manually rewritten for-loop
+      // manually rewritten for-loop
       i=0;
-	  while(i<n) {
+      while(i<n) {
         j=0;
-		while(j<m) {
+        while(j<m) {
           uold[i][j] = u[i][j]; 
-		  j++;
-		}
-		i++;
-	  }
-	  i=1000;
+          j++;
+        }
+        i++;
+      }
+      i=1000;
 
       for (i=1;i<(n-1);i++)  
         for (j=1;j<(m-1);j++)   
@@ -214,8 +214,8 @@ void jacobi( )
     k = k + 1;
     if (k%500==0) 
       printf("Finished %d iteration.\n",k);
-	double tmp1;
-	tmp1=sqrt(error);
+    double tmp1;
+    tmp1=sqrt(error);
     error = tmp1/(n*m);
 
   }          /*  End iteration loop */

@@ -1,0 +1,18 @@
+#!/bin/bash 
+# create latex table for verification runtimes of poly-codes (requires *.stats files to be available)
+
+outputfile=all-runtime.stats.tex
+
+echo "Benchmark & FrontEnd & Init & STG & ArrExtr & ArrSSA & Total\\\\\hline\hline" > ${outputfile}
+allstatsfiles1=`ls polyhedralTest-size16*/*/*/*.stats | tr "\n" " "`
+allstatsfiles2=`ls polyhedralTest-size16*/*/*/*/*.stats | tr "\n" " "`
+allstatsfiles="${allstatsfiles1} ${allstatsfiles2}"
+for stat in $allstatsfiles; do
+  mybasename=`basename "$stat"|sed 's/.stats//g'|tr "_" "-"`
+  mybasename=`echo "$stat"|sed 's/.stats//g'|tr "_" "-"`
+  echo -n "$mybasename & " >> ${outputfile}
+  line=`grep "Runtime(readable)" $stat | sed 's/Runtime(readable),//g'| tr "," "&"`
+   echo "$line\\\\\hline" >> ${outputfile}
+done
+
+echo "generated file ${outputfile}"
