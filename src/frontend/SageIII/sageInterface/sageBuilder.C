@@ -4619,11 +4619,13 @@ SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* fun
        // DQ (7/27/2012): New semantics is that we want to have the input name be without template arguments and 
        // we will add the template arguments instead of trying to remove then (which was problematic for examples 
        // such as "X<Y<Z>> operator X&()" and "X<Y<Z>> operator>()".
+#if 0
           if (hasTemplateSyntax(templateNameWithoutArguments) == true)
              {
                printf ("WARNING: new semantics is that the input name has no template syntax. templateNameWithoutArguments = %s \n",templateNameWithoutArguments.str());
             // ROSE_ASSERT(false);
              }
+#endif
 #else
           XXX SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgumentPtrList & templateArgumentsList)
 
@@ -9652,6 +9654,19 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                ROSE_ASSERT(nondefdecl != NULL);
                ROSE_ASSERT(nondefdecl->get_parent() != NULL);
 
+            // DQ (5/18/2014): Added test to match that in set_firstNondefiningDeclaration().
+            // This is a problem for the Boost code after the fix to detec templates vs. template instantiation declarations.
+               if (nondefdecl->variantT() != firstNondefdecl->variantT())
+                  {
+                    printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): nondefdecl = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
+                         nondefdecl,nondefdecl->class_name().c_str(),firstNondefdecl,firstNondefdecl->class_name().c_str());
+                    nondefdecl->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): nondefdecl: debug");
+                    firstNondefdecl->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefdecl: debug");
+                  }
+
+            // DQ (5/18/2014): Added test to match that in set_firstNondefiningDeclaration().
+               ROSE_ASSERT(nondefdecl->variantT() == firstNondefdecl->variantT());
+
                nondefdecl->set_firstNondefiningDeclaration(firstNondefdecl);
 
             // This might be NULL if the defining declaration has not been seen yet!
@@ -10666,7 +10681,17 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
             // DQ (6/6/2012): Added support for template arguments so that types would be computed with the template arguments.
                ROSE_ASSERT(templateArgumentsList != NULL);
-               ROSE_ASSERT(templateArgumentsList->size() > 0);
+
+            // DQ (5/17/2014): This must be allowed for some template instantiations (see test2014_77.C).
+            // This occurs now under some revised rules for when to interpret a class or struct as a template 
+            // declaration or template instantiation declaration. This revisions is required for test2014_56.C
+            // but has had a small cascading effect on other parts of ROSE (all fixed on 5/17/2014, if I can 
+            // finish this work today).
+            // ROSE_ASSERT(templateArgumentsList->size() > 0);
+               if (templateArgumentsList->size() == 0)
+                  {
+                    printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): templateArgumentsList->size() == 0 \n");
+                  }
 
             // DQ (9/16/2012): Set the firstNondefiningDeclaration so that we can set the template parameters.
                nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
@@ -10926,11 +10951,13 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
           isSgTemplateInstantiationDecl(defdecl)->set_templateName(nameWithoutTemplateArguments);
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
        // DQ (5/8/2013): This fails for test2013_159.C, and it appears that we have been overly restrictive here.
           if (hasTemplateSyntax(nameWithTemplateArguments) == false)
              {
                printf ("WARNING: In buildClassDeclaration_nfi(): nameWithTemplateArguments = %s is not using template syntax \n",nameWithTemplateArguments.str());
              }
+#endif
        // ROSE_ASSERT(hasTemplateSyntax(nameWithTemplateArguments) == true);
 
        // DQ (7/27/2012): This fails for test2005_35.C where conversion operators are seen.
