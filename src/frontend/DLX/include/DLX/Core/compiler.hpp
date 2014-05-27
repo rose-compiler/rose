@@ -40,8 +40,12 @@ class Compiler {
     typedef Directives::directive_t<language_t> directive_t;
     typedef std::vector<directive_t *> directives_ptr_set_t;
 
+    typename language_tpl::compiler_modules_t compiler_modules;
+
   public:
-    Compiler() {}
+    Compiler() :
+      compiler_modules()
+    {}
 
     /*!
      * \brief It applies the transformation associated with the directives.

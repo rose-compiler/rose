@@ -46,8 +46,8 @@ bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_a
 
   construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-  construct->assoc_nodes.data_scope = isSgScopeStatement(SageInterface::getNextStatement(pragma_decl));
-  assert(construct->assoc_nodes.data_scope != NULL);
+  construct->assoc_nodes.data_region = SageInterface::getNextStatement(pragma_decl);
+  assert(construct->assoc_nodes.data_region != NULL);
 
   return true;
 }
@@ -64,16 +64,8 @@ bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_a
 
   construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-
-  SgStatement * stmt = SageInterface::getNextStatement(pragma_decl);
-  construct->assoc_nodes.parallel_scope = isSgScopeStatement(stmt);
-  if (construct->assoc_nodes.parallel_scope != NULL)
-    construct->assoc_nodes.scoped_directive = NULL;
-  else {
-    std::map<SgLocatedNode *, directive_t *>::const_iterator it = translation_map.find(stmt);
-    assert(it != translation_map.end());
-    construct->assoc_nodes.scoped_directive = it->second;
-  }
+  construct->assoc_nodes.parallel_region = SageInterface::getNextStatement(pragma_decl);
+  assert(construct->assoc_nodes.parallel_region != NULL);
 
   return true;
 }
@@ -90,8 +82,8 @@ bool Frontend<OpenACC::language_t>::findAssociatedNodes<OpenACC::language_t::e_a
 
   construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-  construct->assoc_nodes.kernel_scope = isSgScopeStatement(SageInterface::getNextStatement(pragma_decl));
-  assert(construct->assoc_nodes.kernel_scope != NULL);
+  construct->assoc_nodes.kernel_region = SageInterface::getNextStatement(pragma_decl);
+  assert(construct->assoc_nodes.kernel_region != NULL);
 
   return true;
 }
@@ -436,7 +428,7 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   }
   else clause->parameters.dimension_id = 0;
 
-  assert(clause->parameters.dimension_id != -1);
+  assert(clause->parameters.dimension_id != (size_t)-1);
 
   return true;
 }
@@ -456,7 +448,7 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
   }
   else clause->parameters.dimension_id = 0;
 
-  assert(clause->parameters.dimension_id != -1);
+  assert(clause->parameters.dimension_id != (size_t)-1);
 
   return true;
 }
@@ -568,10 +560,205 @@ bool Frontend<OpenACC::language_t>::parseClauseParameters<OpenACC::language_t::e
 
 #endif
 
+void lookup_region_successors(
+  SgStatement * region,
+  Directives::directive_t<OpenACC::language_t> * directive,
+  const std::map<SgLocatedNode *, Directives::directive_t<OpenACC::language_t> *> & translation_map
+) {
+  if (isSgPragmaDeclaration(region)) {
+    std::map<SgLocatedNode *, Directives::directive_t<OpenACC::language_t> *>::const_iterator it_region = translation_map.find(region);
+    assert(it_region != translation_map.end());
+    directive->add_successor(OpenACC::language_t::e_child_scope, it_region->second);
+    it_region->second->add_predecessor(OpenACC::language_t::e_parent_scope, directive);
+  }
+  else {
+    std::queue<SgStatement *> nodes;
+    nodes.push(region);
+    while (!nodes.empty()) {
+      SgStatement * node = nodes.front();
+      nodes.pop();
+
+      if (node == NULL) continue;
+
+      switch (node->variantT()) {
+        case V_SgDoWhileStmt:
+          /// \todo do-while-loop condition: Can it contain directives? It could call functions known to use OpenACC.
+          nodes.push(((SgDoWhileStmt *)node)->get_body());
+          break;
+        case V_SgForStatement:
+          /// \todo for-loop initialization, condition, increment: Can they contain directives? They could call functions known to use OpenACC.
+          nodes.push(((SgForStatement *)node)->get_loop_body());
+          break;
+        case V_SgIfStmt:
+          /// \todo if-stmt condition: Can it contain directives? It could call functions known to use OpenACC.
+          nodes.push(((SgIfStmt *)node)->get_true_body());
+          nodes.push(((SgIfStmt *)node)->get_false_body());
+          break;
+        case V_SgSwitchStatement:
+          /// \todo switch-stmt item selector: Can it contain directives? It could call functions known to use OpenACC.
+          nodes.push(((SgSwitchStatement *)node)->get_body());
+          break;
+        case V_SgWhileStmt:
+          /// \todo while-loop condition: Can it contain directives? It could call functions known to use OpenACC.
+          nodes.push(((SgWhileStmt *)node)->get_body());
+          break;
+        case V_SgBasicBlock:
+        {
+          SgBasicBlock * bb_stmt = (SgBasicBlock *)node;
+          std::vector<SgStatement *>::const_iterator it_stmt;
+          for (it_stmt = bb_stmt->get_statements().begin();  it_stmt != bb_stmt->get_statements().end(); it_stmt++) {
+            std::map<SgLocatedNode *, Directives::directive_t<OpenACC::language_t> *>::const_iterator it_stmt_directive = translation_map.find(*it_stmt);
+            if (it_stmt_directive != translation_map.end()) {
+              directive->add_successor(OpenACC::language_t::e_child_scope, it_stmt_directive->second);
+              it_stmt_directive->second->add_predecessor(OpenACC::language_t::e_parent_scope, directive);
+
+              // Exclude statements scoped under data/parallel/kernel/loop constructs
+              //   do-loop handles succession of directives scoped one under the other, for example:
+              //             sg_scope->{acc_data, acc_parallel, acc_loop, sg_for->{...}, sg_stmt, ... }
+              //     -> find acc_data
+              //     -> ignore acc_parallel, acc_loop and sg_for
+              //     -> restart with sg_stmt
+              do {
+                if (
+                  it_stmt_directive->second->construct->kind == OpenACC::language_t::e_acc_construct_data     ||
+                  it_stmt_directive->second->construct->kind == OpenACC::language_t::e_acc_construct_parallel ||
+                  it_stmt_directive->second->construct->kind == OpenACC::language_t::e_acc_construct_kernel   ||
+                  it_stmt_directive->second->construct->kind == OpenACC::language_t::e_acc_construct_loop
+                ) {
+                  it_stmt++;
+
+                  if (it_stmt == bb_stmt->get_statements().end())
+                    break;
+
+                  it_stmt_directive = translation_map.find(*it_stmt);
+                }
+                else break;
+              } while (it_stmt != bb_stmt->get_statements().end() && it_stmt_directive != translation_map.end());
+            }
+            else nodes.push(*it_stmt);
+          }
+          break;
+        }
+        case V_SgPragmaDeclaration:
+          assert(false); /// \todo Non OpenACC pragma would not be in 'translation_map' and trigger this assertion
+        case V_SgExprStatement:
+          break; /// \todo might be a call-site for a function known to use OpenACC
+        default:
+          assert(false);
+      }
+    }
+  }
+}
+
+void lookup_loop_successors(
+  SgForStatement * for_loop,
+  Directives::directive_t<OpenACC::language_t> * directive,
+  const std::map<SgLocatedNode *, Directives::directive_t<OpenACC::language_t> *> & translation_map
+) {
+  assert(for_loop != NULL);
+
+  std::queue<SgStatement *> nodes;
+  nodes.push(for_loop->get_loop_body());
+  while (!nodes.empty()) {
+    SgStatement * node = nodes.front();
+    nodes.pop();
+
+    if (node == NULL) continue;
+
+    switch (node->variantT()) {
+      case V_SgForStatement:
+        /// \todo for-loop initialization, condition, increment: Can they contain directives? They could call functions known to use OpenACC.
+        nodes.push(((SgForStatement *)node)->get_loop_body());
+        break;
+      case V_SgIfStmt:
+        /// \todo if-stmt condition: Can it contain directives? It could call functions known to use OpenACC.
+        nodes.push(((SgIfStmt *)node)->get_true_body());
+        nodes.push(((SgIfStmt *)node)->get_false_body());
+        break;
+      case V_SgBasicBlock:
+      {
+        SgBasicBlock * bb_stmt = (SgBasicBlock *)node;
+        std::vector<SgStatement *>::const_iterator it_stmt;
+        for (it_stmt = bb_stmt->get_statements().begin();  it_stmt != bb_stmt->get_statements().end(); it_stmt++) {
+          std::map<SgLocatedNode *, Directives::directive_t<OpenACC::language_t> *>::const_iterator it_stmt_directive = translation_map.find(*it_stmt);
+          if (it_stmt_directive != translation_map.end()) {
+            assert(it_stmt_directive->second->construct->kind == OpenACC::language_t::e_acc_construct_loop);
+            directive->add_successor(OpenACC::language_t::e_child_scope, it_stmt_directive->second);
+            it_stmt_directive->second->add_predecessor(OpenACC::language_t::e_parent_scope, directive);
+            it_stmt++;
+          }
+          else nodes.push(*it_stmt);
+        }
+        break;
+      }
+      case V_SgExprStatement:
+        break; /// \todo might be a call-site for a user-defined function that has to be inlined 
+      case V_SgPragmaDeclaration:
+        assert(false); /// \todo Non OpenACC pragma would not be in 'translation_map' and trigger this assertion
+      case V_SgDoWhileStmt:
+      case V_SgSwitchStatement:
+      case V_SgWhileStmt:
+        assert(false); /// \todo not supported inside parallel/kernel region => cannot be scoped under loop construct.
+      default:
+        assert(false);
+    }
+  }
+}
+
 template <>
-bool Frontend<OpenACC::language_t>::build_graph() {
-  /// \todo Frontend<OpenACC::language_t>::build_graph()
-  return false;
+bool Frontend<OpenACC::language_t>::build_graph(const std::map<SgLocatedNode *, directive_t *> & translation_map) {
+  std::vector<Directives::directive_t<OpenACC::language_t> *>::const_iterator it_directive;
+  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
+    switch ((*it_directive)->construct->kind) {
+      case OpenACC::language_t::e_acc_construct_data:
+      {
+        Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> * construct =
+                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> *)((*it_directive)->construct);
+        lookup_region_successors(construct->assoc_nodes.data_region, *it_directive, translation_map);
+        break;
+      }
+      case OpenACC::language_t::e_acc_construct_parallel:
+      {
+        Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> * construct =
+                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> *)((*it_directive)->construct);
+        lookup_region_successors(construct->assoc_nodes.parallel_region, *it_directive, translation_map);
+        break;
+      }
+      case OpenACC::language_t::e_acc_construct_kernel:
+      {
+        Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_kernel> * construct =
+                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_kernel> *)((*it_directive)->construct);
+        lookup_region_successors(construct->assoc_nodes.kernel_region, *it_directive, translation_map);
+        break;
+      }
+      case OpenACC::language_t::e_acc_construct_loop:
+      {
+        Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> * construct =
+                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> *)((*it_directive)->construct);
+        lookup_loop_successors(construct->assoc_nodes.for_loop, *it_directive, translation_map);
+        break;
+      }
+      case OpenACC::language_t::e_acc_construct_host_data:
+      case OpenACC::language_t::e_acc_construct_declare:
+      case OpenACC::language_t::e_acc_construct_cache:
+      case OpenACC::language_t::e_acc_construct_update:
+      case OpenACC::language_t::e_acc_construct_blank:
+      default:
+        assert(false);
+    }
+  }
+
+  graph_entry.clear();
+  graph_final.clear();
+
+  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
+    if ((*it_directive)->predecessor_list.empty())
+      graph_entry.push_back(*it_directive);
+    if ((*it_directive)->successor_list.empty())
+      graph_final.push_back(*it_directive);
+  }
+
+  return true;
 }
 
 /** @} */

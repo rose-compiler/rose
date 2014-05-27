@@ -33,6 +33,7 @@ std::string language_t::language_label;
 language_t::construct_label_map_t language_t::s_construct_labels;
 language_t::construct_kinds_e language_t::s_blank_construct;
 language_t::clause_labels_map_t language_t::s_clause_labels;
+language_t::directives_relation_label_map_t language_t::s_directives_relation_labels;
 
 void language_t::init() {
   // Language label
@@ -124,6 +125,9 @@ void language_t::init() {
   Directives::addClauseLabel<language_t>(e_acc_clause_read, "read");
   Directives::addClauseLabel<language_t>(e_acc_clause_write, "write");
 #endif
+
+  s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_child_scope, "child-scope"));
+  s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_parent_scope, "parent-scope"));
 
 }
 

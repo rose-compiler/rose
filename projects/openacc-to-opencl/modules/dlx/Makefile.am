@@ -19,7 +19,9 @@ openacc_parser_LDADD = \
 
 if ROSE_HAVE_OPENCL_INC
 check-local: openacc-parser
-	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/101/101-kernel-openacc.c
-	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/102/102-kernel-openacc.c
-	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/103/103-kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/101/kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/102/kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/103/kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/104/kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -I$(OPENCL_INC_DIR) $(top_srcdir)/../tests/109/kernel-openacc.c
 endif

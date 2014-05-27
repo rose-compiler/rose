@@ -105,12 +105,18 @@ struct language_t {
   static clause_labels_map_t s_clause_labels;
 
   enum directives_relation_e {
+    e_child_scope,
+    e_parent_scope,
     e_relation_last
   };
-
-  struct compiler_module_handlers_t {};
+  typedef std::map<directives_relation_e, std::string> directives_relation_label_map_t;
+  static directives_relation_label_map_t s_directives_relation_labels;
 
   static void init();
+};
+
+struct compiler_modules_t {
+  KLT
 };
 
 }
@@ -139,24 +145,21 @@ template <>
 template <>
 struct generic_construct_t<OpenACC::language_t>::assoc_nodes_t<OpenACC::language_t::e_acc_construct_data> {
   SgScopeStatement * parent_scope;
-  SgScopeStatement * data_scope;
-  Directives::directive_t<language_t> * scoped_directive;
+  SgStatement * data_region;
 };
 
 template <>
 template <>
 struct generic_construct_t<OpenACC::language_t>::assoc_nodes_t<OpenACC::language_t::e_acc_construct_parallel> {
   SgScopeStatement * parent_scope;
-  SgScopeStatement * parallel_scope;
-  Directives::directive_t<language_t> * scoped_directive;
+  SgStatement * parallel_region;
 };
 
 template <>
 template <>
 struct generic_construct_t<OpenACC::language_t>::assoc_nodes_t<OpenACC::language_t::e_acc_construct_kernel> {
   SgScopeStatement * parent_scope;
-  SgScopeStatement * kernel_scope;
-  Directives::directive_t<language_t> * scoped_directive;
+  SgStatement * kernel_region;
 };
 
 template <>
@@ -382,29 +385,6 @@ struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::
 #endif
 
  /** @} */
-}
-
-namespace Compiler {
-
-/*!
- * \addtogroup grp_dlx_openacc_compiler
- * @{
- */
-/*
-template <>
-Compiler<OpenACC::language_t, Handles::TransformationHandler>::Compiler(
-  Handles::TransformationHandler & transformation_handler,
-  OpenACC::language_t::compiler_module_handlers_t & module_handlers
-);
-
-template <>
-bool Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::compile(
-  const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & directives,
-  const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & graph_entry,
-  const Compiler<DLX::OpenACC::language_t, Handles::TransformationHandler>::directives_ptr_set_t & graph_final
-);
-*/
-/** @} */
 }
 
 }

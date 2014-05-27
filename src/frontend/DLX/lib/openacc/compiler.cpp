@@ -9,8 +9,6 @@
 #include "DLX/Core/compiler.hpp"
 #include "DLX/OpenACC/language.hpp"
 
-#include "transformation-handler.hpp"
-
 namespace DLX {
 
 namespace Compiler {
@@ -20,8 +18,20 @@ namespace Compiler {
  * @{
  */
 
-/** @} */
+template <>
+bool Compiler<DLX::OpenACC::language_t>::compile(
+  const Compiler<DLX::OpenACC::language_t>::directives_ptr_set_t & directives,
+  const Compiler<DLX::OpenACC::language_t>::directives_ptr_set_t & graph_entry,
+  const Compiler<DLX::OpenACC::language_t>::directives_ptr_set_t & graph_final
+) {
+  /// \todo verify that it is correct OpenACC.....
 
+  /// \todo generate LoopTrees from parallel/kernel regions
+
+  return false;
+}
+
+/** @} */
 }
 
 }

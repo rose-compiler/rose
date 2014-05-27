@@ -18,7 +18,9 @@ int main(int argc, char ** argv) {
 
   assert(frontend.parseDirectives(project));
 
-//assert(compiler.compile(frontend.directives, frontend.graph_entry, frontend.graph_final));
+  frontend.toDot(std::cout);
+
+  assert(compiler.compile(frontend.directives, frontend.graph_entry, frontend.graph_final));
 
   return backend(project);
 }

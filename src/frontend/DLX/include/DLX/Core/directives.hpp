@@ -10,6 +10,7 @@
 
 #include <utility>
 #include <vector>
+#include <string>
 
 namespace DLX {
 
@@ -45,6 +46,14 @@ struct directive_t {
 
   predecessor_list_t predecessor_list;
   successor_list_t successor_list;
+
+  void add_predecessor(relation_e rel, directive_t<language_t> * directive) {
+    predecessor_list.push_back(std::pair<relation_e, directive_t<language_t> *>(rel, directive));
+  }
+
+  void add_successor(relation_e rel, directive_t<language_t> * directive) {
+    successor_list.push_back(std::pair<relation_e, directive_t<language_t> *>(rel, directive));
+  }
 };
 
 /** @} */

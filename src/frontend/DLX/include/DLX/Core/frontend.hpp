@@ -67,12 +67,14 @@ class Frontend {
       Directives::clause_t<language_t, kind> * clause
     );
 
-    bool build_graph();
+    bool build_graph(const std::map<SgLocatedNode *, directive_t *> & translation_map);
 
 /*! @} */
 
   public:
     bool parseDirectives(SgNode *);
+
+    void toDot(std::ostream & out) const;
 
   friend bool Directives::findAssociatedNodes<language_t>(SgLocatedNode *, Directives::generic_construct_t<language_t> *, const std::map<SgLocatedNode *, directive_t *> & translation_map); 
   friend bool Directives::parseClauseParameters<language_t>(std::string &, SgLocatedNode *, Directives::generic_clause_t<language_t> *); 
@@ -154,9 +156,28 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     directives.push_back(it->second);
   }
 
-  assert(build_graph());
+  assert(build_graph(translation_map));
  
   return true;
+}
+
+template <class language_tpl>
+void Frontend<language_tpl>::toDot(std::ostream & out) const {
+  out << "digraph {" << std::endl;
+  typename std::vector<directive_t *>::const_iterator it_directive;
+  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
+    typename std::map<typename language_tpl::construct_kinds_e, std::string>::const_iterator it_construct_label = language_tpl::s_construct_labels.find((*it_directive)->construct->kind);
+    assert(it_construct_label != language_tpl::s_construct_labels.end());
+    out << "directive_" << *it_directive << " [label=\"" << it_construct_label->second << " ( " << *it_directive << " )\"];" << std::endl;
+
+    typename std::vector<std::pair<typename language_tpl::directives_relation_e, directive_t *> >::const_iterator it_successor;
+    for (it_successor = (*it_directive)->successor_list.begin(); it_successor != (*it_directive)->successor_list.end(); it_successor++) {
+      typename std::map<typename language_tpl::directives_relation_e, std::string>::const_iterator it_rel_label = language_tpl::s_directives_relation_labels.find(it_successor->first);
+      assert(it_rel_label != language_tpl::s_directives_relation_labels.end());
+      out << "directive_" << *it_directive << " -> " << "directive_" << it_successor->second << " [label=\"" << it_rel_label->second << "\"];" << std::endl;
+    }
+  }
+  out << "}" << std::endl;
 }
 
 /** @} */
@@ -166,3 +187,4 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
 }
 
 #endif /* __DLX_FRONTEND_HPP__ */
+
