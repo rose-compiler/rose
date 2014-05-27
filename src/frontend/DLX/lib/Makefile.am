@@ -1,3 +1,3 @@
 
-SUBDIRS = core openacc
+SUBDIRS = core
 
