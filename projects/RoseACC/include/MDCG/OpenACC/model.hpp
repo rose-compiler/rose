@@ -96,6 +96,8 @@ struct CompilerData {
   static void storeToDB(const std::string & db_file, const input_t & input);
 };
 
+unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_inc_dir);
+
 }
 
 }

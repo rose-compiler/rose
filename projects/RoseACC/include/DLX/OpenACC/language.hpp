@@ -112,10 +112,6 @@ struct language_t {
   typedef std::map<directives_relation_e, std::string> directives_relation_label_map_t;
   static directives_relation_label_map_t s_directives_relation_labels;
 
-  struct compiler_modules_t {
-    /// \todo
-  };
-
   static void init();
 };
 

@@ -11,6 +11,9 @@ libDLX_openacc_la_SOURCES= \
 libDLX_openacc_la_CXXFLAGS= \
   -g \
   -I$(top_srcdir)/src/frontend/DLX/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
+  -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../../../include \
   $(ROSE_INCLUDES)
 libDLX_openacc_la_includedir=$(prefix)/include/DLX

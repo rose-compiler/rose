@@ -476,6 +476,19 @@ void CompilerData::storeToDB(const std::string & db_file_name, const input_t & i
   sqlite3_close(db_file);
 }
 
+unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_inc_dir) {
+  unsigned openacc_model = model_builder.create();
+
+  model_builder.add(openacc_model, "compiler",     libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "region",       libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "kernel",       libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "loop",         libopenacc_inc_dir + "/OpenACC/internal", "h");
+  model_builder.add(openacc_model, "api",          libopenacc_inc_dir + "/OpenACC/device",   "cl");
+
+  return openacc_model;
 }
 
 }
+
+}
+

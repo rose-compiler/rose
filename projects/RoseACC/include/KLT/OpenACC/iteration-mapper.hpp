@@ -25,13 +25,15 @@ class SingleVersionItMapper : public IterationMapper<Annotation, Language::OpenC
     ) const;
 };
 
-class IterationMapperOpenACC : public IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC> {
+namespace OpenACC {
+
+class IterationMapper : public ::KLT::IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC> {
   private:
     std::vector<unsigned> tiling_sizes;
 
   public:
-    IterationMapperOpenACC();
-    IterationMapperOpenACC(const std::vector<unsigned> & tiling_sizes_);
+    IterationMapper();
+    IterationMapper(const std::vector<unsigned> & tiling_sizes_);
 
   private:
     void computeValidShapes(
@@ -39,6 +41,8 @@ class IterationMapperOpenACC : public IterationMapper<Annotation, Language::Open
       std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
     ) const;
 };
+
+}
 
 }
 

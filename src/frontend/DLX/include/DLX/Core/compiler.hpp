@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __DLX_COMPILER_HPP__
-#define __DLX_COMPILER_HPP__
+#ifndef __DLX_CORE_COMPILER_HPP__
+#define __DLX_CORE_COMPILER_HPP__
 
 #include "DLX/Core/directives.hpp"
 
@@ -32,7 +32,7 @@ namespace Compiler {
  * @{
  */
 
-template <class language_tpl>
+template <class language_tpl, class compiler_modules_t>
 class Compiler {
   public:
     typedef language_tpl language_t;
@@ -40,11 +40,11 @@ class Compiler {
     typedef Directives::directive_t<language_t> directive_t;
     typedef std::vector<directive_t *> directives_ptr_set_t;
 
-    typename language_tpl::compiler_modules_t compiler_modules;
+    compiler_modules_t & compiler_modules;
 
   public:
-    Compiler() :
-      compiler_modules()
+    Compiler(compiler_modules_t & compiler_modules_) :
+      compiler_modules(compiler_modules_)
     {}
 
     /*!
@@ -63,5 +63,5 @@ class Compiler {
 
 }
 
-#endif /* __DLX_COMPILER_HPP__ */
+#endif /* __DLX_COMPILER_CORE_HPP__ */
 

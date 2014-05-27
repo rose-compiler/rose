@@ -10,18 +10,6 @@ typedef ::DLX::KLT_Annotation< ::DLX::OpenACC::language_t> Annotation;
 typedef ::KLT::LoopTrees<Annotation> LoopTrees;
 typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
 
-unsigned readOpenaccModel(MDCG::ModelBuilder & model_builder, const std::string & libopenacc_inc_dir) {
-  unsigned openacc_model = model_builder.create();
-
-  model_builder.add(openacc_model, "compiler",     libopenacc_inc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "region",       libopenacc_inc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "kernel",       libopenacc_inc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "loop",         libopenacc_inc_dir + "/OpenACC/internal", "h");
-  model_builder.add(openacc_model, "api",          libopenacc_inc_dir + "/OpenACC/device",   "cl");
-
-  return openacc_model;
-}
-
 void help(std::ostream & out) {
   out << "[Help]  > ---------------------------" << std::endl;
   out << "[Help]  > RoseACC: LoopTree to OpenCL" << std::endl;
@@ -196,7 +184,7 @@ int main(int argc, char ** argv) {
   KLT::Generator<Annotation, Language, Runtime, MFB::KLT_Driver> generator(driver, ocl_kernels_file);
 
   // Read OpenACC Model
-  unsigned model = readOpenaccModel(model_builder, libopenacc_inc_dir);
+  unsigned model = MDCG::OpenACC::readOpenaccModel(model_builder, libopenacc_inc_dir);
 
   unsigned host_data_file_id = driver.add(boost::filesystem::path(kernels_desc_file));
   driver.setUnparsedFile(host_data_file_id);
@@ -207,7 +195,7 @@ int main(int argc, char ** argv) {
   // Create a Code Generation Configuration
   KLT::CG_Config<Annotation, Language, Runtime> cg_config(
       new KLT::LoopMapper<Annotation, Language, Runtime>(),
-      new KLT::IterationMapperOpenACC(tiling_sizes),
+      new KLT::OpenACC::IterationMapper(tiling_sizes),
       new KLT::DataFlow<Annotation, Language, Runtime>()
   );
 

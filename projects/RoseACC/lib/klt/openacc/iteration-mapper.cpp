@@ -50,19 +50,19 @@ void SingleVersionItMapper::computeValidShapes(
   calls++;
 }
 
+namespace OpenACC {
 
-
-IterationMapperOpenACC::IterationMapperOpenACC() :
-  IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC>(),
+IterationMapper::IterationMapper() :
+  ::KLT::IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC>(),
   tiling_sizes()
 {}
 
-IterationMapperOpenACC::IterationMapperOpenACC(const std::vector<unsigned> & tiling_sizes_) :
-  IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC>(),
+IterationMapper::IterationMapper(const std::vector<unsigned> & tiling_sizes_) :
+  ::KLT::IterationMapper<Annotation, Language::OpenCL, Runtime::OpenACC>(),
   tiling_sizes(tiling_sizes_)
 {}
 
-void IterationMapperOpenACC::computeValidShapes(
+void IterationMapper::computeValidShapes(
   LoopTrees<Annotation>::loop_t * loop,
   std::vector<Runtime::OpenACC::loop_shape_t *> & shapes
 ) const {
@@ -196,6 +196,8 @@ void IterationMapperOpenACC::computeValidShapes(
     assert(false); /// \todo vector not supported yet
   }
   else assert(false); // Not reachable => !loop->isDistributed()
+}
+
 }
 
 }
