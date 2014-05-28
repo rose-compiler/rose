@@ -2780,7 +2780,7 @@ Grammar::buildCode ()
      ROSE_ArrayGrammarHeaderFile << buildStorageClassDeclarations();
 
      ROSE_ArrayGrammarHeaderFile << "\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "ROSE_DLL_API std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
 
   // DQ (12/6/2003): Added output function for SgBitVector objects
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::vector<bool>&);\n\n";

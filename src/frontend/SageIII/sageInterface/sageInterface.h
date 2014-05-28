@@ -734,11 +734,11 @@ ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* targ
 // interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This 
 // function is the only function that should be called directly (though in a namespace we can't define permissions).
 //! Set the source code positon for the current (input) node.
-  void setSourcePosition(SgNode* node);
+  ROSE_DLL_API void setSourcePosition(SgNode* node);
 
 // A better name might be "setSourcePositionForSubTree"
 //! Set the source code positon for the subtree (including the root).
-  void setSourcePositionAtRootAndAllChildren(SgNode *root);
+  ROSE_DLL_API void setSourcePositionAtRootAndAllChildren(SgNode *root);
 
 // DQ (5/1/2012): New function with improved name (still preserving the previous interface).
 // This function is not required once the new mechanism defining a source position mode is complete (shortly).
@@ -1787,34 +1787,34 @@ ROSE_DLL_API int fixVariableReferences(SgNode* root);
 It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general.
 In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usually used internally within appendStatment(), insertStatement().
 */
-void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
 
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
-void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a class declaration was built without knowing its target scope.
-void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
 
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a namespace declaration was built without knowing its target scope.
-void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
 
 
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
-void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
-void setFortranNumericLabel(SgStatement* stmt, int label_value);
+ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value);
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
-int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
+ROSE_DLL_API int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
 
 //! Fix the symbol table and set scope (only if scope in declaration is not already set).
-void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
 
 //! Fix the symbol table and set scope (only if scope in declaration is not already set).
-void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
-void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.
@@ -1823,7 +1823,7 @@ void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
  *  accordingly if there are any.
  *  Assumption: The function has already inserted/appended/prepended into the scope before calling this function.
  */
-void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
+ROSE_DLL_API void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
 
 //------------------------------------------------------------------------
 //@{
