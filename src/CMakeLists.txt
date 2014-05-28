@@ -1046,7 +1046,7 @@ if(enable-fortran)
 endif()
 
 if (enable-java)
-  list(APPEND LINK_FILES ${JNI_LIBRARIES})
+  list(APPEND LINK_FILES ${JAVA_JVM_LIBRARY})
 endif()
 
 if(enable-python)
