@@ -496,10 +496,10 @@ class Grammar
           // MS: build a Latex output that shows the abstract Cpp grammar
           GrammarSynthesizedAttribute CreateGrammarDotString(Terminal* grammarnode,
                                                                std::vector<GrammarSynthesizedAttribute> v);
-          GrammarSynthesizedAttribute CreateGrammarLatexString(Terminal* grammarnode,
+          GrammarSynthesizedAttribute CreateAbstractTreeGrammarString(Terminal* grammarnode,
                                                                std::vector<GrammarSynthesizedAttribute> v);
           void buildGrammarDotFile(Terminal* rootNode, std::ostream& GrammarDotFile);
-          void buildGrammarLatexFile(Terminal* rootNode, std::ostream& GrammarLatexFile);
+          void buildAbstractTreeGrammarFile(Terminal* rootNode, std::ostream& AbstractTreeGrammarFile);
 
           // MS: generate source for implementation of the RTI interface
           GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
@@ -601,7 +601,7 @@ class Grammar
        std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
        std::set<std::string> traversedTerminals;
        GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
-       bool isAbstractGrammarSymbol(std::string);
+       bool isAbstractTreeGrammarSymbol(std::string);
 
    // JH (01/13/2006) Added to build code for ast file IO
       public:

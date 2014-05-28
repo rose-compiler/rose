@@ -205,7 +205,7 @@ void jacobi( )
     k = k + 1;
     if (k%500==0) 
       printf("Finished %d iteration.\n",k);
-	double tmp1=sqrt(error);
+    double tmp1=sqrt(error);
     error = tmp1/(n*m);
 
   }          /*  End iteration loop */

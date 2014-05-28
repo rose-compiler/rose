@@ -53,6 +53,10 @@ class Terminal
   // This class represents a terminal (the NonTerminal class is derived from the Terminal class)
 
  public:
+  // MS: 2013
+  bool isInnerNode();
+  bool isLeafNode();
+
   std::string   name;    // The name we assign to the token (e.g. "BinaryOperatorEquals")
 
   // where the name of the terminal is saved unmodified (with no grammar suffix)
