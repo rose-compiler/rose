@@ -18,10 +18,10 @@
 /*-----------------------------------------------------------------------------
  *  Variable Definitions
  *---------------------------------------------------------------------------*/
-int Rose::Cmdline::verbose = 0;
-bool Rose::Cmdline::Java::Ecj::batch_mode = false;
-std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
-std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
+ROSE_DLL_API int Rose::Cmdline::verbose = 0;
+ROSE_DLL_API bool Rose::Cmdline::Java::Ecj::batch_mode = false;
+ROSE_DLL_API std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
+ROSE_DLL_API std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
 
 /*-----------------------------------------------------------------------------
  *  namespace Rose::Cmdline {
@@ -2593,6 +2593,13 @@ std::string
 Rose::Cmdline::Java::Ecj::
 GetRoseClasspath ()
 {
+  
+  #ifdef _MSC_VER
+  std::string separator = ";";
+  #else
+  std::string separator = ":";
+  #endif
+  
   std::string classpath = "-Djava.class.path=";
 
   // Java (ECJ front-end) support (adding specific jar file)
@@ -2606,7 +2613,7 @@ GetRoseClasspath ()
           ecj_class_path_jarfile,
           std::string("lib/") + ecj_jar_file_name
       );
-  classpath += ":";
+  classpath += separator;
 
   // Java (ECJ front-end) support (adding path to source tree for the jar file).
   // This allows us to avoid copying the jar file to the build tree which is
@@ -2616,7 +2623,7 @@ GetRoseClasspath ()
       findRoseSupportPathFromBuild(
           ecj_class_path,
           std::string("lib/"));
-  classpath += ":";
+  classpath += separator;
 
   // Everything else?
   classpath += ".";

@@ -446,6 +446,11 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
   if (inInstallTree) {
     return installTreePath + "/" + installTreeLocation;
   } else {
+    #ifdef _MSC_VER
+    if (buildTreeLocation.compare(0, 3, "lib") == 0 || buildTreeLocation.compare(0, 3, "bin") == 0) {
+      return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation + "/" + CMAKE_INTDIR;
+    }
+    #endif
     return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation;
   }
 }
@@ -4150,11 +4155,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           string backendClassOutput = "javac-syntax-check-classes";
           javaCommandLine.push_back("-d");
           javaCommandLine.push_back(backendClassOutput);
-          if(mkdir(backendClassOutput.c_str(),0777)==-1) {
-                  if(errno != EEXIST) {
-                          printf ("Can't create destination folder for syntax checking\n");
-                          ROSE_ASSERT(false);
-                  }
+          boost::filesystem::create_directory(backendClassOutput.c_str());
+          if (!boost::filesystem::exists(backendClassOutput.c_str())) {
+              printf ("Can't create destination folder for syntax checking\n");
+              ROSE_ASSERT(false);
           }
 
           if (classpath.size()) {
@@ -4168,7 +4172,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           }
 
           // Specify warnings for javac compiler.
-          if (backendJavaCompiler == "javac") {
+          if (backendJavaCompiler == "javac" || backendJavaCompiler == "javac.exe") {
               if (get_output_warnings() == true) {
                   javaCommandLine.push_back("-Xlint");
               } else {
@@ -5411,15 +5415,13 @@ std::string
 Rose::Backend::Java::CreateDestdir(SgProject* project)
 {
   std::string destdir = project->get_Java_destdir();
-  if (!boost::filesystem::create_directory(destdir.c_str()))
+  boost::filesystem::create_directory(destdir.c_str());
+  if (!boost::filesystem::exists(destdir.c_str()))
   {
-      if (errno != EEXIST)
-      {
-          std::cout
-              << "[FATAL] Can't create javac destination folder"
-              << std::endl;
-          ROSE_ASSERT(false);
-      }
+      std::cout
+          << "[FATAL] Can't create javac destination folder"
+          << std::endl;
+      ROSE_ASSERT(false);
   }
   return destdir;
 }

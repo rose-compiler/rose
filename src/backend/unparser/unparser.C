@@ -2187,9 +2187,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             outFolder += package_name;
             outFolder += (package_name.size() > 0 ? "/" : "");
             // Create package folder structure
-            string mkdirCommand = string("mkdir -p ") + outFolder;
-            int status = system (mkdirCommand.c_str());
-            ROSE_ASSERT(status == 0);
+            boost::filesystem::create_directory(outFolder);
+            ROSE_ASSERT(boost::filesystem::exists(outFolder));
             outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
 #if 0
             printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
