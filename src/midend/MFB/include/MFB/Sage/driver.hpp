@@ -116,6 +116,9 @@ class Driver<Sage> {
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
     void setUnparsedFile(unsigned file_id) const;
 
+    /// Set a file to be compiled with the project (by default file added to the driver are *NOT* compiled)
+    void setCompiledFile(unsigned file_id) const;
+
     /// Build API of one file
     api_t * getAPI(unsigned file_id) const;
 

@@ -38,10 +38,37 @@ class LoopTrees {
     struct node_t {
       node_t * parent;
 
-      virtual ~node_t();
+      node_t() : parent(NULL) {}
 
-      protected:
-        node_t(); // Prevent construction of the base class
+      virtual size_t numberLoops() const = 0;
+    };
+
+    struct block_t : public node_t {
+      std::vector<node_t *> children;
+
+      block_t() : node_t(), children() {}
+
+      virtual size_t numberLoops() const {
+        size_t cnt = 0;
+        typename std::vector<node_t *>::const_iterator it;
+        for (it = children.begin(); it != children.end(); it++)
+          if (*it != NULL)
+            cnt += (*it)->numberLoops();
+        return cnt;
+      }
+    };
+
+    struct cond_t : public node_t {
+      SgExpression * condition;
+
+      block_t * block_true;
+      block_t * block_false;
+
+      cond_t(SgExpression * cond = NULL) : node_t(), condition(cond), block_true(NULL), block_false(NULL) {};
+
+      virtual size_t numberLoops() const {
+        return (block_true != NULL ? block_true->numberLoops() : 0) + (block_false != NULL ? block_false->numberLoops() : 0);
+      }
     };
 
     struct loop_t : public node_t {
@@ -49,17 +76,30 @@ class LoopTrees {
 
       SgExpression * lower_bound;
       SgExpression * upper_bound;
+      SgExpression * stride;
 
       std::vector<Annotation> annotations;
 
-      std::list<node_t *> children;
+      block_t * block;
 
       loop_t(
         SgVariableSymbol * it = NULL,
         SgExpression * lb = NULL,
-        SgExpression * ub = NULL
-      );
-      ~loop_t();
+        SgExpression * ub = NULL,
+        SgExpression * stride_ = NULL
+      ) :
+        node_t(),
+        iterator(it),
+        lower_bound(lb),
+        upper_bound(ub),
+        stride(stride_),
+        annotations(),
+        block(NULL)
+      {}
+
+      virtual size_t numberLoops() const {
+        return (block != NULL ? block->numberLoops() : 0) + 1;
+      }
 
       bool isDistributed() const;
     };
@@ -67,8 +107,11 @@ class LoopTrees {
     struct stmt_t : public node_t {
       SgStatement * statement;
 
-      stmt_t(SgStatement * stmt = NULL);
-      virtual ~stmt_t();
+      stmt_t(SgStatement * stmt = NULL) : node_t(), statement(stmt) {}
+
+      virtual size_t numberLoops() const {
+        return 0;
+      }
     };
 
   private:
@@ -86,6 +129,10 @@ class LoopTrees {
 
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::set<SgVariableSymbol *> p_parameters;
+
+    SgExpression * p_num_gangs[3];
+    SgExpression * p_num_workers[3];
+    SgExpression * p_vector_length;
 
   public:
     std::vector<Annotation> annotations;
@@ -114,6 +161,10 @@ class LoopTrees {
     /// Add a parameter of the sequence of loop trees
     void addParameter(SgVariableSymbol * var_sym);
 
+    void setNumGangs(size_t lvl, SgExpression * num);
+    void setNumWorkers(size_t lvl, SgExpression * num);
+    void setVectorLength(SgExpression * length);
+
     /// Read from a lisp like text file
     void read(char * filename);
     void read(const std::string & filename);
@@ -125,7 +176,7 @@ class LoopTrees {
     /// Write a lisp like text
     void toText(std::ostream & out) const;
     
-    unsigned numberLoops() const;
+    size_t numberLoops() const;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -178,64 +229,47 @@ void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std
 //////////////////////////////////////////////////////////////////////////////////////
 
 template <class Annotation>
-LoopTrees<Annotation>::node_t::node_t() :
-  parent(NULL)
-{}
-
-template <class Annotation>
-LoopTrees<Annotation>::node_t::~node_t() {}
-
-template <class Annotation>
-LoopTrees<Annotation>::loop_t::loop_t(
-  SgVariableSymbol * it,
-  SgExpression * lb,
-  SgExpression * ub
-) :
-  node_t(),
-  iterator(it),
-  lower_bound(lb),
-  upper_bound(ub),
-  annotations(),
-  children()
-{}
-
-template <class Annotation>
-LoopTrees<Annotation>::loop_t::~loop_t() {}
-
-template <class Annotation>
-LoopTrees<Annotation>::stmt_t::stmt_t(SgStatement * stmt) :
-  node_t(),
-  statement(stmt)
-{}
-
-template <class Annotation>
-LoopTrees<Annotation>::stmt_t::~stmt_t() {}
-
-template <class Annotation>
 void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::string indent) {
-  loop_t * loop = dynamic_cast<loop_t *>(node);
-  stmt_t * stmt = dynamic_cast<stmt_t *>(node);
+  if (node == NULL) return;
+
+  loop_t  * loop  = dynamic_cast<loop_t  *>(node);
+  cond_t  * cond  = dynamic_cast<cond_t  *>(node);
+  block_t * block = dynamic_cast<block_t *>(node);
+  stmt_t  * stmt  = dynamic_cast<stmt_t  *>(node);
   
-  assert(loop != NULL || stmt != NULL);
+  assert(loop != NULL || cond != NULL || block != NULL || stmt != NULL);
   
   if (loop != NULL) {
     out << indent << "loop(" << std::endl;
     out << indent << "  "
         << loop->iterator->get_name().getString() << ", "
         << loop->lower_bound->unparseToString()   << ", "
-        << loop->upper_bound->unparseToString()   << ", ";
+        << loop->upper_bound->unparseToString()   << ", "
+        << loop->stride->unparseToString()   << ", ";
 
     printLoopAnnotations<Annotation>(loop, out, indent);
     
-    typename std::list<node_t *>::const_iterator it_child = loop->children.begin();
-    toText(*it_child, out, indent + "  ");
-    it_child++;
-    for (; it_child != loop->children.end(); it_child++) {
-      out << "," << std::endl;
-      toText(*it_child, out, indent + "  ");
-    }
+    toText(loop->block, out, indent + "  ");
 
     out << std::endl << indent << ")";
+  }
+  
+  if (cond != NULL) {
+    out << indent << "cond(" << std::endl;
+    out << indent << "  " << cond->condition->unparseToString() << "," << std::endl;
+    
+    toText(cond->block_true , out, indent + "  ");
+    out << "," << std::endl;
+      
+    toText(cond->block_false, out, indent + "  ");
+    out << std::endl << indent << ")";
+  }
+  
+  if (block != NULL) {
+    out << indent << "block(" << std::endl;
+    typename std::vector<node_t *>::const_iterator it_block;
+    for (it_block = block->children.begin(); it_block != block->children.end(); it_block++)
+      toText(*it_block, out, indent + "  ");
   }
   
   if (stmt != NULL) {
@@ -262,6 +296,9 @@ LoopTrees<Annotation>::LoopTrees() :
   p_datas(),
   p_scalars(),
   p_parameters(),
+  p_num_gangs({NULL,NULL,NULL}),
+  p_num_workers({NULL,NULL,NULL}),
+  p_vector_length(NULL),
   annotations()
 {}
 
@@ -281,6 +318,23 @@ template <class Annotation>
 void LoopTrees<Annotation>::addParameter(SgVariableSymbol * var_sym) { p_parameters.insert(var_sym); }
 
 template <class Annotation>
+void LoopTrees<Annotation>::setNumGangs(size_t lvl, SgExpression * num) {
+  assert(lvl >= 0 && lvl <= 2);
+  p_num_gangs[lvl] = num;
+}
+
+template <class Annotation>
+void LoopTrees<Annotation>::setNumWorkers(size_t lvl, SgExpression * num) {
+  assert(lvl >= 0 && lvl <= 2);
+  p_num_workers[lvl] = num;
+}
+
+template <class Annotation>
+void LoopTrees<Annotation>::setVectorLength(SgExpression * length) {
+  p_vector_length = length;
+}
+
+template <class Annotation>
 void LoopTrees<Annotation>::toText(char * filename) const {
   std::ofstream file;
   file.open(filename);
@@ -295,37 +349,26 @@ void LoopTrees<Annotation>::toText(std::ostream & out) const {
   typename std::set<Data<Annotation> *>::const_iterator it_data;
   typename std::list<node_t *>::const_iterator it_tree;
 
-  if (!p_parameters.empty()) {
-    it_sym = p_parameters.begin();
-    out << "params(" << (*it_sym)->get_name().getString();
-    it_sym++;
-    for (; it_sym != p_parameters.end(); it_sym++)
-      out << ", " << (*it_sym)->get_name().getString();
-    out << ")" << std::endl;
-  }
-  else assert(false);
+  for (it_sym = p_parameters.begin(); it_sym != p_parameters.end(); it_sym++)
+    out << "param(" << (*it_sym)->get_name().getString() << "," << SageInterface::get_name((*it_sym)->get_type()) << ")" << std::endl;
 
-  if (!p_scalars.empty()) {
-    it_sym = p_scalars.begin();
-    out << "scalars(" << (*it_sym)->get_name().getString();
-    it_sym++;
-    for (; it_sym != p_scalars.end(); it_sym++)
-      out << ", " << (*it_sym)->get_name().getString();
-    out << ")" << std::endl;
-  }
+  for (it_sym = p_scalars.begin(); it_sym != p_scalars.end(); it_sym++)
+    out << "scalar(" << (*it_sym)->get_name().getString() << "," << SageInterface::get_name((*it_sym)->get_type()) << ")" << std::endl;
 
   for (it_data = p_datas.begin(); it_data != p_datas.end(); it_data++)
     (*it_data)->toText(out);
 
-  it_tree = p_trees.begin();
-  out << "region(" << std::endl;
-  toText(*it_tree, out, "  ");
-  it_tree++;
-  for (; it_tree != p_trees.end(); it_tree++) {
-    out << "," << std::endl;
+  if (!p_trees.empty()) {
+    it_tree = p_trees.begin();
+    out << "region(" << std::endl;
     toText(*it_tree, out, "  ");
+    it_tree++;
+    for (; it_tree != p_trees.end(); it_tree++) {
+      out << "," << std::endl;
+      toText(*it_tree, out, "  ");
+    }
+    out << std::endl << ")" << std::endl;
   }
-  out << std::endl << ")" << std::endl;
 }
 
 template <class Annotation> 
@@ -458,7 +501,7 @@ void parseDatas(LoopTrees<Annotation> & loop_trees) {
 
     ensure(',');
 
-    std::list<std::pair<SgExpression *, SgExpression *> > sections;
+    std::list<typename KLT::Data<Annotation>::section_t> sections;
 
     assert(AstFromString::afs_match_substr("section"));
 
@@ -471,20 +514,29 @@ void parseDatas(LoopTrees<Annotation> & loop_trees) {
     for (int i = 0; i < nbr_dims; i++) {
       ensure(',');
 
-      sections.push_back(std::pair<SgExpression *, SgExpression *>(NULL, NULL));
-      std::pair<SgExpression *, SgExpression *> & section = sections.back();
+      sections.push_back(typename KLT::Data<Annotation>::section_t());
+      typename KLT::Data<Annotation>::section_t & section = sections.back();
 
       AstFromString::afs_skip_whitespace();
 
-      assert(AstFromString::afs_match_additive_expression());
-      section.first = isSgExpression(AstFromString::c_parsed_node);
-      assert(section.first != NULL);
+      if (AstFromString::afs_match_additive_expression())
+        section.lower_bound = isSgExpression(AstFromString::c_parsed_node);
+      else
+        section.lower_bound = NULL;
 
       ensure(',');
 
-      assert(AstFromString::afs_match_additive_expression());
-      section.second = isSgExpression(AstFromString::c_parsed_node);
-      assert(section.second != NULL);
+      if (AstFromString::afs_match_additive_expression())
+        section.size = isSgExpression(AstFromString::c_parsed_node);
+      else
+        section.size = NULL;
+
+      ensure(',');
+
+      if (AstFromString::afs_match_additive_expression())
+        section.stride = isSgExpression(AstFromString::c_parsed_node);
+      else
+        section.stride = NULL;
 
       data_type = SageBuilder::buildPointerType(data_type);
     }
@@ -497,9 +549,14 @@ void parseDatas(LoopTrees<Annotation> & loop_trees) {
 
     Data<Annotation> * data = new Data<Annotation>(var_sym);
 
-    std::list<std::pair<SgExpression *, SgExpression *> >::const_iterator it_section;
-    for (it_section = sections.begin(); it_section != sections.end(); it_section++)
-      data->addSection(*it_section);
+    typename std::list<typename KLT::Data<Annotation>::section_t>::const_iterator it_section;
+    for (it_section = sections.begin(); it_section != sections.end(); it_section++) {
+      typename Data<Annotation>::section_t section;
+        section.lower_bound = it_section->lower_bound;
+        section.size = it_section->size;
+        section.stride = it_section->stride;
+      data->addSection(section);
+    }
 
     ensure(',');
 
@@ -546,8 +603,14 @@ typename LoopTrees<Annotation>::node_t * parseLoopTreesNode() {
     SgExpression * ub_exp = isSgExpression(AstFromString::c_parsed_node);
     assert(ub_exp != NULL);
 
+    ensure(',');
+
+    assert(AstFromString::afs_match_additive_expression());
+    SgExpression * stride_exp = isSgExpression(AstFromString::c_parsed_node);
+    assert(stride_exp != NULL);
+
     typename LoopTrees<Annotation>::loop_t * lt_loop =
-               new typename LoopTrees<Annotation>::loop_t(it_sym, lb_exp, ub_exp);
+               new typename LoopTrees<Annotation>::loop_t(it_sym, lb_exp, ub_exp, stride_exp);
 
     ensure(',');
 
@@ -555,18 +618,57 @@ typename LoopTrees<Annotation>::node_t * parseLoopTreesNode() {
 
     ensure(',');
 
+    typename LoopTrees<Annotation>::node_t * child_block = parseLoopTreesNode<Annotation>();
+    lt_loop->block = dynamic_cast<typename LoopTrees<Annotation>::block_t *>(child_block);
+    assert(lt_loop->block != NULL);
+
+    lt_node = lt_loop;
+
+    ensure(')');
+  }
+  else if (AstFromString::afs_match_substr("cond")) {
+
+    ensure('(');
+
+    assert(AstFromString::afs_match_additive_expression());
+    SgExpression * condition = isSgExpression(AstFromString::c_parsed_node);
+    assert(condition != NULL);
+
+    typename LoopTrees<Annotation>::cond_t * lt_cond = new typename LoopTrees<Annotation>::cond_t(condition);
+
+    ensure(',');
+
+    typename LoopTrees<Annotation>::node_t * block_true_node = parseLoopTreesNode<Annotation>();
+    lt_cond->block_true = dynamic_cast<typename LoopTrees<Annotation>::block_t *>(block_true_node);
+    assert(lt_cond->block_true != NULL);
+
+    ensure(',');
+
+    typename LoopTrees<Annotation>::node_t * block_false_node = parseLoopTreesNode<Annotation>();
+    lt_cond->block_false = dynamic_cast<typename LoopTrees<Annotation>::block_t *>(block_false_node);
+    assert(lt_cond->block_false != NULL);
+
+    lt_node = lt_cond;
+
+    ensure(')');
+  }
+  else if (AstFromString::afs_match_substr("block")) {
+
+    ensure('(');
+
+    typename LoopTrees<Annotation>::block_t * lt_block = new typename LoopTrees<Annotation>::block_t();
+
     do {
       AstFromString::afs_skip_whitespace();
 
-      typename LoopTrees<Annotation>::node_t * child_node = 
-          parseLoopTreesNode<Annotation>();
+      typename LoopTrees<Annotation>::node_t * child_node = parseLoopTreesNode<Annotation>();
       assert(child_node != NULL);
-      lt_loop->children.push_back(child_node);
+      lt_block->children.push_back(child_node);
 
       AstFromString::afs_skip_whitespace();
     } while (AstFromString::afs_match_char(','));
 
-    lt_node = lt_loop;
+    lt_node = lt_block;
 
     ensure(')');
   }
@@ -645,7 +747,7 @@ void parseLoopAnnotations(typename LoopTrees<Annotation>::loop_t * loop) {
 
   ensure(')');
 }
-
+/*
 template <class Annotation>
 void printLoopAnnotations(
   typename LoopTrees<Annotation>::loop_t * loop,
@@ -654,31 +756,48 @@ void printLoopAnnotations(
 ) {
   assert(false);
 }
-
+*/
 template <class Annotation>
 void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgStatement *> & leaves) {
-  typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);
+  if (tree == NULL) return;
+
+  typename LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename LoopTrees<Annotation>::loop_t  *>(tree);
+  typename LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename LoopTrees<Annotation>::cond_t  *>(tree);
+  typename LoopTrees<Annotation>::block_t * block = dynamic_cast<typename LoopTrees<Annotation>::block_t *>(tree);
+  typename LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename LoopTrees<Annotation>::stmt_t  *>(tree);
+
   if (loop != NULL) {
-    typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
-    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
-      collectLeaves<Annotation>(*it_child, leaves);
-    return;
+    collectLeaves<Annotation>(loop->block, leaves);
   }
-
-  typename LoopTrees<Annotation>::stmt_t * stmt = dynamic_cast<typename LoopTrees<Annotation>::stmt_t *>(tree);
-  assert(stmt != NULL);
-
-  leaves.insert(stmt->statement);
+  else if (cond != NULL) {
+    collectLeaves<Annotation>(cond->block_true, leaves);
+    collectLeaves<Annotation>(cond->block_false, leaves);
+  }
+  else if (block != NULL) {
+    typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+    for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
+      collectLeaves<Annotation>(*it_child, leaves);
+  }
+  else if (stmt != NULL) {
+    leaves.insert(stmt->statement);
+  }
+  else assert(false);
 }
 
 template <class Annotation>
 void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
+  if (tree == NULL) return;
+
+  typename LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename LoopTrees<Annotation>::loop_t  *>(tree);
+  typename LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename LoopTrees<Annotation>::cond_t  *>(tree);
+  typename LoopTrees<Annotation>::block_t * block = dynamic_cast<typename LoopTrees<Annotation>::block_t *>(tree);
+  typename LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename LoopTrees<Annotation>::stmt_t  *>(tree);
+
   std::vector<SgVarRefExp *> var_refs;
   std::vector<SgVarRefExp *>::const_iterator it_var_ref;
 
-  typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(tree);
   if (loop != NULL) {
-    // If a loop is distributed (have gang, worker, or vector annotation) bounds will evaluated before launching the kernel.
+    // If a loop is distributed, bounds are computed by the host.
     if (!loop->isDistributed()) {
       var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->lower_bound);
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
@@ -687,45 +806,46 @@ void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std
       var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->upper_bound);
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
         symbols.insert((*it_var_ref)->get_symbol());
+
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->stride);
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
+        symbols.insert((*it_var_ref)->get_symbol());
     }
+
+    if (go_down_children)
+      collectReferencedSymbols<Annotation>(loop->block, symbols);
+  }
+  else if (cond != NULL) {
+    var_refs = SageInterface::querySubTree<SgVarRefExp>(cond->condition);
+    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+      symbols.insert((*it_var_ref)->get_symbol());
 
     if (go_down_children) {
-      typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
-      for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
-        collectReferencedSymbols<Annotation>(*it_child, symbols);
+      collectReferencedSymbols<Annotation>(cond->block_true, symbols);
+      collectReferencedSymbols<Annotation>(cond->block_false, symbols);
     }
   }
-  else {
-    typename LoopTrees<Annotation>::stmt_t * stmt = dynamic_cast<typename LoopTrees<Annotation>::stmt_t *>(tree);
-    assert(stmt != NULL);
-
+  else if (block != NULL) {
+    typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it;
+    for (it = block->children.begin(); it != block->children.end(); it++)
+      collectReferencedSymbols<Annotation>(*it, symbols);
+  }
+  else if (stmt != NULL) {
     var_refs = SageInterface::querySubTree<SgVarRefExp>(stmt->statement);
     for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
       symbols.insert((*it_var_ref)->get_symbol());
   }
+  else assert(false);
 }
 
 template <class Annotation> 
-unsigned LoopTrees<Annotation>::numberLoops() const {
-  std::list<loop_t *> loops;
+size_t LoopTrees<Annotation>::numberLoops() const {
+  size_t cnt = 0;
   typename std::list<node_t *>::const_iterator it_node;
-  for (it_node = p_trees.begin(); it_node != p_trees.end(); it_node++) {
-    loop_t * loop = dynamic_cast<loop_t *>(*it_node);
-    if (loop != NULL)
-      loops.push_back(loop);
-  }
+  for (it_node = p_trees.begin(); it_node != p_trees.end(); it_node++)
+    cnt += (*it_node)->numberLoops();
 
-  typename std::list<loop_t *>::iterator it_loop = loops.begin();
-  while (it_loop != loops.end()) {
-    for (it_node = (*it_loop)->children.begin(); it_node != (*it_loop)->children.end(); it_node++) {
-      loop_t * loop = dynamic_cast<loop_t *>(*it_node);
-      if (loop != NULL)
-        loops.push_back(loop);
-    }
-    it_loop++;
-  }
-
-  return loops.size();
+  return cnt;
 }
 
 /** @} */

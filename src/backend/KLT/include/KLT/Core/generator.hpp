@@ -168,35 +168,46 @@ void buildAllShapeConfigs(
 }
 
 template <class Annotation, class Language, class Runtime>
-unsigned getUnrollingFactor(
-  typename LoopTrees<Annotation>::loop_t * loop,
+size_t getUnrollingFactor(
+  typename LoopTrees<Annotation>::node_t * node,
   const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & shaping
 ) {
-  unsigned child_unrolling_factor = 1;
-  typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_child;
-  for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++) {
-    typename LoopTrees<Annotation>::loop_t * child_loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(*it_child);
-    if (child_loop != NULL) {
-      unsigned tmp_unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(child_loop, shaping);
-      child_unrolling_factor = child_unrolling_factor > tmp_unrolling_factor ? child_unrolling_factor : tmp_unrolling_factor;
+  if (node == NULL) return 1;
+
+  typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
+  typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
+  typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
+
+  if (loop != NULL) {
+    size_t unrolling_factor = 1;
+    typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shaping.find(loop);
+    assert(it_shape != shaping.end());
+    if (it_shape->second != NULL) {
+      if (it_shape->second->unroll_tile_0)
+        unrolling_factor = unrolling_factor > it_shape->second->tile_0 ? unrolling_factor : it_shape->second->tile_0;
+      if (it_shape->second->unroll_tile_1)
+        unrolling_factor = unrolling_factor > it_shape->second->tile_1 ? unrolling_factor : it_shape->second->tile_1;
+      if (it_shape->second->unroll_tile_2)
+        unrolling_factor = unrolling_factor > it_shape->second->tile_2 ? unrolling_factor : it_shape->second->tile_2;
+      if (it_shape->second->unroll_tile_3)
+        unrolling_factor = unrolling_factor > it_shape->second->tile_3 ? unrolling_factor : it_shape->second->tile_3;
     }
-  }
 
-  unsigned unrolling_factor = 1;
-  typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shaping.find(loop);
-  assert(it_shape != shaping.end());
-  if (it_shape->second != NULL) {
-    if (it_shape->second->unroll_tile_0)
-      unrolling_factor = unrolling_factor > it_shape->second->tile_0 ? unrolling_factor : it_shape->second->tile_0;
-    if (it_shape->second->unroll_tile_1)
-      unrolling_factor = unrolling_factor > it_shape->second->tile_1 ? unrolling_factor : it_shape->second->tile_1;
-    if (it_shape->second->unroll_tile_2)
-      unrolling_factor = unrolling_factor > it_shape->second->tile_2 ? unrolling_factor : it_shape->second->tile_2;
-    if (it_shape->second->unroll_tile_3)
-      unrolling_factor = unrolling_factor > it_shape->second->tile_3 ? unrolling_factor : it_shape->second->tile_3;
+    return unrolling_factor * getUnrollingFactor<Annotation, Language, Runtime>(loop->block, shaping);
   }
+  else if (block != NULL) {
+    size_t unrolling_factor = 1;
+    typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it_child;
+    for (it_child = block->children.begin(); it_child != block->children.end(); it_child++) {
+      size_t tmp = getUnrollingFactor<Annotation, Language, Runtime>(*it_child, shaping);
+      unrolling_factor = unrolling_factor > tmp ? unrolling_factor : tmp;
+    }
+    return unrolling_factor;
+  }
+  else if (cond != NULL)
+    return getUnrollingFactor<Annotation, Language, Runtime>(cond->block_true, shaping) * getUnrollingFactor<Annotation, Language, Runtime>(cond->block_false, shaping);
 
-  return child_unrolling_factor * unrolling_factor;
+  return 1;
 }
 
 template <class Annotation, class Language, class Runtime>

@@ -25,7 +25,11 @@ namespace KLT {
 template <class Annotation>
 class Data {
   public:
-    typedef std::pair<SgExpression *, SgExpression *> section_t;
+    typedef struct section_t {
+      SgExpression * lower_bound;
+      SgExpression * size;
+      SgExpression * stride;
+    } section_t;
 
   protected:
     SgVariableSymbol * p_variable_symbol;
@@ -48,14 +52,14 @@ class Data {
     static bool equal(Data * d1, Data * d2);
 
   public:
-    Data(SgVariableSymbol * variable);
+    Data(SgVariableSymbol * variable, size_t dims = 0);
     virtual ~Data();
 
-    void addSection(section_t section);
+    void addSection(const section_t & section);
 
     SgVariableSymbol * getVariableSymbol() const;
 
-    SgType * getBaseType();
+    SgType * getBaseType() const;
 
     const std::vector<section_t> & getSections() const;
 
@@ -63,6 +67,7 @@ class Data {
     bool isFlowOut() const;
 
     void toText(std::ostream & out) const;
+    std::string sectionsToString() const;
 
   static void set_union(
       std::set<Data<Annotation> *> & result_,
@@ -95,34 +100,63 @@ void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::s
 //////////////////////////////////////////////////////////////////////////////////////
 
 template <class Annotation>
-Data<Annotation>::Data(SgVariableSymbol * variable) :
+Data<Annotation>::Data(SgVariableSymbol * variable, size_t dims) :
   p_variable_symbol(variable),
   p_base_type(NULL),
   p_sections(),
   annotations()
-{}
-
-template <class Annotation>
-SgType * Data<Annotation>::getBaseType() {
-  if (p_base_type != NULL) return p_base_type;
-
+{
   p_base_type = p_variable_symbol->get_type();
 
-  unsigned int nbr_dims = p_sections.size();
+  size_t nbr_dims = dims;
 
-  assert(nbr_dims > 0); // FIXME artificial limitation for debugging
+  if (nbr_dims == 0) {
+    SgPointerType * ptr_type = isSgPointerType(p_base_type);
+    SgArrayType   * arr_type = isSgArrayType(p_base_type);
+    size_t cnt = 0;
 
-  SgPointerType * ptr_type = isSgPointerType(p_base_type);
-  unsigned int cnt = 0;
+    while (ptr_type != NULL || arr_type != NULL) {
+      assert(ptr_type != NULL xor arr_type != NULL);
 
-  while (ptr_type != NULL && cnt < nbr_dims) {
-    p_base_type = ptr_type->get_base_type();
-    ptr_type = isSgPointerType(p_base_type);
-    cnt++;
+      if (ptr_type != NULL) {
+        section_t section;
+          section.lower_bound = SageBuilder::buildIntVal(0);
+          section.size = NULL;
+          section.stride = NULL;
+        p_base_type = ptr_type->get_base_type();
+      }
+      if (arr_type != NULL) {
+        section_t section;
+          section.lower_bound = SageBuilder::buildIntVal(0);
+          section.size = arr_type->get_index();
+          section.stride = NULL;
+        p_base_type = arr_type->get_base_type();
+      }
+
+      ptr_type = isSgPointerType(p_base_type);
+      arr_type = isSgArrayType(p_base_type);
+      cnt++;
+    }
   }
-  assert(cnt == nbr_dims);
-  assert(isSgPointerType(p_base_type) == NULL); // FIXME artificial limitation for debugging
+  else {
+    SgPointerType * ptr_type = isSgPointerType(p_base_type);
+    SgArrayType   * arr_type = isSgArrayType(p_base_type);
+    size_t cnt = 0;
 
+    while ((ptr_type != NULL || arr_type != NULL) && cnt < nbr_dims) {
+      assert(ptr_type != NULL xor arr_type != NULL);
+      if (ptr_type != NULL) p_base_type = ptr_type->get_base_type();
+      if (arr_type != NULL) p_base_type = arr_type->get_base_type();
+      ptr_type = isSgPointerType(p_base_type);
+      arr_type = isSgArrayType(p_base_type);
+      cnt++;
+    }
+    assert(cnt == nbr_dims);
+  }
+}
+
+template <class Annotation>
+SgType * Data<Annotation>::getBaseType() const {
   return p_base_type;
 }
 
@@ -130,7 +164,7 @@ template <class Annotation>
 Data<Annotation>::~Data() {}
 
 template <class Annotation>
-void Data<Annotation>::addSection(section_t section) { p_sections.push_back(section); }
+void Data<Annotation>::addSection(const section_t & section) { p_sections.push_back(section); }
 
 template <class Annotation>
 SgVariableSymbol * Data<Annotation>::getVariableSymbol() const { return p_variable_symbol; }
@@ -138,19 +172,28 @@ SgVariableSymbol * Data<Annotation>::getVariableSymbol() const { return p_variab
 template <class Annotation>
 const std::vector<typename Data<Annotation>::section_t> & Data<Annotation>::getSections() const { return p_sections; }
 
+
 template <class Annotation>
-void Data<Annotation>::toText(std::ostream & out) const {
-  out << p_variable_symbol->get_name().getString();
+std::string Data<Annotation>::sectionsToString() const {
+  std::ostringstream oss;
+  oss << "section(" << p_sections.size();
   typename std::vector<typename Data<Annotation>::section_t>::const_iterator it_section;
   for (it_section = p_sections.begin(); it_section != p_sections.end(); it_section++) {
-    out << "[";
-    out << it_section->first->unparseToString();
-    if (it_section->first != it_section->second) {
-      out << ":";
-      out << it_section->second->unparseToString();
-    }
-    out << "]";
+    oss << ",";
+    if (it_section->lower_bound != NULL) oss << it_section->lower_bound->unparseToString();
+    oss << ",";
+    if (it_section->size != NULL)        oss << it_section->size->unparseToString();
+    oss << ",";
+    if (it_section->stride != NULL)      oss << it_section->stride->unparseToString();
   }
+  oss << ")";
+
+  return oss.str();
+}
+
+template <class Annotation>
+void Data<Annotation>::toText(std::ostream & out) const {
+  out << "data(" << p_variable_symbol->get_name().getString() << "," << SageInterface::get_name(p_base_type) << "," << sectionsToString() << ")" << std::endl;
 }
 
 template <class Annotation>
@@ -291,8 +334,9 @@ void collectBoundExpressions(const std::set<Data<Annotation> *> & datas, std::se
     const std::vector<typename Data<Annotation>::section_t> & sections = (*it_data)->getSections();
     typename std::vector<typename Data<Annotation>::section_t>::const_iterator it_section;
     for (it_section = sections.begin(); it_section != sections.end(); it_section++) {
-      exprs.insert(it_section->first);
-      exprs.insert(it_section->second);
+      if (it_section->lower_bound != NULL) exprs.insert(it_section->lower_bound);
+      if (it_section->size != NULL) exprs.insert(it_section->size);
+      if (it_section->stride != NULL) exprs.insert(it_section->stride);
     }
   }
 }
@@ -307,13 +351,21 @@ void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::s
     const std::vector<typename Data<Annotation>::section_t> & sections = (*it_data)->getSections();
     typename std::vector<typename Data<Annotation>::section_t>::const_iterator it_section;
     for (it_section = sections.begin(); it_section != sections.end(); it_section++) {
-      var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->first);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-        symbols.insert((*it_var_ref)->get_symbol());
-
-      var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->second);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-        symbols.insert((*it_var_ref)->get_symbol());
+      if (it_section->lower_bound != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->lower_bound);
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          symbols.insert((*it_var_ref)->get_symbol());
+      }
+      if (it_section->size != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->size);
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          symbols.insert((*it_var_ref)->get_symbol());
+      }
+      if (it_section->stride != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->stride);
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          symbols.insert((*it_var_ref)->get_symbol());
+      }
     }
   }
 }

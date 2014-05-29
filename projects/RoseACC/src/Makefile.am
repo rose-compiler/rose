@@ -56,4 +56,4 @@ check-local: check-looptree-to-opencl check-openacc-parser
 check-looptree-to-opencl: looptree-to-opencl
 
 check-openacc-parser: openacc-parser
-	./openacc-parser -I$(top_srcdir)/../libopenacc/include $(top_srcdir)/../tests/101/kernel-openacc.c
+	./openacc-parser -I$(top_srcdir)/../libopenacc/include -c $(top_srcdir)/../tests/101/kernel-openacc.c

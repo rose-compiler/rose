@@ -154,8 +154,13 @@ void generateKernelBody(
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
   SgScopeStatement * scope
 ) {
-  typename ::KLT::LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t *>(node);
-  typename ::KLT::LoopTrees<Annotation>::stmt_t * stmt = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t *>(node);
+  assert(node != NULL);
+
+  typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
+  typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
+  typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
+  typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(node);
+
   if (loop != NULL) {
     typename Runtime::loop_shape_t * shape = NULL;
     typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shapes.find(loop);
@@ -169,19 +174,51 @@ void generateKernelBody(
     std::vector<SgScopeStatement *>::const_iterator it_scope;
     for (it_scope = sg_loop.second.begin(); it_scope != sg_loop.second.end(); it_scope++) {
 
-      /// \todo change the execution mode if needed
+      /// \todo change the execution mode ('typename Runtime::exec_mode_e exec_mode') if needed
 
-      typename std::list<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
-      for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+      generateKernelBody<Annotation, Language, Runtime>(
+        loop->block, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, *it_scope
+      );
+    }
+  }
+  else if (cond != NULL) {
+    SgExprStatement * cond_stmt = SageBuilder::buildExprStatement(cond->condition);
+    SgBasicBlock * bb_true = SageBuilder::buildBasicBlock();
+    SgBasicBlock * bb_false = SageBuilder::buildBasicBlock();
+
+    SgIfStmt * if_stmt = SageBuilder::buildIfStmt(cond_stmt, bb_true, bb_false);
+    SageInterface::appendStatement(if_stmt, scope);
+
+    if (cond->block_true != NULL)
+      generateKernelBody<Annotation, Language, Runtime>(
+        cond->block_true, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, bb_true
+      );
+    if (cond->block_false != NULL)
+      generateKernelBody<Annotation, Language, Runtime>(
+        cond->block_false, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, bb_false
+      );
+  }
+  else if (block != NULL) {
+    /// \todo guard execution function of the current execution mode ('typename Runtime::exec_mode_e exec_mode')
+
+    if (block->children.size() == 1) {
+      generateKernelBody<Annotation, Language, Runtime>(
+        block->children[0], loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, scope
+      );
+    }
+    else if (block->children.size() > 1) {
+      SgBasicBlock * bb_scope = SageBuilder::buildBasicBlock();
+      SageInterface::appendStatement(bb_scope, scope);
+
+      typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+      for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
         generateKernelBody<Annotation, Language, Runtime>(
-          *it_child, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, *it_scope
+          *it_child, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, bb_scope
         );
     }
   }
   else if (stmt != NULL) {
     SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps, true);
-
-    /// \todo guard execution function of the curret Execution Mode
 
     SageInterface::appendStatement(sg_stmt, scope);
   }

@@ -86,6 +86,18 @@ std::string Parser::getDirectiveString() const {
 }
 
 template <>
+bool Parser::parse<size_t>(size_t & val) const {
+  skip_whitespace();
+  int val_;
+  if (!AstFromString::afs_match_integer_const(&val_)) 
+    return false;
+  skip_whitespace();
+  val = val_;
+
+  return true;
+}
+
+template <>
 bool Parser::parse<SgExpression *>(SgExpression * & expr) const {
   skip_whitespace();
   if (!AstFromString::afs_match_expression()) 

@@ -33,6 +33,15 @@ bool LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t::isDistri
 }
 
 template <>
+void printLoopAnnotations<DLX::KLT_Annotation<DLX::OpenACC::language_t> >(
+  LoopTrees<DLX::KLT_Annotation<DLX::OpenACC::language_t> >::loop_t * loop,
+  std::ostream & out,
+  std::string indent
+) {
+  out << "acc()";
+}
+
+template <>
 unsigned long Kernel<DLX::KLT_Annotation<DLX::OpenACC::language_t>, Language::OpenCL, Runtime::OpenACC>::id_cnt = 0;
 
 template <>

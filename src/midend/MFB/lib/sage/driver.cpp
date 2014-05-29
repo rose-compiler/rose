@@ -98,7 +98,8 @@ unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
     else {
       SgSourceFile * file = isSgSourceFile(SageBuilder::buildFile(path.string(), path.string(), project));
       assert(file != NULL);
-      file->set_skip_unparse(true); // by default if the file exist, we are not supposed to modify it.
+      file->set_skip_unparse(true);
+      file->set_skipfinalCompileStep(true);
 
       unsigned id = file_id_counter++;
 
@@ -137,6 +138,12 @@ void Driver<Sage>::setUnparsedFile(unsigned file_id) const {
   std::map<unsigned, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   it_file->second->set_skip_unparse(false);
+}
+
+void Driver<Sage>::setCompiledFile(unsigned file_id) const {
+  std::map<unsigned, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
+  assert(it_file != id_to_file_map.end());
+  it_file->second->set_skipfinalCompileStep(false);
 }
 
 void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header_file_id) {

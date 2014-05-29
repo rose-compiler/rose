@@ -113,7 +113,7 @@ void init(
       if (arg_idx >= argc && argv[arg_idx][0] != '-')
         init_error("Missing parameter for --region-id");
 
-      if (region_id != -1)
+      if (region_id != (size_t)-1)
         init_error("Option '--region-id' should only be provided once.");
 
       region_id = atoi(argv[arg_idx]);
@@ -132,7 +132,7 @@ void init(
   if (kernels_desc_file.size() == 0) kernels_desc_file = "host-data.c";
   if (version_db_file.size()   == 0) version_db_file   = "versions.db";
 
-  if (region_id == -1) region_id = 0;
+  if (region_id == (size_t)-1) region_id = 0;
 
   // Environment Variables
 

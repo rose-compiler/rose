@@ -5245,6 +5245,8 @@ SgProject::compileOutput()
               int localErrorCode = 0;
               SgFile & file = get_file(i);
 
+              if (file.get_skipfinalCompileStep()) continue;
+
               if (KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL)
               {
                   std::cout

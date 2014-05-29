@@ -41,6 +41,10 @@ template <class Lang> class KLT_Annotation {
     }
 
   public:
+    KLT_Annotation(Directives::generic_clause_t<Lang> * clause_ = NULL):
+      clause(clause_)
+    {}
+
     Directives::generic_clause_t<Lang> * clause;
 
     static bool matchLabel() {

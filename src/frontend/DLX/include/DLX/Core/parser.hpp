@@ -77,6 +77,9 @@ class Parser {
 // Builtin clause's argument types parsing
 
 template <>
+bool Parser::parse<size_t>(size_t &) const;
+
+template <>
 bool Parser::parse<SgExpression *>(SgExpression * &) const;
 
 template <>

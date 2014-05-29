@@ -24,9 +24,9 @@ int main(int argc, char ** argv) {
   assert(frontend.parseDirectives(project));
   frontend.toDot(std::cout);
 
-  DLX::OpenACC::compiler_modules_t compiler_module(project, "kernels.cl", "host-data.c", "/media/ssd/projects/currents/acc2ocl-multidev/libopenacc/include/");
+  DLX::OpenACC::compiler_modules_t compiler_modules(project, "kernels.cl", "host-data.c", "/media/ssd/projects/currents/acc2ocl-multidev/libopenacc/include/");
 
-  DLX::Compiler::Compiler<DLX::OpenACC::language_t, DLX::OpenACC::compiler_modules_t> compiler(compiler_module);
+  DLX::Compiler::Compiler<DLX::OpenACC::language_t, DLX::OpenACC::compiler_modules_t> compiler(compiler_modules);
   assert(compiler.compile(frontend.directives, frontend.graph_entry, frontend.graph_final));
 
   return backend(project);

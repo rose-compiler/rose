@@ -174,7 +174,7 @@ SgStatement * generateStatement<
       subscripts.pop_front();
       unsigned int cnt = 0;
       for (it_subscript = subscripts.begin(); it_subscript != subscripts.end(); it_subscript++) {
-        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[++cnt].second);
+        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[++cnt].size);
         subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
         subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
       }

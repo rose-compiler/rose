@@ -180,12 +180,14 @@ struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_num_gangs> {
+  size_t lvl;
   SgExpression * exp;
 };
 
 template <>
 template <>
 struct generic_clause_t<OpenACC::language_t>::parameters_t<OpenACC::language_t::e_acc_clause_num_workers> {
+  size_t lvl;
   SgExpression * exp;
 };
 
