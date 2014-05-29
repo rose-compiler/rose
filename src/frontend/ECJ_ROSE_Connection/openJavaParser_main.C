@@ -101,6 +101,8 @@ int openJavaParser_main(int argc, char **argv) {
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
     #ifdef _MSC_VER
+    new_value += ";";
+    new_value += old_value;
     int env_status = _putenv_s(ROSE_SHLIBPATH_VAR, new_value.c_str());
     #else
     int env_status = setenv(ROSE_SHLIBPATH_VAR,new_value.c_str(),overwrite);
