@@ -3077,7 +3077,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_annotations, int num_statements, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, jclass, jsize num_annotations, jsize num_statements, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering  cactionMethodDeclarationEnd (method) for %d statements\n", num_statements);
 
