@@ -2190,6 +2190,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             boost::filesystem::create_directory(outFolder);
             ROSE_ASSERT(boost::filesystem::exists(outFolder));
             outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
+            // Convert Windows-style paths to POSIX-style.
+            #ifdef _MSC_VER
+            boost::replace_all(outputFilename, "\\", "/");
+            #endif
 #if 0
             printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
 #endif
