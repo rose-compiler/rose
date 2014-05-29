@@ -1071,6 +1071,14 @@ ROSE_DLL_API bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_
 //Winnie Loop Collapsing
 SgExprListExp * loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor);
 
+bool getForLoopInformations(
+  SgForStatement * for_loop,
+  SgVariableSymbol * & iterator,
+  SgExpression * & lower_bound,
+  SgExpression * & upper_bound,
+  SgExpression * & stride
+);
+
 //@}
 
 //------------------------------------------------------------------------

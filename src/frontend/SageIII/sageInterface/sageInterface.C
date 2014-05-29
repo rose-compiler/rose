@@ -16996,3 +16996,135 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 }
 
 #endif
+
+bool SageInterface::getForLoopInformations(
+  SgForStatement * for_loop,
+  SgVariableSymbol * & iterator,
+  SgExpression * & lower_bound,
+  SgExpression * & upper_bound,
+  SgExpression * & stride
+) {
+  /// \todo handle more case. For example: declaration in initialization
+  /// \todo replace most assertions by error messages and 'return false;'
+
+  iterator = NULL;
+  lower_bound = NULL;
+  upper_bound = NULL;
+  stride = NULL;
+
+  SgForInitStatement * for_init_stmt = for_loop->get_for_init_stmt();
+  const std::vector<SgStatement *> & init_stmts = for_init_stmt->get_init_stmt();
+  assert(init_stmts.size() == 1);
+  SgExprStatement * init_stmt = isSgExprStatement(init_stmts[0]);
+  assert(init_stmt != NULL);
+  SgExpression * init = init_stmt->get_expression();
+
+  SgAssignOp * assign_init = isSgAssignOp(init);
+  assert(assign_init != NULL);
+  SgVarRefExp * iterator_init_ref = isSgVarRefExp(assign_init->get_lhs_operand_i());
+  assert(iterator_init_ref != NULL);
+  iterator = iterator_init_ref->get_symbol();
+  assert(iterator != NULL);
+  lower_bound = assign_init->get_rhs_operand_i();
+
+  SgExprStatement * test_stmt = isSgExprStatement(for_loop->get_test());
+  assert(test_stmt != NULL);
+  SgExpression * test = test_stmt->get_expression();
+  SgBinaryOp * bin_test = isSgBinaryOp(test);
+  assert(bin_test);
+
+  SgExpression * lhs_exp = bin_test->get_lhs_operand_i();
+  while (isSgCastExp(lhs_exp)) lhs_exp = ((SgCastExp *)lhs_exp)->get_operand_i();
+  SgVarRefExp * lhs_var_ref = isSgVarRefExp(lhs_exp);
+  bool lhs_it = (lhs_var_ref != NULL) && (lhs_var_ref->get_symbol() == iterator);
+
+  SgExpression * rhs_exp = bin_test->get_rhs_operand_i();
+  while (isSgCastExp(rhs_exp)) rhs_exp = ((SgCastExp *)rhs_exp)->get_operand_i();
+  SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
+  bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
+
+  assert(lhs_it xor rhs_it);
+
+  upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
+
+  bool inclusive;
+  bool reversed;
+
+  switch (test->variantT()) {
+    case V_SgGreaterOrEqualOp:
+      inclusive = lhs_it;
+      reversed = lhs_it;
+      break;
+    case V_SgGreaterThanOp:
+      inclusive = !lhs_it;
+      reversed = lhs_it;
+      break;
+    case V_SgLessOrEqualOp:
+      inclusive = lhs_it;
+      reversed = !lhs_it;
+      break;
+    case V_SgLessThanOp:
+      inclusive = !lhs_it;
+      reversed = !lhs_it;
+      break;
+    case V_SgEqualityOp:
+    case V_SgNotEqualOp:
+    default:
+      assert(false);
+  }
+
+  SgExpression * increment = for_loop->get_increment();
+  switch (increment->variantT()) {
+    case V_SgPlusPlusOp:
+      assert(!reversed);
+      stride = SageBuilder::buildIntVal(1);
+      break;
+    case V_SgMinusMinusOp:
+      assert(reversed);
+      stride = SageBuilder::buildIntVal(-1);
+      break;
+    case V_SgPlusAssignOp:
+    {
+      SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+      SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
+      assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+      stride = bin_op->get_rhs_operand_i();
+      break;
+    }
+    case V_SgMinusAssignOp:
+    {
+      SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+      SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
+      assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+      stride = bin_op->get_rhs_operand_i();
+      break;
+    }
+    case V_SgAssignOp:
+    {
+      SgAssignOp * assign_op = (SgAssignOp *)increment;
+      SgVarRefExp * inc_assign_lhs = isSgVarRefExp(assign_op->get_lhs_operand_i());
+      assert(inc_assign_lhs != NULL && inc_assign_lhs->get_symbol() == iterator);
+      SgBinaryOp * inc_assign_rhs = isSgBinaryOp(assign_op->get_rhs_operand_i());
+      assert(inc_assign_rhs != NULL);
+      SgVarRefExp * inc_assign_rhs_lhs = isSgVarRefExp(inc_assign_rhs->get_lhs_operand_i());
+      if (inc_assign_rhs_lhs != NULL && inc_assign_rhs_lhs->get_symbol() == iterator)
+        stride = inc_assign_rhs->get_rhs_operand_i();
+      SgVarRefExp * inc_assign_rhs_rhs = isSgVarRefExp(inc_assign_rhs->get_rhs_operand_i());
+      if (inc_assign_rhs_rhs != NULL && inc_assign_rhs_rhs->get_symbol() == iterator)
+        stride = inc_assign_rhs->get_lhs_operand_i();
+      break;
+    }
+    default:
+      assert(false);
+  }
+
+  if (inclusive)
+    if (reversed)
+      upper_bound = SageBuilder::buildSubtractOp(upper_bound, SageBuilder::buildIntVal(1));
+    else
+      upper_bound = SageBuilder::buildAddOp(upper_bound, SageBuilder::buildIntVal(1));
+
+  return true;
+}
+
+
