@@ -19,14 +19,16 @@ namespace OpenACC {
 
 compiler_modules_t::compiler_modules_t(
   SgProject * project,
-  const std::string & ocl_kernels_file,
-  const std::string & kernels_desc_file,
-  const std::string & libopenacc_inc_dir
+  const std::string & ocl_kernels_file_,
+  const std::string & kernels_desc_file_,
+  const std::string & versions_db_file_,
+  const std::string & libopenacc_inc_dir,
+  const std::string & kernels_dir
 ) :
   driver(project),
   model_builder(driver),
   codegen(driver),
-  generator(driver, ocl_kernels_file),
+  generator(driver, ocl_kernels_file_),
   cg_config(
     new KLT::LoopMapper<Annotation, Language, Runtime>(),
     new KLT::OpenACC::IterationMapper(),
@@ -34,10 +36,12 @@ compiler_modules_t::compiler_modules_t(
   ),
   libopenacc_model(0),
   host_data_file_id(0),
+  ocl_kernels_file(ocl_kernels_file_),
+  versions_db_file(versions_db_file_),
   region_desc_class(NULL),
   comp_data()
 {
-  host_data_file_id = driver.add(boost::filesystem::path(kernels_desc_file));
+  host_data_file_id = driver.add(boost::filesystem::path(kernels_desc_file_));
     driver.setUnparsedFile(host_data_file_id);
 
   libopenacc_model = MDCG::OpenACC::readOpenaccModel(model_builder, libopenacc_inc_dir);
@@ -46,9 +50,11 @@ compiler_modules_t::compiler_modules_t(
   assert(classes.size() == 1);
   region_desc_class = *(classes.begin());
 
-  comp_data.runtime_dir = SageBuilder::buildVarRefExp("LIBOPENACC_DIR");
+  comp_data.runtime_dir = SageBuilder::buildStringVal(libopenacc_inc_dir);
   comp_data.ocl_runtime = SageBuilder::buildStringVal("lib/opencl/libopenacc.cl");
-  comp_data.kernels_dir = SageBuilder::buildVarRefExp("KERNEL_DIR");
+  comp_data.kernels_dir = SageBuilder::buildStringVal(kernels_dir);
+
+  KLT::Runtime::OpenACC::loadAPI(driver, libopenacc_inc_dir);
 }
 
 }
@@ -63,6 +69,7 @@ void translateDataSections(
   std::vector<Frontend::data_sections_t>::const_iterator it_data;
   for (it_data = data_sections.begin(); it_data != data_sections.end(); it_data++) {
     KLT::Data<KLT_Annotation<OpenACC::language_t> > * data = new KLT::Data<KLT_Annotation<OpenACC::language_t> >(it_data->first, it_data->second.size());
+    assert(data != NULL);
     loop_tree->addData(data);
 
     data->annotations.push_back(KLT_Annotation<OpenACC::language_t>(clause));
@@ -74,6 +81,25 @@ void translateDataSections(
       section.size = it_section->size;
       section.stride = it_section->stride;
       data->addSection(section);
+
+      std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+      std::vector<SgVarRefExp *> var_refs;
+
+      if (section.lower_bound != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(section.lower_bound);
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          loop_tree->addParameter((*it_var_ref)->get_symbol());
+      }
+      if (section.size != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(section.size);
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          loop_tree->addParameter((*it_var_ref)->get_symbol());
+      }
+      if (section.stride != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(section.stride);
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          loop_tree->addParameter((*it_var_ref)->get_symbol());
+      }
     }
   }
 }
@@ -205,10 +231,10 @@ void interpretClauses(
   }
 }
 
-LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree);
+LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree, std::set<SgVariableSymbol *> & iterators, std::set<SgVariableSymbol *> & others, std::map<SgForStatement *, LoopTrees::loop_t *> & loop_map);
 
-LoopTrees::block_t * buildLoopTreeBlock(SgStatement * stmt, LoopTrees * loop_tree) {
-  LoopTrees::node_t * child = buildLoopTree(stmt, loop_tree);
+LoopTrees::block_t * buildLoopTreeBlock(SgStatement * stmt, LoopTrees * loop_tree, std::set<SgVariableSymbol *> & iterators, std::set<SgVariableSymbol *> & others, std::map<SgForStatement *, LoopTrees::loop_t *> & loop_map) {
+  LoopTrees::node_t * child = buildLoopTree(stmt, loop_tree, iterators, others, loop_map);
   assert(child != NULL);
   LoopTrees::block_t * block = dynamic_cast<LoopTrees::block_t *>(child);
   if (block == NULL) {
@@ -218,7 +244,7 @@ LoopTrees::block_t * buildLoopTreeBlock(SgStatement * stmt, LoopTrees * loop_tre
   return block;
 }
 
-LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree) {
+LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree, std::set<SgVariableSymbol *> & iterators, std::set<SgVariableSymbol *> & others, std::map<SgForStatement *, LoopTrees::loop_t *> & loop_map) {
   switch (stmt->variantT()) {
     case V_SgBasicBlock:
     {
@@ -229,7 +255,7 @@ LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree) {
       std::vector<SgStatement *>::const_iterator it_stmt;
       for (it_stmt = bb->get_statements().begin(); it_stmt != bb->get_statements().end(); it_stmt++)
         if (!isSgPragmaDeclaration(*it_stmt))
-          block->children.push_back(buildLoopTree(*it_stmt, loop_tree));
+          block->children.push_back(buildLoopTree(*it_stmt, loop_tree, iterators, others, loop_map));
 
       return block;
     }
@@ -243,18 +269,36 @@ LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree) {
       SgExpression * stride = NULL;
       assert(SageInterface::getForLoopInformations(for_stmt, iterator, lower_bound, upper_bound, stride));
 
-      std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(for_stmt);
-      std::vector<SgVarRefExp *>::const_iterator it_var_refs;
+      iterators.insert(iterator);
+      std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+      std::vector<SgVarRefExp *> var_refs;
 
-      /// \todo var syms
-/*
-    void addScalar(SgVariableSymbol * var_sym);
-    void addParameter(SgVariableSymbol * var_sym);
-*/
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(for_stmt->get_for_init_stmt());
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+        SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        if (iterators.find(sym) == iterators.end())
+          loop_tree->addParameter(sym); // in a loop : !iterator => parameter
+      }
+
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(for_stmt->get_test());
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+        SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        if (iterators.find(sym) == iterators.end())
+          loop_tree->addParameter(sym); // in a loop : !iterator => parameter
+      }
+
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(for_stmt->get_increment());
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+        SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        if (iterators.find(sym) == iterators.end())
+          loop_tree->addParameter(sym); // in a loop : !iterator => parameter
+      }
 
       LoopTrees::loop_t * loop = new LoopTrees::loop_t(iterator, lower_bound, upper_bound, stride);
 
-      loop->block = buildLoopTreeBlock(for_stmt->get_loop_body(), loop_tree);
+      loop_map.insert(std::pair<SgForStatement *, LoopTrees::loop_t *>(for_stmt, loop));
+
+      loop->block = buildLoopTreeBlock(for_stmt->get_loop_body(), loop_tree, iterators, others, loop_map);
 
       return loop;
     }
@@ -267,16 +311,18 @@ LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree) {
       SgExpression * cond_expr = cond_stmt->get_expression();
       assert(cond_expr != NULL);
 
-      /// \todo var syms
-/*
-    void addScalar(SgVariableSymbol * var_sym);
-    void addParameter(SgVariableSymbol * var_sym);
-*/
+      std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(cond_expr);
+      std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+        SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        if (iterators.find(sym) == iterators.end())
+          others.insert(sym); 
+      }
 
       LoopTrees::cond_t * cond = new LoopTrees::cond_t(cond_expr);
       
-      cond->block_true = buildLoopTreeBlock(if_stmt->get_true_body(), loop_tree);      
-      cond->block_false = buildLoopTreeBlock(if_stmt->get_false_body(), loop_tree);
+      cond->block_true = buildLoopTreeBlock(if_stmt->get_true_body(), loop_tree, iterators, others, loop_map);
+      cond->block_false = buildLoopTreeBlock(if_stmt->get_false_body(), loop_tree, iterators, others, loop_map);
       
       return cond;
     }
@@ -286,11 +332,13 @@ LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree) {
       SgExpression * expr = expr_stmt->get_expression();
       assert(expr != NULL);
 
-      /// \todo var syms
-/*
-    void addScalar(SgVariableSymbol * var_sym);
-    void addParameter(SgVariableSymbol * var_sym);
-*/
+      std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(expr);
+      std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+        SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        if (iterators.find(sym) == iterators.end())
+          others.insert(sym); 
+      }
 
       return new LoopTrees::stmt_t(stmt);
     }
@@ -305,7 +353,8 @@ LoopTrees::node_t * buildLoopTree(SgStatement * stmt, LoopTrees * loop_tree) {
 
 void extractLoopTrees(
   const std::vector<Directives::directive_t<OpenACC::language_t> *> & directives,
-  std::map<Directives::directive_t<OpenACC::language_t> *, LoopTrees *> & regions
+  std::map<Directives::directive_t<OpenACC::language_t> *, LoopTrees *> & regions,
+  std::map<SgForStatement *, LoopTrees::loop_t *> & loop_map
 ) {
   std::vector<Directives::directive_t<OpenACC::language_t> *>::const_iterator it_directive;
   for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
@@ -313,15 +362,15 @@ void extractLoopTrees(
     switch (directive->construct->kind) {
       case OpenACC::language_t::e_acc_construct_parallel:
       {
-        Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> * construct =
-                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_data> *)(directive->construct);
+        Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> * construct =
+                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_parallel> *)(directive->construct);
 
         LoopTrees * loop_tree = new LoopTrees();
         regions.insert(std::pair<Directives::directive_t<OpenACC::language_t> *, LoopTrees *>(directive, loop_tree));
 
         interpretClauses(directive->clause_list, loop_tree);
 
-        SgStatement * region_base = construct->assoc_nodes.data_region;
+        SgStatement * region_base = construct->assoc_nodes.parallel_region;
         if (isSgPragmaDeclaration(region_base)) {
           assert(directive->successor_list.size() == 1);
           Directives::directive_t<OpenACC::language_t> * child = directive->successor_list.begin()->second;
@@ -329,14 +378,32 @@ void extractLoopTrees(
           region_base = ((Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> *)directive->construct)->assoc_nodes.for_loop;
         }
 
+       std::set<SgVariableSymbol *> iterators;
+       std::set<SgVariableSymbol *> others;
+
         SgBasicBlock * region_bb = isSgBasicBlock(region_base);
         if (region_bb != NULL) {
            std::vector<SgStatement *>::const_iterator it_stmt;
            for (it_stmt = region_bb->get_statements().begin(); it_stmt != region_bb->get_statements().end(); it_stmt++)
              if (!isSgPragmaDeclaration(*it_stmt))
-               loop_tree->addTree(buildLoopTree(*it_stmt, loop_tree));
+               loop_tree->addTree(buildLoopTree(*it_stmt, loop_tree, iterators, others, loop_map));
         }
-        else loop_tree->addTree(buildLoopTree(region_base, loop_tree));
+        else loop_tree->addTree(buildLoopTree(region_base, loop_tree, iterators, others, loop_map));
+
+        const std::set<SgVariableSymbol *> & params = loop_tree->getParameters();
+        const std::set<KLT::Data<Annotation> *> & datas_ = loop_tree->getDatas();
+
+        std::set<SgVariableSymbol *> datas;
+        std::set<KLT::Data<Annotation> *>::const_iterator it_data;
+        for (it_data = datas_.begin(); it_data != datas_.end(); it_data++)
+          datas.insert((*it_data)->getVariableSymbol());
+
+        std::set<SgVariableSymbol *>::const_iterator it_other;
+        for (it_other = others.begin(); it_other != others.end(); it_other++)
+          if (params.find(*it_other) == params.end() && datas.find(*it_other) == datas.end())
+            loop_tree->addScalar(*it_other); // Nor iterators or parameters or data
+
+        
 
         loop_tree->toText(std::cout);
 
@@ -374,9 +441,38 @@ bool Compiler<DLX::OpenACC::language_t, DLX::OpenACC::compiler_modules_t>::compi
   /// \todo verify that it is correct OpenACC.....
 
   std::map<Directives::directive_t<OpenACC::language_t> *, LoopTrees *> regions;
-  extractLoopTrees(directives, regions);
+  std::map<SgForStatement *, LoopTrees::loop_t *> loop_map;
+  extractLoopTrees(directives, regions, loop_map);
 
-  /// \todo generate kernels for LoopTrees
+  std::vector<Directives::directive_t<OpenACC::language_t> *>::const_iterator it_directive;
+  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
+    Directives::directive_t<OpenACC::language_t> * directive = *it_directive;
+    if (directive->construct->kind == OpenACC::language_t::e_acc_construct_loop) {
+      Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> * loop_construct =
+                 (Directives::construct_t<OpenACC::language_t, OpenACC::language_t::e_acc_construct_loop> *)(directive->construct);
+      std::map<SgForStatement *, LoopTrees::loop_t *>::const_iterator it_loop = loop_map.find(loop_construct->assoc_nodes.for_loop);
+      assert(it_loop != loop_map.end());
+      std::vector<Directives::generic_clause_t<OpenACC::language_t> *>::const_iterator it_clause;
+      for (it_clause = directive->clause_list.begin(); it_clause != directive->clause_list.end(); it_clause++) 
+        it_loop->second->annotations.push_back(KLT_Annotation<OpenACC::language_t>(*it_clause));
+    }
+  }
+
+  size_t region_cnt = 0;
+  std::map<Directives::directive_t<OpenACC::language_t> *, LoopTrees *>::const_iterator it_region;
+  for (it_region = regions.begin(); it_region != regions.end(); it_region++) {
+    MDCG::OpenACC::RegionDesc::input_t input_region;
+      input_region.id = region_cnt++;
+      input_region.file = compiler_modules.ocl_kernels_file;
+
+    compiler_modules.generator.generate(*(it_region->second), input_region.kernel_lists, compiler_modules.cg_config);
+
+    compiler_modules.comp_data.regions.push_back(input_region);
+  }
+
+  compiler_modules.codegen.addDeclaration<MDCG::OpenACC::CompilerData>(compiler_modules.region_desc_class, compiler_modules.comp_data, compiler_modules.host_data_file_id, "compiler_data");
+
+  MDCG::OpenACC::CompilerData::storeToDB(compiler_modules.versions_db_file, compiler_modules.comp_data);
 
   return true;
 }

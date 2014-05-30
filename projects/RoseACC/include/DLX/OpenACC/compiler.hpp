@@ -21,6 +21,8 @@ struct compiler_modules_t {
 
   unsigned libopenacc_model;
   unsigned host_data_file_id;
+  std::string ocl_kernels_file;
+  std::string versions_db_file;
 
   MDCG::Model::class_t region_desc_class;
 
@@ -28,9 +30,11 @@ struct compiler_modules_t {
 
   compiler_modules_t(
     SgProject * project,
-    const std::string & ocl_kernels_file,
-    const std::string & kernels_desc_file,
-    const std::string & libopenacc_inc_dir
+    const std::string & ocl_kernels_file_,
+    const std::string & kernels_desc_file_,
+    const std::string & versions_db_file_,
+    const std::string & libopenacc_inc_dir,
+    const std::string & kernels_dir
   );
 };
 

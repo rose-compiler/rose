@@ -162,6 +162,7 @@ void generateKernelBody(
   typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(node);
 
   if (loop != NULL) {
+    std::cout << "[generateKernelBody]  loop != NULL" << std::endl;
     typename Runtime::loop_shape_t * shape = NULL;
     typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shapes.find(loop);
     if (it_shape != shapes.end()) shape = it_shape->second;
@@ -182,6 +183,7 @@ void generateKernelBody(
     }
   }
   else if (cond != NULL) {
+    std::cout << "[generateKernelBody]  cond != NULL" << std::endl;
     SgExprStatement * cond_stmt = SageBuilder::buildExprStatement(cond->condition);
     SgBasicBlock * bb_true = SageBuilder::buildBasicBlock();
     SgBasicBlock * bb_false = SageBuilder::buildBasicBlock();
@@ -199,6 +201,7 @@ void generateKernelBody(
       );
   }
   else if (block != NULL) {
+    std::cout << "[generateKernelBody]  block != NULL" << std::endl;
     /// \todo guard execution function of the current execution mode ('typename Runtime::exec_mode_e exec_mode')
 
     if (block->children.size() == 1) {
@@ -218,6 +221,7 @@ void generateKernelBody(
     }
   }
   else if (stmt != NULL) {
+    std::cout << "[generateKernelBody]  stmt != NULL" << std::endl;
     SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps, true);
 
     SageInterface::appendStatement(sg_stmt, scope);

@@ -24,7 +24,12 @@ int main(int argc, char ** argv) {
   assert(frontend.parseDirectives(project));
   frontend.toDot(std::cout);
 
-  DLX::OpenACC::compiler_modules_t compiler_modules(project, "kernels.cl", "host-data.c", "/media/ssd/projects/currents/acc2ocl-multidev/libopenacc/include/");
+  std::string ocl_kernels_file("kernels.cl");
+  std::string kernels_desc_file("host-data.c");
+  std::string versions_db_file("versions.db");
+  std::string libopenacc_inc_dir("/media/ssd/projects/currents/acc2ocl-multidev/libopenacc/include/");
+  std::string kernels_dir(boost::filesystem::current_path().string());
+  DLX::OpenACC::compiler_modules_t compiler_modules(project, ocl_kernels_file, kernels_desc_file, versions_db_file, libopenacc_inc_dir, kernels_dir);
 
   DLX::Compiler::Compiler<DLX::OpenACC::language_t, DLX::OpenACC::compiler_modules_t> compiler(compiler_modules);
   assert(compiler.compile(frontend.directives, frontend.graph_entry, frontend.graph_final));

@@ -360,11 +360,15 @@ void KernelVersion::storeToDB(sqlite3 * db_file, unsigned region_id, unsigned ke
 }
 
 size_t ocl_sizeof(SgType * type) {
-  if (isSgTypeInt(type))         return sizeof(int);
-  else if (isSgTypeLong(type))  return sizeof(long);
-  else if (isSgTypeFloat(type))  return sizeof(float);
-  else if (isSgTypeDouble(type)) return sizeof(double);
-  else assert(0);
+  if (isSgTypeInt(type))               return sizeof(int);
+  else if (isSgTypeLong(type))         return sizeof(long);
+  else if (isSgTypeFloat(type))        return sizeof(float);
+  else if (isSgTypeDouble(type))       return sizeof(double);
+  else if (isSgTypeUnsignedLong(type)) return sizeof(unsigned long);
+  else {
+    std::cerr << "Unsupported type: " << type->class_name() << std::endl;
+    assert(0);
+  }
 
   return 0;
 }

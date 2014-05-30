@@ -148,6 +148,7 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
   for (it_loop_desc = loop_descriptors_map.begin(); it_loop_desc != loop_descriptors_map.end(); it_loop_desc++)
     result->loops[it_loop_desc->second.id] = it_loop_desc->second;
 
+  SageInterface::setSourcePositionForTransformation(body);
 
   return result;
 }
