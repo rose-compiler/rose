@@ -1,3 +1,0 @@
-
-SUBDIRS=DLX KLT MDCG
-
