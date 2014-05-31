@@ -10682,6 +10682,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // DQ (6/6/2012): Added support for template arguments so that types would be computed with the template arguments.
                ROSE_ASSERT(templateArgumentsList != NULL);
 
+#if 0
+            // DQ (5/30/2014): Removing output spew.
             // DQ (5/17/2014): This must be allowed for some template instantiations (see test2014_77.C).
             // This occurs now under some revised rules for when to interpret a class or struct as a template 
             // declaration or template instantiation declaration. This revisions is required for test2014_56.C
@@ -10692,7 +10694,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                   {
                     printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): templateArgumentsList->size() == 0 \n");
                   }
-
+#endif
             // DQ (9/16/2012): Set the firstNondefiningDeclaration so that we can set the template parameters.
                nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
 #if 1
