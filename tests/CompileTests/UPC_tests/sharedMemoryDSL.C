@@ -88,10 +88,11 @@ Traversal::get_nodeListWithTypesToModify()
    }
 
 
+#define DEBUG_IS_SHARED_TYPE 1
 bool
 Traversal::isSharedType(SgType* type)
    {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
      printf ("In Traversal::isSharedType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
@@ -106,7 +107,7 @@ Traversal::isSharedType(SgType* type)
           SgModifierType* mod_type = isSgModifierType(pointerType->get_base_type());
           if (mod_type != NULL)
              {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                printf ("(pointerType != NULL): mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -122,7 +123,7 @@ Traversal::isSharedType(SgType* type)
                     SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
                     if (nested_mod_type != NULL)
                        {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                          printf ("(pointerType != NULL): nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                          if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -139,7 +140,7 @@ Traversal::isSharedType(SgType* type)
           SgModifierType* mod_type = isSgModifierType(type);
           if (mod_type != NULL)
              {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                printf ("(pointerType == NULL): mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -155,7 +156,7 @@ Traversal::isSharedType(SgType* type)
                     SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
                     if (nested_mod_type != NULL)
                        {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                          printf ("(pointerType == NULL): nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                          if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -167,7 +168,7 @@ Traversal::isSharedType(SgType* type)
              }
         }
 
-#if 0
+#if DEBUG_IS_SHARED_TYPE
      printf ("Leaving Traversal::isSharedType(): type = %p = %s returnValue = %s \n",type,type->class_name().c_str(),returnValue ? "true" : "false");
 #endif
 
@@ -286,7 +287,7 @@ Traversal::evaluateInheritedAttribute (
      SgNode* astNode,
      InheritedAttribute inheritedAttribute )
    {
-#if 0
+#if 1
      printf ("In evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
@@ -954,14 +955,14 @@ int main( int argc, char * argv[] )
      SgProject* project = frontend(argList);
      ROSE_ASSERT(project != NULL);
 
-#if 0
+#if 1
   // generateDOTforMultipleFile(*project);
      generateDOT(*project,"_before_transformation");
 #endif
-#if 0
+#if 1
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
 #endif
-#if 0
+#if 1
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 #endif
@@ -983,7 +984,7 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
-#if 0
+#if 1
      printf ("Write out the DOT file after the transformation \n");
      generateDOTforMultipleFile(*project,"after_transformation");
      printf ("DONE: Write out the DOT file after the transformation \n");
