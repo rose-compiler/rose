@@ -15,7 +15,7 @@ TypeTraversalSynthesizedAttribute::TypeTraversalSynthesizedAttribute()
   // It appears that I might not need this (at least for the simple cases).
    }
 
-#define DEBUG_TYPE_TRAVERSAL 1
+#define DEBUG_TYPE_TRAVERSAL 0
 
 void
 TypeTraversal::transformType(SgType* type)

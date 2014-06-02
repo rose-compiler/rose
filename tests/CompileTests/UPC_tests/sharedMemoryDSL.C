@@ -88,7 +88,8 @@ Traversal::get_nodeListWithTypesToModify()
    }
 
 
-#define DEBUG_IS_SHARED_TYPE 1
+#define DEBUG_IS_SHARED_TYPE 0
+
 bool
 Traversal::isSharedType(SgType* type)
    {
@@ -287,7 +288,7 @@ Traversal::evaluateInheritedAttribute (
      SgNode* astNode,
      InheritedAttribute inheritedAttribute )
    {
-#if 1
+#if 0
      printf ("In evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
@@ -955,14 +956,14 @@ int main( int argc, char * argv[] )
      SgProject* project = frontend(argList);
      ROSE_ASSERT(project != NULL);
 
-#if 1
+#if 0
   // generateDOTforMultipleFile(*project);
      generateDOT(*project,"_before_transformation");
 #endif
-#if 1
+#if 0
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
 #endif
-#if 1
+#if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 #endif
@@ -984,7 +985,7 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
-#if 1
+#if 0
      printf ("Write out the DOT file after the transformation \n");
      generateDOTforMultipleFile(*project,"after_transformation");
      printf ("DONE: Write out the DOT file after the transformation \n");
