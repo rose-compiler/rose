@@ -78,7 +78,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: Creating VariableIdMapping."<<endl;
   _variableIdMapping.computeVariableSymbolMapping(root);
   cout << "INIT: Creating Labeler."<<endl;
-  _labeler= new Labeler(root,getVariableIdMapping());
+  _labeler= new Labeler(root);
   //cout << "INIT: Initializing ExprAnalyzer."<<endl;
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;

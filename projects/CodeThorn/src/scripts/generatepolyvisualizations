@@ -1,0 +1,45 @@
+#!/bin/bash
+
+mypath="tests"
+
+#for mybenchpath in polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-Largetilesize polyhedralTest-size16-maxfuse polyhedralTest-size16-nofuse polyhedralTest-size16-smartfuse polyhedralTest-size16-tilesize1 polyhedralTest-size16-tilesize16 polyhedralTest-size16-tilesizePrime polyhedralTest-size16-tilesizePrime2; do
+for mybenchpath in polyhedralTest-size16-tilesizePrime; do
+for mybench in "stencils/jacobi-2d-imper"; do
+  FULLPATHNAME="${mypath}/${mybenchpath}/${mybench}"
+  shortbenchname=`basename "$mybench"`;
+  echo "Computing vis-data ${fullfilename}"
+        
+  variant=""
+  fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
+  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  outputname="${mybenchpath}_${variant}${shortbenchname}"
+  echo "Generating ${outputname}.pdf"
+  cp transitiongraph2.dot ${outputname}.dot
+  dot -Tpdf transitiongraph2.dot -o${outputname}.pdf
+
+  variant="1st_tile_"
+  fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
+  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  outputname="${mybenchpath}_${variant}${shortbenchname}"
+  echo "Generating ${outputname}.pdf"
+  cp transitiongraph2.dot ${outputname}.dot
+  dot -Tpdf transitiongraph2.dot -o${outputname}.pdf
+
+  variant="2nd_tile_"
+  fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
+  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  outputname="${mybenchpath}_${variant}${shortbenchname}"
+  echo "Generating ${outputname}.pdf"
+  cp transitiongraph2.dot ${outputname}.dot
+  dot -Tpdf transitiongraph2.dot -o${outputname}.pdf
+
+  variant="nest_tile_"
+  fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
+  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  outputname="${mybenchpath}_${variant}${shortbenchname}"
+  echo "Generating ${outputname}.pdf"
+  cp transitiongraph2.dot ${outputname}.dot
+  dot -Tpdf transitiongraph2.dot -o${outputname}.pdf
+
+done
+done
