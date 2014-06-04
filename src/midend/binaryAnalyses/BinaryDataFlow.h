@@ -115,12 +115,13 @@ public:
      *  This data structure holds a data flow graph for each control flow graph vertex.  The data flow graph represents data
      *  flow from one abstract location to another.  The union of all abstract locations across all control flow vertices is
      *  the set of variables present in the specimen being analyzed.  The map is keyed by CFG vertex IDs. */
-    typedef Sawyer::Container::Map<size_t, Graph> VertexFlowIndex;
+    typedef Sawyer::Container::Map<size_t, Graph> VertexFlowGraphs;
 
 private:
     InstructionSemantics2::BaseSemantics::RiscOperatorsPtr userOps_; // operators (and state) provided by the user
     InstructionSemantics2::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data flow operators (which point to user ops)
     InstructionSemantics2::BaseSemantics::DispatcherPtr dispatcher_; // copy of user's dispatcher but with DataFlowSemantics
+    static Sawyer::Message::Facility mlog;              // diagnostics for data flow
     void init(const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
 
 public:
@@ -132,6 +133,11 @@ public:
     DataFlow(const InstructionSemantics2::BaseSemantics::DispatcherPtr &userDispatcher) {
         init(userDispatcher);
     }
+
+    /** Initialize diagnostics.
+     *
+     *  This is called by rose::Diagnostics::initialize. */
+    static void initDiagnostics();
 
 public:
     /** Compute data flow.
@@ -150,7 +156,7 @@ private:
     template<class CFG>
     struct BuildGraphPerVertex {
         std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState; // user-defined states
-        VertexFlowIndex result;
+        VertexFlowGraphs result;
         DataFlow *self;
 
         // constructs visitor by initializing the output state for the first CFG vertex
@@ -187,12 +193,14 @@ public:
      *  depth-first order.  This isn't a rigorous analysis, but it is usually able to accurately identify local and global
      *  variables, although typically not through pointers or array indexing. */
     template<class CFG>
-    VertexFlowIndex buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
+    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
+        using namespace rose::Diagnostics;
         ASSERT_this();
         ASSERT_require(startVertex < cfg.nVertices());
-
+        Stream mesg(mlog[WHERE] <<"buildGraphPerVertex startVertex=" <<startVertex);
         BuildGraphPerVertex<CFG> visitor(cfg, startVertex, this);
         cfg.depthFirstVisit(visitor, cfg.findVertex(startVertex));
+        mesg <<"; processed " <<StringUtility::plural(visitor.result.size(), "vertices", "vertex") <<"\n";
         return visitor.result;
     }
 
@@ -200,7 +208,7 @@ public:
      *
      *  This returns a list of unique variables by computing the union of all variables across the index.  Uniqueness is
      *  determined by calling AbstractLocation::mustAlias. The variables are returned in no particular order. */
-    VariableList getUniqueVariables(const VertexFlowIndex &index);
+    VariableList getUniqueVariables(const VertexFlowGraphs&);
 
     /** Data flow engine.
      *

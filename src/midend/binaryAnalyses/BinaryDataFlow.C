@@ -1,8 +1,21 @@
 #include "BinaryDataFlow.h"
+#include "Diagnostics.h"
 
 namespace BinaryAnalysis {
 
 using namespace BinaryAnalysis::InstructionSemantics2;
+
+Sawyer::Message::Facility DataFlow::mlog("BinaryAnalysis::DataFlow");
+
+void
+DataFlow::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog.initStreams(rose::Diagnostics::destination);
+        rose::Diagnostics::facilities.insert(mlog);
+    }
+}
 
 void
 DataFlow::init(const BaseSemantics::DispatcherPtr &userDispatcher) {
@@ -40,9 +53,9 @@ DataFlow::buildGraph(SgAsmBlock *bb)
 }
 
 DataFlow::VariableList
-DataFlow::getUniqueVariables(const VertexFlowIndex &index) {
+DataFlow::getUniqueVariables(const VertexFlowGraphs &graphs) {
     VariableList variables;
-    BOOST_FOREACH (const DataFlow::Graph &dfg, index.values()) {
+    BOOST_FOREACH (const DataFlow::Graph &dfg, graphs.values()) {
         BOOST_FOREACH (const Variable &candidateVariable, dfg.vertexValues()) {
             bool alreadyHaveIt = false;
             BOOST_FOREACH (const Variable &existingVariable, variables) {
@@ -57,6 +70,5 @@ DataFlow::getUniqueVariables(const VertexFlowIndex &index) {
     }
     return variables;
 }
-
 
 } // namespace

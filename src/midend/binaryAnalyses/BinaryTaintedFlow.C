@@ -2,6 +2,18 @@
 
 namespace BinaryAnalysis {
 
+Sawyer::Message::Facility TaintedFlow::mlog("BinaryAnalysis::TaintedFlow");
+
+void
+TaintedFlow::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog.initStreams(rose::Diagnostics::destination);
+        rose::Diagnostics::facilities.insert(mlog);
+    }
+}
+
 TaintedFlow::Taintedness
 TaintedFlow::merge(Taintedness a, Taintedness b) {
     if (a==b) {
