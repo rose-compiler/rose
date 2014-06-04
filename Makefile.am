@@ -160,7 +160,7 @@ install-exec-local:
 	@echo '*****************************************************************'
 
 install-data-local: uninstall-local
-	-mkdir $(DESTDIR)$(includedir)
+	-mkdir -p $(DESTDIR)$(includedir)
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
 #	if !ROSE_USE_NEW_EDG_INTERFACE
 	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
