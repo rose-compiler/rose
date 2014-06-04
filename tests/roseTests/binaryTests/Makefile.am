@@ -791,6 +791,15 @@ $(llvmTranscoder_TestTargets): llvm_%.passed: $(BINARY_SAMPLES)/% llvmTranscoder
 check-llvm: $(llvmTranscoder_TestTargets)
 
 ###############################################################################################################################
+# Binary analysis
+###############################################################################################################################
+
+noinst_PROGRAMS += taintedFlow
+taintedFlow_SOURCES = taintedFlow.C
+taintedFlow_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+
+###############################################################################################################################
 # DEMOS
 #
 # These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless
