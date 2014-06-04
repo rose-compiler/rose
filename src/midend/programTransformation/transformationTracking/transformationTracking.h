@@ -24,7 +24,7 @@ namespace TransformationTracking
   // IDs start from 1, Default value of 0 means a node has not assigned an ID.
   AST_NODE_ID getId (SgNode* ); 
   void setId (SgNode*);
-  //! Assign Ids 
+  //! Assign Ids and save current File Info.
   void registerAstSubtreeIds (SgNode* root);
 
   // return the next Id which will be used

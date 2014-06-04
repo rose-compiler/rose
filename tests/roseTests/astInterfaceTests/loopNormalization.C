@@ -13,6 +13,7 @@ int main(int argc, char * argv[])
   SgProject *project = frontend (argc, argv);
   AstDOTGeneration astdotgen;
 
+  // register IDs and file info
   TransformationTracking::registerAstSubtreeIds (project);
   astdotgen.generate(project,AstDOTGeneration::TOPDOWNBOTTOMUP, "v1");
 
@@ -28,6 +29,8 @@ int main(int argc, char * argv[])
     ROSE_ASSERT(cloop != NULL);
     bool result=false;
     result = SageInterface::forLoopNormalization(cloop);
+    if (i == loops.size() -1) // test File info retrieval: erase file info here first
+      SageInterface::setSourcePositionForTransformation(cloop);
     ROSE_ASSERT(result != false);
   }
   // run all tests
