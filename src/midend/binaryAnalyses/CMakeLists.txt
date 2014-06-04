@@ -2,10 +2,12 @@
 
 install(
   FILES
+    AbstractLocation.h
     binary_analysis.h
     BinaryAnalysisUtils.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
+    BinaryDataFlow.h
     BinaryDominance.h
     BinaryFunctionCall.h
     BinaryPointerDetection.h
@@ -19,6 +21,7 @@ install(
     GraphAlgorithms.h
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/BaseSemantics.h
+    instructionSemantics/DataFlowSemantics2.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
     instructionSemantics/findConstants.h

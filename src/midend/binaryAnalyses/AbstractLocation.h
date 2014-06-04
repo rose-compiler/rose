@@ -1,56 +1,59 @@
 #ifndef Rose_BinaryAnalysis_AbstractLocation_H
 #define Rose_BinaryAnalysis_AbstractLocation_H
 
-namespace rose {
+#include "BaseSemantics2.h"
+
 namespace BinaryAnalysis {
 
 /** Abstract location.
  *
  *  An abstract location represents either a register name or memory address. Registers are represented by RegisterDescriptor
- *  and addresses are represented by semantic values (subclasses of BaseSemantics::SValue) specified by the template argument,
- *  which must be a smart pointer to such an object.
+ *  and addresses are represented by semantic values (subclasses of BaseSemantics::SValue).
  *
  *  For instance, to represent abstract locations where memory addresses have symbolic values, one uses:
  *
  *  @code
  *   using namespace rose::BinaryAnalysis;
- *   typedef AbstractLocation<InstructionSemantics::SymbolicSemantics::SValuePtr> ALoc;
- *   ALoc aloc1(REG_EAX); // REG_EAX is a RegisterDescriptor
- *   ALoc aloc2(addr); // addr is an SValuePtr for the symbolic semantics domain
+ *   AbstractLocation aloc1(REG_EAX); // REG_EAX is a RegisterDescriptor
+ *   AbstractLocation aloc2(addr); // addr is an SValuePtr for the symbolic semantics domain
  *  @endcode
  *
  *  Abstract locations are immutable objects. */
-template<class A>
 class AbstractLocation {
 public:
-    typedef A Address;                                  /**< Type of memory address. */
+    typedef InstructionSemantics2::BaseSemantics::SValuePtr Address; /**< Type of memory address. */
+
 private:
     RegisterDescriptor reg_;
     Address addr_;
+    const RegisterDictionary *regdict_;
+
 public:
     /** Default constructor.
      *
      *  Constructs an abstract location that does not refer to any location.  The @ref isValid method will return true for such
      *  objects. */
-    AbstractLocation() {}
+    AbstractLocation(): regdict_(NULL) {}
 
     /** Copy constructor. */
-    AbstractLocation(const AbstractLocation &other): reg_(other.reg_), addr_(other.addr_) {}
+    AbstractLocation(const AbstractLocation &other): reg_(other.reg_), addr_(other.addr_), regdict_(other.regdict_) {}
 
     /** Register referent.
      *
      *  Constructs an abstract location that refers to a register. */
-    AbstractLocation(const RegisterDescriptor &reg): reg_(reg) {}
+    explicit AbstractLocation(const RegisterDescriptor &reg, const RegisterDictionary *regdict=NULL)
+        : reg_(reg), regdict_(regdict) {}
 
     /** Memory referent.
      *
      *  Constructs an abstract location that refers to a memory location. */
-    AbstractLocation(const Address &addr): addr_(addr) {}
+    explicit AbstractLocation(const Address &addr): addr_(addr), regdict_(NULL) {}
 
     /** Assignment operator. */
     AbstractLocation& operator=(const AbstractLocation &other) {
         reg_ = other.reg_;
         addr_ = other.addr_;
+        regdict_ = other.regdict_;
         return *this;
     }
 
@@ -58,7 +61,7 @@ public:
      *
      *  Returns true if this abstract location refers to either a register or a memory location.  Default constructed abstract
      *  locations refer to neither, as do locations that have both an invalid register descriptor and a null memory address. */
-    bool isValid() const { return isRegister() || isMemory(); }
+    bool isValid() const { return isRegister() || isAddress(); }
 
     /** Checks register reference.
      *
@@ -70,7 +73,7 @@ public:
      *
      *  Returns true if and only if this abstract location refers to memory.  It is impossible for an abstract location to
      *  refer to both a register and memory */
-    bool isMemory() const { return addr_!=NULL; }
+    bool isAddress() const { return addr_!=NULL; }
 
     /** Returns register.
      *
@@ -81,9 +84,9 @@ public:
 
     /** Returns memory address.
      *
-     *  Returns the memory to which this abstract location refers.  When called for an abstract location for which @ref
-     *  isMemory returns false, the return value is a null pointer. */
-    const Address getMemory() const { return addr_; }
+     *  Returns the memory address to which this abstract location refers.  When called for an abstract location for which @ref
+     *  isAddress returns false, the return value is a null pointer. */
+    const Address getAddress() const { return addr_; }
 
     /** True if two abstract locations could be aliases.
      *
@@ -94,15 +97,7 @@ public:
      *
      *  Since memory addresses may be symbolic, this function uses an SMT solver to return true if and only if equality of two
      *  addresses is satisfiable. */
-    bool mayAlias(const AbstractLocation &other, SMTSolver *solver=NULL) const {
-        if (isRegister() && other.isRegister()) {
-            return reg_ == other.reg_;
-        } else if (isMemory() && other.isMemory()) {
-            return addr_->may_equal(other.addr_, solver);
-        } else {
-            return false;
-        }
-    }
+    bool mayAlias(const AbstractLocation &other, SMTSolver *solver=NULL) const;
 
     /** True if two abstract locations are certainly aliases.
      *
@@ -113,18 +108,27 @@ public:
      *
      *  Since memory addresses may be symbolic, this function uses an SMT solver to return true if and only if the inequality
      *  of two addresses is unsatisfiable. */
-    bool mustAlias(const AbstractLocation &other, SMTSolver *solver=NULL) const {
-        if (isRegister() && other.isRegister()) {
-            return reg_ == other.reg_;
-        } else if (isMemory() && other.isMemory()) {
-            return addr_->must_equal(other.addr_, solver);
-        } else {
-            return false;
-        }
+    bool mustAlias(const AbstractLocation &other, SMTSolver *solver=NULL) const;
+
+    /** Print an abstract location.
+     *
+     *  The optional register dictionary is used for register names, the optional formatter is used for memory address
+     *  expressions.
+     *
+     *  @{ */
+    void print(std::ostream &out, const RegisterDictionary *regdict=NULL) const {
+        InstructionSemantics2::BaseSemantics::Formatter fmt;
+        print(out, regdict, fmt);
     }
+    void print(std::ostream &out, InstructionSemantics2::BaseSemantics::Formatter &fmt) const {
+        print(out, NULL, fmt);
+    }
+    void print(std::ostream &out, const RegisterDictionary *regdict, InstructionSemantics2::BaseSemantics::Formatter &fmt) const;
+    /** @} */
 };
 
-} // namespace
+std::ostream& operator<<(std::ostream&, const AbstractLocation&);
+
 } // namespace
 
 #endif
