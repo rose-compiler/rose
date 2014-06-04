@@ -14,14 +14,4 @@ libMFB_sage_la_SOURCES= \
 libMFB_sage_la_CXXFLAGS= \
   -g -I$(srcdir)/../../include \
   $(ROSE_INCLUDES)
-libMFB_sage_la_includedir=$(prefix)/include/KLT
-libMFB_sage_la_include_HEADERS= \
-  $(srcdir)/../../include/MFB/mfb.hpp \
-  $(srcdir)/../../include/MFB/Sage/driver.hpp \
-  $(srcdir)/../../include/MFB/Sage/driver.tpp \
-  $(srcdir)/../../include/MFB/Sage/function-declaration.hpp \
-  $(srcdir)/../../include/MFB/Sage/member-function-declaration.hpp \
-  $(srcdir)/../../include/MFB/Sage/class-declaration.hpp \
-  $(srcdir)/../../include/MFB/Sage/variable-declaration.hpp \
-  $(srcdir)/../../include/MFB/Sage/namespace-declaration.hpp
 
