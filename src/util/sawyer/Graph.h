@@ -14,6 +14,8 @@ namespace Container {
 
 /** %Graph containing user-defined vertices and edges.
  *
+ * @section nodes Vertices and Edges
+ *
  *  This container stores user-defined data at each vertex and edge, along with information about the connectivity of vertices
  *  through edges.  Semantics with respect to storing of user-defined data is similar to the STL's <code>std::list</code> type;
  *  namely, user values are copied into the container when they are inserted, and not copied thereafter.  Accessors return
@@ -21,33 +23,162 @@ namespace Container {
  *  source and target vertex are the same) and parallel edges (two edges both having the same source vertex and both having the
  *  same target vertex) are supported.
  *
+ *  Here's an example of declaring a graph that stores a string name for each vertex and a floating point weight for each edge:
+ *
+ * @code
+ *  typedef Sawyer::Container::Graph<std::string, double> MyGraph;
+ *  MyGraph graph;
+ *  MyGraph::VertexNodeIterator v1 = graph.insertVertex("first vertex");
+ *  MyGraph::VertexNodeIterator v2 = graph.insertVertex("second vertex");
+ *  graph.insertEdge(v1, v2, 1.2); // v1 and v2 are the source and target vertices
+ * @endcode
+ *
+ *  The term "Node" in the above iterators refers to the unit of storage for a vertex, which not only contains the user-defined
+ *  value for the vertex, but also an ID number and connectivity information. Within this documentation, the term "vertex" is
+ *  always used as the name of a graph component (i.e., a graph has vertices and edges), and the term "node" always refers to a
+ *  unit of storage.
+ *
+ * @section iterators Iterators
+ *
  *  Vertices and edges are referenced via iterators, which are stable across insertion and erasure.  That is, an iterator will
  *  continue to point to the same vertex or edge even when other vertices or edges are added or removed from the graph.
  *  Iterators are the preferred mechanism for referring to a vertex or edge, and are lightweight objects.  Iterators, as their
- *  name suggests, are also for iterating over a list of vertices or edges, and "end" iterators indicate the list
- *  termination--they point to one-past-the-end of the list. End iterators are specific to each list, so any two
- *  end iterators from two different lists will always compare as unequal.
+ *  name suggests, are also used for iterating over a list of vertices or edges, and "end" iterators indicate the list
+ *  termination--they point to one-past-the-end of the list. End iterators are generally specific to each list, so any two end
+ *  iterators from two different lists will typically compare as unequal.
+ *
+ *  Iterators can refer to just the user-defined value, or the entire storage node. A storage node contains the user-defined
+ *  value, an ID number, and graph connectivity information and can be implicitly converted to a value iterator.  Orthogonally,
+ *  iterator's referent can be constant or mutable.  Vertex iterator names are:
+ *
+ *  @li @ref VertexValueIterator refers to user-defined mutable values
+ *  @li @ref ConstVertexValueIterator refers to user-defined constant values
+ *  @li @ref VertexNodeIterator refers to mutable vertex storage nodes
+ *  @li @ref ConstVertexNodeIterator refers to constant vertex storage nodes
+ *
+ *  Edge iterators are similar.
+ *
+ *  The previous example (using vertex iterators to refer to newly-inserted vertices) should make more sense now.  Here's an
+ *  example using iterators to actually iterate over something:
+ *
+ * @code
+ *  std::cout <<"Vertex names:\n";
+ *  for (MyGraph::ConstVertexNodeIterator vertex=graph.vertices.begin(); vertex!=graph.vertices.end(); ++vertex)
+ *      std::cout <<"  " << vertex->value() <<"\n";
+ * @endcode
+ *
+ *  The graph maintains a graph-wide list of vertices and edges, iterators to which are returned by the @ref vertices and @ref
+ *  edges methods.  The @ref vertexValues and @ref edgeValues methods are related, but return iterators which, when
+ *  dereferenced, return a reference to the user-defined value for that vertex or edge.  The "value" iterators are
+ *  equality-comparable (<code>==</code> and <code>!=</code>) with their "node" iterator counterparts and implicitly
+ *  constructed from them, but are unable to return information about vertex and edge connectivity (only user-defined values).
+ *
+ *  Here's a couple easier ways to do the same thing as the previous example:
+ *
+ * @code
+ *  BOOST_FOREACH (const MyGraph::VertexNode &vertex, graph.vertices())
+ *      std::cout <<"  " <<vertex.value() <<"\n";
+ * @endcode
+ *
+ * @code
+ *  BOOST_FOREACH (const std::string &name, graph.vertexValues())
+ *      std::cout <<"  " <<name <<"\n";
+ * @endcode
+ *
+ * @section ids Identification Numbers
  *
  *  Vertices and edges are also given small, consecutive ID numbers beginning at zero--one set for vertices and another set for
  *  edges.  ID numbers are stable across insertion but not erasure. That is, if an edge is erased from the container then the
  *  ID numbers for other edges in the same container may change. Similarly for vertices.  An ID number can be converted to an
  *  iterator in constant time, and vice versa.  Inserting or erasing a vertex or edge is a constant-time operation.
  *
- *  The graph maintains a graph-wide list of vertices and edges, iterators to which are returned by the @ref vertices and @ref
- *  edges methods.  The @ref vertexValues and @ref edgeValues methods are related, but return iterators which, when
- *  dereferenced, return a reference to the user-defined value for that vertex or edge.  These so-called "value" iterators are
- *  equality-comparable (<code>==</code> and <code>!=</code>) with their "node" iterator counterparts and implicitly
- *  constructed from them, but are unable to return information about vertex and edge connectivity (only user-defined values).
- *  Within this documentation, the term "vertex" is always used as the name of a graph component (i.e., a graph has vertices
- *  and edges), and the term "node" refers to a list element that represents either a vertex or edge.
+ *  Here's an example that lists all the edges in order of edge ID:
+ *
+ * @code
+ *  for (size_t edgeId=0; edgeId<graph.nEdges(); ++edgeId) {
+ *      MyGraph::ConstEdgeNodeIterator edge = graph.findEdge(edgeId);
+ *      std::cout <<"Edge " <<edgeId
+ *                <<" from vertex " <<edge->source()->id()
+ *                <<" to vertex " <<edge->target()->id() <<"\n";
+ *  }
+ * @endcode
+ *
+ *  One very useful side effect of having small, consecutive identification numbers is that they can be used as constant time
+ *  indexing into auxiliary tables.  For instance, here's how one might construct a table that contains hash values for all the
+ *  vertex names:
+ *
+ * @code
+ *  std::vector<unsigned long> vertexHashes(graph.nVertices());
+ *  BOOST_FOREACH (const MyGraph::VertexNode &vertex, graph.vertices())
+ *      vertexHashes[vertex.id()] = hash(vertex.value());
+ * @endcode
+ *
+ * @section connectivity Graph connectivity
  *
  *  Each vertex has two additional edge lists: a list of incoming edges where this vertex serves as the edges' target, and a
- *  list of outgoing edges where this vertex serves as the edges' source. These lists are sublists of the graph-wide edge list
- *  and iterators are equality-comparable and return references to the same underlying edges.  However, the "end" iterators for
+ *  list of outgoing edges where this vertex serves as the edges' source.  The lists are returned by the @ref
+ *  VertexNode::inEdges and @ref VertexNode::outEdges methods.  These lists are sublists of the graph-wide edge list and
+ *  iterators are equality-comparable and return references to the same underlying edges.  However, the "end" iterators for
  *  these sublists are all distinct from one another and distinct from the graph-wide edge list. (footnote: Actually, the "end"
- *  iterators for the in-coming and out-going lists of a single vertex are equal to each other.)
+ *  iterators for the in-coming and out-going lists of a single vertex are equal to each other, but don't depend on this.)
  *
- *  @section complexity Complexity guarantees
+ *  Each edge has two methods, @ref EdgeNode::source and @ref EdgeNode::target that return iterators to the source and target
+ *  vertices for that edge.
+ *
+ *  Here's an example similar to the previous edge ID iteration except it presents the graph in terms of vertices:
+ *
+ * @code
+ *  BOOST_FOREACH (const MyGraph::VertexNode &vertex, graph.vertices()) {
+ *      std::cout <<"vertex " <<vertex.id() <<"\n";
+ *      BOOST_FOREACH (const MyGraph::EdgeNode &edge, vertex.outEdges()) {
+ *          std::cout <<"  edge " <<edge.id() <<" to vertex " <<edge.target()->id() <<"\n";
+ *      }
+ *  }
+ * @endcode
+ *
+ * @section bgl BGL Compatibility
+ *
+ *  The %Boost %Graph Library (<a href="http://www.boost.org/doc/libs/1_55_0/libs/graph/doc/index.html">BGL</a>) defines an API
+ *  suitable for operating on a wide variety of graph implementations when the appropriate graph and property traits are
+ *  defined.  In order to operate on a %Sawyer graph using the BGL API, the GraphBoost.h header file should be
+ *  included.  See the @ref Sawyer::Boost name space for details.
+ *
+ *  The main philosophical difference between %Sawyer graphs and %Boost Graphs is how internal and external properties are
+ *  stored. %Sawyer stores internal properties as user-defined value members within the vertex and edge storage nodes, and uses
+ *  the small, contiguous vertex and edge ID numbers to look up vector-stored external properties in constant time. BGL graphs
+ *  abstract internal and external properties to property maps (property maps are a separate part of the %Boost library but
+ *  originated as part of BGL). The %Sawyer approach tends to be easier for users to understand because of its similarity to
+ *  STL containers.
+ *
+ *  The <a
+ *  href="https://github.com/matzke1/sawyer/blob/master/tests/Container/graphBoost.C"><tt>tests/Container/graphBoost.C</tt></a>
+ *  file in the %Sawyer source tree exemplifies the differences between the %Sawyer and BGL approaches and gives examples of
+ *  using the BGL API on %Sawyer graphs.
+ *
+ * @section allocators Custom allocators
+ *
+ *  Because a graph allocates memory in terms of vertex and edge nodes, and because these nodes can be quite small, a graph can
+ *  often benefit by using a memory pool allocation scheme.  The third template argument provides the type for the allocator,
+ *  and the graph constructors take an allocator argument which is copied into the graph.  The allocator must implement the
+ *  @ref Sawyer::DefaultAllocator API (essentially an allocate and a deallocate method), which happens to use the normal C++
+ *  global <code>new</code> and <code>delete</code> allocators.  Another possibility is @ref Sawyer::PoolAllocator.
+ *
+ * @code
+ *  typedef Sawyer::Container::Graph<std::string, double, Sawyer::PoolAllocator> MyGraphFast;
+ *  MyGraphFast graph; //uses a default-constructed pool allocator
+ * @endcode
+ *
+ *  Here's a mechanism by which the same pool can be used by multiple graphs. A proxy is needed because allocators are copied
+ *  by value, but we want all the graphs to share the same pool:
+ *
+ * @code
+ *  Sawyer::PoolAllocator pool;
+ *  typedef Sawyer::ProxyAllocator<Sawyer::PoolAllocator> PoolProxy;
+ *  MyGraphFast g1(PoolProxy(pool));
+ *  MyGraphFast g2(PoolProxy(pool));
+ * @endcode
+ *
+ * @section complexity Complexity guarantees
  *
  *  Time complexity guarantees:
  *
