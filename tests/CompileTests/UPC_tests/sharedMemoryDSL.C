@@ -88,10 +88,12 @@ Traversal::get_nodeListWithTypesToModify()
    }
 
 
+#define DEBUG_IS_SHARED_TYPE 0
+
 bool
 Traversal::isSharedType(SgType* type)
    {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
      printf ("In Traversal::isSharedType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
@@ -106,7 +108,7 @@ Traversal::isSharedType(SgType* type)
           SgModifierType* mod_type = isSgModifierType(pointerType->get_base_type());
           if (mod_type != NULL)
              {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                printf ("(pointerType != NULL): mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -122,7 +124,7 @@ Traversal::isSharedType(SgType* type)
                     SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
                     if (nested_mod_type != NULL)
                        {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                          printf ("(pointerType != NULL): nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                          if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -139,7 +141,7 @@ Traversal::isSharedType(SgType* type)
           SgModifierType* mod_type = isSgModifierType(type);
           if (mod_type != NULL)
              {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                printf ("(pointerType == NULL): mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -155,7 +157,7 @@ Traversal::isSharedType(SgType* type)
                     SgModifierType* nested_mod_type = isSgModifierType(mod_type->get_base_type());
                     if (nested_mod_type != NULL)
                        {
-#if 0
+#if DEBUG_IS_SHARED_TYPE
                          printf ("(pointerType == NULL): nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() = %s \n",nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() ? "true" : "false");
 #endif
                          if (nested_mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
@@ -167,7 +169,7 @@ Traversal::isSharedType(SgType* type)
              }
         }
 
-#if 0
+#if DEBUG_IS_SHARED_TYPE
      printf ("Leaving Traversal::isSharedType(): type = %p = %s returnValue = %s \n",type,type->class_name().c_str(),returnValue ? "true" : "false");
 #endif
 

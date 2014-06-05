@@ -8,6 +8,7 @@ include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/transformationTracking
   ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser
 #-------------------------------------------------------------------------------
 # TOO1 (3/6/2014): Add Java includes for sageInterface.C: jni.h, jni_md.h, ecj.h
@@ -921,6 +922,11 @@ set(failsafe_SRC
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
  )
 
+set(trans_tracking_SRC
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/transformationTracking/transformationTracking.cpp
+ )
+
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -981,6 +987,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
  ${failsafe_SRC}
+ ${trans_tracking_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}
