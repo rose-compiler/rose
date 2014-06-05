@@ -39,6 +39,8 @@ class IterationMapper {
         ).first->second;
 
         computeValidShapes(loop, shapes);
+
+         determineLoopShapes(kernel, loop->block, shape_map);
       }
       else if (cond != NULL) {
         determineLoopShapes(kernel, cond->block_true, shape_map);
@@ -49,6 +51,7 @@ class IterationMapper {
         for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
           determineLoopShapes(kernel, *it_child, shape_map);
       }
+      else assert(dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t *>(node) != NULL);
     }
 
   public:

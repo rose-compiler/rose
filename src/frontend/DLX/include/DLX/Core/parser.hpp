@@ -118,14 +118,13 @@ bool Parser::parse_pair(std::pair<A, B> & pair, char start, char stop, char sep)
 
 template <typename A>
 bool Parser::parse_list(std::vector<A> & vect, char start, char stop, char sep) const {
-  A a;
-
   skip_whitespace();
 
   if (!consume(start)) return false;
 
   skip_whitespace();
   do {
+    A a;
     if (!parse<A>(a)) {
       if (sep == '\0') break;
       else return false;

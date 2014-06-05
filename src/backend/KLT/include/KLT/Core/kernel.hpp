@@ -165,7 +165,10 @@ void generateKernelBody(
     std::cout << "[generateKernelBody]  loop != NULL" << std::endl;
     typename Runtime::loop_shape_t * shape = NULL;
     typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shapes.find(loop);
-    if (it_shape != shapes.end()) shape = it_shape->second;
+    if (it_shape != shapes.end()) {
+      assert(it_shape->second != NULL);
+      shape = it_shape->second;
+    }
 
     std::pair<SgStatement *, std::vector<SgScopeStatement *> > sg_loop = generateLoops<Annotation, Language, Runtime>(
       loop, loop_cnt, loop_descriptors_map, shape, local_symbol_maps
