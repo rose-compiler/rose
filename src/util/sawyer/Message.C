@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find.hpp>
+#include <boost/chrono.hpp>
 #include <boost/foreach.hpp>
 #include <cerrno>
 #include <cmath>
@@ -49,10 +50,6 @@ std::string stringifyColor(AnsiColor color) {
     throw std::runtime_error("invalid color");
 }
 
-double timevalDelta(const timeval &begin, const timeval &end) {
-    return (1.0*end.tv_sec-begin.tv_sec) + 1e-6*end.tv_usec - 1e-6*begin.tv_usec;
-}
-
 std::string escape(const std::string &s) {
     std::string retval;
     for (size_t i=0; i<s.size(); ++i) {
@@ -80,10 +77,10 @@ std::string escape(const std::string &s) {
 }
 
 double now() {
-    timeval tv;
-    if (-1 == gettimeofday(&tv, NULL))
-        return 0;
-    return 1.0 * tv.tv_sec + 1e-6 * tv.tv_usec;
+    boost::chrono::system_clock::time_point curtime = boost::chrono::system_clock::now();
+    boost::chrono::system_clock::time_point epoch;
+    boost::chrono::duration<double> diff = curtime - epoch;
+    return diff.count();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -313,21 +310,16 @@ bool SequenceFilter::shouldForward(const MesgProps&) {
 TimeFilterPtr TimeFilter::initialDelay(double delta) {
     if (delta > 0.0) {
         initialDelay_ = delta;
-        if (0==nPosted_) {
-            double then_int;
-            double then_frac = modf(now() + delta, &then_int);
-            lastBakeTime_.tv_sec = then_int;
-            lastBakeTime_.tv_usec = round(1e6 * then_frac);
-        }
+        if (0==nPosted_)
+            lastBakeTime_ = now();
     }
     return boost::dynamic_pointer_cast<TimeFilter>(shared_from_this());
 }
 
 bool TimeFilter::shouldForward(const MesgProps&) {
     ++nPosted_;
-    gettimeofday(&lastBakeTime_, NULL);
-    return  timevalDelta(prevMessageTime_, lastBakeTime_) >= minInterval_;
-
+    lastBakeTime_ = now();
+    return lastBakeTime_ - prevMessageTime_ >= minInterval_;
 }
 
 void TimeFilter::forwarded(const MesgProps&) {
@@ -405,12 +397,9 @@ void Prefix::setStartTime() {
     struct stat sb;
     if (-1 == stat("/proc/self", &sb))
         throw std::runtime_error("cannot stat /proc/self");
-    startTime_->tv_sec = sb.st_ctime;
-    startTime_->tv_usec = sb.st_ctime_usec;
+    startTime_ = sb.st_ctime + 1e-9*sb.st_ctime_usec;
 #else /* this is the work-around */
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    startTime_ = tv;
+    startTime_ = now();
 #endif
 }
 
@@ -454,13 +443,10 @@ std::string Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
     }
 
     if (showElapsedTime_ && startTime_) {
-        timeval tv;
-        if (-1 != gettimeofday(&tv, NULL)) {
-            double delta = timevalDelta(*startTime_, tv);
-            retval.precision(5);
-            retval <<separator <<std::fixed <<delta <<"s";
-            separator = " ";
-        }
+        double delta = now() - *startTime_;
+        retval.precision(5);
+        retval <<separator <<std::fixed <<delta <<"s";
+        separator = " ";
     }
 
     std::string facilityNameShown;
@@ -1233,6 +1219,7 @@ DestinationPtr merr;
 Facility mlog("sawyer");
 Facilities mfacilities;
 bool isInitialized;
+SProxy assertionStream;
 
 bool initializeLibrary() {
     if (!isInitialized) {

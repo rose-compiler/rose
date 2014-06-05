@@ -9,13 +9,11 @@
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstring>
-#include <ctime>
 #include <list>
 #include <ostream>
 #include <set>
 #include <streambuf>
 #include <string>
-#include <sys/time.h>
 #include <vector>
 
 namespace Sawyer {
@@ -329,8 +327,7 @@ enum AnsiColor {    // the values are important: they are the ANSI foreground an
 
 std::string stringifyImportance(Importance);            /**< Convert an @ref Importance enum to a string. */
 std::string stringifyColor(AnsiColor);                  /**< Convert an @ref AnsiColor enum to a string. */
-double now();                                           /**< Return current time as floating point seconds since the epoch. */
-double timevalDelta(const timeval &begin, const timeval &end); /**< Floating ponit difference between two time values. */
+double now();                                           /**< Current system time in seconds. */
 std::string escape(const std::string&);                 /**< Convert a string to its C representation. */
 
 
@@ -705,16 +702,13 @@ public:
 class TimeFilter: public Filter {
     double initialDelay_;                               // amount to delay before emitting the first message
     double minInterval_;                                // minimum time between messages
-    struct timeval prevMessageTime_;                    // time previous message was emitted
-    struct timeval lastBakeTime_;                       // time cached by shouldForward, used by forwarded
+    double prevMessageTime_;                            // time previous message was emitted
+    double lastBakeTime_;                               // time cached by shouldForward, used by forwarded
     size_t nPosted_;                                    // number of messages posted (including those suppressed)
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit TimeFilter(double minInterval)
-        : initialDelay_(0.0), minInterval_(minInterval) {
-        memset(&prevMessageTime_, 0, sizeof(timeval));
-        memset(&lastBakeTime_, 0, sizeof(timeval));
-    }
+        : initialDelay_(0.0), minInterval_(minInterval), prevMessageTime_(0.0), lastBakeTime_(0.0) {}
 public:
     /** Allocating constructor. Creates an instance that limits forwarding of messages to at most one message every
      *  @p minInterval seconds. */
@@ -834,7 +828,7 @@ class Prefix: public boost::enable_shared_from_this<Prefix> {
     boost::optional<std::string> programName_;          /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
     bool showProgramName_;
     bool showThreadId_;
-    boost::optional<timeval> startTime_;                /**< Time at which program started. */
+    boost::optional<double> startTime_;                 /**< Time at which program started. */
     bool showElapsedTime_;
     When showFacilityName_;                             /**< Whether the facility name should be displayed. */
     bool showImportance_;                               /**< Whether the message importance should be displayed. */
@@ -887,8 +881,8 @@ public:
     /** Property: start time when emitting time deltas.  On some systems the start time will be the time at which this object
      *  was created. @sa setStartTime showElapsedTime
      * @{ */
-    const boost::optional<timeval> startTime() const { return startTime_; }
-    PrefixPtr startTime(timeval t) { startTime_ = t; return shared_from_this(); }
+    const boost::optional<double> startTime() const { return startTime_; }
+    PrefixPtr startTime(double t) { startTime_ = t; return shared_from_this(); }
     /** @} */
 
     /** Reset the start time from operating system information.  On some systems this will be the time at which the first
@@ -1529,6 +1523,16 @@ extern Facility mlog;
  *  facilities across all users can be controlled from this one place. */
 extern Facilities mfacilities;
 
+/** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
+ *  initialized at the first call to @ref Assert::fail if it is a null pointer. Users can assign a different stream to it any
+ *  time before then:
+ *
+ * @code
+ * int main(int argc, char *argv[]) {
+ *     Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
+ * @endcode */
+extern SProxy assertionStream;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      The most commonly used stuff
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1557,5 +1561,6 @@ using Message::Facilities;
 
 } // namespace
 } // namespace
+
 
 #endif
