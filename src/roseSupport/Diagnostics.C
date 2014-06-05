@@ -25,7 +25,7 @@ void initialize() {
         facilities.insert(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
-        Sawyer::Assert::assertionStream = mlog[FATAL];
+        Sawyer::Message::assertionStream = mlog[FATAL];
 
         // Register logging facilities from other software layers.  These facilities should already be in a usable, but
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
