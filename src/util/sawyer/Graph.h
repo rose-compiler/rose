@@ -1,8 +1,10 @@
 #ifndef Sawyer_Graph_H
 #define Sawyer_Graph_H
 
+#include <sawyer/DefaultAllocator.h>
 #include <sawyer/IndexedList.h>
 #include <boost/range/iterator_range.hpp>
+#include <ostream>
 #if 1 /*DEBUGGING [Robb Matzke 2014-04-21]*/
 #include <iomanip>
 #endif
@@ -67,18 +69,19 @@ namespace Container {
  *  @li %Graph copy: O(|V|+|E|)
  *
  *  Insertion is amortized constant time due to a vector-based ID map that may require reallocation. */
-template<class V, class E>
+template<class V, class E, class Alloc = DefaultAllocator>
 class Graph {
 public:
     typedef V VertexValue;                              /**< User-level data associated with vertices. */
     typedef E EdgeValue;                                /**< User-level data associated with edges. */
+    typedef Alloc Allocator;                            /**< Allocator for vertex and edge nodes. */
     class VertexNode;                                   /**< All information about a vertex. User info plus connectivity info. */
     class EdgeNode;                                     /**< All information about an edge. User info plus connectivity info. */
 
 private:
     enum EdgePhase { IN_EDGES=0, OUT_EDGES=1, N_PHASES=2 };
-    typedef IndexedList<EdgeNode> EdgeList;
-    typedef IndexedList<VertexNode> VertexList;
+    typedef IndexedList<EdgeNode, Allocator> EdgeList;
+    typedef IndexedList<VertexNode, Allocator> VertexList;
 
     template<class T>
     class VirtualList {
@@ -693,7 +696,7 @@ public:
      *  Creates an empty graph.
      *
      *  Time complexity is constant. */
-    Graph() {};
+    Graph(const Allocator &allocator = Allocator()): edges_(allocator), vertices_(allocator) {};
 
     /** Copy constructor.
      *
@@ -701,8 +704,11 @@ public:
      *  connectivity.  Vertices and edges in this new graph will have the same ID numbers as the @p other graph, but the order
      *  of vertex and edges traversals is not expected to be the same.
      *
+     *  The new graph's allocator is copy constructed from the source graph's allocator, which results in the new allocator
+     *  having the same settings but sharing none of the original data.
+     *
      *  Time complexity is linear in the total number of vertices and edges in @p other. */
-    Graph(const Graph &other) {
+    Graph(const Graph &other): edges_(other.edges_.allocator()), vertices_(other.vertices_.allocator()) {
         *this = other;
     }
 
@@ -714,21 +720,33 @@ public:
      *  expected to be identical between the two graphs.
      *
      *  Time complexity is linear in the total number of vertices and edges in @p other. */
-    template<class V2, class E2>
-    Graph(const Graph<V2, E2> &other) {
+    template<class V2, class E2, class Alloc2>
+    Graph(const Graph<V2, E2, Alloc2> &other, const Allocator &allocator = Allocator())
+        : edges_(allocator), vertices_(allocator) {
         *this = other;
     }
 
     /** Assignment.
      *
      *  Causes this graph to look like @p other in that this graph will have copies of all the @p other vertex and edge data
-     *  and the same vertex connectivity as @p other.  The vertices and edgse of @p other must be convertible to the types of
+     *  and the same vertex connectivity as @p other.  The vertices and edges will have the same ID numbers as in @p other.
+     *  The order of vertex and edge traversals is not expected to be identical between the two graphs.
+     *
+     *  Time complexity is linear in the sum of the number of vertices and edges in this graph and @p other. */
+    Graph& operator=(const Graph &other) {
+        return operator=<V, E>(other);
+    }
+    
+    /** Assignment.
+     *
+     *  Causes this graph to look like @p other in that this graph will have copies of all the @p other vertex and edge data
+     *  and the same vertex connectivity as @p other.  The vertices and edges of @p other must be convertible to the types of
      *  vertices and edges in this graph, and they will have the same ID numbers as in @p other.  The order of vertex and edge
      *  traversals is not expected to be identical between the two graphs.
      *
      *  Time complexity is linear in the sum of the number of vertices and edges in this graph and @p other. */
-    template<class V2, class E2>
-    Graph& operator=(const Graph<V2, E2> &other) {
+    template<class V2, class E2, class Alloc2>
+    Graph& operator=(const Graph<V2, E2, Alloc2> &other) {
         clear();
         for (size_t i=0; i<other.nVertices(); ++i) {
             typename Graph<V2, E2>::ConstVertexNodeIterator vertex = other.findVertex(i);
@@ -742,6 +760,13 @@ public:
             insertEdge(vsrc, vtgt, EdgeValue(edge->value()));
         }
         return *this;
+    }
+
+    /** Allocator.
+     *
+     *  Returns the allocator used for vertices (and probably edges). */
+    const Allocator& allocator() {
+        return vertices_.allocator();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1069,6 +1094,41 @@ public:
     void clear() {
         edges_.clear();
         vertices_.clear();
+    }
+
+private:
+    struct DfsWorkItem {
+        ConstVertexNodeIterator vertex;
+        ConstEdgeNodeIterator edge;
+        DfsWorkItem(const ConstVertexNodeIterator &vertex, const ConstEdgeNodeIterator &edge): vertex(vertex), edge(edge) {}
+    };
+
+public:
+    /** Visits vertices and edges in a depth-first order.
+     *
+     *  Visits every vertex reachable from @p startVertex in depth-first order, traversing every reachable edge exactly once.
+     *  Since all reachable edges are traversed, vertices might be visited more than once. */
+    template<class Visitor>
+    void depthFirstVisit(Visitor &visitor, const ConstVertexNodeIterator &startVertex) const {
+        if (startVertex==vertices().end())
+            return;
+        std::vector<bool> visitedVertex(nVertices(), false);
+        std::vector<DfsWorkItem> workStack;
+        workStack.push_back(DfsWorkItem(startVertex, startVertex->outEdges().begin()));
+        while (!workStack.empty()) {
+            ConstVertexNodeIterator source = workStack.back().vertex;
+            ConstEdgeNodeIterator edge = workStack.back().edge;
+            if (source==vertices().end() || edge==source->outEdges().end()) {
+                workStack.pop_back();
+            } else {
+                ConstVertexNodeIterator target = edge->target();
+                visitor(source, visitedVertex[source->id()], target, visitedVertex[target->id()], edge);
+                workStack.back().edge = ++edge;
+                if (!visitedVertex[target->id()])
+                    workStack.push_back(DfsWorkItem(target, target->outEdges().begin()));
+                visitedVertex[source->id()] = visitedVertex[target->id()] = true;
+            }
+        }
     }
 };
 
