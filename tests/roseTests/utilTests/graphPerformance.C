@@ -8,6 +8,7 @@
 #include <boost/lexical_cast.hpp>
 #include <sawyer/CommandLine.h>
 #include <sawyer/GraphBoost.h>
+#include <sawyer/PoolAllocator.h>
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
@@ -1087,13 +1088,27 @@ static void run_sage() {
 }
 
 static void run_sawyer() {
-    typedef Sawyer::Container::Graph<int, int> sgl1;    // "int" could be "void" for this test when supported
+    // "int" could be "void" for this test when supported
+    typedef Sawyer::Container::Graph<int, int> sgl1;
     sgl_test_all<sgl1>("Sawyer Graph");
 }
 
+static void run_sawyer_pool() {
+    // "int" could be "void" for this test when supported
+    typedef Sawyer::Container::Graph<int, int, Sawyer::PoolAllocator> sgl1;
+    sgl_test_all<sgl1>("Sawyer Graph using memory pools");
+}
+
 static void run_sawyer_bgl() {
-    typedef Sawyer::Container::Graph<int, int> sgl1;    // "int" could be "void" for this test when supported
+    // "int" could be "void" for this test when supported
+    typedef Sawyer::Container::Graph<int, int> sgl1;
     bgl_test_all<sgl1>("Sawyer Graph w/BGL interface");
+}
+
+static void run_sawyer_bgl_pool() {
+    // "int" could be "void" for this test when supported
+    typedef Sawyer::Container::Graph<int, int, Sawyer::PoolAllocator> sgl1;
+    bgl_test_all<sgl1>("Sawyer Graph w/BGL interface using memory pools");
 }
 
 static void run_bgl_vec_vec() {
@@ -1175,7 +1190,9 @@ main(int argc, char *argv[])
     // Dictionary of possible tests
     testDictionary.insert("sage",               run_sage);
     testDictionary.insert("sawyer",             run_sawyer);
+    testDictionary.insert("sawyer-pool",        run_sawyer_pool);
     testDictionary.insert("sawyer-bgl",         run_sawyer_bgl);
+    testDictionary.insert("sawyer-bgl-pool",    run_sawyer_bgl_pool);
     testDictionary.insert("bgl-vec-vec",        run_bgl_vec_vec);
     testDictionary.insert("bgl-vec-list",       run_bgl_vec_list);
     testDictionary.insert("bgl-vec-set",        run_bgl_vec_set);
