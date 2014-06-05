@@ -76,6 +76,7 @@ nobase_include_HEADERS   =			\
 	sawyer/BitVector.h			\
 	sawyer/BitVectorSupport.h		\
 	sawyer/CommandLine.h			\
+	sawyer/DefaultAllocator.h		\
 	sawyer/Graph.h				\
 	sawyer/GraphBoost.h			\
 	sawyer/IndexedList.h			\
@@ -86,6 +87,7 @@ nobase_include_HEADERS   =			\
 	sawyer/Markup.h				\
 	sawyer/MarkupRoff.h			\
 	sawyer/Message.h			\
+	sawyer/PoolAllocator.h			\
 	sawyer/ProgressBar.h			\
 	sawyer/Sawyer.h
 EXTRA_DIST += sawyer/CMakeLists.txt
