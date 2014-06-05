@@ -29,7 +29,7 @@ std::vector<Disassembler*> Disassembler::disassemblers;
 /* Diagnostics */
 Sawyer::Message::Facility Disassembler::mlog("Disassembler");
 double Disassembler::progress_interval = 10.0;
-struct timeval progress_time;
+double Disassembler::progress_time = 0.0;
 
 void Disassembler::initDiagnostics() {
     static bool initialized = false;
@@ -289,9 +289,8 @@ Disassembler::update_progress(SgAsmInstruction *insn)
         if (insn) {
             ++p_ndisassembled;
             if (progress_interval>=0 && mlog[INFO]) {
-                struct timeval curtime;
-                gettimeofday(&curtime, NULL);
-                if (Sawyer::Message::timevalDelta(progress_time, curtime) >= progress_interval) {
+                double curtime = Sawyer::Message::now();
+                if (curtime - progress_time >= progress_interval) {
                     if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
                         mlog[INFO] <<"at va " <<addrToString(insn->get_address())
                                    <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";

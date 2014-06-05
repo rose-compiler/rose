@@ -74,7 +74,7 @@ Partitioner::isSgAsmx86Instruction(SgNode *node)
 
 /* Progress report class variables. */
 double Partitioner::progress_interval = 10.0;
-struct timeval Partitioner::progress_time;
+double Partitioner::progress_time = 0.0;
 
 /* Set progress reporting values. */
 void
@@ -88,9 +88,8 @@ void
 Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
 {
     if (progress_interval>=0 && mlog[INFO]) {
-        struct timeval curtime;
-        gettimeofday(&curtime, NULL);
-        if (Sawyer::Message::timevalDelta(progress_time, curtime) >= progress_interval) {
+        double curtime = Sawyer::Message::now();
+        if (curtime - progress_time >= progress_interval) {
             mlog[INFO] <<"starting " <<stringifySgAsmBlockReason(reason, "BLK_") <<" pass " <<pass
                        <<": " <<StringUtility::plural(functions.size(), "functions")
                        <<", " <<StringUtility::plural(insns.size(), "instructions")
