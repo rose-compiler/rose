@@ -1,6 +1,7 @@
 #ifndef Sawyer_Assert_H
 #define Sawyer_Assert_H
 
+#include <sawyer/Sawyer.h>
 #include <sawyer/Message.h>
 #include <string>
 
@@ -74,23 +75,21 @@ namespace Sawyer {                                      // documented elsewhere
  *  vectors must be the same size". Writing notes in the affirmative has two benefits: (1) the note documents the code, and (2)
  *  if the assertion fails the message makes sense to the user, namely "assertion failed: name and ID vectors must be the same
  *  size".
- */
+ *
+ *  Failed assertions output to Sawyer::Message::assertionStream, which defaults to
+ *  <code>Sawyer::Message::mlog[FATAL]</code>. This variable is initialized at the first call to @ref fail if it is a null
+ *  pointer. Users can assign a different stream to it any time before then:
+ *
+ * @code
+ *  int main(int argc, char *argv[]) {
+ *      Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
+ * @endcode */
 namespace Assert {
 
 /** Cause immediate failure.  This function is the low-level function called by most of the other Sawyer::Assert macros
  *  when an assertion fails. Calls to this function do not return. */
 void fail(const char *mesg, const char *expr, const std::string &note,
           const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
-
-/** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
- *  initialized at the first call to @ref fail if it is a null pointer. Users can assign a different stream to it any time
- *  before then:
- *
- * @code
- * int main(int argc, char *argv[]) {
- *     Sawyer::Assert::assertionStream = Sawer::Message::mlog[FATAL];
- * @endcode */
-extern Message::SProxy assertionStream;
 
 } // namespace
 } // namespace
