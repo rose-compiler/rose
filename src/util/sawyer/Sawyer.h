@@ -164,6 +164,9 @@ extern bool isInitialized;
 
 } // namespace
 
+// Define only when we have the Boost Chrono library, which was first available in boost-1.47.
+//#define SAWYER_HAVE_BOOST_CHRONO
+
 // Microsoft compilers are deficient in some respects
 #ifdef _MSC_VER
 # define SAWYER_ATTR_UNUSED /*unused*/

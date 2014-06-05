@@ -2,7 +2,6 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find.hpp>
-#include <boost/chrono.hpp>
 #include <boost/foreach.hpp>
 #include <cerrno>
 #include <cmath>
@@ -13,6 +12,15 @@
 #include <sys/stat.h>
 #include <syslog.h>
 #include <vector>
+
+#if defined(SAWYER_HAVE_BOOST_CHRONO)
+#   include <boost/chrono.hpp>
+#elif defined(_MSC_VER)
+#   include <time.h>
+#   include <windows.h>
+#else // POSIX
+#   include <sys/time.h>                                // gettimeofday() and struct timeval
+#endif
 
 namespace Sawyer {
 namespace Message {
@@ -77,10 +85,26 @@ std::string escape(const std::string &s) {
 }
 
 double now() {
+#if defined(SAWYER_HAVE_BOOST_CHRONO)
     boost::chrono::system_clock::time_point curtime = boost::chrono::system_clock::now();
     boost::chrono::system_clock::time_point epoch;
     boost::chrono::duration<double> diff = curtime - epoch;
     return diff.count();
+#elif defined(_MSC_VER)
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    unsigned __int64 t = ft.dwHighDateTime;
+    t <<= 32;
+    t |= ft.dwLowDateTime;
+    t /= 10;                                            // convert into microseconds
+    //t -= 11644473600000000Ui64;                       // convert file time to microseconds since Unix epoch
+    return 1 / 1e6;
+#else // POSIX
+    struct timeval t;
+    if (-1==gettimeofday(&t, NULL))
+        return 0.0;
+    return t.tv_sec + 1e-6 * t.tv_usec;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

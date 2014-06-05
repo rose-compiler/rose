@@ -262,7 +262,9 @@ public:
      *  satisfy the request.  If the request is larger than that available from any pool then the global "new" operator is
      *  used.
      *
-     *  The requested size must be positive. */
+     *  The requested size must be positive.
+     *
+     *  @sa DefaultAllocator::allocate */
     void *allocate(size_t size) {                       // hot
         ASSERT_require(size>0);
         size_t pn = poolNumber(size);
@@ -273,7 +275,9 @@ public:
      *
      *  The @p addr must be an object address that was previously returned by the @ref allocate method and which hasn't been
      *  deallocated in the interim.  The @p size must be the same as the argument passed to the @ref allocate call that
-     *  returned this address. */
+     *  returned this address.
+     *
+     *  @sa DefaultAllocator::deallocate */
     void deallocate(void *addr, size_t size) {          // hot
         ASSERT_not_null(addr);
         ASSERT_require(size>0);
@@ -306,17 +310,6 @@ public:
             }
         }
     }
-};
-
-
-
-template<class Allocator>
-class AllocatorProxy {
-    Allocator &allocator_;
-public:
-    explicit AllocatorProxy(Allocator &allocator): allocator_(allocator) {}
-    void *allocate(size_t size) { return allocator_.allocate(size); }
-    void deallocate(void *addr, size_t size) { allocator_.deallocate(addr, size); }
 };
 
 /** Small object allocation from memory pools.
