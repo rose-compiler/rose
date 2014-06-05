@@ -1839,7 +1839,7 @@ public:
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
 
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
-    static timeval progress_time;                       /**< Time of last report, or zero if no report has been generated. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
 
 public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
