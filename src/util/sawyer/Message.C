@@ -412,7 +412,7 @@ void Prefix::setProgramName() {
             name = name.substr(3);
         programName_ = name;
     }
-    if (programName_.get_value_or("").empty())
+    if (programName_.getOrElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
@@ -514,8 +514,8 @@ std::string UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgPro
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
-            retval = gang()->properties().interruptionStr.get_value_or(std::string("")) +
-                     gang()->properties().lineTermination.get_value_or(std::string(""));
+            retval = gang()->properties().interruptionStr.getOrDefault() +
+                     gang()->properties().lineTermination.getOrDefault();
             gang()->clear();
         }
     }
@@ -540,12 +540,12 @@ std::string UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props
     std::string retval;
     if (!mesg.isEmpty()) {
         if (mesg.isCanceled()) {
-            retval = props.cancelationStr.get_value_or(std::string("")) +
-                     props.lineTermination.get_value_or(std::string(""));
+            retval = props.cancelationStr.getOrDefault() +
+                     props.lineTermination.getOrDefault();
             gang()->clear();
         } else if (mesg.isComplete()) {
-            retval = props.completionStr.get_value_or(std::string("")) +
-                     props.lineTermination.get_value_or(std::string(""));
+            retval = props.completionStr.getOrDefault() +
+                     props.lineTermination.getOrDefault();
             gang()->clear();
         } else {
             gang()->emitted(mesg, props);
@@ -631,7 +631,7 @@ void SyslogSink::init() {
 void SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
     if (mesg.isComplete()) {
         int priority = LOG_ERR;
-        switch (props.importance.get_value_or(ERROR)) {
+        switch (props.importance.getOrElse(ERROR)) {
             case DEBUG: priority = LOG_DEBUG;   break;
             case TRACE: priority = LOG_DEBUG;   break;
             case WHERE: priority = LOG_DEBUG;   break;

@@ -2,6 +2,7 @@
 #define Sawyer_IntervalSet_H
 
 #include <sawyer/IntervalMap.h>
+#include <sawyer/Optional.h>
 
 #include <boost/integer_traits.hpp>
 #include <boost/iterator/iterator_facade.hpp>
@@ -308,7 +309,7 @@ public:
      *
      *  Returns the minimum scalar that exists in this set and which is greater than or equal to @p lowerLimit.  If no such
      *  value exists then nothing is returned. */
-    boost::optional<Scalar> least(Scalar lowerLimit) const {
+    Optional<Scalar> least(Scalar lowerLimit) const {
         return map_.least(lowerLimit);
     }
 
@@ -316,7 +317,7 @@ public:
      *
      *  Returns the maximum scalar that exists in this set and which is less than or equal to @p upperLimit.  If no such
      *  value exists then nothing is returned. */
-    boost::optional<Scalar> greatest(Scalar upperLimit) const {
+    Optional<Scalar> greatest(Scalar upperLimit) const {
         return map_.greatest(upperLimit);
     }
 
@@ -324,7 +325,7 @@ public:
      *
      *  Returns the minimum scalar equal to or greater than the @p lowerLimit which is not in this set.  If no such value
      *  exists then nothing is returned. */
-    boost::optional<Scalar> leastNonExistent(Scalar lowerLimit) const {
+    Optional<Scalar> leastNonExistent(Scalar lowerLimit) const {
         return map_.leastUnmapped(lowerLimit);
     }
 
@@ -332,7 +333,7 @@ public:
      *
      *  Returns the maximum scalar equal to or less than the @p upperLimit which is not in this set.  If no such value exists
      *  then nothing is returned. */
-    boost::optional<Scalar> greatestNonExistent(Scalar upperLimit) const {
+    Optional<Scalar> greatestNonExistent(Scalar upperLimit) const {
         return map_.greatestUnmapped(upperLimit);
     }
 
