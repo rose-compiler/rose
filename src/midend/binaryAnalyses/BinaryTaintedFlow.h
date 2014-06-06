@@ -21,6 +21,13 @@ public:
      *  and parents of <code>BOTTOM</code>. */
     enum Taintedness { BOTTOM, NOT_TAINTED, TAINTED, TOP };
 
+    /** Mode of operation.
+     *
+     *  The mode of operation can be set to under- or over-approximate tainted flow.  The only difference between the two modes
+     *  are whether variable searching uses DataFlow::Variable::mustAlias (under-approximated) or DataFlow::Variable::mayAlias
+     *  (over-appoximated). */
+    enum Approximation { UNDER_APPROXIMATE, OVER_APPROXIMATE };
+
     /** Merges two taint values.
      *
      *  Given two taint values that are part of a taintedness lattice, return the least common ancestor. */
@@ -86,6 +93,15 @@ public:
          *  Merges the specified state into this state and returns true if this state changed in any way. */
         bool merge(const State::Ptr&);
 
+        /** List of all variables and their taintedness.
+         *
+         *  Returns a list of VariableTaint pairs in no particular order.
+         *
+         *  @{ */
+        const VarTaintList& variables() const { return taints_; }
+        VarTaintList& variables() { return taints_; }
+        /** @} */
+
         /** Print this state. */
         void print(std::ostream&) const;
     };
@@ -101,8 +117,11 @@ public:
 protected:
     class TransferFunction {
         const DataFlow::VertexFlowGraphs &index_; // maps CFG vertex to data flow graph
+        Approximation approximation_;
+        SMTSolver *smtSolver_;
     public:
-        explicit TransferFunction(const DataFlow::VertexFlowGraphs &index): index_(index) {}
+        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, SMTSolver *solver)
+            : index_(index), approximation_(approx), smtSolver_(solver) {}
 
         template<class CFG>
         StatePtr operator()(const CFG &cfg, size_t cfgVertex, const StatePtr &in) {
@@ -117,11 +136,13 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     static Sawyer::Message::Facility mlog;
+    Approximation approximation_;
     DataFlow dataFlow_;
     DataFlow::VertexFlowGraphs vertexFlowGraphs_;
     DataFlow::VariableList variableList_;
     bool vlistInitialized_;
     std::vector<StatePtr> results_;
+    SMTSolver *smtSolver_;
 
 public:
     /** Constructs a tainted flow analysis.
@@ -131,12 +152,34 @@ public:
      *  The dispatcher need not have a valid state at this time; however, the state must be initialized before calling @ref
      *  computeFlowGraphs (if that method is called). */
     explicit TaintedFlow(const InstructionSemantics2::BaseSemantics::DispatcherPtr &userDispatcher)
-        : dataFlow_(userDispatcher), vlistInitialized_(false) {}
+        : approximation_(UNDER_APPROXIMATE), dataFlow_(userDispatcher), vlistInitialized_(false), smtSolver_(NULL) {}
 
     /** Initialize diagnostics.
      *
      *  This is called by rose::Diagnostics::initialize. */
     static void initDiagnostics();
+
+    /** Property: approximation.
+     *
+     *  The approximation property determines whether taintedness is under or over approximated.  Under-approximating mode uses
+     *  mustAlias during the data flow transfer function, which limits taint flow only to those variables that certainly alias
+     *  the data flow destination; while over-approximating mode uses mayAlias, which causes data to flow to all variables that
+     *  could alias the data flow destination.
+     *
+     *  @{ */
+    Approximation approximation() const { return approximation_; }
+    void approximation(Approximation a) { approximation_ = a; }
+    /** @} */
+
+    /** Property: SMT solver.
+     *
+     *  An SMT solver can be used for more accurate comparisons between variables.  The default is to not use an SMT solver, in
+     *  which case under and over approximations both degenerate to equality using only structural equivalence.
+     *
+     *  @{ */
+    SMTSolver *smtSolver() const { return smtSolver_; }
+    void smtSolver(SMTSolver *solver) { smtSolver_ = solver; }
+    /** @} */
 
     /** Compute data flow graphs.
      *
@@ -192,10 +235,10 @@ public:
      *
      *  Creates a new state with all variables initialized to the specified taintedness value.  The @ref vertexFlowGraphs
      *  property must have alraeady been set or calculated. */
-    StatePtr stateInstance() const {
+    StatePtr stateInstance(Taintedness taint) const {
         ASSERT_this();
         ASSERT_require2(vlistInitialized_, "TaintedFlow::computeFlowGraphs must be called before TaintedFlow::stateInstance");
-        return State::instance(variableList_);
+        return State::instance(variableList_, taint);
     }
 
     /** Run data flow.
@@ -209,7 +252,7 @@ public:
         ASSERT_not_null(initialState);
         Stream mesg(mlog[WHERE] <<"runToFixedPoint starting at CFG vertex " <<cfgStartVertex);
         results_.clear();
-        TransferFunction xfer(vertexFlowGraphs_);
+        TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_);
         DataFlow::Engine<CFG, StatePtr, TransferFunction> dfEngine(cfg, xfer);
         dfEngine.runToFixedPoint(cfgStartVertex, initialState);
         results_ = dfEngine.getFinalStates();

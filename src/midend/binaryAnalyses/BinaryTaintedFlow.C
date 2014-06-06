@@ -91,12 +91,38 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
         const DataFlow::Graph::EdgeNode &edge = *dfg.findEdge(edgeId);
         ASSERT_require(edge.id()==edge.value().sequence);
 
-        Taintedness srcTaint = out->lookup(edge.source()->value());
-        Taintedness &dstTaint = out->lookup(edge.target()->value());
-        if (edge.value().edgeType == DataFlow::Graph::EdgeValue::CLOBBER) {
-            dstTaint = srcTaint;
-        } else {
-            dstTaint = merge(dstTaint, srcTaint);
+        const DataFlow::Variable &srcVariable = edge.source()->value();
+        Taintedness srcTaint = out->lookup(srcVariable);
+
+        switch (approximation_) {
+            case UNDER_APPROXIMATE: {
+                Taintedness &dstTaint = out->lookup(edge.target()->value());
+                if (edge.value().edgeType == DataFlow::Graph::EdgeValue::CLOBBER) {
+                    dstTaint = srcTaint;
+                } else {
+                    dstTaint = merge(dstTaint, srcTaint);
+                }
+                break;
+            }
+
+            case OVER_APPROXIMATE: {
+                StatePtr tmp = out->copy();
+                BOOST_FOREACH (VariableTaint &varTaint, tmp->variables()) {
+                    DataFlow::Variable &dstVariable = varTaint.first;
+                    Taintedness &dstTaint = varTaint.second;
+                    if (dstVariable.mustAlias(edge.target()->value(), smtSolver_)) {
+                        if (edge.value().edgeType == DataFlow::Graph::EdgeValue::CLOBBER) {
+                            dstTaint = srcTaint;
+                        } else {
+                            dstTaint = merge(dstTaint, srcTaint);
+                        }
+                    } else if (dstVariable.mayAlias(edge.target()->value(), smtSolver_)) {
+                        dstTaint = merge(dstTaint, srcTaint);
+                    }
+                }
+                out = tmp;
+                break;
+            }
         }
     }
     return out;
