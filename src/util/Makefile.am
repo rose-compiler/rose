@@ -87,6 +87,7 @@ nobase_include_HEADERS   =			\
 	sawyer/Markup.h				\
 	sawyer/MarkupRoff.h			\
 	sawyer/Message.h			\
+	sawyer/Optional.h			\
 	sawyer/PoolAllocator.h			\
 	sawyer/ProgressBar.h			\
 	sawyer/Sawyer.h
