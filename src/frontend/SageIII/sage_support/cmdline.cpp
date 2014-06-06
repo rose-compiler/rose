@@ -1953,6 +1953,7 @@ void
 Rose::Cmdline::Java::
 ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
 {
+  project->set_Java_only(false);
   bool is_java_only =
       CommandlineProcessing::isOption(
           argv,
@@ -3680,6 +3681,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
+#if 0
+     printf ("***** hasRoseUpcEnabled = %s \n",hasRoseUpcEnabled ? "true" : "false");
+#endif
+
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled)
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -3690,6 +3695,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
           CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
         }
+
+#if 0
+     printf ("***** get_UPC_only() = %s \n",get_UPC_only() ? "true" : "false");
+#endif
 
   // DQ (9/19/2010): Added support for UPC++.  This uses the UPC mode and internally processes the code as C++ instead of C.
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix

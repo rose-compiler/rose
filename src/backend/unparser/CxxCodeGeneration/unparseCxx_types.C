@@ -200,7 +200,9 @@ string get_type_name(SgType* t)
              // SgClassDeclaration* cdecl;
                 SgClassDeclaration* decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
-             // printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+#if 0
+                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+#endif
                 if (nm.getString() != "")
                     return nm.getString();
                 else
