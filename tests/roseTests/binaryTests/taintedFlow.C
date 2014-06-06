@@ -72,6 +72,7 @@
 #include "WorkLists.h"
 #include "YicesSolver.h"
 
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/foreach.hpp>
 #include <list>
 #include <sawyer/CommandLine.h>
@@ -152,13 +153,17 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // The BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
     TaintedFlow taintAnalysis(cpu);
     taintAnalysis.approximation(approximation);
+#if defined(ROSE_HAVE_LIBYICES) || defined(ROSE_YICES)
+    YicesSolver solver;
+    taintAnalysis.smtSolver(&solver);
+#else
+    mlog[WARN] <<"not using an SMT solver (none available)\n";
+#endif
 
     // Analyze the specimen in order to discover what variables are referenced and the control flow between those variables for
     // each basic block.
     mlog[TRACE] <<"Finding data flows between variables...\n";
     taintAnalysis.computeFlowGraphs(cfg, cfgStartVertex);
-    YicesSolver solver;
-    taintAnalysis.smtSolver(&solver);
 
     // Print some debugging information.
     if (mlog[DEBUG]) {
@@ -234,6 +239,12 @@ int main(int argc, char *argv[])
     // Describe the command-line
     using namespace Sawyer::CommandLine;
     SwitchGroup switches("Tainted flow switches");
+    std::vector<rose_addr_t> functionAddresses;
+    switches.insert(Switch("address")
+                    .argument("addr", nonNegativeIntegerParser(functionAddresses))
+                    .whichValue(SAVE_ALL)
+                    .doc("Specifies function entry addresses for those functions that should be analyzed.  This switch "
+                         "can appear multiple times.  Any function whose entry address is a specified address is analyzed."));
     TaintedFlow::Approximation approx = TaintedFlow::UNDER_APPROXIMATE;
     switches.insert(Switch("approx", 'a')
                     .argument("mode", enumParser<TaintedFlow::Approximation>(approx)
@@ -243,8 +254,8 @@ int main(int argc, char *argv[])
                          "uses a must-alias constraint when flowing taint from one abstract location to another, while an "
                          "over approximation uses may-alias.  The effect of over approximating is that the analyzer is "
                          "less able to determine when global variables and local variables are distinct because it "
-                         "reasons that a stack-offset expression could be equal to some arbitrary constant.  The default "
-                         "is to under approximate."));
+                         "reasons that a stack-offset expression could be equal to some arbitrary constant.  The @v{mode} "
+                         "can be the word \"under\" (the default) or \"over\"."));
     switches.insert(Switch("help", 'h')
                     .action(showHelpAndExit(0))
                     .doc("Emits the documentation for these switches and then exits."));
@@ -267,6 +278,12 @@ int main(int argc, char *argv[])
                     .doc("Configure diagnostic facilities.  This switch can appear multiple times and is processed in the "
                          "order it appears.  Each string can be either the word \"list\" or a facilities control "
                          "sentence, the syntax of which can be found in the Sawyer::Message::Facilities::control method."));
+    std::vector<std::string> functionNameRegexList;
+    switches.insert(Switch("names")
+                    .whichValue(SAVE_ALL)
+                    .argument("regex", anyParser(functionNameRegexList))
+                    .doc("Specifies a regular expression for function names that will be analyzed.  If more than one regular "
+                         "expression is given then a function is analyzed if it's name matches any of the expressions."));
     switches.insert(Switch("version", 'V')
                     .action(userAction(showVersionAndExit))
                     .doc("Emit the ROSE version number to the standard output stream and exit. This version "
@@ -287,7 +304,9 @@ int main(int argc, char *argv[])
     cmdline_parser.doc("Options",
                        "These are the switches recognized by the @prop{programName} tool itself. Documentation for switches "
                        "that can be passed to ROSE's frontend() function is available by using \"-rose:help\" in the "
-                       "@v{rose_switches} part of the command-line.");
+                       "@v{rose_switches} part of the command-line (the \"--\" and a specimen name are require because "
+                       "frontend tries to parse the program before it spits out the help message, so do it this way: "
+                       "\"@prop{programName} -- -rose:help @v{specimen}\").");
 
     // Parse the command line.
     ParserResult cmdline = cmdline_parser.with(switches).parse(argc, argv).apply();
@@ -299,7 +318,7 @@ int main(int argc, char *argv[])
     // before all frontend() switches, and we must assume that all tool switches are spelled correctly (because we have no way
     // to distinguish between a valid frontend() switch and a misspelled tool switch).  FIXME[Robb P. Matzke 2014-06-06]
     std::vector<std::string> frontendArgs = cmdline.unreachedArgs();
-    frontendArgs.push_front(argv[0]); // frontend() needs this even though it just throws it away
+    frontendArgs.insert(frontendArgs.begin(), argv+0, argv+1); // frontend() needs this even though it just throws it away
     SgProject *project = frontend(frontendArgs);
 
     // Find the most interesting interpretation (the PE interpretation for a PE executable is the last one)
@@ -308,10 +327,33 @@ int main(int argc, char *argv[])
     ASSERT_forbid(interps.empty());
     SgAsmInterpretation *interp = interps.back();
 
-    // Performan a tainted flow analysis for each function of the interpretation whose name starts with "f" and a digit.
-    // We can either under or over approximate the taint.  We can do data flow over instructions or basic blocks.
+    // Performan a tainted flow analysis for each function of the interpretation whose name matches the list of
+    // regular expressions or whose address matches the list of function addresses.  If both lists are empty then
+    // analyze all functions.
     BOOST_FOREACH (SgAsmFunction *func, SageInterface::querySubTree<SgAsmFunction>(interp)) {
-        if (func->get_name().size() >= 2 && isalpha(func->get_name()[0]) && isdigit(func->get_name()[1])) {
+        bool doAnalysis = functionNameRegexList.empty() && functionAddresses.empty();
+
+        if (!doAnalysis) {
+            std::string funcName = func->get_name();
+            BOOST_FOREACH (const std::string &regexString, functionNameRegexList) {
+                boost::regex re(regexString);
+                if (boost::find_regex(funcName, re)) {
+                    doAnalysis = true;
+                    break;
+                }
+            }
+        }
+
+        if (!doAnalysis) {
+            BOOST_FOREACH (rose_addr_t addr, functionAddresses) {
+                if (addr == func->get_entry_va()) {
+                    doAnalysis = true;
+                    break;
+                }
+            }
+        }
+
+        if (doAnalysis) {
             if (useInstructions) {
                 analyze<SgAsmInstruction>(func, approx);
             } else {
