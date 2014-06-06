@@ -167,6 +167,11 @@ static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vecto
 static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
   SgNode* parent = n->get_parent();
+
+#if 0
+  printf ("In getNodeJustAfterInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
+#endif
+
   if (isSgFunctionParameterList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(parent);
     ROSE_ASSERT (decl);
@@ -196,10 +201,40 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
 static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
   SgNode* parent = n->get_parent();
   ROSE_ASSERT (parent);
+
+#if 0
+  printf ("In getNodeJustBeforeInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
+#endif
+
   if (isSgFunctionDefinition(n)) return CFGNode(0, 0); // Should not be used
   if (isSgCtorInitializerList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgCtorInitializerList(n)->get_parent());
     ROSE_ASSERT (decl);
+
+#if 0
+ // DQ (6/1/2014): This is part fo debugging fuse test2011_77.C (which appears to be mixing template functions into the virtual CFG).
+ // We might have the have Greg look into this directly.
+    printf ("In getNodeJustBeforeInContainer(): decl = %p decl->get_definingDeclaration() = %p \n",decl,decl->get_definingDeclaration());
+
+ // DQ (6/1/2014): We need the defining declaration (if there is one).
+    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+ // ROSE_ASSERT (decl);
+    if (defining_decl == NULL)
+       {
+         printf ("Note: In getNodeJustBeforeInContainer(): There is no associated defining declaration for the function, so there is no way to return a valid CFGNode \n");
+      // I think this is the next best thing to do.
+         return CFGNode(0, 0);
+       }
+
+    printf ("In getNodeJustBeforeInContainer(): decl is a SgFunctionDeclaration: return CFGNode(decl->get_definition(), 1); \n");
+    printf ("In getNodeJustBeforeInContainer(): decl->get_definition() = %p \n",decl->get_definition());
+#else
+    if (isSgTemplateMemberFunctionDeclaration(decl) != NULL)
+       {
+         printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
+       }
+#endif
+
     return CFGNode(decl->get_definition(), 1);
   }
   if (isSgFunctionParameterList(n)) {
@@ -4145,6 +4180,15 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx) {
 
 std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
      std::vector<CFGEdge> result;
+
+  // DQ (6/1/2014): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
+#if 0
+     SgInitializedNamePtrList & ctorList = this->get_ctors();
+     printf ("In SgCtorInitializerList::cfgInEdges(idx = %u): this = %p ctorList.size() = %zu \n",idx,this,ctorList.size());
+#endif
+
      if (idx == 0) {
        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
      } else {
