@@ -2,6 +2,7 @@
 #define Sawyer_ProgressBar_H
 
 #include <sawyer/Message.h>
+#include <sawyer/Optional.h>
 
 #include <cmath>
 #include <sstream>
@@ -26,7 +27,7 @@ public:
     size_t nUpdates_;                                   // number of times a message was emitted
     bool shouldSpin_;                                   // spin instead of progress
     Message::Mesg textMesg_;                            // message used when ANSI escape sequences are not available
-    boost::optional<int> oldPercent_;                   // old percent value used when updating a non-color progress bar
+    Optional<int> oldPercent_;                          // old percent value used when updating a non-color progress bar
 
     ProgressBarImpl(const Message::SProxy &stream)
         : value_(0.0), width_(15), showPercent_(true), leftEnd_("["), rightEnd_("]"), barChar_('#'), nonBarChar_('-'),

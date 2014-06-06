@@ -3,6 +3,7 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/Interval.h>
+#include <sawyer/Optional.h>
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
@@ -465,7 +466,7 @@ void swap(Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2
 template<class Word>
 struct LeastSignificantSetBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     LeastSignificantSetBit(): offset(0) {}
     bool operator()(const Word &word, size_t nbits) {
         if (0 != (word & bitMask<Word>(0, nbits))) {
@@ -486,18 +487,18 @@ struct LeastSignificantSetBit {
  *  Returns the index of the least significant set bit within the specified range of bits. The return value is the
  *  absolute bit number in the entire vector.  If none of the bits in the range are set then nothing is returned. */
 template<class Word>
-boost::optional<size_t> leastSignificantSetBit(const Word *words, const BitRange &range) {
+Optional<size_t> leastSignificantSetBit(const Word *words, const BitRange &range) {
     LeastSignificantSetBit<Word> visitor;
     traverse(visitor, words, range, LowToHigh());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 template<class Word>
 struct LeastSignificantClearBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     LeastSignificantClearBit(): offset(0) {}
     bool operator()(const Word &word, size_t nbits) {
         if (bitMask<Word>(0, nbits) != (word & bitMask<Word>(0, nbits))) {
@@ -518,18 +519,18 @@ struct LeastSignificantClearBit {
  *  Returns the index of the least significant clear bit within the specified range of bits.  The return value is the absolute
  *  bit number in the entire vector.  If none of the bits in the range are clear then nothing is returned. */
 template<class Word>
-boost::optional<size_t> leastSignificantClearBit(const Word *words, const BitRange &range) {
+Optional<size_t> leastSignificantClearBit(const Word *words, const BitRange &range) {
     LeastSignificantClearBit<Word> visitor;
     traverse(visitor, words, range, LowToHigh());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 template<class Word>
 struct MostSignificantSetBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     MostSignificantSetBit(size_t nbits): offset(nbits) {}
     bool operator()(const Word &word, size_t nbits) {
         ASSERT_require(nbits <= offset);
@@ -551,18 +552,18 @@ struct MostSignificantSetBit {
  *  Returns the index of the most significant set bit within the specified range of bits. The return value is the
  *  absolute bit number in the entire vector.  If none of the bits in the range are set then nothing is returned. */
 template<class Word>
-boost::optional<size_t> mostSignificantSetBit(const Word *words, const BitRange &range) {
+Optional<size_t> mostSignificantSetBit(const Word *words, const BitRange &range) {
     MostSignificantSetBit<Word> visitor(range.size());
     traverse(visitor, words, range, HighToLow());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 template<class Word>
 struct MostSignificantClearBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     MostSignificantClearBit(size_t nbits): offset(nbits) {}
     bool operator()(const Word &word, size_t nbits) {
         ASSERT_require(nbits <= offset);
@@ -584,12 +585,12 @@ struct MostSignificantClearBit {
  *  Returns the index of the most significant zero bit within the specified range of bits. The return value is the
  *  absolute bit number in the entire vector.  If none of the bits in the range are set then nothing is returned. */
 template<class Word>
-boost::optional<size_t> mostSignificantClearBit(const Word *words, const BitRange &range) {
+Optional<size_t> mostSignificantClearBit(const Word *words, const BitRange &range) {
     MostSignificantClearBit<Word> visitor(range.size());
     traverse(visitor, words, range, HighToLow());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 /** True if all bits are set.
@@ -661,7 +662,7 @@ size_t nClear(const Word *words, const BitRange &range) {
 template<class Word>
 struct LeastSignificantDifference {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     LeastSignificantDifference(): offset(0) {}
     bool operator()(const Word &w1, const Word &w2, size_t nbits) {
         Word mask = bitMask<Word>(0, nbits);
@@ -684,8 +685,8 @@ struct LeastSignificantDifference {
  *  to the beginning of the sub-vectors where the first difference is found; it is not a bit index within the either
  *  vector-as-a-whole (unless the ranges start at zero). If no difference is found then nothing is returned. */
 template<class Word>
-boost::optional<size_t> leastSignificantDifference(const Word *vec1, const BitRange &range1,
-                                                   const Word *vec2, const BitRange &range2) {
+Optional<size_t> leastSignificantDifference(const Word *vec1, const BitRange &range1,
+                                            const Word *vec2, const BitRange &range2) {
     LeastSignificantDifference<Word> visitor;
     traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
     return visitor.result;
@@ -694,7 +695,7 @@ boost::optional<size_t> leastSignificantDifference(const Word *vec1, const BitRa
 template<class Word>
 struct MostSignificantDifference {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     MostSignificantDifference(size_t nbits): offset(nbits) {}
     bool operator()(const Word &w1, const Word &w2, size_t nbits) {
         ASSERT_require(nbits <= offset);
@@ -718,8 +719,8 @@ struct MostSignificantDifference {
  *  the beginning of the sub-vectors where the first difference is found; it is not a bit index within the either
  *  vector-as-a-whole (unless the ranges start at zero). If no difference is found then nothing is returned. */
 template<class Word>
-boost::optional<size_t> mostSignificantDifference(const Word *vec1, const BitRange &range1,
-                                                  const Word *vec2, const BitRange &range2) {
+Optional<size_t> mostSignificantDifference(const Word *vec1, const BitRange &range1,
+                                           const Word *vec2, const BitRange &range2) {
     MostSignificantDifference<Word> visitor(range1.size());
     traverse(visitor, vec1, range1, vec2, range2, HighToLow());
     return visitor.result;
@@ -1168,13 +1169,13 @@ int compareSigned(const Word *vec1, const BitRange &range1, const Word *vec2, co
     if (range1.isEmpty() && range2.isEmpty()) {
         return 0;
     } else if (range1.isEmpty()) {
-        if (boost::optional<size_t> mssb = mostSignificantSetBit(vec2, range2)) {
+        if (Optional<size_t> mssb = mostSignificantSetBit(vec2, range2)) {
             return *mssb == range2.greatest() ? 1 : -1;
         } else {
             return 0;
         }
     } else if (range2.isEmpty()) {
-        if (boost::optional<size_t> mssb = mostSignificantSetBit(vec1, range1)) {
+        if (Optional<size_t> mssb = mostSignificantSetBit(vec1, range1)) {
             return *mssb == range1.greatest() ? -1 : 1;
         } else {
             return 0;
@@ -1205,7 +1206,7 @@ int compareSigned(const Word *vec1, const BitRange &range1, const Word *vec2, co
         if (!neg1 && !neg2) {
             return compare(vec1, range1, vec2, range2);
         } else if (neg1 && neg2) {
-            if (boost::optional<size_t> diff = mostSignificantDifference(vec1, range1, vec2, range2)) {
+            if (Optional<size_t> diff = mostSignificantDifference(vec1, range1, vec2, range2)) {
                 return get(vec1, range1.least() + *diff) ? 1 : -1;
             } else {
                 return 0;

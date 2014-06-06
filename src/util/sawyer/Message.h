@@ -2,12 +2,13 @@
 #define Sawyer_Message_H
 
 #include <sawyer/Map.h>
+#include <sawyer/Optional.h>
 #include <sawyer/Sawyer.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/logic/tribool.hpp>
-#include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cassert>
 #include <cstring>
 #include <list>
 #include <ostream>
@@ -382,13 +383,13 @@ public:
 /** Properties for messages.  Each message property is optional.  When a message is sent through the plumbing, each node of the
  *  plumbing lattice may provide default values for properties that are not set, or may override properties that are set. */
 struct MesgProps {
-    boost::optional<std::string> facilityName;          /**< The name of the logging facility that produced this message. */
-    boost::optional<Importance> importance;             /**< The message importance level. */
+    Optional<std::string> facilityName;                 /**< The name of the logging facility that produced this message. */
+    Optional<Importance> importance;                    /**< The message importance level. */
     boost::tribool isBuffered;                          /**< Whether the output buffered and emitted on a per-message basis. */
-    boost::optional<std::string> completionStr;         /**< String to append to the end of each complete message. */
-    boost::optional<std::string> interruptionStr;       /**< String to append when a partial message is interrupted. */
-    boost::optional<std::string> cancelationStr;        /**< String to append to a partial message when it is destroyed. */
-    boost::optional<std::string> lineTermination;       /**< Line termination for completion, interruption, and cancelation. */
+    Optional<std::string> completionStr;                /**< String to append to the end of each complete message. */
+    Optional<std::string> interruptionStr;              /**< String to append when a partial message is interrupted. */
+    Optional<std::string> cancelationStr;               /**< String to append to a partial message when it is destroyed. */
+    Optional<std::string> lineTermination;              /**< Line termination for completion, interruption, and cancelation. */
     boost::tribool useColor;                            /**< Whether to use ANSI escape sequences to colorize output. */
 
     MesgProps(): isBuffered(boost::indeterminate), useColor(boost::indeterminate) {}
@@ -784,7 +785,7 @@ public:
 /** @internal
  *  Keeps track of how much of a partial message was already emitted. */
 class HighWater {
-    boost::optional<unsigned> id_;                      /**< ID number of last message to be emitted, if any. */
+    Optional<unsigned> id_;                             /**< ID number of last message to be emitted, if any. */
     MesgProps props_;                                   /**< Properties used for the last emission. */
     size_t ntext_;                                      /**< Number of characters of the message we've seen already. */
 public:
@@ -825,10 +826,10 @@ public:
 class Prefix: public boost::enable_shared_from_this<Prefix> {
     enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
     ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */
-    boost::optional<std::string> programName_;          /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
+    Optional<std::string> programName_;                 /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
     bool showProgramName_;
     bool showThreadId_;
-    boost::optional<double> startTime_;                 /**< Time at which program started. */
+    Optional<double> startTime_;                        /**< Time at which program started. */
     bool showElapsedTime_;
     When showFacilityName_;                             /**< Whether the facility name should be displayed. */
     bool showImportance_;                               /**< Whether the message importance should be displayed. */
@@ -859,7 +860,7 @@ public:
      *  the base name since this is typically added by libtool and doesn't correspond to the name that the user executed.
      *  @sa setProgramName showProgramName
      * @{ */
-    const boost::optional<std::string>& programName() const { return programName_; }
+    const Optional<std::string>& programName() const { return programName_; }
     PrefixPtr programName(const std::string &s) { programName_ = s; return shared_from_this(); }
     /** @} */
 
@@ -881,7 +882,7 @@ public:
     /** Property: start time when emitting time deltas.  On some systems the start time will be the time at which this object
      *  was created. @sa setStartTime showElapsedTime
      * @{ */
-    const boost::optional<double> startTime() const { return startTime_; }
+    const Optional<double> startTime() const { return startTime_; }
     PrefixPtr startTime(double t) { startTime_ = t; return shared_from_this(); }
     /** @} */
 
@@ -1487,7 +1488,7 @@ private:
         ControlTerm(const std::string &facilityName, bool enable)
             : facilityName(facilityName), lo(DEBUG), hi(DEBUG), enable(enable) {}
         std::string toString() const;                   /**< String representation of this struct for debugging. */
-        std::string facilityName;                       /**< Optional facility name. Empty implies all facilities. */
+        std::string facilityName;                       /**< %Optional facility name. Empty implies all facilities. */
         Importance lo, hi;                              /**< Inclusive range of importances. */
         bool enable;                                    /**< New state. */
     };

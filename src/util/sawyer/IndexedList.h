@@ -3,6 +3,7 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/DefaultAllocator.h>
+#include <sawyer/Optional.h>
 
 #include <boost/range/iterator_range.hpp>
 #include <iterator>
@@ -516,8 +517,8 @@ public:
     }
     /** @} */
 
-    boost::optional<Value> get(size_t id) const {
-        return id < size() ? boost::optional<Value>(index_[id]) : boost::optional<Value>();
+    Optional<Value> get(size_t id) const {
+        return id < size() ? Optional<Value>(index_[id]) : Optional<Value>();
     }
 
     Value& getOrElse(size_t id, Value &dflt) {

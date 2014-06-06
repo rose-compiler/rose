@@ -2,6 +2,7 @@
 #include <sawyer/CommandLine.h>
 #include <sawyer/MarkupRoff.h>
 #include <sawyer/Message.h>
+#include <sawyer/Optional.h>
 
 #include <algorithm>
 #include <boost/algorithm/string/case_conv.hpp>
@@ -278,9 +279,29 @@ void ShowHelp::operator()(const ParserResult &parserResult) {
     parserResult.parser().emitDocumentationToPager();
 }
 
+void ShowHelpAndExit::operator()(const ParserResult &parserResult) {
+    parserResult.parser().emitDocumentationToPager();
+    exit(exitStatus_);
+}
+
+void ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
+    BOOST_FOREACH (const ParsedValue &value, parserResult.parsed(switchKey_)) {
+        if (0==value.string().compare("list")) {
+            facilities_.print(std::cout);
+        } else {
+            std::string errorMessage = facilities_.control(value.string());
+            if (!errorMessage.empty())
+                throw std::runtime_error(errorMessage);
+        }
+    }
+}
+
 ShowVersion::Ptr showVersion(const std::string &versionString) { return ShowVersion::instance(versionString); }
 ShowHelp::Ptr showHelp() { return ShowHelp::instance(); }
-
+ShowHelpAndExit::Ptr showHelpAndExit(int exitStatus) { return ShowHelpAndExit::instance(exitStatus); }
+ConfigureDiagnostics::Ptr configureDiagnostics(const std::string &switchKey, Message::Facilities &facilities) {
+    return ConfigureDiagnostics::instance(switchKey, facilities);
+}
 
 /*******************************************************************************************************************************
  *                                      Parsed values
@@ -1299,7 +1320,7 @@ ParserResult Parser::parseInternal(const std::vector<std::string> &programArgume
 
 bool Parser::parseOneSwitch(Cursor &cursor, ParserResult &result) {
     ASSERT_require(cursor.atArgBegin());
-    boost::optional<std::runtime_error> saved_error;
+    Optional<std::runtime_error> saved_error;
 
     // Single long switch
     ParsedValues values;
@@ -1351,7 +1372,7 @@ static bool decreasingLength(const std::string &a, const std::string &b) {
 }
 
 const Switch* Parser::parseLongSwitch(Cursor &cursor, ParsedValues &parsedValues,
-                                      boost::optional<std::runtime_error> &saved_error) {
+                                      Optional<std::runtime_error> &saved_error) {
     ASSERT_require(cursor.atArgBegin());
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
         ParsingProperties sgProps = sg.properties().inherit(properties_);
@@ -1384,7 +1405,7 @@ const Switch* Parser::parseLongSwitch(Cursor &cursor, ParsedValues &parsedValues
 }
 
 const Switch* Parser::parseShortSwitch(Cursor &cursor, ParsedValues &parsedValues,
-                                       boost::optional<std::runtime_error> &saved_error, bool mayNestle) {
+                                       Optional<std::runtime_error> &saved_error, bool mayNestle) {
     ASSERT_require(mayNestle || cursor.atArgBegin());
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
         ParsingProperties sgProps = sg.properties().inherit(properties_);
@@ -1490,7 +1511,7 @@ std::vector<std::string> Parser::readArgsFromFile(const std::string &filename) {
 
 const std::string& Parser::programName() const {
     if (programName_.empty()) {
-        boost::optional<std::string> s = Message::Prefix::instance()->programName();
+        Optional<std::string> s = Message::Prefix::instance()->programName();
         if (s)
             programName_ = *s;
     }
@@ -1858,13 +1879,16 @@ std::string Parser::manpage() const {
 
 // Try to determine screen width.
 int Parser::terminalWidth() {
+#ifndef _MSC_VER
+    // This won't work on Windows
     int ttyfd = isatty(1) ? 1 : (isatty(0) ? 1 : (isatty(2) ? 2 : -1));
     if (ttyfd >= 0) {
         struct winsize ws;
         if (-1 != ioctl(ttyfd, TIOCGWINSZ, &ws))
             return ws.ws_col;
     }
-        
+#endif
+
     if (const char *columns = getenv("COLUMNS")) {
         char *rest = NULL;
         errno = 0;
@@ -1873,19 +1897,35 @@ int Parser::terminalWidth() {
             return n;
     }
 
+
     return 80;
 }
 
 // Send manual to the output
 // nroff -mandoc -rLL=156n -rLT=156n |ul
+// FIXME[Robb Matzke 2014-06-05]: Windows systems will require that nroff be installed. Eventually we'll want to do something
+// better but I don't use Windows, so I have no idea what that would be.
 void Parser::emitDocumentationToPager() const {
     std::string doc = manpage();
     int actualWidth = terminalWidth();
     int width = std::min(actualWidth * 39/40, std::max(actualWidth-2, 20));
     std::string cmd = std::string("nroff -man ") +
                       "-rLL=" + toString(width) + "n " +
-                      "-rLT=" + toString(width) + "n " +
-                      "| less";
+                      "-rLT=" + toString(width) + "n ";
+
+    // Use a pager if output is being sent to the terminal.
+    std::string pager;
+    if (const char *pagerEnv = getenv("PAGER"))
+        pager = pagerEnv;
+    if (pager.empty())
+        pager = "less";
+#ifdef _MSC_VER
+    cmd += "|" + pager;
+#else
+    if (isatty(1))
+        cmd += "|" + pager;
+#endif
+
     FILE *proc = popen(cmd.c_str(), "w");
     if (!proc)
         throw std::runtime_error("cannot run \"" + cmd + "\"");

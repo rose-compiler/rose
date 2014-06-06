@@ -2,6 +2,7 @@
 #define Sawyer_IntervalMap_H
 
 #include <sawyer/Map.h>
+#include <sawyer/Optional.h>
 
 #include <boost/cstdint.hpp>
 #include <sawyer/Assert.h>
@@ -435,6 +436,7 @@ public:
             throw std::domain_error("key lookup failure; key is not in map domain");
         return found->value();
     }
+    // FIXME[Robb Matzke 2014-06-05]: need get() for consistency with class Map
     /** @} */
 
     /** Lookup and return a value or nothing.
@@ -447,19 +449,19 @@ public:
      * @code
      *  IntervalMap<AddressInterval, FileInfo> files;
      *  ...
-     *  if (boost::optional<FileInfo> fileInfo = files.get(address))
+     *  if (Optional<FileInfo> fileInfo = files.getOptional(address))
      *      std::cout <<"file info for " <<address <<" is " <<*fileInfo <<"\n";
      * @endcode */
-    boost::optional<Value> get(const typename Interval::Value &scalar) const {
+    Optional<Value> getOptional(const typename Interval::Value &scalar) const {
         ConstNodeIterator found = find(scalar);
-        return found == nodes().end() ? boost::optional<Value>() : boost::optional<Value>(found->value());
+        return found == nodes().end() ? Optional<Value>() : Optional<Value>(found->value());
     }
     
     /** Lookup and return a value or something else.
      *
-     *  This is similar to the @ref get method, except a default can be provided.  If a node with the specified @p scalar key
-     *  is present in this container, then a reference to that node's value is returned, otherwise the (reference to) supplied
-     *  default is returned.
+     *  This is similar to the @ref getOptional method, except a default can be provided.  If a node with the specified @p
+     *  scalar key is present in this container, then a reference to that node's value is returned, otherwise the (reference
+     *  to) supplied default is returned.
      *
      * @{ */
     Value& getOrElse(const typename Interval::Value &scalar, Value &dflt) {
@@ -529,10 +531,10 @@ public:
      *
      *  Returns the minimum scalar key that exists in the map and which is greater than or equal to @p lowerLimit.  If no such
      *  value exists then nothing is returned. */
-    boost::optional<typename Interval::Value> least(typename Interval::Value lowerLimit) const {
+    Optional<typename Interval::Value> least(typename Interval::Value lowerLimit) const {
         ConstNodeIterator found = lowerBound(lowerLimit); // first node ending at or after lowerLimit
         if (found==nodes().end())
-            return boost::none;
+            return Nothing();
         return std::max(lowerLimit, found->key().least());
     }
 
@@ -540,10 +542,10 @@ public:
      *
      *  Returns the maximum scalar key that exists in the map and which is less than or equal to @p upperLimit.  If no such
      *  value exists then nothing is returned. */
-    boost::optional<typename Interval::Value> greatest(typename Interval::Value upperLimit) const {
+    Optional<typename Interval::Value> greatest(typename Interval::Value upperLimit) const {
         ConstNodeIterator found = findPrior(upperLimit); // last node beginning at or before upperLimit
         if (found==nodes().end())
-            return boost::none;
+            return Nothing();
         return std::min(upperLimit, found->key().greatest());
     }
 
@@ -551,13 +553,13 @@ public:
      *
      *  Returns the lowest unmapped scalar key equal to or greater than the @p lowerLimit.  If no such value exists then
      *  nothing is returned. */
-    boost::optional<typename Interval::Value> leastUnmapped(typename Interval::Value lowerLimit) const {
+    Optional<typename Interval::Value> leastUnmapped(typename Interval::Value lowerLimit) const {
         for (ConstNodeIterator iter = lowerBound(lowerLimit); iter!=nodes().end(); ++iter) {
             if (lowerLimit < iter->key().least())
                 return lowerLimit;
             lowerLimit = iter->key().greatest() + 1;
             if (lowerLimit < iter->key().greatest())
-                return boost::none;                     // overflow
+                return Nothing();                       // overflow
         }
         return lowerLimit;
     }
@@ -566,13 +568,13 @@ public:
      *
      *  Returns the maximum unmapped scalar key equal to or less than the @p upperLimit.  If no such value exists then nothing
      *  is returned. */
-    boost::optional<typename Interval::Value> greatestUnmapped(typename Interval::Value upperLimit) const {
+    Optional<typename Interval::Value> greatestUnmapped(typename Interval::Value upperLimit) const {
         for (ConstNodeIterator iter = findPrior(upperLimit); iter!=nodes().end(); --iter) {
             if (upperLimit > iter->key().greatest())
                 return upperLimit;
             upperLimit = iter->key().least()- 1;
             if (upperLimit > iter->key().least())
-                return boost::none;                     // overflow
+                return Nothing();                       // overflow
             if (iter==nodes().begin())
                 break;
         }

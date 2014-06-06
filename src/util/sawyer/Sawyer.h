@@ -34,7 +34,8 @@
  *
  *   @li Miscellaneous: @ref Sawyer::PoolAllocator "PoolAllocator" to allocate memory from large pools rather than one
  *       object at a time; and @ref Sawyer::SmallObject "SmallObject", a base class for objects that are only a few bytes;
- *       @ref Sawyer::Stopwatch "Stopwatch" for high-resolution elapsed time.
+ *       @ref Sawyer::Stopwatch "Stopwatch" for high-resolution elapsed time; @ref Sawyer::Optional "Optional" for optional
+ *       values.
  *
  *  Design goals for this library can be found in the [Design goals](group__design__goals.html) page.
  *

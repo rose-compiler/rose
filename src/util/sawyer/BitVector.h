@@ -3,6 +3,7 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/BitVectorSupport.h>
+#include <sawyer/Optional.h>
 #include <boost/cstdint.hpp>
 
 namespace Sawyer {
@@ -230,7 +231,7 @@ public:
      *  Returns the index for the least significant bit that has the value true in the specified range.  The range must be
      *  valid for this vector. If the range has no such bits, including the case when the range is empty, then nothing is
      *  returned. */
-    boost::optional<size_t> leastSignificantSetBit(const BitRange &range) const {
+    Optional<size_t> leastSignificantSetBit(const BitRange &range) const {
         checkRange(range);
         return BitVectorSupport::leastSignificantSetBit(data(), range);
     }
@@ -239,7 +240,7 @@ public:
      *
      *  Returns the index for the least significant bit that has the value true. If no bit is true, including the case when the
      *  vector is empty, then nothing is returned. */
-    boost::optional<size_t> leastSignificantSetBit() const {
+    Optional<size_t> leastSignificantSetBit() const {
         return BitVectorSupport::leastSignificantSetBit(data(), hull());
     }
 
@@ -248,7 +249,7 @@ public:
      *  Returns the index for the least significant bit that has the value false in the specified range.  The range must be
      *  valid for this vector. If the range has no such bits, including the case when the range is empty, then nothing is
      *  returned. */
-    boost::optional<size_t> leastSignificantClearBit(const BitRange &range) const {
+    Optional<size_t> leastSignificantClearBit(const BitRange &range) const {
         checkRange(range);
         return BitVectorSupport::leastSignificantClearBit(data(), range);
     }
@@ -257,7 +258,7 @@ public:
      *
      *  Returns the index for the least significant bit that has the value false. If no bit is false, including the case when
      *  the vector is empty, then nothing is returned. */
-    boost::optional<size_t> leastSignificantClearBit() const {
+    Optional<size_t> leastSignificantClearBit() const {
         return BitVectorSupport::leastSignificantClearBit(data(), hull());
     }
     
@@ -266,7 +267,7 @@ public:
      *  Returns the index for the most significant bit that has the value true in the specified range.  The range must be
      *  valid for this vector. If the range has no such bits, including the case when the range is empty, then nothing is
      *  returned. */
-    boost::optional<size_t> mostSignificantSetBit(const BitRange &range) const {
+    Optional<size_t> mostSignificantSetBit(const BitRange &range) const {
         checkRange(range);
         return BitVectorSupport::mostSignificantSetBit(data(), range);
     }
@@ -275,7 +276,7 @@ public:
      *
      *  Returns the index for the most significant bit that has the value true. If no bit is true, including the case when the
      *  vector is empty, then nothing is returned. */
-    boost::optional<size_t> mostSignificantSetBit() const {
+    Optional<size_t> mostSignificantSetBit() const {
         return BitVectorSupport::mostSignificantSetBit(data(), hull());
     }
 
@@ -284,7 +285,7 @@ public:
      *  Returns the index for the most significant bit that has the value false in the specified range.  The range must be
      *  valid for this vector. If the range has no such bits, including the case when the range is empty, then nothing is
      *  returned. */
-    boost::optional<size_t> mostSignificantClearBit(const BitRange &range) const {
+    Optional<size_t> mostSignificantClearBit(const BitRange &range) const {
         checkRange(range);
         return BitVectorSupport::mostSignificantClearBit(data(), range);
     }
@@ -293,7 +294,7 @@ public:
      *
      *  Returns the index for the most significant bit that has the value false. If no bit is false, including the case when
      *  the vector is empty, then nothing is returned. */
-    boost::optional<size_t> mostSignificantClearBit() const {
+    Optional<size_t> mostSignificantClearBit() const {
         return BitVectorSupport::mostSignificantClearBit(data(), hull());
     }
 
@@ -373,8 +374,8 @@ public:
      *
      *  Note that the return value is not a vector index, but rather an offset with respect to the starting index in each of
      *  the ranges. */
-    boost::optional<size_t> mostSignificantDifference(const BitRange &range1, const BitVector &other,
-                                                      const BitRange &range2) const {
+    Optional<size_t> mostSignificantDifference(const BitRange &range1, const BitVector &other,
+                                               const BitRange &range2) const {
         checkRange(range1);
         other.checkRange(range2);
         return BitVectorSupport::mostSignificantDifference(data(), range1, other.data(), range2);
@@ -388,7 +389,7 @@ public:
      *
      *  Note that the return value is not a vector index, but rather an offset with respect to the starting index in each of
      *  the ranges. */
-    boost::optional<size_t> mostSignificantDifference(const BitRange &range1, const BitRange &range2) const {
+    Optional<size_t> mostSignificantDifference(const BitRange &range1, const BitRange &range2) const {
         checkRange(range1);
         checkRange(range2);
         return BitVectorSupport::mostSignificantDifference(data(), range1, data(), range2);
@@ -399,7 +400,7 @@ public:
      *  Finds the most significant bit that differs between this vector and the @p other vector and return its index.  Both
      *  vectors must be the same size.  If no bits differ, including the case when this vector is empty, then nothing is
      *  returned. */
-    boost::optional<size_t> mostSignificantDifference(const BitVector &other) const {
+    Optional<size_t> mostSignificantDifference(const BitVector &other) const {
         return BitVectorSupport::mostSignificantDifference(data(), hull(), other.data(), other.hull());
     }
         
@@ -413,8 +414,8 @@ public:
      *
      *  Note that the return value is not a vector index, but rather an offset with respect to the starting index in each of
      *  the ranges. */
-    boost::optional<size_t> leastSignificantDifference(const BitRange &range1, const BitVector &other,
-                                                      const BitRange &range2) const {
+    Optional<size_t> leastSignificantDifference(const BitRange &range1, const BitVector &other,
+                                                const BitRange &range2) const {
         checkRange(range1);
         other.checkRange(range2);
         return BitVectorSupport::leastSignificantDifference(data(), range1, other.data(), range2);
@@ -428,7 +429,7 @@ public:
      *
      *  Note that the return value is not a vector index, but rather an offset with respect to the starting index in each of
      *  the ranges. */
-    boost::optional<size_t> leastSignificantDifference(const BitRange &range1, const BitRange &range2) const {
+    Optional<size_t> leastSignificantDifference(const BitRange &range1, const BitRange &range2) const {
         checkRange(range1);
         checkRange(range2);
         return BitVectorSupport::leastSignificantDifference(data(), range1, data(), range2);
@@ -439,7 +440,7 @@ public:
      *  Finds the least significant bit that differs between this vector and the @p other vector and return its index.  Both
      *  vectors must be the same size.  If no bits differ, including the case when this vector is empty, then nothing is
      *  returned. */
-    boost::optional<size_t> leastSignificantDifference(const BitVector &other) const {
+    Optional<size_t> leastSignificantDifference(const BitVector &other) const {
         return BitVectorSupport::leastSignificantDifference(data(), hull(), other.data(), other.hull());
     }
     
