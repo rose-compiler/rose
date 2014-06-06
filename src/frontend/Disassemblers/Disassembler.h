@@ -684,7 +684,7 @@ protected:
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
-    struct timeval progress_time;                       /**< Time of last report, or zero if no report has been generated. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 };
 

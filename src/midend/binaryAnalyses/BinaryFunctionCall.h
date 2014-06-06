@@ -275,8 +275,8 @@ BinaryAnalysis::FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, Fun
     for (boost::tie(ei, ei_end)=boost::edges(cfg); ei!=ei_end; ++ei) {
         CFG_Vertex cfg_a = boost::source(*ei, cfg);
         CFG_Vertex cfg_b = boost::target(*ei, cfg);
-        SgAsmBlock *block_a = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_a));
-        SgAsmBlock *block_b = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_b));
+        SgAsmBlock *block_a = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_a), true/* inc. self */);
+        SgAsmBlock *block_b = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_b), true/* inc. self */);
         SgAsmFunction *func_a = block_a->get_enclosing_function();
         SgAsmFunction *func_b = block_b->get_enclosing_function();
         if (func_a && func_b && block_b==func_b->get_entry_block() && !is_edge_filtered(func_a, func_b)) {

@@ -6,6 +6,7 @@
 #include "rose.h"
 #include <set>
 #include <inttypes.h>
+#include <sawyer/IntervalSet.h>
 
 // SEMANTIC_DOMAIN values
 #define NULL_DOMAIN 1

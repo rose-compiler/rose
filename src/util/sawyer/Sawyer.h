@@ -21,14 +21,21 @@
  *      dd. Additionally, documentation can be provided in the C++ source code for each switch and Unix man pages can be
  *      produced. See Sawyer::CommandLine for details.
  *
- *  @li Container classes: <code>Graph</code> storing vertex and edge connectivity information along with user-defined values
- *      attached to each vertex and node, sequential ID numbers, and constant time complexity for most operations;
- *      <code>IndexedList</code>, a combination list and vector having constant time insertion and erasure and constant time
- *      lookup-by-ID; <code>IntervalSet</code> and <code>IntervalMap</code> similar to STL's <code>std::set</code> and
- *      <code>std::map</code> containers but optimized for cases when very large numbers of keys are adjacent;
- *      <code>Map</code>, similar to STL's <code>std::map</code> but with an API that's consistent with other containers in
- *      this library; <code>BitVector</code> bit vectors with operations defined across index intervals.  These can be found in
- *      the Sawyer::Container namespace.
+ *  @li Container classes: @ref Sawyer::Container::Graph "Graph", storing vertex and edge connectivity information along with
+ *      user-defined values attached to each vertex and node, sequential ID numbers, and constant time complexity for most
+ *      operations; @ref Sawyer::Container::IndexedList "IndexedList", a combination list and vector having constant time
+ *      insertion and erasure and constant time lookup-by-ID; @ref Sawyer::Container::Interval "Interval" represents integral
+ *      intervals including empty and whole intervals; @ref Sawyer::Container::IntervalSet "IntervalSet" and @ref
+ *      Sawyer::Container::IntervalMap "IntervalMap" similar to STL's <code>std::set</code> and <code>std::map</code>
+ *      containers but optimized for cases when very large numbers of keys are adjacent; @ref Sawyer::Container::Map "Map",
+ *      similar to STL's <code>std::map</code> but with an API that's consistent with other containers in this library; @ref
+ *      Sawyer::Container::BitVector "BitVector" bit vectors with operations defined across index intervals.  These can be
+ *      found in the Sawyer::Container namespace.
+ *
+ *   @li Miscellaneous: @ref Sawyer::PoolAllocator "PoolAllocator" to allocate memory from large pools rather than one
+ *       object at a time; and @ref Sawyer::SmallObject "SmallObject", a base class for objects that are only a few bytes;
+ *       @ref Sawyer::Stopwatch "Stopwatch" for high-resolution elapsed time; @ref Sawyer::Optional "Optional" for optional
+ *       values.
  *
  *  Design goals for this library can be found in the [Design goals](group__design__goals.html) page.
  *
@@ -157,6 +164,9 @@ bool initializeLibrary();
 extern bool isInitialized;
 
 } // namespace
+
+// Define only when we have the Boost Chrono library, which was first available in boost-1.47.
+//#define SAWYER_HAVE_BOOST_CHRONO
 
 // Microsoft compilers are deficient in some respects
 #ifdef _MSC_VER

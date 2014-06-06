@@ -19,8 +19,8 @@ fi
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
-    Assert BitVector BitVectorSupport CommandLine Graph GraphBoost IndexedList \
-    Interval IntervalMap IntervalSet Map Markup MarkupRoff Message ProgressBar Sawyer
+    Assert BitVector BitVectorSupport CommandLine DefaultAllocator Graph GraphBoost IndexedList \
+    Interval IntervalMap IntervalSet Map Markup MarkupRoff Message Optional PoolAllocator ProgressBar Sawyer
 do
     srcbase="$SAWYER_ROOT/sawyer/$f";
     cp "$srcbase.h" .

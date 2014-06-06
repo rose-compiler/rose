@@ -13,6 +13,15 @@
 #include <syslog.h>
 #include <vector>
 
+#if defined(SAWYER_HAVE_BOOST_CHRONO)
+#   include <boost/chrono.hpp>
+#elif defined(_MSC_VER)
+#   include <time.h>
+#   include <windows.h>
+#else // POSIX
+#   include <sys/time.h>                                // gettimeofday() and struct timeval
+#endif
+
 namespace Sawyer {
 namespace Message {
 
@@ -49,10 +58,6 @@ std::string stringifyColor(AnsiColor color) {
     throw std::runtime_error("invalid color");
 }
 
-double timevalDelta(const timeval &begin, const timeval &end) {
-    return (1.0*end.tv_sec-begin.tv_sec) + 1e-6*end.tv_usec - 1e-6*begin.tv_usec;
-}
-
 std::string escape(const std::string &s) {
     std::string retval;
     for (size_t i=0; i<s.size(); ++i) {
@@ -80,10 +85,26 @@ std::string escape(const std::string &s) {
 }
 
 double now() {
-    timeval tv;
-    if (-1 == gettimeofday(&tv, NULL))
-        return 0;
-    return 1.0 * tv.tv_sec + 1e-6 * tv.tv_usec;
+#if defined(SAWYER_HAVE_BOOST_CHRONO)
+    boost::chrono::system_clock::time_point curtime = boost::chrono::system_clock::now();
+    boost::chrono::system_clock::time_point epoch;
+    boost::chrono::duration<double> diff = curtime - epoch;
+    return diff.count();
+#elif defined(_MSC_VER)
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    unsigned __int64 t = ft.dwHighDateTime;
+    t <<= 32;
+    t |= ft.dwLowDateTime;
+    t /= 10;                                            // convert into microseconds
+    //t -= 11644473600000000Ui64;                       // convert file time to microseconds since Unix epoch
+    return 1 / 1e6;
+#else // POSIX
+    struct timeval t;
+    if (-1==gettimeofday(&t, NULL))
+        return 0.0;
+    return t.tv_sec + 1e-6 * t.tv_usec;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -313,21 +334,16 @@ bool SequenceFilter::shouldForward(const MesgProps&) {
 TimeFilterPtr TimeFilter::initialDelay(double delta) {
     if (delta > 0.0) {
         initialDelay_ = delta;
-        if (0==nPosted_) {
-            double then_int;
-            double then_frac = modf(now() + delta, &then_int);
-            lastBakeTime_.tv_sec = then_int;
-            lastBakeTime_.tv_usec = round(1e6 * then_frac);
-        }
+        if (0==nPosted_)
+            lastBakeTime_ = now();
     }
     return boost::dynamic_pointer_cast<TimeFilter>(shared_from_this());
 }
 
 bool TimeFilter::shouldForward(const MesgProps&) {
     ++nPosted_;
-    gettimeofday(&lastBakeTime_, NULL);
-    return  timevalDelta(prevMessageTime_, lastBakeTime_) >= minInterval_;
-
+    lastBakeTime_ = now();
+    return lastBakeTime_ - prevMessageTime_ >= minInterval_;
 }
 
 void TimeFilter::forwarded(const MesgProps&) {
@@ -396,7 +412,7 @@ void Prefix::setProgramName() {
             name = name.substr(3);
         programName_ = name;
     }
-    if (programName_.get_value_or("").empty())
+    if (programName_.getOrElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
@@ -405,12 +421,9 @@ void Prefix::setStartTime() {
     struct stat sb;
     if (-1 == stat("/proc/self", &sb))
         throw std::runtime_error("cannot stat /proc/self");
-    startTime_->tv_sec = sb.st_ctime;
-    startTime_->tv_usec = sb.st_ctime_usec;
+    startTime_ = sb.st_ctime + 1e-9*sb.st_ctime_usec;
 #else /* this is the work-around */
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    startTime_ = tv;
+    startTime_ = now();
 #endif
 }
 
@@ -454,13 +467,10 @@ std::string Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
     }
 
     if (showElapsedTime_ && startTime_) {
-        timeval tv;
-        if (-1 != gettimeofday(&tv, NULL)) {
-            double delta = timevalDelta(*startTime_, tv);
-            retval.precision(5);
-            retval <<separator <<std::fixed <<delta <<"s";
-            separator = " ";
-        }
+        double delta = now() - *startTime_;
+        retval.precision(5);
+        retval <<separator <<std::fixed <<delta <<"s";
+        separator = " ";
     }
 
     std::string facilityNameShown;
@@ -504,8 +514,8 @@ std::string UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgPro
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
-            retval = gang()->properties().interruptionStr.get_value_or(std::string("")) +
-                     gang()->properties().lineTermination.get_value_or(std::string(""));
+            retval = gang()->properties().interruptionStr.getOrDefault() +
+                     gang()->properties().lineTermination.getOrDefault();
             gang()->clear();
         }
     }
@@ -530,12 +540,12 @@ std::string UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props
     std::string retval;
     if (!mesg.isEmpty()) {
         if (mesg.isCanceled()) {
-            retval = props.cancelationStr.get_value_or(std::string("")) +
-                     props.lineTermination.get_value_or(std::string(""));
+            retval = props.cancelationStr.getOrDefault() +
+                     props.lineTermination.getOrDefault();
             gang()->clear();
         } else if (mesg.isComplete()) {
-            retval = props.completionStr.get_value_or(std::string("")) +
-                     props.lineTermination.get_value_or(std::string(""));
+            retval = props.completionStr.getOrDefault() +
+                     props.lineTermination.getOrDefault();
             gang()->clear();
         } else {
             gang()->emitted(mesg, props);
@@ -621,7 +631,7 @@ void SyslogSink::init() {
 void SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
     if (mesg.isComplete()) {
         int priority = LOG_ERR;
-        switch (props.importance.get_value_or(ERROR)) {
+        switch (props.importance.getOrElse(ERROR)) {
             case DEBUG: priority = LOG_DEBUG;   break;
             case TRACE: priority = LOG_DEBUG;   break;
             case WHERE: priority = LOG_DEBUG;   break;
@@ -1233,6 +1243,7 @@ DestinationPtr merr;
 Facility mlog("sawyer");
 Facilities mfacilities;
 bool isInitialized;
+SProxy assertionStream;
 
 bool initializeLibrary() {
     if (!isInitialized) {
