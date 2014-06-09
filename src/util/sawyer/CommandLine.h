@@ -1198,10 +1198,8 @@ typename EnumParser<T>::Ptr enumParser() {
     return EnumParser<T>::instance();
 }
 
-
 StringSetParser::Ptr stringSetParser(std::string &storage);
 StringSetParser::Ptr stringSetParser();
-
 
 ListParser::Ptr listParser(const ValueParser::Ptr&, const std::string &sepRe="[,;:]\\s*");
 /** @} */
@@ -1308,7 +1306,7 @@ public:
 
     /** Runs the action.  Calling this method will cause the function operator to be invoked with the parser results. */
     void run(const ParserResult &parserResult) /*final*/ { (*this)(parserResult); }
-private:
+protected:
     virtual void operator()(const ParserResult&) = 0;
 };
 
@@ -1329,7 +1327,30 @@ public:
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
     static Ptr instance(const std::string &versionString) { return Ptr(new ShowVersion(versionString)); }
-private:
+protected:
+    virtual void operator()(const ParserResult&) /*overload*/;
+};
+
+/** Functor to print a version string and exit. This functor does the same thing as ShowVersion, but then it exits the program
+ *  with the specified status. */
+class ShowVersionAndExit: public ShowVersion {
+    int exitStatus_;
+protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
+    explicit ShowVersionAndExit(const std::string &versionString, int exitStatus)
+        : ShowVersion(versionString), exitStatus_(exitStatus) {}
+public:
+    /** Reference counting pointer for this class. */
+    typedef boost::shared_ptr<ShowVersionAndExit> Ptr;
+
+    /** Allocating constructor. Returns a pointer to a new ShowVersionAndExit object.  Uses will most likely want to use the
+     *  @ref showVersionAndExit factory instead, which requires less typing.
+     *
+     * @sa @ref action_factories, and the @ref SwitchAction class. */
+    static Ptr instance(const std::string &versionString, int exitStatus) {
+        return Ptr(new ShowVersionAndExit(versionString, exitStatus));
+    }
+protected:
     virtual void operator()(const ParserResult&) /*overload*/;
 };
 
@@ -1350,13 +1371,13 @@ public:
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
     static Ptr instance() { return Ptr(new ShowHelp); }
-private:
+protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
 
 /** Functor to print the Unix man page and exit.  This functor is the same as ShowHelp except it also exits with the specified
  *  value. */
-class ShowHelpAndExit: public SwitchAction {
+class ShowHelpAndExit: public ShowHelp {
     int exitStatus_;
 protected:
     /** Constructor for derived classes.  Non-subclass users should use @ref instance instead. */
@@ -1370,7 +1391,7 @@ public:
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
     static Ptr instance(int exitStatus) { return Ptr(new ShowHelpAndExit(exitStatus)); }
-private:
+protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
 
@@ -1406,7 +1427,7 @@ public:
     static Ptr instance(const std::string &switchKey, Message::Facilities &facilities) {
         return Ptr(new ConfigureDiagnostics(switchKey, facilities));
     }
-private:
+protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
 
@@ -1444,7 +1465,7 @@ public:
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
     static Ptr instance(const Functor &f) { return Ptr(new UserAction(f)); }
-private:
+protected:
     virtual void operator()(const ParserResult &parserResult) /*override*/ { (functor_)(parserResult); }
 };
 
@@ -1477,6 +1498,7 @@ private:
  * @{ */
 
 ShowVersion::Ptr showVersion(const std::string &versionString);
+ShowVersionAndExit::Ptr showVersionAndExit(const std::string &versionString, int exitStatus);
 
 ShowHelp::Ptr showHelp();
 

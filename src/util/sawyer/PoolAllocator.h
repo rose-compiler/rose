@@ -33,10 +33,14 @@ namespace Sawyer {
  *
  *  The @ref PoolAllocator typedef provides reasonable template arguments.
  *
- *  Pool allocators cannot be copied. Deleting a pool allocator deletes all its pools, which deletes all the chunks, which
- *  deallocates memory that might be in use by objects allocated from this allocator.  In other words, don't destroy the
- *  allocator unless you're willing that the memory for any objects in use will suddenly be freed without even calling the
- *  destructors for those objects. */
+ *  When a pool allocator is copied, only its settings are copied, not the pools.  Since containers typically copy their
+ *  constructor-provided allocators, each container will have its own pools even if one provides the same pool to all the
+ *  constructors.  See @ref ProxyAllocator for a way to avoid this, and to allow different containers to share the same
+ *  allocator.
+ *
+ *  Deleting a pool allocator deletes all its pools, which deletes all the chunks, which deallocates memory that might be in
+ *  use by objects allocated from this allocator.  In other words, don't destroy the allocator unless you're willing that the
+ *  memory for any objects in use will suddenly be freed without even calling the destructors for those objects. */
 template<size_t smallestCell, size_t sizeDelta, size_t nPools, size_t chunkSize>
 class PoolAllocatorBase {
 public:

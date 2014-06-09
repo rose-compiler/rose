@@ -806,7 +806,7 @@ public:
  *  writing to stdout and another writing to stderr--they need to coordinate with each other if they're both going to the
  *  terminal.  A gang just keeps track of what message was most recently emitted. */
 class Gang: public HighWater {
-    typedef Container::Map<int, GangPtr> GangMap;
+    typedef Sawyer::Container::Map<int, GangPtr> GangMap;
     static GangMap gangs_;                              /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
 protected:

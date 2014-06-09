@@ -275,12 +275,17 @@ void ShowVersion::operator()(const ParserResult&) {
     std::cerr <<versionString_ <<"\n";
 }
 
+void ShowVersionAndExit::operator()(const ParserResult &parserResult) {
+    ShowVersion::operator()(parserResult);
+    exit(exitStatus_);
+}
+
 void ShowHelp::operator()(const ParserResult &parserResult) {
     parserResult.parser().emitDocumentationToPager();
 }
 
 void ShowHelpAndExit::operator()(const ParserResult &parserResult) {
-    parserResult.parser().emitDocumentationToPager();
+    ShowHelp::operator()(parserResult);
     exit(exitStatus_);
 }
 
@@ -297,6 +302,9 @@ void ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
 }
 
 ShowVersion::Ptr showVersion(const std::string &versionString) { return ShowVersion::instance(versionString); }
+ShowVersionAndExit::Ptr showVersionAndExit(const std::string &versionString, int exitStatus) {
+    return ShowVersionAndExit::instance(versionString, exitStatus);
+}
 ShowHelp::Ptr showHelp() { return ShowHelp::instance(); }
 ShowHelpAndExit::Ptr showHelpAndExit(int exitStatus) { return ShowHelpAndExit::instance(exitStatus); }
 ConfigureDiagnostics::Ptr configureDiagnostics(const std::string &switchKey, Message::Facilities &facilities) {
