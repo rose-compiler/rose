@@ -242,6 +242,19 @@ SgFunctionDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
   // printf ("In SgFunctionDeclaration::fixupCopy_symbols(): this->get_definition() = %p \n",this->get_definition());
      if (this->get_definition() != NULL)
         {
+       // DQ (3/15/2014): The defining declaration should not be marked (isForward() == true).
+          if (isForward() == true)
+             {
+               printf ("Error: The defining declaration should not be marked (isForward() == true) \n");
+               printf ("SgFunctionDeclaration::fixupCopy_symbols(): (isForward() == true): functionDeclaration_copy = %p = %s \n",functionDeclaration_copy,functionDeclaration_copy->class_name().c_str());
+               printf ("   --- functionDeclaration_copy->get_firstNondefiningDeclaration() = %p \n",functionDeclaration_copy->get_firstNondefiningDeclaration());
+               printf ("   --- functionDeclaration_copy->get_definingDeclaration()         = %p \n",functionDeclaration_copy->get_definingDeclaration());
+
+               functionDeclaration_copy->get_file_info()->display("SgFunctionDeclaration::fixupCopy_scopes(): (isForward() == true): debug");
+
+            // Reset this!
+            // functionDeclaration_copy->unsetForward();
+             }
           ROSE_ASSERT(isForward() == false);
 
        // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
@@ -704,9 +717,9 @@ SgNamespaceDeclarationStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & he
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
-
+#if 0
      printf ("Inside of SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
-
+#endif
   // Call the base class fixupCopy member function
      SgDeclarationStatement::fixupCopy_symbols(copy,help);
 

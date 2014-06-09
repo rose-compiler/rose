@@ -92,7 +92,7 @@ DOTSubgraphRepresentation<NodeType>::writeOutSubgraph( typename map<int,string>:
         {
           if ( (*i).subgraph == sid )
              {
-               (*dotout) << nodeName( (*i).node ) << " [label=\"BLA" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
+               (*dotout) << this->nodeName( (*i).node ) << " [label=\"BLA" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
                (*i).written = true;
              }
         }
@@ -118,9 +118,9 @@ DOTSubgraphRepresentation<NodeType>::writeOutSubgraph( typename map<int,string>:
 
           if( isinthis  )
              {
-               (*dotout) << nodeName( (*i).node1 )
+               (*dotout) << this->nodeName( (*i).node1 )
                          << " -> "
-                         << nodeName( (*i).node2 )
+                         << this->nodeName( (*i).node2 )
                          << " [label=\"" <<  (*i).label << "\" " <<  (*i).option  << " ];" << endl;
                (*i).written = true;
              }
@@ -168,15 +168,15 @@ DOTSubgraphRepresentation<NodeType>::writeDotoutStream( void )
        // write nodes
           for (typename vector<NodeStorageType>::iterator i=mNodes.begin(); i!=mNodes.end(); i++)
              {
-               (*dotout) << nodeName( (*i).node ) << "[label=\"" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
+               (*dotout) << this->nodeName( (*i).node ) << "[label=\"" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
                (*i).written = true;
              }
        // write edges
           for (typename vector<EdgeStorageType>::iterator i=mEdges.begin(); i!=mEdges.end(); i++)
              {
-               (*dotout) << nodeName( (*i).node1 )
+               (*dotout) << this->nodeName( (*i).node1 )
                          << " -> "
-                         << nodeName( (*i).node2 )
+                         << this->nodeName( (*i).node2 )
                          << "[label=\"" <<  (*i).label << "\" " <<  (*i).option  << " ];" << endl;
                (*i).written = true;
              }
@@ -210,7 +210,7 @@ DOTSubgraphRepresentation<NodeType>::writeDotoutStream( void )
 			// write all components of this subgraph
 			for(typename vector<NodeStorageType>::iterator i=mNodes.begin(); i!=mNodes.end(); i++) {
 				if( (*i).subgraph == sid ) {
-				(*dotout) << nodeName( (*i).node ) << " [label=\"BLA" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
+				(*dotout) << this->nodeName( (*i).node ) << " [label=\"BLA" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
 				(*i).written = true; }
 			}
 			for(typename vector<EdgeStorageType>::iterator i=mEdges.begin(); i!=mEdges.end(); i++) {
@@ -226,9 +226,9 @@ DOTSubgraphRepresentation<NodeType>::writeDotoutStream( void )
 				}
 
 				if( isinthis  ) {
-				(*dotout) << nodeName( (*i).node1 )
+				(*dotout) << this->nodeName( (*i).node1 )
 					<< " -> "
-					<< nodeName( (*i).node2 )
+					<< this->nodeName( (*i).node2 )
 					<< " [label=\"" <<  (*i).label << "\" " <<  (*i).option  << " ];" << endl;
 				(*i).written = true; }
 			}
@@ -250,13 +250,13 @@ DOTSubgraphRepresentation<NodeType>::writeDotoutStream( void )
       // DQ (8/16/2004): These nodes will appear outside of the subgraph (as intended by the user)
 		// write everything that wasnt written yet
 		for(typename vector<NodeStorageType>::iterator i=mNodes.begin(); i!=mNodes.end(); i++) {
-			if(!(*i).written) (*dotout) << nodeName( (*i).node ) << "[label=\"BLA" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
+			if(!(*i).written) (*dotout) << this->nodeName( (*i).node ) << "[label=\"BLA" <<  (*i).label  << "\" " <<  (*i).option  << "];" << endl;
 		}
 		// write edges
 		for(typename vector<EdgeStorageType>::iterator i=mEdges.begin(); i!=mEdges.end(); i++) {
-			if(!(*i).written) (*dotout) << nodeName( (*i).node1 )
+			if(!(*i).written) (*dotout) << this->nodeName( (*i).node1 )
 				<< " -> "
-				<< nodeName( (*i).node2 )
+				<< this->nodeName( (*i).node2 )
 				<< "[label=\"" <<  (*i).label << "\" " <<  (*i).option  << " ];" << endl;
 		}
 		for(typename vector<NodeAdditionalStorage>::iterator i=mAdds.begin(); i!=mAdds.end(); i++) {

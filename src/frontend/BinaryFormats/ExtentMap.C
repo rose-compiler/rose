@@ -131,6 +131,20 @@ ExtentMap::exists_all(ExtentPair what) const
 }
 #endif
 
+void
+ExtentMap::dump_extents(std::ostream &o, const std::string &prefix, const std::string &label) const
+{
+    using namespace StringUtility;
+    size_t idx=0;
+    for (const_iterator i=begin(); i!=end(); ++i, ++idx) {
+        o <<prefix <<(label.empty()?std::string("Extent"):label) <<"[" <<idx <<"]"
+          <<" = offset " <<unsignedToHex(i->first.first())
+          <<" for " <<unsignedToHex(i->first.size()) <<(1==i->first.size()?" byte":" bytes")
+          <<" ending at " <<unsignedToHex(i->first.first() + i->first.size()) <<"\n";
+    }
+}
+    
+
 /** Print info about an extent map. This is a little different format than the ostream "<<" operator. */
 void
 ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad) const
