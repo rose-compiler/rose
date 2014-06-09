@@ -554,7 +554,7 @@ public:
     // Dynamic pointer casts
 public:
     /** Run-time promotion of a base RiscOperators pointer to symbolic operators. This is a checked conversion--it
-     *  will fail if @p from does not point to a SymbolicSemantics::RiscOperators object. */
+     *  will fail if @p x does not point to a SymbolicSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         assert(retval!=NULL);

@@ -50,7 +50,7 @@ public:
 
     void assert_args(I insn, A args, size_t nargs) {
         if (args.size()!=nargs) {
-            std::string mesg = "instruction must have " + StringUtility::numberToString(nargs) + "argument" + (1==nargs?"":"s");
+            std::string mesg = "instruction must have " + StringUtility::plural(nargs, "arguments");
             throw BaseSemantics::Exception(mesg, insn);
         }
     }
@@ -599,7 +599,7 @@ struct IP_inc: P {
 struct IP_int: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SgAsmByteValueExpression *bv = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *bv = isSgAsmIntegerValueExpression(args[0]);
         if (!bv)
             throw BaseSemantics::Exception("operand must be a byte value expression", insn);
         ops->interrupt(0, bv->get_value());
@@ -811,7 +811,7 @@ struct IP_movzx: P {
 // Unsigned multiply
 struct IP_mul: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
+        assert_args(insn, args, 1);
         size_t nbits = asm_type_width(args[0]->get_type());
         RegisterDescriptor reg0 = d->REG_AX; reg0.set_nbits(nbits);
         RegisterDescriptor reg1 = d->REG_DX; reg1.set_nbits(nbits);

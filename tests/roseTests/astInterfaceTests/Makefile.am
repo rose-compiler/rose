@@ -28,7 +28,7 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage
+    buildJavaPackage createAbstractHandles
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -86,6 +86,7 @@ insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 loopCollapsing_SOURCES                    = loopCollapsing.C
+createAbstractHandles_SOURCES             = createAbstractHandles.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -148,7 +149,7 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
-  buildJavaPackage.passed
+  buildJavaPackage.passed 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -201,20 +202,21 @@ group1 =						\
 	rose_inputbuildAbstractHandle.C			\
 	rose_inputbuildTypedefDeclaration.C		\
 	rose_inputgetDependentDecls.C			\
-	rose_inputreplaceWithPattern.C
+	rose_inputreplaceWithPattern.C                  \
+	rose_inputcreateAbstractHandles.C
 
 $(group1): rose_input%.C: input%.C %
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/$*$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # deepDelete apparently doesn't actually create an output file
 deepDelete.passed: inputdeepDelete.C deepDelete
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -rose:detect_dangling_pointers 1 -c $<" \
+		CMD="$$(pwd)/deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -rose:detect_dangling_pointers 1 -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # Like group1, except that EXE doesn't follow the pattern
@@ -222,7 +224,7 @@ rose_inputBlank1.C: inputBlank1.C buildFunctionDeclaration
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/buildFunctionDeclaration$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Like group1, except that EXE doesn't follow the pattern
@@ -230,15 +232,15 @@ rose_inputBlank2.C: inputBlank2.C buildNondefiningFunction
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/buildNondefiningFunction$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Like group1, except FLAGS includes an extra -I
 rose_inputbuildFunctionCalls.C: inputbuildFunctionCalls.C buildFunctionCalls
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/buildFunctionCalls$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -I$(srcdir)" \
-		INPUT=$< \
+		FLAGS="$(TEST_CXXFLAGS) -I$(abs_srcdir)" \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Like group1, except this is a C, not C++ file (not sure why we're passing CXXFLAGS instead of CFLAGS though)
@@ -246,7 +248,7 @@ rose_inputbuildPragmaDeclaration.c: inputbuildPragmaDeclaration.c buildPragmaDec
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/buildPragmaDeclaration$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Like group1, except capitalization of the target is different
@@ -254,25 +256,25 @@ rose_inputAttachComment.C: inputAttachComment.C attachComment
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/attachComment$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputInsertHeader.C: inputInsertHeader.C insertHeader
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/insertHeader$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputLookupNamedType.C: inputLookupNamedType.C lookupNamedType
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/lookupNamedType$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputMovePreprocessingInfo.C: inputMovePreprocessingInfo.C movePreprocessingInfo
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/movePreprocessingInfo$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Like group1, except for target extension and extra FLAGS
@@ -280,27 +282,27 @@ rose_inputisUpcSharedType.upc: inputisUpcSharedType.upc isUpcSharedType
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/isUpcSharedType$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputisUpcPhaseLessSharedType.upc: inputisUpcPhaseLessSharedType.upc isUpcPhaseLessSharedType
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/isUpcPhaseLessSharedType$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Doesn't produce a C file
 abiStuffTest.passed: inputAbiStuffTest.c abiStuffTest
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/abiStuffTest$(EXEEXT) $<" \
+		CMD="$$(pwd)/abiStuffTest$(EXEEXT) $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # Doesn't produce a C file
 abiStuffTestUPC.passed: inputAbiStuffTestUPC.upc abiStuffTestUPC
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -rose:upc_threads 1 -c $<" \
+		CMD="$$(pwd)/abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -rose:upc_threads 1 -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 
@@ -322,7 +324,7 @@ $(group2): rose_input%.f: input%.f %
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/$*$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 endif
 
@@ -332,7 +334,7 @@ rose_inputloopUnrolling.C: inputloopUnrolling.C loopUnrolling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopUnrolling$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopunroll:abstract_handle 'Statement<position,5>' -rose:loopunroll:factor 3" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT="-rose:output $@" \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
@@ -340,7 +342,7 @@ rose_inputloopUnrolling1.C: inputloopUnrolling.C loopUnrolling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopUnrolling$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopunroll:abstract_handle 'Statement<position,6>' -rose:loopunroll:factor 5" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT="-rose:output $@" \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
@@ -348,7 +350,7 @@ rose_inputloopUnrolling2.C: inputloopUnrolling.C loopUnrolling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopUnrolling$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopunroll:abstract_handle 'Statement<position,6>' -rose:loopunroll:factor 3" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT="-rose:output $@" \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
@@ -357,7 +359,7 @@ rose_inputloopUnrolling.C: inputloopUnrolling.C loopUnrolling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopUnrolling$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopunroll:abstract_handle 'Statement<position,5>' -rose:loopunroll:factor 3" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT="-rose:output $@" \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
@@ -365,7 +367,7 @@ rose_inputloopUnrolling1.C: inputloopUnrolling.C loopUnrolling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopUnrolling$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopunroll:abstract_handle 'Statement<position,6>' -rose:loopunroll:factor 5" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT="-rose:output $@" \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
@@ -373,7 +375,7 @@ rose_inputloopUnrolling2.C: inputloopUnrolling.C loopUnrolling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopUnrolling$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopunroll:abstract_handle 'Statement<position,6>' -rose:loopunroll:factor 3" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		OUTPUT="-rose:output $@" \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
@@ -384,28 +386,28 @@ rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,5>' -rose:loopcollapse:factor 2" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputloopCollapsing_3.C: inputloopCollapsing_3.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 3" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputloopCollapsing_4.C: inputloopCollapsing_4.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 4" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 5" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
 else
@@ -413,28 +415,28 @@ rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,5>' -rose:loopcollapse:factor 2" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputloopCollapsing_3.C: inputloopCollapsing_3.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 3" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputloopCollapsing_4.C: inputloopCollapsing_4.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 4" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
 rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 5" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
 endif
@@ -444,7 +446,7 @@ rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopInterchange$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopInterchange:abstract_handle 'ForStatement<numbering,1>' -rose:loopInterchange:depth 4 -rose:loopInterchange:order 1" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # Tile the first loop within the input file at depth 3 , tile size is 5
@@ -452,7 +454,7 @@ rose_inputloopTiling.C: inputloopTiling.C loopTiling
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopTiling$(EXEEXT) -rose:loopTiling:abstract_handle 'ForStatement<numbering,1>' -rose:loopTiling:depth 3 -rose:loopTiling:tilesize 5" \
 		FLAGS="$(TEST_CXXFLAGS)" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 rose_inputreplaceMacroCalls.C: inputreplaceMacroCalls.C replaceMacroCalls
@@ -460,7 +462,7 @@ rose_inputreplaceMacroCalls.C: inputreplaceMacroCalls.C replaceMacroCalls
 		DISABLED="boost:wave causes seg fault on 64-bit machines" \
 		EXE="$$(pwd)/replaceMacroCalls$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:wave" \
-		INPUT=$< \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # DQ (9/16/2010): Added this test code to demonstrate problem with adding statments around statments with comments or
@@ -468,8 +470,8 @@ rose_inputreplaceMacroCalls.C: inputreplaceMacroCalls.C replaceMacroCalls
 rose_inputinsertStatementBeforeFunction.C: inputinsertStatementBeforeFunction.C insertStatementBeforeFunction $(srcdir)/inputinsertStatementBeforeFunction_1.h
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/insertStatementBeforeFunction$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -I$(srcdir)" \
-		INPUT=$< \
+		FLAGS="$(TEST_CXXFLAGS) -I$(abs_srcdir)" \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 # There are a lot of different cases that we now test for with the relocation of comments support in the
@@ -490,8 +492,8 @@ group3_headers = 						\
 $(group3): rose_%: % $(group3_headers)
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/removeStatementCommentRelocation$(EXEEXT)" \
-		FLAGS="$(TEST_CXX_FLAGS) -I$(srcdir)" \
-		INPUT=$< \
+		FLAGS="$(TEST_CXX_FLAGS) -I$(abs_srcdir)" \
+		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
 
@@ -499,7 +501,7 @@ $(group3): rose_%: % $(group3_headers)
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $<" \
+		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # MUST keep this up-to-date!!
@@ -529,8 +531,9 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C					\
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f				\
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
-       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C \
-       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
+       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
+       inputbuildJavaPackage.C
 
 
 #------------------------------------------------------------------------------------------------------------------------

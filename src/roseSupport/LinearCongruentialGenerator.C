@@ -39,6 +39,11 @@ LinearCongruentialGenerator::init()
         seed_ = value_ = rand();
     }
 }
+#else
+void
+LinearCongruentialGenerator::init()
+{
+}
 #endif
 
 uint64_t
@@ -75,5 +80,11 @@ LinearCongruentialGenerator::max()
 {
     // all 64 bits are returned by next()
     return UINT64_MAX;
+}
+
+bool
+LinearCongruentialGenerator::flip_coin()
+{
+    return 0 == next(1);
 }
 #endif

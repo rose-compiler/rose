@@ -851,7 +851,6 @@ git commit --allow-empty
 # And then push the changes
 git push origin dq-cxx-rc
 
-
 New merged-builder branch specific instructions:
 
 Push to local repository:
@@ -893,4 +892,37 @@ Clone a new repository:
 
 Checkout someone else's branch:
    git checkout origin/charles4/charles4-java-rc -b charles4-java-rc
+
+
+Access to RH5 machines:
+   ssh hudson-rose-32 (25-31)
+   (alternative use higher numbered machines up to husdon-rose-33, which ar RH6)
+
+Clone my edg4x branch:
+   git clone rose-dev@rosecompiler1.llnl.gov:rose/edg4x/rose.git
+
+   git checkout -b dq-edg4x-rc origin/dquinlan/dq-edg4x-rc
+   git submodule init
+   git submodule update
+
+Command to sync branch on RH5 to RH6 machines (and visa versa)
+   git pull origin dquinlan/dq-edg4x-rc
+
+
+Compiling with CMake:
+   CC=gcc CXX=g++ cmake /home/dquinlan/ROSE/git-dq-edg4x-rc  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug
+then run make normally.
+
+Verbose mode:
+   make VERBOSE=1 -j24
+
+For snippets work with Robb:
+    git pull origin matzke/snippets-rc
+
+
+Make a backup using git:
+   git branch backup
+
+Delete the backup:
+   git branch -D backup
 

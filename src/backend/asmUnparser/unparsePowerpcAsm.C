@@ -71,11 +71,8 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             result = unparsePowerpcRegister(rr->get_descriptor(), registers);
             break;
         }
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression: {
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+        case V_SgAsmIntegerValueExpression: {
+            uint64_t v = isSgAsmIntegerValueExpression(expr)->get_absolute_value();
             if (useHex) {
                 result = StringUtility::intToHex(v);
             } else {
@@ -84,7 +81,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             if (labels) {
                 AsmUnparser::LabelMap::const_iterator li = labels->find(v);
                 if (li!=labels->end())
-                    result += "<" + li->second + ">";
+                    result = StringUtility::appendAsmComment(result, li->second);
             }
             break;
         }
@@ -93,9 +90,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             ROSE_ASSERT (false);
         }
     }
-    if (expr->get_replacement() != "") {
-        result += " <" + expr->get_replacement() + ">";
-    }
+    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     return result;
 }
 

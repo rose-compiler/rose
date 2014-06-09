@@ -85,15 +85,11 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
             break;
         }
 
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression:
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             assert(ival!=NULL);
             uint64_t value = ival->get_absolute_value(); // not sign extended
-            result = StringUtility::addrToString(value, ival->get_significant_bits(), true/*signed*/);
+            result = StringUtility::signedToHex2(value, ival->get_significant_bits());
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
@@ -102,8 +98,7 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
                 label =mipsValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();
-            if (!label.empty())
-                result += "<" + label + ">";
+            result = StringUtility::appendAsmComment(result, label);
             break;
         }
 
@@ -113,14 +108,6 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         }
     }
 
-    if (expr->get_replacement() != "") {
-        result += " <" + expr->get_replacement() + ">";
-    }
-#if 0
-    if (expr->get_bit_size()>0) {
-        result += " <@" + StringUtility::numberToString(expr->get_bit_offset()) +
-                  "+" + StringUtility::numberToString(expr->get_bit_size()) + ">";
-    }
-#endif
+    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     return result;
 }

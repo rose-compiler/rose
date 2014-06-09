@@ -20,7 +20,9 @@ operator<<(std::ostream &o, const Partitioner::IPDParser::Exception &e)
 std::string
 Partitioner::IPDParser::Exception::format() const 
 {
-    std::string retval = mesg.empty() ? "IPD parse error" : mesg;
+    std::string retval = what();
+    if (retval.empty())
+        retval = "IPD parse error";
 
     if (name.empty()) {
         if (lnum>0)
@@ -322,7 +324,7 @@ Partitioner::IPDParser::parse_Successors()
         try {
             cur_block->sucs_program = AssemblerX86().assembleProgram(src);
         } catch (const Assembler::Exception &e) {
-            throw Exception(std::string("successor program assembly failed: ") + e.mesg);
+            throw Exception(std::string("successor program assembly failed: ") + e.what());
         }
     } else {
         /* Successors specified as a list of addresses in curly braces */

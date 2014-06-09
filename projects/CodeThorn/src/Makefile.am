@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = addressTakenAnalysis
+#SUBDIRS = addressTakenAnalysis
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
@@ -8,13 +8,13 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
 if ROSE_APPROVED_PYTHON_VERSION
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
-# DQ (9/12/2013): Need to add -fopenmp to link line to get portable handling via automake.
-#AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
+
+noinst_PROGRAMS = addressTakenAnalysis 
 
 MYDATE = $(shell date +%Y_%m_%d)
 
@@ -53,8 +53,6 @@ codethorn_SOURCES = \
   LTLCheckerUnified.C              \
   LTLCheckerUnified.h              \
   LTLParser.y++                    \
-  Labeler.C                        \
-  Labeler.h                        \
   LanguageRestrictor.C             \
   LanguageRestrictor.h             \
   LanguageRestrictorCollection.C   \
@@ -62,45 +60,51 @@ codethorn_SOURCES = \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   SetAlgo.h                        \
-  SgNodeHelper.C                   \
-  SgNodeHelper.h                   \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \
   Timer.h                          \
-  VariableIdMapping.C              \
-  VariableIdMapping.h              \
   Visualizer.C                     \
   Visualizer.h                     \
   RDLattice.h                      \
   RDLattice.C                      \
-  AstAnnotator.h             \
-  AstAnnotator.C             \
   codethorn.C                      \
   codethorn.h                      \
   WorkListSeq.h                    \
   DFAnalyzer.h                     \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  DFAstAttribute.h           \
-  DFAstAttribute.C           \
-  RDAstAttributeInterface.h \
-  RDAstAttributeInterface.C \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
-  CPAstAttributeInterface.h	\
-  CPAstAttributeInterface.C	\
   RERS_empty_specialization.C      \
   Flow.h \
   Flow.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h
+  ReachabilityResults.h \
+  ReachabilityResults.C \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
+  RewriteSystem.C \
+  RewriteSystem.h 
 
-#  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h
+addressTakenAnalysis_SOURCES = \
+  Timer.cpp \
+  AstTerm.C \
+  AnalysisAbstractionLayer.C \
+  Miscellaneous.C \
+  CommandLineOptions.C \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysisDriver.C
+
+addressTakenAnalysis_LDADD = -lrose
 
 # used only in specialized analyzer
 faketarget:
@@ -130,7 +134,27 @@ faketarget:
 	WorkListOMP.C
 	WorkListSeq.C
 	DFAnalyzer.C
-#      matcherparser_decls.h
+	DeadCodeEliminationOperators.C 
+	spotconnection/ltlverifier.C 
+	spotconnection/stg2.c 
+	spotconnection/stg2_cpp.C 
+	tests/Problem28.c 
+	tests/artificialsum1.C 
+	tests/artificialsum1.c 
+	tests/artificialsum2.C 
+	tests/artificialsum3.C 
+	tests/artificialsum4.C 
+	tests/artificialsum_pointers1.C 
+	tests/jacobi.c 
+	tests/jacobi_normalized.c 
+	tests/jacobi_seq.c 
+	tests/logictest1.C 
+	tests/rdtest1.C 
+	tests/rdtest2.C 
+	tests/rdtest3.C 
+	tests/rdtest4.C 
+	tests/rers13_mini1.C 
+#      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
 
@@ -138,8 +162,7 @@ REGRESSION_DATA_DIR=regressiondata
 
 # MS: matcher_demo
 matcher_demo_LDADD = -lrose
-#matcher_demo_SOURCES = matcherparser.yy matcherlexer.ll Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
-matcher_demo_SOURCES = Timer.cpp AstTerm.C SgNodeHelper.h SgNodeHelper.C matcher_demo.C
+matcher_demo_SOURCES = Timer.cpp AstTerm.C matcher_demo.C
 #matcher_demo_AM_YFLAGS = -d -p matcherparser
 #matcher_demo_AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
 BUILT_SOURCES = 
@@ -147,16 +170,12 @@ AM_YFLAGS =
 AM_LFLAGS =
 
 varwatch_LDADD = -lrose
-varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C
+varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AstAnnotator.h AstAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  DFAstAttribute.h           \
-  DFAstAttribute.C           \
-  RDAstAttributeInterface.h \
-  RDAstAttributeInterface.C \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
   UDAstAttribute.h                 \
@@ -169,25 +188,25 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   ProgramStats.C                 \
   Flow.h \
   Flow.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h
 
 woodpecker_LDADD = -lrose
-woodpecker_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AstAnnotator.h AstAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  DFAstAttribute.h           \
-  DFAstAttribute.C           \
-  RDAstAttributeInterface.h \
-  RDAstAttributeInterface.C \
+  AType.h                          \
+  AType.C                          \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
+  CPAstAttribute.h CPAstAttribute.C \
   AstTerm.h                        \
   AstTerm.C                        \
   Miscellaneous.C                  \
@@ -196,14 +215,67 @@ woodpecker_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.
   ProgramStats.C                 \
   Flow.h \
   Flow.C \
-  addressTakenAnalysis/defUseQuery.C \
-  addressTakenAnalysis/defUseQuery.h \
-  addressTakenAnalysis/VariableIdUtils.C \
-  addressTakenAnalysis/VariableIdUtils.h \
-  addressTakenAnalysis/addressTakenAnalysis.C \
-  addressTakenAnalysis/addressTakenAnalysis.h \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
+  ReachabilityResults.h \
+  ReachabilityResults.C \
+  TrivialInlining.C                \
+  TrivialInlining.h                \
+  DeadCodeElimination.C                \
+  DeadCodeElimination.h                \
+  ReachabilityAnalysis.C \
+  ReachabilityAnalysis.h \
   woodpecker.C
 
+
+analyterix_LDADD = -lrose
+analyterix_SOURCES = \
+  CommandLineOptions.h CommandLineOptions.C \
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
+  AnalysisAbstractionLayer.h       \
+  AnalysisAbstractionLayer.C       \
+  CFAnalyzer.h \
+  CFAnalyzer.C \
+  RDLattice.h \
+  RDLattice.C \
+  RDAnalyzer.h \
+  RDAnalyzer.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  LanguageRestrictor.h \
+  LanguageRestrictor.C \
+  LanguageRestrictorCollection.h \
+  LanguageRestrictorCollection.C \
+  DataDependenceVisualizer.h \
+  DataDependenceVisualizer.C \
+  AType.h \
+  AType.C \
+  RDAstAttribute.h \
+  RDAstAttribute.C \
+  UDAstAttribute.h \
+  UDAstAttribute.C \
+  CPAstAttribute.h CPAstAttribute.C \
+  AstTerm.h \
+  AstTerm.C \
+  Miscellaneous.C \
+  Miscellaneous.h \
+  ProgramStats.h \
+  ProgramStats.C \
+  Flow.h \
+  Flow.C \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
+  ReachabilityResults.h \
+  ReachabilityResults.C \
+  analyterix.C
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -271,7 +343,9 @@ dummy_target:
         # paste all csv's line-by-line
 	paste -d "," $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<) >$@
         # ensure that all variants are consistent
-	if egrep '(yes,.*no,)|(no,.*yes,)' $@; then false; fi
+        #if egrep '(yes,.*no,)|(no,.*yes,)' $@; then false; fi
+
+deactivated_tests:
         # now also compare with counterexamples
 	python $(srcdir)/regressiondata/validate.py \
 	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) \
@@ -298,7 +372,6 @@ dummy_target:
 	python $(srcdir)/tests/rers/verify.py \
 	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
 	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) || echo "** XFAIL"
-
 
 
 # MS: 1-6 is reasonable for V1.2
@@ -548,7 +621,12 @@ CODETHORN_TESTS= \
     tests/rers/properties6.txt \
     tests/rers/properties7.txt \
     tests/rers/properties8.txt \
-    tests/rers/properties9.txt
+    tests/rers/properties9.txt \
+    tests/rers/Problem28_mod.c \
+    tests/rers/Problem28_opt.C \
+    tests/rers/Problem901-solutions.csv \
+    tests/rers/Problem901-solutions.ltl.csv \
+    tests/rers/Problem901.c
 
 # MS: does not exist
 #    tests/test.ltl \

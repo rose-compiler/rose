@@ -2,53 +2,15 @@
 
 #include "DisassemblerMips.h"
 #include "integerOps.h"
+using namespace IntegerOps;
 
 class DisassemblerMips;
 
-
-/** Create a bit mask. The returned mask will have all bits from @p lobit through @p hibit (inclusive) set, and all other bits
- *  are clear. */
 template<size_t lobit, size_t hibit>
-static unsigned
-mask_for()
+static unsigned mask_for()
 {
-    assert(hibit<32);
-    assert(hibit>=lobit);
-    return IntegerOps::shiftLeft<32>(IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value, lobit);
+    return genMask<unsigned>(lobit, hibit);
 }
-
-/** Create a shifted value. The return value is created by shifting @p value to the specified position in the result. Other
- *  bits of the return value are clear. The @p hibit is specified so that we can check at run-time that a valid value was
- *  specified (i.e., the value isn't too wide). */
-template<size_t lobit, size_t hibit>
-static unsigned
-shift_to(unsigned value)
-{
-    assert(hibit<32);
-    assert(hibit>=lobit);
-    assert(0==(value & ~IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value));
-    return IntegerOps::shiftLeft<32>(value & IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value, lobit);
-}
-
-/** Extract bits from a value.  Bits @p lobit through @p hibit, inclusive, are right shifted into the result and higher-order
- *  bits of the result are cleared. */
-template<size_t lobit, size_t hibit>
-static unsigned
-extract(unsigned bits)
-{
-    assert(hibit<32);
-    assert(hibit>=lobit);
-    return IntegerOps::shiftRightLogical<32>(bits, lobit) & IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value;
-}
-
-/** Determines if one bitmask is a subset of another.  Returns true if the bits set in the first argument form a subset of the
- *  bits set in the second argument. */
-static bool
-bitmask_subset(unsigned m1, unsigned m2)
-{
-    return 0 == (~m1 & m2); // m2 must not contain bits that are not in m1
-}
-
 
 // These simple little functions operate on certain bits of an instruction and are used commonly throughout the
 // disassembler. The functions whose name begins with "m" are for creating bit masks; those beginning with "s" are for setting
@@ -481,66 +443,72 @@ DisassemblerMips::makeHwRegister(unsigned cc)
 SgAsmMipsRegisterReferenceExpression *
 DisassemblerMips::makeShadowRegister(unsigned cc)
 {
-    assert(!"FIXME");
-    abort();
-    return NULL;
+    // Get the general purpose register
+    SgAsmMipsRegisterReferenceExpression *regref = makeRegister(cc);
+    assert(regref!=NULL);
+
+    // Turn it into a shadow register
+    RegisterDescriptor desc = regref->get_descriptor();
+    desc.set_major(mips_regclass_sgpr);
+    regref->set_descriptor(desc);
+    return regref;
 }
 
-SgAsmByteValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate8(unsigned value, size_t bit_offset, size_t nbits)
 {
     assert(0==(value & ~0xff));
-    SgAsmByteValueExpression *retval = new SgAsmByteValueExpression(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeByteValue(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate16(unsigned value, size_t bit_offset, size_t nbits)
 {
     assert(0==(value & ~0xffff));
-    SgAsmWordValueExpression *retval = new SgAsmWordValueExpression(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeWordValue(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate32(unsigned value, size_t bit_offset, size_t nbits)
 {
     assert(0==(value & ~0xffffffffull));
-    SgAsmDoubleWordValueExpression *retval = new SgAsmDoubleWordValueExpression(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeDWordValue(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeBranchTargetRelative(unsigned pc_offset, size_t bit_offset, size_t nbits)
 {
     assert(0==(pc_offset & ~0xffff));
-    pc_offset = IntegerOps::shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
-    pc_offset = IntegerOps::signExtend<18, 32>(pc_offset);      // offsets are signed
-    unsigned target = (get_ip() + 4 + pc_offset) & IntegerOps::GenMask<unsigned, 32>::value; // measured from next instruction
-    SgAsmDoubleWordValueExpression *retval = new SgAsmDoubleWordValueExpression(target);
+    pc_offset = shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
+    pc_offset = signExtend<18, 32>(pc_offset);      // offsets are signed
+    unsigned target = (get_ip() + 4 + pc_offset) & GenMask<unsigned, 32>::value; // measured from next instruction
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeDWordValue(target);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits)
 {
     assert(nbits>0);
     assert(bit_offset+nbits+2<=32);
-    assert(0==(insn_index & ~IntegerOps::genMask<uint64_t>(nbits)));
+    assert(0==(insn_index & ~genMask<uint64_t>(nbits)));
     unsigned lo_nbits = nbits+2;        // number of bits coming from instr_index after multiplying by four
-    unsigned lo_mask = IntegerOps::genMask<uint64_t>(lo_nbits);
-    unsigned lo_target = IntegerOps::shiftLeft<32>(insn_index, 2) & lo_mask;
+    unsigned lo_mask = genMask<uint64_t>(lo_nbits);
+    unsigned lo_target = shiftLeft<32>(insn_index, 2) & lo_mask;
     unsigned hi_target = (get_ip() + 4) & ~lo_mask;
     unsigned target = hi_target | lo_target;
-    return new SgAsmDoubleWordValueExpression(target);
+    return SageBuilderAsm::makeDWordValue(target);
 }
 
 SgAsmBinaryAdd *
@@ -548,8 +516,8 @@ DisassemblerMips::makeRegisterOffset(unsigned gprnum, unsigned offset16)
 {
     SgAsmMipsRegisterReferenceExpression *regref = makeRegister(gprnum);
     assert(0==(offset16 & ~0xffff));
-    unsigned offset32 = IntegerOps::signExtend<16, 32>(offset16);
-    SgAsmDoubleWordValueExpression *offset = new SgAsmDoubleWordValueExpression(offset32);
+    unsigned offset32 = signExtend<16, 32>(offset16);
+    SgAsmIntegerValueExpression *offset = SageBuilderAsm::makeDWordValue(offset32);
     SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(regref, offset);
     return retval;
 }
@@ -1696,7 +1664,7 @@ static struct Mips32_lbe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(054),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lbe, "lbe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I8()));
@@ -1719,7 +1687,7 @@ static struct Mips32_lbue: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(050),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lbue, "lbue",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_U8()));
@@ -1774,7 +1742,7 @@ static struct Mips32_lhe: Mips32 {
                          sOP(037)|shift_to<6, 6>(1)|sFN(055),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lhe, "lhe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I16()));
@@ -1797,7 +1765,7 @@ static struct Mips32_lhue: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(051),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lhue, "lhue",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_U16()));
@@ -1820,7 +1788,7 @@ static struct Mips32_lle: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(056),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lle, "lle",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -1885,7 +1853,7 @@ static struct Mips32_lwe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(057),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lwe, "lwe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -1908,7 +1876,7 @@ static struct Mips32_lwle: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(031),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lwle, "lwle",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -1931,7 +1899,7 @@ static struct Mips32_lwre: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(032),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lwre, "lwre",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -2692,7 +2660,7 @@ static struct Mips32_prefe: Mips32 {
                            sOP(037)|shift_to<6, 6>(0)|sFN(043),
                            mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         return d->makeInstruction(mips_prefe, "prefe",
                                   d->makeImmediate8(gR1(ib), 16, 5), d->makeRegisterOffset(gR0(ib), offset16));
     }
@@ -2879,7 +2847,7 @@ static struct Mips32_sbe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(034),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_sbe, "sbe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B8()));
@@ -2902,7 +2870,7 @@ static struct Mips32_sce: Mips32 {
                          sOP(047)|shift_to<6, 6>(0)|sFN(036),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_sce, "sce",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -2979,7 +2947,7 @@ static struct Mips32_she: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(035),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_she, "she",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B16()));
@@ -3223,7 +3191,7 @@ static struct Mips32_swe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(037),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_swe, "swe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B32()));
@@ -3246,7 +3214,7 @@ static struct Mips32_swle: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(041),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_swle, "swle",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B32()));
@@ -3269,7 +3237,7 @@ static struct Mips32_swre: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(042),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_swre, "swre",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B32()));

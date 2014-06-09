@@ -22,7 +22,7 @@ operator<<(std::ostream &o, const BinaryLoader::Exception &e)
 void
 BinaryLoader::Exception::print(std::ostream &o) const
 {
-    o <<mesg;
+    o <<what();
 }
 
 /* We put some initializations here in a *.C file so we don't need to recompile so much if we need to change how a
@@ -334,7 +334,8 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
     rose_addr_t old_base_va = header->get_base_va();
     rose_addr_t new_base_va = rebase(map, header, sections);
     if (new_base_va != old_base_va) {
-        if (debug) fprintf(debug, "  temporarily rebasing header from 0x%08"PRIx64" to 0x%08"PRIx64"\n", old_base_va, new_base_va);
+        if (debug) fprintf(debug, "  temporarily rebasing header from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
+                           old_base_va, new_base_va);
         header->set_base_va(new_base_va);
     }
 

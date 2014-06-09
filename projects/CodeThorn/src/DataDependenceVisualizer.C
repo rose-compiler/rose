@@ -2,7 +2,7 @@
 
 #include "rose.h"
 #include "DataDependenceVisualizer.h"
-#include "addressTakenAnalysis/VariableIdUtils.h"
+#include "VariableIdUtils.h"
 #include "CFAnalyzer.h"
 
 class VariableIdSetAttribute;

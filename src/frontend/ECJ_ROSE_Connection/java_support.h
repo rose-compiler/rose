@@ -1,22 +1,14 @@
 #ifndef ROSE_JAVA_SUPPORT
 #define ROSE_JAVA_SUPPORT
 
+#include "ecj.h"
+
 using namespace std;
 
 extern SgProject *project;
 extern SgGlobal *globalScope;
 extern SgSourceFile *currentSourceFile;
-extern SgClassType *ObjectClassType;
-extern SgClassType *StringClassType;
-extern SgClassType *ClassClassType;
 extern SgClassDefinition *ObjectClassDefinition;
-extern SgName java_lang;
-
-// This is used for both Fortran and Java support to point to the current SgSourceFile.
-extern SgSourceFile *OpenFortranParser_globalFilePointer;
-
-#include "jni_JavaSourceCodePosition.h"
-#include "token.h"
 
 // Control output from Fortran parser
 #define DEBUG_JAVA_SUPPORT true
@@ -25,37 +17,37 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 
 // TODO: Remove this !!!
 //extern string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
-extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
+//extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
+extern string javaStringToUtf8(const jstring &java_string);
 
-extern SgArrayType *getUniqueArrayType(SgType *, int);
-extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgType *containing_type, SgTemplateParameterPtrList *);
-extern SgJavaWildcardType *getUniqueWildcardUnbound();
-extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
-extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
-extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType *, SgType *);
+//extern SgArrayType *getUniqueArrayType(SgType *, int);
+//extern SgPointerType *getUniquePointerType(SgType *, int);
+//extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
+//extern SgJavaWildcardType *getUniqueWildcardUnbound();
+//extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
+//extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
+//extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType *, SgType *);
 
 string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
 
-bool isVisibleSimpleTypeName(SgNamedType *);
+//bool isVisibleSimpleTypeName(SgNamedType *);
 bool isConflictingType(string, SgClassType *);
 bool isImportedType(SgClassType *);
+bool isImportedTypeOnDemand(AstSgNodeListAttribute *, SgClassDefinition *, SgClassType *);
 
 bool mustBeFullyQualified(SgClassType *class_type);
 string markAndGetQualifiedTypeName(SgClassType *class_type);
 
+bool hasConflicts(SgClassDeclaration *class_declaration);
+
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
-string getFullyQualifiedTypeName(SgClassType *);
+string getUnionTypeName(SgJavaUnionType *);
 string getParameters(SgJavaParameterizedType *);
-string getUnqualifiedTypeName(SgJavaParameterizedType *);
-string getFullyQualifiedTypeName(SgJavaParameterizedType *);
-string getFullyQualifiedTypeName(SgJavaQualifiedType *);
-bool hasConflicts(SgClassDeclaration *class_declaration);
 string getTypeName(SgClassType *class_type);
-string getTypeName(SgJavaParameterizedType *parm_type);
-string getTypeName(SgJavaQualifiedType *);
 string getTypeName(SgType *);
+string getUnqualifiedTypeName(SgType *);
+string getFullyQualifiedTypeName(SgType *);
 
 //
 // This class is kept here as documentation. IT is declared in:  ./src/midend/astProcessing/AstAttributeMechanism.h
@@ -73,49 +65,6 @@ string getTypeName(SgType *);
 //         AstSgNodeListAttribute();
 //         AstSgNodeListAttribute(std::vector<SgNode *> &);
 // };
-
-
-//
-// Attribute used to construct array types.
-//
-class AstArrayTypeAttribute : public AstAttribute {
-public:
-    SgArrayType *arrayType;
-
-    AstArrayTypeAttribute(SgArrayType *array_type) : arrayType(array_type) {}
-
-    SgArrayType *getArrayType() { return arrayType; }
-};
-
-
-//
-// Attribute used to construct pointer types.  These are not valid Java types. However,
-// they are required for multi-dimensional arrays in the Rose representation.
-//
-class AstPointerTypeAttribute : public AstAttribute {
-public:
-    SgPointerType *pointerType;
-
-    AstPointerTypeAttribute(SgPointerType *pointer_type) : pointerType(pointer_type) {}
-
-    SgPointerType *getPointerType() { return pointerType; }
-};
-
-
-//
-// Attribute used to construct parameterized types.
-//
-class AstParameterizedTypeAttribute : public AstAttribute {
-private:
-    SgNamedType *rawType;
-    list<SgJavaParameterizedType *> parameterizedTypes;
-
-public:
-    AstParameterizedTypeAttribute(SgNamedType *rawType_) : rawType(rawType_) {}
-
-    bool argumentsMatch(SgTemplateParameterList *type_arg_list, SgTemplateParameterPtrList *new_args_ptr);
-    SgJavaParameterizedType *findOrInsertParameterizedType(SgType *containing_type, SgTemplateParameterPtrList *new_args_ptr);
-};
 
 
 //
@@ -219,7 +168,7 @@ public:
 class ScopeStack : private list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
-if (isSgLocatedNode(n) && n != ::globalScope) {
+if (isSgLocatedNode(n) && n != globalScope) {
 Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
 if (file_info == NULL)
 cout << "Null file_info found while pushing scope node " << n -> class_name() << endl;
@@ -247,7 +196,7 @@ cout.flush();
     SgScopeStatement *pop() {
         ROSE_ASSERT(size() > 0);
         SgScopeStatement *n = front();
-if (isSgLocatedNode(n) && n != ::globalScope) {
+        if (isSgLocatedNode(n) && n != ::globalScope) {
 Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
 if (file_info == NULL)
 cout << "Null file_info found while popping scope node " << n -> class_name() << endl;
@@ -477,14 +426,15 @@ extern ComponentStack astJavaComponentStack;
 // Global stack of scopes
 extern ScopeStack astJavaScopeStack;
 
+class Token_t;
 void setJavaSourcePosition(SgLocatedNode *locatedNode, Token_t *);
 void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
-void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
+//void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 
 // *********************************************
 
+//SgClassDeclaration *buildDefiningClassDeclaration(SgClassDeclaration::class_types kind, SgName, SgScopeStatement *);
 SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *, const SgName &, JNIEnv *, jobject);
-SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
 SgClassDefinition *findOrInsertPackage(SgScopeStatement *, const SgName &, JNIEnv *env, jobject loc);
 SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
 SgJavaPackageDeclaration *findPackageDeclaration(SgName &);

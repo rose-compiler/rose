@@ -6,6 +6,8 @@
 #include <iostream>
 #include <cassert>
 
+#include "rosedll.h"
+
 class VectorCmdOptions
 {
   std::vector<std::string>* cmd;
@@ -20,7 +22,7 @@ class VectorCmdOptions
     return *cmd;
   }
   size_t HasOption( const std::string& opt) const;  // Returns one-based index or zero for not found
-  static VectorCmdOptions* GetInstance();
+  ROSE_UTIL_API static VectorCmdOptions* GetInstance();
 };
 
 #endif

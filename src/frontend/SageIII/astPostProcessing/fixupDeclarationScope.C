@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 
 #include "fixupDeclarationScope.h"
+
+
 void fixupAstDeclarationScope( SgNode* node )
    {
   // This function was designed to fixup what I thought were inconsistancies in how the 
@@ -58,8 +60,12 @@ void fixupAstDeclarationScope( SgNode* node )
             // TV (7/22/13): This is also triggered when for global scope accross files.
                if (associatedScope != correctScope)
                   {
-                    printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
-                         *j,(*j)->class_name().c_str(),associatedScope,associatedScope->class_name().c_str(),correctScope,correctScope->class_name().c_str());
+                 // DQ (1/30/2014): Cleaning up some output spew.
+                    if (SgProject::get_verbose() > 0)
+                       {
+                         printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
+                              *j,(*j)->class_name().c_str(),associatedScope,associatedScope->class_name().c_str(),correctScope,correctScope->class_name().c_str());
+                       }
 #if 0
                     printf ("Make this an error for now! \n");
                     ROSE_ASSERT(false);

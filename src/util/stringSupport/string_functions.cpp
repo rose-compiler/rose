@@ -472,27 +472,84 @@ StringUtility::numberToString ( double x )
      return string(numberString);
    }
 
+#ifndef _MSC_VER
+// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
+// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
+// DQ (2/22/2014): Required code for GNU versions greater than 4.6.
 string
-StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
-{
-    std::string retval;
+StringUtility::numberToString ( __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     long long temp_x = (long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
 
-    assert(nbits>0 && nbits<=128);
+string
+StringUtility::numberToString ( unsigned __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     unsigned long long temp_x = (unsigned long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
+   #endif
+#endif
+
+// DQ (2/23/2014): Fixed conflict in commit for 128 bit integer support.
+// string StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
+std::string
+StringUtility::toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, bool show_signed_decimal,
+                      uint64_t decimal_threshold)
+{
+    assert(nbits>0 && nbits<=8*sizeof value);
+    uint64_t sign_bit = ((uint64_t)1 << (nbits-1));
+
+    // Hexadecimal value
+    std::string retval;
     int nnibbles = (nbits+3)/4;
     char buf[64];
     snprintf(buf, sizeof buf, "0x%0*"PRIx64, nnibbles, value);
     buf[sizeof(buf)-1] = '\0';
     retval = buf;
 
-    if (nbits>=2 && is_signed && nbits<=(8*sizeof(value))) {
-        uint64_t signbit = (uint64_t)1 << (nbits-1);
-        uint64_t mask_lo = signbit - 1;                     // bits less significant than the sign bit
-        uint64_t mask_hi = ~(signbit | mask_lo);            // bits more significant than the sign bit
-        if (0!=(value & signbit) && 0!=(value & mask_lo) && 0==(value & mask_hi))
-            retval += "<-" + addrToString((~value+1) & mask_lo, nbits, false) + ">";
+    // unsigned decimal
+    bool showed_unsigned = false;
+    if (show_unsigned_decimal && value >= decimal_threshold) {
+        retval = appendAsmComment(retval, numberToString(value));
+        showed_unsigned = true;
     }
 
+    // signed decimal
+    if (show_signed_decimal) {
+        if (0 == (value & sign_bit)) {
+            // This is a positive value. Don't show it if we did already.
+            if (!showed_unsigned && value >= decimal_threshold)
+                retval = appendAsmComment(retval, numberToString(value));
+        } else {
+            // This is a negative value, so show it as negative.  We have to manually sign extend it first.
+            int64_t signed_value = (value | (-1ll & ~(sign_bit-1)));
+            retval = appendAsmComment(retval, numberToString(signed_value));
+        }
+    }
     return retval;
+}
+
+std::string
+StringUtility::signedToHex2(uint64_t value, size_t nbits)
+{
+    return toHex2(value, nbits, false, true);
+}
+
+std::string
+StringUtility::unsignedToHex2(uint64_t value, size_t nbits)
+{
+    return toHex2(value, nbits, true, false);
+}
+
+string
+StringUtility::addrToString(uint64_t value, size_t nbits)
+{
+    return toHex2(value, nbits, false, false);
 }
 
 string
@@ -1777,4 +1834,16 @@ StringUtility::untab(const std::string &str, size_t tabstops, size_t colnum)
         }
     }
     return retval;
+}
+
+std::string
+StringUtility::appendAsmComment(const std::string &s, const std::string &comment)
+{
+    if (comment.empty())
+        return s;
+    if (s.empty())
+        return "<" + comment + ">";
+    if (s[s.size()-1] == '>')
+        return s.substr(0, s.size()-1) + "," + comment + ">";
+    return s + "<" + comment + ">";
 }

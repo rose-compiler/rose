@@ -43,17 +43,25 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( ReferenceType       , "ReferenceType",        "T_REFERENCE" );
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
+  // DQ (3/24/2014): Adding support for 128 bit integers.
+     NEW_TERMINAL_MACRO ( TypeUnsigned128bitInteger, "TypeUnsigned128bitInteger",  "T_UNSIGNED_128BIT_INTEGER" );
+     NEW_TERMINAL_MACRO ( TypeSigned128bitInteger  , "TypeSigned128bitInteger"  ,  "T_SIGNED_128BIT_INTEGER" );
+
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABLE" );
 
   // DQ (5/7/2004): Made this a terminal, was previously a nonterminal 
   // with a TemplateInstantiationType derived from it.
-     NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
+  //   NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
 
   // DQ (8/18/2011): Java specific support for generics.
      NEW_TERMINAL_MACRO ( JavaParameterizedType , "JavaParameterizedType", "T_JAVA_PARAM" );
      NEW_TERMINAL_MACRO ( JavaQualifiedType , "JavaQualifiedType", "T_JAVA_QUALIFIED" );
      NEW_TERMINAL_MACRO ( JavaWildcardType, "JavaWildcardType", "T_JAVA_WILD" );
+
+  // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+     NEW_TERMINAL_MACRO ( JavaUnionType    , "JavaUnionType", "T_JAVA_UNION" );
+     NEW_TERMINAL_MACRO ( JavaParameterType , "JavaParameterType", "T_JAVA_PARAMETER" );
 
      //
      // [DT] 5/11/2000 -- Added TemplateType.  Should it be called TemplateInstantiationType
@@ -119,10 +127,21 @@ Grammar::setUpTypes ()
   // NEW_NONTERMINAL_MACRO (NamedType,
   //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
   //                        "NamedType","T_NAME");
+#if 0
+  // DQ (2/10/2014): Original code
      NEW_NONTERMINAL_MACRO (NamedType,
                             ClassType | JavaParameterizedType | JavaQualifiedType | EnumType | TypedefType,
                             "NamedType","T_NAME", false);
-
+#else
+  // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+     NEW_NONTERMINAL_MACRO (ClassType,
+                            JavaParameterType,
+                            "ClassType","T_CLASS", true);
+     NEW_NONTERMINAL_MACRO (NamedType,
+                            ClassType | JavaParameterizedType | JavaQualifiedType | EnumType | TypedefType | JavaWildcardType,
+                            "NamedType","T_NAME", false);
+#endif
+ 
   // DQ (5/11/2011): This is no longer used, and has not be used since the 3rd rewite of the name qualification
   // support in 2007.  We are now working on the 4rh rewrite of this horrible subject and it is not clear if it
   // should be revived.  I would rather place the name qualification information into the constructs the reference
@@ -142,12 +161,12 @@ Grammar::setUpTypes ()
           TypeSignedInt    | TypeUnsignedInt   | TypeLong          | TypeSignedLong       | 
           TypeUnsignedLong | TypeVoid          | TypeGlobalVoid    | TypeWchar            |
           TypeFloat        | TypeDouble        | TypeLongLong      | TypeSignedLongLong   |
-          TypeUnsignedLongLong | 
+          TypeUnsignedLongLong  |  TypeSigned128bitInteger  |  TypeUnsigned128bitInteger  |
           TypeLongDouble   | TypeString        | TypeBool          | PointerType          |
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
           TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
-          TypeCrayPointer  | TypeLabel         | JavaWildcardType, "Type","TypeTag", false);
+          TypeCrayPointer  | TypeLabel         | JavaUnionType, "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -186,19 +205,31 @@ Grammar::setUpTypes ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // MK: Type.excludeDataPrototype ("int","substitutedForTemplateParam","= 0");
 
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to reference type
+  // Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to pointer type
+  // Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to modifier nodes (I forget the purpose of this)
+  // Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Reference to typedef type \attention{(need to check that these are fully resolved within mapping from EDG)}
 #if 1
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
+  // Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
      Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
   // #else
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
@@ -345,6 +376,10 @@ Grammar::setUpTypes ()
      TypeSignedLongLong.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsignedLongLong.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (3/24/2014): Adding support for 128 bit integers.
+     TypeSigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeUnsigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
      TypeCAFTeam.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // FMZ (4/8/2009): Added for Cray pointer
@@ -424,13 +459,22 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_JAVA_QUALIFIED_TYPE",
             "SgClassDeclaration* decl = NULL");
 
-  // DQ (11/28/2011): Make this more like the NamedType internal support.
+  // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+     CUSTOM_CREATE_TYPE_MACRO(JavaUnionType,
+            "SOURCE_CREATE_TYPE_FOR_JAVA_UNION_TYPE",
+            "SgClassDeclaration* decl = NULL");
+
+     CUSTOM_CREATE_TYPE_MACRO(JavaParameterType,
+            "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE",
+            "SgClassDeclaration* decl = NULL");
+
+   // DQ (11/28/2011): Make this more like the NamedType internal support.
   // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(JavaWildcardType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE",
-            "SgType *bound_type = NULL");
+            "SgClassDeclaration *decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,
             "SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE",
             "SgTemplateInstantiationDecl* decl = NULL");
@@ -487,8 +531,15 @@ Grammar::setUpTypes ()
   // These classes have data fields
      TypeInt.setDataPrototype           ("int","field_size","= 0",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
+  // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
+  // and any other type with a base_type.
+  // PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+
      ReferenceType.setDataPrototype     ("SgType*","base_type","= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -521,30 +572,47 @@ Grammar::setUpTypes ()
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
-     JavaParameterizedType.setDataPrototype     ("SgType*","raw_type","= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaParameterizedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+     JavaParameterizedType.setDataPrototype     ("SgNamedType*","raw_type","= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaParameterizedType.setDataPrototype     ("SgTemplateParameterList*","type_list","= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JavaQualifiedType.setFunctionPrototype ("HEADER_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code" );
      JavaQualifiedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
-     JavaQualifiedType.setDataPrototype     ("SgType *","parent_type","= NULL",
+     JavaQualifiedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+     JavaQualifiedType.setDataPrototype     ("SgNamedType *","parent_type","= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JavaQualifiedType.setDataPrototype     ("SgType *","type","= NULL",
+     JavaQualifiedType.setDataPrototype     ("SgNamedType *","type","= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JavaWildcardType.setFunctionPrototype ("HEADER_JAVA_WILDCARD_TYPE", "../Grammar/Type.code" );
      JavaWildcardType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     JavaWildcardType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
      JavaWildcardType.setDataPrototype     ("SgType*","bound_type","= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // JavaWildcardType.setDataPrototype     ("SgType*","extends_type","= NULL",
+     //                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // JavaWildcardType.setDataPrototype     ("SgType*","super_type","= NULL",
+     //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaWildcardType.setDataPrototype     ("bool","is_unbound","= true",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaWildcardType.setDataPrototype     ("bool","has_extends","= false",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaWildcardType.setDataPrototype     ("bool","has_super","= false",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );
+  // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+     JavaUnionType.setFunctionPrototype ("HEADER_JAVA_UNION_TYPE", "../Grammar/Type.code" );
+     JavaUnionType.setDataPrototype     ("SgTypePtrList","type_list","",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaUnionType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+     JavaParameterType.setFunctionPrototype ("HEADER_JAVA_PARAMETER_TYPE", "../Grammar/Type.code" );
+     JavaParameterType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+     JavaParameterType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+   // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
@@ -578,8 +646,14 @@ Grammar::setUpTypes ()
   // Exclude the get_mangled function since we include it in the HEADER_MODIFIER_TYPE string
      ModifierType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      ModifierType.setFunctionPrototype ("HEADER_MODIFIER_TYPE", "../Grammar/Type.code" );
+
+  // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
+  // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
+  // and any other type with a base_type.
+  // ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
+  //                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // DQ (4/22/2004): Old way of handling modifiers
   // ModifierType.setDataPrototype     ("unsigned int","bitfield","= 0",
   //           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -678,6 +752,9 @@ Grammar::setUpTypes ()
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
+
+     ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     ArrayType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      ArrayType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -787,6 +864,10 @@ Grammar::setUpTypes ()
 
      JavaWildcardType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+  // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+     JavaUnionType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     JavaParameterType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
   // TemplateInstantiationType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      EnumType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -819,6 +900,10 @@ Grammar::setUpTypes ()
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
      TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
+
+  // DQ (3/24/2014): Adding support for 128 bit integers.
+     TypeSigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "SL128" );
+     TypeUnsigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "UL128" );
 
      TypeCAFTeam.editSubstitute( "MANGLED_ID_STRING", "s" );
 
@@ -856,6 +941,9 @@ Grammar::setUpTypes ()
      JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
      JavaQualifiedType.setFunctionSource     ( "SOURCE_JAVA_QUALIFIED_TYPE", "../Grammar/Type.code");
      JavaWildcardType.setFunctionSource      ( "SOURCE_JAVA_WILDCARD_TYPE", "../Grammar/Type.code");
+
+     JavaUnionType.setFunctionSource     ( "SOURCE_JAVA_UNION_TYPE", "../Grammar/Type.code");
+     JavaParameterType.setFunctionSource ( "SOURCE_JAVA_PARAMETER_TYPE", "../Grammar/Type.code");
 
      TemplateType.setFunctionSource        ( "SOURCE_TEMPLATE_TYPE", "../Grammar/Type.code");
 

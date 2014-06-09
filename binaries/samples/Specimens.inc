@@ -1,34 +1,116 @@
 # -*- makefile -*-
 
-DOS_x86_Specimens =				\
+################################################################################################################################
+# The finest granularity.  Names follow this format:
+#
+#   <Container>_<FileType>_<Architecture>_specimens
+#
+# Where:
+#   <Container> is one of
+#	dos	-- DOS (Microsoft)
+#	elf	-- Executable and Linkable Format (Linux, etc)
+#	pe	-- Portable Executable (Microsoft)
+#	raw	-- raw data, no container
+
+specimen_containers = dos elf pe raw
+
+#
+#  <FileType> is one of
+#	exe	-- executable programs (but not necessarily having execute permission)
+#	obj	-- object file (names usually ending with ".o" or ".obj")
+#	archive	-- archive (static library)
+#	so	-- shared object (names usually ending with ".so" or ".dll")
+#	core	-- core dump (only used for ELF)
+#	insns	-- raw data instructions
+#	rot13	-- raw data rot13 encoded
+
+specimen_filetypes = exe obj archive so core insns rot13
+
+#
+#  <Architecture> is one of
+#       amd64	-- Intel 64-bit
+#	arm	-- ARM
+#	mips	-- MIPS
+#	m68k	-- Motorola m68k
+#	ppc	-- PowerPC
+#	x86	-- Intel 32-bit
+#
+
+specimen_architectures = amd64 arm mips m68k ppc x86
+
+#------------------------------------------------------------------------------------------------------------------------
+# dos_*_x86_specimens
+
+dos_exe_x86_specimens =				\
     exefmt.exe
 
-ELF_amd64_Specimens =				\
-    gcc-4.0.x-test1.o				\
-    schulz-sample1-p.so				\
-    schulz-sample1.so				\
-    schulz-sample2-p.so				\
-    schulz-sample2.so				\
+#------------------------------------------------------------------------------------------------------------------------
+# elf_*_amd64_specimens
+
+elf_exe_amd64_specimens =			\
     x86-64-ctrlaltdel				\
     x86-64-nologin				\
     x86-64-pivot_root				\
     x86-64-poweroff
+elf_obj_amd64_specimens =			\
+    gcc-4.0.x-test1.o
+elf_so_amd64_specimens =			\
+    schulz-sample1-p.so				\
+    schulz-sample1.so				\
+    schulz-sample2-p.so				\
+    schulz-sample2.so
+elf_core_amd64_specimens =
+elf_archive_amd64_specimens =			\
+    libTest-amd64.a
 
-ELF_ARM_Specimens =				\
+#------------------------------------------------------------------------------------------------------------------------
+# elf_*_arm_specimens
+
+elf_exe_arm_specimens =				\
     arm-ctrlaltdel				\
     arm-nologin					\
     arm-pivot_root				\
     arm-poweroff
+elf_obj_arm_specimens =
+elf_so_arm_specimens =
+elf_core_arm_specimens =
+elf_archive_arm_specimens =
 
-ELF_MIPS_Specimens =				\
+#------------------------------------------------------------------------------------------------------------------------
+# elf_*_m68k_specimens
+
+elf_exe_m68k_specimens =
+elf_obj_m68k_specimens =
+elf_so_m68k_specimens =
+elf_core_m68k_specimens =
+elf_archive_m68k_specimens =
+
+#------------------------------------------------------------------------------------------------------------------------
+# elf_*_mips_specimens
+
+elf_exe_mips_specimens =			\
     hello.mips
+elf_obj_mips_specimens =
+elf_so_mips_specimens =
+elf_core_mips_specimens =
+elf_archive_mips_specimens =
 
-ELF_PowerPC_Specimens =				\
+#------------------------------------------------------------------------------------------------------------------------
+# elf_*_ppc_specimens
+
+elf_exe_ppc_specimens =				\
     bgl-helloworld-mpicc			\
     bgl-helloworld-mpixlc			\
     fnord.ppc
+elf_obj_ppc_specimens =
+elf_so_ppc_specimens =
+elf_core_ppc_specimens =
+elf_archive_ppc_specimens =
 
-ELF_x86_Specimens =				\
+#------------------------------------------------------------------------------------------------------------------------
+# elf_*_x86_specimens
+
+elf_exe_x86_specimens =				\
     buffer2.bin					\
     fnord.i386					\
     i386-ctrlaltdel				\
@@ -41,54 +123,58 @@ ELF_x86_Specimens =				\
     i686-test1.O0.bin				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
-    libm-2.3.6.so				\
     memreadwrite				\
     usedef
+elf_obj_x86_specimens =
+elf_so_x86_specimens =				\
+    libm-2.3.6.so
+elf_core_x86_specimens =
+elf_archive_x86_specimens =
 
-PE_ARM_Specimens =				\
+#------------------------------------------------------------------------------------------------------------------------
+# pe_*_arm_specimens
+
+pe_exe_arm_specimens =				\
     pocketputty.exe				\
     pocketputty2.exe
+pe_obj_arm_specimens =
+pe_so_arm_specimens =
 
-PE_x86_Specimens =				\
-    PFE32.EXE					\
+#------------------------------------------------------------------------------------------------------------------------
+# pe_*_ppc_specimens
+
+pe_exe_ppc_specimens =				\
+    PFE32.EXE
+pe_obj_ppc_specimens =
+pe_so_ppc_specimens =
+
+#------------------------------------------------------------------------------------------------------------------------
+# pe_*_x86_specimens
+
+pe_exe_x86_specimens =				\
     asm_code_samples_gcc.exe			\
     proxycfg.exe				\
     puttytel.exe
+pe_obj_x86_specimens =
+pe_so_x86_specimens =
 
-Raw_x86_Specimens =				\
+#------------------------------------------------------------------------------------------------------------------------
+# raw_*_*_specimens
+
+raw_insns_x86_specimens =			\
     buffer2.raw					\
-    buffer2.rot13				\
     vm-final.raw
+raw_rot13_x86_specimens =			\
+    buffer2.rot13
 
-Archive_amd64_Specimens =			\
-    libTest-amd64.a
+###############################################################################################################################
+# Other distributed files, not necessarily binary specimens
 
-Other_Files =					\
+other_distributed =				\
     ARPPRODUCTICON.exe				\
     memreadwrite.s				\
     vm-final.README				\
     vm-final.ipd
 
-# Specimens by container type
-DOS_Specimens = $(DOS_x86_Specimens)
-ELF_Specimens = $(ELF_amd64_Specimens) $(ELF_ARM_Specimens) $(ELF_MIPS_Specimens) $(ELF_PowerPC_Specimens) $(ELF_x86_Specimens)
-PE_Specimens = $(PE_ARM_Specimens) $(PE_x86_Specimens)
-
-Executable_Specimens = $(DOS_Specimens) $(ELF_Specimens) $(PE_Specimens)
-Archive_Specimens = $(Archive_amd64_Specimens)
-Raw_Specimens = $(Raw_x86_Specimens)
-
-# Specimens by CPU architecture
-amd64_Specimens = $(ELF_amd64_Specimens)
-ARM_Specimens = $(ELF_ARM_Specimens) $(PE_ARM_Specimens)
-MIPS_Specimens = $(ELF_MIPS_Specimens)
-PowerPC_Specimens = $(ELF_PowerPC_Specimens)
-x86_Specimens = $(DOS_x86_Specimens) $(ELF_x86_Specimens) $(PE_x86_Specimens) $(Raw_x86_Specimens) $(Archive_amd64_Specimens)
-
-# All specimens
-All_Specimens =														\
-    $(DOS_x86_Specimens)												\
-    $(ELF_amd64_Specimens) $(ELF_ARM_Specimens) $(ELF_MIPS_Specimens) $(ELF_PowerPC_Specimens) $(ELF_x86_Specimens)	\
-    $(PE_x86_Specimens)													\
-    $(Raw_x86_Specimens)												\
-    $(Archive_amd64_Specimens)
+# The name "any_any_any_specimens" is a bit strange, so lets have an alias
+all_specimens = $(any_any_any_specimens)

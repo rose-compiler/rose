@@ -14,11 +14,14 @@ grep '^[\(]' $1 | \
         -e 's/ *WU */) `WU` (/g' \
         -e 's/ *! */ Not $ /g' \
         -e "s/ *o\([A-Z]\) */ Out '\1' /g" \
-        -e "s/ *i\([A-Z]\) */ In '\1' /g" 
+        -e "s/ *i\([A-Z]\) */ In '\1' /g" \
+        -e "s/true/TTTrue/g" \
+        -e "s/false/FFFalse/g"
 
 echo "    None]"
 echo "frequencies = ["
-grep -o i[A-G] $1 |sort |uniq -c|sed -e "s/ *\(.\+\) i\(.\) */  (\1, elements ['\2']),/g"
+#grep -o i[A-G] $1 |sort |uniq -c|sed -e "s/ *\(.\+\) i\(.\) */  (\1, elements ['\2']),/g
+grep -o i[A-G] $1 |sort |uniq -c|sed -e "s/i//g" |awk "{ print \"  (\"\$1\", elements ['\"\$2\"']),\" }"
 echo "  (0, elements ['Z'])]"
 echo
 echo "machine = \"./Problem"`echo $1| egrep -o '[0-9]+'`".exe\""

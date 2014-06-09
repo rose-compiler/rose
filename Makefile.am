@@ -108,12 +108,14 @@ enforce_policies:
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers build ChangeLog2
 
-# Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
-# otherwise the stale one can go into the distribution package
+# The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
+# each time we make a distribution because we don't want to distribute stale information.
+EXTRA_DIST += bincompat-sig
+.PHONY: cleanSig
 cleanSig:
 	rm -rf bincompat-sig
 bincompat-sig: cleanSig
-	$(srcdir)/scripts/bincompat-sig > $@
+	$(srcdir)/scripts/edg-generate-sig > $@
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
 # ROSE_Talks
