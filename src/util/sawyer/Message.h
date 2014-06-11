@@ -4,10 +4,9 @@
 #include <sawyer/Map.h>
 #include <sawyer/Optional.h>
 #include <sawyer/Sawyer.h>
+#include <sawyer/SharedPointer.h>
 
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/logic/tribool.hpp>
-#include <boost/shared_ptr.hpp>
 #include <cassert>
 #include <cstring>
 #include <list>
@@ -136,7 +135,7 @@ namespace Sawyer {
  *
  *  All plumbing lattice nodes are dynamically allocated and reference counted. Instead of using the normal C++ constructors,
  *  plumbing objects are created with static @c instance methods that perform the allocation and return a smart pointer. The
- *  type names for smart pointers are the class names with a "Ptr" suffix, and <code>boost::shared_ptr</code> serves as the
+ *  type names for smart pointers are the class names with a "Ptr" suffix, and @ref Sawyer::SharedPointer serves as the
  *  implementation.
  *
  *  For instance, a lattice that accepts any kind of message, limits the output to at most one message per second,
@@ -426,22 +425,22 @@ std::ostream& operator<<(std::ostream &o, const MesgProps &props);
  *        the stack and then try to use its address in a smart pointer situation.</li>
  *    <li>Users should use the @c instance class methods instead of constructors to instantiate an instance of such a class.
  *        These methods allocate a new object and return a smart pointer to that object.</li>
- *    <li>Sawyer uses <code>boost::shared_ptr</code> for its smart pointer implementation.</li>
+ *    <li>Sawyer uses @ref Sawyer::SharedPointer "SharedPointer" for its smart pointer implementation.</li>
  * </ol>
  * @{ */
-typedef boost::shared_ptr<class Destination> DestinationPtr;
-typedef boost::shared_ptr<class Multiplexer> MultiplexerPtr;
-typedef boost::shared_ptr<class Filter> FilterPtr;
-typedef boost::shared_ptr<class SequenceFilter> SequenceFilterPtr;
-typedef boost::shared_ptr<class TimeFilter> TimeFilterPtr;
-typedef boost::shared_ptr<class ImportanceFilter> ImportanceFilterPtr;
-typedef boost::shared_ptr<class Gang> GangPtr;
-typedef boost::shared_ptr<class Prefix> PrefixPtr;
-typedef boost::shared_ptr<class UnformattedSink> UnformattedSinkPtr;
-typedef boost::shared_ptr<class FdSink> FdSinkPtr;
-typedef boost::shared_ptr<class FileSink> FileSinkPtr;
-typedef boost::shared_ptr<class StreamSink> StreamSinkPtr;
-typedef boost::shared_ptr<class SyslogSink> SyslogSinkPtr;
+typedef SharedPointer<class Destination> DestinationPtr;
+typedef SharedPointer<class Multiplexer> MultiplexerPtr;
+typedef SharedPointer<class Filter> FilterPtr;
+typedef SharedPointer<class SequenceFilter> SequenceFilterPtr;
+typedef SharedPointer<class TimeFilter> TimeFilterPtr;
+typedef SharedPointer<class ImportanceFilter> ImportanceFilterPtr;
+typedef SharedPointer<class Gang> GangPtr;
+typedef SharedPointer<class Prefix> PrefixPtr;
+typedef SharedPointer<class UnformattedSink> UnformattedSinkPtr;
+typedef SharedPointer<class FdSink> FdSinkPtr;
+typedef SharedPointer<class FileSink> FileSinkPtr;
+typedef SharedPointer<class StreamSink> StreamSinkPtr;
+typedef SharedPointer<class SyslogSink> SyslogSinkPtr;
 /** @} */
 
 /** Baked properties for a destination.  Rather than recompute properties every time characters of a message are inserted into
@@ -555,7 +554,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for all types of message destinations. This is the base class for all nodes in the plumbing lattice. */
-class Destination: public boost::enable_shared_from_this<Destination> {
+class Destination: public SharedFromThis<Destination> {
 protected:
     MesgProps dflts_;                                   /**< Default properties merged into each incoming message. */
     MesgProps overrides_;                               /**< Override properties applied to incoming message. */
@@ -673,7 +672,7 @@ public:
     /** Property: number of initial messages to skip. The first @p n messages sent through this filter are discarded.
      *  @{ */
     size_t nSkip() const { return nSkip_; }
-    SequenceFilterPtr nSkip(size_t n) { nSkip_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
+    SequenceFilterPtr nSkip(size_t n) { nSkip_ = n; return sharedFromThis().dynamicCast<SequenceFilter>(); }
     /** @} */
 
     /** Property: rate of messages to emit after initial messages are skipped.  A rate of @e n means the first message of
@@ -681,14 +680,14 @@ public:
      *  same thing as a rate of one--every message is forwarded.
      * @{ */
     size_t rate() const { return rate_; }
-    SequenceFilterPtr rate(size_t n) { rate_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
+    SequenceFilterPtr rate(size_t n) { rate_ = n; return sharedFromThis().dynamicCast<SequenceFilter>(); }
     /** @} */
 
     /** Property: total number of messages forwarded.  At most @e n messages are forwarded to children in the lattice, after
      *  which messages are discarded. A value of zero means no limit is in effect.
      *  @{ */
     size_t limit() const { return limit_; }
-    SequenceFilterPtr limit(size_t n) { limit_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
+    SequenceFilterPtr limit(size_t n) { limit_ = n; return sharedFromThis().dynamicCast<SequenceFilter>(); }
     /** @} */
 
     /** Number of messages processed.  This includes messages forwarded and messages not forwarded. */
@@ -764,7 +763,7 @@ public:
     bool enabled(Importance imp) const { return enabled_[imp]; }
     ImportanceFilterPtr enabled(Importance imp, bool b) {
         enabled_[imp] = b;
-        return boost::dynamic_pointer_cast<ImportanceFilter>(shared_from_this());
+        return sharedFromThis().dynamicCast<ImportanceFilter>();
     }
     /** @} */
 
@@ -805,7 +804,7 @@ public:
  *  A Gang is used to coordinate output from two or more sinks.  This is normally used by sinks writing the tty, such as a sink
  *  writing to stdout and another writing to stderr--they need to coordinate with each other if they're both going to the
  *  terminal.  A gang just keeps track of what message was most recently emitted. */
-class Gang: public HighWater {
+class Gang: public HighWater, public SharedObject {
     typedef Sawyer::Container::Map<int, GangPtr> GangMap;
     static GangMap gangs_;                              /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
@@ -823,7 +822,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Information printed at the beginning of each free-format message. */
-class Prefix: public boost::enable_shared_from_this<Prefix> {
+class Prefix: public SharedFromThis<Prefix> {
     enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
     ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */
     Optional<std::string> programName_;                 /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
@@ -861,7 +860,7 @@ public:
      *  @sa setProgramName showProgramName
      * @{ */
     const Optional<std::string>& programName() const { return programName_; }
-    PrefixPtr programName(const std::string &s) { programName_ = s; return shared_from_this(); }
+    PrefixPtr programName(const std::string &s) { programName_ = s; return sharedFromThis(); }
     /** @} */
 
     /** Reset the program name from operating system information. @sa programName showProgramName */
@@ -870,20 +869,20 @@ public:
     /** Property: whether to show the program name in the message prefix area.  The default is true. @sa programName
      * @{ */
     bool showProgramName() const { return showProgramName_; }
-    PrefixPtr showProgramName(bool b) { showProgramName_ = b; return shared_from_this(); }
+    PrefixPtr showProgramName(bool b) { showProgramName_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Property: whether to show the thread ID in the message prefix area.  The default is true.
      * @{ */
     bool showThreadId() const { return showThreadId_; }
-    PrefixPtr showThreadId(bool b) { showThreadId_ = b; return shared_from_this(); }
+    PrefixPtr showThreadId(bool b) { showThreadId_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Property: start time when emitting time deltas.  On some systems the start time will be the time at which this object
      *  was created. @sa setStartTime showElapsedTime
      * @{ */
     const Optional<double> startTime() const { return startTime_; }
-    PrefixPtr startTime(double t) { startTime_ = t; return shared_from_this(); }
+    PrefixPtr startTime(double t) { startTime_ = t; return sharedFromThis(); }
     /** @} */
 
     /** Reset the start time from operating system information.  On some systems this will be the time at which the first
@@ -895,7 +894,7 @@ public:
      *  @sa startTime setStartTime
      * @{ */
     bool showElapsedTime() const { return showElapsedTime_; }
-    PrefixPtr showElapsedTime(bool b) { showElapsedTime_ = b; return shared_from_this(); }
+    PrefixPtr showElapsedTime(bool b) { showElapsedTime_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Property: whether to show the facilityName property. When set to SOMETIMES, the facility name is shown when it differs
@@ -903,13 +902,13 @@ public:
      *  value.
      * @{ */
     When showFacilityName() const { return showFacilityName_; }
-    PrefixPtr showFacilityName(When w) { showFacilityName_ = w; return shared_from_this(); }
+    PrefixPtr showFacilityName(When w) { showFacilityName_ = w; return sharedFromThis(); }
     /** @} */
 
     /** Property: whether to show the importance property. In any case, the importance level is not shown if it has no value.
      * @{ */
     bool showImportance() const { return showImportance_; }
-    PrefixPtr showImportance(bool b) { showImportance_ = b; return shared_from_this(); }
+    PrefixPtr showImportance(bool b) { showImportance_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Return a prefix string. Generates a string from this prefix object. */
@@ -942,7 +941,7 @@ public:
     const GangPtr& gang() const { return gang_; }
     UnformattedSinkPtr gang(const GangPtr &g) {
         gangInternal(g);
-        return boost::dynamic_pointer_cast<UnformattedSink>(shared_from_this());
+        return sharedFromThis().dynamicCast<UnformattedSink>();
     }
     /** @} */
 
@@ -952,7 +951,7 @@ public:
     const PrefixPtr& prefix() const { return prefix_; }
     UnformattedSinkPtr prefix(const PrefixPtr &p) {
         prefix_ = p;
-        return boost::dynamic_pointer_cast<UnformattedSink>(shared_from_this());
+        return sharedFromThis().dynamicCast<UnformattedSink>();
     }
     /** @} */
 
@@ -1035,6 +1034,7 @@ public:
     virtual void post(const Mesg&, const MesgProps&) /*override*/;
 };
 
+#ifndef _MSC_VER
 /** Sends messages to the syslog daemon. */
 class SyslogSink: public Destination {
 protected:
@@ -1051,6 +1051,7 @@ public:
 private:
     void init();
 };
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Message streams
@@ -1229,11 +1230,14 @@ public:
      *  mlog[DEBUG] and mlog[DEBUG] <<"the memory map is: " <<memoryMap <<"\n";
      *  
      *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
-     * @endcode */
+     * @endcode
+     *
+     *  Note: Although "and" looks slightly better than "&&" in the above examples, it is not portable across Microsoft
+     *  compilers. */
     operator bool() { return enabled(); }
 
     // See Stream::bool()
-    #define SAWYER_MESG(message_stream) message_stream and message_stream
+    #define SAWYER_MESG(message_stream) message_stream && message_stream
 
     /** Enable or disable a stream.  A disabled stream buffers the latest partial message and enabling the stream will cause
      * the entire accumulated message to be emitted--whether the partial message immediately appears on the output is up to

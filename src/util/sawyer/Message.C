@@ -10,7 +10,9 @@
 #include <stdexcept>
 #include <sstream>
 #include <sys/stat.h>
+#ifndef _MSC_VER
 #include <syslog.h>
+#endif
 #include <vector>
 
 #if defined(SAWYER_HAVE_BOOST_CHRONO)
@@ -18,6 +20,8 @@
 #elif defined(_MSC_VER)
 #   include <time.h>
 #   include <windows.h>
+#   undef ERROR                                         // not sure where this pollution comes from
+#   undef max                                           // more pollution
 #else // POSIX
 #   include <sys/time.h>                                // gettimeofday() and struct timeval
 #endif
@@ -243,7 +247,7 @@ bool Mesg::hasText() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Destination::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
-    baked.push_back(std::make_pair(shared_from_this(), mergeProperties(props)));
+    baked.push_back(std::make_pair(sharedFromThis(), mergeProperties(props)));
 }
 
 MesgProps Destination::mergeProperties(const MesgProps &props) {
@@ -271,26 +275,26 @@ MultiplexerPtr Multiplexer::addDestination(const DestinationPtr &destination) {
     std::vector<DestinationPtr> work(1, destination);
     while (!work.empty()) {
         DestinationPtr d = work.back();
-        if (d.get()==this)
+        if (get(d)==this)
             throw std::runtime_error("cycle introduced in Sawyer::Multiplexer tree");
         work.pop_back();
-        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(d.get()))
+        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(get(d)))
             work.insert(work.end(), seq->destinations_.begin(), seq->destinations_.end());
     }
     
     // Add it as the last child
     destinations_.push_back(destination);
-    return boost::dynamic_pointer_cast<Multiplexer>(shared_from_this());
+    return sharedFromThis().dynamicCast<Multiplexer>();
 }
 
 MultiplexerPtr Multiplexer::removeDestination(const DestinationPtr &destination) {
     destinations_.erase(std::remove(destinations_.begin(), destinations_.end(), destination), destinations_.end());
-    return boost::dynamic_pointer_cast<Multiplexer>(shared_from_this());
+    return sharedFromThis().dynamicCast<Multiplexer>();
 }
 
 MultiplexerPtr Multiplexer::to(const DestinationPtr &destination) {
     addDestination(destination);
-    return boost::dynamic_pointer_cast<Multiplexer>(shared_from_this());
+    return sharedFromThis().dynamicCast<Multiplexer>();
 }
 
 MultiplexerPtr Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2) {
@@ -337,7 +341,7 @@ TimeFilterPtr TimeFilter::initialDelay(double delta) {
         if (0==nPosted_)
             lastBakeTime_ = now();
     }
-    return boost::dynamic_pointer_cast<TimeFilter>(shared_from_this());
+    return sharedFromThis().dynamicCast<TimeFilter>();
 }
 
 bool TimeFilter::shouldForward(const MesgProps&) {
@@ -359,12 +363,12 @@ bool ImportanceFilter::shouldForward(const MesgProps &props) {
 
 ImportanceFilterPtr ImportanceFilter::enable(Importance imp) {
     enabled(imp, true);
-    return boost::dynamic_pointer_cast<ImportanceFilter>(shared_from_this());
+    return sharedFromThis().dynamicCast<ImportanceFilter>();
 }
 
 ImportanceFilterPtr ImportanceFilter::disable(Importance imp) {
     enabled(imp, false);
-    return boost::dynamic_pointer_cast<ImportanceFilter>(shared_from_this());
+    return sharedFromThis().dynamicCast<ImportanceFilter>();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -461,8 +465,14 @@ std::string Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
     if (showProgramName_ && programName_) {
         programNameShown = *programName_;
         retval <<*programName_;
-        if (showThreadId_)
+        if (showThreadId_) {
+#ifdef _MSC_VER
+            // FIXME[Robb Matzke 2014-06-10]: How does one get a process ID or thread identifier on Windows?
+            retval <<"[?]";
+#else
             retval <<"[" <<getpid() <<"]";
+#endif
+        }
         separator = " ";
     }
 
@@ -566,6 +576,11 @@ std::string UnformattedSink::render(const Mesg &mesg, const MesgProps &props) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FdSink::init() {
+#ifdef _MSC_VER
+    gangInternal(Gang::instanceForId(fd_));
+    overrideProperties().useColor = false;
+    defaultProperties().isBuffered = true;
+#else
     if (isatty(fd_)) {
         gangInternal(Gang::instanceForTty());
         defaultProperties().useColor = true;            // use color if the user doesn't care
@@ -574,9 +589,14 @@ void FdSink::init() {
         overrideProperties().useColor = false;          // force false; user can still set this if they really want color
     }
     defaultProperties().isBuffered = 2!=fd_;            // assume stderr is unbuffered and the rest are buffered
+#endif
 }
 
 void FdSink::post(const Mesg &mesg, const MesgProps &props) {
+#ifdef _MSC_VER
+    // FIXME[Robb Matzke 2014-06-10]: what is the most basic file level on Windows; one which doesn't need construction?
+    std::cout <<render(mesg, props);
+#else
     std::string s = render(mesg, props);
     const char *buf = s.c_str();
     size_t nbytes = s.size();
@@ -592,11 +612,17 @@ void FdSink::post(const Mesg &mesg, const MesgProps &props) {
             nbytes -= nwritten;
         }
     }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FileSink::init() {
+#ifdef _MSC_VER
+    gangInternal(Gang::instanceForTty());
+    overrideProperties().useColor = false;
+    defaultProperties().isBuffered = true;
+#else
     if (isatty(fileno(file_))) {
         gangInternal(Gang::instanceForTty());
         overrideProperties().useColor = true;           // use color if the user doesn't care
@@ -605,6 +631,7 @@ void FileSink::init() {
         overrideProperties().useColor = false;          // force false; user can still set this if they really want color
     }
     defaultProperties().isBuffered = 2!=fileno(file_);  // assume stderr is unbuffered and the rest are buffered
+#endif
 }
 
 void FileSink::post(const Mesg &mesg, const MesgProps &props) {
@@ -619,6 +646,7 @@ void StreamSink::post(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifndef _MSC_VER
 SyslogSink::SyslogSink(const char *ident, int option, int facility) {
     init();
     openlog(ident, option, facility);
@@ -644,6 +672,7 @@ void SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
         syslog(priority, "%s", mesg.text().c_str());
     }
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

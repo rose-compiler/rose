@@ -1,5 +1,5 @@
-#include <sawyer/Assert.h>
 #include <sawyer/MarkupRoff.h>
+#include <sawyer/Assert.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -187,7 +187,7 @@ bool RoffFormatter::beginTag(std::ostream &stream, const TagPtr &tag, const TagA
         convertToUpper_ -= shouldConvertToUpper;
         bufferedOutput_ <<"\"";
         nextLine();
-        inArg_.reset();
+        clear(inArg_);
 
         // We don't want to emit an .SH/.SS command if there's no body, but since it's too late by now to go back and fix it,
         // and since we can't expect to have c++11 move semantics, the only way to undo the .SH/.SS command is to seek back and
@@ -213,7 +213,7 @@ bool RoffFormatter::beginTag(std::ostream &stream, const TagPtr &tag, const TagA
         nextLine();
         inArg_ = tag;
         args[0]->emit(stream, self());
-        inArg_.reset();
+        clear(inArg_);
 
         nextLine();
         args[1]->emit(stream, self());
@@ -267,7 +267,7 @@ bool RoffFormatter::beginTag(std::ostream &stream, const TagPtr &tag, const TagA
         bufferedOutput_ <<".\\\" ";
         args[0]->emit(stream, self());
         nextLine();
-        inArg_.reset();
+        clear(inArg_);
         recurse = false;
 
     } else {

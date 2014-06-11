@@ -1,5 +1,6 @@
 #include <sawyer/ProgressBar.h>
 
+#include <boost/numeric/conversion/cast.hpp>
 #include <cstdio>
 #include <sstream>
 
@@ -65,7 +66,7 @@ std::string ProgressBarImpl::makeBar(double ratio, bool isBackward) {
         if (centerIdx >= (int)width_)
             centerIdx = 2*width_ - centerIdx - 1;
         assert(centerIdx>=0 && (size_t)centerIdx < width_);
-        int indicatorWidth = ceil(0.3 * width_);
+        int indicatorWidth = boost::numeric::converter<int, double>::convert(ceil(0.3 * width_));
         int indicatorIdx = centerIdx - indicatorWidth/2;
         bar = std::string(width_, nonBarChar_);
         for (int i=std::max(indicatorIdx, 0); i<std::min(indicatorIdx+indicatorWidth, (int)width_); ++i)
@@ -76,7 +77,7 @@ std::string ProgressBarImpl::makeBar(double ratio, bool isBackward) {
             sprintf(buf, "%3.0f%% ", 100.0*ratio);
             prefix += buf;
         }
-        size_t barLen = round(ratio * width_);
+        size_t barLen = boost::numeric::converter<size_t, double>::convert(round(ratio * width_));
         if (isBackward) {
             bar += std::string(width_-barLen, nonBarChar_) + std::string(barLen, barChar_);
         } else {
@@ -102,7 +103,7 @@ void ProgressBarImpl::updateTextMesg(double ratio) {
             textMesg_.insert(" " + suffix_);
         }
     } else {
-        int pct = round(ratio*10.0) * 10;
+        int pct = boost::numeric::converter<int, double>::convert(round(ratio*10.0) * 10);
         if (!oldPercent_ || pct != *oldPercent_) {
             bool needElipsis = !textMesg_.isEmpty();
             if (textMesg_.isEmpty() || textMesg_.text().size() > width_) {

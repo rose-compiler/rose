@@ -1,10 +1,11 @@
 #ifndef Sawyer_BitVector_H
 #define Sawyer_BitVector_H
 
+#include <boost/cstdint.hpp>
 #include <sawyer/Assert.h>
 #include <sawyer/BitVectorSupport.h>
 #include <sawyer/Optional.h>
-#include <boost/cstdint.hpp>
+#include <vector>
 
 namespace Sawyer {
 namespace Container {

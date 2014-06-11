@@ -2,7 +2,6 @@
 #define Sawyer_Assert_H
 
 #include <sawyer/Sawyer.h>
-#include <sawyer/Message.h>
 #include <string>
 
 // If SAWYER_NDEBUG is defined then some of the macros defined in this header become no-ops.  For interoperability with the
@@ -94,6 +93,12 @@ void fail(const char *mesg, const char *expr, const std::string &note,
 } // namespace
 } // namespace
 
+#ifndef _MSC_VER
+#define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#else
+#define SAWYER_PRETTY_FUNCTION "UNKNOWN_FUNCTION"
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // These "always" macros are enabled regardless of whether SAWYER_NDEBUG is defined.  Don't use them for
@@ -104,37 +109,37 @@ void fail(const char *mesg, const char *expr, const std::string &note,
 #define ASSERT_always_require2(expr, note)                                                                                     \
     ((expr) ?                                                                                                                  \
         static_cast<void>(0) :                                                                                                 \
-        Sawyer::Assert::fail("assertion failed", "required: "__STRING(expr), (note),                                           \
-                             __FILE__, __LINE__, __PRETTY_FUNCTION__))
+        Sawyer::Assert::fail("assertion failed", "required: " #expr, (note),                                                   \
+                             __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 #define ASSERT_always_forbid(expr) ASSERT_always_forbid2(expr, "")
 #define ASSERT_always_forbid2(expr, note)                                                                                      \
     (!(expr) ?                                                                                                                 \
         static_cast<void>(0) :                                                                                                 \
         Sawyer::Assert::fail("assertion failed",                                                                               \
-                             "forbidden: "__STRING(expr), (note), __FILE__, __LINE__, __PRETTY_FUNCTION__))
+                             "forbidden: " #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 #define ASSERT_always_not_null(expr) ASSERT_always_not_null2(expr, "")
 #define ASSERT_always_not_null2(expr, note)                                                                                    \
     ((expr)!=NULL ?                                                                                                            \
         static_cast<void>(0) :                                                                                                 \
         Sawyer::Assert::fail("null pointer",                                                                                   \
-                             __STRING(expr), (note), __FILE__, __LINE__, __PRETTY_FUNCTION__))
+                             #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 #define ASSERT_always_not_reachable(note)                                                                                      \
     Sawyer::Assert::fail("reached impossible state", NULL, (note),                                                             \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__);
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION);
 
 #define ASSERT_always_not_implemented(note)                                                                                    \
     Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__)
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #define ASSERT_always_this()                                                                                                   \
     (this ?                                                                                                                    \
         static_cast<void>(0) :                                                                                                 \
         Sawyer::Assert::fail("assertion failed",                                                                               \
                              "required: this!=NULL", "'this' cannot be null in an object method",                              \
-                             __FILE__, __LINE__, __PRETTY_FUNCTION__))
+                             __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The non-"always" macros might change behavior based on whether SAWYER_NDEBUG is defined.
@@ -172,10 +177,10 @@ void fail(const char *mesg, const char *expr, const std::string &note,
 
 #define TODO(note)                                                                                                             \
     Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__)
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #define FIXME(note)                                                                                                            \
     Sawyer::Assert::fail("needs to be fixed", NULL, (note),                                                                    \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__)
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #endif

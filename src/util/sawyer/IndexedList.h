@@ -155,6 +155,7 @@ private:
     protected:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }
+    public:
         const BaseIterator& base() const { return base_; }
     };
 

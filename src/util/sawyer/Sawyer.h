@@ -114,7 +114,7 @@
  *      explicit SomeClass(int n): someData_(n) {}
  *
  *  public:
- *      typedef boost::shared_ptr<SomeClass> Ptr;
+ *      typedef Sawyer::SharedPointer<SomeClass> Ptr;
  *
  *      static Ptr instance() {
  *          return Ptr(new SomeClass);

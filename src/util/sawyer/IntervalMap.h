@@ -1,11 +1,10 @@
 #ifndef Sawyer_IntervalMap_H
 #define Sawyer_IntervalMap_H
 
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
-
 #include <boost/cstdint.hpp>
 #include <sawyer/Assert.h>
+#include <sawyer/Map.h>
+#include <sawyer/Optional.h>
 
 namespace Sawyer {
 namespace Container {
@@ -314,7 +313,7 @@ public:
      * @{ */
     template<typename T2, class Policy2>
     std::pair<NodeIterator, typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator>
-    findFirstOverlap(IntervalMap::NodeIterator thisIter, const IntervalMap<Interval, T2, Policy2> &other,
+    findFirstOverlap(typename IntervalMap::NodeIterator thisIter, const IntervalMap<Interval, T2, Policy2> &other,
                      typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator otherIter) {
         while (thisIter!=nodes().end() && otherIter!=other.nodes().end()) {
             if (thisIter->key().isOverlapping(otherIter->key()))
@@ -329,7 +328,7 @@ public:
     }
     template<typename T2, class Policy2>
     std::pair<ConstNodeIterator, typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator>
-    findFirstOverlap(IntervalMap::ConstNodeIterator thisIter, const IntervalMap<Interval, T2, Policy2> &other,
+    findFirstOverlap(typename IntervalMap::ConstNodeIterator thisIter, const IntervalMap<Interval, T2, Policy2> &other,
                      typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator otherIter) const {
         while (thisIter!=nodes().end() && otherIter!=other.nodes().end()) {
             if (thisIter->key().isOverlapping(otherIter->key()))

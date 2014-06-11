@@ -4,9 +4,8 @@
 
 #include <sawyer/Map.h>
 
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/shared_ptr.hpp>
 #include <cstring>
+#include <sawyer/SharedPointer.h>
 #include <string>
 #include <vector>
 
@@ -58,28 +57,28 @@ public:
     void cancel() { canceled_ = true; }
 };
 
-typedef boost::shared_ptr<class Tag>            TagPtr;
-typedef boost::shared_ptr<class NullTag>        NullTagPtr;
-typedef boost::shared_ptr<class CommentTag>     CommentTagPtr;
-typedef boost::shared_ptr<class SectionTag>     SectionTagPtr;
-typedef boost::shared_ptr<class SubSectionTag>  SubSectionTagPtr;
-typedef boost::shared_ptr<class BoldTag>        BoldTagPtr;
-typedef boost::shared_ptr<class ItalicTag>      ItalicTagPtr;
-typedef boost::shared_ptr<class VariableTag>    VariableTagPtr;
-typedef boost::shared_ptr<class NameBulletTag>  NameBulletTagPtr;
+typedef SharedPointer<class Tag>            TagPtr;
+typedef SharedPointer<class NullTag>        NullTagPtr;
+typedef SharedPointer<class CommentTag>     CommentTagPtr;
+typedef SharedPointer<class SectionTag>     SectionTagPtr;
+typedef SharedPointer<class SubSectionTag>  SubSectionTagPtr;
+typedef SharedPointer<class BoldTag>        BoldTagPtr;
+typedef SharedPointer<class ItalicTag>      ItalicTagPtr;
+typedef SharedPointer<class VariableTag>    VariableTagPtr;
+typedef SharedPointer<class NameBulletTag>  NameBulletTagPtr;
 
-typedef boost::shared_ptr<class ProseTag>       ProseTagPtr;
-typedef boost::shared_ptr<class CodeTag>        CodeTagPtr;
-typedef boost::shared_ptr<class TagInstance>    TagInstancePtr;
-typedef boost::shared_ptr<class Content>        ContentPtr;
-typedef boost::shared_ptr<class Formatter>      FormatterPtr;
-typedef boost::shared_ptr<class TextFormatter>  TextFormatterPtr;
+typedef SharedPointer<class ProseTag>       ProseTagPtr;
+typedef SharedPointer<class CodeTag>        CodeTagPtr;
+typedef SharedPointer<class TagInstance>    TagInstancePtr;
+typedef SharedPointer<class Content>        ContentPtr;
+typedef SharedPointer<class Formatter>      FormatterPtr;
+typedef SharedPointer<class TextFormatter>  TextFormatterPtr;
 
 typedef std::string Word;
 typedef std::vector<Word> Words;
 typedef std::vector<ContentPtr> TagArgs;
 
-class Tag: public boost::enable_shared_from_this<Tag> {
+class Tag: public SharedFromThis<Tag> {
     std::string name_;                                  // tag name without the leading "@"
     size_t nArgsDeclared_;                              // number of arguments declared
 protected:
@@ -87,7 +86,7 @@ protected:
         : name_(name), nArgsDeclared_(nargs) {}
 public:
     virtual ~Tag() {}
-    TagPtr self() { return boost::dynamic_pointer_cast<Tag>(shared_from_this()); }
+    TagPtr self() { return sharedFromThis().dynamicCast<Tag>(); }
     virtual ContentPtr eval(const TagArgs&);
     const std::string &name() const { return name_; }
     size_t nArgsDeclared() const { return nArgsDeclared_; }
@@ -174,7 +173,7 @@ public:
 };
 
 
-class TagInstance {
+class TagInstance: public SharedObject {
 private:
     TagPtr tag_;
     TagArgs args_;
@@ -202,7 +201,7 @@ public:
 
 
 // A sequence of tag instances
-class Content {
+class Content: public SharedObject {
 private:
     std::vector<TagInstancePtr> elmts_;
 protected:
@@ -288,7 +287,7 @@ private:
 
 
 
-class Formatter: public boost::enable_shared_from_this<Formatter> {
+class Formatter: public SharedFromThis<Formatter> {
 protected:
     Formatter() {}
 public:

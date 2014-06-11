@@ -8,6 +8,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/Interval.h>
 #include <sawyer/IntervalMap.h>
+#include <vector>
 
 namespace Sawyer {
 

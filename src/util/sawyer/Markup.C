@@ -86,7 +86,7 @@ ContentPtr TagInstance::eval() const {
 }
 
 void TagInstance::emit(std::ostream &stream, const FormatterPtr &formatter) const {
-    if (NullTagPtr nullTag = boost::dynamic_pointer_cast<NullTag>(tag_)) {
+    if (NullTagPtr nullTag = tag_.dynamicCast<NullTag>()) {
         formatter->text(stream, nullTag->text());
     } else {
         if (formatter->beginTag(stream, tag_, args_)) {

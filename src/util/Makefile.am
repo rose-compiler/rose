@@ -90,7 +90,8 @@ nobase_include_HEADERS   =			\
 	sawyer/Optional.h			\
 	sawyer/PoolAllocator.h			\
 	sawyer/ProgressBar.h			\
-	sawyer/Sawyer.h
+	sawyer/Sawyer.h				\
+	sawyer/SharedPointer.h
 EXTRA_DIST += sawyer/CMakeLists.txt
 
 ########################################################################################################################

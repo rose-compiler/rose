@@ -6,15 +6,16 @@
 #include <sawyer/Map.h>
 #include <sawyer/Message.h>
 #include <sawyer/Optional.h>
+#include <sawyer/SharedPointer.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/any.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
-#include <boost/shared_ptr.hpp>
 #include <cerrno>
+#include <ctype.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -348,11 +349,11 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // used internally
-class ValueSaver {
+class ValueSaver: public SharedObject {
 protected:
     ValueSaver() {}
 public:
-    typedef boost::shared_ptr<ValueSaver> Ptr;
+    typedef SharedPointer<ValueSaver> Ptr;
     virtual ~ValueSaver() {}
     virtual void save(const boost::any&) const = 0;
 };
@@ -364,7 +365,7 @@ class TypedSaver: public ValueSaver {
 protected:
     TypedSaver(T &storage): storage_(storage) {}
 public:
-    typedef boost::shared_ptr<TypedSaver> Ptr;
+    typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(T &storage) { return Ptr(new TypedSaver(storage)); }
     virtual void save(const boost::any &value) const /*override*/ {
         storage_ = boost::any_cast<T>(value);
@@ -378,7 +379,7 @@ class TypedSaver<std::vector<T> >: public ValueSaver {
 protected:
     TypedSaver(std::vector<T> &storage): storage_(storage) {}
 public:
-    typedef boost::shared_ptr<TypedSaver> Ptr;
+    typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(std::vector<T> &storage) { return Ptr(new TypedSaver(storage)); }
     virtual void save(const boost::any &value) const /*override*/ {
         T typed = boost::any_cast<T>(value);
@@ -589,7 +590,7 @@ typedef std::vector<ParsedValue> ParsedValues;
  *
  * @sa
  *  @ref parser_factories */
-class ValueParser: public boost::enable_shared_from_this<ValueParser> {
+class ValueParser: public SharedFromThis<ValueParser> {
     ValueSaver::Ptr valueSaver_;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @c instance or factories instead. */
@@ -599,7 +600,7 @@ protected:
     explicit ValueParser(const ValueSaver::Ptr &valueSaver): valueSaver_(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ValueParser> Ptr;
+    typedef SharedPointer<ValueParser> Ptr;
 
     virtual ~ValueParser() {}
 
@@ -628,7 +629,7 @@ public:
      *  is saved until apply is called--this allows command-lines to be parsed for their error side effects without actually
      *  changing any program state.
      * @{ */
-    Ptr valueSaver(const ValueSaver::Ptr &f) { valueSaver_ = f; return shared_from_this(); }
+    Ptr valueSaver(const ValueSaver::Ptr &f) { valueSaver_ = f; return sharedFromThis(); }
     const ValueSaver::Ptr valueSaver() const { return valueSaver_; }
     /** @} */
 
@@ -691,7 +692,7 @@ protected:
     AnyParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<AnyParser> Ptr;
+    typedef SharedPointer<AnyParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new AnyParser object.  Uses will most likely want to use the @ref
      *  anyParser factory instead, which requires less typing.
@@ -758,7 +759,7 @@ protected:
     explicit IntegerParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<IntegerParser> Ptr;
+    typedef SharedPointer<IntegerParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref
      *  integerParser factory instead, which requires less typing.
@@ -803,7 +804,7 @@ protected:
     NonNegativeIntegerParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<NonNegativeIntegerParser> Ptr;
+    typedef SharedPointer<NonNegativeIntegerParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new NonNegativeIntegerParser object.  Uses will most likely want to use
      *  the @ref nonNegativeIntegerParser factory instead, which requires less typing.
@@ -850,7 +851,7 @@ protected:
     RealNumberParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<RealNumberParser> Ptr;
+    typedef SharedPointer<RealNumberParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new RealNumberParser object.  Uses will most likely want to use
      *  the @ref realNumberParser factory instead, which requires less typing.
@@ -888,7 +889,7 @@ protected:
     BooleanParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<BooleanParser> Ptr;
+    typedef SharedPointer<BooleanParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new BooleanParser object.  Uses will most likely want to use the @ref
      *  booleanParser factory instead, which requires less typing.
@@ -909,7 +910,7 @@ private:
             const char **list = 0==negpos ? neg : pos;
             size_t listsz = 0==negpos ? sizeof(neg)/sizeof(*neg) : sizeof(pos)/sizeof(*pos);
             for (size_t i=0; i<listsz; ++i) {
-                if (0==strncasecmp(list[i], input, strlen(list[i]))) {
+                if (0==my_strncasecmp(list[i], input, strlen(list[i]))) {
                     *rest = input + strlen(list[i]);
                     while (isspace(**rest)) ++*rest;
                     std::string parsed(start, *rest-start);
@@ -918,6 +919,21 @@ private:
             }
         }
         throw std::runtime_error("Boolean expected");
+    }
+
+    // Microsoft doesn't have the POSIX.1-2001 strncasecmp function
+    int my_strncasecmp(const char *a, const char *b, size_t nchars) {
+        ASSERT_not_null(a);
+        ASSERT_not_null(b);
+        for (size_t i=0; i<nchars; ++i) {
+            if (!a[i] || !b[i])
+                return a[i] ? 1 : (b[i] ? -1 : 0);
+            char achar = tolower(a[i]);
+            char bchar = tolower(b[i]);
+            if (achar != bchar)
+                return achar < bchar ? -1 : 1;
+        }
+        return 0;
     }
 };
 
@@ -939,7 +955,7 @@ protected:
     StringSetParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<StringSetParser> Ptr;
+    typedef SharedPointer<StringSetParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new StringSetParser object.  Uses will most likely want to use
      *  the @ref stringSetParser factory instead, which requires less typing.
@@ -958,7 +974,7 @@ public:
     template<class InputIterator>
     Ptr with(InputIterator begin, InputIterator end) {
         strings_.insert(strings_.end(), begin, end);
-        return boost::dynamic_pointer_cast<StringSetParser>(shared_from_this());
+        return sharedFromThis().dynamicCast<StringSetParser>();
     }
     /** @} */
 
@@ -985,7 +1001,7 @@ protected:
     EnumParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver), strParser_(StringSetParser::instance()) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<EnumParser> Ptr;
+    typedef SharedPointer<EnumParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new EnumParser object.  Uses will most likely want to use the @ref
      *  enumParser factory instead, which requires less typing.
@@ -1001,7 +1017,7 @@ public:
     Ptr with(const std::string &name, T value) {
         strParser_->with(name);
         members_.insert(name, value);
-        return boost::dynamic_pointer_cast<EnumParser>(shared_from_this());
+        return sharedFromThis().template dynamicCast<EnumParser>();
     }
 private:
     virtual ParsedValue operator()(Cursor &cursor) /*override*/ {
@@ -1029,7 +1045,7 @@ protected:
     }
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ListParser> Ptr;
+    typedef SharedPointer<ListParser> Ptr;
 
     /** Value type for list ParsedValue. */
     typedef std::list<ParsedValue> ValueList;
@@ -1053,7 +1069,7 @@ public:
      *  characters. */
     Ptr nextMember(const ValueParser::Ptr &elmtType, const std::string &separatorRe="[,;:]\\s*") {
         elements_.push_back(ParserSep(elmtType, separatorRe));
-        return boost::dynamic_pointer_cast<ListParser>(shared_from_this());
+        return sharedFromThis().dynamicCast<ListParser>();
     }
 
     /** Specify limits for the number of values parsed.
@@ -1298,10 +1314,10 @@ public:
  *  SwitchAction::Ptr action1 = UserAction::instance<MyFunctor>(myFunctor);
  *  SwitchAction::Ptr action2 = userAction(myFunctor);
  * @endcode */
-class SwitchAction {
+class SwitchAction: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<SwitchAction> Ptr;
+    typedef SharedPointer<SwitchAction> Ptr;
     virtual ~SwitchAction() {}
 
     /** Runs the action.  Calling this method will cause the function operator to be invoked with the parser results. */
@@ -1320,7 +1336,7 @@ protected:
     explicit ShowVersion(const std::string &versionString): versionString_(versionString) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ShowVersion> Ptr;
+    typedef SharedPointer<ShowVersion> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new ShowVersion object.  Uses will most likely want to use the @ref
      *  showVersion factory instead, which requires less typing.
@@ -1341,7 +1357,7 @@ protected:
         : ShowVersion(versionString), exitStatus_(exitStatus) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ShowVersionAndExit> Ptr;
+    typedef SharedPointer<ShowVersionAndExit> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new ShowVersionAndExit object.  Uses will most likely want to use the
      *  @ref showVersionAndExit factory instead, which requires less typing.
@@ -1364,7 +1380,7 @@ protected:
     ShowHelp() {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ShowHelp> Ptr;
+    typedef SharedPointer<ShowHelp> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new ShowHelp object.  Uses will most likely want to use the @ref
      *  showHelp factory instead, which requires less typing.
@@ -1384,7 +1400,7 @@ protected:
     ShowHelpAndExit(int exitStatus): exitStatus_(exitStatus) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ShowHelpAndExit> Ptr;
+    typedef SharedPointer<ShowHelpAndExit> Ptr;
 
     /** Allocating constructor.  Returns a pointer to a new ShowHelpAndExit object.  Users will most likely want to use the
      * @ref showHelpAndExit factory instead, which requires less typing.
@@ -1418,7 +1434,7 @@ protected:
         : switchKey_(switchKey), facilities_(facilities) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ConfigureDiagnostics> Ptr;
+    typedef SharedPointer<ConfigureDiagnostics> Ptr;
 
     /** Allocating constructor.  Returns a pointer to a new ConfigureDiagnostics object.  Users will most likely want to use
      * the @ref configureDiagnostics factory instead, which requires less typing.
@@ -1452,19 +1468,19 @@ protected:
  * @endcode */
 template<class Functor>
 class UserAction: public SwitchAction {
-    const Functor &functor_;
+    Functor &functor_;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    UserAction(const Functor &f): functor_(f) {}
+    UserAction(Functor &f): functor_(f) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<class UserAction> Ptr;
+    typedef SharedPointer<class UserAction> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new UserAction object.  Uses will most likely want to use the @ref
      *  userAction factory instead, which requires less typing.
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(const Functor &f) { return Ptr(new UserAction(f)); }
+    static Ptr instance(Functor &f) { return Ptr(new UserAction(f)); }
 protected:
     virtual void operator()(const ParserResult &parserResult) /*override*/ { (functor_)(parserResult); }
 };
@@ -1532,10 +1548,10 @@ typename UserAction<Functor>::Ptr userAction(const Functor &functor) {
  *
  *  Most subclasses will have factory functions to instantiate reference counted, allocated objects. See @ref
  *  augmenter_factories for a list. */
-class ValueAugmenter {
+class ValueAugmenter: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ValueAugmenter> Ptr;
+    typedef SharedPointer<ValueAugmenter> Ptr;
     virtual ~ValueAugmenter() {}
 
     /** Called when a switch's value is about to be stored into the ParserResult.  The previously stored switch values for all
@@ -1564,7 +1580,7 @@ protected:
     Sum() {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<Sum> Ptr;
+    typedef SharedPointer<Sum> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new Sum object.  Uses will most likely want to use the @ref
      *  sum factory instead, which requires less typing.

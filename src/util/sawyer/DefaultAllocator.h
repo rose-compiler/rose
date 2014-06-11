@@ -44,8 +44,8 @@ public:
  *  typedef Sawyer::ProxyAllocator<Sawyer::PoolAllocator> PoolProxy;
  *  typedef Sawyer::Container::Graph<int, int, PoolProxy> Graph;
  *
- *  Graph g1(PoolProxy(pool));
- *  Graph g2(PoolProxy(pool));
+ *  Graph g1(pool);
+ *  Graph g2(pool);
  * @endcode */
 template<class Allocator>
 class ProxyAllocator {
@@ -55,7 +55,7 @@ public:
      *
      *  The constructor stores a reference to the @p allocator within the new proxy object.  All copies of the proxy will refer
      *  to the same allocator. */
-    explicit ProxyAllocator(Allocator &allocator): allocator_(allocator) {}
+    ProxyAllocator(Allocator &allocator): allocator_(allocator) {} // implicit
 
     /** Allocate memory.
      *

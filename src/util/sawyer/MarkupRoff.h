@@ -8,7 +8,7 @@
 namespace Sawyer {
 namespace Markup {
 
-typedef boost::shared_ptr<class RoffFormatter>  RoffFormatterPtr;
+typedef SharedPointer<class RoffFormatter>  RoffFormatterPtr;
 
 class RoffFormatter: public Formatter {
     std::string pageName_;                              // command name, usually upper case. E.g., "LS"
@@ -56,7 +56,7 @@ public:
     void nextLine();
     std::string escapeArg(const std::string&) const;
     std::string escapeText(const std::string&) const;
-    RoffFormatterPtr self() { return boost::dynamic_pointer_cast<RoffFormatter>(shared_from_this()); }
+    RoffFormatterPtr self() { return sharedFromThis().dynamicCast<RoffFormatter>(); }
     virtual void beginDocument(std::ostream&) /*override*/;
     virtual void endDocument(std::ostream&) /*override*/;
     virtual bool beginTag(std::ostream&, const TagPtr&, const TagArgs&) /*override*/;

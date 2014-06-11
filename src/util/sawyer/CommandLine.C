@@ -10,13 +10,19 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
+#include <cstdio>
+#include <ctime>
 #include <iostream>
 #include <set>
 #include <sstream>
+
+#ifndef _MSC_VER
 #include <termio.h>
 #include <sys/ioctl.h>
+#endif
 
 namespace Sawyer {
 namespace CommandLine {
@@ -151,7 +157,7 @@ ParsedValue ValueParser::operator()(Cursor &cursor) {
             cursor.consumeChars(rest-s);
         }
         return retval;
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error&) {
         // We must update the cursor location even if an exception is thrown because it indicates that a value
         // was syntactically correct, but not semantically correct. E.g., a mathematical integer that could not be
         // stored as an unsigned type.
@@ -189,7 +195,7 @@ ListParser::Ptr ListParser::limit(size_t minLength, size_t maxLength) {
         throw std::runtime_error("minimum ListParser length must be less than or equal to maximum length");
     minLength_ = minLength;
     maxLength_ = maxLength;
-    return boost::dynamic_pointer_cast<ListParser>(shared_from_this());
+    return sharedFromThis().dynamicCast<ListParser>();
 }
 
 ParsedValue ListParser::operator()(Cursor &cursor) {
@@ -319,17 +325,17 @@ ConfigureDiagnostics::Ptr configureDiagnostics(const std::string &switchKey, Mes
 template<typename T>
 static T fromSigned(const boost::any &v) {
     if (v.type() == typeid(boost::int64_t)) {
-        return boost::any_cast<boost::int64_t>(v);
+        return boost::numeric_cast<T>(boost::any_cast<boost::int64_t>(v));
     } else if (v.type() == typeid(long long)) {
-        return boost::any_cast<long long>(v);
+        return boost::numeric_cast<T>(boost::any_cast<long long>(v));
     } else if (v.type() == typeid(long)) {
-        return boost::any_cast<long>(v);
+        return boost::numeric_cast<T>(boost::any_cast<long>(v));
     } else if (v.type() == typeid(int)) {
-        return boost::any_cast<int>(v);
+        return boost::numeric_cast<T>(boost::any_cast<int>(v));
     } else if (v.type() == typeid(short)) {
-        return boost::any_cast<short>(v);
+        return boost::numeric_cast<T>(boost::any_cast<short>(v));
     } else if (v.type() == typeid(signed char)) {
-        return boost::any_cast<signed char>(v);
+        return boost::numeric_cast<T>(boost::any_cast<signed char>(v));
     } else {
         return boost::any_cast<T>(v);
     }
@@ -338,19 +344,19 @@ static T fromSigned(const boost::any &v) {
 template<typename T>
 static T fromUnsigned(const boost::any &v) {
     if (v.type() == typeid(boost::uint64_t)) {
-        return boost::any_cast<boost::uint64_t>(v);
+        return boost::numeric_cast<T>(boost::any_cast<boost::uint64_t>(v));
     } else if (v.type() == typeid(unsigned long long)) {
-        return boost::any_cast<unsigned long long>(v);
+        return boost::numeric_cast<T>(boost::any_cast<unsigned long long>(v));
     } else if (v.type() == typeid(unsigned long)) {
-        return boost::any_cast<unsigned long>(v);
+        return boost::numeric_cast<T>(boost::any_cast<unsigned long>(v));
     } else if (v.type() == typeid(unsigned int)) {
-        return boost::any_cast<unsigned int>(v);
+        return boost::numeric_cast<T>(boost::any_cast<unsigned int>(v));
     } else if (v.type() == typeid(unsigned short)) {
-        return boost::any_cast<unsigned short>(v);
+        return boost::numeric_cast<T>(boost::any_cast<unsigned short>(v));
     } else if (v.type() == typeid(unsigned char)) {
-        return boost::any_cast<unsigned char>(v);
+        return boost::numeric_cast<T>(boost::any_cast<unsigned char>(v));
     } else if (v.type() == typeid(size_t)) {
-        return boost::any_cast<size_t>(v);
+        return boost::numeric_cast<T>(boost::any_cast<size_t>(v));
     } else {
         return boost::any_cast<T>(v);
     }
@@ -377,9 +383,9 @@ static T fromInteger(const boost::any &v) {
 template<typename T>
 T fromFloatingPoint(const boost::any &v) {
     if (v.type() == typeid(double)) {
-        return boost::any_cast<double>(v);
+        return boost::numeric::converter<T, double>::convert(boost::any_cast<double>(v));
     } else if (v.type() == typeid(float)) {
-        return boost::any_cast<float>(v);
+        return boost::numeric::converter<T, float>::convert(boost::any_cast<float>(v));
     } else {
         return fromInteger<T>(v);
     }
@@ -418,7 +424,7 @@ float ParsedValue::asFloat() const {
 }
 
 bool ParsedValue::asBool() const {
-    return fromInteger<boost::uint64_t>(value_);
+    return fromInteger<boost::uint64_t>(value_) != 0;
 }
 
 std::string ParsedValue::asString() const {
@@ -1312,7 +1318,7 @@ ParserResult Parser::parseInternal(const std::vector<std::string> &programArgume
         // there's no switch to parse.
         try {
             parseOneSwitch(cursor, result);
-        } catch (const std::runtime_error &e) {
+        } catch (const std::runtime_error&) {
             if (skipUnknownSwitches_) {
                 result.skip(cursor.location());
                 cursor.consumeArg();
@@ -1459,33 +1465,48 @@ bool Parser::apparentSwitch(const Cursor &cursor) const {
     return false;
 }
 
+static std::string readOneLine(FILE *stream)
+{
+    std::string retval;
+    while (1) {
+        int c = fgetc(stream);
+        if (c < 0)
+            break;
+        retval += (char)c;
+        if ('\n'==c)
+            break;
+    }
+    return retval;
+}
+
 // Read a text file to obtain command line arguments which are returned.
 std::vector<std::string> Parser::readArgsFromFile(const std::string &filename) {
     std::vector<std::string> retval;
     struct FileGuard {
         FILE *f;
-        char *linebuf;
-        size_t linebufsz;
-        FileGuard(FILE *f): f(f), linebuf(NULL), linebufsz(0) {}
+        FileGuard(FILE *f): f(f) {}
         ~FileGuard() {
-            if (f) fclose(f);
-            if (linebuf) free(linebuf);
+            if (f)
+                fclose(f);
         }
     } file(fopen(filename.c_str(), "r"));
     if (NULL==file.f)
         throw std::runtime_error("failed to open file \"" + filename + "\": " + strerror(errno));
 
-    ssize_t nchars, nlines = 0;
-    while ((nchars = getline(&file.linebuf, &file.linebufsz, file.f))>0) {
+    unsigned nlines = 0;
+    while (1) {
         ++nlines;
-        std::string line = boost::trim_copy(std::string(file.linebuf, nchars));
-        nchars = line.size();
+        std::string line = readOneLine(file.f);
+        if (line.empty())
+            break;
+        boost::trim(line);
+        size_t nchars = line.size();
         if (line.empty() || '#'==line[0])
             continue;
         char inQuote = '\0';
         std::string word;
 
-        for (ssize_t i=0; i<nchars; ++i) {
+        for (size_t i=0; i<nchars; ++i) {
             char ch = line[i];
             if ('\''==ch || '"'==ch) {
                 if (ch==inQuote) {
@@ -1535,11 +1556,10 @@ Parser& Parser::version(const std::string &versionString, const std::string &dat
 std::pair<std::string, std::string> Parser::version() const {
     if (dateString_.empty()) {
         time_t now = time(NULL);
-        struct tm tm;
-        if (localtime_r(&now, &tm)) {
+        if (const struct tm *tm_static = localtime(&now)) { // localtime_r not avail on Windows
             static const char *month[] = {"January", "February", "March", "April", "May", "June", "July",
                                           "August", "September", "October", "November", "December"};
-            dateString_ = std::string(month[tm.tm_mon]) + " " + toString(1900+tm.tm_year);
+            dateString_ = std::string(month[tm_static->tm_mon]) + " " + toString(1900+tm_static->tm_year);
         }
     }
     return std::make_pair(versionString_, dateString_);
@@ -1586,7 +1606,7 @@ std::vector<std::string> Parser::docSections() const {
 
 // @s{NAME} where NAME is either a long or short switch name without prefix.
 typedef Container::Map<std::string, std::string> PreferredPrefixes; // maps switch names to their best prefixes
-typedef boost::shared_ptr<class SwitchTag> SwitchTagPtr;
+typedef SharedPointer<class SwitchTag> SwitchTagPtr;
 class SwitchTag: public Markup::Tag {
     PreferredPrefixes preferredPrefixes_;
     std::string bestShortPrefix_;                       // short prefix if the switch name is not recognized
@@ -1620,7 +1640,7 @@ public:
 };
 
 // @seeAlso is replaced by the list @man references that have been processed so far.
-typedef boost::shared_ptr<class SeeAlsoTag> SeeAlsoTagPtr;
+typedef SharedPointer<class SeeAlsoTag> SeeAlsoTagPtr;
 class SeeAlsoTag: public Markup::Tag {
 public:
 public:
@@ -1648,7 +1668,7 @@ public:
 };
 
 // @man{PAGE}{CHAPTER} converted to @b{PAGE}(CHAPTER) to cite Unix manual pages.
-typedef boost::shared_ptr<class ManTag> ManTagPtr;
+typedef SharedPointer<class ManTag> ManTagPtr;
 class ManTag: public Markup::Tag {
     SeeAlsoTagPtr seeAlso_;
 protected:
@@ -1669,7 +1689,7 @@ public:
 };
 
 // @prop{KEY} is replaced with the property string stored for KEY
-typedef boost::shared_ptr<class PropTag> PropTagPtr;
+typedef SharedPointer<class PropTag> PropTagPtr;
 class PropTag: public Markup::Tag {
     Container::Map<std::string, std::string> values_;
 protected:
@@ -1678,7 +1698,7 @@ public:
     static PropTagPtr instance() { return PropTagPtr(new PropTag); }
     PropTagPtr with(const std::string &key, const std::string &value) {
         values_.insert(key, value);
-        return boost::dynamic_pointer_cast<PropTag>(shared_from_this());
+        return sharedFromThis().dynamicCast<PropTag>();
     }
     virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*overload*/ {
         using namespace Markup;
@@ -1914,6 +1934,9 @@ int Parser::terminalWidth() {
 // FIXME[Robb Matzke 2014-06-05]: Windows systems will require that nroff be installed. Eventually we'll want to do something
 // better but I don't use Windows, so I have no idea what that would be.
 void Parser::emitDocumentationToPager() const {
+#ifdef _MSC_VER
+    std::cout <<"Cannot emit documentation on a Microsoft OS";
+#else
     std::string doc = manpage();
     int actualWidth = terminalWidth();
     int width = std::min(actualWidth * 39/40, std::max(actualWidth-2, 20));
@@ -1927,18 +1950,15 @@ void Parser::emitDocumentationToPager() const {
         pager = pagerEnv;
     if (pager.empty())
         pager = "less";
-#ifdef _MSC_VER
-    cmd += "|" + pager;
-#else
     if (isatty(1))
         cmd += "|" + pager;
-#endif
 
     FILE *proc = popen(cmd.c_str(), "w");
     if (!proc)
         throw std::runtime_error("cannot run \"" + cmd + "\"");
     fputs(doc.c_str(), proc);
     pclose(proc);
+#endif
 }
 
 } // namespace

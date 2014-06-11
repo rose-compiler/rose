@@ -1,6 +1,7 @@
 #ifndef Sawyer_Graph_H
 #define Sawyer_Graph_H
 
+#include <sawyer/Assert.h>
 #include <sawyer/DefaultAllocator.h>
 #include <sawyer/IndexedList.h>
 #include <boost/range/iterator_range.hpp>
