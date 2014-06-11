@@ -2,14 +2,34 @@
 
 class InheritedAttribute
    {
+          bool isSharedTypeExpression;
+
      public:
           InheritedAttribute();
+          InheritedAttribute( const InheritedAttribute & X );
+
+          void set_SharedTypeExpression(bool value);
+          bool get_SharedTypeExpression();
    };
 
 class SynthesizedAttribute
    {
+     private:
+          bool isSharedTypeExpression;
+          bool isMarkedForTransformation;
+
+     public:
+          SgNode* node;
+
      public:
           SynthesizedAttribute();
+          SynthesizedAttribute( SgNode* n );
+          SynthesizedAttribute( const SynthesizedAttribute & X );
+
+          void set_SharedTypeExpression(bool value);
+          bool get_SharedTypeExpression();
+          void set_MarkedForTransformation(bool value);
+          bool get_MarkedForTransformation();
    };
 
 class Traversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
