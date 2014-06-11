@@ -1390,11 +1390,16 @@ ResetParentPointers::evaluateInheritedAttribute (
                       // (and it is not clear that it should be an error).  So output a message as we debug this issue.
                          if (declaration->get_parent() != directive)
                             {
+#if 0
                               printf ("Error: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
                               printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
                               printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
                               declaration->get_file_info()->display("location of problem code: declaration: debug");
                               directive->get_file_info()->display("location of problem code: directive: debug");
+#else
+                           // DQ (5/19/2014): Make this a warning for now; it does not appear to be a problem.
+                              printf ("Warning: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
+#endif
                             }
 
                       // DQ (3/15/2006): Why is it an error to have this be a valid pointer?  The parent should be the directive, I think.
