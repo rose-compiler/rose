@@ -13,9 +13,6 @@
 #ifndef VERBOSE
 #define VERBOSE 0
 #endif
-#ifndef FILTER_OUT_LARGE_UNROLLING_FACTOR
-#define FILTER_OUT_LARGE_UNROLLING_FACTOR 0
-#endif
 
 class SgProject;
 class SgSourceFile;
@@ -137,95 +134,34 @@ Generator<Annotation, Language, Runtime, Driver>::Generator(
 template <class Annotation, class Language, class Runtime, class Driver>
 Generator<Annotation, Language, Runtime, Driver>::~Generator() {}
 
-/// Helper function to build set of all loop shape configuration.
+/// Helper function to build set of all tiling configuration.
 template <class Annotation, class Language, class Runtime>
-void buildAllShapeConfigs(
-  std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> curr_elem,
-  typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::loop_shape_t *> >::const_iterator curr_it,
-  const typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::loop_shape_t *> >::const_iterator end_it,
-  std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> > & shape_set
+void buildAllTileConfigs(
+  std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> curr_elem,
+  typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> >::const_iterator curr_it,
+  const typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> >::const_iterator end_it,
+  std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> > & tiling_set
 ) {
   if (curr_it == end_it) {
-    shape_set.insert(curr_elem);
+    tiling_set.insert(curr_elem);
   }
   else {
-    typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename Runtime::loop_shape_t *> >::const_iterator new_curr_it = curr_it;
+    typename std::map<typename LoopTrees<Annotation>::loop_t *,  std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> >::const_iterator new_curr_it = curr_it;
     new_curr_it++;
 
     if (curr_it->second.empty()) {
-      curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(curr_it->first, NULL));
-      buildAllShapeConfigs<Annotation, Language, Runtime>(curr_elem, new_curr_it, end_it, shape_set);
+      curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *>(curr_it->first, NULL));
+      buildAllTileConfigs<Annotation, Language, Runtime>(curr_elem, new_curr_it, end_it, tiling_set);
     }
     else {
-      typename std::vector<typename Runtime::loop_shape_t *>::const_iterator it;
+      typename std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *>::const_iterator it;
       for (it = curr_it->second.begin(); it != curr_it->second.end(); it++) {
-        std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> new_curr_elem(curr_elem);
-        new_curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(curr_it->first, *it));
-        buildAllShapeConfigs<Annotation, Language, Runtime>(new_curr_elem, new_curr_it, end_it, shape_set);
+        std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> new_curr_elem(curr_elem);
+        new_curr_elem.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *>(curr_it->first, *it));
+        buildAllTileConfigs<Annotation, Language, Runtime>(new_curr_elem, new_curr_it, end_it, tiling_set);
       }
     }
   }
-}
-
-template <class Annotation, class Language, class Runtime>
-size_t getUnrollingFactor(
-  typename LoopTrees<Annotation>::node_t * node,
-  const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & shaping
-) {
-  if (node == NULL) return 1;
-
-  typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
-  typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
-  typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
-
-  if (loop != NULL) {
-    size_t unrolling_factor = 1;
-    typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shaping.find(loop);
-    assert(it_shape != shaping.end());
-    if (it_shape->second != NULL) {
-      if (it_shape->second->unroll_tile_0)
-        unrolling_factor = unrolling_factor > it_shape->second->tile_0 ? unrolling_factor : it_shape->second->tile_0;
-      if (it_shape->second->unroll_tile_1)
-        unrolling_factor = unrolling_factor > it_shape->second->tile_1 ? unrolling_factor : it_shape->second->tile_1;
-      if (it_shape->second->unroll_tile_2)
-        unrolling_factor = unrolling_factor > it_shape->second->tile_2 ? unrolling_factor : it_shape->second->tile_2;
-      if (it_shape->second->unroll_tile_3)
-        unrolling_factor = unrolling_factor > it_shape->second->tile_3 ? unrolling_factor : it_shape->second->tile_3;
-    }
-
-    return unrolling_factor * getUnrollingFactor<Annotation, Language, Runtime>(loop->block, shaping);
-  }
-  else if (block != NULL) {
-    size_t unrolling_factor = 1;
-    typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it_child;
-    for (it_child = block->children.begin(); it_child != block->children.end(); it_child++) {
-      size_t tmp = getUnrollingFactor<Annotation, Language, Runtime>(*it_child, shaping);
-      unrolling_factor = unrolling_factor > tmp ? unrolling_factor : tmp;
-    }
-    return unrolling_factor;
-  }
-  else if (cond != NULL)
-    return getUnrollingFactor<Annotation, Language, Runtime>(cond->block_true, shaping) * getUnrollingFactor<Annotation, Language, Runtime>(cond->block_false, shaping);
-
-  return 1;
-}
-
-template <class Annotation, class Language, class Runtime>
-unsigned getUnrollingFactor(
-  Kernel<Annotation, Language, Runtime> * kernel,
-  const std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> & shaping
-) {
-  unsigned unrolling_factor = 1;
-  const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
-  typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
-  for (it_root = roots.begin(); it_root != roots.end(); it_root++) {
-    typename LoopTrees<Annotation>::loop_t * loop = dynamic_cast<typename LoopTrees<Annotation>::loop_t *>(*it_root);
-    if (loop != NULL) {
-      unsigned tmp_unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(loop, shaping);
-      unrolling_factor = unrolling_factor > tmp_unrolling_factor ? unrolling_factor : tmp_unrolling_factor;
-    }
-  }
-  return unrolling_factor;
 }
 
 template <class Annotation, class Language, class Runtime, class Driver>
@@ -259,33 +195,27 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       // 4 - Iterations Mapping : determines the "shape" of every loop of each kernel.
       //     The "shape" of a loop is how this loop is adapted to the execution model.
 
-      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> > shape_map;
-      typename std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_loop_shape;
-      typename std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> >::const_iterator it_shape_vect;
-      typename std::vector<typename Runtime::loop_shape_t *>::const_iterator it_shape;
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> > tiling_map;
 
-      cg_config.getIterationMapper().determineLoopShapes(*it_kernel, shape_map);
+      cg_config.getLoopTiler().determineTiles(*it_kernel, tiling_map);
 
-      std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> > loop_shape_set;
-      buildAllShapeConfigs<Annotation, Language, Runtime>(
-        std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>(),
-        shape_map.begin(),
-        shape_map.end(),
-        loop_shape_set
+      std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> > loop_tiling_set;
+      buildAllTileConfigs<Annotation, Language, Runtime>(
+        std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *>(),
+        tiling_map.begin(),
+        tiling_map.end(),
+        loop_tiling_set
       );
 
       // 5 - Code Generation
 
       unsigned cnt = 0;
-      typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> >::iterator it_loop_shape_map;
-      for (it_loop_shape_map = loop_shape_set.begin(); it_loop_shape_map != loop_shape_set.end(); it_loop_shape_map++) {
-#if FILTER_OUT_LARGE_UNROLLING_FACTOR
-        /// \todo Should not be here, shape should be filtered earlier even if this limitation come from codegen
-        unsigned unrolling_factor = getUnrollingFactor<Annotation, Language, Runtime>(*it_kernel, *it_loop_shape_map);
-#endif /* FILTER_OUT_LARGE_UNROLLING_FACTOR */
-#if VERBOSE
+      typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> >::iterator it_loop_tiling_map;
+      for (it_loop_tiling_map = loop_tiling_set.begin(); it_loop_tiling_map != loop_tiling_set.end(); it_loop_tiling_map++) {
+
+#if 0 && VERBOSE
         std::cerr << "Generate kernel version " << cnt << "/" << loop_shape_set.size() << std::endl;
-        for (it_loop_shape = it_loop_shape_map->begin(); it_loop_shape != it_loop_shape_map->end(); it_loop_shape++) {
+        for (it_loop_shape = it_loop_tiling_map->begin(); it_loop_shape != it_loop_tiling_map->end(); it_loop_shape++) {
           std::cerr << "  Loop: " << it_loop_shape->first->iterator->get_name().getString() << std::endl;
           if (it_loop_shape->second != NULL) {
             std::cerr << "      Tile 0: " << it_loop_shape->second->tile_0 << " " << it_loop_shape->second->unroll_tile_0 << std::endl;
@@ -296,32 +226,22 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
           else
             std::cerr << "      No shape information." << std::endl;
         }
-#if FILTER_OUT_LARGE_UNROLLING_FACTOR
-        std::cerr << "    Unrolling Factor = " << unrolling_factor << std::endl;
-#endif /* FILTER_OUT_LARGE_UNROLLING_FACTOR */
 #endif /* VERBOSE */
 
-#if FILTER_OUT_LARGE_UNROLLING_FACTOR
-        if (unrolling_factor > 128) {
-#if VERBOSE
-          std::cerr << "  Skip this shape configuration because of a Unrolling factor too large." << std::endl;
-#endif /* VERBOSE */
-          continue;
-        }
-#endif /* FILTER_OUT_LARGE_UNROLLING_FACTOR */
 
         typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);
 
-        kernel_desc.shapes.insert(it_loop_shape_map->begin(), it_loop_shape_map->end());
+        kernel_desc.tiling.insert(it_loop_tiling_map->begin(), it_loop_tiling_map->end());
 
         typename Kernel<Annotation, Language, Runtime>::a_kernel * kernel = p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc);
 
         (*it_kernel)->addKernel(kernel);
       }
-
-      for (it_shape_vect = shape_map.begin(); it_shape_vect != shape_map.end(); it_shape_vect++)
-        for (it_shape = it_shape_vect->second.begin(); it_shape != it_shape_vect->second.end(); it_shape++)
-          delete *it_shape;
+      typename std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> >::const_iterator it_tiling_vect;
+      typename std::vector<typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *>::const_iterator it_tiling;
+      for (it_tiling_vect = tiling_map.begin(); it_tiling_vect != tiling_map.end(); it_tiling_vect++)
+        for (it_tiling = it_tiling_vect->second.begin(); it_tiling != it_tiling_vect->second.end(); it_tiling++)
+          delete *it_tiling;
       
     }
 }

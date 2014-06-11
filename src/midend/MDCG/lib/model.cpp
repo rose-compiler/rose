@@ -174,7 +174,7 @@ namespace_t model_t::lookup_namespace(SgNamespaceSymbol * symbol) const {
 
   return NULL;
 }
-  
+
 template <>
 void model_t::lookup<Model::variable_t>(const std::string & name, std::set<Model::variable_t> & result) const {
   std::vector<Model::variable_t>::const_iterator it_variable;

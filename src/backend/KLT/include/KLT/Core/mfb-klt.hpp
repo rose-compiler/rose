@@ -44,8 +44,8 @@ SgBasicBlock * createLocalDeclarations(
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::arguments_t & arguments,
   const std::map<
     typename ::KLT::LoopTrees<Annotation>::loop_t *,
-    typename Runtime::loop_shape_t *
-  > & loop_shapes
+    typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
+  > & loop_tiling
 );
 
 template <class Object>
@@ -121,21 +121,21 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     kernel_result.definition,
     local_symbol_maps,
     object.kernel->getArguments(),
-    object.shapes
+    object.tiling
   );
-
 
   std::map<
       typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::loop_t *,
       typename KLT<Object>::Runtime::a_loop
   > loop_descriptors_map;
 
-  unsigned loop_cnt = 0;
+  size_t loop_cnt = 0;
+  size_t tile_cnt = 0;
   const std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *> & kernel_roots = object.kernel->getRoots();
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;
   for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++)
     ::KLT::generateKernelBody<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(
-      *it_root, loop_cnt, loop_descriptors_map, KLT<Object>::Runtime::default_execution_mode, object.shapes, local_symbol_maps, body
+      *it_root, loop_cnt, tile_cnt, loop_descriptors_map, KLT<Object>::Runtime::default_execution_mode, object.tiling, local_symbol_maps, body
     );
 
   assert(result->loops.empty());

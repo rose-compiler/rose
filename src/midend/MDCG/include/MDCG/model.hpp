@@ -22,6 +22,8 @@
 #include <iostream>
 #include <string>
 
+#include <cassert>
+
 namespace MDCG {
 
 namespace Model {
@@ -81,6 +83,16 @@ struct model_t {
   
   template <typename element_t>
   void lookup(const std::string & name, std::set<element_t> & result) const;
+  
+  template <typename element_t>
+  element_t lookup(const std::string & name) const {
+    std::set<element_t> element_set;
+    lookup<element_t>(name, element_set);
+    assert(element_set.size() == 1);
+    element_t result = *(element_set.begin());
+    assert(result != NULL);
+    return result;
+  }
 
   // Printer
 

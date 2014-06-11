@@ -12,18 +12,30 @@ template <class Annotation, class Language, class Runtime> class Kernel;
 */
 
 template <class Annotation, class Language, class Runtime>
-class IterationMapper {
+class LoopTiler {
+  public:
+    struct loop_tiling_t {
+      loop_tiling_t(typename LoopTrees<Annotation>::loop_t * loop_);
+
+      typename LoopTrees<Annotation>::loop_t * loop;
+      std::vector<typename Runtime::tile_desc_t> tiles;
+    };
+
+
   protected:
-    virtual void computeValidShapes(
+    virtual void extendTiles(
       typename LoopTrees<Annotation>::loop_t * loop,
-      std::vector<typename Runtime::loop_shape_t *> & shapes
-    ) const = 0;
+      loop_tiling_t * basic_tiling,
+      std::vector<loop_tiling_t *> & extended_tiling
+    ) const {
+      extended_tiling.push_back(basic_tiling);
+    }
 
   private:
-    void determineLoopShapes(
+    void determineTiles(
       Kernel<Annotation, Language, Runtime> * kernel,
       typename LoopTrees<Annotation>::node_t * node,
-      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> > & shape_map
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<loop_tiling_t *> > & tiling_map
     ) const {
       if (node == NULL) return;
 
@@ -32,24 +44,24 @@ class IterationMapper {
       typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
 
       if (loop != NULL) {
-        std::vector<typename Runtime::loop_shape_t *> & shapes = shape_map.insert(
-          std::pair<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> >(
-            loop, std::vector<typename Runtime::loop_shape_t *>()
+        std::vector<loop_tiling_t *> & tiling = tiling_map.insert(
+          std::pair<typename LoopTrees<Annotation>::loop_t *, std::vector<loop_tiling_t *> >(
+            loop, std::vector<loop_tiling_t *>()
           )
         ).first->second;
 
-        computeValidShapes(loop, shapes);
+        extendTiles(loop, new loop_tiling_t(loop), tiling);
 
-         determineLoopShapes(kernel, loop->block, shape_map);
+        determineTiles(kernel, loop->block, tiling_map);
       }
       else if (cond != NULL) {
-        determineLoopShapes(kernel, cond->block_true, shape_map);
-        determineLoopShapes(kernel, cond->block_false, shape_map);
+        determineTiles(kernel, cond->block_true, tiling_map);
+        determineTiles(kernel, cond->block_false, tiling_map);
       }
       else if (block != NULL) {
         typename std::vector<typename LoopTrees<Annotation>::node_t *>::iterator it_child;
         for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
-          determineLoopShapes(kernel, *it_child, shape_map);
+          determineTiles(kernel, *it_child, tiling_map);
       }
       else assert(dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t *>(node) != NULL);
     }
@@ -59,15 +71,14 @@ class IterationMapper {
      *  \param loop_distribution
      *  \param shapes
      */
-    void determineLoopShapes(
+    void determineTiles(
       Kernel<Annotation, Language, Runtime> * kernel,
-      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<typename Runtime::loop_shape_t *> > & shape_map
+      std::map<typename LoopTrees<Annotation>::loop_t *, std::vector<loop_tiling_t *> > & tiling_map
     ) const {
       const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
       typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
-      for (it_root = roots.begin(); it_root != roots.end(); it_root++) {
-        determineLoopShapes(kernel, *it_root, shape_map);
-      }
+      for (it_root = roots.begin(); it_root != roots.end(); it_root++)
+        determineTiles(kernel, *it_root, tiling_map);
     }
 };
 

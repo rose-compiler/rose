@@ -3,6 +3,7 @@
 #define __KLT_KERNEL_HPP__
 
 #include "KLT/Core/loop-trees.hpp"
+#include "KLT/Core/loop-tiler.hpp"
 
 #include <vector>
 #include <list>
@@ -138,19 +139,24 @@ SgStatement * generateStatement(
 template <class Annotation, class Language, class Runtime>
 std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops(
   typename LoopTrees<Annotation>::loop_t * loop,
-  unsigned & loop_cnt,
+  size_t & loop_cnt,
+  size_t & tile_cnt,
   std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::a_loop> & loop_descriptors_map,
-  typename Runtime::loop_shape_t * shape,
+  typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t & tiling,
   const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
 );
 
 template <class Annotation, class Language, class Runtime>
 void generateKernelBody(
   typename ::KLT::LoopTrees<Annotation>::node_t * node,
-  unsigned & loop_cnt,
+  size_t & loop_cnt,
+  size_t & tile_cnt,
   std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::a_loop> & loop_descriptors_map,
   typename Runtime::exec_mode_e exec_mode,
-  std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *> shapes,
+  const std::map<
+    typename ::KLT::LoopTrees<Annotation>::loop_t *,
+    typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
+  > & tilings,
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
   SgScopeStatement * scope
 ) {
@@ -163,15 +169,18 @@ void generateKernelBody(
 
   if (loop != NULL) {
     std::cout << "[generateKernelBody]  loop != NULL" << std::endl;
-    typename Runtime::loop_shape_t * shape = NULL;
-    typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_shape_t *>::const_iterator it_shape = shapes.find(loop);
-    if (it_shape != shapes.end()) {
-      assert(it_shape->second != NULL);
-      shape = it_shape->second;
+    typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t * tiling = NULL;
+    typename std::map<
+      typename ::KLT::LoopTrees<Annotation>::loop_t *,
+      typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
+    >::const_iterator it_tiling = tilings.find(loop);
+    if (it_tiling != tilings.end()) {
+      assert(it_tiling->second != NULL);
+      tiling = it_tiling->second;
     }
 
     std::pair<SgStatement *, std::vector<SgScopeStatement *> > sg_loop = generateLoops<Annotation, Language, Runtime>(
-      loop, loop_cnt, loop_descriptors_map, shape, local_symbol_maps
+      loop, loop_cnt, tile_cnt, loop_descriptors_map, *tiling, local_symbol_maps
     );
     SageInterface::appendStatement(sg_loop.first, scope);
 
@@ -181,7 +190,7 @@ void generateKernelBody(
       /// \todo change the execution mode ('typename Runtime::exec_mode_e exec_mode') if needed
 
       generateKernelBody<Annotation, Language, Runtime>(
-        loop->block, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, *it_scope
+        loop->block, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, *it_scope
       );
     }
   }
@@ -196,11 +205,11 @@ void generateKernelBody(
 
     if (cond->block_true != NULL)
       generateKernelBody<Annotation, Language, Runtime>(
-        cond->block_true, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, bb_true
+        cond->block_true, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, bb_true
       );
     if (cond->block_false != NULL)
       generateKernelBody<Annotation, Language, Runtime>(
-        cond->block_false, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, bb_false
+        cond->block_false, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, bb_false
       );
   }
   else if (block != NULL) {
@@ -209,7 +218,7 @@ void generateKernelBody(
 
     if (block->children.size() == 1) {
       generateKernelBody<Annotation, Language, Runtime>(
-        block->children[0], loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, scope
+        block->children[0], loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, scope
       );
     }
     else if (block->children.size() > 1) {
@@ -219,7 +228,7 @@ void generateKernelBody(
       typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
       for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
         generateKernelBody<Annotation, Language, Runtime>(
-          *it_child, loop_cnt, loop_descriptors_map, exec_mode, shapes, local_symbol_maps, bb_scope
+          *it_child, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, bb_scope
         );
     }
   }
