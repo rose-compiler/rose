@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = stringSupport commandlineProcessing support graphs
+SUBDIRS = stringSupport commandlineProcessing support graphs sawyer
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
@@ -33,7 +33,8 @@ libroseutil_la_SOURCES =			\
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
-	commandlineProcessing/libRoseCommandlineUtil.la
+	commandlineProcessing/libRoseCommandlineUtil.la \
+	sawyer/libroseSawyer.la
 
 # DQ (4/5/2009): I don't think this needs to be specified using this Automake technique.
 # The use of this technique for force rose_paths.C to be built was also what was causing
@@ -53,7 +54,7 @@ include_HEADERS =				\
 	rose_paths.h				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
-	setup.h					\
+	setup.h						\
 	Stopwatch.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
@@ -64,11 +65,3 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB
-
-
-
-
-
-
-
-
