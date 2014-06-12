@@ -1,13 +1,13 @@
 #ifndef Sawyer_BitVectorSupport_H
 #define Sawyer_BitVectorSupport_H
 
-#include <sawyer/Assert.h>
-#include <sawyer/Interval.h>
-#include <sawyer/Optional.h>
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
+#include <sawyer/Assert.h>
+#include <sawyer/Interval.h>
+#include <sawyer/Optional.h>
 #include <string>
 #include <vector>
 

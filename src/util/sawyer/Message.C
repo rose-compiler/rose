@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find.hpp>
+#include <boost/config.hpp>
 #include <boost/foreach.hpp>
 #include <cerrno>
 #include <cmath>
@@ -10,14 +11,20 @@
 #include <stdexcept>
 #include <sstream>
 #include <sys/stat.h>
-#ifndef _MSC_VER
-#include <syslog.h>
-#endif
 #include <vector>
+
+#ifdef BOOST_WINDOWS
+//#   include <stdafx.h>
+#   include <windows.h>
+#   include <tchar.h>
+#   include <psapi.h>
+#else
+#   include <syslog.h>
+#endif
 
 #if defined(SAWYER_HAVE_BOOST_CHRONO)
 #   include <boost/chrono.hpp>
-#elif defined(_MSC_VER)
+#elif defined(BOOST_WINDOWS)
 #   include <time.h>
 #   include <windows.h>
 #   undef ERROR                                         // not sure where this pollution comes from
@@ -94,7 +101,7 @@ double now() {
     boost::chrono::system_clock::time_point epoch;
     boost::chrono::duration<double> diff = curtime - epoch;
     return diff.count();
-#elif defined(_MSC_VER)
+#elif defined(BOOST_WINDOWS)
     FILETIME ft;
     GetSystemTimeAsFileTime(&ft);
     unsigned __int64 t = ft.dwHighDateTime;
@@ -102,7 +109,7 @@ double now() {
     t |= ft.dwLowDateTime;
     t /= 10;                                            // convert into microseconds
     //t -= 11644473600000000Ui64;                       // convert file time to microseconds since Unix epoch
-    return 1 / 1e6;
+    return t / 1e6;
 #else // POSIX
     struct timeval t;
     if (-1==gettimeofday(&t, NULL))
@@ -403,6 +410,21 @@ void Gang::removeInstance(int id) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Prefix::setProgramName() {
+#ifdef BOOST_WINDOWS
+    if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
+        TCHAR buffer[MAX_PATH];
+        if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) { // requires linking with MinGW's psapi.a
+            std::string name = buffer;
+            size_t slash_idx = name.rfind('\\');
+            if (slash_idx != std::string::npos)
+                name = name.substr(slash_idx+1);
+            if (name.size()>4 && 0==name.substr(name.size()-4, 4).compare(".exe"))
+                name = name.substr(0, name.size()-4);
+            programName_ = name;
+        }
+        CloseHandle(handle);
+    }
+#else
     if (FILE *f = fopen("/proc/self/cmdline", "r")) {
         std::string name;
         int c;
@@ -416,6 +438,7 @@ void Prefix::setProgramName() {
             name = name.substr(3);
         programName_ = name;
     }
+#endif
     if (programName_.getOrElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
@@ -466,9 +489,8 @@ std::string Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
         programNameShown = *programName_;
         retval <<*programName_;
         if (showThreadId_) {
-#ifdef _MSC_VER
-            // FIXME[Robb Matzke 2014-06-10]: How does one get a process ID or thread identifier on Windows?
-            retval <<"[?]";
+#ifdef BOOST_WINDOWS
+            retval <<"[" <<GetCurrentProcessId() <<"]";
 #else
             retval <<"[" <<getpid() <<"]";
 #endif
@@ -576,10 +598,9 @@ std::string UnformattedSink::render(const Mesg &mesg, const MesgProps &props) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FdSink::init() {
-#ifdef _MSC_VER
+#ifdef BOOST_WINDOWS
     gangInternal(Gang::instanceForId(fd_));
-    overrideProperties().useColor = false;
-    defaultProperties().isBuffered = true;
+    overrideProperties().useColor = true;
 #else
     if (isatty(fd_)) {
         gangInternal(Gang::instanceForTty());
@@ -588,12 +609,12 @@ void FdSink::init() {
         gangInternal(Gang::instanceForId(fd_));
         overrideProperties().useColor = false;          // force false; user can still set this if they really want color
     }
-    defaultProperties().isBuffered = 2!=fd_;            // assume stderr is unbuffered and the rest are buffered
 #endif
+    defaultProperties().isBuffered = 2!=fd_;            // assume stderr is unbuffered and the rest are buffered
 }
 
 void FdSink::post(const Mesg &mesg, const MesgProps &props) {
-#ifdef _MSC_VER
+#ifdef BOOST_WINDOWS
     // FIXME[Robb Matzke 2014-06-10]: what is the most basic file level on Windows; one which doesn't need construction?
     std::cout <<render(mesg, props);
 #else
@@ -618,10 +639,10 @@ void FdSink::post(const Mesg &mesg, const MesgProps &props) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FileSink::init() {
-#ifdef _MSC_VER
+#ifdef BOOST_WINDOWS
     gangInternal(Gang::instanceForTty());
-    overrideProperties().useColor = false;
-    defaultProperties().isBuffered = true;
+    overrideProperties().useColor = true;
+    defaultProperties().isBuffered = false;
 #else
     if (isatty(fileno(file_))) {
         gangInternal(Gang::instanceForTty());
@@ -646,7 +667,7 @@ void StreamSink::post(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef _MSC_VER
+#ifndef BOOST_WINDOWS
 SyslogSink::SyslogSink(const char *ident, int option, int facility) {
     init();
     openlog(ident, option, facility);

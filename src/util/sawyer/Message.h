@@ -6,6 +6,7 @@
 #include <sawyer/Sawyer.h>
 #include <sawyer/SharedPointer.h>
 
+#include <boost/config.hpp>
 #include <boost/logic/tribool.hpp>
 #include <cassert>
 #include <cstring>
@@ -1034,7 +1035,7 @@ public:
     virtual void post(const Mesg&, const MesgProps&) /*override*/;
 };
 
-#ifndef _MSC_VER
+#ifndef BOOST_WINDOWS
 /** Sends messages to the syslog daemon. */
 class SyslogSink: public Destination {
 protected:

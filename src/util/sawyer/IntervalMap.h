@@ -120,8 +120,8 @@ public:
 template<typename I, typename T, class Policy = MergePolicy<I, T> >
 class IntervalMap {
 public:
-    typedef I Interval;
-    typedef T Value;
+    typedef I Interval;                                 /**< Interval type. */
+    typedef T Value;                                    /**< Value type. */
 
 private:
     // Nodes of the underlying map are sorted by their last value so that we can use that map's lowerBound method to find the

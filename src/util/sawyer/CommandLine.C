@@ -10,6 +10,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/config.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
@@ -19,7 +20,7 @@
 #include <set>
 #include <sstream>
 
-#ifndef _MSC_VER
+#ifndef BOOST_WINDOWS
 #include <termio.h>
 #include <sys/ioctl.h>
 #endif
@@ -1907,7 +1908,7 @@ std::string Parser::manpage() const {
 
 // Try to determine screen width.
 int Parser::terminalWidth() {
-#ifndef _MSC_VER
+#ifndef BOOST_WINDOWS
     // This won't work on Windows
     int ttyfd = isatty(1) ? 1 : (isatty(0) ? 1 : (isatty(2) ? 2 : -1));
     if (ttyfd >= 0) {
@@ -1934,7 +1935,7 @@ int Parser::terminalWidth() {
 // FIXME[Robb Matzke 2014-06-05]: Windows systems will require that nroff be installed. Eventually we'll want to do something
 // better but I don't use Windows, so I have no idea what that would be.
 void Parser::emitDocumentationToPager() const {
-#ifdef _MSC_VER
+#ifdef BOOST_WINDOWS
     std::cout <<"Cannot emit documentation on a Microsoft OS";
 #else
     std::string doc = manpage();
