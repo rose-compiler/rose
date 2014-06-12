@@ -93,7 +93,7 @@ public:
     bool isSingleton() const { return lo_ == hi_; }
 
     /** True if interval covers entire space. */
-    bool isWhole() const { return !isEmpty && hi_ + 1 == lo_; }
+    bool isWhole() const { return !isEmpty() && hi_ + 1 == lo_; }
 
     /** True if two intervals overlap.
      *
