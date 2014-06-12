@@ -130,6 +130,12 @@ set( STORAGECLASSES_SRC
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
