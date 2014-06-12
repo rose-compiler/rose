@@ -70,7 +70,8 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/MarkupRoff.C			\
 	sawyer/Message.C			\
 	sawyer/ProgressBar.C			\
-	sawyer/Sawyer.C
+	sawyer/Sawyer.C				\
+	sawyer/useHeaders.C
 nobase_include_HEADERS   =			\
 	sawyer/Assert.h				\
 	sawyer/BitVector.h			\
