@@ -821,7 +821,11 @@ private:
         while (isspace(*input)) ++input;
         if ('+'!=*input && !isdigit(*input))
             throw std::runtime_error("unsigned integer expected");
+#ifdef _MSC_VER // FIXME[Robb Matzke 2014-06-12]
+        boost::uint64_t big = _strtoui64(input, (char**)rest, 0);
+#else
         boost::uint64_t big = strtoull(input, (char**)rest, 0);
+#endif
         if (*rest==input)
             throw std::runtime_error("unsigned integer expected");
         while (isspace(**rest)) ++*rest;
