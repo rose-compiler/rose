@@ -292,7 +292,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/util/graphs  \
      -I$(top_srcdir)/src/util/stringSupport \
      -I$(top_srcdir)/src/util/commandlineProcessing \
-     -I$(top_srcdir)/src/util/sawyer \
      -I$(top_srcdir)/src/midend/abstractHandle \
      -I$(top_srcdir)/src/midend/abstractMemoryObject \
      -I$(top_srcdir)/src/midend/abstractLayer \
