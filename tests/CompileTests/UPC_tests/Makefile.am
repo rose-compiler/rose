@@ -277,6 +277,24 @@ testSharedMemoryDSL_42: sharedMemoryDSL
 testSharedMemoryDSL_43: sharedMemoryDSL
 	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_43.c
 
+testSharedMemoryDSL_44: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_44.c
+
+testSharedMemoryDSL_45: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_45.c
+
+testSharedMemoryDSL_46: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_46.c
+
+testSharedMemoryDSL_47: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_47.c
+
+testSharedMemoryDSL_48: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_48.c
+
+testSharedMemoryDSL_49: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_49.c
+
 
 # DQ (4/30/2014): List of test codes to test the shared memory DSL work.
 SharedMemoryDSL_testcodes = \
@@ -288,10 +306,8 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_26 testSharedMemoryDSL_27 testSharedMemoryDSL_28 testSharedMemoryDSL_29 testSharedMemoryDSL_30 \
    testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34 \
    testSharedMemoryDSL_36 testSharedMemoryDSL_37 testSharedMemoryDSL_38 testSharedMemoryDSL_39 testSharedMemoryDSL_40 \
-   testSharedMemoryDSL_41 
-
-# DQ (6/1/2014): This is still not passing although a simpler version of the test is passing.
-# testSharedMemoryDSL_42
+   testSharedMemoryDSL_41 testSharedMemoryDSL_42 testSharedMemoryDSL_43 testSharedMemoryDSL_44 testSharedMemoryDSL_45 \
+   testSharedMemoryDSL_46 testSharedMemoryDSL_47 testSharedMemoryDSL_48 testSharedMemoryDSL_49
 
 testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
 
