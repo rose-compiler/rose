@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = stringSupport commandlineProcessing support graphs sawyer
+SUBDIRS = stringSupport commandlineProcessing support graphs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
@@ -33,8 +33,7 @@ libroseutil_la_SOURCES =			\
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
-	commandlineProcessing/libRoseCommandlineUtil.la \
-	sawyer/libroseSawyer.la
+	commandlineProcessing/libRoseCommandlineUtil.la
 
 # DQ (4/5/2009): I don't think this needs to be specified using this Automake technique.
 # The use of this technique for force rose_paths.C to be built was also what was causing
@@ -58,6 +57,17 @@ include_HEADERS =				\
 	Stopwatch.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
+
+########################################################################################################################
+# rules for the sawyer subdirectory
+
+noinst_LTLIBRARIES += libroseSawyer.la
+libroseSawyer_la_SOURCES = sawyer/Assert.C sawyer/Message.C sawyer/ProgressBar.C sawyer/Sawyer.C
+nobase_include_HEADERS   = sawyer/Assert.h sawyer/Message.h sawyer/ProgressBar.h sawyer/Sawyer.h
+EXTRA_DIST += sawyer/CMakeLists.txt
+
+########################################################################################################################
+# automake boilerplate
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
