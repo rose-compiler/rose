@@ -78,11 +78,11 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
   const LoopTrees<Annotation> & loop_trees,
   Kernel<Annotation, Language, Runtime> * kernel
 ) {
-  std::set<SgVariableSymbol *>::const_iterator it_symbol;
+  std::vector<SgVariableSymbol *>::const_iterator it_symbol;
   typename std::set<Data<Annotation> *>::const_iterator it_data;
 
-  const std::set<SgVariableSymbol *> & parameters = loop_trees.getParameters();
-  const std::set<SgVariableSymbol *> & scalars = loop_trees.getScalars();
+  const std::vector<SgVariableSymbol *> & parameters = loop_trees.getParameters();
+  const std::vector<SgVariableSymbol *> & scalars = loop_trees.getScalars();
 
   std::set<SgVariableSymbol *> sym_var_refs;
     collectReferencedSymbols(kernel, sym_var_refs);

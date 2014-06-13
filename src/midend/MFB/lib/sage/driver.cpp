@@ -167,6 +167,7 @@ void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header
       std::string inc_path = (*it_arg).substr(2);
       if (header_file_name.find(inc_path) == 0) {
         header_file_name = header_file_name.substr(inc_path.length());
+        while (header_file_name[0] == '/') header_file_name = header_file_name.substr(1);
         break;
       }
     }

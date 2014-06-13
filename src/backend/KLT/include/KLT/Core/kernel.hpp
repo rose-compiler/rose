@@ -24,8 +24,6 @@ template <class Annotation, class Language, class Runtime>
 class Kernel {
   public:
     const unsigned long id;
-    
-    unsigned num_loops;
 
   public:
     struct dataflow_t {
@@ -67,12 +65,21 @@ class Kernel {
     struct a_kernel {
       std::string kernel_name;
 
+      size_t num_gangs[3];
+      size_t num_workers[3];
+      size_t vector_length;
+
       std::vector<typename Runtime::a_loop> loops;
     };
 
   protected:
+    const LoopTrees<Annotation> & p_loop_tree;
+
     /// List of trees forming the kernel (can be loops or statements)
     std::list<typename LoopTrees<Annotation>::node_t *> p_looptree_roots;
+
+    /// All loops in text order
+    std::vector<typename LoopTrees<Annotation>::loop_t *> p_loops;
 
     /// Set of data sorted accordingly to how they flow through the kernel
     dataflow_t p_data_flow;
@@ -83,10 +90,36 @@ class Kernel {
     /// All actual kernels that have been generated for this kernel (different decisions made in shape interpretation)
     std::vector<a_kernel *> p_generated_kernels;
 
+    void registerLoops(typename LoopTrees<Annotation>::node_t * node) {
+      assert(node != NULL);
+
+      typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
+      typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
+      typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
+      typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(node);
+
+      if (loop != NULL) {
+        p_loops.push_back(loop);
+        registerLoops(loop->block);
+      }
+      else if (cond != NULL) {
+        if (cond->block_true != NULL)
+          registerLoops(cond->block_true);
+        if (cond->block_false != NULL)
+          registerLoops(cond->block_false);
+      }
+      else if (block != NULL) {
+        typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+        for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
+            registerLoops(*it_child);
+      }
+      else assert(stmt != NULL);
+    }
+
   public:
-    Kernel() :
+    Kernel(const LoopTrees<Annotation> & loop_tree) :
       id(id_cnt++),
-      num_loops(0),
+      p_loop_tree(loop_tree),
       p_looptree_roots(),
       p_data_flow(),
       p_arguments(),
@@ -97,7 +130,10 @@ class Kernel {
       /// \todo
     }
 
-    std::list<typename LoopTrees<Annotation>::node_t *> & getRoots() { return p_looptree_roots; }
+    void appendRoot(typename LoopTrees<Annotation>::node_t * node) {
+      p_looptree_roots.push_back(node);
+      registerLoops(node);
+    }
     const std::list<typename LoopTrees<Annotation>::node_t *> & getRoots() const { return p_looptree_roots; }
 
     dataflow_t & getDataflow() { return p_data_flow; }
@@ -108,6 +144,10 @@ class Kernel {
 
     void addKernel(a_kernel * kernel) { p_generated_kernels.push_back(kernel); }
     const std::vector<a_kernel *> & getKernels() const { return p_generated_kernels; }
+
+    const LoopTrees<Annotation> & getLoopTree() const { return p_loop_tree; }
+
+    const std::vector<typename LoopTrees<Annotation>::loop_t *> & getLoops() const { return p_loops; }
 
   private:
     static unsigned long id_cnt;

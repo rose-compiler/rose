@@ -27,22 +27,22 @@ class LoopMapper {
 
 /** 
  *  Default imlementation, it creates only one kernel.
- *  More advanced version should distribute the LoopTree into multiple kernels that could be executed in parallel
+ *  More advanced version could distribute the LoopTree into multiple kernels that could be executed in parallel
  */
 template <class Annotation, class Language, class Runtime>
 void LoopMapper<Annotation, Language, Runtime>::createKernels(
   const LoopTrees<Annotation> & loop_trees,
   std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists
 ) const {
-  const std::list<typename LoopTrees<Annotation>::node_t * > & trees = loop_trees.getTrees();
-
   std::list<Kernel<Annotation, Language, Runtime> *> kernel_list;
 
-  Kernel<Annotation, Language, Runtime> * kernel = new Kernel<Annotation, Language, Runtime>();
-    kernel->num_loops = loop_trees.numberLoops();
+  Kernel<Annotation, Language, Runtime> * kernel = new Kernel<Annotation, Language, Runtime>(loop_trees);
   kernel_list.push_back(kernel);
 
-  kernel->getRoots().insert(kernel->getRoots().end(), trees.begin(), trees.end());
+  const std::vector<typename LoopTrees<Annotation>::node_t * > & trees = loop_trees.getTrees();
+  typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it;
+  for (it = trees.begin(); it != trees.end(); it++)
+    kernel->appendRoot(*it);
 
   kernel_lists.insert(kernel_list);
 }

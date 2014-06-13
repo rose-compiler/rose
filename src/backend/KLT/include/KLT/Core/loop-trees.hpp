@@ -119,47 +119,82 @@ class LoopTrees {
 
   protected:
     /// List of loop tree in textual order
-    std::list<node_t *> p_trees;
+    std::vector<node_t *> p_trees;
 
     /// Datas used by loop trees
-    std::set<Data<Annotation> *> p_datas;
+    std::vector<Data<Annotation> *> p_datas;
 
     /// Coefficiants (constant values) used in the sequence loop trees
-    std::set<SgVariableSymbol *> p_scalars;
+    std::vector<SgVariableSymbol *> p_scalars;
 
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
-    std::set<SgVariableSymbol *> p_parameters;
+    std::vector<SgVariableSymbol *> p_parameters;
 
     SgExpression * p_num_gangs[3];
     SgExpression * p_num_workers[3];
     SgExpression * p_vector_length;
 
+    bool getLoopID_rec(node_t * curr, loop_t * targ, size_t & idx) const {
+      assert(targ != NULL);
+
+      if (curr == NULL) return false;
+
+      typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(curr);
+      typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(curr);
+      typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(curr);
+      typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(curr);
+
+      if (loop != NULL) {
+        if (loop == targ)
+          return true;
+        else {
+          idx++;
+          return getLoopID_rec(loop->block, targ, idx);
+        }
+      }
+      else if (cond != NULL)
+        return getLoopID_rec(cond->block_true, targ, idx) && getLoopID_rec(cond->block_false, targ, idx);
+      else if (block != NULL) {
+        typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+        for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
+          if (getLoopID_rec(*it_child, targ, idx) == true)
+            return true;
+        return false;
+      }
+      else if (stmt != NULL) return false;
+      else assert(false);
+    }
+
   public:
     std::vector<Annotation> annotations;
 
   public:
-    const std::list<node_t *> & getTrees() const;
+    const std::vector<node_t *> & getTrees() const { return p_trees; }
 
-    const std::set<Data<Annotation> *> getDatas() const;
+    const std::vector<Data<Annotation> *> getDatas() const { return p_datas; }
+    size_t getNumDatas() const { return p_datas.size(); }
 
-    const std::set<SgVariableSymbol *> getScalars() const;
-    const std::set<SgVariableSymbol *> getParameters() const;
+    const std::vector<SgVariableSymbol *> getScalars() const { return p_scalars; }
+    size_t getNumScalars() const { return p_scalars.size(); }
+
+    const std::vector<SgVariableSymbol *> getParameters() const { return p_parameters; }
+    size_t getNumParameters() const { return p_parameters.size(); }
 
   public:
     LoopTrees();
     virtual ~LoopTrees();
 
     /// Add a tree at the end of the list
-    void addTree(node_t * tree);
+    void addTree(node_t * tree) { p_trees.push_back(tree); }
 
     /// Add a data used by loop trees
-    void addData(Data<Annotation> * data);
+    void addData(Data<Annotation> * data) { if (std::find(p_datas.begin(), p_datas.end(), data) == p_datas.end()) p_datas.push_back(data); }
 
     /// Add a coefficient of the sequence of loop trees
-    void addScalar(SgVariableSymbol * var_sym);
+    void addScalar(SgVariableSymbol * var_sym) { if (std::find(p_scalars.begin(), p_scalars.end(), var_sym) == p_scalars.end()) p_scalars.push_back(var_sym); }
 
     /// Add a parameter of the sequence of loop trees
-    void addParameter(SgVariableSymbol * var_sym);
+    void addParameter(SgVariableSymbol * var_sym) { if (std::find(p_parameters.begin(), p_parameters.end(), var_sym) == p_parameters.end()) p_parameters.push_back(var_sym); }
 
     void setNumGangs(size_t lvl, SgExpression * num);
     void setNumWorkers(size_t lvl, SgExpression * num);
@@ -177,6 +212,14 @@ class LoopTrees {
     void toText(std::ostream & out) const;
     
     size_t numberLoops() const;
+    size_t getLoopID(loop_t * loop) const {
+      size_t idx = 0;
+      typename std::vector<node_t *>::const_iterator it_tree;
+      for (it_tree = p_trees.begin(); it_tree != p_trees.end(); it_tree++)
+        if (getLoopID_rec(*it_tree, loop, idx))
+          return idx;
+      assert(false);
+    }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -278,19 +321,6 @@ void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::strin
 }
 
 template <class Annotation>
-const std::list<typename LoopTrees<Annotation>::node_t *> & 
-                    LoopTrees<Annotation>::getTrees() const { return p_trees; }
-
-template <class Annotation>
-const std::set<Data<Annotation> *> LoopTrees<Annotation>::getDatas() const { return p_datas; }
-
-template <class Annotation>
-const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getScalars() const { return p_scalars; }
-
-template <class Annotation>
-const std::set<SgVariableSymbol *> LoopTrees<Annotation>::getParameters() const { return p_parameters; }
-
-template <class Annotation>
 LoopTrees<Annotation>::LoopTrees() :
   p_trees(),
   p_datas(),
@@ -304,18 +334,6 @@ LoopTrees<Annotation>::LoopTrees() :
 
 template <class Annotation>
 LoopTrees<Annotation>::~LoopTrees() {}
-
-template <class Annotation>
-void LoopTrees<Annotation>::addTree(node_t * tree) { p_trees.push_back(tree); }
-
-template <class Annotation>
-void LoopTrees<Annotation>::addData(Data<Annotation> * data) { p_datas.insert(data); }
-
-template <class Annotation>
-void LoopTrees<Annotation>::addScalar(SgVariableSymbol * var_sym) { p_scalars.insert(var_sym); }
-
-template <class Annotation>
-void LoopTrees<Annotation>::addParameter(SgVariableSymbol * var_sym) { p_parameters.insert(var_sym); }
 
 template <class Annotation>
 void LoopTrees<Annotation>::setNumGangs(size_t lvl, SgExpression * num) {
@@ -345,9 +363,9 @@ void LoopTrees<Annotation>::toText(char * filename) const {
    
 template <class Annotation> 
 void LoopTrees<Annotation>::toText(std::ostream & out) const {
-  std::set<SgVariableSymbol *>::const_iterator it_sym;
-  typename std::set<Data<Annotation> *>::const_iterator it_data;
-  typename std::list<node_t *>::const_iterator it_tree;
+  std::vector<SgVariableSymbol *>::const_iterator it_sym;
+  typename std::vector<Data<Annotation> *>::const_iterator it_data;
+  typename std::vector<node_t *>::const_iterator it_tree;
 
   for (it_sym = p_parameters.begin(); it_sym != p_parameters.end(); it_sym++)
     out << "param(" << (*it_sym)->get_name().getString() << "," << SageInterface::get_name((*it_sym)->get_type()) << ")" << std::endl;
@@ -804,11 +822,11 @@ void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std
         symbols.insert((*it_var_ref)->get_symbol());
 
       var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->upper_bound);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
         symbols.insert((*it_var_ref)->get_symbol());
 
       var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->stride);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
         symbols.insert((*it_var_ref)->get_symbol());
     }
 
@@ -841,7 +859,7 @@ void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std
 template <class Annotation> 
 size_t LoopTrees<Annotation>::numberLoops() const {
   size_t cnt = 0;
-  typename std::list<node_t *>::const_iterator it_node;
+  typename std::vector<node_t *>::const_iterator it_node;
   for (it_node = p_trees.begin(); it_node != p_trees.end(); it_node++)
     cnt += (*it_node)->numberLoops();
 

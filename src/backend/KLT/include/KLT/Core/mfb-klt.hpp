@@ -57,6 +57,15 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
       typename KLT<Object>::Runtime
     >::a_kernel();
 
+/// \todo Move : OpenACC specific
+  result->num_gangs[0] = 0;
+  result->num_gangs[1] = 0;
+  result->num_gangs[2] = 0;
+  result->num_workers[0] = 0;
+  result->num_workers[1] = 0;
+  result->num_workers[2] = 0;
+  result->vector_length = 0;
+
   std::map<SgVariableSymbol *, SgVariableSymbol *> param_to_field_map;
   std::map<SgVariableSymbol *, SgVariableSymbol *> coef_to_field_map;
   std::map< ::KLT::Data<typename KLT<Object>::Annotation> *, SgVariableSymbol *> data_to_field_map;

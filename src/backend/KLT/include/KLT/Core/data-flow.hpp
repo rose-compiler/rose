@@ -124,7 +124,8 @@ void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
   typename std::list<typename LoopTrees<Annotation>::node_t *>::const_iterator it_root;
   typename std::set<Data<Annotation> *>::iterator it_data;
 
-  std::set<Data<Annotation> *> datas(loop_trees.getDatas());
+  const std::vector<Data<Annotation> *> & data_vect = loop_trees.getDatas();
+  std::set<Data<Annotation> *> datas(data_vect.begin(), data_vect.end());
   std::set<Data<Annotation> *> datas_in;
   std::set<Data<Annotation> *> datas_out;
   for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
