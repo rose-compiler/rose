@@ -14,7 +14,7 @@
 #       pragma warning(disable:4251)
 
         // Warning 4996: This function or variable may be unsafe.
- 	// This warning is emitted even for safe usage of functions like fopen, strerror, localtime, getenv, sprintf...
+        // This warning is emitted even for safe usage of functions like fopen, strerror, localtime, getenv, sprintf...
 #       pragma warning(disable:4996)
 
 #   endif

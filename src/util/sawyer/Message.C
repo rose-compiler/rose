@@ -414,6 +414,7 @@ void Gang::removeInstance(int id) {
 
 void Prefix::setProgramName() {
 #ifdef BOOST_WINDOWS
+#if 0 // [Robb Matzke 2014-06-13]: disabled because of a linking error in ROSE. Some CMake file probably needs to be fixe
     if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
         TCHAR buffer[MAX_PATH];
         if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) { // requires linking with MinGW's psapi.a
@@ -1115,6 +1116,11 @@ Importance Facilities::importanceFromString(const std::string &str) {
     if (0==str.compare("fatal") || 0==str.compare("FATAL"))
         return FATAL;
     abort();
+#ifdef _MSC_VER
+    // Microsoft's C++ compiler thinks that abort() can return; this extraneous return shuts up the warning and is
+    // protected from other compilers that may complain that this statement is unreachable.
+    return FATAL;
+#endif
 }
 
 // parses a StreamControlList. On success, returns a non-empty vector and adjust 'str' to point to the next character after the

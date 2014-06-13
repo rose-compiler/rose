@@ -164,7 +164,7 @@
  * @endcode */
 
 #ifdef BOOST_WINDOWS
-#   ifdef SAWYER_DO_EXPORTS                             // defined in CMake when compiling libsawyer
+#   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_DLL_EXPORTS) // defined in CMake when compiling libsawyer
 #       define SAWYER_EXPORT __declspec(dllexport)
 #   else
 #       define SAWYER_EXPORT __declspec(dllimport)
