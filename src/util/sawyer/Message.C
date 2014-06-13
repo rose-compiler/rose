@@ -414,7 +414,6 @@ void Gang::removeInstance(int id) {
 
 void Prefix::setProgramName() {
 #ifdef BOOST_WINDOWS
-#if 0 // [Robb Matzke 2014-06-13]: disabled because of a linking error in ROSE. Some CMake file probably needs to be fixe
     if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
         TCHAR buffer[MAX_PATH];
         if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) { // requires linking with MinGW's psapi.a
