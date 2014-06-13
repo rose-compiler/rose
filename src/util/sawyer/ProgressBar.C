@@ -75,7 +75,9 @@ std::string ProgressBarImpl::makeBar(double ratio, bool isBackward) {
     } else {
         if (showPercent_) {
             char buf[16];
+#include <sawyer/WarningsOff.h>
             sprintf(buf, "%3.0f%% ", 100.0*ratio);
+#include <sawyer/WarningsRestore.h>
             prefix += buf;
         }
         // Microsoft doesn't define round(double) in <cmath>

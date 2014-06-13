@@ -10,8 +10,9 @@
 namespace Sawyer {
 
 // used internally by the ProgressBar<> classes
-class ProgressBarImpl {
+class SAWYER_EXPORT ProgressBarImpl {
 public:
+#include <sawyer/WarningsOff.h>
     double value_;                                      // between zero and one, inclusive
     size_t width_;                                      // width of bar in characters
     bool showPercent_;                                  // show the percent after the progress bar
@@ -28,6 +29,7 @@ public:
     bool shouldSpin_;                                   // spin instead of progress
     Message::Mesg textMesg_;                            // message used when ANSI escape sequences are not available
     Optional<int> oldPercent_;                          // old percent value used when updating a non-color progress bar
+#include <sawyer/WarningsRestore.h>
 
     ProgressBarImpl(const Message::SProxy &stream)
         : value_(0.0), width_(15), showPercent_(true), leftEnd_("["), rightEnd_("]"), barChar_('#'), nonBarChar_('-'),
@@ -55,15 +57,15 @@ namespace ProgressBarSettings {
      *  the entire task can be completed quickly.  The default is 5 seconds. This value is global, applying to all progress
      *  bars.
      * @{ */
-    double initialDelay();
-    void initialDelay(double s);
+    SAWYER_EXPORT double initialDelay();
+    SAWYER_EXPORT void initialDelay(double s);
     /** @} */
     
 
     /** Minimum time between updates.  Measured in seconds.
      *  @{ */
-    double minimumUpdateInterval();
-    void minimumUpdateInterval(double s);
+    SAWYER_EXPORT double minimumUpdateInterval();
+    SAWYER_EXPORT void minimumUpdateInterval(double s);
     /** @} */
 } // namespace
 

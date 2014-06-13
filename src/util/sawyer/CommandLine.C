@@ -1483,6 +1483,7 @@ static std::string readOneLine(FILE *stream)
 // Read a text file to obtain command line arguments which are returned.
 std::vector<std::string> Parser::readArgsFromFile(const std::string &filename) {
     std::vector<std::string> retval;
+#include <sawyer/WarningsOff.h>                         // turn off warnings for fopen and strerror in MVC
     struct FileGuard {
         FILE *f;
         FileGuard(FILE *f): f(f) {}
@@ -1493,6 +1494,7 @@ std::vector<std::string> Parser::readArgsFromFile(const std::string &filename) {
     } file(fopen(filename.c_str(), "r"));
     if (NULL==file.f)
         throw std::runtime_error("failed to open file \"" + filename + "\": " + strerror(errno));
+#include <sawyer/WarningsRestore.h>
 
     unsigned nlines = 0;
     while (1) {
@@ -1557,7 +1559,9 @@ Parser& Parser::version(const std::string &versionString, const std::string &dat
 std::pair<std::string, std::string> Parser::version() const {
     if (dateString_.empty()) {
         time_t now = time(NULL);
+#include <sawyer/WarningsOff.h>
         if (const struct tm *tm_static = localtime(&now)) { // localtime_r not avail on Windows
+#include <sawyer/WarningsRestore.h>
             static const char *month[] = {"January", "February", "March", "April", "May", "June", "July",
                                           "August", "September", "October", "November", "December"};
             dateString_ = std::string(month[tm_static->tm_mon]) + " " + toString(1900+tm_static->tm_year);
@@ -1918,7 +1922,9 @@ int Parser::terminalWidth() {
     }
 #endif
 
+#include <sawyer/WarningsOff.h>
     if (const char *columns = getenv("COLUMNS")) {
+#include <sawyer/WarningsRestore.h>
         char *rest = NULL;
         errno = 0;
         int n = strtol(columns, &rest, 0);

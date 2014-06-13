@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <iomanip>
+#include <iostream>
 #include <stdexcept>
 #include <sstream>
 #include <sys/stat.h>
@@ -86,7 +87,9 @@ std::string escape(const std::string &s) {
                     retval += s[i];
                 } else {
                     char buf[8];
+#include <sawyer/WarningsOff.h>
                     sprintf(buf, "\\%03o", (unsigned)s[i]);
+#include <sawyer/WarningsRestore.h>
                     retval += buf;
                 }
                 break;

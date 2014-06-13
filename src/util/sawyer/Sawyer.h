@@ -1,6 +1,8 @@
 #ifndef Sawyer_H
 #define Sawyer_H
 
+#include <boost/cstdint.hpp>
+
 /** @mainpage
  *
  *  %Sawyer is a library that provides the following:
@@ -161,6 +163,16 @@
  *  };
  * @endcode */
 
+#ifdef BOOST_WINDOWS
+#   ifdef SAWYER_DO_EXPORTS                             // defined in CMake when compiling libsawyer
+#       define SAWYER_EXPORT __declspec(dllexport)
+#   else
+#       define SAWYER_EXPORT __declspec(dllimport)
+#   endif
+#else
+#   define SAWYER_EXPORT /*void*/
+#endif
+
 
 /** Name space for the entire library.  All %Sawyer functionality except for some C preprocessor macros exists inside this
  * namespace.  Most of the macros begin with the string "SAWYER_". */
@@ -169,23 +181,63 @@ namespace Sawyer {
 /** Explicitly initialize the library. This initializes any global objects provided by the library to users.  This happens
  *  automatically for many API calls, but sometimes needs to be called explicitly. Calling this after the library has already
  *  been initialized does nothing. The function always returns true. */
-bool initializeLibrary();
+SAWYER_EXPORT bool initializeLibrary();
 
 /** True if the library has been initialized. */
-extern bool isInitialized;
+SAWYER_EXPORT extern bool isInitialized;
+
+/** Portable replacement for ::strtoll
+ *
+ *  Microsoft doesn't define this function, so we define it in the Sawyer namespace. */
+SAWYER_EXPORT boost::int64_t strtoll(const char*, char**, int);
+
+/** Portable replacement for ::strtoull
+ *
+ *  Microsoft doesn't define this function, so we define it in the Sawyer namespace. */
+SAWYER_EXPORT boost::uint64_t strtoull(const char*, char**, int);
+
 
 } // namespace
 
 // Define only when we have the Boost Chrono library, which was first available in boost-1.47.
 //#define SAWYER_HAVE_BOOST_CHRONO
 
-// Microsoft compilers are deficient in some respects
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Compiler portability issues
+//
+// The following macros are used to distinguish between different compilers:
+//     _MSC_VER         Defined only when compiled by Microsoft's MVC C++ compiler. This macro is predefined by Microsoft's
+//                      preprocessor.
+//
+// The following macros are used to distinguish between different target environments, regardless of what compiler is being
+// used or the environment which is doing the compiling.  For instance, BOOST_WINDOWS will be defined when using the MinGW
+// compiler on Linux to target a Windows environment.
+//     BOOST_WINDOWS    The Windows API is present.  This is defined (or not) by including <boost/config.hpp>.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifdef _MSC_VER
 # define SAWYER_ATTR_UNUSED /*unused*/
 # define SAWYER_ATTR_NORETURN /*noreturn*/
+# define SAWYER_PRETTY_FUNCTION __FUNCSIG__
+
+// MVC doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector, which will be
+// cleaned up propertly at end of scope or exceptions.
+# define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
+    std::vector<TYPE> NAME##Vec_(SIZE);                 \
+    TYPE *NAME = &(NAME##Vec_[0]);
+
 #else
 # define SAWYER_ATTR_UNUSED __attribute__((unused))
 # define SAWYER_ATTR_NORETURN __attribute__((noreturn))
+# define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
+
+# define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
+    TYPE NAME[SIZE];
+
 #endif
+
+#define SAWYER_CONFIGURED /*void*/
 
 #endif

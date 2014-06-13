@@ -236,7 +236,7 @@ void clear(SharedPointer<T> &ptr) {
  *
  *  Any reference counted object should inherit from this class, which provides a default constructor, virtual destructor, and
  *  a private reference count data member. */
-class SharedObject {
+class SAWYER_EXPORT SharedObject {
     template<class U> friend class SharedPointer;
     mutable size_t nrefs_;
 public:

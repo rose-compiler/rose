@@ -87,18 +87,11 @@ namespace Assert {
 
 /** Cause immediate failure.  This function is the low-level function called by most of the other Sawyer::Assert macros
  *  when an assertion fails. Calls to this function do not return. */
-void fail(const char *mesg, const char *expr, const std::string &note,
-          const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
+SAWYER_EXPORT void fail(const char *mesg, const char *expr, const std::string &note,
+                        const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
 
 } // namespace
 } // namespace
-
-#ifndef _MSC_VER
-#define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
-#else
-#define SAWYER_PRETTY_FUNCTION "UNKNOWN_FUNCTION"
-#endif
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // These "always" macros are enabled regardless of whether SAWYER_NDEBUG is defined.  Don't use them for

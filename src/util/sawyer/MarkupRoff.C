@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 
 namespace Sawyer {
@@ -94,7 +95,9 @@ void RoffFormatter::beginDocument(std::ostream &stream) {
 void RoffFormatter::endDocument(std::ostream &stream) {
     std::string str = bufferedOutput_.str();
     std::vector<std::string> lines;
+#include <sawyer/WarningsOff.h>
     boost::split(lines, str, boost::is_any_of("\n"));
+#include <sawyer/WarningsRestore.h>
     BOOST_FOREACH (std::string &line, lines)
         boost::trim(line);
 
@@ -191,8 +194,8 @@ bool RoffFormatter::beginTag(std::ostream &stream, const TagPtr &tag, const TagA
 
         // We don't want to emit an .SH/.SS command if there's no body, but since it's too late by now to go back and fix it,
         // and since we can't expect to have c++11 move semantics, the only way to undo the .SH/.SS command is to seek back and
-        // overwrite it with an nroff comment.
-        std::streampos startOfBody = bufferedOutput_.tellp();
+        // overwrite it with an nroff comment. (Casting nonsense is for Microsoft's C++ compiler.)
+        size_t startOfBody = boost::numeric_cast<size_t>((boost::uint64_t)bufferedOutput_.tellp());
         args[1]->emit(stream, self());
         if (boost::trim_copy(bufferedOutput_.str().substr(startOfBody)).empty()) {
             bufferedOutput_.seekp(shPosition);

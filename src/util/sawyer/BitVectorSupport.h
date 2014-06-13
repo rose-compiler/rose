@@ -8,6 +8,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/Interval.h>
 #include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 #include <string>
 #include <vector>
 
@@ -264,12 +265,7 @@ void traverse2(Processor &processor, Word1 *vec1, const BitRange &range1, Word2 
     // the source and destination overlap.
     size_t offsetInWord = bitIndex<Word2>(range2.least());
     const size_t nWordsTmp = numberOfWords<Word2>(offsetInWord + range2.size());
-#ifdef _MSC_VER
-    std::vector<typename RemoveConst<Word1>::Base> tmpVec(nWordsTmp);
-    typename RemoveConst<Word1>::Base *tmp = &tmpVec[0];
-#else
-    typename RemoveConst<Word1>::Base tmp[nWordsTmp];
-#endif
+    SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word1>::Base, tmp, nWordsTmp);
     memset(tmp, 0, sizeof tmp);                         // only for making debugging easier
     BitRange tmpRange = BitRange::baseSize(offsetInWord, range1.size());
     nonoverlappingCopy(vec1, range1, tmp, tmpRange);
@@ -306,12 +302,7 @@ void traverse2(Processor &processor, Word1 *vec1, const BitRange &range1, Word2 
     // the source and destination overlap.
     const size_t offsetInWord = bitIndex<Word2>(range2.least());
     const size_t nWordsTmp = numberOfWords<Word2>(offsetInWord + range2.size());
-#ifdef _MSC_VER
-    std::vector<typename RemoveConst<Word1>::Base> tmpVec(nWordsTmp);
-    typename RemoveConst<Word1>::Base * tmp = &tmpVec[0];
-#else
-    typename RemoveConst<Word1>::Base tmp[nWordsTmp];
-#endif
+    SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word1>::Base, tmp, nWordsTmp);
     BitRange tmpRange = BitRange::baseSize(offsetInWord, range1.size());
     nonoverlappingCopy(vec1, range1, tmp, tmpRange);
 
@@ -814,12 +805,7 @@ void rotateRight(Word *words, const BitRange &range, size_t nShift) {
 
     // Save the low-order bits that will be shifted off
     size_t nSavedWords = numberOfWords<Word>(nShift);
-#ifdef _MSC_VER
-    std::vector<Word> savedVec(nSavedWords);
-    Word *saved = &savedVec[0];
-#else
-    Word saved[nSavedWords];
-#endif
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, saved, nSavedWords);
     BitRange savedRange = BitRange::baseSize(0, nShift);
     copy(words, BitRange::baseSize(range.least(), nShift), saved, savedRange);
 
@@ -859,12 +845,7 @@ void fromInteger(Word *words, const BitRange &range, boost::uint64_t value) {
     size_t nbits = std::min(range.size(), (size_t)64);  // number of significant bits to copy, not fill
     Word wordMask = bitMask<Word>(0, bitsPerWord<Word>::value);
     size_t nTmpWords = numberOfWords<Word>(nbits);
-#ifdef _MSC_VER
-    std::vector<Word> tmpVec(nTmpWords);
-    Word *tmp = &tmpVec[0];
-#else
-    Word tmp[nTmpWords];
-#endif
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, tmp, nTmpWords);
     for (size_t i=0; i<nTmpWords; ++i)
         tmp[i] = (value >> (i * bitsPerWord<Word>::value)) & wordMask;
 
@@ -888,12 +869,7 @@ boost::uint64_t toInteger(const Word *words, const BitRange &range) {
     // Copy the bits into the low bits of a temporary bit vector
     size_t nbits = std::min(range.size(), (size_t)64);
     size_t nTmpWords = numberOfWords<Word>(nbits);
-#ifdef _MSC_VER
-    std::vector<typename RemoveConst<Word>::Base> tmpVec(nTmpWords);
-    typename RemoveConst<Word>::Base *tmp = &tmpVec[0];
-#else
-    typename RemoveConst<Word>::Base tmp[nTmpWords];
-#endif
+    SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word>::Base, tmp, nTmpWords);
     memset(tmp, 0, sizeof tmp);
     BitRange lo = BitRange::baseSize(range.least(), nbits);
     copy(words, lo, tmp, BitRange::baseSize(0, nbits));
@@ -1007,12 +983,7 @@ bool add(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &r
 template<class Word>
 bool subtract(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
     size_t nTempWords = numberOfWords<Word>(range1.size());
-#ifdef _MSC_VER
-    std::vector<Word> tempVec(nTempWords);
-    Word *temp = &tempVec[0];
-#else
-    Word temp[nTempWords];
-#endif
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, temp, nTempWords);
     BitRange tempRange = BitRange::baseSize(0, range1.size());
     copy(vec1, range1, temp, tempRange);
     invert(temp, tempRange);
