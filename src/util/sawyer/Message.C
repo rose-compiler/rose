@@ -414,6 +414,7 @@ void Gang::removeInstance(int id) {
 
 void Prefix::setProgramName() {
 #ifdef BOOST_WINDOWS
+# if 0 // [Robb Matzke 2014-06-13] temporarily disable for ROSE linking error (needs psapi.lib in Windows)
     if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
         TCHAR buffer[MAX_PATH];
         if (GetModuleFileNameEx(handle, 0, buffer, MAX_PATH)) { // requires linking with MinGW's psapi.a
@@ -427,6 +428,9 @@ void Prefix::setProgramName() {
         }
         CloseHandle(handle);
     }
+# else
+    programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
+# endif
 #else
     if (FILE *f = fopen("/proc/self/cmdline", "r")) {
         std::string name;

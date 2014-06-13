@@ -164,11 +164,15 @@
  * @endcode */
 
 #ifdef BOOST_WINDOWS
+# if 1 // [Robb Matzke 2014-06-13] import/export temporarily disabled for ROSE debugging
+#   define SAWYER_EXPORT /*void*/
+# else
 #   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_DLL_EXPORTS) // defined in CMake when compiling libsawyer
 #       define SAWYER_EXPORT __declspec(dllexport)
 #   else
 #       define SAWYER_EXPORT __declspec(dllimport)
 #   endif
+# endif
 #else
 #   define SAWYER_EXPORT /*void*/
 #endif
