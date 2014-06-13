@@ -142,8 +142,9 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
      )
 add_library(roseutil SHARED ${rose_util_src})
+set_target_properties(roseutil PROPERTIES DEFINE_SYMBOL "SAWYER_DO_EXPORTS")
 if (WIN32)
-  target_link_libraries(roseutil shlwapi.lib)
+  target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
 set_target_properties(roseutil PROPERTIES
   DEFINE_SYMBOL ROSE_UTIL_EXPORTS
