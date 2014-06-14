@@ -35,6 +35,10 @@ template <class Annotation> class Data;
 template <class Annotation>
 class LoopTrees {
   public:
+    size_t id;
+  private:
+    static size_t id_cnt;
+  public:
     struct node_t {
       node_t * parent;
 
@@ -322,6 +326,7 @@ void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::strin
 
 template <class Annotation>
 LoopTrees<Annotation>::LoopTrees() :
+  id(id_cnt++),
   p_trees(),
   p_datas(),
   p_scalars(),
