@@ -295,6 +295,12 @@ testSharedMemoryDSL_48: sharedMemoryDSL
 testSharedMemoryDSL_49: sharedMemoryDSL
 	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_49.c
 
+testSharedMemoryDSL_50: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_50.c
+
+testSharedMemoryDSL_51: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_51.c
+
 
 # DQ (4/30/2014): List of test codes to test the shared memory DSL work.
 SharedMemoryDSL_testcodes = \

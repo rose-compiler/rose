@@ -568,6 +568,42 @@ Traversal::evaluateSynthesizedAttribute (
           ROSE_ASSERT(false);
 #endif
         }
+
+  // DQ (6/14/2014): We need to suppress the transformations on the operands of a SgCastExp, 
+  // so that it will be done on the SgCastExp directly instead (see test2014_50.c).
+     SgCastExp* castExp = isSgCastExp(astNode);
+     if (castExp != NULL)
+        {
+#if 0
+          printf ("Found SgCastExp: Supressed transformation on children of SgCastExp \n");
+#endif
+          skip_transformation_of_children = true;
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (6/14/2014): We need to suppress the transformations on the operands of a SgCastExp, 
+  // so that it will be done on the SgCastExp directly instead (see test2014_51.c).
+     SgExprListExp* exprListExp = isSgExprListExp(astNode);
+     if (exprListExp != NULL)
+        {
+#if 0
+          printf ("Found SgExprListExp: Supressed transformation on children of SgExprListExp \n");
+#endif
+          skip_transformation_of_children = true;
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if 0
+          printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
+#endif
+
+
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
@@ -597,6 +633,9 @@ Traversal::evaluateSynthesizedAttribute (
             // ROSE_ASSERT(parentExpression != NULL);
                if (parentExpression != NULL)
                   {
+#if 0
+                    printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
+#endif
                     if (skip_transformation_of_children == false)
                        {
                          SgExpression* newSubtree = transformExpression(expression_to_transform);
@@ -627,6 +666,18 @@ Traversal::evaluateSynthesizedAttribute (
                               parentExpression,parentExpression->class_name().c_str(),parentExpression->unparseToString().c_str());
 #endif
                        }
+                      else
+                       {
+#if 0
+                         printf ("Skipping the possible transformation: skip_transformation_of_children == true \n");
+#endif
+                       }
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skipping the possible transformation: parentExpression == NULL \n");
+#endif
                   }
 #if 0
                 printf ("Exiting as a test! \n");
