@@ -313,7 +313,8 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34 \
    testSharedMemoryDSL_36 testSharedMemoryDSL_37 testSharedMemoryDSL_38 testSharedMemoryDSL_39 testSharedMemoryDSL_40 \
    testSharedMemoryDSL_41 testSharedMemoryDSL_42 testSharedMemoryDSL_43 testSharedMemoryDSL_44 testSharedMemoryDSL_45 \
-   testSharedMemoryDSL_46 testSharedMemoryDSL_47 testSharedMemoryDSL_48 testSharedMemoryDSL_49
+   testSharedMemoryDSL_46 testSharedMemoryDSL_47 testSharedMemoryDSL_48 testSharedMemoryDSL_49 testSharedMemoryDSL_50 \
+   testSharedMemoryDSL_51
 
 testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
 
