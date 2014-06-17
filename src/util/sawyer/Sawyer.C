@@ -32,4 +32,33 @@ boost::uint64_t strtoull(const char *input, char **rest, int base) {
 #endif
 }
 
+std::string readOneLine(FILE *stream) {
+    std::string retval;
+    while (1) {
+        int c = fgetc(stream);
+        if (c < 0)
+            break;
+        retval += (char)c;
+        if ('\n'==c)
+            break;
+    }
+    return retval;
+}
+
+FILE* popen(const std::string &cmd, const char *how) {
+#ifdef BOOST_WINDOWS
+    return ::_popen(cmd.c_str(), how);
+#else
+    return ::popen(cmd.c_str(), how);
+#endif
+}
+
+int pclose(FILE *f) {
+#ifdef BOOST_WINDOWS
+    return ::_pclose(f);
+#else
+    return ::pclose(f);
+#endif
+}
+
 } // namespace

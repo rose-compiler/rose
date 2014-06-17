@@ -1,6 +1,6 @@
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
-#include <sawyer/MarkupRoff.h>
+#include <sawyer/MarkupPod.h>
 #include <sawyer/Message.h>
 #include <sawyer/Optional.h>
 
@@ -1466,20 +1466,6 @@ bool Parser::apparentSwitch(const Cursor &cursor) const {
     return false;
 }
 
-static std::string readOneLine(FILE *stream)
-{
-    std::string retval;
-    while (1) {
-        int c = fgetc(stream);
-        if (c < 0)
-            break;
-        retval += (char)c;
-        if ('\n'==c)
-            break;
-    }
-    return retval;
-}
-
 // Read a text file to obtain command line arguments which are returned.
 std::vector<std::string> Parser::readArgsFromFile(const std::string &filename) {
     std::vector<std::string> retval;
@@ -1597,6 +1583,7 @@ std::pair<int, std::string> Parser::chapter() const {
 }
 
 Parser& Parser::doc(const std::string &sectionName, const std::string &docKey, const std::string &text) {
+    checkMarkup(text);
     sectionOrder_.insert(docKey, sectionName);
     sectionDoc_.insert(boost::to_lower_copy(sectionName), text);
     return *this;
@@ -1611,19 +1598,21 @@ std::vector<std::string> Parser::docSections() const {
 
 // @s{NAME} where NAME is either a long or short switch name without prefix.
 typedef Container::Map<std::string, std::string> PreferredPrefixes; // maps switch names to their best prefixes
-typedef SharedPointer<class SwitchTag> SwitchTagPtr;
+
 class SwitchTag: public Markup::Tag {
     PreferredPrefixes preferredPrefixes_;
     std::string bestShortPrefix_;                       // short prefix if the switch name is not recognized
     std::string bestLongPrefix_;                        // long prefix if the switch name is not recognized
 protected:
     SwitchTag(const PreferredPrefixes &known, const std::string &bestShort, const std::string &bestLong)
-        : Markup::Tag("switch", 1), preferredPrefixes_(known), bestShortPrefix_(bestShort), bestLongPrefix_(bestLong) {}
+        : Markup::Tag(Markup::SPANNING, "switch", Markup::SPANNING),
+          preferredPrefixes_(known), bestShortPrefix_(bestShort), bestLongPrefix_(bestLong) {}
 public:
-    static SwitchTagPtr instance(const PreferredPrefixes &known, const std::string &bestShort, const std::string &bestLong) {
-        return SwitchTagPtr(new SwitchTag(known, bestShort, bestLong));
+    typedef SharedPointer<SwitchTag> Ptr;
+    static Ptr instance(const PreferredPrefixes &known, const std::string &bestShort, const std::string &bestLong) {
+        return Ptr(new SwitchTag(known, bestShort, bestLong));
     }
-    virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*override*/ {
+    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*override*/ {
         using namespace Markup;
         ASSERT_require(1==args.size());
         std::string raw = args.front()->asText();
@@ -1637,32 +1626,31 @@ public:
         } else {
             raw = i->value() + raw;
         }
-        TagInstancePtr nulltag = TagInstance::instance(NullTag::instance(raw));
-        ContentPtr retval = Content::instance();
+        TagInstance::Ptr nulltag = TagInstance::instance(NullTag::instance(raw));
+        Content::Ptr retval = Content::instance();
         retval->append(nulltag);
         return retval;
     }
 };
 
 // @seeAlso is replaced by the list @man references that have been processed so far.
-typedef SharedPointer<class SeeAlsoTag> SeeAlsoTagPtr;
 class SeeAlsoTag: public Markup::Tag {
 public:
-public:
-    typedef Container::Map<std::string, Markup::ContentPtr> SeeAlso;
+    typedef SharedPointer<SeeAlsoTag> Ptr;
+    typedef Container::Map<std::string, Markup::Content::Ptr> SeeAlso;
 private:
     SeeAlso seeAlso_;
 protected:
-    SeeAlsoTag(): Markup::Tag("seeAlso", 0) {}
+    SeeAlsoTag(): Markup::Tag(Markup::DIVIDING, "seeAlso") {}
 public:
-    static SeeAlsoTagPtr instance() { return SeeAlsoTagPtr(new SeeAlsoTag); }
-    void insert(const std::string &name, const Markup::ContentPtr content) {
+    static Ptr instance() { return Ptr(new SeeAlsoTag); }
+    void insert(const std::string &name, const Markup::Content::Ptr &content) {
         seeAlso_.insert(name, content);
     }
-    virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*override*/ {
+    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*override*/ {
         using namespace Markup;
         ASSERT_require(0==args.size());
-        ContentPtr retval = Content::instance();
+        Content::Ptr retval = Content::instance();
         for (SeeAlso::ValueIterator sai=seeAlso_.values().begin(); sai!=seeAlso_.values().end(); ++sai) {
             if (sai!=seeAlso_.values().begin())
                 retval->append(", ");
@@ -1672,19 +1660,20 @@ public:
     }
 };
 
-// @man{PAGE}{CHAPTER} converted to @b{PAGE}(CHAPTER) to cite Unix manual pages.
-typedef SharedPointer<class ManTag> ManTagPtr;
+// @man{PAGE}{CHAPTER} converted to @em{PAGE}(CHAPTER) to cite Unix manual pages.
 class ManTag: public Markup::Tag {
-    SeeAlsoTagPtr seeAlso_;
+    SeeAlsoTag::Ptr seeAlso_;
 protected:
-    ManTag(const SeeAlsoTagPtr &seeAlso): Markup::Tag("man", 2), seeAlso_(seeAlso) {}
+    ManTag(const SeeAlsoTag::Ptr &seeAlso)
+        : Markup::Tag(Markup::SPANNING, "man", Markup::SPANNING, Markup::SPANNING), seeAlso_(seeAlso) {}
 public:
-    static ManTagPtr instance(const SeeAlsoTagPtr &seeAlso) { return ManTagPtr(new ManTag(seeAlso)); }
-    virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*override*/ {
+    typedef SharedPointer<ManTag> Ptr;
+    static Ptr instance(const SeeAlsoTag::Ptr &seeAlso) { return Ptr(new ManTag(seeAlso)); }
+    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*override*/ {
         using namespace Markup;
         ASSERT_require(2==args.size());
-        ContentPtr retval = Content::instance();
-        retval->append(TagInstance::instance(BoldTag::instance(), args[0]));
+        Content::Ptr retval = Content::instance();
+        retval->append(TagInstance::instance(EmphasisTag::instance(), args[0]));
         retval->append("(");
         retval->append(args[1]);
         retval->append(")");
@@ -1694,22 +1683,22 @@ public:
 };
 
 // @prop{KEY} is replaced with the property string stored for KEY
-typedef SharedPointer<class PropTag> PropTagPtr;
 class PropTag: public Markup::Tag {
     Container::Map<std::string, std::string> values_;
 protected:
-    PropTag(): Markup::Tag("prop", 1) {}
+    PropTag(): Markup::Tag(Markup::SPANNING, "prop", Markup::SPANNING) {}
 public:
-    static PropTagPtr instance() { return PropTagPtr(new PropTag); }
-    PropTagPtr with(const std::string &key, const std::string &value) {
+    typedef SharedPointer<PropTag> Ptr;
+    static Ptr instance() { return Ptr(new PropTag); }
+    Ptr with(const std::string &key, const std::string &value) {
         values_.insert(key, value);
         return sharedFromThis().dynamicCast<PropTag>();
     }
-    virtual Markup::ContentPtr eval(const Markup::TagArgs &args) /*overload*/ {
+    virtual Markup::Content::Ptr eval(const Markup::TagArgs &args) /*overload*/ {
         using namespace Markup;
         ASSERT_require(1==args.size());
         std::string key = args.front()->asText();
-        ContentPtr retval = Content::instance();
+        Content::Ptr retval = Content::instance();
         retval->append(values_.getOrDefault(key));
         return retval;
     }
@@ -1765,12 +1754,12 @@ std::string Parser::docForSwitches() const {
             BOOST_FOREACH (GroupSwitches::Node &sgNode, groupSwitches.nodes()) {
                 const std::string &groupTitle = groupTitles.getOrDefault(sgNode.key());
                 if (!groupTitle.empty())
-                    retval += "@subsection{" + groupTitle + "}{";
+                    retval += "@section{" + groupTitle + "}{";
                 retval += boost::join(groupDocumentation.getOrDefault(sgNode.key()), "\n\n");
                 BOOST_FOREACH (KeySwitchPair &swPair, sgNode.value()) {
                     std::string synopsis = swPair.second->synopsis();
                     const std::string &doc = swPair.second->doc();
-                    retval += "@defn{" + synopsis + "}{" + (doc.empty() ? notDocumented : doc) + "}\n";
+                    retval += "@named{" + synopsis + "}{" + (doc.empty() ? notDocumented : doc) + "}\n";
                 }
                 if (!groupTitle.empty())
                     retval += "}\n";
@@ -1785,12 +1774,12 @@ std::string Parser::docForSwitches() const {
                 if (sgKeysSeen.insert(groupKey).second) {
                     const std::string &groupTitle = groupTitles.getOrDefault(groupKey);
                     if (!groupTitle.empty())
-                        retval += "@subsection{" + groupTitle + "}{";
+                        retval += "@section{" + groupTitle + "}{";
                     retval += boost::join(groupDocumentation.getOrDefault(groupKey), "\n\n");
                     BOOST_FOREACH (KeySwitchPair &swPair, groupSwitches[groupKey]) {
                         std::string synopsis = swPair.second->synopsis();
                         const std::string &doc = swPair.second->doc();
-                        retval += "@defn{" + synopsis + "}{" + (doc.empty() ? notDocumented : doc) + "}\n";
+                        retval += "@named{" + synopsis + "}{" + (doc.empty() ? notDocumented : doc) + "}\n";
                     }
                     if (!groupTitle.empty())
                         retval += "}\n";
@@ -1864,12 +1853,14 @@ std::string Parser::documentationMarkup() const {
     // This section is always at the bottom unless the user forces it elsewhere.
     if (created.insert("see also").second)
         doc += "@section{See Also}{" + docForSection("see also") + "}\n";
-    
     return doc;
 }
 
-// Generate an nroff manual page
-std::string Parser::manpage() const {
+Markup::ParserResult Parser::parseDocumentation() const {
+    return parseDocumentation(documentationMarkup());
+}
+
+Markup::ParserResult Parser::parseDocumentation(const std::string &docstring) const {
     // The @s tag for expanding switch names from "foo" to "--foo", or whatever is appropriate
     Container::Map<std::string, std::string> prefixes;
     preferredSwitchPrefixes(prefixes /*out*/);
@@ -1881,7 +1872,7 @@ std::string Parser::manpage() const {
                            properties_.longPrefixes.front();
 
     // Make some properties available in the markup
-    PropTagPtr properties = PropTag::instance();
+    PropTag::Ptr properties = PropTag::instance();
     properties
         ->with("inclusionPrefix", inclusionPrefixes_.empty() ? std::string() : inclusionPrefixes_.front())
         ->with("terminationSwitch", terminationSwitches_.empty() ? std::string() : terminationSwitches_.front())
@@ -1893,7 +1884,7 @@ std::string Parser::manpage() const {
         ->with("chapterName", chapter().second);
 
     // This tag decl will accumulate all the @man references
-    SeeAlsoTagPtr seeAlso = SeeAlsoTag::instance();
+    SeeAlsoTag::Ptr seeAlso = SeeAlsoTag::instance();
 
     Markup::Parser mp;
     mp.registerTag(SwitchTag::instance(prefixes, bestShort, bestLong), "s");
@@ -1901,71 +1892,42 @@ std::string Parser::manpage() const {
     mp.registerTag(seeAlso, "seeAlso");
     mp.registerTag(properties, "prop");
 
-    Markup::ParserResult markup = mp.parse(documentationMarkup());
-    std::string chapterNumberStr = toString(chapter().first);
-    Markup::RoffFormatterPtr nroff = Markup::RoffFormatter::instance(programName(), chapterNumberStr, chapter().second);
-    nroff->version(version().first, version().second);
+    return mp.parse(docstring);
+}
+
+std::string Parser::podDocumentation() const {
+    Markup::ParserResult doc = parseDocumentation();
     std::ostringstream ss;
-    markup.emit(ss, nroff);
+    doc.emit(ss, Markup::PodFormatter::instance());
     return ss.str();
 }
 
-// Try to determine screen width.
-int Parser::terminalWidth() {
-#ifndef BOOST_WINDOWS
-    // This won't work on Windows
-    int ttyfd = isatty(1) ? 1 : (isatty(0) ? 1 : (isatty(2) ? 2 : -1));
-    if (ttyfd >= 0) {
-        struct winsize ws;
-        if (-1 != ioctl(ttyfd, TIOCGWINSZ, &ws))
-            return ws.ws_col;
-    }
-#endif
-
-#include <sawyer/WarningsOff.h>
-    if (const char *columns = getenv("COLUMNS")) {
-#include <sawyer/WarningsRestore.h>
-        char *rest = NULL;
-        errno = 0;
-        int n = strtol(columns, &rest, 0);
-        if (0==errno && rest!=columns && !*rest)
-            return n;
-    }
-
-
-    return 80;
+std::string Parser::manDocumentation() const {
+    Markup::PodFormatter::Ptr podder = Markup::PodFormatter::instance();
+    podder->title(programName(), toString(chapter().first), chapter().second);
+    podder->version(version().first, version().second);
+    return podder->toNroff(parseDocumentation());
 }
 
-// Send manual to the output
-// nroff -mandoc -rLL=156n -rLT=156n |ul
-// FIXME[Robb Matzke 2014-06-05]: Windows systems will require that nroff be installed. Eventually we'll want to do something
-// better but I don't use Windows, so I have no idea what that would be.
 void Parser::emitDocumentationToPager() const {
-#ifdef BOOST_WINDOWS
-    std::cout <<"Cannot emit documentation on a Microsoft OS";
-#else
-    std::string doc = manpage();
-    int actualWidth = terminalWidth();
-    int width = std::min(actualWidth * 39/40, std::max(actualWidth-2, 20));
-    std::string cmd = std::string("nroff -man ") +
-                      "-rLL=" + toString(width) + "n " +
-                      "-rLT=" + toString(width) + "n ";
+    Markup::PodFormatter::Ptr podder = Markup::PodFormatter::instance();
+    podder->title(programName(), toString(chapter().first), chapter().second);
+    podder->version(version().first, version().second);
+    podder->emit(parseDocumentation());
+}
 
-    // Use a pager if output is being sent to the terminal.
-    std::string pager;
-    if (const char *pagerEnv = getenv("PAGER"))
-        pager = pagerEnv;
-    if (pager.empty())
-        pager = "less";
-    if (isatty(1))
-        cmd += "|" + pager;
+void checkMarkup(const std::string &s) {
+    Markup::Parser mp;
 
-    FILE *proc = popen(cmd.c_str(), "w");
-    if (!proc)
-        throw std::runtime_error("cannot run \"" + cmd + "\"");
-    fputs(doc.c_str(), proc);
-    pclose(proc);
-#endif
+    // Same as for Parser::parseDocument except just stubbed out to test for syntax
+    Container::Map<std::string, std::string> prefixes;
+    mp.registerTag(SwitchTag::instance(prefixes, "-", "--"), "s");
+    SeeAlsoTag::Ptr seeAlso = SeeAlsoTag::instance();
+    mp.registerTag(ManTag::instance(seeAlso), "man");
+    mp.registerTag(seeAlso, "seeAlso");
+    mp.registerTag(PropTag::instance(), "prop");
+
+    mp.parse("@section{X}{"+s+"}");             // throws on error
 }
 
 } // namespace

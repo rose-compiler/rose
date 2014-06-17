@@ -136,7 +136,7 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
-      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupRoff.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupPod.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
@@ -1095,10 +1095,15 @@ else (NOT WIN32)
 target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} shlwapi.lib )
 endif (NOT WIN32)
 
+# ROSE_DLL_EXPORTS causes ROSE's header files, when compiled for Microsoft Windows platforms, to declare API functions,
+# classes, etc. as exported (Linux exports everything by default).  The Sawyer source code is intended to be completely
+# independent from ROSE and therefore does not use any ROSE-specific symbols, therefore we also define SAWYER_EXPORT which
+# serves a similar purpose as ROSE_DLL_EXPORTS.
 set_target_properties(ROSE_DLL PROPERTIES
   VERSION 1.0.0
   SOVERSION 1
   DEFINE_SYMBOL ROSE_DLL_EXPORTS
+  DEFINE_SYMBOL SAWYER_EXPORT
 )
 install(TARGETS ROSE_DLL DESTINATION lib)
 

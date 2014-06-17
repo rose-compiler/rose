@@ -1,6 +1,8 @@
 #ifndef Sawyer_Optional_H
 #define Sawyer_Optional_H
 
+#include <sawyer/Sawyer.h>
+
 #include <stdexcept>
 
 namespace Sawyer {
@@ -25,8 +27,17 @@ class Nothing {};
  *  The stored value type (@ref Value) cannot be a reference type. */
 template<typename T>
 class Optional {
-    unsigned char data_[sizeof(T)];
+
+    // Done this way to avoid aliasing warnings from GCC
+    union SAWYER_MAY_ALIAS MayAlias {
+        unsigned char data_[sizeof(T)];
+    } mayAlias_;
+
     bool isEmpty_;
+
+    void *address() { return &mayAlias_; }
+    const void*address() const { return &mayAlias_; }
+
 public:
     /** Type of stored value. */
     typedef T Value;
@@ -40,7 +51,7 @@ public:
      *
      *  Constructs an optional object that holds a copy of @p v. */
     Optional(const Value &v): isEmpty_(false) {         // implicit
-        new (data_) Value(v);                           // copy constructed in place
+        new (address()) Value(v);                    // copy constructed in place
     }
 
     /** Construct from nothing.
@@ -56,8 +67,8 @@ public:
         isEmpty_ = other.isEmpty_;
         if (!isEmpty_) {
             const Value &otherValue = *other;
-            new (data_) Value(otherValue);
-        }
+            new (address()) Value(otherValue);
+       }
     }
 
     /** Value assignment.
@@ -66,7 +77,7 @@ public:
      *  operator is used, otherwise the @ref Value copy constructor is used. */
     Optional& operator=(const Value &value) {
         if (isEmpty_) {
-            new (data_) Value(value);
+            new (address()) Value(value);
         } else {
             Value &thisValue = **this;
             thisValue = value;
@@ -97,7 +108,7 @@ public:
     Optional& operator=(const Optional &other) {
         if (isEmpty_ && !other.isEmpty_) {
             const Value &otherValue = *other;
-            new (data_) Value(otherValue);
+            new (address()) Value(otherValue);
         } else if (!isEmpty_) {
             if (other.isEmpty_) {
                 Value &thisValue = **this;
@@ -127,12 +138,12 @@ public:
     const Value& get() const {
         if (isEmpty_)
             throw std::domain_error("dereferenced nothing");
-        return *reinterpret_cast<const Value*>(data_);
+        return *reinterpret_cast<const Value*>(address());
     }
     Value& get() {
         if (isEmpty_)
             throw std::domain_error("dereferenced nothing");
-        return *reinterpret_cast<Value*>(data_);
+        return *reinterpret_cast<Value*>(address());
     }
     /** @} */
 
