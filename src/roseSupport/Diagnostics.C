@@ -9,21 +9,26 @@ namespace rose {
 namespace Diagnostics {
 
 Sawyer::Message::DestinationPtr destination;
-Sawyer::Message::Facility log;
+Sawyer::Message::Facility log("rose");
 Sawyer::Message::Facilities facilities;
 
 void initialize() {
     if (!isInitialized()) {
-        // Basic diagnostic messages initialization
+        // Allow libsawyer to initialize itself if necessary.  Among other things, this makes Saywer::Message::merr actually
+        // point to something.  This is also the place where one might want to assign some other message plumbing to
+        // rose::Diagnostics::destination (such as sending messages to additional locations).
         Sawyer::initializeLibrary();
         destination = Sawyer::Message::merr;
-        log = Sawyer::Message::Facility("rose", destination);
+        log.initStreams(destination);
         facilities.insert(log);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
-        Sawyer::Assert::assertionStream = log[Sawyer::Message::FATAL];
+        Sawyer::Assert::assertionStream = log[FATAL];
 
-        // Register logging facilities from other software layers
+        // Register logging facilities from other software layers.  These facilities should already be in a usable, but
+        // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
+        // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
+        // rose::Diagnostics::destination that we set above.
         BinaryLoader::initDiagnostics();
         Disassembler::initDiagnostics();
 
