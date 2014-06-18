@@ -149,7 +149,6 @@ if (WIN32)
 endif()
 set_target_properties(roseutil PROPERTIES
   DEFINE_SYMBOL ROSE_UTIL_EXPORTS
-  DEFINE_SYMBOL SAWYER_DO_EXPORTS
 )
 install(TARGETS roseutil DESTINATION lib)
 
