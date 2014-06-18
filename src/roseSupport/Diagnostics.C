@@ -29,8 +29,10 @@ void initialize() {
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
         // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
         // rose::Diagnostics::destination that we set above.
+#if 0 // [Robb P. Matzke 2014-06-17]: not present on this branch yet
         BinaryLoader::initDiagnostics();
         Disassembler::initDiagnostics();
+#endif
 
         // By default, only messages of informational importance and above are dispalyed.
         facilities.control("none, >=info");

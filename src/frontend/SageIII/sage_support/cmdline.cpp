@@ -3294,8 +3294,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          } else {
              std::string errmesg = Diagnostics::facilities.control(switchValue);
              if (!errmesg.empty()) {
-                 Diagnostics::log[Sawyer::Message::ERROR] <<errmesg <<"\n";
-                 Diagnostics::log[Sawyer::Message::ERROR] <<"See \"-rose:log=help\" for usage information.\n";
+                 Diagnostics::mlog[Diagnostics::ERROR] <<errmesg <<"\n";
+                 Diagnostics::mlog[Diagnostics::ERROR] <<"See \"-rose:log=help\" for usage information.\n";
              }
          }
      }
