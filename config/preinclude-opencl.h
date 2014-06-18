@@ -5,7 +5,8 @@
   /* Define alignment keys */
 
 #if defined( __GNUC__ )
-    #define OPENCL_ALIGNED(_x)          __attribute__ ((aligned(_x)))
+//  #define OPENCL_ALIGNED(_x)          __attribute__ ((aligned(_x)))
+    #define OPENCL_ALIGNED(_x)
 #elif defined( _WIN32) && (_MSC_VER)
     /* Alignment keys neutered on windows because MSVC can't swallow function arguments with alignment requirements     */
     /* http://msdn.microsoft.com/en-us/library/373ak2y1%28VS.71%29.aspx                                                 */
