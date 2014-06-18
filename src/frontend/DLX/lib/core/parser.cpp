@@ -7,6 +7,7 @@
  */
 
 #include "DLX/Core/parser.hpp"
+#include <cstring>
 
 namespace DLX {
 
@@ -79,6 +80,15 @@ bool Parser::consume(const char c) const {
     return true;
   }
   return false;
+}
+
+bool Parser::consume(const std::string & label) const {
+  std::string str(AstFromString::c_char);
+  if (str.find(label) == 0) {
+    AstFromString::c_char += label.length();
+    return true;
+  }
+  else return false;
 }
 
 std::string Parser::getDirectiveString() const {

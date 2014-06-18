@@ -72,6 +72,7 @@ class Parser {
 
     void skip_whitespace() const;
     bool consume(const char) const;
+    bool consume(const std::string &) const;
 };
 
 // Builtin clause's argument types parsing
