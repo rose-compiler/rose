@@ -1,9 +1,8 @@
-#define BOOST_FILESYSTEM_VERSION 3
-
 #include <sawyer/MarkupPod.h>
 
-#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <cerrno>
+#include <cstdio>
 #include <fstream>
 #include <sawyer/Assert.h>
 #include <sawyer/Sawyer.h>
@@ -11,6 +10,7 @@
 
 #ifdef BOOST_WINDOWS
 # include <windows.h>                                   // GetTempPath
+# include <shlwapi.h>                                   // PathFileExists
 #else
 # include <unistd.h>                                    // access
 # include <sys/stat.h>                                  // IS_DIR
@@ -35,23 +35,36 @@ PodFormatter::version(const std::string &versionString, const std::string &dateS
     return self();
 }
 
-static boost::filesystem::path
+static std::string
+escapeSingleQuoted(const std::string &s) {
+    std::string result;
+    BOOST_FOREACH (char ch, s) {
+        if ('\''==ch) {
+            result += "\\'";
+        } else {
+            ASSERT_always_require(isprint(ch));
+            result += ch;
+        }
+    }
+    return result;
+}
+
+static std::string
 tempFileName(const std::string &ext="") {
 #if 0 // [Robb Matzke 2014-06-18]: temp_directory_path and unique_path are not always available
     boost::filesystem::path path = boost::filesystem::temp_directory_path().string();
     path /= "%%%%-%%%%-%%%%-%%%%" + ext;
-    return boost::filesystem::unique_path(path);
+    return boost::filesystem::unique_path(path).string();
 #else
 # ifdef BOOST_WINDOWS
     char dummy;
     size_t size = GetTempPath(0, &dummy);               // size includes NUL terminator
     if (0==size)
         throw std::runtime_error("could not get system temporary directory name");
-    std::vector<char> tempPath(size);
-    size = GetTempPath(size, &tempPath[0]);
-    ASSERT_require(size==tempPath.size());
-    std::string str(tempPath.begin(), tempPath.begin()+size-1);
-    boost::filesystem::path path = str;
+    std::vector<char> buffer(size);
+    size = GetTempPath(size, &buffer[0]);
+    ASSERT_require(size==buffer.size());
+    std::string tempPath(buffer.begin(), buffer.begin()+size); // includes final back-slash according to documentation
 # else
     std::string tempPath;
     if (0!=geteuid()) {
@@ -68,7 +81,10 @@ tempFileName(const std::string &ext="") {
     }
     if (tempPath.empty())
         tempPath = _PATH_TMP;
-    boost::filesystem::path path = tempPath;
+    if (tempPath.empty())
+        tempPath = "/tmp";
+    if ('/'!=tempPath[tempPath.size()-1])
+        tempPath += "/";
 # endif
     while (1) {
         std::string basename;
@@ -81,51 +97,47 @@ tempFileName(const std::string &ext="") {
                 basename += ch;
             }
         }
-        basename += ext;
-        boost::filesystem::path check = path;
-        check /= basename;
-        if (!exists(status(check))) {
-            path /= basename;
-            break;
-        }
+        std::string path = tempPath + basename + ext;
+#ifdef BOOST_WINDOWS
+        bool exists = PathFileExists(path.c_str());
+#else
+        bool exists = 0 == access(path.c_str(), F_OK);
+#endif
+        if (!exists)
+            return path;
     }
-    return path;
 #endif
 }
     
 struct TempFile {
-    boost::filesystem::path name;
+    std::string name;
     std::ofstream stream;
-    TempFile(const boost::filesystem::path &name): name(name), stream(name.string().c_str()) {}
+    TempFile(const std::string &name): name(name), stream(name.c_str()) {}
     ~TempFile() {
         stream.close();
-        boost::filesystem::remove(name);
+        std::remove(name.c_str());
     }
 };
 
 struct TempDir {
-    boost::filesystem::path name;
-    TempDir(const boost::filesystem::path &name): name(name) {
-        boost::filesystem::create_directory(name);
+    std::string name;
+    TempDir(const std::string &name): name(name) {
+#ifdef BOOST_WINDOWS
+        ASSERT_not_implemented("[Robb Matzke 2014-06-18]");
+        this->name += '\\';
+#else
+        mkdir(name.c_str(), 0777);
+        this->name += '/';
+#endif
     }
     ~TempDir() {
-        boost::filesystem::remove_all(name);
+#ifdef BOOST_WINDOWS
+        ASSERT_not_implemented("[Robb Matzke 2014-06-18]");
+#else
+        system(("/bin/rm -rf '" + escapeSingleQuoted(name) + "'").c_str());
+#endif
     }
 };
-
-static std::string
-escapeSingleQuoted(const std::string &s) {
-    std::string result;
-    BOOST_FOREACH (char ch, s) {
-        if ('\''==ch) {
-            result += "\\'";
-        } else {
-            ASSERT_always_require(isprint(ch));
-            result += ch;
-        }
-    }
-    return result;
-}
 
 SAWYER_EXPORT std::string
 PodFormatter::toNroff(const ParserResult &parsed) {
@@ -140,7 +152,7 @@ PodFormatter::toNroff(const ParserResult &parsed) {
                       " --name='" + escapeSingleQuoted(pageName_) + "'"
                       " --release='" + escapeSingleQuoted(versionString_) + "'"
                       " --section='" + escapeSingleQuoted(chapterNumber_) + "'"
-                      " " + tmpfile.name.string();
+                      " " + tmpfile.name;
 
     FILE *f = popen(cmd.c_str(), "r");
     if (!f) {
@@ -168,10 +180,9 @@ PodFormatter::emit(const ParserResult &parsed) {
     // Generate POD documentation into a temporary file.  Since perldoc doesn't support the "name" property, but rather
     // uses the file name, we create a temporary directory and place a POD file inside with the name we want.
     TempDir tmpdir(tempFileName());
-    boost::filesystem::path fileName = tmpdir.name;
-    fileName /= pageName_ + ".pod";
+    std::string fileName = tmpdir.name + pageName_ + ".pod";
     {
-        std::ofstream stream(fileName.string().c_str());
+        std::ofstream stream(fileName.c_str());
         parsed.emit(stream, sharedFromThis());
     }
 
@@ -181,7 +192,7 @@ PodFormatter::emit(const ParserResult &parsed) {
                       // " -w 'name:" + escapeSingleQuoted(pageName_) + "'"
                       " -w 'release:" + escapeSingleQuoted(versionString_) + "'"
                       " -w 'section:" + escapeSingleQuoted(chapterNumber_) + "'"
-                      " " + fileName.string();
+                      " " + fileName;
     system(cmd.c_str());
 }
     
