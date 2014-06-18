@@ -26,10 +26,12 @@ public:
      *  matches if the instruction bits to be disassembled match any of the BitPattern objects. */
     class M68k {
     public:
-        M68k(const std::string &name, const BitPattern<uint16_t> &pattern): name(name), pattern(pattern) {}
+        M68k(const std::string &name, unsigned family, const BitPattern<uint16_t> &pattern)
+            : name(name), family(family), pattern(pattern) {}
         virtual ~M68k() {}
-        std::string name; // for debugging
-        BitPattern<uint16_t> pattern;
+        std::string name;                               // for debugging; same as class name but without the "M68k_" prefix
+        unsigned family;                                // bitmask of M68kFamily bits
+        BitPattern<uint16_t> pattern;                   // bits that match
         typedef DisassemblerM68k D;
         virtual SgAsmM68kInstruction *operator()(D *d, unsigned w0) = 0;
     };

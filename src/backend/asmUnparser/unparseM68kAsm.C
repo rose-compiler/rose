@@ -14,7 +14,7 @@ std::string
 unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers)
 {
     if (!registers)
-        registers = RegisterDictionary::dictionary_mcf5484(); // FIXME: we should use something more generic [RPM 2013-10-07]
+        registers = RegisterDictionary::dictionary_m68000();
     RegisterNames name_of(registers);
     std::string result = "";
     if (expr==NULL)
@@ -38,7 +38,7 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr)) {
         assert(ival!=NULL);
         uint64_t value = ival->get_absolute_value(); // not sign extended
-        result = StringUtility::addrToString(value, ival->get_significant_bits(), true/*signed*/);
+        result = StringUtility::signedToHex2(value, ival->get_significant_bits());
 
         // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
         // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.

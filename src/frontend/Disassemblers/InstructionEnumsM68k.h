@@ -1,5 +1,43 @@
 #ifndef ROSE_InstructionEnumsM68k_H
 #define ROSE_InstructionEnumsM68k_H
+/* References:
+ *   [1] "M68000 PM/AD REV.1 Programmers Reference Manual (Includes CPU32 Instructions)" Downloaded from the
+ *       Freescale website on 2013-10-07.
+ */
+
+/** Members of the Motorola Coldfire family of m68k processors.  These descriptions come from page 1-1 of the manual. In
+ *  particular, when the manual mentions a processor (like "MC68020") it refers to both that particular processor and the
+ *  embedded versions thereof ("MC68EC020"). We'll use the same approach here, and if we need to refer to only a paricular
+ *  processor excluding embedded version, we append "_only" to the name. */
+enum M68kFamily {
+    m68k_family         = 0xffffffff,                   /**< All M68k CPUs */
+    // Generation one (internally 16/32-bit and produced with 8-, 16-, and 32-bit interfaces)
+    m68k_generation_1   = 0x000000ff,                   /**< M68k first generation */
+    m68k_68000_only     = 0x00000001,                   /**< MC68000 16-/32-bit microprocessor */
+    m68k_68ec000        = 0x00000002,                   /**< MC68EC000 16-/32-bit embedded controller */
+    m68k_68hc000        = 0x00000004,                   /**< MC68HC000 low-power CMOS version of MC68000 */
+    m68k_68000          = 0x00000007,                   /**< MC68000 and embedded versions thereof */
+    m68k_68008          = 0x00000008,                   /**< MC68008 16-bit microprocessor with 8-bit external data bus */
+    m68k_68010          = 0x00000010,                   /**< MC68010 16-/32-bit virtual memory microprocessor */
+    m68k_68012          = 0x00000020,                   /**< MC68012 84-pin PGA version of MC68010 supporting 2GB RAM */
+    // Generation two (internally fully 32-bit)
+    m68k_generation_2   = 0x0000ff00,                   /**< M68k second generation */
+    m68k_68020_only     = 0x00000100,                   /**< MC68020 32-bit virtual memory microprocessor */
+    m68k_68ec020        = 0x00000200,                   /**< MC68EC020 32-bit embedded controller */
+    m68k_68020          = 0x00000300,                   /**< MC68020 and embedded versions thereof. */
+    m68k_68030_only     = 0x00000400,                   /**< MC68030 second-generation 32-bit enhanced microprocessor */
+    m68k_68ec030        = 0x00001000,                   /**< MC68EC030 32-bit embedded controller */
+    m68k_68030          = 0x00002000,                   /**< MC68030 and embedded versions thereof */
+    // Generation three (pipelined)
+    m68k_generation_3   = 0x00ff0000,                   /**< M68k third generation */
+    m68k_68040_only     = 0x00010000,                   /**< MC68040 third-generation 32-bit microprocessor */
+    m68k_68ec040        = 0x00020000,                   /**< MC68EC040 32-bit embedded controller w/out FPU or MMU */
+    m68k_68lc040        = 0x00040000,                   /**< MC68LC040 32-bit embedded controller w/out FPU */
+    m68k_68040          = 0x00070000,                   /**< MC68040 and embedded versions thereof */
+    // Freescale CPUs based on m68k
+    m68k_freescale      = 0xff000000,                   /**< Freescale CPUs based on Motorola 683xx */
+    m68k_cpu32          = 0x01000000,                   /**< Freescale CPU32 (similar to MC68020 w/out bitfield insns */
+};
 
 enum M68kRegisterClass {
     m68k_regclass_data,                 /**< Data registers. */
@@ -106,10 +144,11 @@ enum M68kSupervisorRegister {
  * Note +: the absolute data addressing modes are marked as non-alterable in this table in the m68k documentation, but the
  * documentation for instructions that say an operand "uses the alterable addressing modes shown in the following table" shows
  * the absolute addressing modes as being valid for the instruction. Therefore, I'm including the absolute addressing modes in
- * the set of alterable addressing modes. [Robb P. Matzke 2013-10-07]
- *
- * Reference: "M68000 PM/AD REV.1 Programmers Reference Manual (Includes CPU32 Instructions)" Downloaded from the
- * Freescale website on 2013-10-07.  The table is derived from table 2-4 on page 2-20.
+ * the set of alterable addressing modes. [Robb P. Matzke 2013-10-07]   After implementing all the integer instructions, it
+ * looks like this table in the reference manual has an error: the table excludes the two absolute data addressing modes (as
+ * just mentioned), but includes the two program counter memory indirect modes (which are missing from the tables for most
+ * instructions that say they use alterable addressing modes). So it looks like someone at Motorola placed two "X"s in the
+ * wrong rows. I may change my table in the future. FIXME[Robb P. Matzke 2014-02-24]
  */
 enum M68kEffectiveAddressMode {
     m68k_eam_unknown = 0,
