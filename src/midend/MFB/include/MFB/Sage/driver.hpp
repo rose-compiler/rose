@@ -113,6 +113,7 @@ class Driver<Sage> {
     virtual ~Driver();
 
     /// Create or load a file
+    unsigned create(const boost::filesystem::path & path);
     unsigned add(const boost::filesystem::path & path);
 
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
@@ -153,8 +154,8 @@ class Driver<Sage> {
     /// Import external header for a given file
     void addExternalHeader(unsigned file_id, std::string header_name, bool is_system_header = true);
 
-    /// Add a string at the begining of the file
-    void attachArbitraryText(unsigned file_id, std::string str);
+    /// Add a pragma at the begining of the file
+    void addPragmaDecl(unsigned file_id, std::string str);
 };
 
 // SgTemplateInstantiationMemberFunctionDecl

@@ -12485,7 +12485,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 
   // DQ (4/15/2010): Turn on verbose mode
-     arglist.push_back("-rose:verbose 2");
+  // arglist.push_back("-rose:verbose 2");
 
   // This handles the case where the original command line may have referenced multiple files.
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
