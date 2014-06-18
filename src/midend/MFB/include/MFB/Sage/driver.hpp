@@ -102,6 +102,8 @@ class Driver<Sage> {
     unsigned getFileID(SgSourceFile * source_file) const;
     unsigned getFileID(SgScopeStatement * scope) const;
 
+    unsigned add(SgSourceFile * file);
+
   protected:
     template <typename Object>
     typename Sage<Object>::build_scopes_t getBuildScopes(const typename Sage<Object>::object_desc_t & desc);
@@ -135,13 +137,13 @@ class Driver<Sage> {
     /// Add needed include statement or forward definition to use a symbol in a file (from SgSourceFile pointer)
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false) {
-      return useSymbol(symbol, getFileID(file), need_forward_only);
+      return useSymbol<Object>(symbol, getFileID(file), need_forward_only);
     }
 
     /// Add needed include statement or forward definition to use a symbol in a file (from SgScopeStatement pointer)
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgScopeStatement * scope, bool need_forward_only = false) {
-      return useSymbol(symbol, getFileID(scope), need_forward_only);
+      return useSymbol<Object>(symbol, getFileID(scope), need_forward_only);
     }
 
     /// Build an object and add associated symbol to driver
@@ -167,9 +169,9 @@ class Driver<Sage> {
 
 }
 
-#ifndef NO_TEMPLATE_DEFINITION
+//#ifndef NO_TEMPLATE_DEFINITION
 #include "MFB/Sage/driver.tpp"
-#endif
+//#endif
 
 #endif /* __MFB_SAGE_DRIVER_HPP__ */
 

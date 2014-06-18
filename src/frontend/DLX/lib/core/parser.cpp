@@ -43,7 +43,7 @@ bool consume_label(std::string & directive_str, const std::string & label) {
 
   if (directive_str.find(label) != 0) return false;
 
-  if ((directive_str.size() > label.size()) && !whitespace(directive_str[label.size()]) && (directive_str[label.size()] != '(')) return false;
+  if ((directive_str.size() > label.size()) && !whitespace(directive_str[label.size()]) && (directive_str[label.size()] != '(') && (directive_str[label.size()] != '[')) return false;
 
   directive_str = directive_str.substr(label.size());
 

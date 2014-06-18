@@ -85,9 +85,32 @@ Driver<Sage>::Driver(SgProject * project_) :
 
   if (!CommandlineProcessing::isCppFileNameSuffix("h"))
     CommandlineProcessing::extraCppSourceFileSuffixes.push_back("h");
+
+  // Load existing files
+  const std::vector<SgFile *> & files = project->get_fileList_ptr()->get_listOfFiles();
+  std::vector<SgFile *>::const_iterator it_file;
+  for (it_file = files.begin(); it_file != files.end(); it_file++) {
+    SgSourceFile * src_file = isSgSourceFile(*it_file);
+    if (src_file != NULL)
+      add(src_file);
+  }
 }
 
 Driver<Sage>::~Driver() {}
+
+unsigned Driver<Sage>::add(SgSourceFile * file) {
+  unsigned id = file_id_counter++;
+
+  id_to_file_map.insert(std::pair<unsigned, SgSourceFile *>(id, file));
+  file_to_id_map.insert(std::pair<SgSourceFile *, unsigned>(file, id));
+  file_id_to_accessible_file_id_map.insert(std::pair<unsigned, std::set<unsigned> >(id, std::set<unsigned>())).first->second.insert(id);
+
+  /// \todo detect other accessible file (opt: add recursively)
+
+  loadSymbols<SgDeclarationStatement>(id, file);
+
+  return id;
+}
 
 unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
   if (boost::filesystem::exists(path)) {
@@ -101,16 +124,9 @@ unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
       file->set_skip_unparse(true);
       file->set_skipfinalCompileStep(true);
 
-      unsigned id = file_id_counter++;
+      unsigned id = add(file);
 
-      id_to_file_map.insert(std::pair<unsigned, SgSourceFile *>(id, file));
-      file_to_id_map.insert(std::pair<SgSourceFile *, unsigned>(file, id));
       path_to_id_map.insert(std::pair<boost::filesystem::path, unsigned>(path, id));
-      file_id_to_accessible_file_id_map.insert(std::pair<unsigned, std::set<unsigned> >(id, std::set<unsigned>())).first->second.insert(id);
-
-      /// \todo detect other accessible file (opt: add recursively)
-
-      loadSymbols<SgDeclarationStatement>(id, file);
 
       return id;
     }

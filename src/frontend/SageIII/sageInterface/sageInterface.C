@@ -17786,11 +17786,11 @@ bool SageInterface::getForLoopInformations(
       assert(false);
   }
 
-  if (inclusive)
+  if (!inclusive)
     if (reversed)
-      upper_bound = SageBuilder::buildSubtractOp(upper_bound, SageBuilder::buildIntVal(1));
-    else
       upper_bound = SageBuilder::buildAddOp(upper_bound, SageBuilder::buildIntVal(1));
+    else
+      upper_bound = SageBuilder::buildSubtractOp(upper_bound, SageBuilder::buildIntVal(1));
 
   return true;
 }

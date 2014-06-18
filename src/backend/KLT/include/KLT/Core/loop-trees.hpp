@@ -134,10 +134,6 @@ class LoopTrees {
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::vector<SgVariableSymbol *> p_parameters;
 
-    SgExpression * p_num_gangs[3];
-    SgExpression * p_num_workers[3];
-    SgExpression * p_vector_length;
-
     bool getLoopID_rec(node_t * curr, loop_t * targ, size_t & idx) const {
       assert(targ != NULL);
 
@@ -175,13 +171,13 @@ class LoopTrees {
   public:
     const std::vector<node_t *> & getTrees() const { return p_trees; }
 
-    const std::vector<Data<Annotation> *> getDatas() const { return p_datas; }
+    const std::vector<Data<Annotation> *> & getDatas() const { return p_datas; }
     size_t getNumDatas() const { return p_datas.size(); }
 
-    const std::vector<SgVariableSymbol *> getScalars() const { return p_scalars; }
+    const std::vector<SgVariableSymbol *> & getScalars() const { return p_scalars; }
     size_t getNumScalars() const { return p_scalars.size(); }
 
-    const std::vector<SgVariableSymbol *> getParameters() const { return p_parameters; }
+    const std::vector<SgVariableSymbol *> & getParameters() const { return p_parameters; }
     size_t getNumParameters() const { return p_parameters.size(); }
 
   public:
@@ -199,10 +195,6 @@ class LoopTrees {
 
     /// Add a parameter of the sequence of loop trees
     void addParameter(SgVariableSymbol * var_sym) { if (std::find(p_parameters.begin(), p_parameters.end(), var_sym) == p_parameters.end()) p_parameters.push_back(var_sym); }
-
-    void setNumGangs(size_t lvl, SgExpression * num);
-    void setNumWorkers(size_t lvl, SgExpression * num);
-    void setVectorLength(SgExpression * length);
 
     /// Read from a lisp like text file
     void read(char * filename);
@@ -250,8 +242,8 @@ template <class Annotation>
 typename LoopTrees<Annotation>::node_t * parseLoopTreesNode();
 
 template <class Annotation>
-void printLoopAnnotations(
-  typename LoopTrees<Annotation>::loop_t * loop,
+void printAnnotations(
+  const std::vector<Annotation> & annotations,
   std::ostream & out,
   std::string indent
 );
@@ -294,7 +286,7 @@ void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::strin
         << loop->upper_bound->unparseToString()   << ", "
         << loop->stride->unparseToString()   << ", ";
 
-    printLoopAnnotations<Annotation>(loop, out, indent);
+    printAnnotations<Annotation>(loop->annotations, out, indent);
     
     toText(loop->block, out, indent + "  ");
 
@@ -313,10 +305,17 @@ void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::strin
   }
   
   if (block != NULL) {
+    assert(!block->children.empty());
     out << indent << "block(" << std::endl;
-    typename std::vector<node_t *>::const_iterator it_block;
-    for (it_block = block->children.begin(); it_block != block->children.end(); it_block++)
+
+    typename std::vector<node_t *>::const_iterator it_block = block->children.begin();
+    toText(*it_block, out, indent + "  ");
+    it_block++;
+    for (; it_block != block->children.end(); it_block++) {
+      out << "," << std::endl;
       toText(*it_block, out, indent + "  ");
+    }
+    out << std::endl << indent << ")";
   }
   
   if (stmt != NULL) {
@@ -331,31 +330,11 @@ LoopTrees<Annotation>::LoopTrees() :
   p_datas(),
   p_scalars(),
   p_parameters(),
-  p_num_gangs({NULL,NULL,NULL}),
-  p_num_workers({NULL,NULL,NULL}),
-  p_vector_length(NULL),
   annotations()
 {}
 
 template <class Annotation>
 LoopTrees<Annotation>::~LoopTrees() {}
-
-template <class Annotation>
-void LoopTrees<Annotation>::setNumGangs(size_t lvl, SgExpression * num) {
-  assert(lvl >= 0 && lvl <= 2);
-  p_num_gangs[lvl] = num;
-}
-
-template <class Annotation>
-void LoopTrees<Annotation>::setNumWorkers(size_t lvl, SgExpression * num) {
-  assert(lvl >= 0 && lvl <= 2);
-  p_num_workers[lvl] = num;
-}
-
-template <class Annotation>
-void LoopTrees<Annotation>::setVectorLength(SgExpression * length) {
-  p_vector_length = length;
-}
 
 template <class Annotation>
 void LoopTrees<Annotation>::toText(char * filename) const {
@@ -381,17 +360,18 @@ void LoopTrees<Annotation>::toText(std::ostream & out) const {
   for (it_data = p_datas.begin(); it_data != p_datas.end(); it_data++)
     (*it_data)->toText(out);
 
-  if (!p_trees.empty()) {
-    it_tree = p_trees.begin();
-    out << "region(" << std::endl;
+  assert(!p_trees.empty());
+
+  it_tree = p_trees.begin();
+  out << "region(" << std::endl;
+  printAnnotations<Annotation>(annotations, out, "  ");
+  toText(*it_tree, out, "  ");
+  it_tree++;
+  for (; it_tree != p_trees.end(); it_tree++) {
+    out << "," << std::endl;
     toText(*it_tree, out, "  ");
-    it_tree++;
-    for (; it_tree != p_trees.end(); it_tree++) {
-      out << "," << std::endl;
-      toText(*it_tree, out, "  ");
-    }
-    out << std::endl << ")" << std::endl;
   }
+  out << std::endl << ")" << std::endl;
 }
 
 template <class Annotation> 
@@ -770,16 +750,7 @@ void parseLoopAnnotations(typename LoopTrees<Annotation>::loop_t * loop) {
 
   ensure(')');
 }
-/*
-template <class Annotation>
-void printLoopAnnotations(
-  typename LoopTrees<Annotation>::loop_t * loop,
-  std::ostream & out,
-  std::string indent
-) {
-  assert(false);
-}
-*/
+
 template <class Annotation>
 void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgStatement *> & leaves) {
   if (tree == NULL) return;
