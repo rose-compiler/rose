@@ -477,6 +477,7 @@ disassemble2_buffer2.raw.passed: $(disassemble2_directory)/buffer2.raw disassemb
 
 disassemble2_vm-final.raw.passed: $(disassemble2_directory)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
 	@$(RTH_RUN) \
+		DISABLED="This takes forever to run" \
 		TITLE="disassemble $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
 		EXE="$$(pwd)/disassemble" \
@@ -766,6 +767,28 @@ multiSemanticsSpeed2_SOURCES = semanticsSpeed.C
 multiSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=NEW_API
 multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+
+###############################################################################################################################
+# LLVM tests
+###############################################################################################################################
+
+noinst_PROGRAMS += llvmTranscoder
+llvmTranscoder_SOURCES = llvmTranscoder.C
+llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+llvmTranscoder_Specimens = $(elf_exe_x86_specimens) $(pe_exe_x86_specimens)
+llvmTranscoder_TestTargets = $(addprefix llvm_, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
+TEST_TARGETS += $(llvmTranscoder_TestTargets)
+EXTRA_DIST += llvmTranscoder.conf
+
+$(llvmTranscoder_TestTargets): llvm_%.passed: $(BINARY_SAMPLES)/% llvmTranscoder llvmTranscoder.conf
+	@$(RTH_RUN) \
+		TITLE="LLVM transcoder for $* [$@]" \
+		SPECIMEN="$(abspath $<)" \
+		$(srcdir)/llvmTranscoder.conf $@
+
+.PHONY: check-llvm
+check-llvm: $(llvmTranscoder_TestTargets)
 
 ###############################################################################################################################
 # DEMOS

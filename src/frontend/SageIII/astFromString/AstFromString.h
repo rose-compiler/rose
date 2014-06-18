@@ -89,7 +89,7 @@ namespace AstFromString
   ROSE_DLL_API bool afs_skip_whitespace();
 
  
-  //! Match identifier, move to the next character if successful. The identifier could be a name of a type, function, variable, or label. The resolved identifier (type or variable/function/label name) is stored into c_parsed_node.
+  //! Match identifier, move to the next character if successful. The identifier could be a name of a type, function, variable, or label. The resolved identifier (type , variable name, function reference expression, or label name) is stored into c_parsed_node.
   ROSE_DLL_API bool afs_match_identifier();
 
   //! Match an integer constant, store it into result
@@ -157,7 +157,7 @@ namespace AstFromString
    \brief  utility functions for parsing expressions and generate AST pieces for them. Successful match will advance the current position. The function names and grammars largely follow the conventions used in http://www.antlr.org/grammar/1153358328744/C.g. For example in the grammar shown,  | means or, * means 0 or more repetition of the previous term , ? means 0 or 1 occurrence of the previous term. + means 1 or more occurrence. 
  */
   //-----------------------------------------
-  //!  Grammar:  argument_expression_list : assignment_expression (',' assignment_expression)*  one assignment_expression, followed by optionally arbitrary numbers of (',' assignment_expression)
+  //!  Grammar:  argument_expression_list : assignment_expression (',' assignment_expression)*  one assignment_expression, followed by optionally arbitrary numbers of (',' assignment_expression), store SgExprListExp to c_parsed_node. 
   ROSE_DLL_API bool afs_match_argument_expression_list();
 
   //!  Grammar:  additive_expression : (multiplicative_expression) ('+' multiplicative_expression | '-' multiplicative_expression)*

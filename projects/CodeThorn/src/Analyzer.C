@@ -19,7 +19,7 @@ using namespace CodeThorn;
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
              _semanticFoldThreshold(5000),_solver(3),_analyzerMode(AM_ALL_STATES),
-             _maxTransitions(0),_treatStdErrLikeFailedAssert(false) {
+                     _maxTransitions(0),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -29,6 +29,10 @@ bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==0)
     return false;
   return transitionGraph.size()>_maxTransitions;
+}
+
+ExprAnalyzer* Analyzer::getExprAnalyzer() {
+  return &exprAnalyzer;
 }
 
 void Analyzer::runSolver() {
@@ -137,9 +141,10 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
   t=isStdIOLabel(label) 
-    //    || getLabeler()->isStdErrLabel(label)
+    || (getLabeler()->isStdErrLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     //|| isTerminationRelevantLabel(label)
      || isStartLabel(label) // we keep the start state
+     || isCppLabeledAssertLabel(label)
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -303,20 +308,22 @@ void Analyzer::runSolver1() {
               }
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
-                if(name=="globalError")
-                  name="error_60";
-                name=name.substr(6,name.size()-6);
-                std::ofstream fout;
-                // csv_assert_live_file is the member-variable of analyzer
+                if(name.size()>0) {
+                  if(name=="globalError")
+                    name="error_60";
+                  name=name.substr(6,name.size()-6);
+                  std::ofstream fout;
+                  // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-                {
-                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-                  assert (!fout.fail( ));
-                  fout << name << ",yes,9"<<endl;
-                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-                  
-                  fout.close(); 
-                }
+                  {
+                    fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                    assert (!fout.fail( ));
+                    fout << name << ",yes,9"<<endl;
+                    //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                    
+                    fout.close(); 
+                  }
+                } // if (assert-label was found)
               } // if
             }
           } // end of loop on transfer function return-estates
@@ -580,11 +587,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   if(edge.isType(EDGE_LOCAL)) {
 #ifdef RERS_SPECIALIZATION
     if(boolOptions["rers-binary"]) {
+	  //cout<<"DEBUG: ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source);
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_output") {
+		  //cout<<"DEBUG: BINARY-transfer: calculate output found."<<endl;
           SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
           SgExpressionPtrList::iterator j=actualParameters.begin();
           SgExpression* actualParameterExpr=*j;
@@ -607,10 +616,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               // = rers_result*(-1)-100 : rers error-number
               if(rers_result==-1000) {
                 binaryBindingAssert[61]=true;
+				reachabilityResults.reachable(61);
               } else {
                 int index=((rers_result+100)*(-1));
                 assert(index>=0 && index <=60);
                 binaryBindingAssert[index]=true;
+				reachabilityResults.reachable(index);
+				//cout<<"DEBUG: found assert Error "<<index<<endl;
               }
               return elistify();
             }
@@ -823,7 +835,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         list<EState> resList;
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
-          if(boolOptions["input-var-values-as-constraints"]) {
+          if(boolOptions["input-values-as-constraints"]) {
             newCSet.removeAllConstraintsOfVar(varId);
             newPState[varId]=AType::Top();
             newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
@@ -854,11 +866,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           if(boolOptions["update-input-var"]) {
             newCSet.removeAllConstraintsOfVar(varId);
             newPState[varId]=AType::Top();
-          }
-          if(boolOptions["reset-state-on-input"]) {
-            newPState.setAllVariablesToTop();
-            ConstraintSet emptyCSet;
-            newCSet=emptyCSet;
           }
         }
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
@@ -968,6 +975,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       return newEStateList;
     }
     if(isSgConditionalExp(nextNodeToAnalyze2)) {
+      // this is meanwhile modeled in the ExprAnalyzer - TODO: utilize as expr-stmt.
       cerr<<"Error: found conditional expression outside assert. We do not support this form yet."<<endl;
       exit(1);
 #if 0
@@ -1035,13 +1043,26 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           EState estate=(*i).estate;
           PState newPState=*estate.pstate();
           ConstraintSet cset=*estate.constraints();
-          newPState[lhsVar]=(*i).result;
+          // only update integer variables. Ensure values of floating-point variables are not computed
+          if(variableIdMapping.hasIntegerType(lhsVar)) {
+            newPState[lhsVar]=(*i).result;
+          }
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
           estateList.push_back(createEState(edge.target,newPState,cset));
         } else {
+          if(isSgPntrArrRefExp(lhs)) {
+            // for now we ignore array refs on lhs
+            // TODO: assignments in index computations of ignored array ref
+            // since nothing can change (because of being ignored) state remains the same
+            EState estate=(*i).estate;
+            PState oldPState=*estate.pstate();
+            ConstraintSet oldcset=*estate.constraints();            
+            estateList.push_back(createEState(edge.target,oldPState,oldcset));            
+          } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
+          }
         }
       }
       return estateList;
@@ -1065,7 +1086,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   initAstNodeInfo(root);
 
   cout << "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new Labeler(root,getVariableIdMapping());
+  Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
@@ -1154,13 +1175,6 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   AValue rhsIntVal=AType::Top();
   bool isRhsIntVal=false;
   bool isRhsVar=false;
-
-  if(boolOptions["assign-top"]) {
-    PState newPState=currentPState;
-    cset.removeAllConstraintsOfVar(lhsVar);
-    newPState[lhsVar]=AType::Top();
-    return newPState;
-  }
 
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
@@ -1297,7 +1311,7 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   return true;
 }
 
-
+#if 0
 void Analyzer::deleteNonRelevantEStates() {
   size_t numEStatesBefore=estateSet.size();
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
@@ -1309,6 +1323,7 @@ void Analyzer::deleteNonRelevantEStates() {
   if(numEStatesBefore!=numEStatesAfter)
     cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
 }
+#endif
 
 void Analyzer::stdIOFoldingOfTransitionGraph() {
   cout << "STATUS: stdio-folding: computing states to fold."<<endl;
@@ -1428,6 +1443,82 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
   return 0;
 }
 
+void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
+  ss<<"S"<<estateSet.estateIdString(t.source);
+  ss<<",";
+  ss<<"S"<<estateSet.estateIdString(t.target);
+  const EState* myTarget=t.target;
+  AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
+  ss<<",\""; // dquote reqired for condition
+  // generate transition condition
+  if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
+    if(!myIOVal.isConstInt()) {
+      //assert(myIOVal.isConstInt());
+      cerr<<"Error: IOVal is NOT const.\n"<<"EState: "<<myTarget->toString()<<endl;
+      exit(1);
+    }
+  }
+  // myIOVal.isTop(): this only means that any value *may* be read/written. This cannot be modeled here.
+  // if it represents "any of A..F" or any of "U..Z" it could be handled.
+  for(int i=1;i<=6;i++) {
+    if(i!=1)
+      ss<<" & ";
+    if(myTarget->io.isStdInIO() && myIOVal.isConstInt() && myIOVal.getIntValue()==i) {
+      ss<<"  ";
+    } else {
+      ss<<"! ";
+    }
+    ss<<"i"<<(char)(i+'A'-1);
+  }
+  for(int i=21;i<=26;i++) {
+    ss<<" & ";
+    if(myTarget->io.isStdOutIO() && myIOVal.isConstInt() && myIOVal.getIntValue()==i) {
+      ss<<"  ";
+      } else {
+      ss<<"! ";
+    }
+    ss<<"o"<<(char)(i+'A'-1);
+  }
+  ss<<"\""; // dquote reqired for condition
+  ss<<",;"; // no accepting states specified
+  ss<<endl;
+}
+
+string Analyzer::generateSpotSTG() {
+  stringstream ss;
+  // (1) generate accepting states
+#if 0
+  EStatePtrSet states=transitionGraph.estateSet();
+  cout<<"Generating accepting states."<<endl;
+  ss<<"acc=";
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    if(!((*i)->io.isStdErrIO()||(*i)->io.isFailedAssertIO())) {
+      ss<<"S"<<estateSet.estateIdString(*i)<<" ";
+    }
+  }
+  ss<<";"<<endl;
+#else
+  cout<<"All states are accepting."<<endl;
+#endif
+  // (2) generate state transition graph
+  // the start state is identified by the first transition. Therefore I generate all transitions of the
+  // start state first, and exclude them from all the others.
+  const EState* startState=transitionGraph.getStartEState();
+  TransitionPtrSet startTransitions=transitionGraph.outEdges(startState);
+  for(TransitionPtrSet::iterator i=startTransitions.begin();i!=startTransitions.end();++i) {
+    generateSpotTransition(ss,**i);
+  }
+  int num=0;
+  for(TransitionGraph::iterator i=transitionGraph.begin();i!=transitionGraph.end();++i) {
+    if((*i).source!=startState)
+      generateSpotTransition(ss,*i);
+    if(num%1000==0 && num>0)
+      cout<<"Generated "<<num<<" of "<<transitionGraph.size()<<" transitions."<<endl;
+    num++;
+  }
+  cout<<"SPOT STG: start state: "<<"S"<<estateSet.estateIdString(startState)<<endl;
+  return ss.str();
+}
 
 int Analyzer::semanticEliminationOfSelfInInTransitions() {
   //cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
@@ -1476,26 +1567,46 @@ int Analyzer::semanticEliminationOfDeadStates() {
   }
   return toEliminate.size();
 }
-int Analyzer::semanticFoldingOfInInTransitions() {
+int Analyzer::semanticFusionOfInInTransitions() {
   set<const EState*> toReduce;
   for(TransitionGraph::iterator i=transitionGraph.begin();
       i!=transitionGraph.end();
       ++i) {
-    if((getLabeler()->isStdInLabel((*i).source->label()))
+    if(((*i).source->io.isStdInIO())
        &&
-       (getLabeler()->isStdInLabel((*i).target->label()))
+       ((*i).target->io.isStdInIO())
        &&
        ((*i).source!=(*i).target)
        ) {
-      // found in-in edge; we reduce the target-node
-      // but only if there is no connection to already collected nodes (cycle check)
-      if(toReduce.find((*i).source)==toReduce.end())
-        toReduce.insert((*i).target);
+      // found in-in edge; fuse source and target state into target state (VERY different to reduction!)
+      // 1) all in edges of source become in-edges of target
+      // 2) all out edges of source become out-edges of target
+      // 3) eliminate source
+      set<Transition> newTransitions;
+      const EState* remapped=(*i).target;
+      TransitionPtrSet in=transitionGraph.inEdges((*i).source);
+      for(TransitionPtrSet::iterator j=in.begin();j!=in.end();++j) {
+        newTransitions.insert(Transition((*j)->source,
+                                         Edge((*j)->source->label(),EDGE_PATH,remapped->label()),
+                                         remapped));
+      }
+      TransitionPtrSet out=transitionGraph.outEdges((*i).source);
+      for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
+        newTransitions.insert(Transition(remapped,
+                                         Edge(remapped->label(),EDGE_PATH,(*j)->target->label()),
+                                         (*j)->target));
+      }
+      for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
+        transitionGraph.add(*k);
+        //assert(find(*k)!=end());
+      }
+      transitionGraph.eliminateEState((*i).source);
+      return 1;
     }
   }
-  transitionGraph.reduceEStates2(toReduce);
   //cout<<"STATUS: Eliminated "<<elim<<" in-in transitions."<<endl;
-  return toReduce.size();
+  //return toReduce.size();
+  return 0;
 }
 
 void Analyzer::semanticEliminationOfTransitions() {
@@ -1508,7 +1619,7 @@ void Analyzer::semanticEliminationOfTransitions() {
     elim+=semanticEliminationOfDeadStates();
     // this function does not work in general yet
     // probably because of self-edges
-    elim+=semanticFoldingOfInInTransitions();
+    elim+=semanticFusionOfInInTransitions();
     assert(transitionGraph.checkConsistency());
   } while (elim>0);
   cout << "done."<<endl;
@@ -1647,6 +1758,7 @@ void Analyzer::runSolver2() {
 
 void Analyzer::runSolver3() {
   flow.boostify();
+  reachabilityResults.init(); // set all reachability results to unknown
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
   vector<const EState*> workVector(_numberOfThreadsToUse);
@@ -1673,7 +1785,7 @@ void Analyzer::runSolver3() {
         assert(currentEStatePtr);
       
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+        //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -1704,6 +1816,21 @@ void Analyzer::runSolver3() {
                   cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
                 }
               }
+              
+              // record reachability
+              int assertCode=reachabilityAssertCode(currentEStatePtr);
+              if(assertCode>=0) {
+#pragma omp critical
+                {
+                  reachabilityResults.reachable(assertCode);
+                }
+              } else {
+                // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+                if(!boolOptions["rersmode"]) {
+                  // assert without label
+                }
+              }
+              
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
                 if(name=="globalError")
@@ -1734,12 +1861,29 @@ void Analyzer::runSolver3() {
       return;
     }
   } // while
+  reachabilityResults.finished(); // sets all unknown entries to NO.
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
+int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
+  string name=labelNameOfAssertLabel(currentEStatePtr->label());
+  if(name.size()==0)
+    return -1;
+  if(name=="globalError")
+    name="error_60";
+  name=name.substr(6,name.size()-6);
+  std::istringstream ss(name);
+  int num;
+  ss>>num;
+  return num;
+}
+
+
+// algorithm 4 also records reachability for incomplete STGs (analyzer::reachabilityResults)
 void Analyzer::runSolver4() {
   //flow.boostify();
+  reachabilityResults.init(); // set all reachability results to unknown
   size_t prevStateSetSize=0; // force immediate report at start
   int analyzedSemanticFoldingNode=0;
   int threadNum;
@@ -1801,6 +1945,17 @@ void Analyzer::runSolver4() {
               newEStatePtr=processNewOrExisting(newEState);
               recordTransition(currentEStatePtr,e,newEStatePtr);        
               
+              // record reachability
+              int assertCode=reachabilityAssertCode(currentEStatePtr);
+              if(assertCode>=0) {
+#pragma omp critical
+                {
+                  reachabilityResults.reachable(assertCode);
+                }
+              } else {
+                // assert without label
+              }
+              
               if(boolOptions["report-failed-assert"]) {
 #pragma omp critical
                 {
@@ -1809,20 +1964,22 @@ void Analyzer::runSolver4() {
               }
               if(_csv_assert_live_file.size()>0) {
                 string name=labelNameOfAssertLabel(currentEStatePtr->label());
-                if(name=="globalError")
-                  name="error_60";
-                name=name.substr(6,name.size()-6);
-                std::ofstream fout;
-                // csv_assert_live_file is the member-variable of analyzer
+                if(name.size()>0) {
+                  if(name=="globalError")
+                    name="error_60";
+                  name=name.substr(6,name.size()-6);
+                  std::ofstream fout;
+                  // csv_assert_live_file is the member-variable of analyzer
 #pragma omp critical
-                {
-                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-                  assert (!fout.fail( ));
-                  fout << name << ",yes,9"<<endl;
-                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-                  
-                  fout.close(); 
-                }
+                  {
+                    fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                    assert (!fout.fail( ));
+                    fout << name << ",yes,9"<<endl;
+                    //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                    
+                    fout.close(); 
+                  }
+                }// if label of assert was found (name.size()>0)
               } // if
             }
           } // end of loop on transfer function return-estates
@@ -1843,7 +2000,7 @@ void Analyzer::runSolver4() {
     if(isIncompleteSTGReady()) {
       // ensure that the STG is folded properly when finished
       if(boolOptions["semantic-fold"]) {
-    semanticFoldingOfTransitionGraph();
+        semanticFoldingOfTransitionGraph();
       }  
       // we report some information and finish the algorithm with an incomplete STG
       cout << "-------------------------------------------------"<<endl;
@@ -1856,6 +2013,7 @@ void Analyzer::runSolver4() {
   if(boolOptions["semantic-fold"]) {
     semanticFoldingOfTransitionGraph();
   }  
+  reachabilityResults.finished(); // sets all unknown entries to NO.
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
 }

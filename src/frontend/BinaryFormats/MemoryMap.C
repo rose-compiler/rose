@@ -25,7 +25,17 @@
 #define TEMP_FAILURE_RETRY(expression) expression
 #define PROT_WRITE 0x02
 #define F_OK 0
+#define MAP_SHARED 0
+#define MAP_PRIVATE 1
 #endif
+
+#ifndef PROT_READ
+#define PROT_READ MM_PROT_READ
+#endif
+#ifndef PROT_WRITE
+#define PROT_WRITE MM_PROT_WRITE
+#endif
+
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const MemoryMap::Exception    &x) { x.print(o); return o; }

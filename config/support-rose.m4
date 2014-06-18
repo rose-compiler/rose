@@ -269,6 +269,7 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
 if test "x$enable_microsoft_extensions" = "xyes"; then
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
 else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi
@@ -1644,17 +1645,32 @@ echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # This list should be the same as in build (search for Makefile.in)
+
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
+src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
-
 
 # End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
@@ -1683,6 +1699,8 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/experimental-fortran-parser/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -1801,6 +1819,7 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/Makefile
 src/roseExtensions/roseHPCToolkit/src/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
+src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
@@ -1814,14 +1833,12 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
-projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/CodeThorn/Makefile
 projects/CodeThorn/src/Makefile
-projects/CodeThorn/src/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -2029,11 +2046,16 @@ tests/CompileTests/ElsaTestCases/gnu/Makefile
 tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
+tests/CompileTests/MicrosoftWindows_C_tests/Makefile
 tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
+tests/CompileTests/Java_tests/unit_tests/Makefile
+tests/CompileTests/MicrosoftWindows_Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
+tests/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
 tests/CompileTests/Cxx11_tests/Makefile
+tests/CompileTests/C11_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
@@ -2046,6 +2068,7 @@ tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
+tests/CompileTests/FailSafe_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
 tests/CompileTests/OpenMP_tests/cvalidation/Makefile
@@ -2067,6 +2090,7 @@ tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
+tests/CompileTests/systemc_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2082,6 +2106,7 @@ tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
@@ -2169,6 +2194,7 @@ binaries/samples/Makefile
 ])
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
+#projects/BinaryDataStructureRecognition/Makefile
 #projects/haskellport/Makefile
 #projects/haskellport/Setup.hs
 #projects/haskellport/rose.cabal.in
@@ -2264,6 +2290,18 @@ AC_CONFIG_COMMANDS([rose_paths.C], [[
 AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 	make rosePublicConfig.h
 ]])
+
+# [TOO1, 2014-04-22]
+# TODO: Re-enable once we phase out support for older version of Autotools.
+#       Specifically, Pontetec is using Autoconf 2.59 and Automake 1.9.6.
+# Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
+#AC_CONFIG_COMMANDS([absoluteNames],
+#[[
+#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#	find . -name Makefile | xargs sed -i~ \
+#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#]])
+
 
 
 # End macro ROSE_SUPPORT_ROSE_PART_7.

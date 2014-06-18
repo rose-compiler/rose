@@ -16,6 +16,8 @@ using namespace std;
 
 using namespace CodeThorn;
 
+bool AType::ConstIntLattice::arithTop=false;
+
 ostream& AType::operator<<(ostream& os, const BoolLattice& value) {
   os << value.toString();
   return os;
@@ -233,16 +235,12 @@ AType::ConstIntLattice AType::ConstIntLattice::operator!() {
 
 AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
-  if(!boolOptions["precision-intbool"]) {
-    if(isTop()   || other.isTop())   return Top();
-  } else {
-    // all TOP cases
-    if(isTop()   && other.isTop())   return Top();
-    if(isTop()   && other.isTrue())  return true;
-    if(isTrue()  && other.isTop())   return true;
-    if(isTop()   && other.isFalse()) return Top();
-    if(isFalse() && other.isTop())   return Top();
-  }
+  // all TOP cases
+  if(isTop()   && other.isTop())   return Top();
+  if(isTop()   && other.isTrue())  return true;
+  if(isTrue()  && other.isTop())   return true;
+  if(isTop()   && other.isFalse()) return Top();
+  if(isFalse() && other.isTop())   return Top();
   // all BOT cases
   if(valueType==BOT) {
     tmp.valueType=other.valueType; 
@@ -265,16 +263,12 @@ AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other)
 
 AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
-  if(!boolOptions["precision-intbool"]) {
-    if(isTop()   || other.isTop())   return Top();
-  } else {
-    // all TOP cases
-    if(isTop()   && other.isTop())   return Top();
-    if(isTop()   && other.isTrue())  return Top();
-    if(isTrue()  && other.isTop())   return Top();
-    if(isTop()   && other.isFalse()) return false;
-    if(isFalse() && other.isTop())   return false;
-  }
+  // all TOP cases
+  if(isTop()   && other.isTop())   return Top();
+  if(isTop()   && other.isTrue())  return Top();
+  if(isTrue()  && other.isTop())   return Top();
+  if(isTop()   && other.isFalse()) return false;
+  if(isFalse() && other.isTop())   return false;
   // all BOT cases
   if(valueType==BOT) {
     tmp.valueType=other.valueType;
@@ -444,6 +438,8 @@ AType::ConstIntLattice AType::ConstIntLattice::operator-() {
   return tmp;
 }
 
+//#define ARITH_TOP
+
 AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
@@ -452,7 +448,7 @@ AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()+b.getIntValue();
@@ -465,7 +461,7 @@ AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()-b.getIntValue();
@@ -478,7 +474,7 @@ AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()*b.getIntValue();
@@ -491,7 +487,7 @@ AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()/b.getIntValue();
@@ -504,7 +500,7 @@ AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(boolOptions["arith-top"])
+  if(ConstIntLattice::arithTop)
     return AType::Top();
   else
     return a.getIntValue()%b.getIntValue();

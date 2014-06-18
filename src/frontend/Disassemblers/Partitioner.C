@@ -377,8 +377,9 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
 
     /* Run non-local analyses if necessary. These are never cached here in this block. */
 
-    /* If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
-     * successor. */
+    // If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
+    // successor.  In fact, since most calls may return, assume that this call also may return unless we already know there's a
+    // function there and we haven't yet proven that it may return.
     if (bb->cache.is_function_call) {
         rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
         rose_addr_t call_target_va = call_target(bb);
@@ -386,15 +387,27 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
             Instruction *target_insn = find_instruction(call_target_va, true);
             BasicBlock *target_bb = target_insn ? find_bb_starting(call_target_va, false) : NULL;
             if (!target_insn) {
-                /* We know the call target, but could not obtain an instruction there.  The target might be a dynamically
-                 * linked function that isn't mapped yet.  Assume it returns. */
+                // We know the call target, but could not obtain an instruction there.  The target might be a dynamically
+                // linked function that isn't mapped yet.  Assume it may return since most of them can.
                 retval.insert(fall_through_va);
-            } else if (target_bb && target_bb->function && target_bb->function->possible_may_return()) {
-                /* There's a function at the call target and that function might return. */
+            } else if (target_bb && target_bb->function) {
+                // There is a basic block at the call target and the block belongs to a function already. This call may
+                // return if the target function may return
+                if (target_bb->function->possible_may_return())
+                    retval.insert(fall_through_va);
+            } else if (target_bb) {
+                // There is a basic block at the call target but it hasn't been assigned to a function yet. Assume that it can
+                // return since most calls can.
+                retval.insert(fall_through_va);
+            } else {
+                // We were able to disassemble an instruction at the call target, but no basic block exists there yet. Assume
+                // that the call may return since most calls can.
+                assert(target_insn);
+                assert(!target_bb);                     
                 retval.insert(fall_through_va);
             }
         } else {
-            retval.insert(fall_through_va); /*true 99% of the time*/
+            retval.insert(fall_through_va);             // most calls may return, so assume this one can
         }
     }
 

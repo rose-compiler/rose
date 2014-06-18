@@ -62,29 +62,34 @@ string get_type_name(SgType* t)
 //#else
      switch (t->variant())
         {
-          case T_UNKNOWN:            return "UNKNOWN";
-          case T_CHAR:               return "char";
-          case T_SIGNED_CHAR:        return "signed char";
-          case T_UNSIGNED_CHAR:      return "unsigned char";
-          case T_SHORT:              return "short";
-          case T_SIGNED_SHORT:       return "signed short";
-          case T_UNSIGNED_SHORT:     return "unsigned short";
-          case T_INT:                return "int";
-          case T_SIGNED_INT:         return "signed int";
-          case T_UNSIGNED_INT:       return "unsigned int";
-          case T_LONG:               return "long";
-          case T_SIGNED_LONG:        return "signed long";
-          case T_UNSIGNED_LONG:      return "unsigned long";
-          case T_VOID:               return "void";
-          case T_GLOBAL_VOID:        return "global void";
-          case T_WCHAR:              return "wchar_t";
-          case T_FLOAT:              return "float";
-          case T_DOUBLE:             return "double";
-          case T_LONG_LONG:          return "long long";
-          case T_SIGNED_LONG_LONG:   return "signed long long";
-          case T_UNSIGNED_LONG_LONG: return "unsigned long long";
-          case T_LONG_DOUBLE:        return "long double";
-          case T_STRING:             return "char*";
+          case T_UNKNOWN:                 return "UNKNOWN";
+          case T_CHAR:                    return "char";
+          case T_SIGNED_CHAR:             return "signed char";
+          case T_UNSIGNED_CHAR:           return "unsigned char";
+          case T_SHORT:                   return "short";
+          case T_SIGNED_SHORT:            return "signed short";
+          case T_UNSIGNED_SHORT:          return "unsigned short";
+          case T_INT:                     return "int";
+          case T_SIGNED_INT:              return "signed int";
+          case T_UNSIGNED_INT:            return "unsigned int";
+          case T_LONG:                    return "long";
+          case T_SIGNED_LONG:             return "signed long";
+          case T_UNSIGNED_LONG:           return "unsigned long";
+          case T_VOID:                    return "void";
+          case T_GLOBAL_VOID:             return "global void";
+          case T_WCHAR:                   return "wchar_t";
+          case T_FLOAT:                   return "float";
+          case T_DOUBLE:                  return "double";
+          case T_LONG_LONG:               return "long long";
+          case T_SIGNED_LONG_LONG:        return "signed long long";
+          case T_UNSIGNED_LONG_LONG:      return "unsigned long long";
+
+       // DQ (3/24/2014): Added support for 128-bit integers.
+          case T_SIGNED_128BIT_INTEGER:   return "__int128";
+          case T_UNSIGNED_128BIT_INTEGER: return "unsigned __int128";
+
+          case T_LONG_DOUBLE:             return "long double";
+          case T_STRING:                  return "char*";
 
           case T_BOOL:
              {
@@ -195,7 +200,9 @@ string get_type_name(SgType* t)
              // SgClassDeclaration* cdecl;
                 SgClassDeclaration* decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
-             // printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+#if 0
+                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+#endif
                 if (nm.getString() != "")
                     return nm.getString();
                 else
@@ -506,6 +513,11 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_LONG_LONG:
                case T_UNSIGNED_LONG_LONG:
                case T_SIGNED_LONG_LONG:
+
+            // DQ (3/24/2014): Added support for 128-bit integers.
+               case T_SIGNED_128BIT_INTEGER:
+               case T_UNSIGNED_128BIT_INTEGER:
+
                case T_LONG_DOUBLE:
                case T_STRING:
                case T_BOOL:
@@ -625,6 +637,22 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #if 0
                     printf ("DONE: Calling unparseTemplateType(%p) \n",type);
 #endif
+                    break;
+                  }
+
+             // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
+             // SgJavaWildcardType
+               case T_JAVA_WILD:
+                  {
+                    printf ("ERROR: SgJavaWildcardType is appearing in call to unparseType from graph generation (allow this for now) \n");
+                    break;
+                  }
+
+            // DQ (4/27/2014): After some fixes to ROSE to permit the new shared memory DSL, we now get this 
+            // IR node appearing in test2007_168.f90 (I don't yet understand why).
+               case T_LABLE:
+                  {
+                    printf ("ERROR: Unparse_Type::unparseType(): SgTypeLabel is appearing in test2007_168.f90 (where it had not appeared before) (allow this for now) \n");
                     break;
                   }
 
@@ -2258,27 +2286,27 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
                if (block_size == 0) // block size empty
-               {
-                 curprint ("shared[] ") ;
-               }
+                  {
+                    curprint ("shared[] ") ;
+                  }
                else if (block_size == -1) // block size omitted
-               {
-                 curprint ("shared ") ;
-               }
+                  {
+                    curprint ("shared ") ;
+                  }
                else if (block_size == -2) // block size is *
-               {
-                 curprint ("shared[*] ") ;
-               }
+                  {
+                    curprint ("shared[*] ") ;
+                  }
                else
-               {
-                 ROSE_ASSERT(block_size > 0);
+                  {
+                    ROSE_ASSERT(block_size > 0);
 
-                 stringstream ss;
+                    stringstream ss;
 
-                 ss<<block_size;
+                    ss << block_size;
 
-                 curprint ("shared["+ss.str()+"] ") ;
-               }
+                    curprint ("shared[" + ss.str() + "] ");
+                  }
              }
 
        // Print the base type unless it has been printed up front
@@ -2692,8 +2720,26 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
                  // DQ (1/9/2014): These should have been setup to be the same.
                     ROSE_ASSERT(ninfo2.SkipClassDefinition() == ninfo2.SkipEnumDefinition());
-
-                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+#if 0
+                    printf ("In unparseArrayType(): ninfo2.supressArrayBound()  = %s \n",(ninfo2.supressArrayBound() == true) ? "true" : "false");
+#endif
+                 // DQ (2/2/2014): Allow the array bound to be subressed (e.g. in secondary declarations of array variable using "[]" syntax.
+                 // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                    if (ninfo2.supressArrayBound() == false)
+                       {
+                      // Unparse the array bound.
+                         unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In unparseArrayType(): Detected info_for_type.supressArrayBound() == true \n");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
                   }
                curprint("]");
                unparseType(array_type->get_base_type(), info); // second part

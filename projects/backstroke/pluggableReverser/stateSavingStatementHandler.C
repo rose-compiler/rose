@@ -38,6 +38,7 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(
 		if (!SageInterface::isAncestor(node, var_name[0]->get_declaration()) && filter->isVariableInteresting(var_name))
 			modified_vars.push_back(var_name);
 	}
+	cout<<"STATUS: number of modified variables: "<<modified_vars.size()<<endl;
 
 	// Sort those names in lexicographical order.
 	using namespace boost::lambda;
@@ -414,7 +415,6 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			return;
 		} //end if the var has class type
 	} //end if var is pointer or reference
-
 	//We will build a push expression and a pop expression.
 	SgExpression* valueToBePushedExpression = VariableRenaming::buildVariableReference(varName);
 	SgExpression* assignedVarExpression = SageInterface::copyExpression(valueToBePushedExpression);
@@ -445,6 +445,8 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 	//Now, restore the value in the reverse code
     SgExpression* assign = restoreOneVariable(varName, valueToBePushedExpression->get_type());
+	ROSE_ASSERT(valueToBePushedExpression);
+	ROSE_ASSERT(valueToBePushedExpression->get_type());
 	SgExpression* commitExpression = popVal_front(valueToBePushedExpression->get_type());
 
 	SageInterface::prependStatement(buildExprStatement(fwd_exp), forwardBody);
@@ -454,6 +456,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
+  cerr<<"DEBUG: generateReverseAST: "<<stmt->unparseToString()<<endl;
 	SgBasicBlock* forwardBody = buildBasicBlock();
     SgBasicBlock* reverseBody = buildBasicBlock();
     SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
@@ -462,14 +465,18 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 
 	// If the following child result is empty, we don't have to reverse the target statement.
 	vector<EvaluationResult> child_result = eval_result.getChildResults();
+        cerr<<"DEBUG: child-vector-length:"<<child_result.size()<<endl;
 	if (!child_result.empty())
 	{
+
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
+                cerr<<"DEBUG: children>0: reverseStmt: "<<child_reversal.reverseStatement->unparseToString()<<endl;
 		SageInterface::prependStatement(child_reversal.forwardStatement, forwardBody);
 		SageInterface::appendStatement(child_reversal.reverseStatement, reverseBody);
 	}
 	else
 	{
+                cerr<<"children==0: onlyForwardStmt: "<<stmt->unparseToString()<<endl;
 		//In the forward code, include a copy of the original statement
 		SageInterface::prependStatement(SageInterface::copyStatement(stmt), forwardBody);
 	}
@@ -506,7 +513,6 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 			saveOneVariable(varName, forwardBody, reverseBody, commitBody, classHierarchy);
 		}
 	}
-
 	return StatementReversal(forwardBody, reverseBody, commitBody);
 }
 

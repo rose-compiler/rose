@@ -39,6 +39,11 @@ LinearCongruentialGenerator::init()
         seed_ = value_ = rand();
     }
 }
+#else
+void
+LinearCongruentialGenerator::init()
+{
+}
 #endif
 
 uint64_t

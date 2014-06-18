@@ -14,6 +14,11 @@
 #else
 #endif
 
+// DQ (2/22/2014): Used below to control use of __int128 type.
+// However, this file can't be included here and must be included 
+// in the C source file calling this header file.
+// #include "rose_config.h"
+
 // extern const char** roseGlobalVariantNameList;
 //Rama: 12/14/06: Changed the class to namespace and removed 'static'ness of the erstwhile "member functions"
 //There is still a lot of clean up do be done: Like 
@@ -129,6 +134,15 @@ namespace StringUtility
        //  string numberToString ( unsigned int x );
        //  ROSE_UTIL_API std::string numberToString ( size_t x );
 
+#ifndef _MSC_VER
+// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
+// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
+        // DQ (2/22/2014): Required code for GNU versions greater than 4.6.
+           ROSE_UTIL_API std::string numberToString ( __int128 x );
+           ROSE_UTIL_API std::string numberToString ( unsigned __int128 x );
+   #endif
+#endif
 
        // DQ (8/10/2010): Changed to take parameter as const.
        //! Convert a pointer value to a string

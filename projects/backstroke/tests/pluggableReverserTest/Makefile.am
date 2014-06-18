@@ -13,32 +13,30 @@ pluggableReverser_LDADD = $(top_builddir)/projects/backstroke/libBackstroke.la \
 			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:detect_dangling_pointers 1
+
 EXTRA_DIST = 
 
 CLEANFILES = 
 
-#ALL_TESTCODES = test0.C
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/pluggableReverser -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/testcases
 
-#TEST_Objects = ${ALL_TESTCODES:.C=.o}
+TESTCODES_REQUIRED_TO_PASS = \
+test_Basic2.C \
+test_Basic3.C
 
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include
+# noted for future work
+TESTCODES_KNOWN_TO_FAIL = failingtests
+
+TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(TEST_Objects):pluggableReverser 
-	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/$(@:.o=.C) $(@:.o=.C)
-	./pluggableReverser $(TESTCODE_INCLUDES) -c $(@:.o=.C)    
+	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/testcases/$(@:.o=.C) $(@:.o=.C)
+	./pluggableReverser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(@:.o=.C)    
 
 check-local:
-#@$(MAKE) $(TEST_Objects)
+	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
 	@echo "* ROSE/projects/backstroke/tests/pluggableReverserTest: make check rule complete (terminated normally) *"
 	@echo "*********************************************************************************************************"
 
-test: FORCE
-	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/test0.C test0.C
-	./pluggableReverser $(TESTCODE_INCLUDES) -c test0.C
-
-test2: FORCE
-	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test_Basic.C test0.C
-	./pluggableReverser $(TESTCODE_INCLUDES) -c test0.C
-
-FORCE:

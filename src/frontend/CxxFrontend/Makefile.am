@@ -71,7 +71,7 @@ else
 # We use the edg-generate-sig script to choose the best version from a list of available versions.  If there's a version
 # number (SHA1) already stored in the bincompat-sig file in the top of the source tree then edg-generate-sig will use
 # that rather than doing a bunch of git commands.
-EDGBIN_SIGNATURE:=$(shell $(top_srcdir)/scripts/edg-generate-sig --find --progress)
+EDGBIN_SIGNATURE:=$(shell $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress)
 EDGBIN_BEST_NAME:=$(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 all-am: EDG/libroseEDG.la
@@ -97,11 +97,6 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 	touch EDG/libroseEDG.la
 
 installdir = ${datadir}
-# TOO1 (1/31/2014) This is required by installed translators. Otherwise, error 'invalid EDG_BASE directory' occurs at runtime.
-#                  We will need to figure out what the correct solution for distributions will be in the future.
-# Liao (1/16/2014) This will break make distcheck since the file from EDG submodule will not be available in a distribution package
-install_DATA = \
-	EDG/EDG_@ROSE_EDG_MAJOR_VERSION_NUMBER@.@ROSE_EDG_MINOR_VERSION_NUMBER@/lib/predefined_macros.txt
 
 endif
 ###############################################################################################################################

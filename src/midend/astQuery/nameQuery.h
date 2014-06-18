@@ -127,14 +127,14 @@ namespace NameQuery{
    * returns a list of all strings in the sub-tree of the variable 'subTree' found by the 
    * preimplemented function 'elementReturnType'.
    *******************************************************************************************/
-  NameQuerySynthesizedAttributeType
+  ROSE_DLL_API NameQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      TypeOfQueryTypeOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NameQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NameQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * > nodeList,
      TypeOfQueryTypeOneParameter elementReturnType);
 
@@ -146,14 +146,14 @@ namespace NameQuery{
    * returns a list of all stings in the sub-tree of the variable 'subTree' found by the 
    * function 'elementReturnType'.
    *******************************************************************************************/
-  NameQuerySynthesizedAttributeType
+  ROSE_DLL_API NameQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      roseFunctionPointerOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NameQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NameQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      roseFunctionPointerOneParameter querySolverFunction);
 
@@ -167,7 +167,7 @@ namespace NameQuery{
    * returns a list of all strings in the sub-tree of the variable 'subTree' found by the 
    * function 'querySolverFunction' given a second argument 'traversal'.
    *******************************************************************************************/
-  NameQuerySynthesizedAttributeType
+  ROSE_DLL_API NameQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      std::string traversal,
@@ -175,7 +175,7 @@ namespace NameQuery{
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NameQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NameQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      std::string targetNode,
      roseFunctionPointerTwoParameters querySolverFunction);
@@ -189,7 +189,7 @@ namespace NameQuery{
    * returns a list of all strings in the sub-tree of the variable 'subTree' found by the 
    * preimplemented function 'elementReturnType' given a second argument 'traversal'.
    *******************************************************************************************/
-  NameQuerySynthesizedAttributeType
+  ROSE_DLL_API NameQuerySynthesizedAttributeType
     querySubTree
     (SgNode * subTree,
      std::string traversal,
@@ -197,7 +197,7 @@ namespace NameQuery{
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-  NameQuerySynthesizedAttributeType queryNodeList
+  ROSE_DLL_API NameQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      std::string targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
 
