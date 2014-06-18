@@ -151,6 +151,11 @@ ROSE_DLL_API SgTypeSignedLong*  buildSignedLongType();
 ROSE_DLL_API SgTypeSignedLongLong* buildSignedLongLongType();
 ROSE_DLL_API SgTypeSignedShort* buildSignedShortType();
 
+#if 1
+ROSE_DLL_API SgTypeSigned128bitInteger* buildSigned128bitIntegerType();
+ROSE_DLL_API SgTypeUnsigned128bitInteger* buildUnsigned128bitIntegerType();
+#endif
+
 ROSE_DLL_API SgTypeUnsignedChar* buildUnsignedCharType();
 ROSE_DLL_API SgTypeUnsignedInt* buildUnsignedIntType();
 ROSE_DLL_API SgTypeUnsignedLong*    buildUnsignedLongType();
@@ -363,7 +368,7 @@ SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp(SgClassSymbol* sym);
 SgSuperExp* buildSuperExp_nfi(SgClassSymbol* sym);
 
-//! Build super pointer
+//! Build class pointer
 SgClassExp* buildClassExp(SgClassSymbol* sym);
 SgClassExp* buildClassExp_nfi(SgClassSymbol* sym);
 
@@ -978,6 +983,10 @@ SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement
 SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 void buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 
+// EDG 4.8 handled the do-while statment differently (more similar to a block scope than before in EDG 4.7 (i.e. with an end-of-construct statement).
+// So we need an builder function that can use the existing SgDoWhileStatement scope already on the stack.
+void buildDoWhileStatement_nfi(SgDoWhileStmt* result, SgStatement * body, SgStatement * condition);
+
 //! Build a UPC forall statement
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
@@ -1272,8 +1281,65 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 #endif
 
+//! Fixup any AST moved from one file two another (references to symbols, types, etc.).
+// ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy, std::map<SgNode*,SgNode*> & translationMap);
+// ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original, std::map<SgNode*,SgNode*> & translationMap);
+ROSE_DLL_API void fixupCopyOfAstFromSeperateFileInNewTargetAst (SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy);
+ROSE_DLL_API void fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original);
+ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope);
+ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
+ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
+
+//! Error checking the inserted snippet AST.
+ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
+
+//! Function to reset scopes in SgDeclarationStatement IR nodes.
+// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
+template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
+
+//-----------------------------------------------------------------------------
+//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
+ROSE_DLL_API SgVarRefExp *buildJavaArrayLengthVarRefExp();
+ROSE_DLL_API SgScopeStatement *buildScopeStatement(SgClassDefinition * = NULL);
+ROSE_DLL_API SgJavaTypeExpression *buildJavaTypeExpression(SgType *);
+ROSE_DLL_API SgJavaMarkerAnnotation *buildJavaMarkerAnnotation(SgType *);
+ROSE_DLL_API SgJavaMemberValuePair *buildJavaMemberValuePair(const SgName &, SgExpression *);
+ROSE_DLL_API SgJavaSingleMemberAnnotation *buildJavaSingleMemberAnnotation(SgType *, SgExpression *);
+ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *);
+ROSE_DLL_API SgJavaNormalAnnotation *buildJavaNormalAnnotation(SgType *, std::list<SgJavaMemberValuePair *>&);
+ROSE_DLL_API SgInitializedName *buildJavaFormalParameter(SgType *, const SgName &, bool is_var_args = false, bool is_final = false);
+
+ROSE_DLL_API SgJavaPackageStatement *buildJavaPackageStatement(std::string);
+ROSE_DLL_API SgJavaImportStatement *buildJavaImportStatement(std::string, bool);
+ROSE_DLL_API SgClassDeclaration *buildJavaDefiningClassDeclaration(SgScopeStatement *, std::string, SgClassDeclaration::class_types kind = SgClassDeclaration::e_class);
+ROSE_DLL_API SgSourceFile *buildJavaSourceFile(SgProject *, std::string, SgClassDefinition *, std::string);
+ROSE_DLL_API SgArrayType *getUniqueJavaArrayType(SgType *, int);
+ROSE_DLL_API SgJavaParameterizedType *getUniqueJavaParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
+ROSE_DLL_API SgJavaQualifiedType *getUniqueJavaQualifiedType(SgClassDeclaration *, SgNamedType *, SgNamedType *);
+ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardUnbound();
+ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardExtends(SgType *);
+ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardSuper(SgType *);
+
 //@}
 
 } // end of namespace
+
+namespace Rose {
+    namespace Frontend {
+        namespace Java {
+
+            extern SgClassDefinition *javaLangPackageDefinition;
+            extern SgClassType *ObjectClassType;
+            extern SgClassType *StringClassType;
+            extern SgClassType *ClassClassType;
+            extern SgVariableSymbol *lengthSymbol;
+
+        }// ::rose::frontend::java
+    }// ::rose::frontend
+}// ::rose
+//-----------------------------------------------------------------------------
+//#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//-----------------------------------------------------------------------------
 
 #endif //ROSE_SAGE_BUILDER_INTERFACE

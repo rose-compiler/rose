@@ -1,10 +1,12 @@
+#include "rosedll.h"
+
 class SgProject;
 class SgNode;
 
 /*
  * Perform the transformation on the given project.  See implementation notes for details
  */
-void shortCircuitingTransformation(SgProject *prj);
+ROSE_DLL_API void shortCircuitingTransformation(SgProject *prj);
 
 /*
  * Provides annotation information needed to place temporary deallocation in the correct place.

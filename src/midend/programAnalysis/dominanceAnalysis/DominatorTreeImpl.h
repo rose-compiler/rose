@@ -72,10 +72,10 @@ namespace DominatorTreesAndDominanceFrontiers
                 buckets.push_back(std::set < int >());
 
                 std::vector < VirtualCFG::FilteredCFGEdge < CFGFilterFunction > >outEdges =
-                    getDirectionModifiedOutEdges(current);
+                    this->getDirectionModifiedOutEdges(current);
                 for (unsigned int i = 0; i < outEdges.size(); i++)
                 {
-                    workList.push_back(target(outEdges[i]));
+                    workList.push_back(this->target(outEdges[i]));
                                                                                 parentWorkList.push_back(nodeCount);
                 }
                 nodeCount++;
@@ -219,10 +219,10 @@ namespace DominatorTreesAndDominanceFrontiers
             
                                                 // for all predecessors of the current node
             std::vector < VirtualCFG::FilteredCFGEdge < CFGFilterFunction > >inEdges =
-                getDirectionModifiedInEdges(current);
+                this->getDirectionModifiedInEdges(current);
             for (unsigned int j = 0; j < inEdges.size(); j++)
             {
-                int nodeID = nodeToIdMap[source(inEdges[j])];
+                int nodeID = nodeToIdMap[this->source(inEdges[j])];
 
                 // get the smallest possible semidom from that dfs-subtree
                 int possiblySmallestSemiDom = eval(nodeID);

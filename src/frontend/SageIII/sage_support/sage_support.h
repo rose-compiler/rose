@@ -61,15 +61,6 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// FMZ (5/19/2008):
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-   #include "FortranModuleInfo.h"
-   #include "FortranParserState.h"
-   #include "unparseFortran_modfile.h"
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#endif
-
 #ifdef HAVE_DLADDR
    #include <dlfcn.h>
 #endif
@@ -90,6 +81,50 @@
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "transformationSupport.h"
 #endif
+
+namespace Rose {
+namespace Frontend {
+  int Run(SgProject* project);
+  int RunSerial(SgProject* project);
+namespace Java {
+  int Run(SgProject* project);
+namespace Ecj {
+//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // TOO1 (2/13/2014): Declared in src/frontend/ECJ_ROSE_Connection/openJavaParser_main.C.
+  extern SgProject* Ecj_globalProjectPointer;
+
+  int Run(SgProject* project);
+  int RunBatchMode(SgProject* project);
+
+  /**
+   * @param argc out variable
+   * @param argv out variable
+   */
+  std::vector<std::string> GetCommandline(
+      std::vector<std::string> argv,
+      const SgProject* project,
+      int& o_argc,
+      char*** o_argv);
+
+  std::string GetClasspath(const SgProject* project);
+  std::string GetClasspath(const SgProject* project);
+  std::string GetSourcepath(const SgProject* project);
+  std::string GetSourceVersion(const SgProject* project);
+  std::string GetTargetVersion(const SgProject* project);
+  std::string GetVerbosity(const SgProject* project);
+}// ::Rose::Frontend::Java::Ecj
+}// ::Rose::Frontend::Java
+}// ::Rose::Frontend
+
+namespace Backend {
+namespace Java {
+  int CompileBatch(SgProject* project, std::vector<std::string> argv);
+  std::string CreateDestdir(SgProject* project);
+}// ::Rose::Backend::Java
+}// ::Rose::Backend
+
+
+}// ::Rose
 
 #endif // ROSE_SAGESUPPORT_H
 

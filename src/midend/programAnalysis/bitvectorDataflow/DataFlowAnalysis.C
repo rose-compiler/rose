@@ -23,7 +23,7 @@ operator()( AstInterface& fa, const AstNodePtr& head)
       Node* cur = *np;
       Data inOrig = cur->get_entry_data();
       Data in = inOrig;
-      for (NodeIterator pp = GetPredecessors(cur); !pp.ReachEnd(); ++pp) {
+      for (NodeIterator pp = this->GetPredecessors(cur); !pp.ReachEnd(); ++pp) {
         Node* pred = *pp;
         Data predout = pred->get_exit_data();
         in = meet_data(in, predout);

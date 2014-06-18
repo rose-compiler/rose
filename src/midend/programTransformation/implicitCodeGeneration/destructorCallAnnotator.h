@@ -1,3 +1,5 @@
+#include "rosedll.h"
+
 class SgProject;
 
-void destructorCallAnnotator(SgProject *prj);
+ROSE_DLL_API void destructorCallAnnotator(SgProject *prj);

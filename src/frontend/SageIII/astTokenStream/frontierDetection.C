@@ -19,7 +19,7 @@ using namespace std;
 // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
 // variable so that all regression tests can be processed to mix the unparsing of 
 // the token stream with unparsing from the AST.
-bool ROSE_tokenUnparsingTestingMode = false;
+ROSE_DLL_API bool ROSE_tokenUnparsingTestingMode = false;
 
 FrontierDetectionForTokenStreamMapping_InheritedAttribute::
 FrontierDetectionForTokenStreamMapping_InheritedAttribute()
@@ -644,9 +644,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                if (globalScope != NULL)
                   {
                  // If this is the global scope and no attributes have triggered generation from the AST, then unparse from the token stream and build an appropriate frontier node.
-
+#if 0
                     printf ("If this is the global scope and no attributes have triggered generation from the AST, then unparse from the token stream and build an appropriate frontier node. \n");
-
+#endif
                     returnAttribute.isFrontier = true;
 
                     string name    = "token_frontier";

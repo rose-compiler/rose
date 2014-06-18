@@ -8,7 +8,10 @@ pcg_SOURCES =   main.cpp
 pcg_LDADD = libpoet.la
 
 
-EXTRA_DIST = poet_ASTfactory.h poet_SymbolTable.h poet_AST.h poet_ASTinterface.h poet_ASTvisitor.h poet_error.h poet_config.h poet_ASTeval.h timing.h
+EXTRA_DIST = ASTeval.h     error_config.h     poet_AST.h           poet_ASTvisitor.h  poet_SymbolTable.h  timing.h \
+            ASTfactory.h  poet_ASTeval.h     poetAST.h            poet_config.h      poet_yacc.h         windows_includes.h \
+	    ASTvisitor.h  poet_ASTfactory.h  poet_ASTinterface.h  poet_error.h       SymbolTable.h
+             
 
 files = $(EXTRA_DIST) $(pcg_SOURCES)
 

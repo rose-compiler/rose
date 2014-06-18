@@ -5,6 +5,7 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+#include "transformationTracking.h"
 #include "wholeAST.h"
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -511,7 +512,9 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
                     returnString = "color=\"green\" decorate";
                   }
              }
-     
+
+#error "DEAD CODE!"
+
           SgInitializedName* initializedName = isSgInitializedName(from);
           if (initializedName != NULL)
              {
@@ -538,17 +541,21 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
      SgType* type = isSgType(to);
      if (type != NULL)
         {
+       // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
        // returnString = "color=\"gold1\" decorate labelfontcolor=gold4";
-          returnString = "color=\"gold1\" decorate ";
+       // returnString = "color=\"gold1\" decorate ";
+          returnString = "color=\"gold1\" ";
         }
 
   // DQ (3/5/2007): color the parent edges blue
      if (from->get_parent() == to && label == "parent")
         {
+       // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
        // Note that labelfontcolor does not appear to work
        // returnString = "color=\"blue\" decorate labelfontcolor=blue4";
        // returnString = "color=\"blue\" decorate labelfontcolor=\"blue4\"";
-          returnString = "color=\"blue\" decorate ";
+       // returnString = "color=\"blue\" decorate ";
+          returnString = "color=\"blue\" ";
         }
 
   // DQ (3/5/2007): color the scope edges green (that are explicitly stored in the AST)
@@ -558,8 +565,10 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
         {
           if (statement->hasExplicitScope() == true && statement->get_scope() == to && label == "scope")
              {
+            // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
             // returnString = "color=\"green\" decorate labelfontcolor=green4";
-               returnString = "color=\"green\" decorate ";
+            // returnString = "color=\"green\" decorate ";
+               returnString = "color=\"green\" ";
              }
         }
      
@@ -568,8 +577,10 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
         {
           if (initializedName->get_scope() == to && label == "scope")
              {
+            // DQ (2/27/2014): removed "decorate" keyword since it is an error for latest version of zgrviewer (or maybe dot).
             // returnString = "color=\"green\" decorate labelfontcolor=green4";
-               returnString = "color=\"green\" decorate ";
+            // returnString = "color=\"green\" decorate ";
+               returnString = "color=\"green\" ";
              }
         }
 
@@ -1499,6 +1510,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+          // Liao, 5/8/2014, display unique ID if set (non-zero)
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1601,12 +1616,19 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                ROSE_ASSERT(isSgCastExp(node) != NULL);
              }
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
 
+
      if (isSgType(node) != NULL)
         {
+          SgType* type = isSgType(node);
+          ROSE_ASSERT(type != NULL);
+
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
        // Make this statement different in the generated dot graph
@@ -1659,6 +1681,68 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
        // DQ (5/4/2013): Added to make the formatting of the type information better in the graph node.
           labelWithSourceCode += string("\\n   ");
 
+#if 1
+          SgModifierType* mod_type = isSgModifierType(node);
+          if (mod_type != NULL)
+             {
+               if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                  {
+                    long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+
+                    labelWithSourceCode += string("UPC: ");
+
+                    if (block_size == 0) // block size empty
+                       {
+                      // curprint ("shared[] ") ;
+                         labelWithSourceCode += string("shared[] ");
+                       }
+                    else if (block_size == -1) // block size omitted
+                       {
+                      // curprint ("shared ") ;
+                         labelWithSourceCode += string("shared ");
+                       }
+                    else if (block_size == -2) // block size is *
+                       {
+                      // curprint ("shared[*] ") ;
+                         labelWithSourceCode += string("shared[*] ");
+                       }
+                    else
+                       {
+                         ROSE_ASSERT(block_size > 0);
+                         stringstream ss;
+                         ss << block_size;
+
+                      // curprint ("shared["+ss.str()+"] ") ;
+                         labelWithSourceCode += string("shared["+ss.str()+"] ");
+                       }
+                  }
+
+               if (mod_type->get_typeModifier().get_constVolatileModifier().isConst() == true)
+                  {
+                    labelWithSourceCode += string("\\n const ");
+                  }
+
+               if (mod_type->get_typeModifier().get_elaboratedTypeModifier().get_modifier() != SgElaboratedTypeModifier::e_default)
+                  {
+                    stringstream ss;
+                    ss << mod_type->get_typeModifier().get_elaboratedTypeModifier().get_modifier();
+                    labelWithSourceCode += string("\\n type modifier enum value = "+ss.str()+" ");
+                  }
+             }
+
+       // DQ (4/22/2014): Added to make the formatting of the type information better in the graph node.
+          labelWithSourceCode += string("\\n   ");
+#endif
+
+#if 0
+       // DQ (4/24/2014): Added string name to unparsed IR node label  (this might not always be wanted).
+          string unparsedType = type->unparseToString();
+          labelWithSourceCode += unparsedType + string("\\n   ");
+#endif
+
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1866,6 +1950,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1879,6 +1966,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                                   string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
          // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
  //           break;
+ 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
             NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
             addNode(graphNode);
           }
@@ -1893,8 +1984,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           string labelWithSourceCode;
 
           labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
-          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
 #endif
@@ -2058,7 +2152,6 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           printf ("Warning: In wholeAST.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
 #endif
         }
-
 
 
 #if 0

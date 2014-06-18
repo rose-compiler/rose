@@ -5,6 +5,7 @@ add_subdirectory(stringSupport)
 add_subdirectory(commandlineProcessing)
 add_subdirectory(support)
 add_subdirectory(graphs)
+add_subdirectory(sawyer)
 
 #############################################################################
 #Generating "rose_paths.C"
@@ -56,5 +57,7 @@ execute_process(
 
 ########### install files ###############
 
-install(FILES  FormatRestorer.h setup.h processSupport.h rose_paths.h Stopwatch.h ParallelSort.h 
+install(FILES  FormatRestorer.h setup.h processSupport.h rose_paths.h
+               compilationFileDatabase.h Map.h rose_getline.h rose_strtoull.h
+               roseTraceLib.c Stopwatch.h ParallelSort.h GraphUtility.h
         DESTINATION ${INCLUDE_INSTALL_DIR})
