@@ -3,9 +3,10 @@
 
 namespace Sawyer {
 
-bool isInitialized;
+SAWYER_EXPORT bool isInitialized;
 
-bool initializeLibrary() {
+SAWYER_EXPORT bool
+initializeLibrary() {
     if (!isInitialized) {
         Message::initializeLibrary();
         isInitialized = true;
@@ -16,7 +17,8 @@ bool initializeLibrary() {
 // Presence/absense of strtoll and strtoull depends on the compiler rather than the target environment.   For instance, MinGW
 // has strtoll and strtoull and lacks _strtoi64 and _strtoui64 even though both MinGW and MVC are targeting a Windows
 // environment.
-boost::int64_t strtoll(const char *input, char **rest, int base) {
+SAWYER_EXPORT boost::int64_t
+strtoll(const char *input, char **rest, int base) {
 #ifdef _MSC_VER
     return _strtoi64(input, rest, base);
 #else
@@ -24,7 +26,8 @@ boost::int64_t strtoll(const char *input, char **rest, int base) {
 #endif
 }
 
-boost::uint64_t strtoull(const char *input, char **rest, int base) {
+SAWYER_EXPORT boost::uint64_t
+strtoull(const char *input, char **rest, int base) {
 #ifdef _MSC_VER
     return _strtoui64(input, rest, base);
 #else
@@ -32,7 +35,8 @@ boost::uint64_t strtoull(const char *input, char **rest, int base) {
 #endif
 }
 
-std::string readOneLine(FILE *stream) {
+SAWYER_EXPORT std::string
+readOneLine(FILE *stream) {
     std::string retval;
     while (1) {
         int c = fgetc(stream);
@@ -45,7 +49,8 @@ std::string readOneLine(FILE *stream) {
     return retval;
 }
 
-FILE* popen(const std::string &cmd, const char *how) {
+SAWYER_EXPORT FILE*
+popen(const std::string &cmd, const char *how) {
 #ifdef BOOST_WINDOWS
     return ::_popen(cmd.c_str(), how);
 #else
@@ -53,7 +58,8 @@ FILE* popen(const std::string &cmd, const char *how) {
 #endif
 }
 
-int pclose(FILE *f) {
+SAWYER_EXPORT int
+pclose(FILE *f) {
 #ifdef BOOST_WINDOWS
     return ::_pclose(f);
 #else

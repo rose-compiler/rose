@@ -201,13 +201,13 @@ SAWYER_EXPORT boost::uint64_t strtoull(const char*, char**, int);
 /** Reads one line of input from a file.
  *
  *  Returns one line, including any line termination.  Returns an empty string at the end of the file. */
-std::string readOneLine(FILE*);
+SAWYER_EXPORT std::string readOneLine(FILE*);
 
 /** Semi-portable replacement for popen. */
-FILE *popen(const std::string&, const char *how);
+SAWYER_EXPORT FILE *popen(const std::string&, const char *how);
 
 /** Semi-portable replacement for pclose. */
-int pclose(FILE*);
+SAWYER_EXPORT int pclose(FILE*);
 
 } // namespace
 

@@ -3,6 +3,7 @@
 #define Sawyer_GraphBoost_H
 
 #include <sawyer/Graph.h>
+#include <sawyer/Sawyer.h>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
 

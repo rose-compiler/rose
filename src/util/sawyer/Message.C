@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
+#include <sawyer/Sawyer.h>
 #include <stdexcept>
 #include <sstream>
 #include <sys/stat.h>
@@ -39,7 +40,8 @@ namespace Message {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string stringifyImportance(Importance importance) {
+SAWYER_EXPORT std::string
+stringifyImportance(Importance importance) {
     switch (importance) {
         case DEBUG: return "DEBUG";
         case TRACE: return "TRACE";
@@ -55,7 +57,8 @@ std::string stringifyImportance(Importance importance) {
     throw std::runtime_error("invalid message importance");
 }
 
-std::string stringifyColor(AnsiColor color) {
+SAWYER_EXPORT std::string
+stringifyColor(AnsiColor color) {
     switch (color) {
         case COLOR_BLACK:   return "black";
         case COLOR_RED:     return "red";
@@ -70,7 +73,8 @@ std::string stringifyColor(AnsiColor color) {
     throw std::runtime_error("invalid color");
 }
 
-std::string escape(const std::string &s) {
+SAWYER_EXPORT std::string
+escape(const std::string &s) {
     std::string retval;
     for (size_t i=0; i<s.size(); ++i) {
         switch (s[i]) {
@@ -98,7 +102,8 @@ std::string escape(const std::string &s) {
     return retval;
 }
 
-double now() {
+SAWYER_EXPORT double
+now() {
 #if defined(SAWYER_HAVE_BOOST_CHRONO)
     boost::chrono::system_clock::time_point curtime = boost::chrono::system_clock::now();
     boost::chrono::system_clock::time_point epoch;
@@ -123,13 +128,15 @@ double now() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ColorSet ColorSet::blackAndWhite() {
+SAWYER_EXPORT ColorSet
+ColorSet::blackAndWhite() {
     ColorSet cs;
     cs[WARN] = cs[ERROR] = cs[FATAL] = ColorSpec(COLOR_DEFAULT, COLOR_DEFAULT, true);
     return cs;
 }
 
-ColorSet ColorSet::fullColor() {
+SAWYER_EXPORT ColorSet
+ColorSet::fullColor() {
     ColorSet cs;
     cs[DEBUG] = ColorSpec(COLOR_DEFAULT, COLOR_DEFAULT, false);
     cs[TRACE] = ColorSpec(COLOR_CYAN,    COLOR_DEFAULT, false);
@@ -143,7 +150,8 @@ ColorSet ColorSet::fullColor() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MesgProps MesgProps::merge(const MesgProps &other) const {
+SAWYER_EXPORT MesgProps
+MesgProps::merge(const MesgProps &other) const {
     MesgProps retval = *this;
     if (!facilityName)
         retval.facilityName = other.facilityName;
@@ -164,7 +172,8 @@ MesgProps MesgProps::merge(const MesgProps &other) const {
     return retval;
 }
 
-void MesgProps::print(std::ostream &o) const {
+SAWYER_EXPORT void
+MesgProps::print(std::ostream &o) const {
     o <<"{facilityName=";
     if (facilityName) {
         o <<"\"" <<*facilityName <<"\"";
@@ -224,7 +233,8 @@ void MesgProps::print(std::ostream &o) const {
     o <<"}";
 }
 
-std::ostream& operator<<(std::ostream &o, const MesgProps &props) {
+SAWYER_EXPORT std::ostream&
+operator<<(std::ostream &o, const MesgProps &props) {
     props.print(o);
     return o;
 }
@@ -233,40 +243,47 @@ std::ostream& operator<<(std::ostream &o, const MesgProps &props) {
 
 unsigned Mesg::nextId_;
 
-void Mesg::insert(const std::string &s) {
+SAWYER_EXPORT void
+Mesg::insert(const std::string &s) {
     if (isComplete())
         throw std::runtime_error("cannot add text to a completed message");
     text_ += s;
 }
 
-void Mesg::insert(char ch) {
+SAWYER_EXPORT void
+Mesg::insert(char ch) {
     if (isComplete())
         throw std::runtime_error("cannot add text to a completed message");
     text_ += ch;
 }
 
-void Mesg::post(const BakedDestinations &baked) const {
+SAWYER_EXPORT void
+Mesg::post(const BakedDestinations &baked) const {
     for (BakedDestinations::const_iterator bi=baked.begin(); bi!=baked.end(); ++bi)
         bi->first->post(*this, bi->second);
 }
 
-bool Mesg::hasText() const {
+SAWYER_EXPORT bool
+Mesg::hasText() const {
     return boost::find_token(text_, boost::is_graph());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Destination::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
+SAWYER_EXPORT void
+Destination::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
     baked.push_back(std::make_pair(sharedFromThis(), mergeProperties(props)));
 }
 
-MesgProps Destination::mergeProperties(const MesgProps &props) {
+SAWYER_EXPORT MesgProps
+Destination::mergeProperties(const MesgProps &props) {
     return overrides_.merge(props.merge(dflts_));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Multiplexer::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
+SAWYER_EXPORT void
+Multiplexer::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
     MesgProps downwardProps = mergeProperties(props);
     for (Destinations::const_iterator di=destinations_.begin(); di!=destinations_.end(); ++di)
         (*di)->bakeDestinations(downwardProps, baked);
@@ -274,11 +291,13 @@ void Multiplexer::bakeDestinations(const MesgProps &props, BakedDestinations &ba
 
 // Multiplexors are never included in baked results (they control baking instead), so messages should never be posted directly
 // to multiplexers.
-void Multiplexer::post(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT void
+Multiplexer::post(const Mesg &mesg, const MesgProps &props) {
     assert(!"messages should not be posted to multiplexers");
 }
 
-MultiplexerPtr Multiplexer::addDestination(const DestinationPtr &destination) {
+SAWYER_EXPORT MultiplexerPtr
+Multiplexer::addDestination(const DestinationPtr &destination) {
     assert(destination!=NULL);
 
     // Make sure this doesn't introduce a cycle
@@ -297,28 +316,33 @@ MultiplexerPtr Multiplexer::addDestination(const DestinationPtr &destination) {
     return sharedFromThis().dynamicCast<Multiplexer>();
 }
 
-MultiplexerPtr Multiplexer::removeDestination(const DestinationPtr &destination) {
+SAWYER_EXPORT MultiplexerPtr
+Multiplexer::removeDestination(const DestinationPtr &destination) {
     destinations_.erase(std::remove(destinations_.begin(), destinations_.end(), destination), destinations_.end());
     return sharedFromThis().dynamicCast<Multiplexer>();
 }
 
-MultiplexerPtr Multiplexer::to(const DestinationPtr &destination) {
+SAWYER_EXPORT MultiplexerPtr
+Multiplexer::to(const DestinationPtr &destination) {
     addDestination(destination);
     return sharedFromThis().dynamicCast<Multiplexer>();
 }
 
-MultiplexerPtr Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2) {
+SAWYER_EXPORT MultiplexerPtr
+Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2) {
     to(d1);
     return to(d2);
 }
 
-MultiplexerPtr Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2,
+SAWYER_EXPORT MultiplexerPtr
+Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2,
                                const DestinationPtr &d3) {
     to(d1, d2);
     return to(d3);
 }
 
-MultiplexerPtr Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2,
+SAWYER_EXPORT MultiplexerPtr
+Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d2,
                                const DestinationPtr &d3, const DestinationPtr &d4) {
     to(d1, d2);
     return to(d3, d4);
@@ -326,7 +350,8 @@ MultiplexerPtr Multiplexer::to(const DestinationPtr &d1, const DestinationPtr &d
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Filter::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
+SAWYER_EXPORT void
+Filter::bakeDestinations(const MesgProps &props, BakedDestinations &baked) {
     if (shouldForward(props)) {
         Multiplexer::bakeDestinations(props, baked);
         forwarded(props);
@@ -335,7 +360,8 @@ void Filter::bakeDestinations(const MesgProps &props, BakedDestinations &baked) 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool SequenceFilter::shouldForward(const MesgProps&) {
+SAWYER_EXPORT bool
+SequenceFilter::shouldForward(const MesgProps&) {
     bool retval = nPosted_ >= nSkip_ &&
                   0 == (nPosted_ - nSkip_) % std::max(rate_, (size_t)1) &&
                   (0==limit_ || (nPosted_ - nSkip_) / std::max(rate_, (size_t)1) < limit_);
@@ -345,7 +371,8 @@ bool SequenceFilter::shouldForward(const MesgProps&) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TimeFilterPtr TimeFilter::initialDelay(double delta) {
+SAWYER_EXPORT TimeFilterPtr
+TimeFilter::initialDelay(double delta) {
     if (delta > 0.0) {
         initialDelay_ = delta;
         if (0==nPosted_)
@@ -354,29 +381,34 @@ TimeFilterPtr TimeFilter::initialDelay(double delta) {
     return sharedFromThis().dynamicCast<TimeFilter>();
 }
 
-bool TimeFilter::shouldForward(const MesgProps&) {
+SAWYER_EXPORT bool
+TimeFilter::shouldForward(const MesgProps&) {
     ++nPosted_;
     lastBakeTime_ = now();
     return lastBakeTime_ - prevMessageTime_ >= minInterval_;
 }
 
-void TimeFilter::forwarded(const MesgProps&) {
+SAWYER_EXPORT void
+TimeFilter::forwarded(const MesgProps&) {
     prevMessageTime_ = lastBakeTime_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ImportanceFilter::shouldForward(const MesgProps &props) {
+SAWYER_EXPORT bool
+ImportanceFilter::shouldForward(const MesgProps &props) {
     assert(!props.importance || (*props.importance >=0 && *props.importance < N_IMPORTANCE));
     return props.importance && enabled_[*props.importance];
 }
 
-ImportanceFilterPtr ImportanceFilter::enable(Importance imp) {
+SAWYER_EXPORT ImportanceFilterPtr
+ImportanceFilter::enable(Importance imp) {
     enabled(imp, true);
     return sharedFromThis().dynamicCast<ImportanceFilter>();
 }
 
-ImportanceFilterPtr ImportanceFilter::disable(Importance imp) {
+SAWYER_EXPORT ImportanceFilterPtr
+ImportanceFilter::disable(Importance imp) {
     enabled(imp, false);
     return sharedFromThis().dynamicCast<ImportanceFilter>();
 }
@@ -412,7 +444,8 @@ void Gang::removeInstance(int id) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Prefix::setProgramName() {
+SAWYER_EXPORT void
+Prefix::setProgramName() {
 #ifdef BOOST_WINDOWS
 # if 0 // [Robb Matzke 2014-06-13] temporarily disable for ROSE linking error (needs psapi.lib in Windows)
     if (HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId())) {
@@ -450,7 +483,8 @@ void Prefix::setProgramName() {
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
-void Prefix::setStartTime() {
+SAWYER_EXPORT void
+Prefix::setStartTime() {
 #if 0 /* FIXME[Robb Matzke 2014-01-19]: st_ctime_usec is not defined. */
     struct stat sb;
     if (-1 == stat("/proc/self", &sb))
@@ -461,12 +495,14 @@ void Prefix::setStartTime() {
 #endif
 }
 
-void Prefix::initFromSystem() {
+SAWYER_EXPORT void
+Prefix::initFromSystem() {
     setProgramName();
     setStartTime();
 }
 
-std::string Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
+SAWYER_EXPORT std::string
+Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
     std::ostringstream retval;
     std::string separator = "";
 
@@ -539,7 +575,8 @@ std::string Prefix::toString(const Mesg &mesg, const MesgProps &props) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void UnformattedSink::init() {
+SAWYER_EXPORT void
+UnformattedSink::init() {
     defaultProperties().importance = INFO;
     defaultProperties().isBuffered = false;
     defaultProperties().completionStr = "";
@@ -549,7 +586,8 @@ void UnformattedSink::init() {
     defaultProperties().useColor = true;
 }
 
-std::string UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT std::string
+UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
@@ -561,21 +599,24 @@ std::string UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgPro
     return retval;
 }
 
-std::string UnformattedSink::maybePrefix(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT std::string
+UnformattedSink::maybePrefix(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty() && !gang()->isValid())
         retval = prefix()->toString(mesg, props);
     return retval;
 }
 
-std::string UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT std::string
+UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty())
         retval = mesg.text().substr(gang()->ntext());
     return retval;
 }
 
-std::string UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT std::string
+UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (mesg.isCanceled()) {
@@ -593,7 +634,8 @@ std::string UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props
     return retval;
 }
 
-std::string UnformattedSink::render(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT std::string
+UnformattedSink::render(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     retval += maybeTerminatePrior(mesg, props);         // force side effects in a particular order
     retval += maybePrefix(mesg, props);
@@ -604,7 +646,8 @@ std::string UnformattedSink::render(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FdSink::init() {
+SAWYER_EXPORT void
+FdSink::init() {
 #ifdef BOOST_WINDOWS
     gangInternal(Gang::instanceForId(fd_));
     overrideProperties().useColor = true;
@@ -620,7 +663,8 @@ void FdSink::init() {
     defaultProperties().isBuffered = 2!=fd_;            // assume stderr is unbuffered and the rest are buffered
 }
 
-void FdSink::post(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT void
+FdSink::post(const Mesg &mesg, const MesgProps &props) {
 #ifdef BOOST_WINDOWS
     // FIXME[Robb Matzke 2014-06-10]: what is the most basic file level on Windows; one which doesn't need construction?
     std::cout <<render(mesg, props);
@@ -645,7 +689,8 @@ void FdSink::post(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FileSink::init() {
+SAWYER_EXPORT void
+FileSink::init() {
 #ifdef BOOST_WINDOWS
     gangInternal(Gang::instanceForTty());
     overrideProperties().useColor = true;
@@ -662,13 +707,15 @@ void FileSink::init() {
 #endif
 }
 
-void FileSink::post(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT void
+FileSink::post(const Mesg &mesg, const MesgProps &props) {
     fputs(render(mesg, props).c_str(), file_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void StreamSink::post(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT void
+StreamSink::post(const Mesg &mesg, const MesgProps &props) {
     stream_ <<render(mesg, props);
 }
 
@@ -680,11 +727,13 @@ SyslogSink::SyslogSink(const char *ident, int option, int facility) {
     openlog(ident, option, facility);
 }
 
-void SyslogSink::init() {
+SAWYER_EXPORT void
+SyslogSink::init() {
     overrideProperties().isBuffered = true;
 }
 
-void SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
+SAWYER_EXPORT void
+SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
     if (mesg.isComplete()) {
         int priority = LOG_ERR;
         switch (props.importance.getOrElse(ERROR)) {
@@ -704,14 +753,16 @@ void SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void StreamBuf::post() {
+SAWYER_EXPORT void
+StreamBuf::post() {
     if (enabled_ && message_.hasText() && (message_.isComplete() || anyUnbuffered_)) {
         assert(isBaked_);
         message_.post(baked_);
     }
 }
 
-void StreamBuf::completeMessage() {
+SAWYER_EXPORT void
+StreamBuf::completeMessage() {
     if (!message_.isEmpty()) {
         message_.complete();
         post();
@@ -722,7 +773,8 @@ void StreamBuf::completeMessage() {
     anyUnbuffered_ = false;
 }
 
-void StreamBuf::cancelMessage() {
+SAWYER_EXPORT void
+StreamBuf::cancelMessage() {
     if (!message_.isEmpty()) {
         message_.cancel();
         post();
@@ -733,7 +785,8 @@ void StreamBuf::cancelMessage() {
     anyUnbuffered_ = false;
 }
 
-void StreamBuf::bake() {
+SAWYER_EXPORT void
+StreamBuf::bake() {
     if (!isBaked_) {
         destination_->bakeDestinations(message_.properties(), baked_/*out*/);
         anyUnbuffered_ = false;
@@ -743,7 +796,8 @@ void StreamBuf::bake() {
     }
 }
 
-std::streamsize StreamBuf::xsputn(const char *s, std::streamsize &n) {
+SAWYER_EXPORT std::streamsize
+StreamBuf::xsputn(const char *s, std::streamsize &n) {
     static const char termination_symbol = '\n';
 
     for (std::streamsize i=0; i<n; ++i) {
@@ -763,7 +817,8 @@ std::streamsize StreamBuf::xsputn(const char *s, std::streamsize &n) {
     return n;
 }
 
-StreamBuf::int_type StreamBuf::overflow(int_type c) {
+SAWYER_EXPORT StreamBuf::int_type
+StreamBuf::overflow(int_type c) {
     if (c==traits_type::eof())
         return traits_type::eof();
     char_type ch = traits_type::to_char_type(c);
@@ -773,7 +828,8 @@ StreamBuf::int_type StreamBuf::overflow(int_type c) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Stream::enable(bool b) {
+SAWYER_EXPORT void
+Stream::enable(bool b) {
     if (!b) {
         streambuf_->enabled_ = false;
     } else if (!streambuf_->enabled_) {
@@ -782,7 +838,8 @@ void Stream::enable(bool b) {
     }
 }
 
-void Stream::completionString(const std::string &s, bool asDefault) {
+SAWYER_EXPORT void
+Stream::completionString(const std::string &s, bool asDefault) {
     streambuf_->message_.properties().completionStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.completionStr = s;
@@ -791,7 +848,8 @@ void Stream::completionString(const std::string &s, bool asDefault) {
     }
 }
 
-void Stream::interruptionString(const std::string &s, bool asDefault) {
+SAWYER_EXPORT void
+Stream::interruptionString(const std::string &s, bool asDefault) {
     streambuf_->message_.properties().interruptionStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.interruptionStr = s;
@@ -800,7 +858,8 @@ void Stream::interruptionString(const std::string &s, bool asDefault) {
     }
 }
 
-void Stream::cancelationString(const std::string &s, bool asDefault) {
+SAWYER_EXPORT void
+Stream::cancelationString(const std::string &s, bool asDefault) {
     streambuf_->message_.properties().cancelationStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.cancelationStr = s;
@@ -809,7 +868,8 @@ void Stream::cancelationString(const std::string &s, bool asDefault) {
     }
 }
 
-void Stream::facilityName(const std::string &s, bool asDefault) {
+SAWYER_EXPORT void
+Stream::facilityName(const std::string &s, bool asDefault) {
     streambuf_->message_.properties().facilityName = s;
     if (asDefault) {
         streambuf_->dflt_props_.facilityName = s;
@@ -820,6 +880,7 @@ void Stream::facilityName(const std::string &s, bool asDefault) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SAWYER_EXPORT
 SProxy::SProxy(std::ostream *o): stream_(NULL) {
     Stream *s = dynamic_cast<Stream*>(o);
     assert(s!=NULL);
@@ -828,6 +889,7 @@ SProxy::SProxy(std::ostream *o): stream_(NULL) {
     stream_ = s;
 }
 
+SAWYER_EXPORT
 SProxy::SProxy(std::ostream &o): stream_(NULL) {
     Stream *s = dynamic_cast<Stream*>(&o);
     assert(s!=NULL);
@@ -836,12 +898,14 @@ SProxy::SProxy(std::ostream &o): stream_(NULL) {
     stream_ = s;
 }
 
+SAWYER_EXPORT
 SProxy::SProxy(const SProxy &other): stream_(other.stream_) {
     if (stream_)
         ++stream_->nrefs_;
 }
 
-SProxy& SProxy::operator=(const SProxy &other) {
+SAWYER_EXPORT SProxy&
+SProxy::operator=(const SProxy &other) {
     if (this != &other) {
         if (other.stream_) {
             ++other.stream_->nrefs_;
@@ -854,7 +918,8 @@ SProxy& SProxy::operator=(const SProxy &other) {
     return *this;
 }
 
-void SProxy::reset() {
+SAWYER_EXPORT void
+SProxy::reset() {
     if (stream_!=NULL) {
         assert(stream_->nrefs_ > 0);
         if (0 == --stream_->nrefs_)
@@ -863,13 +928,15 @@ void SProxy::reset() {
     }
 }
 
+SAWYER_EXPORT
 SProxy::operator bool() const {
     return stream_!=NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Facility& Facility::initStreams(const DestinationPtr &destination) {
+SAWYER_EXPORT Facility&
+Facility::initStreams(const DestinationPtr &destination) {
     if (streams_.empty()) {
         for (int i=0; i<N_IMPORTANCE; ++i)
             streams_.push_back(new Stream(name_, (Importance)i, destination));
@@ -880,7 +947,8 @@ Facility& Facility::initStreams(const DestinationPtr &destination) {
     return *this;
 }
 
-Stream& Facility::get(Importance imp) {
+SAWYER_EXPORT Stream&
+Facility::get(Importance imp) {
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
     if ((size_t)imp>=streams_.size() || NULL==streams_[imp]) {
@@ -898,7 +966,8 @@ Stream& Facility::get(Importance imp) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Facilities& Facilities::impset(Importance imp, bool enabled) {
+SAWYER_EXPORT Facilities&
+Facilities::impset(Importance imp, bool enabled) {
     if (enabled) {
         impset_.insert(imp);
     } else {
@@ -908,7 +977,8 @@ Facilities& Facilities::impset(Importance imp, bool enabled) {
     return *this;
 }
 
-Facilities& Facilities::insert(Facility &facility, std::string name) {
+SAWYER_EXPORT Facilities&
+Facilities::insert(Facility &facility, std::string name) {
     if (name.empty())
         name = facility.name();
     if (name.empty())
@@ -936,7 +1006,8 @@ Facilities& Facilities::insert(Facility &facility, std::string name) {
     return *this;
 }
 
-Facilities& Facilities::insertAndAdjust(Facility &facility, std::string name) {
+SAWYER_EXPORT Facilities&
+Facilities::insertAndAdjust(Facility &facility, std::string name) {
     ImportanceSet imps = impset_;
     insert(facility, name); // throws
 
@@ -949,7 +1020,8 @@ Facilities& Facilities::insertAndAdjust(Facility &facility, std::string name) {
     return *this;
 }
 
-Facilities& Facilities::erase(Facility &facility) {
+SAWYER_EXPORT Facilities&
+Facilities::erase(Facility &facility) {
     FacilityMap map = facilities_;;
     BOOST_FOREACH (const FacilityMap::Node &node, map.nodes()) {
         if (node.value() == &facility)
@@ -958,7 +1030,8 @@ Facilities& Facilities::erase(Facility &facility) {
     return *this;
 }
 
-Facilities& Facilities::reenable() {
+SAWYER_EXPORT Facilities&
+Facilities::reenable() {
     BOOST_FOREACH (const FacilityMap::Node &node, facilities_.nodes()) {
         for (int i=0; i<N_IMPORTANCE; ++i) {
             Importance imp = (Importance)i;
@@ -968,7 +1041,8 @@ Facilities& Facilities::reenable() {
     return *this;
 }
 
-Facilities& Facilities::reenableFrom(const Facilities &other) {
+SAWYER_EXPORT Facilities&
+Facilities::reenableFrom(const Facilities &other) {
     BOOST_FOREACH (const FacilityMap::Node &src, other.facilities_.nodes()) {
         FacilityMap::NodeIterator fi_dst = facilities_.find(src.key());
         if (fi_dst!=facilities_.nodes().end()) {
@@ -981,7 +1055,8 @@ Facilities& Facilities::reenableFrom(const Facilities &other) {
     return *this;
 }
 
-Facilities& Facilities::enable(const std::string &switch_name, bool b) {
+SAWYER_EXPORT Facilities&
+Facilities::enable(const std::string &switch_name, bool b) {
     FacilityMap::NodeIterator found = facilities_.find(switch_name);
     if (found != facilities_.nodes().end()) {
         if (b) {
@@ -997,7 +1072,8 @@ Facilities& Facilities::enable(const std::string &switch_name, bool b) {
     return *this;
 }
     
-Facilities& Facilities::enable(Importance imp, bool b) {
+SAWYER_EXPORT Facilities&
+Facilities::enable(Importance imp, bool b) {
     if (b) {
         impset_.insert(imp);
     } else {
@@ -1008,7 +1084,8 @@ Facilities& Facilities::enable(Importance imp, bool b) {
     return *this;
 }
 
-Facilities& Facilities::enable(bool b) {
+SAWYER_EXPORT Facilities&
+Facilities::enable(bool b) {
     BOOST_FOREACH (Facility *facility, facilities_.values()) {
         if (b) {
             for (int i=0; i<N_IMPORTANCE; ++i) {
@@ -1023,7 +1100,8 @@ Facilities& Facilities::enable(bool b) {
     return *this;
 }
 
-std::string Facilities::ControlTerm::toString() const {
+std::string
+Facilities::ControlTerm::toString() const {
     std::string s = enable ? "enable" : "disable";
     if (lo==hi) {
         s += " level " + stringifyImportance(lo);
@@ -1037,7 +1115,8 @@ std::string Facilities::ControlTerm::toString() const {
 // Matches the Perl regular expression /^\s*([a-zA-Z]\w*((\.|::)[a-zA-Z]\w*)*/
 // On match, returns $1 and str points to the next character after the regular expression
 // When not matched, returns "" and str is unchanged
-std::string Facilities::parseFacilityName(const char *&str) {
+SAWYER_EXPORT std::string
+Facilities::parseFacilityName(const char *&str) {
     std::string name;
     const char *s = str;
     while (isspace(*s)) ++s;
@@ -1058,7 +1137,8 @@ std::string Facilities::parseFacilityName(const char *&str) {
 
 // Matches the Perl regular expression /^\s*([+!]?)/ and returns $1 on success with str pointing to the character after the
 // match.  Returns the empty string on failure with str not adjusted.
-std::string Facilities::parseEnablement(const char *&str) {
+SAWYER_EXPORT std::string
+Facilities::parseEnablement(const char *&str) {
     const char *s = str;
     while (isspace(*s)) ++s;
     if ('!'==*s || '+'==*s) {
@@ -1070,7 +1150,8 @@ std::string Facilities::parseEnablement(const char *&str) {
 
 // Matches the Perl regular expression /^\s*(<=?|>=?)/ and returns $1 on success with str pointing to the character after
 // the match. Returns the empty string on failure with str not adjusted.
-std::string Facilities::parseRelation(const char *&str) {
+SAWYER_EXPORT std::string
+Facilities::parseRelation(const char *&str) {
     const char *s = str;
     while (isspace(*s)) ++s;
     if (!strncmp(s, "<=", 2) || !strncmp(s, ">=", 2)) {
@@ -1086,7 +1167,8 @@ std::string Facilities::parseRelation(const char *&str) {
 // Matches the Perl regular expression /^\s*(all|none|debug|trace|where|info|warn|error|fatal)\b/
 // On match, returns $1 and str points to the next character after the match
 // On failure, returns "" and str is unchanged
-std::string Facilities::parseImportanceName(const char *&str) {
+SAWYER_EXPORT std::string
+Facilities::parseImportanceName(const char *&str) {
     static const char *words[] = {"all", "none", "debug", "trace", "where", "info", "warn", "error", "fatal",
                                   "ALL", "NONE", "DEBUG", "TRACE", "WHERE", "INFO", "WARN", "ERROR", "FATAL"};
     static const size_t nwords = sizeof(words)/sizeof(words[0]);
@@ -1103,7 +1185,8 @@ std::string Facilities::parseImportanceName(const char *&str) {
     return "";
 }
 
-Importance Facilities::importanceFromString(const std::string &str) {
+SAWYER_EXPORT Importance
+Facilities::importanceFromString(const std::string &str) {
     if (0==str.compare("debug") || 0==str.compare("DEBUG"))
         return DEBUG;
     if (0==str.compare("trace") || 0==str.compare("TRACE"))
@@ -1128,7 +1211,8 @@ Importance Facilities::importanceFromString(const std::string &str) {
 
 // parses a StreamControlList. On success, returns a non-empty vector and adjust 'str' to point to the next character after the
 // list.  On failure, throw a ControlError.
-std::list<Facilities::ControlTerm> Facilities::parseImportanceList(const std::string &facilityName, const char *&str) {
+SAWYER_EXPORT std::list<Facilities::ControlTerm>
+Facilities::parseImportanceList(const std::string &facilityName, const char *&str) {
     const char *s = str;
     std::list<ControlTerm> retval;
 
@@ -1202,7 +1286,8 @@ std::list<Facilities::ControlTerm> Facilities::parseImportanceList(const std::st
     return retval;
 }
 
-std::string Facilities::control(const std::string &ss) {
+SAWYER_EXPORT std::string
+Facilities::control(const std::string &ss) {
     const char *start = ss.c_str();
     const char *s = start;
     std::list<ControlTerm> terms;
@@ -1275,7 +1360,8 @@ std::string Facilities::control(const std::string &ss) {
     return ""; // no errors
 }
 
-void Facilities::print(std::ostream &log) const {
+SAWYER_EXPORT void
+Facilities::print(std::ostream &log) const {
     for (int i=0; i<N_IMPORTANCE; ++i) {
         Importance mi = (Importance)i;
         log <<(impset_.find(mi)==impset_.end() ? '-' : stringifyImportance(mi)[0]);
@@ -1301,13 +1387,14 @@ void Facilities::print(std::ostream &log) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DestinationPtr merr;
-Facility mlog("sawyer");
-Facilities mfacilities;
-bool isInitialized;
-SProxy assertionStream;
+SAWYER_EXPORT DestinationPtr merr;
+SAWYER_EXPORT Facility mlog("sawyer");
+SAWYER_EXPORT Facilities mfacilities;
+SAWYER_EXPORT bool isInitialized;
+SAWYER_EXPORT SProxy assertionStream;
 
-bool initializeLibrary() {
+SAWYER_EXPORT bool
+initializeLibrary() {
     if (!isInitialized) {
         isInitialized = true;
         merr = FdSink::instance(2);

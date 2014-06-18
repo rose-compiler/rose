@@ -2,6 +2,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sawyer/Sawyer.h>
 #include <stdexcept>
 #include <sstream>
 
@@ -15,14 +16,16 @@ std::ostream& operator<<(std::ostream &o, const Content &c) { c.print(o); return
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Consume N characters and return them.
-std::string Input::consume(size_t nchars) {
+SAWYER_EXPORT std::string
+Input::consume(size_t nchars) {
     size_t begin = at_;
     at_ = std::min(at_+nchars, content_.size());
     return content_.substr(begin, at_-begin);
 }
 
 // Skip over white space.  Returns the characters skipped.  Backslashed escaped white space doesn't count.
-std::string Input::consumeSpace() {
+SAWYER_EXPORT std::string
+Input::consumeSpace() {
     size_t begin = at_;
     while (isspace(cur())) inc();
     return content_.substr(begin, at_-begin);
@@ -30,7 +33,8 @@ std::string Input::consumeSpace() {
 
 // Consume input until one of the specified characters is reached, returning the consumed characters.  The matched character is
 // not consumed.  Only matches characters that are not escaped.
-std::string Input::consumeUntil(const char *stopSet) {
+SAWYER_EXPORT std::string
+Input::consumeUntil(const char *stopSet) {
     size_t begin = at_;
     size_t end = content_.find_first_of(stopSet, begin);
     if (end==std::string::npos) {
@@ -47,7 +51,8 @@ std::string Input::consumeUntil(const char *stopSet) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Check that argument declarations are consistent; throw an exception if not.
-void Tag::checkArgDecls() const {
+SAWYER_EXPORT void
+Tag::checkArgDecls() const {
     if (type() == VERBATIM)
         throw std::runtime_error("tag '"+name()+"' cannot be of type 'VERBATIM'; only arguments can be verbatim");
     for (size_t i=0; i<argDecls_.size(); ++i) {
@@ -59,7 +64,8 @@ void Tag::checkArgDecls() const {
 }
 
 // Default tag evaluator evaluates each argument and returns the same tag but with evaluated arguments.
-Content::Ptr Tag::eval(const TagArgs &args) {
+SAWYER_EXPORT Content::Ptr
+Tag::eval(const TagArgs &args) {
     TagArgs evaluatedArgs;
     BOOST_FOREACH (const Content::Ptr &arg, args)
         evaluatedArgs.push_back(arg->eval());
@@ -70,7 +76,8 @@ Content::Ptr Tag::eval(const TagArgs &args) {
 }
 
 // NullTag has no arguments, so just return self
-Content::Ptr NullTag::eval(const TagArgs &args) {
+SAWYER_EXPORT Content::Ptr
+NullTag::eval(const TagArgs &args) {
     TagInstance::Ptr ti = TagInstance::instance(self());
     Content::Ptr retval = Content::instance();
     retval->append(ti);
@@ -80,7 +87,8 @@ Content::Ptr NullTag::eval(const TagArgs &args) {
 // Comments are non-evaluating
 // FIXME[Robb Matzke 2014-02-23]: actually, they should evaluate to the textual representation of their argument so that
 // something like "@comment{@b{abc}}" is the string "@b{abc}" (not the bold tag with argument "abc").
-Content::Ptr CommentTag::eval(const TagArgs &args) {
+SAWYER_EXPORT Content::Ptr
+CommentTag::eval(const TagArgs &args) {
     TagInstance::Ptr t1 = TagInstance::instance(self(), args);
     Content::Ptr retval = Content::instance();
     retval->append(t1);
@@ -93,11 +101,13 @@ Content::Ptr CommentTag::eval(const TagArgs &args) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-Content::Ptr TagInstance::eval() const {
+SAWYER_EXPORT Content::Ptr
+TagInstance::eval() const {
     return tag_->eval(args_);
 }
 
-void TagInstance::emit(std::ostream &stream, const Formatter::Ptr &formatter) const {
+SAWYER_EXPORT void
+TagInstance::emit(std::ostream &stream, const Formatter::Ptr &formatter) const {
     if (NullTag::Ptr nullTag = tag_.dynamicCast<NullTag>()) {
         formatter->text(stream, nullTag->text());
     } else {
@@ -114,13 +124,15 @@ void TagInstance::emit(std::ostream &stream, const Formatter::Ptr &formatter) co
 //                                      Content sequence
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Content::append(const std::string &s) {
+SAWYER_EXPORT void
+Content::append(const std::string &s) {
     TagInstance::Ptr tag = TagInstance::instance(NullTag::instance(s));
     append(tag);
 }
 
 // Traverses this content and rewrites it so adjacent list items are grouped into a ListTag.
-Content::Ptr Content::fixupLists() const {
+SAWYER_EXPORT Content::Ptr
+Content::fixupLists() const {
     Content::Ptr retval = Content::instance();
     TagInstance::Ptr list;
     Tag::Ptr prevListItemTag;
@@ -173,27 +185,31 @@ Content::Ptr Content::fixupLists() const {
 }
 
 // Evaluate each of the tag instances and concatenate all the results together.
-Content::Ptr Content::eval() const {
+SAWYER_EXPORT Content::Ptr
+Content::eval() const {
     Content::Ptr retval = Content::instance();
     BOOST_FOREACH (const TagInstance::Ptr &elmt, elmts_)
         retval->append(elmt->eval());
     return retval;
 }
 
-void Content::emit(std::ostream &stream, const Formatter::Ptr &formatter) const {
+SAWYER_EXPORT void
+Content::emit(std::ostream &stream, const Formatter::Ptr &formatter) const {
     BOOST_FOREACH (const TagInstance::Ptr &elmt, elmts_)
         elmt->emit(stream, formatter);
 }
 
 // Text representation of content
-std::string Content::asText() const {
+SAWYER_EXPORT std::string
+Content::asText() const {
     std::ostringstream ss;
     Formatter::Ptr fmt = TextFormatter::instance();
     emit(ss, fmt);
     return ss.str();
 }
 
-void Content::print(std::ostream &o) const {
+SAWYER_EXPORT void
+Content::print(std::ostream &o) const {
     BOOST_FOREACH (const TagInstance::Ptr &elmt, elmts_) {
         if (NullTag::Ptr data = elmt->tag().dynamicCast<NullTag>()) {
             o <<"DATA{" <<data->text() <<"}";
@@ -212,13 +228,15 @@ void Content::print(std::ostream &o) const {
 //                                      Parser result
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ParserResult::emit(std::ostream &stream, const Formatter::Ptr &formatter) const {
+SAWYER_EXPORT void
+ParserResult::emit(std::ostream &stream, const Formatter::Ptr &formatter) const {
     formatter->beginDocument(stream);
     content_->emit(stream, formatter);
     formatter->endDocument(stream);
 }
 
-void ParserResult::print(std::ostream &stream) const {
+SAWYER_EXPORT void
+ParserResult::print(std::ostream &stream) const {
     content_->print(stream);
 }
 
@@ -228,7 +246,8 @@ void ParserResult::print(std::ostream &stream) const {
 
 
 
-void Parser::init() {
+SAWYER_EXPORT void
+Parser::init() {
     // Dividing tags
     registerTag(ProseTag::instance(),           "prose");
     registerTag(NonProseTag::instance(),        "nonprose");
@@ -247,7 +266,8 @@ void Parser::init() {
     registerTag(VerbatimTag::instance(),        "c");
 }
 
-Parser& Parser::registerTag(const Tag::Ptr &tag, const std::string &name) {
+SAWYER_EXPORT Parser&
+Parser::registerTag(const Tag::Ptr &tag, const std::string &name) {
     symtab_.insert(name.empty() ? tag->name() : name, tag);
     return *this;
 }
@@ -255,7 +275,8 @@ Parser& Parser::registerTag(const Tag::Ptr &tag, const std::string &name) {
     
 
 // FIXME[Robb Matzke 2014-02-22]: make this much more informative
-std::string Parser::location(const Input &input) {
+SAWYER_EXPORT std::string
+Parser::location(const Input &input) {
     if (input.atEnd())
         return "end of input";
     std::ostringstream ss;
@@ -263,11 +284,13 @@ std::string Parser::location(const Input &input) {
     return ss.str();
 }
 
-void Parser::warn(const std::string &mesg) {
+SAWYER_EXPORT void
+Parser::warn(const std::string &mesg) {
     throw std::runtime_error(mesg);
 }
 
-char Parser::closingFor(char opening) {
+SAWYER_EXPORT char
+Parser::closingFor(char opening) {
     switch (opening) {
         case '{': return '}';
         case '(': return ')';
@@ -284,7 +307,8 @@ char Parser::closingFor(char opening) {
 }
 
 // Parse a symbol: a letter followed by one or more letters, digits, and underscores.
-std::string Parser::parseSymbol(Input &input) {
+SAWYER_EXPORT std::string
+Parser::parseSymbol(Input &input) {
     std::string name;
     if (input.atEnd() || !isalpha(*input))
         return name;
@@ -295,7 +319,8 @@ std::string Parser::parseSymbol(Input &input) {
 }
 
 // Parse a word, such as appears for a single-word argument.
-std::string Parser::parseWord(Input &input) {
+SAWYER_EXPORT std::string
+Parser::parseWord(Input &input) {
     std::string word;
     while (!input.atEnd() && (isalnum(*input) || '-'==*input))
         word += input.next();
@@ -305,7 +330,8 @@ std::string Parser::parseWord(Input &input) {
 // Parse input as a string, counting left and right delimiters and stopping just before we see a right delimiter that
 // is not balanced with an earlier parsed left delimiter.  For instance, if the left delimiter is "(" and the right delimiter
 // is ")" then given the input "one (two) three) four" the parser will stop prior to consuming the second right paren.
-std::string Parser::parseNested(Input &input, char left, char right) {
+SAWYER_EXPORT std::string
+Parser::parseNested(Input &input, char left, char right) {
     std::string retval;
     int depth = 0;
     for (/*void*/; !input.atEnd(); ++input) {
@@ -327,7 +353,8 @@ std::string Parser::parseNested(Input &input, char left, char right) {
 
 // Parse a tag argument of the form "{TEXT}".  The delimiters can be other than curly braces, but must be balanced or escaped
 // within TEXT.  The delimiters are not included in the returned delimiters.  Returns null if a tag could not be parsed.
-Content::Ptr Parser::parseTagArgument(Input &input, DivSpan allowed) {
+SAWYER_EXPORT Content::Ptr
+Parser::parseTagArgument(Input &input, DivSpan allowed) {
     ExcursionGuard guard(input);
     if (input.atEnd())
         return ContentPtr();
@@ -358,7 +385,8 @@ Content::Ptr Parser::parseTagArgument(Input &input, DivSpan allowed) {
 // Parse a tag instance of the form @TAGNAME{ARG1}{ARG2}... with as many arguments as declared for the tag.  The argument
 // delimiters need not be curly braces.  Returns null without adjusting the input cursor if TAGNAME is not valid or if its
 // arguments cannot be parsed.
-TagInstance::Ptr Parser::parseTag(Input &input, DivSpan allowed) {
+SAWYER_EXPORT TagInstance::Ptr
+Parser::parseTag(Input &input, DivSpan allowed) {
     ExcursionGuard guard(input);
     if ('@'!=input.next())
         return TagInstance::Ptr();
@@ -386,7 +414,8 @@ TagInstance::Ptr Parser::parseTag(Input &input, DivSpan allowed) {
 // Parse text, including top-level tag instances.  Text that is not enclosed in a tag is returned as if it were inside a null
 // tag.   For instance, if the input is "1 @c{2} 3" will parse as if it were "@{1 }@c{2}@{ 3}".  If @p allowed is DIVIDING then
 // any type of tags are allowed; if it is SPANNING then only spanning tags are allowed.
-Content::Ptr Parser::parseContent(Input &input, ParseTerminator &stopAt, DivSpan allowed) {
+SAWYER_EXPORT Content::Ptr
+Parser::parseContent(Input &input, ParseTerminator &stopAt, DivSpan allowed) {
     Content::Ptr retval = Content::instance();
     std::string str;
     TagInstance::Ptr tag;
@@ -411,7 +440,8 @@ Content::Ptr Parser::parseContent(Input &input, ParseTerminator &stopAt, DivSpan
     return retval;
 }
 
-ParserResult Parser::parse(const std::string &str) {
+SAWYER_EXPORT ParserResult
+Parser::parse(const std::string &str) {
     Input input(str);
     ParseTerminator stopAtEof;
     Content::Ptr content = parseContent(input, stopAtEof, DIVIDING);

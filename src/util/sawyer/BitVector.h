@@ -5,6 +5,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/BitVectorSupport.h>
 #include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 #include <vector>
 
 namespace Sawyer {
