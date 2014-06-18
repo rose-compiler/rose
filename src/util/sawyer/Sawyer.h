@@ -166,7 +166,8 @@
  * @endcode */
 
 #ifdef BOOST_WINDOWS
-#   ifdef SAWYER_DO_EXPORTS // defined in CMake when compiling libsawyer
+// FIXME[Robb Matzke 2014-06-18]: get rid of ROSE_UTIL_EXPORTS; cmake can only have one DEFINE_SYMBOL
+#   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_UTIL_EXPORTS) // defined in CMake when compiling libsawyer
 #       define SAWYER_EXPORT __declspec(dllexport)
 #   else
 #       define SAWYER_EXPORT __declspec(dllimport)
