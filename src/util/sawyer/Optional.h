@@ -167,6 +167,36 @@ public:
         return isEmpty_ ? Value() : **this;
     }
 
+    /** Conditionally save a value.
+     *
+     *  If this optional object has a value then its value is written to @p out and this method returns true; otherwise the
+     *  value of @p out is not changed and this method returns false.  This method is convenient to use in conditional
+     *  statements like this:
+     *
+     * @code
+     *  unsigned key = ...;
+     *  std::string value;
+     *  IntervalMap<Interval<unsigned>, std::string> imap = ...;
+     *  while (imap.getOptional(key).apply(value)) ...
+     * @endcode
+     *
+     *  where the alternative would be
+     *
+     * @code
+     *  unsigned key = ...;
+     *  IntervalMap<Interval<unsigned>, std::string> imap = ...;
+     *  while (Optional<std::string> opt = imap.getOptional(key)) {
+     *      std::string value = *opt;
+     * @endcode */
+    bool apply(Value &out) const {
+        if (isEmpty_) {
+            return false;
+        } else {
+            out = **this;
+            return true;
+        }
+    }
+    
     // The following trickery is to allow things like "if (x)" to work but without having an implicit
     // conversion to bool which would cause no end of other problems.
 private:

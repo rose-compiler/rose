@@ -273,7 +273,11 @@ SAWYER_EXPORT extern bool isInitialized;
 
 // Any header that #defines words that are this common is just plain stupid!
 #if defined(DEBUG) || defined(TRACE) || defined(WHERE) || defined(INFO) || defined(WARN) || defined(ERROR) || defined(FATAL)
-# warning "Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL"
+# ifdef _MSC_VER
+#  pragma message("Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL")
+# else
+#  warning "Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL"
+# endif
 # undef DEBUG
 # undef TRACE
 # undef WHERE
