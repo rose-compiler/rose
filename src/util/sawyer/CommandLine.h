@@ -1476,8 +1476,8 @@ protected:
  *  user has a function like this:
  *
  * @code
- *  void showRawManPage(const Parser *parser) {
- *      std::cout <<parser->manpage();
+ *  void showRawManPage(const ParserResult *cmdline) {
+ *      std::cout <<cmdline->parser()->manpage();
  *      exit(0);
  *  }
  * @endcode
