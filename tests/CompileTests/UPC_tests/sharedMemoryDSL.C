@@ -88,6 +88,16 @@ Traversal::get_nodeListWithTypesToModify()
    }
 
 
+Traversal::Traversal()
+   {
+  // If we transformat any expression then we will save the required offset variable declaration 
+  // and add it to the global scope last (to avoid changing the SgGlobal IR node during a traversal).
+  // DQ (6/18/2014): This fixes a bug which was causing the first global scope statement to be transformed 
+  // to be traversed a second time where that statement was not the last statement.  It was a strange bug.
+     supportingOffset = NULL;
+   }
+
+
 #define DEBUG_IS_SHARED_TYPE 0
 
 bool
@@ -253,7 +263,13 @@ Traversal::transformExpression(SgExpression* exp)
 #if 0
           printf ("In transformExpression(): Put the variableDeclaration = %p into the global scope \n",variableDeclaration);
 #endif
-          SageInterface::prependStatement(variableDeclaration,globalScope);
+
+       // DQ (6/18/2014): This fixes a bug which was causing the first global scope statement to be transformed 
+       // to be traversed a second time where that statement was not the last statement.  It was a strange bug.
+       // DQ (6/18/2014): We have to add this offset variable as a last step 
+       // since we are within a traversal of the global scope at this point.
+       // SageInterface::prependStatement(variableDeclaration,globalScope);
+          supportingOffset = variableDeclaration;
 
        // Now the symbol should exist.
           variableSymbol = globalScope->lookup_variable_symbol(offset_variable_name);
@@ -371,7 +387,7 @@ Traversal::evaluateInheritedAttribute (
           bool skipTransformation = false;
           SgBinaryOp* parentBinaryOp = isSgBinaryOp(expression->get_parent());
           SgArrowExp* parentArrowExp = isSgArrowExp(expression->get_parent());
-          SgDotExp*   parentDotExp = isSgDotExp(expression->get_parent());
+          SgDotExp*   parentDotExp   = isSgDotExp(expression->get_parent());
        // if (parentArrowExp != NULL)
           if (parentArrowExp != NULL || parentDotExp != NULL)
              {
@@ -380,17 +396,41 @@ Traversal::evaluateInheritedAttribute (
                bool expressionIsRhs = (expression == parentBinaryOp->get_rhs_operand());
                ROSE_ASSERT(expressionIsLhs == true || expressionIsRhs == true);
 #if 0
-               printf ("In evaluateInheritedAttribute(): SgArrowExp: expressionIsLhs = %s expressionIsRhs = %s \n",expressionIsLhs ? "true" : "false",expressionIsRhs ? "true" : "false");
+               printf ("In evaluateInheritedAttribute(): SgArrowExp or SgDotExp: expressionIsLhs = %s expressionIsRhs = %s \n",expressionIsLhs ? "true" : "false",expressionIsRhs ? "true" : "false");
 #endif
                skipTransformation = (expressionIsRhs == true);
              }
 #if 0
-          printf ("In evaluateInheritedAttribute(): SgArrowExp: skipTransformation = %s \n",skipTransformation ? "true" : "false");
+          printf ("In evaluateInheritedAttribute(): SgArrowExp or SgDotExp: skipTransformation = %s \n",skipTransformation ? "true" : "false");
 #endif
        // Reset the isSharedTypeExpression variable.
           inheritedAttribute.set_SharedTypeExpression(false);
 
           SgType* type = expression->get_type();
+#if 0
+          printf ("In evaluateInheritedAttribute(): expression->get_type(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
+          SgTypeDefault* defaultType = isSgTypeDefault(type);
+          if (defaultType != NULL)
+             {
+#if 0
+               printf ("Found a SgTypeDefault (likely a SgExprListExp) \n");
+#endif
+               if (isSgExprListExp(expression) == NULL)
+                  {
+                    printf ("Warning: Expression returning SgTypeDefault, but not a SgExprListExp: expression = %p = %s \n",expression,expression->class_name().c_str());
+                 // ROSE_ASSERT(false);
+                  }
+#if 0
+               printf ("In evaluateInheritedAttribute(): Skip possible transformation of SgExprListExp: expression = %p = %s \n",expression,expression->class_name().c_str());
+#endif
+               skipTransformation = true;
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
           if (isSharedType(type) == true && skipTransformation == false)
              {
             // This might be a better way to identify expressions that should be transformed.
@@ -416,7 +456,6 @@ Traversal::evaluateInheritedAttribute (
                        }
                       else
                        {
-#if 1
                       // DQ (6/8/2014): We have to reach one level deeper to search for the pointer type below a chain of length two (of SgModifierType IR nodes).
                          SgModifierType* nested_modifierType = isSgModifierType(base_type);
                          if (nested_modifierType != NULL)
@@ -438,11 +477,7 @@ Traversal::evaluateInheritedAttribute (
                                  {
                                    modifierType = NULL;
                                  }
-                           }
-#else
-#error "DEAD CODE!"
-                         modifierType = NULL;
-#endif
+                            }
                        }
                   }
 
@@ -485,6 +520,20 @@ Traversal::evaluateSynthesizedAttribute (
           printf ("SgFunctionCallExp: type = %p = %s \n",type,type->class_name().c_str());
         }
 #endif
+
+  // DQ (6/18/2014): This fixes a bug which was causing the first global scope statement to be transformed 
+  // to be traversed a second time where that statement was not the last statement.  It was a strange bug.
+     SgGlobal* globalScope = isSgGlobal(astNode);
+     if (globalScope != NULL)
+        {
+          if (supportingOffset != NULL)
+             {
+#if 0
+               printf ("Add required offset variable declaration to the global scope \n");
+#endif
+               SageInterface::prependStatement(supportingOffset,globalScope);
+             }
+        }
 
   // DQ (5/24/2014): This is the newer version of the logic to control where expresion are transformed.
   // This version makes better use of the inherited attribute and uses it to set the synthesized 
@@ -556,13 +605,14 @@ Traversal::evaluateSynthesizedAttribute (
 #if 0
           printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
 #endif
+
+#if 0
           if (skip_transformation_of_children == true)
              {
-#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
-#endif
              }
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -575,39 +625,72 @@ Traversal::evaluateSynthesizedAttribute (
      if (castExp != NULL)
         {
 #if 0
-          printf ("Found SgCastExp: Supressed transformation on children of SgCastExp \n");
+          printf ("Found SgCastExp: Suppressed transformation on children of SgCastExp: castExp = %p castExp->get_type() = %p = %s = %s \n",
+               castExp,castExp->get_type(),castExp->get_type()->class_name().c_str(),castExp->get_type()->unparseToString().c_str());
 #endif
+#if 0
           skip_transformation_of_children = true;
+#else
+          SgType* cast_to_type   = castExp->get_type();
+          ROSE_ASSERT(cast_to_type != NULL);
+          SgType* cast_from_type = castExp->get_operand()->get_type();
+          ROSE_ASSERT(cast_from_type != NULL);
+
+          bool cast_to_type_is_shared   = isSharedType(cast_to_type);
+          bool cast_from_type_is_shared = isSharedType(cast_from_type);
+#if 0
+          printf ("cast_to_type_is_shared   = %s \n",cast_to_type_is_shared   ? "true" : "false");
+          printf ("cast_from_type_is_shared = %s \n",cast_from_type_is_shared ? "true" : "false");
+#endif
+          if ( (cast_from_type_is_shared == true) && (cast_to_type_is_shared == false) )
+             {
+#if 0
+               printf ("types do NOT match in sharing \n");
+#endif
+             }
+            else
+             {
+#if 0
+               printf ("types DO match in sharing \n");
+#endif
+               skip_transformation_of_children = true;
+             }
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
         }
 
+#if 0
   // DQ (6/14/2014): We need to suppress the transformations on the operands of a SgCastExp, 
   // so that it will be done on the SgCastExp directly instead (see test2014_51.c).
      SgExprListExp* exprListExp = isSgExprListExp(astNode);
      if (exprListExp != NULL)
         {
 #if 0
-          printf ("Found SgExprListExp: Supressed transformation on children of SgExprListExp \n");
+          printf ("Found SgExprListExp: Suppressed transformation on children of SgExprListExp \n");
 #endif
+#if 0
           skip_transformation_of_children = true;
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
         }
-
-#if 0
-          printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
 #endif
 
+#if 0
+     printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
+
+     size_t child_index = 0;
 
   // DQ (5/25/2014): Iterate over the child attributes and determin if any transformations are required to the AST.
      for (SynthesizedAttributesList::iterator i = childAttributes.begin(); i != childAttributes.end(); i++)
@@ -636,8 +719,72 @@ Traversal::evaluateSynthesizedAttribute (
 #if 0
                     printf ("skip_transformation_of_children = %s \n",skip_transformation_of_children ? "true" : "false");
 #endif
+
+                 // DQ (6/18/2014): We have to match the expression with the function parameter type.
+                    SgExprListExp* exprListExp = isSgExprListExp(astNode);
+                    if (exprListExp != NULL)
+                       {
+                         SgExpressionPtrList & exprList   = exprListExp->get_expressions();
+                         SgExpression* indexed_expression = exprList[child_index];
+                         ROSE_ASSERT(indexed_expression != NULL);
+
+                      // Check if the expression and the type in the SgExprListExp match.
+                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exprListExp->get_parent());
+                         if (functionCallExp != NULL)
+                            {
+#if 0
+                              printf ("SgExprListExp = %p IS associated with a SgFunctionCallExp = %p \n",functionCallExp);
+#endif
+                              SgExpression* tmp_exp = functionCallExp->get_function();
+                              ROSE_ASSERT(tmp_exp != NULL);
+                              SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(tmp_exp);
+                              ROSE_ASSERT(functionRefExp != NULL);
+                              SgType* tmp_type = functionRefExp->get_type();
+                              SgFunctionType* functionType = isSgFunctionType(tmp_type);
+                              ROSE_ASSERT(functionType != NULL);
+
+                              SgTypePtrList & typeList = functionType->get_arguments();
+
+                              SgType* indexed_expression_type = indexed_expression->get_type();
+                              ROSE_ASSERT(indexed_expression_type != NULL);
+
+                              SgType* indexed_function_parameter_type = typeList[child_index];
+                              ROSE_ASSERT(indexed_function_parameter_type != NULL);
+
+                              bool indexed_function_parameter_type_is_shared = isSharedType(indexed_function_parameter_type);
+                              bool indexed_expression_type_is_shared         = isSharedType(indexed_expression_type);
+#if 0
+                              printf ("indexed_function_parameter_type_is_shared = %s \n",indexed_function_parameter_type_is_shared ? "true" : "false");
+                              printf ("indexed_expression_type_is_shared         = %s \n",indexed_expression_type_is_shared ? "true" : "false");
+#endif
+                              if ( (indexed_expression_type_is_shared == true) && (indexed_function_parameter_type_is_shared == false) )
+                                 {
+#if 0
+                                   printf ("types do NOT match in sharing \n");
+#endif
+                                   skip_transformation_of_children = false;
+                                 }
+                                else
+                                 {
+#if 0
+                                   printf ("types DO match in sharing \n");
+#endif
+                                   skip_transformation_of_children = true;
+                                 }
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                           else
+                            {
+                              printf ("SgExprListExp = %p is NOT associated with a SgFunctionCallExp \n");
+                            }
+                       }
+
                     if (skip_transformation_of_children == false)
                        {
+                      // DQ (6/17/2014): This function is causing the traversal to be called twice.
                          SgExpression* newSubtree = transformExpression(expression_to_transform);
                          ROSE_ASSERT(newSubtree != NULL);
 #if 0
@@ -684,6 +831,8 @@ Traversal::evaluateSynthesizedAttribute (
                 ROSE_ASSERT(false);
 #endif
              }
+
+          child_index++;
         }
 
      return localResult;
@@ -804,9 +953,17 @@ int main( int argc, char * argv[] )
   // Define the traversal
      Traversal sharedMemoryDSL_Traversal;
 
+#if 0
+     printf ("Call the traversal starting at the project (root) node of the AST \n");
+#endif
+
   // Call the traversal starting at the project (root) node of the AST
   // SynthesizedAttribute result = sharedMemoryDSL_Traversal.traverseWithinFile(project,inheritedAttribute);
      SynthesizedAttribute result = sharedMemoryDSL_Traversal.traverse(project,inheritedAttribute);
+
+#if 0
+     printf ("DONE: Call the traversal starting at the project (root) node of the AST \n");
+#endif
 
   // This is the compiler pass that will do the transformations on declarations of shared 
   // pointers and there associated expressions.

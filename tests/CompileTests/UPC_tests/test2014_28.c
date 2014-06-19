@@ -12,6 +12,11 @@ void foo(void){
 	pptr = mymalloc(69);
 	myfree(pptr);
 
-	myfree(sptr);   		/* Should generate a warning due to implicit cast of shared to private. */
-	myfree((int *)sptr);	/* Should not generate a warning as the cast is explicit. */
+/* Should generate a warning due to implicit cast of shared to private. */
+/* myfree(((int *)(((char *)sptr) + MPISMOFFSET))); */
+	myfree(sptr);
+
+/* Should not generate a warning as the cast is explicit. */
+/* myfree(((int *)((int *)(((char *)sptr) + MPISMOFFSET)))); */
+	myfree((int *)sptr);
 }
