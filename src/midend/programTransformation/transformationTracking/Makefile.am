@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libtranstracking.la
 
 libtranstracking_la_SOURCES  = \
    transformationTracking.cpp
-include_HEADERS =  \
+pkginclude_HEADERS =  \
    transformationTracking.h
 
 clean-local:

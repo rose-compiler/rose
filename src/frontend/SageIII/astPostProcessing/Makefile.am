@@ -47,7 +47,7 @@ libastPostProcessing_la_SOURCES      = \
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      astPostProcessing.h \
      fixupDefiningAndNondefiningDeclarations.h \
      markCompilerGenerated.h \

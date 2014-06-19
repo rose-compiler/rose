@@ -49,11 +49,11 @@ libbackend_la_SOURCES=\
 	$(asmUnparser_la_sources)
 
 
-include_HEADERS=\
+pkginclude_HEADERS=\
 	$(unparser_includeHeaders)
 
 
-dist_include_HEADERS=\
+dist_pkginclude_HEADERS=\
 	$(asmUnparser_distIncludeHeaders)
 
 
