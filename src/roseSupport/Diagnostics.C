@@ -1,9 +1,11 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
 #include "sawyer/Assert.h"
+#include "AsmUnparser.h"                                // rose::AsmUnparser
+#include "BinaryLoader.h"                               // rose::BinaryLoader
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::Disassembler
-#include "BinaryLoader.h"                               // rose::BinaryLoader
+#include "Partitioner.h"                                // rose::Partitioner
 
 namespace rose {
 namespace Diagnostics {
@@ -29,10 +31,10 @@ void initialize() {
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
         // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
         // rose::Diagnostics::destination that we set above.
-#if 0 // [Robb P. Matzke 2014-06-17]: not present on this branch yet
         BinaryLoader::initDiagnostics();
         Disassembler::initDiagnostics();
-#endif
+        Partitioner::initDiagnostics();
+        AsmUnparser::initDiagnostics();
 
         // By default, only messages of informational importance and above are dispalyed.
         facilities.control("none, >=info");

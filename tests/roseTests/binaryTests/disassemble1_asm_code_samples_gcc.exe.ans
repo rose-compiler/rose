@@ -42,9 +42,10 @@ using this memory map for disassembly:
 0x0040103a: e8 71 05 00 00          |.q...   |   call   0x004015b0<<Func>>
 0x0040103a: Successor blocks: 0x004015b0<<Func>>
 
-0x0040103f: c9 c3                   |..      | 2 bytes untyped data beginning at 0x0040103f
-0x0040103f: c9                      |.       | (data)   leave  
-0x00401040: c3                      |.       | (data)   ret    
+0x0040103f: Basic block reasons: graph-1
+0x0040103f: c9                      |.       |   leave  
+0x00401040: c3                      |.       |   ret    
+0x00401040: Successor blocks: unknown
 
 0x00401041: 90 90 90 90 90 90 90 90 |........|
 0x00401049: 90 90 90 90 90 90 90    |....... | 15-byte padding beginning at 0x00401041

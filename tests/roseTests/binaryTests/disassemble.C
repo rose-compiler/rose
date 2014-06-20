@@ -35,7 +35,7 @@
 #ifndef CXX_IS_ROSE_ANALYSIS
 
 using namespace BinaryAnalysis::InstructionSemantics;
-using namespace rose::Diagnostics;
+using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 
 static Sawyer::Message::Facility mlog("tool");          // diagnostics at the tool level; further initialization in main()
@@ -1525,7 +1525,7 @@ main(int argc, char *argv[])
             for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
                 mlog[INFO] <<"    " <<addrToString(bmi->first) <<": " <<bmi->second.what() <<"\n";
         } else {
-            mlog[INFO] <<" (use --show-bad to see errors)\n";
+            mlog[INFO] <<"use --show-bad to see errors\n";
         }
     }
 

@@ -4,7 +4,6 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
-#include "Assert.h"                                     // Sawyer::Assert, ASSERT_* macros
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
@@ -36,8 +35,8 @@ BinaryLoader::Exception::print(std::ostream &o) const
 void
 BinaryLoader::init()
 {
-    //set_debug(stderr);
     //set_perform_dynamic_linking(true);
+    //add_directory("/lib32");
 }
 
 // class method

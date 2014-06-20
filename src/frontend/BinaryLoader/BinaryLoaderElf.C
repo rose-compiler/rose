@@ -1,6 +1,6 @@
 #include "sage3basic.h"
-#include "Assert.h"                                     // Sawyer::Assert
 #include "BinaryLoaderElf.h"
+#include "Diagnostics.h"
 #include "integerOps.h"                 /* needed for signExtend() */
 #include "MemoryMap.h"
 
@@ -277,10 +277,10 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 //            if (symver.is_local()) {
 //                /* Symbols in the dynsym should never be local (if this is isn't the case, we can ignore them). Symbol
 //                 * versioning also may make symbols "local". */
-//                if (get_debug()) fprintf(get_debug(), " local (ignoring)\n");
+//                trace <<" local (ignoring)\n";
 //            } else if (symver.is_hidden()) {
 //                /* Symbol versioning can result in 'hidden' symbols that should be ignored. */
-//                if (get_debug()) fprintf(get_debug(), " hidden (ignoring)\n");
+//                trace <<" hidden (ignoring)\n";
 //            } else
             if (symver.is_reference()) {
                 /* Symbol versioning lets us determine which symbols are 'references' i.e.  that are only used to help
