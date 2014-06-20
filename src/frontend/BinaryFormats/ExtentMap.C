@@ -4,6 +4,40 @@
  * manage string table free lists, among other things. */
 
 #include "sage3basic.h"
+#include <boost/foreach.hpp>
+
+Extent toExtent(const AddressInterval &x) {
+    return x.isEmpty() ? Extent() : Extent::inin(x.least(), x.greatest());
+}
+
+AddressInterval toAddressInterval(const Extent &x) {
+    return x.empty() ? AddressInterval() : AddressInterval::hull(x.first(), x.last());
+}
+
+ExtentMap toExtentMap(const AddressIntervalSet &x) {
+    ExtentMap retval;
+    BOOST_FOREACH (const AddressInterval &interval, x.nodes())
+        retval.insert(toExtent(interval));
+    return retval;
+}
+
+AddressIntervalSet toAddressIntervalSet(const ExtentMap &x) {
+    AddressIntervalSet retval;
+    for (ExtentMap::const_iterator iter=x.begin(); iter!=x.end(); ++iter)
+        retval.insert(toAddressInterval(iter->first));
+    return retval;
+}
+
+std::ostream& operator<<(std::ostream &out, const AddressInterval &x) {
+    if (x.isEmpty()) {
+        out <<"empty";
+    } else if (x.isSingleton()) {
+        out <<StringUtility::addrToString(x.least());
+    } else {
+        out <<"[" <<StringUtility::addrToString(x.least()) <<"," <<StringUtility::addrToString(x.greatest()) <<"]";
+    }
+    return out;
+}
 
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:
