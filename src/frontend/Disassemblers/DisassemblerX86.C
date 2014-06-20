@@ -12,6 +12,7 @@
 #include "sageBuilderAsm.h"
 #include "DisassemblerX86.h"
 #include "integerOps.h"
+#include "stringify.h"
 
 #include <sstream>
 
@@ -64,12 +65,12 @@ DisassemblerX86::init(size_t wordsize)
         case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::dictionary_i286());  break;
         case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_pentium4());  break;
         case 8: insnSize = x86_insnsize_64; set_registers(RegisterDictionary::dictionary_amd64()); break;
-        default: ROSE_ASSERT(!"unknown x86 instruction size");
+        default: ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(ByteOrder::ORDER_LSB);
-    ROSE_ASSERT(get_registers()!=NULL);
+    ASSERT_not_null(get_registers());
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
@@ -94,7 +95,7 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
     /* Disassemble the instruction */
     startInstruction(start_va, temp, tempsz);
     SgAsmx86Instruction *insn = disassemble(); /*throws an exception on error*/
-    ROSE_ASSERT(insn);
+    ASSERT_not_null(insn);
 
     /* Note successors if necesssary */
     if (successors) {
@@ -176,7 +177,11 @@ DisassemblerX86::effectiveAddressSize() const
             case x86_insnsize_16: return x86_insnsize_32;
             case x86_insnsize_32: return x86_insnsize_16;
             case x86_insnsize_64: return x86_insnsize_32;
-                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
+            default: {
+                ASSERT_not_reachable("not a valid effective address size: " + stringifyX86InstructionSize(insnSize));
+                /* avoid MSCV warning by adding return stmt even though it cannot be reached */
+                return insnSize;
+            }
         }
     } else {
         return insnSize;
@@ -201,7 +206,11 @@ DisassemblerX86::effectiveOperandSize() const
                     return x86_insnsize_64;
                 return x86_insnsize_16;
             }
-                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
+            default: {
+                ASSERT_not_reachable("not a valid effective operand size: " + stringifyX86InstructionSize(insnSize));
+                /* avoid MSCV warning by adding return stmt */
+                return insnSize;
+            }
         }
     } else {
         X86InstructionSize s = insnSize;
@@ -237,7 +246,11 @@ DisassemblerX86::mmPrefix() const
                 return mmF3;
             }
         }
-                default: { ROSE_ASSERT(false);  /* avoid MSCV warning by adding return stmt */ return mmNone; }
+        default: {
+            ASSERT_not_reachable("not a valid repeat prefix: " + stringifyX86RepeatPrefix(repeatPrefix));
+            /* avoid MSCV warning by adding return stmt */
+            return mmNone;
+        }
     }
 }
 
@@ -258,7 +271,11 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
         case x86_insnsize_16: return rmWord;
         case x86_insnsize_32: return rmDWord;
         case x86_insnsize_64: return rmQWord;
-                default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return rmWord; }
+        default: {
+            ASSERT_not_reachable("not a valid instruction size: " + stringifyX86InstructionSize(s));
+            /* avoid MSCV warning by adding return stmt */
+            return rmWord;
+        }
     }
 }
 
@@ -270,7 +287,11 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
         case x86_insnsize_16: return SgAsmTypeWord::createType();
         case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
         case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
-                default: { abort(); /* avoid MSCV warning by adding return stmt */ return NULL; }
+        default: {
+            abort();
+            /* avoid MSCV warning by adding return stmt */
+            return NULL;
+        }
     }
 }
 
@@ -297,7 +318,7 @@ DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_si
             retval = SageBuilderAsm::makeQWordValue((uint64_t)val);
             break;
         default:
-            ROSE_ASSERT(false);
+            ASSERT_not_reachable("not a valid effective address size " + stringifyX86InstructionSize(effectiveAddressSize()));
     }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(bit_size);
@@ -310,7 +331,7 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 {
     SgAsmx86Instruction *insn = new SgAsmx86Instruction(ip, mnemonic, kind, insnSize, effectiveOperandSize(),
                                                         effectiveAddressSize());
-    ROSE_ASSERT(insn);
+    ASSERT_not_null(insn);
     insn->set_lockPrefix(lock);
     insn->set_repeatPrefix(repeatPrefix);
     insn->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
@@ -325,11 +346,12 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 
     /* If any operand is null, then the following operands must also be null because analysis assumes that the operand vector
      * indices correspond to argument positions and don't expect null-padding in the vector. */
-    ROSE_ASSERT((!op1 && !op2 && !op3 && !op4) ||
-                ( op1 && !op2 && !op3 && !op4) ||
-                ( op1 &&  op2 && !op3 && !op4) ||
-                ( op1 &&  op2 &&  op3 && !op4) ||
-                ( op1 &&  op2 &&  op3 &&  op4));
+    ASSERT_require2((!op1 && !op2 && !op3 && !op4) ||
+                    ( op1 && !op2 && !op3 && !op4) ||
+                    ( op1 &&  op2 && !op3 && !op4) ||
+                    ( op1 &&  op2 &&  op3 && !op4) ||
+                    ( op1 &&  op2 &&  op3 &&  op4),
+                    "if any operand is null then the following operands must be null");
 
     if (op1)
         SageBuilderAsm::appendOperand(insn, op1);
@@ -351,11 +373,12 @@ DisassemblerX86::makeIP()
         case x86_insnsize_16: name="ip"; break;
         case x86_insnsize_32: name="eip"; break;
         case x86_insnsize_64: name="rip"; break;
-        case x86_insnsize_none: ROSE_ASSERT(!"unknown instruction size");
+        case x86_insnsize_none:
+            ASSERT_not_reachable("invalid instruction size: " + stringifyX86InstructionSize(insnSize));
     }
-    ROSE_ASSERT(get_registers()!=NULL);
+    ASSERT_not_null(get_registers());
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
-    ROSE_ASSERT(rdesc!=NULL);
+    ASSERT_not_null(rdesc);
     SgAsmx86RegisterReferenceExpression *r = new SgAsmx86RegisterReferenceExpression(*rdesc);
     r->set_type(sizeToType(insnSize));
     return r;
@@ -476,17 +499,17 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
         case rmReturnNull:
             return NULL;
     }
-    ROSE_ASSERT(!name.empty());
+    ASSERT_forbid(name.empty());
 
     /* Now that we have a register name, obtain the register descriptor from the dictionary. */
-    ROSE_ASSERT(get_registers()!=NULL);
+    ASSERT_not_null(get_registers());
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     if (!rdesc)
         throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
 
     /* Construct the return value. */
     SgAsmx86RegisterReferenceExpression *rre = new SgAsmx86RegisterReferenceExpression(*rdesc);
-    ROSE_ASSERT(rre);
+    ASSERT_not_null(rre);
     rre->set_type(registerType);
     return rre;
 }
@@ -495,14 +518,14 @@ SgAsmExpression *
 DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64) const
 {
     switch (so) {
-        case x86_segreg_none: ROSE_ASSERT(!"makeSegmentRegister does not support x86_segreg_none");
+        case x86_segreg_none: ASSERT_not_reachable("makeSegmentRegister must not be x86_segreg_none");
         case x86_segreg_cs: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_cs, rmSegment);
         case x86_segreg_ds: return makeRegister(x86_segreg_ds, rmSegment);
         case x86_segreg_es: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_es, rmSegment);
         case x86_segreg_fs: return makeRegister(x86_segreg_fs, rmSegment);
         case x86_segreg_gs: return makeRegister(x86_segreg_gs, rmSegment);
         case x86_segreg_ss: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_ss, rmSegment);
-        default: ROSE_ASSERT(!"Bad segment register in makeSegmentRegister");
+        default: ASSERT_not_reachable("bad segment register in makeSegmentRegister");
     }
 
     /* avoid MSCV warning by adding return stmt */
@@ -534,7 +557,7 @@ DisassemblerX86::getModRegRM(RegisterMode regMode, RegisterMode rmMode, SgAsmTyp
 SgAsmMemoryReferenceExpression *
 DisassemblerX86::decodeModrmMemory()
 {
-    ROSE_ASSERT(modregrmByteSet);
+    ASSERT_require(modregrmByteSet);
     SgAsmExpression* addressExpr = NULL;
     X86SegmentRegister defaultSeg = x86_segreg_ds;
     if (effectiveAddressSize() == x86_insnsize_16) {
@@ -579,7 +602,7 @@ DisassemblerX86::decodeModrmMemory()
                     defaultSeg = x86_segreg_ds;
                     addressExpr = makeRegister(3, rmWord);
                     break;
-                default: ROSE_ASSERT(false);
+                default: ASSERT_not_reachable("invalid rmField: " + StringUtility::numberToString(rmField));
             }
             switch (modeField) {
                 case 0:
@@ -603,7 +626,7 @@ DisassemblerX86::decodeModrmMemory()
                     break;
                 }
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(modeField));
             }
         }
     } else {
@@ -643,7 +666,7 @@ DisassemblerX86::decodeModrmMemory()
                             break;
                         }
                         default:
-                            ROSE_ASSERT(false);
+                            ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(modeField));
                     }
                 } else {
                     sibBase = makeOperandRegisterFull(rexB, sibBaseField);
@@ -686,11 +709,11 @@ DisassemblerX86::decodeModrmMemory()
                     break;
                 }
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid mode field: " + StringUtility::numberToString(modeField));
             }
         }
     }
-    ROSE_ASSERT(addressExpr);
+    ASSERT_not_null(addressExpr);
     X86SegmentRegister seg;
     if (segOverride != x86_segreg_none) {
         seg = segOverride;
@@ -715,7 +738,7 @@ DisassemblerX86::fillInModRM(RegisterMode rmMode, SgAsmType *t)
 SgAsmExpression *
 DisassemblerX86::makeModrmNormal(RegisterMode m, SgAsmType* mrType)
 {
-    ROSE_ASSERT(modregrmByteSet);
+    ASSERT_require(modregrmByteSet);
     if (modeField == 3) {
         /* Register */
         if (m == rmLegacyByte && rexPresent)
@@ -731,7 +754,7 @@ DisassemblerX86::makeModrmNormal(RegisterMode m, SgAsmType* mrType)
 SgAsmx86RegisterReferenceExpression *
 DisassemblerX86::makeModrmRegister(RegisterMode m, SgAsmType* mrType)
 {
-    ROSE_ASSERT(modregrmByteSet);
+    ASSERT_require(modregrmByteSet);
     if (m == rmLegacyByte && rexPresent)
         m = rmRexByte;
     return makeRegister((rexR ? 8 : 0) + regField, m, mrType);
@@ -792,7 +815,11 @@ DisassemblerX86::getImmForAddr()
         case x86_insnsize_16: return getImmWord();
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
-                default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+        default: {
+            ASSERT_not_reachable("invalid effective address size: " + stringifyX86InstructionSize(effectiveAddressSize()));
+            /* avoid MSCV warning by adding return stmt */
+            return NULL;
+        }
     }
 }
 
@@ -803,7 +830,11 @@ DisassemblerX86::getImmIv()
         case x86_insnsize_16: return getImmWord();
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
-                default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+        default: {
+            ASSERT_not_reachable("invalid effective operand size: " + stringifyX86InstructionSize(effectiveOperandSize()));
+            /* avoid MSCV warning by adding return stmt */
+            return NULL;
+        }
     }
 }
 
@@ -862,8 +893,11 @@ DisassemblerX86::getImmIzAsIv()
         case x86_insnsize_64: {
             return getImmDWord();
         }
-        default:
-                        { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+        default: {
+            ASSERT_not_reachable("invalid effective operand size: " + stringifyX86InstructionSize(effectiveOperandSize()));
+            /* avoid MSCV warning by adding return stmt */
+            return NULL;
+        }
     }
 }
 
@@ -1584,7 +1618,9 @@ DisassemblerX86::disassemble()
                         default:
                             throw ExceptionX86("bad repeat prefix for insd", this);
                     }
-                default: ROSE_ASSERT(false);
+                default:
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x6E: {
@@ -1624,7 +1660,9 @@ DisassemblerX86::disassemble()
                         default:
                             throw ExceptionX86("bad repeat prefix for outsd", this);
                     }
-                default: ROSE_ASSERT(false);
+                default:
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x70: {
@@ -1864,7 +1902,8 @@ DisassemblerX86::disassemble()
                     insn = makeInstruction(x86_cdqe, "cdqe");
                     goto done;
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x99: {
@@ -1879,7 +1918,8 @@ DisassemblerX86::disassemble()
                     insn = makeInstruction(x86_cqo, "cqo");
                     goto done;
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x9A: {
@@ -1906,7 +1946,8 @@ DisassemblerX86::disassemble()
                     insn = makeInstruction(x86_pushfq, "pushfq");
                     goto done;
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x9D: {
@@ -1922,7 +1963,8 @@ DisassemblerX86::disassemble()
                     insn = makeInstruction(x86_popfq, "popfq");
                     goto done;
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x9E: {
@@ -2006,7 +2048,8 @@ DisassemblerX86::disassemble()
                         default:
                             throw ExceptionX86("bad repeat prefix for movsq", this);
                     }
-                default: ROSE_ASSERT(false);
+                default: ASSERT_not_reachable("invalid effective operand size: " +
+                                              stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xA6: {
@@ -2068,7 +2111,8 @@ DisassemblerX86::disassemble()
                         default:
                             throw ExceptionX86("bad repeat prefix for cmpsq", this);
                     }
-                default: ROSE_ASSERT(false);
+                default: ASSERT_not_reachable("invalid effective operand size: " +
+                                              stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xA8: {
@@ -2128,7 +2172,8 @@ DisassemblerX86::disassemble()
                         default: throw ExceptionX86("bad repeat prefix for stosq", this);
                     }
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xAC: {
@@ -2178,7 +2223,8 @@ DisassemblerX86::disassemble()
                         default:
                             throw ExceptionX86("bad repeat prefix for lodsq", this);
                     }
-                default: ROSE_ASSERT(false);
+                default: ASSERT_not_reachable("invalid effective operand size: " +
+                                              stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xAE: {
@@ -2240,7 +2286,8 @@ DisassemblerX86::disassemble()
                         default:
                             throw ExceptionX86("bad repeat prefix for scasq", this);
                     }
-                default: ROSE_ASSERT(false);
+                default: ASSERT_not_reachable("invalid effective operand size: " +
+                                              stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xB0: {
@@ -2514,7 +2561,8 @@ DisassemblerX86::disassemble()
                     insn = makeInstruction(x86_jrcxz, "jrcxz", imm);
                     goto done;
                 default:
-                    ROSE_ASSERT(false);
+                    ASSERT_not_reachable("invalid effective operand size: " +
+                                         stringifyX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xE4: {
@@ -2664,10 +2712,10 @@ DisassemblerX86::disassemble()
             insn = decodeGroup5();
             goto done;
         }
-        default: ROSE_ASSERT(!"Should not get here");
+        default: ASSERT_not_reachable("should not get here");
     }
 done:
-    ROSE_ASSERT(insn);
+    ASSERT_not_null(insn);
     return insn;
 }
 
@@ -3735,7 +3783,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
                         case 6: return makeInstruction(x86_psllw, "psllw", modrm, shiftAmount);
                         case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        default: ROSE_ASSERT(false);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
                     }
                 }
                 case mmF3:
@@ -3754,7 +3802,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
                         case 6: return makeInstruction(x86_psllw, "psllw", modrm, shiftAmount);
                         case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f71", this);
-                        default: ROSE_ASSERT(false);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
                     }
                 }
                 case mmF2:
@@ -3778,7 +3826,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
                         case 6: return makeInstruction(x86_pslld, "pslld", modrm, shiftAmount);
                         case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        default: ROSE_ASSERT(false);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
                     }
                 }
                 case mmF3:
@@ -3797,7 +3845,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
                         case 6: return makeInstruction(x86_pslld, "pslld", modrm, shiftAmount);
                         case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f72", this);
-                        default: ROSE_ASSERT(false);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
                     }
                 }
                 case mmF2:
@@ -3821,7 +3869,7 @@ DisassemblerX86::decodeOpcode0F()
                         case 5: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
                         case 6: return makeInstruction(x86_psllq, "psllq", modrm, shiftAmount);
                         case 7: throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f73", this);
-                        default: ROSE_ASSERT(false);
+                        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
                     }
                 }
                 case mmF3:
@@ -3851,7 +3899,7 @@ DisassemblerX86::decodeOpcode0F()
                             isSgAsmx86RegisterReferenceExpression(modrm)->set_type(DQWORDT);
                             return makeInstruction(x86_pslldq, "pslldq", modrm, shiftAmount);
                         default:
-                            ROSE_ASSERT(false);
+                            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
                     }
                 }
                 case mmF2:
@@ -5107,8 +5155,6 @@ DisassemblerX86::decodeOpcode0F()
         }
         case 0xFF:
             throw ExceptionX86("bad opcode 0x0fff", this);
-        default:
-            ROSE_ASSERT(false);
     }
 
     // avoid MSCV warning by adding return stmt
@@ -5160,7 +5206,11 @@ DisassemblerX86::decodeX87InstructionD8()
             case 5: return makeInstruction(x86_fsubr, "fsubr", modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv",  modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", modrm);
-                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+            default: {
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                /* avoid MSCV warning by adding return stmt */
+                return NULL;
+            }
         }
     } else { // Two-operand register forms
         switch (regField) {
@@ -5172,7 +5222,11 @@ DisassemblerX86::decodeX87InstructionD8()
             case 5: return makeInstruction(x86_fsubr, "fsubr", makeRegister(0, rmST), modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv",   makeRegister(0, rmST), modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", makeRegister(0, rmST), modrm);
-                        default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
+            default: {
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
+                /* avoid MSCV warning by adding return stmt */
+                return NULL;
+            }
         }
     }
 }
@@ -5183,7 +5237,7 @@ DisassemblerX86::decodeX87InstructionD9()
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
     if (modeField < 3) {
         SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
-        ROSE_ASSERT(mr);
+        ASSERT_not_null(mr);
         switch (regField) {
             case 0:
                 mr->set_type(FLOATT);
@@ -5209,14 +5263,14 @@ DisassemblerX86::decodeX87InstructionD9()
                 mr->set_type(WORDT);
                 return makeInstruction(x86_fnstcw, "fnstcw", modrm);
             default:
-                ROSE_ASSERT(false);
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
       }
     } else if (regField == 0 || regField == 1) { // FLD and FXCH on registers
         modrm = makeModrmNormal(rmST, NULL);
         switch (regField) {
             case 0: return makeInstruction(x86_fld, "fld", modrm);
             case 1: return makeInstruction(x86_fxch, "fxch", modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else {
         switch (modregrmByte) {
@@ -5269,7 +5323,7 @@ DisassemblerX86::decodeX87InstructionDA()
             case 5: return makeInstruction(x86_fisubr, "fisubr", modrm);
             case 6: return makeInstruction(x86_fidiv, "fidiv", modrm);
             case 7: return makeInstruction(x86_fidivr, "fidivr", modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else if (regField < 4) { // FCMOV{B,E,BE,U}
         modrm = makeModrmRegister(rmST);
@@ -5278,7 +5332,7 @@ DisassemblerX86::decodeX87InstructionDA()
             case 1: return makeInstruction(x86_fcmove, "fcmove", makeRegister(0, rmST), modrm);
             case 2: return makeInstruction(x86_fcmovbe, "fcmovbe", makeRegister(0, rmST), modrm);
             case 3: return makeInstruction(x86_fcmovu, "fcmovu", makeRegister(0, rmST), modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else {
         switch (modregrmByte) {
@@ -5296,7 +5350,7 @@ DisassemblerX86::decodeX87InstructionDB()
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
     if (modeField < 3) {
         SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
-        ROSE_ASSERT(mr);
+        ASSERT_not_null(mr);
         if (regField <= 3) {
             mr->set_type(DWORDT);
         } else {
@@ -5311,7 +5365,7 @@ DisassemblerX86::decodeX87InstructionDB()
             case 5: return makeInstruction(x86_fld, "fld", modrm);
             case 6: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", this);
             case 7: return makeInstruction(x86_fstp, "fstp", modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else if (regField <= 3 || regField == 5 || regField == 6) { // FCMOV{NB,NE,NBE,NU}, FUCOMI, FCOMI
         modrm = makeModrmNormal(rmST, NULL);
@@ -5322,7 +5376,7 @@ DisassemblerX86::decodeX87InstructionDB()
             case 3: return makeInstruction(x86_fcmovnu, "fcmovnu", makeRegister(0, rmST), modrm);
             case 5: return makeInstruction(x86_fucomi, "fucomi", makeRegister(0, rmST), modrm);
             case 6: return makeInstruction(x86_fcomi, "fcomi", makeRegister(0, rmST), modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
       }
     } else {
         switch (modregrmByte) {
@@ -5349,7 +5403,7 @@ DisassemblerX86::decodeX87InstructionDC()
             case 5: return makeInstruction(x86_fsubr, "fsubr", modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv", modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else { // Two-operand register forms
         switch (regField & 7) {
@@ -5361,7 +5415,7 @@ DisassemblerX86::decodeX87InstructionDC()
             case 5: return makeInstruction(x86_fsub,  "fsub",  modrm, makeRegister(0, rmST));
             case 6: return makeInstruction(x86_fdivr, "fdivr", modrm, makeRegister(0, rmST));
             case 7: return makeInstruction(x86_fdiv,  "fdiv",  modrm, makeRegister(0, rmST));
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5374,7 +5428,7 @@ DisassemblerX86::decodeX87InstructionDD()
     getModRegRM(rmReturnNull, rmST, NULL);
     if (modeField < 3) { // Using memory
         SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
-        ROSE_ASSERT(mr);
+        ASSERT_not_null(mr);
         switch (regField) {
             case 0:
                 mr->set_type(DOUBLET);
@@ -5400,7 +5454,7 @@ DisassemblerX86::decodeX87InstructionDD()
                 mr->set_type(WORDT);
                 return makeInstruction(x86_fnstsw, "fnstsw", modrm);
             default:
-                ROSE_ASSERT(false);
+                ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else { // Register forms
         switch (regField) {
@@ -5412,7 +5466,7 @@ DisassemblerX86::decodeX87InstructionDD()
             case 5: return makeInstruction(x86_fucomp, "fucomp", modrm, makeRegister(0, rmST));
             case 6: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", this);
             case 7: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdd", this);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5433,7 +5487,7 @@ DisassemblerX86::decodeX87InstructionDE()
             case 5: return makeInstruction(x86_fisubr, "fisubr", modrm);
             case 6: return makeInstruction(x86_fidiv, "fidiv", modrm);
             case 7: return makeInstruction(x86_fidivr, "fidivr", modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else {
         switch (regField & 7) {
@@ -5450,7 +5504,7 @@ DisassemblerX86::decodeX87InstructionDE()
             case 5: return makeInstruction(x86_fsubp, "fsubp", modrm, makeRegister(0, rmST));
             case 6: return makeInstruction(x86_fdivrp, "fdivrp", modrm, makeRegister(0, rmST));
             case 7: return makeInstruction(x86_fdivp, "fdivp", modrm, makeRegister(0, rmST));
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5463,7 +5517,7 @@ DisassemblerX86::decodeX87InstructionDF()
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
     if (modeField < 3) { // Using memory
         SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
-        ROSE_ASSERT(mr);
+        ASSERT_not_null(mr);
         switch (regField) {
             case 0: mr->set_type(WORDT); return makeInstruction(x86_fild, "fild", modrm);
             case 1: mr->set_type(WORDT); return makeInstruction(x86_fisttp, "fisttp", modrm);
@@ -5473,7 +5527,7 @@ DisassemblerX86::decodeX87InstructionDF()
             case 5: mr->set_type(QWORDT); return makeInstruction(x86_fild, "fild", modrm);
             case 6: mr->set_type(BYTET); return makeInstruction(x86_fbstp, "fbstp", modrm);
             case 7: mr->set_type(QWORDT); return makeInstruction(x86_fistp, "fistp", modrm);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     } else {
         modrm = makeModrmNormal(rmST, NULL);
@@ -5492,7 +5546,7 @@ DisassemblerX86::decodeX87InstructionDF()
             case 5: return makeInstruction(x86_fucomip, "fucomip", makeRegister(0, rmST), modrm);
             case 6: return makeInstruction(x86_fcomip, "fcomip", makeRegister(0, rmST), modrm);
             case 7: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
-            default: ROSE_ASSERT(false);
+            default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
         }
     }
     /* avoid MSCV warning by adding return stmt */
@@ -5511,7 +5565,7 @@ DisassemblerX86::decodeGroup1(SgAsmExpression* imm)
         case 5: return makeInstruction(x86_sub, "sub", modrm, imm);
         case 6: return makeInstruction(x86_xor, "xor", modrm, imm);
         case 7: return makeInstruction(x86_cmp, "cmp", modrm, imm);
-        default: ROSE_ASSERT(false);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5537,7 +5591,7 @@ DisassemblerX86::decodeGroup2(SgAsmExpression* count)
         case 5: return makeInstruction(x86_shr, "shr", modrm, count);
         case 6: return makeInstruction(x86_shl, "shl", modrm, count);
         case 7: return makeInstruction(x86_sar, "sar", modrm, count);
-        default: ROSE_ASSERT(false);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5549,7 +5603,7 @@ DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
     switch (regField) {
         case 0:
         case 1:
-            ROSE_ASSERT(immMaybe);
+            ASSERT_require(immMaybe);
             return makeInstruction(x86_test, "test", modrm, immMaybe);
         case 2:
             return makeInstruction(x86_not, "not", modrm);
@@ -5564,7 +5618,7 @@ DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
         case 7:
             return makeInstruction(x86_idiv, "idiv", modrm);
         default:
-            ROSE_ASSERT(false);
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5605,7 +5659,7 @@ DisassemblerX86::decodeGroup5()
         case 7:
             throw ExceptionX86("bad ModR/M value for Group 5 opcode", this);
         default:
-            ROSE_ASSERT(false);
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5623,7 +5677,7 @@ DisassemblerX86::decodeGroup6()
         case 5: return makeInstruction(x86_verw, "verw", modrm);
         case 6: throw ExceptionX86("bad ModR/M value for Group 6 opcode", this);
         case 7: throw ExceptionX86("bad ModR/M value for Group 6 opcode", this);
-        default: ROSE_ASSERT(false);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5683,7 +5737,7 @@ DisassemblerX86::decodeGroup7()
                     case 5: return makeInstruction(x86_clgi, "clgi");
                     case 6: return makeInstruction(x86_skinit, "skinit");
                     case 7: return makeInstruction(x86_invlpga, "invlpga");
-                    default: ROSE_ASSERT(false);
+                    default: ASSERT_not_reachable("invalid rm field: " + StringUtility::numberToString(rmField));
                 }
             } else {
                 fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
@@ -5713,7 +5767,7 @@ DisassemblerX86::decodeGroup7()
             }
         }
         default:
-            ROSE_ASSERT(false);
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5731,7 +5785,7 @@ DisassemblerX86::decodeGroup8(SgAsmExpression* imm)
         case 5: return makeInstruction(x86_bts, "bts", modrm, imm);
         case 6: return makeInstruction(x86_btr, "btr", modrm, imm);
         case 7: return makeInstruction(x86_btc, "btc", modrm, imm);
-        default: ROSE_ASSERT(false);
+        default: ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;
@@ -5792,7 +5846,7 @@ DisassemblerX86::decodeGroup15()
                 return makeInstruction(x86_clflush, "clflush", modrm);
             }
         default:
-            ROSE_ASSERT(false);
+            ASSERT_not_reachable("invalid reg field: " + StringUtility::numberToString(regField));
     }
     /* avoid MSCV warning by adding return stmt */
     return NULL;

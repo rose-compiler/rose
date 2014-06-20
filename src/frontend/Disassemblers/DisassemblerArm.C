@@ -47,7 +47,7 @@ DisassemblerArm::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
     /* Disassemble the instruction */
     startInstruction(start_va, c);
     SgAsmArmInstruction *insn = disassemble(); /*throws an exception on error*/
-    ROSE_ASSERT(insn);
+    ASSERT_not_null(insn);
     
     /* Note successors if necessary */
     if (successors) {
@@ -78,7 +78,7 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
                                                 ArmInstructionKind kind, ArmInstructionCondition cond, uint32_t insn)
 {
     SgAsmArmInstruction* instruction = new SgAsmArmInstruction(address, mnemonic, kind, cond, condPos);
-    ROSE_ASSERT (instruction);
+    ASSERT_not_null(instruction);
 
     SgAsmOperandList* operands = new SgAsmOperandList();
     instruction->set_operandList(operands);
@@ -98,11 +98,11 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
 SgAsmArmRegisterReferenceExpression *
 DisassemblerArm::makeRegister(uint8_t reg) const
 {
-    ROSE_ASSERT(get_registers()!=NULL);
-    ROSE_ASSERT(reg<16);
+    ASSERT_not_null(get_registers());
+    ASSERT_require(reg<16);
     std::string name = "r" + StringUtility::numberToString(reg);
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
-    ROSE_ASSERT(rdesc!=NULL);
+    ASSERT_not_null(rdesc);
     SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression(*rdesc);
     return r;
 }
@@ -120,10 +120,10 @@ DisassemblerArm::makeRegister(uint8_t reg) const
 SgAsmArmRegisterReferenceExpression *
 DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const
 {
-    ROSE_ASSERT(get_registers()!=NULL);
+    ASSERT_not_null(get_registers());
     std::string name = useSPSR ? "spsr" : "cpsr";
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
-    ROSE_ASSERT(rdesc!=NULL);
+    ASSERT_not_null(rdesc);
     SgAsmArmRegisterReferenceExpression *r = new SgAsmArmRegisterReferenceExpression(*rdesc);
     if (fields!=0)
         r->set_psr_mask(fields);
@@ -204,10 +204,10 @@ DisassemblerArm::makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression
         case 0x05: return MAKE_INSN3(adc, 3, rd, rn, rhsOperand);
         case 0x06: return MAKE_INSN3(sbc, 3, rd, rn, rhsOperand);
         case 0x07: return MAKE_INSN3(rsc, 3, rd, rn, rhsOperand);
-        case 0x08: ROSE_ASSERT (!"Not a data processing insn");
-        case 0x09: ROSE_ASSERT (!"Not a data processing insn");
-        case 0x0A: ROSE_ASSERT (!"Not a data processing insn");
-        case 0x0B: ROSE_ASSERT (!"Not a data processing insn");
+        case 0x08: ASSERT_not_reachable("Not a data processing insn");
+        case 0x09: ASSERT_not_reachable("Not a data processing insn");
+        case 0x0A: ASSERT_not_reachable("Not a data processing insn");
+        case 0x0B: ASSERT_not_reachable("Not a data processing insn");
         case 0x0C: return MAKE_INSN3(orr, 3, rd, rn, rhsOperand);
         case 0x0D: return MAKE_INSN2(mov, 3, rd, rhsOperand);
         case 0x0E: return MAKE_INSN3(bic, 3, rd, rn, rhsOperand);
@@ -228,7 +228,7 @@ DisassemblerArm::makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression
         case 0x1D: return MAKE_INSN2(movs, 3, rd, rhsOperand);
         case 0x1E: return MAKE_INSN3(bics, 3, rd, rn, rhsOperand);
         case 0x1F: return MAKE_INSN2(mvns, 3, rd, rhsOperand);
-        default: ROSE_ASSERT (false);
+        default: ASSERT_not_reachable("invalid opcode " + StringUtility::addrToString(opcode));
     }
 // DQ (11/29/2009): Avoid MSVC warning.
    return NULL;
@@ -270,12 +270,10 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
       case 5: return SageBuilderAsm::makeSubtractPreupdate(rn, offset);
       case 6: return SageBuilderAsm::makeAdd(rn, offset);
       case 7: return SageBuilderAsm::makeAddPreupdate(rn, offset);
-      default: {
-        ROSE_ASSERT (false);
-        // DQ (11/29/2009): Avoid MSVC warning.
-        return NULL;
-      }
+      default: ASSERT_not_reachable("invalid memory address specification");
     }
+    // DQ (11/29/2009): Avoid MSVC warning.
+    return NULL;
 }
 
 SgAsmArmInstruction *
@@ -309,10 +307,10 @@ DisassemblerArm::decodeMultiplyInstruction() const
         case 0xD: return MAKE_INSN4(smulls, 5, rd, rn, rm, rs);
         case 0xE: return MAKE_INSN4(smlal, 5, rd, rn, rm, rs);
         case 0xF: return MAKE_INSN4(smlals, 5, rd, rn, rm, rs);
-        default: ROSE_ASSERT (false);
+        default: ASSERT_not_reachable("invalid multiply instruction");
     }
-// DQ (11/29/2009): Avoid MSVC warning.
-   return NULL;
+    // DQ (11/29/2009): Avoid MSVC warning.
+    return NULL;
 }
 
 SgAsmArmInstruction *
@@ -338,7 +336,7 @@ DisassemblerArm::decodeExtraLoadStores() const
         case 5: addr = SageBuilderAsm::makeSubtractPreupdate(rn, offset); break;
         case 6: addr = SageBuilderAsm::makeAdd(rn, offset); break;
         case 7: addr = SageBuilderAsm::makeAddPreupdate(rn, offset); break;
-        default: ROSE_ASSERT (false);
+        default: ASSERT_not_reachable("invalid extra load stores");
     }
     SgAsmExpression* memref = SageBuilderAsm::makeMemoryReference(addr);
     uint8_t lsh = (bit20 ? 4 : 0) | (bit6 ? 2 : 0) | (bit5 ? 1 : 0);
@@ -355,10 +353,10 @@ DisassemblerArm::decodeExtraLoadStores() const
         case 5: return MAKE_INSN2(ldruh, 3, rd, memref);
         case 6: return MAKE_INSN2(ldrsb, 3, rd, memref);
         case 7: return MAKE_INSN2(ldrsh, 3, rd, memref);
-        default: ROSE_ASSERT (false);
+        default: ASSERT_not_reachable("invalid lsh value " + StringUtility::numberToString(lsh));
     }
-// DQ (11/29/2009): Avoid MSVC warning.
-   return NULL;
+    // DQ (11/29/2009): Avoid MSVC warning.
+    return NULL;
 }
 
 SgAsmArmInstruction *
@@ -405,7 +403,7 @@ DisassemblerArm::decodeMiscInstruction() const
             case 1: return MAKE_INSN3(qsub, 4, rd, rm, rn);
             case 2: return MAKE_INSN3(qdadd, 5, rd, rm, rn);
             case 3: return MAKE_INSN3(qdsub, 5, rd, rm, rn);
-            default: ROSE_ASSERT (false);
+            default: ASSERT_not_reachable("invalid op " + StringUtility::numberToString(op));
           }
         }
         case 6: throw ExceptionArm("bad bits in decodeMiscInstruction (6)", this, 4);
@@ -415,7 +413,7 @@ DisassemblerArm::decodeMiscInstruction() const
           uint16_t imm = (imm1 << 4) | imm2;
           return MAKE_INSN1(bkpt, 4, SageBuilderAsm::makeWordValue(imm));
         }
-        default: ROSE_ASSERT (false);
+        default: ASSERT_not_reachable("invalid miscellaneous instruction");
       }
     } else { // bit 7 set -- signed mul
       SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 16) & 15);
@@ -442,11 +440,11 @@ DisassemblerArm::decodeMiscInstruction() const
         case 0xD: return MAKE_INSN3(smulbt, 6, rd, rm, rs);
         case 0xE: return MAKE_INSN3(smultb, 6, rd, rm, rs);
         case 0xF: return MAKE_INSN3(smultt, 6, rd, rm, rs);
-        default: ROSE_ASSERT (false);
+        default: ASSERT_not_reachable("invalid miscellaneous instruction op");
       }
     }
-// DQ (11/29/2009): Avoid MSVC warning.
-   return NULL;
+    // DQ (11/29/2009): Avoid MSVC warning.
+    return NULL;
 }
 
 SgAsmArmInstruction *
@@ -465,7 +463,8 @@ DisassemblerArm::disassemble()
       bool bit24 = (insn >> 24) & 1;
       bool bit25 = (insn >> 25) & 1;
       bool bit4_and_bit7 = bit4 && bit7;
-      if (condField != 15 || !decodeUnconditionalInstructions) { // Normal instructions (or arm_cond_nv instructions if they are not treated specially)
+      if (condField != 15 || !decodeUnconditionalInstructions) {
+        // Normal instructions (or arm_cond_nv instructions if they are not treated specially)
         cond = (ArmInstructionCondition)(condField + 1);
         uint8_t dataProcOpcode = (insn >> 21) & 15;
         bool dpIsSpecial = (insn & 0x01900000) == 0x01000000;
@@ -511,7 +510,7 @@ DisassemblerArm::disassemble()
                 case 5: return MAKE_INSN2(strbt, 3, rd, memref);
                 case 6: return MAKE_INSN2(ldrt, 3, rd, memref);
                 case 7: return MAKE_INSN2(ldrbt, 3, rd, memref);
-                default: ROSE_ASSERT (false);
+                default: ASSERT_not_reachable("invalid bits");
               }
             } else if ((insn & 0x0FF000F0U) == 0x07F000F0U) {
               return MAKE_INSN0(undefined, 9);
@@ -558,7 +557,7 @@ DisassemblerArm::disassemble()
                 case 0xD: return MAKE_INSN2(ldmib, 3, rn, regs);
                 case 0xE: return MAKE_INSN2(stmib, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
                 case 0xF: return MAKE_INSN2(ldmib, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
-                default: ROSE_ASSERT (false);
+                default: ASSERT_not_reachable("invalid bits");
               }
             } else {
               SgAsmExpression* target = makeBranchTarget();
@@ -577,21 +576,21 @@ DisassemblerArm::disassemble()
                 throw ExceptionArm("coprocessor not supported", this, 26);
             }
           }
-          default: ROSE_ASSERT (!"Can't happen");
+          default: ASSERT_not_reachable("invalid bits");
         }
       } else { // Unconditional instructions
         cond = arm_cond_al;
         uint16_t opcode1 = (insn >> 20) & 0xFF;
 
-     // DQ (8/30/2008): Unused value removed to avoid compiler warning.
-     // uint16_t opcode2 = (insn >> 4) & 0xF;
+        // DQ (8/30/2008): Unused value removed to avoid compiler warning.
+        // uint16_t opcode2 = (insn >> 4) & 0xF;
 
         switch (opcode1) {
           case 0x10: {
             if (bit16) {
               return MAKE_INSN1(setend, 6, SageBuilderAsm::makeByteValue(bit9));
             } else {
-              ROSE_ASSERT (!"CPS not supported");
+              ASSERT_not_reachable("CPS not supported");
             }
           }
           default: {
@@ -601,7 +600,7 @@ DisassemblerArm::disassemble()
         }
       }
 
-   ROSE_ASSERT (!"Fell off end of disassemble");
-// DQ (11/29/2009): Avoid MSVC warning.
-   return NULL;
+      ASSERT_not_reachable("fell off end of disassemble");
+      // DQ (11/29/2009): Avoid MSVC warning.
+      return NULL;
 }

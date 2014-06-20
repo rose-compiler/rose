@@ -10,6 +10,7 @@
 #include "DisassemblerX86.h"
 #include "BinaryLoader.h"
 #include "Partitioner.h"
+#include "stringify.h"
 
 #include <stdarg.h>
 using namespace rose;                                   // temporary until this API lives in the "rose" name space
@@ -164,7 +165,7 @@ Disassembler::register_subclass(Disassembler *factory)
 {
     initclass();
     RTS_MUTEX(class_mutex) {
-        ROSE_ASSERT(factory!=NULL);
+        ASSERT_not_null(factory);
         disassemblers.push_back(factory);
     } RTS_MUTEX_END;
 }
@@ -223,14 +224,14 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 {
     /* Create a new disassembler so we can modify its behavior locally. */
     Disassembler *disassembler = Disassembler::lookup(interp);
-    assert(disassembler);
+    ASSERT_not_null(disassembler);
     disassembler = disassembler->clone();
-    assert(disassembler);
+    ASSERT_not_null(disassembler);
 
     /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
      * defaults built into the Disassembler class. */
     SgNode *file = SageInterface::getEnclosingNode<SgFile>(interp);
-    ROSE_ASSERT(file);
+    ASSERT_not_null(file);
     disassembler->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 
     /* Partitioning methods are specified with "-rose:partitioner_search" and are stored in SgFile also. Use them rather than
@@ -253,8 +254,8 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 void
 Disassembler::set_wordsize(size_t n)
 {
-    ROSE_ASSERT(n>0);
-    ROSE_ASSERT(n<=sizeof(rose_addr_t));
+    ASSERT_require(n>0);
+    ASSERT_require(n<=sizeof(rose_addr_t));
     p_wordsize = n;
 }
 
@@ -266,7 +267,7 @@ Disassembler::set_alignment(size_t n)
     int nbits=0;
     for (size_t i=0; i<8*sizeof(n); i++)
         nbits += (((size_t)1<<i) & n) ? 1 : 0;
-    ROSE_ASSERT(1==nbits);
+    ASSERT_require(1==nbits);
 #endif
     p_alignment = n;
 }
@@ -287,7 +288,7 @@ Disassembler::update_progress(SgAsmInstruction *insn)
     RTS_MUTEX(class_mutex) {
         if (insn) {
             ++p_ndisassembled;
-            if (log[INFO]) {
+            if (progress_interval>=0 && log[INFO]) {
                 struct timeval curtime;
                 gettimeofday(&curtime, NULL);
                 if (Sawyer::Message::timeval_delta(progress_time, curtime) >= progress_interval) {
@@ -365,7 +366,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                     break;
                 }
             }
-            assert(insn!=NULL);
+            ASSERT_not_null(insn);
             next_va = va + insn->get_size();
             insns.insert(std::make_pair(va, insn));
 
@@ -566,7 +567,7 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
             while (va+d->get_wordsize() <= range.last()) {
                 rose_addr_t constant = 0; /*virtual address*/
                 unsigned char buf[sizeof constant];
-                assert(d->get_wordsize()<=sizeof constant);
+                ASSERT_require(d->get_wordsize()<=sizeof constant);
                 if (map->read1(buf, va, d->get_wordsize())<d->get_wordsize())
                     break; /*shouldn't happen since we checked sizes above*/
 
@@ -579,7 +580,7 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
                             constant |= buf[i] << (8*(d->get_wordsize()-(i+1)));
                             break;
                         default:
-                            ROSE_ASSERT(!"not implemented");
+                            ASSERT_not_implemented("byte order " + stringifyByteOrderEndianness(d->get_sex()));
                     }
                 }
                 if (map->exists(constant) && !tried.exists(constant)) {
@@ -614,7 +615,7 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
             return; // no subsequent valid mapped address
         const Extent &range = si->first;
         const MemoryMap::Segment &segment = si->second;
-        assert(range.last()>=next_va);
+        ASSERT_require(range.last()>=next_va);
 
         if (0==(segment.get_mapperms() & MemoryMap::MM_PROT_EXEC)) {
             next_va = range.last() + 1;
@@ -686,7 +687,7 @@ Disassembler::find_instruction_containing(const InstructionMap &insns, rose_addr
         return NULL;
     while (1) {
         --ii;
-        ROSE_ASSERT(ii->first <= va);
+        ASSERT_require(ii->first <= va);
         if (ii->first + max_insns_size < va)
             return NULL;
         if (ii->first + ii->second->get_size() > va)
@@ -714,7 +715,7 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
                                  AddressSet *successors, BadMap *bad)
 {
     SgAsmGenericFile *file = section->get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     const void *file_buf = &(file->get_data()[0]);
 
     MemoryMap::Segment sgmt(MemoryMap::ExternBuffer::create(file_buf, section->get_size()), 0,
@@ -741,16 +742,16 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     if (!map) {
         trace <<"no memory map; remapping all sections\n";
         BinaryLoader *loader = BinaryLoader::lookup(interp);
-        assert(loader);
+        ASSERT_not_null(loader);
         loader = loader->clone();
-        assert(loader);
+        ASSERT_not_null(loader);
         loader->set_perform_dynamic_linking(false);
         loader->set_perform_remap(true);
         loader->set_perform_relocations(false);
         loader->load(interp);
         map = interp->get_map();
     }
-    ROSE_ASSERT(map);
+    ASSERT_not_null(map);
     if (trace) {
         trace <<"MemoryMap for disassembly:\n";
         map->dump(trace, "    ");
@@ -814,7 +815,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     try {
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
-            ROSE_ASSERT(insn->get_size()<=sizeof buf);
+            ASSERT_require(insn->get_size()<=sizeof buf);
             rose_addr_t va = insn->get_address();
             size_t nbytes = insn->get_size();
 
