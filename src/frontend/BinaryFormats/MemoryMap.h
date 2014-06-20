@@ -3,6 +3,7 @@
 
 #include "ByteOrder.h"
 #include <boost/shared_ptr.hpp>
+#include <sawyer/Optional.h>
 
 /* Increase ADDR if necessary to make it a multiple of ALMNT */
 #define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
@@ -543,6 +544,13 @@ public:
     bool exists(rose_addr_t va, unsigned required_perms=0) const { return exists(Extent(va), required_perms); }
     bool exists(Extent range, unsigned required_perms=0) const;
     /** @} */
+
+    /** Returns the next valid address.
+     *
+     *  Returns the next mapped address greater than or equal to @p va and having all of the require
+     *  permissions are specified then the address need only be mapped.  Returns nothing if there is no
+     *  equal to @p va. */
+    Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
      *  necessarily need to correspond to a similar add() call; for instance, it's possible to add a large address space and
