@@ -27,7 +27,7 @@ RTS_mutex_t Disassembler::class_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_DISASSEM
 std::vector<Disassembler*> Disassembler::disassemblers;
 
 /* Diagnostics */
-Sawyer::Message::Facility Disassembler::log;
+Sawyer::Message::Facility Disassembler::log("Disassembler");
 double Disassembler::progress_interval = 10.0;
 struct timeval progress_time;
 
@@ -35,7 +35,7 @@ void Disassembler::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        log = Sawyer::Message::Facility("Disassembler", Diagnostics::destination);
+        log.initStreams(Diagnostics::destination);
         Diagnostics::facilities.insert(log);
     }
 }

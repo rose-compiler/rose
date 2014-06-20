@@ -31,14 +31,14 @@ std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
     return o;
 }
 
-Sawyer::Message::Facility Partitioner::log;
+Sawyer::Message::Facility Partitioner::log("Partitioner");
 
 // class method
 void Partitioner::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        log = Sawyer::Message::Facility("Partitioner", Diagnostics::destination);
+        log.initStreams(Diagnostics::destination);
         Diagnostics::facilities.insert(log);
     }
 }
