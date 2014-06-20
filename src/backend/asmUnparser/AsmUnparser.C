@@ -5,7 +5,7 @@
 using namespace rose;                                   // temporary until this API lives inside the "rose" name space
 using namespace rose::Diagnostics;
 
-Sawyer::Message::Facility AsmUnparser::log("AsmUnparser");
+Sawyer::Message::Facility AsmUnparser::mlog("AsmUnparser");
 
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
@@ -70,8 +70,8 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        log.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(log);
+        mlog.initStreams(Diagnostics::destination);
+        Diagnostics::facilities.insert(mlog);
     }
 }
 
@@ -295,7 +295,7 @@ std::string
 AsmUnparser::invalid_register(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *regdict)
 {
     using namespace StringUtility;
-    Stream warn(Diagnostics::log[WARN]);
+    Stream warn(mlog[WARN]);
 
     std::string regstr = numberToString(reg.get_major()) + "." + numberToString(reg.get_minor()) + "." +
                          numberToString(reg.get_offset()) + "." + numberToString(reg.get_nbits());
