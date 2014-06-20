@@ -1,6 +1,6 @@
 using this memory map for disassembly:
     va 0x08048310 + 0x0000002f = 0x0804833f r-x- at buffer aaa   + 0x00000000 buffer2.raw
-disassembled 16 instructions and 0 failures
+
 
 
 

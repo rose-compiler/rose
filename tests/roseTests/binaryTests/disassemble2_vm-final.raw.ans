@@ -1,6 +1,5 @@
 using this memory map for disassembly:
     va 0x00c00000 + 0x000d9000 = 0x00cd9000 r-x- at buffer aaa   + 0x00000000 vm-final.raw
-disassembled 353686 instructions and 9418 failures (use --show-bad to see errors)
 
 
 
