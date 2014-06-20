@@ -33,6 +33,7 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction*);
 std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
 std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*, bool leaMode);
 std::string unparseX86Register(const RegisterDescriptor&, const RegisterDictionary*);
+std::string unparseX86Register(SgAsmInstruction*, const RegisterDescriptor&, const RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM
