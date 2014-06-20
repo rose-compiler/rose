@@ -5,6 +5,7 @@
 #include <sawyer/Map.h>
 
 #include <cstring>
+#include <sawyer/Sawyer.h>
 #include <sawyer/SharedPointer.h>
 #include <string>
 #include <vector>
@@ -27,11 +28,12 @@ namespace Sawyer {
  *  username must start with a letter". */
 namespace Markup {
 
-class Input {
+class SAWYER_EXPORT Input {
     const std::string &content_;
     size_t at_;
 public:
     explicit Input(const std::string &s): content_(s), at_(0) {}
+    virtual ~Input() {}
     size_t at() const { return at_; }
     void at(size_t offset) { at_ = std::min(offset, content_.size()); }
     bool atEnd() const { return at_ >= content_.size(); }
@@ -53,170 +55,463 @@ class ExcursionGuard {
     bool canceled_;
 public:
     explicit ExcursionGuard(Input &input): input_(input), at_(input.at()), canceled_(false) {}
-    ~ExcursionGuard() { if (!canceled_) input_.at(at_); }
+    virtual ~ExcursionGuard() { if (!canceled_) input_.at(at_); }
     void cancel() { canceled_ = true; }
 };
 
-typedef SharedPointer<class Tag>            TagPtr;
-typedef SharedPointer<class NullTag>        NullTagPtr;
-typedef SharedPointer<class CommentTag>     CommentTagPtr;
-typedef SharedPointer<class SectionTag>     SectionTagPtr;
-typedef SharedPointer<class SubSectionTag>  SubSectionTagPtr;
-typedef SharedPointer<class BoldTag>        BoldTagPtr;
-typedef SharedPointer<class ItalicTag>      ItalicTagPtr;
-typedef SharedPointer<class VariableTag>    VariableTagPtr;
-typedef SharedPointer<class NameBulletTag>  NameBulletTagPtr;
-
-typedef SharedPointer<class ProseTag>       ProseTagPtr;
-typedef SharedPointer<class CodeTag>        CodeTagPtr;
-typedef SharedPointer<class TagInstance>    TagInstancePtr;
-typedef SharedPointer<class Content>        ContentPtr;
-typedef SharedPointer<class Formatter>      FormatterPtr;
-typedef SharedPointer<class TextFormatter>  TextFormatterPtr;
+typedef SharedPointer<class Content> ContentPtr;
 
 typedef std::string Word;
 typedef std::vector<Word> Words;
 typedef std::vector<ContentPtr> TagArgs;
 
-class Tag: public SharedFromThis<Tag> {
-    std::string name_;                                  // tag name without the leading "@"
-    size_t nArgsDeclared_;                              // number of arguments declared
-protected:
-    Tag(const std::string &name, size_t nargs=1)
-        : name_(name), nArgsDeclared_(nargs) {}
-public:
-    virtual ~Tag() {}
-    TagPtr self() { return sharedFromThis().dynamicCast<Tag>(); }
-    virtual ContentPtr eval(const TagArgs&);
-    const std::string &name() const { return name_; }
-    size_t nArgsDeclared() const { return nArgsDeclared_; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//                                                      Tags
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Tag types.
+ *
+ *  Tags come in two flavors:
+ *
+ *  @li Tags that span some text within a paragraph.
+ *  @li Tags that start new paragraphs.
+ *
+ *  Examples of spanning tags are tags that emphasize text, tags that mark text as being a variable, etc.  Examples of dividing
+ *  tags are tags that delineate sections and subsections, tags that deliniate prose versus non-prose, etc. */
+enum DivSpan {
+    DIVIDING,                                           /**< A tag that divides output into paragraphs. */
+    SPANNING,                                           /**< A tag that appears within a paragraph. */
+    VERBATIM,                                           /**< Tags are not parsed as tags. */
 };
 
-class NullTag: public Tag {
-    std::string text_;
-protected:
-    explicit NullTag(const std::string &text): Tag("null", 0), text_(text) {}
+/** Declaration for tag arguments.
+ *
+ *  This class describes how to parse each argument for a tag instance.
+ *
+ *  An argument type of DIVIDING means that any tags can appear in the argument, while SPANNING means that only spanning-type
+ *  tags can appear in the argument.  If no tags are to be parsed, as in a comment or verbatim argument, then set the argument
+ *  type to VERBATIM -- this causes all tags to be parsed as plain textual data. Otherwise, all arguments of a SPANNING tag
+ *  must be SPANNING arguments, and arguments of a DIVIDING tag can be either SPANNING or DIVIDING.  For instance, a "Section"
+ *  tag that takes two arguments, a section name and the section body, declares the first argument as a SPANNING argument since
+ *  the name cannot be multiple paragraphs. */
+class ArgumentDeclaration {
+    DivSpan type_;                                      /**< What to allow when parsing the argument. */
 public:
-    static NullTagPtr instance(const std::string &text) { return NullTagPtr(new NullTag(text)); }
+    explicit ArgumentDeclaration(DivSpan type): type_(type) {}
+    DivSpan type() const { return type_; }
+};
+
+class SAWYER_EXPORT Tag: public SharedFromThis<Tag> {
+#include <sawyer/WarningsOff.h>
+    DivSpan divspan_;                                   // tag type
+    std::string name_;                                  // tag name without the leading "@"
+
+    // Number and types of arguments.  An argument that is SPANNING cannot have a DIVIDING tag within it.
+    std::vector<ArgumentDeclaration> argDecls_;
+#include <sawyer/WarningsRestore.h>
+
+public:
+    typedef SharedPointer<Tag> Ptr;
+protected:
+    Tag(DivSpan divspan, const std::string &name)
+        : divspan_(divspan), name_(name) {}
+    Tag(DivSpan divspan, const std::string &name, DivSpan arg1)
+        : divspan_(divspan), name_(name) {
+        argDecls_.push_back(ArgumentDeclaration(arg1));
+        checkArgDecls();
+    }
+    Tag(DivSpan divspan, const std::string &name, DivSpan arg1, DivSpan arg2)
+        : divspan_(divspan), name_(name) {
+        argDecls_.push_back(ArgumentDeclaration(arg1));
+        argDecls_.push_back(ArgumentDeclaration(arg2));
+        checkArgDecls();
+    }
+    Tag(DivSpan divspan, const std::string &name, DivSpan arg1, DivSpan arg2, DivSpan arg3)
+        : divspan_(divspan), name_(name) {
+        argDecls_.push_back(ArgumentDeclaration(arg1));
+        argDecls_.push_back(ArgumentDeclaration(arg2));
+        argDecls_.push_back(ArgumentDeclaration(arg3));
+        checkArgDecls();
+    }
+private:
+    void checkArgDecls() const;
+public:
+    virtual ~Tag() {}
+    Ptr self() { return sharedFromThis().dynamicCast<Tag>(); }
+    virtual ContentPtr eval(const TagArgs&);
+    const std::string &name() const { return name_; }
+    DivSpan type() const { return divspan_; }
+    size_t nArgsDeclared() const { return argDecls_.size(); }
+    DivSpan argType(size_t argNum) const { return argDecls_[argNum].type(); }
+};
+
+class SAWYER_EXPORT NullTag: public Tag {
+#include <sawyer/WarningsOff.h>
+    std::string text_;
+#include <sawyer/WarningsRestore.h>
+protected:
+    explicit NullTag(const std::string &text): Tag(DIVIDING, "null"), text_(text) {}
+public:
+    typedef SharedPointer<NullTag> Ptr;
+    static Ptr instance(const std::string &text) { return Ptr(new NullTag(text)); }
     virtual ContentPtr eval(const TagArgs&);
     const std::string& text() const { return text_; }
 };
 
-// Comment that will be emitted to the output as a comment
-class CommentTag: public Tag {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Dividing constructs
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Prose.
+ *
+ *  A dividing tag that takes one argument and renders it as prose. One can assume that the top level of documentation is
+ *  surrounded by a \@prose construct since this is the default rendering mode. The \@prose construct can also appear inside a
+ *  non-prose construct (i.e., \@code) to temporarily switch from verbatim mode to prose mode. */
+class ProseTag: public Tag {
 protected:
-    CommentTag(): Tag("comment", 1) {}
+    ProseTag(): Tag(DIVIDING, "prose", DIVIDING) {}
 public:
-    static CommentTagPtr instance() { return CommentTagPtr(new CommentTag); }
+    typedef SharedPointer<ProseTag> Ptr;
+    static Ptr instance() { return Ptr(new ProseTag); }
+};
+
+/** Non-prose.
+ *
+ *  A dividing construct that takes one argument and renders it vertatim, possibly indented.  Leading and trailing linefeeds
+ *  are removed.
+ *
+ * @code
+ *  Example
+ *
+ *  \@nonprose{
+ *    class CodeTag: public Tag {
+ *    protected:
+ *        CodeTag(): Tag("code", 1) {}
+ *    public:
+ *        static CodeTagPtr instance() {
+ *            return CodeTagPtr(new CodeTag);
+ *        }
+ *    };
+ *  }
+ * @endcode */
+class NonProseTag: public Tag {
+protected:
+    NonProseTag(): Tag(DIVIDING, "nonprose", VERBATIM) {}
+public:
+    typedef SharedPointer<NonProseTag> Ptr;
+    static Ptr instance() { return Ptr(new NonProseTag); }
+};
+
+/** Section, subsection, etc.
+ *
+ *  A dividing construct that takes two arguments and renders the second argument as a section, subsection, etc. within the
+ *  enclosing text. The first argument is the name of the new section.  Some backends limit the permissible nesting level, but
+ *  three levels is safe.
+ *
+ * @code
+ *  \@section{Installation}{
+ *    \@section{Prerequisites}{
+ *      \@section{Boost}{
+ *        First install boost.
+ *      }
+ *      \@section{Aptitude}{
+ *        Then install aptitude.
+ *      }
+ *    }
+ *  }
+ * @endcode */
+class SectionTag: public Tag {
+protected:
+    SectionTag(): Tag(DIVIDING, "section", SPANNING, DIVIDING) {}
+public:
+    typedef SharedPointer<SectionTag> Ptr;
+    static Ptr instance() { return Ptr(new SectionTag); }
+};
+
+// Used internally to group Bullet, Numbered, and Named tags. Any number of arguments, each of which is a list item.
+class ListTag: public Tag {
+protected:
+    ListTag(): Tag(DIVIDING, "list") {}
+public:
+    typedef SharedPointer<ListTag> Ptr;
+    static Ptr instance() { return Ptr(new ListTag); }
+};
+
+// Internal: Base class for list items with one or two arguments.
+class ListItemTag: public Tag {
+protected:
+    ListItemTag(const std::string &name, DivSpan arg1): Tag(DIVIDING, name, arg1) {}
+    ListItemTag(const std::string &name, DivSpan arg1, DivSpan arg2): Tag(DIVIDING, name, arg1, arg2) {}
+public:
+    typedef SharedPointer<ListItemTag> Ptr;
+};
+
+/** Bullet list item.
+ *
+ *  A dividing construct that takes one argument that represents a bullet item in a list.  A list consists of all the
+ *  neighboring bullet constructs.
+ *
+ * @code
+ *  Some things to remember:
+ *  \@bullet{Don't use \@section within a bullet item.}
+ *  \@bullet{Blank lines are optional around these since they're division constructs that start their own paragraph.}
+ * @endcode */
+class BulletTag: public ListItemTag {
+protected:
+    BulletTag(): ListItemTag("bullet", DIVIDING) {}
+public:
+    typedef SharedPointer<BulletTag> Ptr;
+    static Ptr instance() { return Ptr(new BulletTag); }
+};
+
+/** Numbered list item.
+ *
+ *  A dividing construct that takes one argument that represents a numbered item in a list.  A list consists of all the
+ *  neighboring numbered item constructs.
+ *
+ * @code
+ *  There are 10 types of people in the world:
+ *  \@numbered{Those who count in binary}
+ *  \@numbered{And those who don't}
+ * @endcode */
+class NumberedTag: public ListItemTag {
+protected:
+    NumberedTag(): ListItemTag("numbered", DIVIDING) {}
+public:
+    typedef SharedPointer<NumberedTag> Ptr;
+    static Ptr instance() { return Ptr(new NumberedTag); }
+};
+
+/** Named list item.
+ *
+ *  A dividing construct that takes two arguments that represents a named item in a list. The first argument is the name of the
+ *  item and the second argument is its text. A list consists of all the neighboring named item constructs.  
+ *
+ * @code
+ *  Common number systems
+ *  @named{binary}{Counting with a pair of symbols, usually "0" and "1".}
+ *  @named{octal}{Counting using eight symbols, usually the digits "0" through "7".}
+ *  @named{decimal}{What most ordinary people use.}
+ *  @named{hexadecimal}{Counting using sixteen symbols. Convenient because each symbol represents four bits of information.}
+ *  @named{base64}{Counting using 64 symbols. Common way of encoding binary data for transmission over a text-only medium
+ *  because each symbol represents exactly six bits and there are approximately 64 characters of the ASCII sequence that have
+ *  standard printable glyphs.}
+ * @endcode */
+class NamedTag: public ListItemTag {
+protected:
+    NamedTag(): ListItemTag("named", SPANNING, DIVIDING) {}
+public:
+    typedef SharedPointer<NamedTag> Ptr;
+    static Ptr instance() { return Ptr(new NamedTag); }
+};
+    
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Spanning constructs
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Comment.
+ *
+ *  A spanning construct that takes one argument which will not appear in the output.
+ *
+ *  @code
+ *   The frobnicator does to frob what the communicator does to comm. \@comment{FIXME: We need to expound on this}.
+ *  @endcode */
+class SAWYER_EXPORT CommentTag: public Tag {
+protected:
+    CommentTag(): Tag(SPANNING, "comment", VERBATIM) {}
+public:
+    typedef SharedPointer<CommentTag> Ptr;
+    static Ptr instance() { return Ptr(new CommentTag); }
     virtual ContentPtr eval(const TagArgs&);
 };
 
-// First arg is section name; second is content.
-class SectionTag: public Tag {
+/** Emphasis.
+ *
+ *  A spanning construct that emphasizes its single argument.
+ *
+ * @code
+ *  One should always write documentation for @em{all} parts of the public interface.
+ * @endcode */
+class EmphasisTag: public Tag {
 protected:
-    SectionTag(): Tag("section", 2) {}
+    EmphasisTag(): Tag(SPANNING, "emphasis", SPANNING) {}
 public:
-    static SectionTagPtr instance() { return SectionTagPtr(new SectionTag); }
+    typedef SharedPointer<EmphasisTag> Ptr;
+    static Ptr instance() { return Ptr(new EmphasisTag); }
 };
 
-// Subsection. First arg is name, second is content.
-class SubSectionTag: public Tag {
-protected:
-    SubSectionTag(): Tag("subsection", 2) {}
-public:
-    static SubSectionTagPtr instance() { return SubSectionTagPtr(new SubSectionTag); }
-};
-
-// Named bullet. First arg is the name, second is the content.
-class NameBulletTag: public Tag {
-protected:
-    NameBulletTag(): Tag("namebullet", 2) {}
-public:
-    static NameBulletTagPtr instance() { return NameBulletTagPtr(new NameBulletTag); }
-};
-    
-class BoldTag: public Tag {
-protected:
-    BoldTag(): Tag("bold", 1) {}
-public:
-    static BoldTagPtr instance() { return BoldTagPtr(new BoldTag); }
-};
-
-class ItalicTag: public Tag {
-protected:
-    ItalicTag(): Tag("italic", 1) {}
-public:
-    static ItalicTagPtr instance() { return ItalicTagPtr(new ItalicTag); }
-};
-
+/** Variable.
+ *
+ *  A spanning tag used to represent a variable.
+ *
+ * @code
+ *  This function counts from 1 to @var{N}.
+ * @endcode */
 class VariableTag: public Tag {
 protected:
-    VariableTag(): Tag("variable", 1) {}
+    VariableTag(): Tag(SPANNING, "variable", SPANNING) {}
 public:
-    static VariableTagPtr instance() { return VariableTagPtr(new VariableTag); }
+    typedef SharedPointer<VariableTag> Ptr;
+    static Ptr instance() { return Ptr(new VariableTag); }
 };
 
-    
-
-class ProseTag: public Tag {
+/** Link.
+ *
+ *  A spanning construct that takes two arguments and renders them as a link.  The first argument is the link target and the
+ *  second argument is the text that will appear in the output.  If the second argument is empty then the link text will be the
+ *  same as the link target.
+ *
+ * @code
+ *  See the \@a{http://boost.org/documentation}{Boost} website for documentation.
+ * @endcode */
+class LinkTag: public Tag {
 protected:
-    ProseTag(): Tag("prose", 1) {}
+    LinkTag(): Tag(SPANNING, "link", SPANNING, SPANNING) {}
 public:
-    static ProseTagPtr instance() { return ProseTagPtr(new ProseTag); }
+    typedef SharedPointer<LinkTag> Ptr;
+    static Ptr instance() { return Ptr(new LinkTag); }
 };
 
-class CodeTag: public Tag {
+/** Inline verbatim.
+ *
+ *  A spanning construct that inserts its argument verbatim.
+ *
+ *  @code
+ *   The emphasis markup takes one argument, like this: \@c{\@em{\@v{text}}}
+ *  @endcode */
+class VerbatimTag: public Tag {
 protected:
-    CodeTag(): Tag("code", 1) {}
+    VerbatimTag(): Tag(SPANNING, "verbatim", VERBATIM) {}
 public:
-    static CodeTagPtr instance() { return CodeTagPtr(new CodeTag); }
+    typedef SharedPointer<VerbatimTag> Ptr;
+    static Ptr instance() { return Ptr(new VerbatimTag); }
 };
 
 
-class TagInstance: public SharedObject {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//                                                      Formatter
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+enum TextMode { PROSE, NONPROSE };
+
+/** Base class for formatting markup. */
+class SAWYER_EXPORT Formatter: public SharedFromThis<Formatter> {
+#include <sawyer/WarningsOff.h>
+    std::vector<TextMode> textModeStack_;
+#include <sawyer/WarningsRestore.h>
+protected:
+    Formatter(): textModeStack_(1, PROSE) {}
+
+public:
+    virtual ~Formatter() {}
+
+public:
+    typedef SharedPointer<Formatter> Ptr;
+    void textModePush(TextMode tm) { textModeStack_.push_back(tm); }
+    TextMode textMode() const { return textModeStack_.back(); }
+    void textModePop() { textModeStack_.pop_back(); }
+
+public: // used internally
+    virtual void beginDocument(std::ostream&) = 0;
+    virtual void endDocument(std::ostream&) = 0;
+    virtual bool beginTag(std::ostream&, const Tag::Ptr&, const TagArgs&) = 0;
+    virtual void endTag(std::ostream&, const Tag::Ptr&, const TagArgs&) = 0;
+    virtual void text(std::ostream&, const std::string&) = 0;
+};
+
+// Formatter used internally by the asText() methods.
+class TextFormatter: public Formatter {
+protected:
+    TextFormatter() {}
+public:
+    typedef SharedPointer<TextFormatter> Ptr;
+    static Ptr instance() { return Ptr(new TextFormatter); }
+    virtual void beginDocument(std::ostream&) /*override*/ {}
+    virtual void endDocument(std::ostream&) /*override*/ {}
+    virtual bool beginTag(std::ostream&, const Tag::Ptr&, const TagArgs&) /*override*/ { return true; }
+    virtual void endTag(std::ostream&, const Tag::Ptr&, const TagArgs&) /*override*/ {}
+    virtual void text(std::ostream &stream, const std::string &text) /*override*/ { stream <<text; }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//                                              Tag Instance
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SAWYER_EXPORT TagInstance: public SharedObject {
 private:
-    TagPtr tag_;
+#include <sawyer/WarningsOff.h>
+    Tag::Ptr tag_;
     TagArgs args_;
-protected:
-    explicit TagInstance(const TagPtr &tag): tag_(tag) {}
-    TagInstance(const TagPtr &tag, const TagArgs &args): tag_(tag), args_(args) {}
+#include <sawyer/WarningsRestore.h>
 public:
-    static TagInstancePtr instance(const TagPtr &tag) {
-        return TagInstancePtr(new TagInstance(tag));
+    typedef SharedPointer<TagInstance> Ptr;
+protected:
+    explicit TagInstance(const Tag::Ptr &tag): tag_(tag) {}
+    TagInstance(const Tag::Ptr &tag, const TagArgs &args): tag_(tag), args_(args) {}
+public:
+    static Ptr instance(const Tag::Ptr &tag) {
+        return Ptr(new TagInstance(tag));
     }
-    static TagInstancePtr instance(const TagPtr &tag, const TagArgs &args) {
-        return TagInstancePtr(new TagInstance(tag, args));
+    static Ptr instance(const Tag::Ptr &tag, const TagArgs &args) {
+        return Ptr(new TagInstance(tag, args));
     }
-    static TagInstancePtr instance(const TagPtr &tag, const ContentPtr &arg0) {
+    static Ptr instance(const Tag::Ptr &tag, const ContentPtr &arg0) {
         TagArgs args;
         args.push_back(arg0);
         return instance(tag, args);
     }
     void append(const ContentPtr &arg) { args_.push_back(arg); }
-    const TagPtr tag() const { return tag_; }
+    const Tag::Ptr tag() const { return tag_; }
     const TagArgs& args() const { return args_; }
     ContentPtr eval() const;
-    void emit(std::ostream&, const FormatterPtr&) const;
+    void emit(std::ostream&, const Formatter::Ptr&) const;
 };
 
-
 // A sequence of tag instances
-class Content: public SharedObject {
+class SAWYER_EXPORT Content: public SharedObject {
 private:
-    std::vector<TagInstancePtr> elmts_;
+#include <sawyer/WarningsOff.h>
+    std::vector<TagInstance::Ptr> elmts_;
+#include <sawyer/WarningsRestore.h>
 protected:
     Content() {}
 public:
-    static ContentPtr instance() { return ContentPtr(new Content); }
-    void append(const TagInstancePtr &elmt) { elmts_.push_back(elmt); }
+    typedef SharedPointer<Content> Ptr;
+    static Ptr instance() { return Ptr(new Content); }
+    void append(const TagInstance::Ptr &elmt) { elmts_.push_back(elmt); }
     void append(const std::string &s);
-    void append(const ContentPtr &other) { elmts_.insert(elmts_.end(), other->elmts_.begin(), other->elmts_.end()); }
-    ContentPtr eval() const;
-    void emit(std::ostream&, const FormatterPtr&) const;
+    void append(const Ptr &other) { elmts_.insert(elmts_.end(), other->elmts_.begin(), other->elmts_.end()); }
+    Ptr eval() const;
+    void emit(std::ostream&, const Formatter::Ptr&) const;
     void print(std::ostream&) const;
     std::string asText() const;
+    Ptr fixupLists() const;
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//                                              Parser
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ParseTerminator {
 protected:
@@ -251,26 +546,26 @@ public:
         return isDone_;
     }
 };
-
         
-        
-
-
-
-
-class ParserResult {
-    ContentPtr content_;
+class SAWYER_EXPORT ParserResult {
+#include <sawyer/WarningsOff.h>
+    Content::Ptr content_;
+#include <sawyer/WarningsRestore.h>
 public:
-    ParserResult(const ContentPtr &content): content_(content) {}
-    void emit(std::ostream&, const FormatterPtr&);
+    ParserResult() {}
+    ParserResult(const Content::Ptr &content): content_(content) {}
+    void print(std::ostream&) const;
+    void emit(std::ostream&, const Formatter::Ptr&) const;
 };
 
-class Parser {
-    typedef Container::Map<std::string, TagPtr> SymbolTable;
+class SAWYER_EXPORT Parser {
+#include <sawyer/WarningsOff.h>
+    typedef Container::Map<std::string, Tag::Ptr> SymbolTable;
     SymbolTable symtab_;
+#include <sawyer/WarningsRestore.h>
 public:
     Parser() { init(); }
-    Parser& registerTag(const TagPtr&, const std::string &name="");
+    Parser& registerTag(const Tag::Ptr&, const std::string &name="");
     ParserResult parse(const std::string&);
 private:
     void init();
@@ -278,40 +573,13 @@ private:
     static void warn(const std::string&);
     static char closingFor(char opening);
     std::string parseSymbol(Input&);
+    std::string parseWord(Input&);
     std::string parseNested(Input&, char left, char right);
-    ContentPtr parseTagArgument(Input&);
-    TagInstancePtr parseTag(Input&);
-    ContentPtr parseContent(Input&, ParseTerminator&);
+    Content::Ptr parseTagArgument(Input&, DivSpan allowed);
+    TagInstance::Ptr parseTag(Input&, DivSpan allowed);
+    Content::Ptr parseContent(Input&, ParseTerminator&, DivSpan allowed);
+    Content::Ptr fixupLists(const Content::Ptr &in) const;
 };
-
-
-
-
-class Formatter: public SharedFromThis<Formatter> {
-protected:
-    Formatter() {}
-public:
-    virtual ~Formatter() {}
-    virtual void beginDocument(std::ostream&) = 0;
-    virtual void endDocument(std::ostream&) = 0;
-    virtual bool beginTag(std::ostream&, const TagPtr&, const TagArgs&) = 0;
-    virtual void endTag(std::ostream&, const TagPtr&, const TagArgs&) = 0;
-    virtual void text(std::ostream&, const std::string&) = 0;
-};
-
-// Formatter used internally by the asText() methods.
-class TextFormatter: public Formatter {
-protected:
-    TextFormatter() {}
-public:
-    static TextFormatterPtr instance() { return TextFormatterPtr(new TextFormatter); }
-    virtual void beginDocument(std::ostream&) /*override*/ {}
-    virtual void endDocument(std::ostream&) /*override*/ {}
-    virtual bool beginTag(std::ostream&, const TagPtr&, const TagArgs&) /*override*/ { return true; }
-    virtual void endTag(std::ostream&, const TagPtr&, const TagArgs&) /*override*/ {}
-    virtual void text(std::ostream &stream, const std::string &text) /*override*/ { stream <<text; }
-};
-    
 
 } // namespace
 } // namespace

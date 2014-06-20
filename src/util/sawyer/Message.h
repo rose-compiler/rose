@@ -271,6 +271,22 @@ SAWYER_EXPORT bool initializeLibrary();
 /** True if the library has been initialized. @sa initializeLibrary(). */
 SAWYER_EXPORT extern bool isInitialized;
 
+// Any header that #defines words that are this common is just plain stupid!
+#if defined(DEBUG) || defined(TRACE) || defined(WHERE) || defined(INFO) || defined(WARN) || defined(ERROR) || defined(FATAL)
+# ifdef _MSC_VER
+#  pragma message("Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL")
+# else
+#  warning "Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL"
+# endif
+# undef DEBUG
+# undef TRACE
+# undef WHERE
+# undef INFO
+# undef WARN
+# undef ERROR
+# undef FATAL
+#endif
+
 /** Level of importance for a message.
  *
  *  The library defines only these importance levels and does not provide a mechanism by which additional levels can be

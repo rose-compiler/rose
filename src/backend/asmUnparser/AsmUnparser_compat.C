@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 #include "BinaryControlFlow.h"
+#include "Diagnostics.h"
 
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
@@ -42,8 +43,7 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
         case V_SgAsmM68kInstruction:
             return unparseM68kMnemonic(isSgAsmM68kInstruction(insn));
         default:
-            std::cerr <<"Unhandled variant " <<insn->class_name() <<std::endl;
-            abort();
+            ASSERT_not_reachable("unhandled variant: " + insn->class_name());
     }
 #ifdef _MSC_VER
     return "error in unparseMnemonic"; /*MSC doesn't know that abort() doesn't return*/
@@ -74,8 +74,7 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
         case V_SgAsmM68kInstruction:
             return unparseM68kExpression(expr, labels, registers);
         default:
-            std::cerr <<"Unhandled variant " <<insn->class_name() << std::endl;
-            abort();
+            ASSERT_not_reachable("unhandled variant: " + insn->class_name());
     }
 #ifdef _MSC_VER
     return "ERROR in unparseExpression()"; /*MSC doesn't know that abort() doesn't return*/
@@ -103,8 +102,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
             u.unparse(s, isSgAsmFunction(stmt));
             return s.str();
         default:
-            std::cerr <<"Unhandled variant " <<stmt->class_name() <<std::endl;
-            abort();
+            ASSERT_not_reachable("unhandled variant: " + stmt->class_name());
     }
 #ifdef _MSC_VER
     return "ERROR in unparseAsmStatement()"; /*MSC doesn't know that abort() doesn't return*/
@@ -150,7 +148,7 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
 void
 unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt)
 {
-    ROSE_ASSERT (stmt != NULL);
+    ASSERT_not_null(stmt);
     std::ofstream of(filename.c_str());
     of << unparseAsmStatement(stmt);
 }

@@ -8,6 +8,9 @@
 #include "DispatcherX86.h"
 #include "YicesSolver.h"
 #include "Disassembler.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 // see base class
 bool
@@ -289,11 +292,11 @@ Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
     using namespace BinaryAnalysis::InstructionSemantics;
-    static const bool debug = false;
+    Stream debug(mlog[DEBUG]);
 
     if (debug) {
-        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
-                  <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<std::endl;
+        debug <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
+              <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
@@ -337,8 +340,8 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
                 semantics.processInstruction(insn);
                 if (debug) {
-                    std::cerr << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
-                              <<policy.get_state();
+                    debug << "  state after " <<unparseInstructionWithAddress(insn) <<"\n"
+                          <<policy.get_state();
                 }
             }
             const RegisterType &newip = policy.get_ip();
@@ -349,21 +352,19 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             }
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
-            if (debug)
-                std::cerr <<e <<"\n";
+            debug <<e <<"\n";
         } catch(const Policy::Exception& e) {
             /* Abandon entire basic block if the semantics policy cannot handle the instruction. */
-            if (debug)
-                std::cerr <<e <<"\n";
+            debug <<e <<"\n";
         }
     }
 
     if (debug) {
-        std::cerr <<"  successors:";
+        debug <<"  successors:";
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            std::cerr <<" " <<StringUtility::addrToString(*si);
+            debug <<" " <<StringUtility::addrToString(*si);
         if (!*complete) std::cerr <<"...";
-        std::cerr <<std::endl;
+        debug <<"\n";
     }
 
     return successors;

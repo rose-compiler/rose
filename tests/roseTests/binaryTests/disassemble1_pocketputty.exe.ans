@@ -7,7 +7,6 @@ using this memory map for disassembly:
     va 0x000d5600 + 0x00000a9c = 0x000d609c rw-p at anon aax     + 0x00000000 pocketputty.exe(.data)
     va 0x000d7000 + 0x00002400 = 0x000d9400 r--- at buffer abb   + 0x000bfa00 pocketputty.exe(.pdata)
     va 0x000da000 + 0x00002000 = 0x000dc000 r--- at buffer abd   + 0x000c1e00 pocketputty.exe(.rsrc)
-disassembled 160283 instructions and 481666 failures (use --show-bad to see errors)
 
 
 0x000ad8e8: ================================== Function (entry point) unknown name
@@ -321,4 +320,3 @@ disassembled 160283 instructions and 481666 failures (use --show-bad to see erro
 
 
 
-generating ASCII dump...

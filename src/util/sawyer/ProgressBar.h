@@ -3,6 +3,7 @@
 
 #include <sawyer/Message.h>
 #include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 
 #include <cmath>
 #include <sstream>

@@ -2,6 +2,8 @@
 #define Sawyer_H
 
 #include <boost/cstdint.hpp>
+#include <cstdio>
+#include <string>
 
 /** @mainpage
  *
@@ -164,15 +166,12 @@
  * @endcode */
 
 #ifdef BOOST_WINDOWS
-# if 1 // [Robb Matzke 2014-06-13] import/export temporarily disabled for ROSE debugging
-#   define SAWYER_EXPORT /*void*/
-# else
-#   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_DLL_EXPORTS) // defined in CMake when compiling libsawyer
+// FIXME[Robb Matzke 2014-06-18]: get rid of ROSE_UTIL_EXPORTS; cmake can only have one DEFINE_SYMBOL
+#   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_UTIL_EXPORTS) // defined in CMake when compiling libsawyer
 #       define SAWYER_EXPORT __declspec(dllexport)
 #   else
 #       define SAWYER_EXPORT __declspec(dllimport)
 #   endif
-# endif
 #else
 #   define SAWYER_EXPORT /*void*/
 #endif
@@ -200,6 +199,16 @@ SAWYER_EXPORT boost::int64_t strtoll(const char*, char**, int);
  *  Microsoft doesn't define this function, so we define it in the Sawyer namespace. */
 SAWYER_EXPORT boost::uint64_t strtoull(const char*, char**, int);
 
+/** Reads one line of input from a file.
+ *
+ *  Returns one line, including any line termination.  Returns an empty string at the end of the file. */
+SAWYER_EXPORT std::string readOneLine(FILE*);
+
+/** Semi-portable replacement for popen. */
+SAWYER_EXPORT FILE *popen(const std::string&, const char *how);
+
+/** Semi-portable replacement for pclose. */
+SAWYER_EXPORT int pclose(FILE*);
 
 } // namespace
 
@@ -225,6 +234,7 @@ SAWYER_EXPORT boost::uint64_t strtoull(const char*, char**, int);
 # define SAWYER_ATTR_UNUSED /*unused*/
 # define SAWYER_ATTR_NORETURN /*noreturn*/
 # define SAWYER_PRETTY_FUNCTION __FUNCSIG__
+# define SAWYER_MAY_ALIAS /*void*/
 
 // MVC doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector, which will be
 // cleaned up propertly at end of scope or exceptions.
@@ -236,6 +246,7 @@ SAWYER_EXPORT boost::uint64_t strtoull(const char*, char**, int);
 # define SAWYER_ATTR_UNUSED __attribute__((unused))
 # define SAWYER_ATTR_NORETURN __attribute__((noreturn))
 # define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
+# define SAWYER_MAY_ALIAS __attribute__((may_alias))
 
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     TYPE NAME[SIZE];

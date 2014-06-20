@@ -11,6 +11,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <cassert>
 #include <inttypes.h>
+#include <sawyer/BitVector.h>
 #include <set>
 #include <vector>
 
