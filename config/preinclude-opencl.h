@@ -64,7 +64,7 @@ typedef uint16_t        half     __attribute__((aligned(2)));
 typedef uint32_t ptrdiff_t;
 
 typedef unsigned int uint;
-typedef unsigned int size_t;
+typedef unsigned long size_t;
 
   /* Vector Types */
   
