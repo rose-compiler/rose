@@ -199,7 +199,6 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "DisassemblerX86.h"
 #include "Diagnostics.h"
 
-
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
@@ -827,7 +826,7 @@ public:
 
     // Organize instructions into basic blocks
     virtual void analyze_cfg(SgAsmBlock::Reason reason) /*override*/ {
-        assert(function!=NULL);
+        ASSERT_not_null(function);
         bool changed = true;
         for (size_t pass=0; changed; ++pass) {
             changed = false;
@@ -836,13 +835,13 @@ public:
                 Instruction *insn = ii->second;
                 if (!insn->bblock) {
                     BasicBlock *bb = find_bb_starting(va);
-                    assert(bb!=NULL);
+                    ASSERT_not_null(bb);
                     append(function, bb, SgAsmBlock::BLK_USERDEF);
                     changed = true;
                 }
             }
             if (pass>=100) {
-                std::cerr <<"too many passes through simple partitioner\n";
+                mlog[ERROR] <<"too many passes through simple partitioner\n";
                 abort();
             }
         }
@@ -1392,8 +1391,8 @@ main(int argc, char *argv[])
         }
     }
 
-    mlog[INFO] <<"using this memory map for disassembly:\n";
-    map.dump(mlog[INFO], "    ");
+    std::cout <<"using this memory map for disassembly:\n";
+    map.dump(std::cout, "    ");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Run the disassembler and partitioner
