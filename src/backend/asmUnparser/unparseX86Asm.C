@@ -57,7 +57,7 @@ static std::string x86ValToLabel(uint64_t val, const AsmUnparser::LabelMap *labe
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
     if (NULL==ty) {
-        Diagnostics::log[ERROR] <<"x86TypeToPtrName: null type\n";
+        mlog[ERROR] <<"x86TypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
 

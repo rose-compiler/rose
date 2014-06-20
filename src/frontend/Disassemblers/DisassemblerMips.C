@@ -581,12 +581,12 @@ DisassemblerMips::insert_idis(Mips32 *idis, bool replace)
                    (bitmask_subset(idis_table[i]->mask, idis->mask) &&
                     idis_table[i]->match == (idis->match & idis_table[i]->mask))) {
             // Inserting this instruction-specific disassembler would cause an ambiguity in the table.
-            log[DEBUG] <<"DisassemblerMips::insert_idis: insertion key"
-                       <<" mask=" <<StringUtility::addrToString(idis->mask)
-                       <<" match=" <<StringUtility::addrToString(idis->match)
-                       <<" conflicts with existing key"
-                       <<" mask=" <<StringUtility::addrToString(idis_table[i]->mask)
-                       <<" match="<<StringUtility::addrToString(idis_table[i]->match) <<"\n";
+            mlog[DEBUG] <<"DisassemblerMips::insert_idis: insertion key"
+                        <<" mask=" <<StringUtility::addrToString(idis->mask)
+                        <<" match=" <<StringUtility::addrToString(idis->match)
+                        <<" conflicts with existing key"
+                        <<" mask=" <<StringUtility::addrToString(idis_table[i]->mask)
+                        <<" match="<<StringUtility::addrToString(idis_table[i]->match) <<"\n";
             throw Exception("insert_idis() would cause an ambiguity in the MIPS instruction disassembly table");
         }
     }

@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "Assert.h"                                     // Sawyer::Assert
 #include "BinaryLoaderElf.h"
 #include "integerOps.h"                 /* needed for signExtend() */
 #include "MemoryMap.h"
@@ -6,6 +7,8 @@
 #include <fstream>
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
+
+using namespace Sawyer::Message;
 
 std::ostream& operator<<(std::ostream &o, const BinaryLoaderElf::VersionedSymbol &x) { x.print(o); return o; }
 
@@ -22,7 +25,8 @@ section_cmp(SgAsmGenericSection *_a, SgAsmGenericSection *_b)
 {
     SgAsmElfSection *a = isSgAsmElfSection(_a);
     SgAsmElfSection *b = isSgAsmElfSection(_b);
-    ROSE_ASSERT(a!=NULL && b!=NULL);
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
     SgAsmElfSegmentTableEntry *a_seg = a->get_segment_entry();
     SgAsmElfSegmentTableEntry *b_seg = b->get_segment_entry();
     if (a_seg && b_seg) {
@@ -87,7 +91,7 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
                               ConflictResolution *resolve_p)
 {
     SgAsmElfSection *section = isSgAsmElfSection(_section);
-    assert(section); /* This method is only for ELF files. */
+    ASSERT_not_null(section); /* This method is only for ELF files. */
 
     /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
@@ -237,6 +241,8 @@ void
 BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 {
     typedef std::vector<std::pair<SgAsmGenericSection*, SymbolMap*> > SymbolMapList;
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("BinaryLoaderElf");
 
     /* Build a mapping (symbolMaps) from each ".dynsym" section (one per file header) to a SymbolMap. The SymbolMap
      * holds the symbols defined (i.e., not local, hidden, or only referenced) by the section. */
@@ -244,8 +250,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
     SymbolMapList symbolMaps; /*maps each .dynsym section to a SymbolMap::BaseMap object. */
     for (size_t h=0; h < headers.size(); ++h) {
         SgAsmGenericHeader* header = headers[h];
-        if (get_debug())
-            fprintf(get_debug(), "BinaryLoaderElf: building symbol map for %s...\n", header->get_file()->get_name().c_str());
+        trace <<"building symbol map for " <<header->get_file()->get_name() <<"...\n";
         SymverResolver versionResolver(header);
 
         /* There must be zero or one ELF Section named ".dynsym" under this header.  If the section does not exist then the
@@ -256,8 +261,8 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
         SgAsmElfSymbolSection *dynsym = isSgAsmElfSymbolSection(header->get_section_by_name(".dynsym"));
         if (!dynsym)
             continue;
-        ROSE_ASSERT(dynsym->get_section_entry());
-        ROSE_ASSERT(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
+        ASSERT_not_null(dynsym->get_section_entry());
+        ASSERT_require(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
 
         /* Add each symbol definition to the SymbolMap and then add the SymbolMap to the symbolMaps */
         SymbolMap* symbolMap = new SymbolMap;
@@ -265,8 +270,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
             if (0==symbol_idx) continue; /*this must be undefined, so we can skip it*/
 
             SgAsmElfSymbol* symbol = dynsym->get_symbols()->get_symbols()[symbol_idx];
-            if (get_debug())
-                fprintf(get_debug(), "  symbol [%zu] \"%s\" ", symbol_idx, symbol->get_name()->get_string(true).c_str());
+            trace <<"  symbol [" <<symbol_idx <<"] \"" <<symbol->get_name()->get_string(true) <<"\" ";
 
             VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
 // I think we need all symbols in the symbol table for relocations. [RPM 2010-09-16]
@@ -281,20 +285,20 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
             if (symver.is_reference()) {
                 /* Symbol versioning lets us determine which symbols are 'references' i.e.  that are only used to help
                  * relocating */     
-                if (get_debug()) fprintf(get_debug(), " reference (ignoring)\n");
+                trace <<" reference (ignoring)\n";
             } else {
                 std::string symName = symver.get_name();
-                ROSE_ASSERT(symName==symbol->get_name()->get_string());
+                ASSERT_require(symName==symbol->get_name()->get_string());
                 SymbolMapEntry &symbolEntry = (*symbolMap)[symName];
                 symbolEntry.addVersion(symver);
-                if (get_debug()) fputs(" added.\n", get_debug());
+                trace <<" added.\n";
             }
         }
         symbolMaps.push_back(std::make_pair(dynsym, symbolMap));
     }
 
     /* Initialize the p_symbols master symbol table by merging all the definitions from the symbolMaps we created above. */
-    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: building master symbol table...\n");
+    trace <<"building master symbol table...\n";
     p_symbols.clear();
     for (SymbolMapList::const_iterator smi=symbolMaps.begin(); smi!=symbolMaps.end(); ++smi) {
         const SymbolMap *symbolMap = smi->second;
@@ -312,9 +316,9 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
             }
         }
     }
-    if (get_debug()) {
-        fprintf(get_debug(), "BinaryLoaderElf: master symbol table:\n");
-        p_symbols.dump(get_debug(), "  ");
+    if (trace) {
+        trace <<"master symbol table:\n";
+        p_symbols.dump(stderr, "  ");                   // FIXME[Robb Matzke 2014-01-27]: should be able to pass "trace"
     }
 }
 
@@ -325,10 +329,10 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) /*overr
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     build_master_symbol_table(interp);
 
-    if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
+    mlog[TRACE] <<"BinaryLoaderElf: performing relocation fixups...\n";
     for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
-        ROSE_ASSERT(NULL != elfHeader);
+        ASSERT_not_null(elfHeader);
         if (errors!=NULL) {
             try {
                 performRelocations(elfHeader, interp->get_map());
@@ -353,7 +357,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
                 elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
             } else {
-                ROSE_ASSERT(!retval); /* There should be only one */
+                ASSERT_require2(retval!=NULL, "there should be only one matching section");
                 retval = elf_section;
             }
         }
@@ -494,7 +498,7 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
     for (size_t i=0; i<p_versions.size(); ++i) {
         if (SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def()) {
             const SgAsmElfSymverDefinedAuxPtrList &defaux_list = def->get_entries()->get_entries();
-            assert(!defaux_list.empty() && defaux_list[0]!=NULL);
+            ASSERT_require(!defaux_list.empty() && defaux_list[0]!=NULL);
             if (0==defaux_list[0]->get_name()->get_string().compare(neededVersion))
                 return p_versions[i];
         }
@@ -512,6 +516,7 @@ BinaryLoaderElf::SymbolMapEntry::addVersion(const VersionedSymbol& vsymbol)
         // There can be only one "base" version, so if one already exists, move it to the end of the list (vector) and insert
         // our new base version at the beginning.
         if (!p_versions.empty()) {
+             ASSERT_require(p_versions.empty() || false == get_vsymbol().is_base_definition());
             p_versions.push_back(p_versions.front());
             p_versions[0] = vsymbol;
         } else {
@@ -650,7 +655,7 @@ BinaryLoaderElf::SymverResolver::ctor(SgAsmGenericHeader* header)
 void
 BinaryLoaderElf::SymverResolver::makeSymbolVersionDefMap(SgAsmElfSymverDefinedSection* section)
 {
-    ROSE_ASSERT(NULL != section);
+    ASSERT_not_null(section);
     SgAsmElfSymverDefinedEntryPtrList& defs = section->get_entries()->get_entries();
     for (size_t def=0; def < defs.size(); ++def) {
         SgAsmElfSymverDefinedEntry* defEntry =  defs[def];
@@ -661,7 +666,7 @@ BinaryLoaderElf::SymverResolver::makeSymbolVersionDefMap(SgAsmElfSymverDefinedSe
 void
 BinaryLoaderElf::SymverResolver::makeSymbolVersionNeedMap(SgAsmElfSymverNeededSection* section)
 {
-    ROSE_ASSERT(NULL != section);
+    ASSERT_not_null(section);
     SgAsmElfSymverNeededEntryPtrList& needs = section->get_entries()->get_entries();
     for (size_t need=0; need < needs.size(); ++need) {
         SgAsmElfSymverNeededEntry* needEntry = needs[need];
@@ -676,16 +681,16 @@ BinaryLoaderElf::SymverResolver::makeSymbolVersionNeedMap(SgAsmElfSymverNeededSe
 void
 BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* dynsym, SgAsmElfSymverSection* symver/*=NULL*/)
 {
-    ROSE_ASSERT(dynsym && dynsym->get_is_dynamic());
+    ASSERT_require(dynsym && dynsym->get_is_dynamic());
     SgAsmElfSymbolPtrList& symbols = dynsym->get_symbols()->get_symbols();
 
     /* symverSection may be NULL, but if it isn't, it must have the same number of entries as dynsym */
-    ROSE_ASSERT(NULL == symver || symbols.size() == symver->get_entries()->get_entries().size());
+    ASSERT_require(NULL == symver || symbols.size() == symver->get_entries()->get_entries().size());
 
     for (size_t symbol_idx=0; symbol_idx<symbols.size(); symbol_idx++) {
         SgAsmElfSymbol *symbol = symbols[symbol_idx];
 
-        ROSE_ASSERT(p_versionedSymbolMap.end() == p_versionedSymbolMap.find(symbol));
+        ASSERT_require(p_versionedSymbolMap.end() == p_versionedSymbolMap.find(symbol));
         VersionedSymbol* versionedSymbol = new VersionedSymbol(symbol);
         p_versionedSymbolMap.insert(std::make_pair(symbol,versionedSymbol));
 
@@ -715,7 +720,7 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
                 SymbolVersionDefinitionMap::const_iterator defIter = p_symbolVersionDefMap.find(value);
                 SymbolVersionNeededMap::const_iterator needIter = p_symbolVersionNeedMap.find(value);
                 /* We must have a match from defs or needs, not both, not neither. */
-                ROSE_ASSERT((p_symbolVersionDefMap.end() == defIter) != (p_symbolVersionNeedMap.end() == needIter));
+                ASSERT_require((p_symbolVersionDefMap.end() == defIter) != (p_symbolVersionNeedMap.end() == needIter));
                 if (p_symbolVersionDefMap.end() != defIter) {
                     versionedSymbol->set_version_def(defIter->second);
                 } else if (p_symbolVersionNeedMap.end() != needIter) {
@@ -735,7 +740,7 @@ BinaryLoaderElf::SymverResolver::get_versioned_symbol(SgAsmElfSymbol* symbol) co
 
     /* We should have every symbol that might get looked up in here */
     VersionedSymbolMap::const_iterator iter = p_versionedSymbolMap.find(symbol);
-    ROSE_ASSERT(p_versionedSymbolMap.end() != iter);
+    ASSERT_require(p_versionedSymbolMap.end() != iter);
     return *(iter->second);
 }
 
@@ -764,7 +769,7 @@ BinaryLoaderElf::SymverResolver::dump(FILE *f, const char *prefix, ssize_t idx) 
         SgAsmElfSymbol *sym = si->first;
         VersionedSymbol *vsym = si->second;
         std::string pp = std::string(p)+"versionedSymbol["+StringUtility::numberToString(i)+"].";
-        assert(sym == vsym->get_symbol());
+        ASSERT_require(sym == vsym->get_symbol());
         vsym->dump(f, pp.c_str(), -1); // sym is printed as part of this
     }
 }
@@ -776,23 +781,24 @@ BinaryLoaderElf::SymverResolver::dump(FILE *f, const char *prefix, ssize_t idx) 
 SgAsmElfSymbol *
 BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const SymverResolver &resolver)
 {
-    ROSE_ASSERT(reloc!=NULL);
+    Stream trace(mlog[TRACE]);
+
+    ASSERT_not_null(reloc);
     if (0==reloc->get_sym()) {
-        if (get_debug()) fprintf(get_debug(), "    reloc symbol: <none>\n");
+        trace <<"    reloc symbol: <none>\n";
         return NULL;
     }
 
     /* Look up symbol referenced by the relocation entry */
     SgAsmElfSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
-    ROSE_ASSERT(reloc_section!=NULL);
+    ASSERT_not_null(reloc_section);
     SgAsmElfSymbolSection* symbol_section = isSgAsmElfSymbolSection(reloc_section->get_linked_section());
-    ROSE_ASSERT(symbol_section!=NULL);
-    ROSE_ASSERT(reloc->get_sym() < symbol_section->get_symbols()->get_symbols().size());
+    ASSERT_not_null(symbol_section);
+    ASSERT_require(reloc->get_sym() < symbol_section->get_symbols()->get_symbols().size());
     SgAsmElfSymbol *reloc_sym = symbol_section->get_symbols()->get_symbols()[reloc->get_sym()];
-    ROSE_ASSERT(reloc_sym!=NULL);
+    ASSERT_not_null(reloc_sym);
     VersionedSymbol reloc_vsym = resolver.get_versioned_symbol(reloc_sym);
-    if (get_debug())
-        fprintf(get_debug(), "    reloc symbol: %s\n", reloc_vsym.get_versioned_name().c_str());
+    trace <<"    reloc symbol: " <<reloc_vsym.get_versioned_name() <<"\n";
     bool is_weak = reloc_sym->get_elf_binding() == SgAsmElfSymbol::STB_WEAK;
     bool is_local = reloc_vsym.is_hidden() || reloc_vsym.is_local();
 
@@ -802,21 +808,21 @@ BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const Symver
     if (const SymbolMapEntry *symbol_entry = p_symbols.lookup(symbol_name)) {
         VersionedSymbol source_vsym = symbol_entry->get_vsymbol(reloc_vsym);
         if (source_vsym.is_reference()) {
-            if (get_debug()) fprintf(get_debug(), "    reference symbol is being treated as undefined\n");
+            trace <<"    reference symbol is being treated as undefined\n";
         } else if (is_local && reloc_vsym.get_section()->get_header()!=source_vsym.get_section()->get_header()) {
-            if (get_debug()) fprintf(get_debug(), "    hidden/local symbol is being treated as undefined\n");
+            trace <<"    hidden/local symbol is being treated as undefined\n";
         } else {
-            if (get_debug()) fprintf(get_debug(), "    using definition %s\n", source_vsym.get_versioned_name().c_str());
+            trace <<"    using definition " <<source_vsym.get_versioned_name() <<"\n";
             retval = source_vsym.get_symbol();
-            assert(retval!=NULL);
-            assert(0 != retval->get_st_shndx());/* test an assumption [MCB] */
+            ASSERT_not_null(retval);
+            ASSERT_require(0 != retval->get_st_shndx());/* test an assumption [MCB] */
         }
     }
 
     /* Handle case when defined symbol doesn't exist (or we made it not to exist because it's local). */
     if (!retval) {
         if (!is_weak) {
-            if (get_debug()) fprintf(get_debug(), "    could not find symbol in master symbol table\n");
+            trace <<"    could not find symbol in master symbol table\n";
             throw Exception(symbol_name + " not defined in master symbol table");
         }
         return NULL; /*weak symbol with no definition*/
@@ -828,25 +834,24 @@ BinaryLoaderElf::fixup_info_reloc_symbol(SgAsmElfRelocEntry *reloc, const Symver
 rose_addr_t
 BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSection **section_p, rose_addr_t *adj_p)
 {
+    Stream trace(mlog[TRACE]);
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
     SgAsmGenericSection *section = find_section_by_preferred_va(header, reloc->get_r_offset());
     if (!section) {
-        if (get_debug())
-            fprintf(get_debug(), "    target: no suitable section at preferred va 0x%08"PRIx64"\n", reloc->get_r_offset());
+        trace <<"    target: no suitable section at preferred va " <<StringUtility::addrToString(reloc->get_r_offset()) <<"\n";
         throw Exception("reloc target " + StringUtility::addrToString(reloc->get_r_offset()) + " is not mapped");
     }
             
     rose_addr_t target_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
     rose_addr_t target_va = reloc->get_r_offset() + target_adj;
 
-    if (get_debug()) {
-        fprintf(get_debug(), "    target: file=\"%s\"\n", header->get_file()->get_name().c_str());
-        fprintf(get_debug(), "            section=[%d] \"%s\"\n",
-                section->get_id(), section->get_name()->get_string(true).c_str());
-        fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
-                section->get_mapped_preferred_va(), section->get_mapped_actual_va());
-        fprintf(get_debug(), "            va 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                reloc->get_r_offset(), target_adj, target_va);
+    if (trace) {
+        trace <<"    target: file=\"" <<header->get_file()->get_name() <<"\"\n";
+        trace <<"            section=[" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"\n";
+        trace <<"            preferred=" <<StringUtility::addrToString(section->get_mapped_preferred_va())
+              <<", actual=" <<StringUtility::addrToString(section->get_mapped_actual_va()) <<"\n";
+        trace <<"            va " <<StringUtility::addrToString(reloc->get_r_offset()) <<" + adjustment "
+              <<StringUtility::addrToString(target_adj) <<" = " <<StringUtility::addrToString(target_va) <<"\n";
     }
 
     if (section_p)
@@ -859,9 +864,10 @@ BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSec
 rose_addr_t
 BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSection **section_p, rose_addr_t *adj_p)
 {
+    Stream trace(mlog[TRACE]);
+
     if (!symbol) {
-        if (get_debug())
-            fprintf(get_debug(), "    symbol: no symbol; possibly weak with no definition\n");
+        trace <<"    symbol: no symbol; possibly weak with no definition\n";
         if (section_p)
             *section_p = NULL;
         if (adj_p)
@@ -872,21 +878,20 @@ BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSectio
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(symbol);
     SgAsmGenericSection *section = find_section_by_preferred_va(header, symbol->get_value());
     if (!section) {
-        if (get_debug())
-            fprintf(get_debug(), "    symbol: no suitable section at preferred va 0x%08"PRIx64"\n", symbol->get_value());
+        trace <<"    symbol: no suitable section at preferred va " <<StringUtility::addrToString(symbol->get_value()) <<"\n";
         throw Exception("symbol value " + StringUtility::addrToString(symbol->get_value()) + " is not mapped");
     }
 
     rose_addr_t symbol_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
     rose_addr_t symbol_va = symbol->get_value() + symbol_adj;
-    if (get_debug()) {
-        fprintf(get_debug(), "    symbol: file=\"%s\"\n", header->get_file()->get_name().c_str());
-        fprintf(get_debug(), "            section=[%d] \"%s\"\n",
-                section->get_id(), section->get_name()->get_string(true).c_str());
-        fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
-                section->get_mapped_preferred_va(), section->get_mapped_actual_va());
-        fprintf(get_debug(), "            value 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                symbol->get_value(), symbol_adj, symbol_va);
+    if (trace) {
+        trace <<"    symbol: file=\"" <<header->get_file()->get_name() <<"\"\n";
+        trace <<"            section=[" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"\n";
+        trace <<"            preferred=" <<StringUtility::addrToString(section->get_mapped_preferred_va())
+              <<", actual=" <<StringUtility::addrToString(section->get_mapped_actual_va()) <<"\n";
+        trace <<"            value " <<StringUtility::addrToString(symbol->get_value())
+              <<" + adjustment " <<StringUtility::addrToString(symbol_adj)
+              <<" = " <<StringUtility::addrToString(symbol_va) <<"\n";
     }
 
     if (section_p)
@@ -899,29 +904,28 @@ BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSectio
 rose_addr_t
 BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, MemoryMap *memmap, size_t nbytes)
 {
+    Stream trace(mlog[TRACE]);
+
     SgAsmElfRelocSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
-    ROSE_ASSERT(reloc_section!=NULL);
+    ASSERT_not_null(reloc_section);
     if (0==nbytes)
         nbytes = reloc_section->get_header()->get_word_size();
 
     if (reloc_section->get_uses_addend()) {
-        if (get_debug())
-            fprintf(get_debug(), "    addend from reloc is 0x%08"PRIx64"\n", reloc->get_r_addend());
+        trace <<"    addend from reloc is " <<StringUtility::addrToString(reloc->get_r_addend()) <<"\n";
         return reloc->get_r_addend();
     }
 
-    if (get_debug())
-        fprintf(get_debug(), "    reading %zu-byte addend from memory at 0x%08"PRIx64"\n", nbytes, target_va);
+    trace <<"    reading " <<nbytes <<"-byte addend from memory at " <<StringUtility::addrToString(target_va) <<"\n";
     rose_addr_t retval = 0;
     ByteOrder::Endianness sex = reloc_section->get_header()->get_sex();
-    ROSE_ASSERT(memmap!=0);
+    ASSERT_not_null(memmap);
     switch (nbytes) {
         case 4: {
             uint32_t guest;
             size_t nread = memmap->read(&guest, target_va, sizeof guest);
             if (nread<sizeof guest) {
-                if (get_debug())
-                    fprintf(get_debug(), "    short read of relocation addend at 0x%08"PRIx64"\n", target_va);
+                trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
             }
             retval = ByteOrder::disk_to_host(sex, guest);
@@ -931,19 +935,17 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
             uint64_t guest;
             size_t nread = memmap->read(&guest, target_va, sizeof guest);
             if (nread<sizeof guest) {
-                if (get_debug())
-                    fprintf(get_debug(), "    short read of relocation addend at 0x%08"PRIx64"\n", target_va);
+                trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
             }
             retval = ByteOrder::disk_to_host(sex, guest);
             break;
         }
         default:
-            ROSE_ASSERT(!"not implemented");
+            ASSERT_not_implemented("only 4 and 8 byte sizes are handled");
     }
 
-    if (get_debug())
-        fprintf(get_debug(), "    addend from memory is 0x%08"PRIx64"\n", retval);
+    trace <<"    addend from memory is " <<StringUtility::addrToString(retval) <<"\n";
     return retval;
 }
 
@@ -987,18 +989,18 @@ BinaryLoaderElf::fixup_info_expr(const std::string &expression, SgAsmElfRelocEnt
                 break;
             }
             case '+': {                                 /* Addition of two top stack items */
-                ROSE_ASSERT(stack.size()>=2);
+                ASSERT_require(stack.size()>=2);
                 rose_addr_t opand1 = stack.back(); stack.pop_back();
                 rose_addr_t opand2 = stack.back(); stack.pop_back();
                 stack.push_back(opand1 + opand2);
                 break;
             }
             default:
-                ROSE_ASSERT(!"not implemented");
+                ASSERT_not_implemented(std::string("fixup info expression = '") + expression[i] + "'");
         }
     }
 
-    ROSE_ASSERT(1==stack.size());
+    ASSERT_require(1==stack.size());
     return stack[0];
 }
 
@@ -1010,8 +1012,10 @@ void
 BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, MemoryMap *memmap,
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
+    Stream trace(mlog[TRACE]);
+
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
-    assert(header);
+    ASSERT_not_null(header);
     ByteOrder::Endianness sex = header->get_sex();
 
     if (0==target_va)
@@ -1019,18 +1023,15 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
     if (0==nbytes)
         nbytes = header->get_word_size();
 
-    if (get_debug()) {
-        fprintf(get_debug(), "    writing 0x%08"PRIx64" (%zu byte%s) to address 0x%08"PRIx64"\n",
-                value, nbytes, 1==nbytes?"":"s", target_va);
-    }
+    trace <<"    writing " <<StringUtility::addrToString(value) <<" (" <<StringUtility::plural(nbytes, "bytes") <<")"
+          <<" to address " <<StringUtility::addrToString(target_va) <<"\n";
     switch (nbytes) {
         case 4: {
             uint32_t guest;
             ByteOrder::host_to_disk(sex, value, &guest);
             size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
-                if (get_debug())
-                    fprintf(get_debug(), "    short write (only %zu byte%s)\n", nwrite, 1==nwrite?"":"s");
+                trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
                 throw Exception("short write at " + StringUtility::addrToString(target_va));
             }
             break;
@@ -1040,14 +1041,13 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
             ByteOrder::host_to_disk(sex, value, &guest);
             size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
-                if (get_debug())
-                    fprintf(get_debug(), "    short write (only %zu byte%s)\n", nwrite, 1==nwrite?"":"s");
+                trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
                 throw Exception("short write at " + StringUtility::addrToString(target_va));
             }
             break;
         }
         default:
-            ROSE_ASSERT(!"not implemented");
+            ASSERT_not_implemented("only 4 and 8 byte sizes are implemented");
     }
 }
 
@@ -1055,34 +1055,29 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
 void
 BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
+    Stream trace(mlog[TRACE]);
     SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
     rose_addr_t target_va = fixup_info_target_va(reloc);
     rose_addr_t symbol_va = fixup_info_symbol_va(symbol);
     size_t symbol_sz = symbol->get_size();
     
-    if (get_debug()) {
-        fprintf(get_debug(), "    copying %zu byte%s from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
-                symbol_sz, 1==symbol_sz?"":"s", symbol_va, target_va);
-    }
+    trace <<"    copying " <<StringUtility::plural(symbol_sz, "bytes")
+          <<" from " <<StringUtility::addrToString(symbol_va) <<" to " <<StringUtility::addrToString(target_va) <<"\n";
     while (symbol_sz>0) {
         uint8_t buf[4096];
         size_t nbytes = std::min(symbol_sz, sizeof buf);
 
         size_t nread = memmap->read(buf, symbol_va, nbytes);
         if (nread<nbytes) {
-            if (get_debug()) {
-                fprintf(get_debug(), "    short read (only %zu byte%s but expected %zu) at 0x%08"PRIx64"\n",
-                        nread, 1==nread?"":"s", nbytes, symbol_va);
-            }
+            trace <<"    short read (only " <<StringUtility::plural(nread, "bytes")
+                  <<" but expected " <<nbytes <<") at " <<StringUtility::addrToString(symbol_va) <<"\n";
             throw Exception("short read at " + StringUtility::addrToString(symbol_va));
         }
 
         size_t nwrite = memmap->write(buf, target_va, nbytes);
         if (nwrite<nbytes) {
-            if (get_debug()) {
-                fprintf(get_debug(), "    short write (only %zu byte%s but expected %zu) at 0x%08"PRIx64"\n",
-                        nwrite, 1==nwrite?"":"s", nbytes, target_va);
-            }
+            trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes")
+                  <<" but expected " <<nbytes <<" at " <<StringUtility::addrToString(target_va) <<"\n";
             throw Exception("short write at " + StringUtility::addrToString(target_va));
         }
 
@@ -1157,23 +1152,22 @@ Thus, we're performing
 void
 BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
 {
-    ROSE_ASSERT(NULL != reloc);
+    Stream trace(mlog[TRACE]);
+    ASSERT_not_null2(reloc, "ELF relocation entry");
     SgAsmElfRelocSection *parentSection = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
-    ROSE_ASSERT(NULL != parentSection); // could fix to just use getEnclosingNode
-    ROSE_ASSERT(NULL != memmap);
+    ASSERT_not_null2(parentSection, "section containing ELF relocation entry");
+    ASSERT_not_null2(memmap, "memory map");
     SgAsmGenericHeader* header = parentSection->get_header();
-    ROSE_ASSERT(NULL != header);
+    ASSERT_not_null2(header, "ELF file header for relocation entry");
     SgAsmGenericHeader::InsSetArchitecture isa = header->get_isa();
     
     SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
-    ROSE_ASSERT(NULL != linkedSymbolSection);
-    assert(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
+    ASSERT_not_null2(linkedSymbolSection, "linked ELF section for relocation entry");
+    ASSERT_require(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
     SgAsmElfSymbol* relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
-    ROSE_ASSERT(NULL != relocSymbol);
-    if (get_debug()) {
-        fprintf(get_debug(), "  0x%08"PRIx64" %16s for \"%s\"\n",
-                reloc->get_r_offset(), reloc->reloc_name().c_str(), relocSymbol->get_name()->get_string(true).c_str());
-    }
+    ASSERT_not_null2(relocSymbol, "relocation symbol");
+    trace <<"  " <<StringUtility::addrToString(reloc->get_r_offset()) <<" " <<reloc->reloc_name()
+          <<" for \"" <<relocSymbol->get_name()->get_string(true) <<"\"\n";
 
     rose_addr_t target_va = 0;
     switch (isa & SgAsmGenericHeader::ISA_FAMILY_MASK) {
@@ -1219,14 +1213,12 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 case SgAsmElfRelocEntry::R_386_TLS_DTPMOD32:
                 case SgAsmElfRelocEntry::R_386_TLS_DTPOFF32:
                 case SgAsmElfRelocEntry::R_386_TLS_TPOFF32: {
-                    if (get_debug())
-                        fprintf(get_debug(), "    thread local storage not supported\n");
+                    trace <<"    thread local storage not supported\n";
                     throw Exception("relocation " + reloc->reloc_name() + " not supported");
                     break;
                 }
                 default: {
-                    if (get_debug())
-                        fprintf(get_debug(), "    not implemented\n");
+                    trace <<"    not implemented\n";
                     throw Exception("relocation " + reloc->reloc_name() + " not implemented");
                     break;
                 }
@@ -1245,7 +1237,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                     /* FIXME: Not sure if this is correct.  Are both the addend and result only 32 bits? [RPM 2010-09-16] */
                     rose_addr_t value = fixup_info_expr("4SA+", reloc, resolver, memmap, &target_va);
                     if (value > 0xffffffff) {
-                        if (get_debug()) fprintf(get_debug(), "    value exceeds 32-bit range\n");
+                        trace <<"    value exceeds 32-bit range\n";
                         throw Exception("value exceeds 32-bit range");
                     }
                     fixup_apply(value, reloc, memmap, target_va, 4);
@@ -1270,16 +1262,14 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                     break;
                 }
                 default:
-                    if (get_debug())
-                        fprintf(get_debug(), "    not implemented\n");
+                    trace <<"    not implemented\n";
                     throw Exception("relocation " + reloc->reloc_name() + " not implemented");
                     break;
             }
             break;
 
         default:
-            if (get_debug())
-                fprintf(get_debug(), "    not implemented\n");
+            trace <<"    not implemented\n";
             throw Exception("relocation " + reloc->reloc_name() + " not implemented");
     }
 }

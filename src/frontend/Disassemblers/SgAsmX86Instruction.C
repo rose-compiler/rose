@@ -292,7 +292,7 @@ Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
     using namespace BinaryAnalysis::InstructionSemantics;
-    Stream debug(rose::Diagnostics::log[DEBUG]);
+    Stream debug(mlog[DEBUG]);
 
     if (debug) {
         debug <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())

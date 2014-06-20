@@ -282,7 +282,7 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
 SgAsmArmInstruction *
 DisassemblerArm::decodeMediaInstruction() const
 {
-    log[DEBUG] << "ARM media instructions not supported: " << StringUtility::intToHex(insn) << "\n";
+    mlog[DEBUG] << "ARM media instructions not supported: " << StringUtility::intToHex(insn) << "\n";
     throw ExceptionArm("media instruction not supported", this);
 }
 
@@ -575,7 +575,7 @@ DisassemblerArm::disassemble()
             if ((insn & 0x0F000000U) == 0x0F000000U) {
               return MAKE_INSN1(swi, 3, SageBuilderAsm::makeDWordValue(insn & 0x00FFFFFFU));
             } else {
-                log[DEBUG] << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << "\n";
+                mlog[DEBUG] << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << "\n";
                 throw ExceptionArm("coprocessor not supported", this, 26);
             }
           }
@@ -597,7 +597,7 @@ DisassemblerArm::disassemble()
             }
           }
           default: {
-              log[DEBUG] << "Cannot handle too many unconditional instructions: " << StringUtility::intToHex(insn) << "\n";
+              mlog[DEBUG] << "Cannot handle too many unconditional instructions: " << StringUtility::intToHex(insn) << "\n";
               throw ExceptionArm("too many unconditional instructions", this, 32);
           }
         }
