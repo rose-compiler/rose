@@ -26,11 +26,10 @@ SgAsmM68kInstruction::terminates_basic_block()
         case m68k_bvs:
         case m68k_bra:
         case m68k_bsr:
-        case m68k_halt:
         case m68k_illegal:
         case m68k_jmp:
         case m68k_jsr:
-        case m68k_rte:
+        case m68k_rtr:
         case m68k_rts:
         case m68k_trap:
             return true;
@@ -71,7 +70,7 @@ SgAsmM68kInstruction::is_function_return(const std::vector<SgAsmInstruction*>& i
     SgAsmM68kInstruction *last = isSgAsmM68kInstruction(insns.back());
     if (!last)
         return false;
-    if (last->get_kind()==m68k_rts || last->get_kind()==m68k_rte)
+    if (last->get_kind()==m68k_rts || last->get_kind()==m68k_rtr)
         return true;
     return false;
 }
@@ -89,10 +88,10 @@ SgAsmM68kInstruction::get_successors(bool *complete)
     *complete = true;
 
     switch (get_kind()) {
-        case m68k_halt: {
-            // Instructions having no successors
-            break;
-        }
+        //case m68k_halt: {
+        //    // Instructions having no successors
+        //    break;
+        //}
 
         case m68k_unknown_instruction:
         case m68k_illegal:
@@ -102,7 +101,7 @@ SgAsmM68kInstruction::get_successors(bool *complete)
             break;
         }
 
-        case m68k_rte:
+        case m68k_rtr:
         case m68k_rts: {
             // Instructions that have a single successor that is unknown
             *complete = false;

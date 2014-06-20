@@ -112,17 +112,6 @@ public:
      *  which is either a 5-bit unsigned integer or a data register number. This is used by various bit field instructions. */
     ExpressionPair makeOffsetWidthPair(unsigned extension_word);
 
-#if 0
-    /** Determines the effective address mode for a 6-bit modreg value. The @p nbits is used only to distinguish between
-     *  absolute short addressing mode (m68k_eam_absw) and absolute long addressing mode (m68k_eam_absl). */
-    M68kEffectiveAddressMode effectiveAddressMode(unsigned modreg, size_t nbits);
-#endif
-
-    /** Number of instruction extension words needed for the specified effective address mode.  The @p nbits is used only to
-     *  distinguish between absolute short addressing mode (m68k_eam_absw) and absolute long addressing mode
-     *  (m68k_eam_absl). */
-    size_t nExtensionWords(M68kEffectiveAddressMode, size_t nbits);
-
     /** Build an instruction. */
     SgAsmM68kInstruction *makeInstruction(M68kInstructionKind, const std::string &mnemonic,
                                           SgAsmExpression *arg0=NULL, SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
@@ -135,7 +124,7 @@ private:
     void init();
     const MemoryMap *map;                       /**< Map from which to read instruction words. */
     rose_addr_t insn_va;                        /**< Address of instruction. */
-    uint16_t    iwords[7];                      /**< Instruction words. */
+    uint16_t    iwords[11];                     /**< Instruction words. */
     size_t      niwords;                        /**< Number of instruction words read. */
     size_t      niwords_used;                   /**< High water number of instruction words used by instruction_word(). */
     typedef std::list<M68k*> IdisTable;
