@@ -8,6 +8,7 @@ include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/transformationTracking
   ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser
 #-------------------------------------------------------------------------------
 # TOO1 (3/6/2014): Add Java includes for sageInterface.C: jni.h, jni_md.h, ecj.h
@@ -16,7 +17,8 @@ include_directories(
   ${JAVA_INCLUDE_PATH2}
   ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
 # DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
-  ${CMAKE_SOURCE_DIR}/src/midend/astMatching)
+  ${CMAKE_SOURCE_DIR}/src/midend/astMatching
+  ${CMAKE_SOURCE_DIR}/src/util)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -129,10 +131,20 @@ set( STORAGECLASSES_SRC
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupRoff.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
      )
 add_library(roseutil SHARED ${rose_util_src})
+set_target_properties(roseutil PROPERTIES DEFINE_SYMBOL "SAWYER_DO_EXPORTS")
 if (WIN32)
-  target_link_libraries(roseutil shlwapi.lib)
+  target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
 set_target_properties(roseutil PROPERTIES
   DEFINE_SYMBOL ROSE_UTIL_EXPORTS
@@ -908,6 +920,11 @@ set(failsafe_SRC
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
  )
 
+set(trans_tracking_SRC
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/transformationTracking/transformationTracking.cpp
+ )
+
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -968,6 +985,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
  ${failsafe_SRC}
+ ${trans_tracking_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}

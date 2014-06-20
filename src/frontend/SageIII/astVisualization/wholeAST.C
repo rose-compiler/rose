@@ -5,6 +5,7 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+#include "transformationTracking.h"
 #include "wholeAST.h"
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -1509,6 +1510,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+          // Liao, 5/8/2014, display unique ID if set (non-zero)
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1611,6 +1616,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                ROSE_ASSERT(isSgCastExp(node) != NULL);
              }
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1732,6 +1740,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           labelWithSourceCode += unparsedType + string("\\n   ");
 #endif
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1939,6 +1950,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1952,6 +1966,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                                   string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
          // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
  //           break;
+ 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
             NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
             addNode(graphNode);
           }
@@ -1966,8 +1984,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           string labelWithSourceCode;
 
           labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
-          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
 #endif
@@ -2131,7 +2152,6 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           printf ("Warning: In wholeAST.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
 #endif
         }
-
 
 
 #if 0
