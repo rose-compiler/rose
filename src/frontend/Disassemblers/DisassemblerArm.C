@@ -591,7 +591,7 @@ DisassemblerArm::disassemble()
             if (bit16) {
               return MAKE_INSN1(setend, 6, SageBuilderAsm::makeByteValue(bit9));
             } else {
-              ROSE_ASSERT (!"CPS not supported");
+                throw ExceptionArm("CPS not supported", this);
             }
           }
           default: {
