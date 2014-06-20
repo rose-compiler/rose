@@ -46,6 +46,7 @@ libroseutil_la_LIBADD = \
 include_HEADERS =				\
 	compilationFileDatabase.h		\
 	FormatRestorer.h			\
+	GraphUtility.h				\
 	Map.h					\
 	ParallelSort.h                          \
 	processSupport.h			\
@@ -53,10 +54,51 @@ include_HEADERS =				\
 	rose_paths.h				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
-	setup.h					\
+	setup.h						\
 	Stopwatch.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
+
+########################################################################################################################
+# rules for the sawyer subdirectory
+
+noinst_LTLIBRARIES += libroseSawyer.la
+libroseSawyer_la_SOURCES =			\
+	sawyer/Assert.C				\
+	sawyer/CommandLine.C			\
+	sawyer/Markup.C				\
+	sawyer/MarkupRoff.C			\
+	sawyer/Message.C			\
+	sawyer/ProgressBar.C			\
+	sawyer/Sawyer.C				\
+	sawyer/useHeaders.C
+nobase_include_HEADERS   =			\
+	sawyer/Assert.h				\
+	sawyer/BitVector.h			\
+	sawyer/BitVectorSupport.h		\
+	sawyer/CommandLine.h			\
+	sawyer/DefaultAllocator.h		\
+	sawyer/Graph.h				\
+	sawyer/GraphBoost.h			\
+	sawyer/IndexedList.h			\
+	sawyer/Interval.h			\
+	sawyer/IntervalMap.h			\
+	sawyer/IntervalSet.h			\
+	sawyer/Map.h				\
+	sawyer/Markup.h				\
+	sawyer/MarkupRoff.h			\
+	sawyer/Message.h			\
+	sawyer/Optional.h			\
+	sawyer/PoolAllocator.h			\
+	sawyer/ProgressBar.h			\
+	sawyer/Sawyer.h				\
+	sawyer/SharedPointer.h			\
+	sawyer/WarningsOff.h			\
+	sawyer/WarningsRestore.h
+EXTRA_DIST += sawyer/CMakeLists.txt
+
+########################################################################################################################
+# automake boilerplate
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
@@ -64,11 +106,3 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB
-
-
-
-
-
-
-
-
