@@ -176,6 +176,15 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (9/4/2013): Added support for compund literals.
           case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
 
+       // DQ (4/27/2014): This case appears in a snippet test code (testJava3a) as a result 
+       // of something added to support the new shared memory DSL.  Not clear what this is,
+       // I will ignore it for the moment as part of debugging this larger issue.
+          case JAVA_TYPE_EXPRESSION: 
+             {
+               printf ("Warning: unparseLanguageSpecificExpression(): case SgJavaTypeExpression ignored \n");
+               break;
+             }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -250,6 +259,10 @@ void
 Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info)
    {
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
+
+#if 0
+     printf ("In unparseTemplateName(): templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+#endif
 
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
 
@@ -480,11 +493,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
           unp->u_exprStmt->curprint(" > ");
         }
+       else
+        {
+       // DQ (5/26/2014): In the case of a template instantiation with empty template argument list, output
+       // a " " to be consistant with the behavior when there is a non-empty template argument list.
+       // This is a better fix for the template issue that Robb pointed out and that was fixed last week.
+          unp->u_exprStmt->curprint(" ");
+        }
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
@@ -1152,7 +1173,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // DQ (7/3/2013): Added initial support for varadic template arguments.
             // Using an expression for now, but we might need something else.
                ROSE_ASSERT (templateArgument->get_expression() != NULL);
-#if 1
+#if 0
                printf ("In unparseTemplateArgument(): Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);

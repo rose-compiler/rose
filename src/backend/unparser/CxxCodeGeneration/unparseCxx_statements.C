@@ -4421,6 +4421,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
 #if 1
+#if 0
+                    printf ("Using ninfo_for_type.set_PrintName(); to support unparsing of type \n");
+#endif
                  // This is an alternative to permit the unparsing of the type to control the name output for types.
                  // But it would have to be uniform that all the pieces of the first part of the type would have to 
                  // be output.  E.g. "*" in "*X".
@@ -4474,6 +4477,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ROSE_ASSERT(ninfo_for_type.isTypeSecondPart() == false);
 #if 0
                     printf ("##### This works for test2013_156.C and not quite for test2013_158.C, but it should be using ninfo_for_type so that the name qualification info is passed properly! \n");
+                    printf ("   --- tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
                  // DQ (5/7/2013): This is an attempt to fix test2013_156.C.
                  // DQ (7/28/2012): Output the type if this is not associated with a declaration list from a previous declaration.
@@ -4495,6 +4499,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 #if 0
                curprint("\n/* END: output using unp->u_type->unparseType (1st part) */ \n");
+#endif
+#if 0
+               curprint("/* END: output using unp->u_type->unparseType (1st part) */");
 #endif
 #if 0
             // DQ (12/31/2013): review this in light of change to support type attributres directly.
@@ -4600,6 +4607,14 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // curprint(tmp_name.str());
                     if (isAnonymousName == false)
                        {
+#if 0
+                      // DQ (5/26/2014): The fix to output a space in unparseTemplateArgumentList() when we have an empty template argument list means
+                      // that we no longer require this space to be output here (which was a problem for more general non template test codes that
+                      // were using diff against a gold standard for there tests (in the ROSE regression tests).
+                      // DQ (5/17/2014): With fixes to the determination of template declarations and template instantiation declarations, test2005_163.C
+                      // now requires  whitespace between the variable's type and the variable's name.
+                         curprint(" ");
+#endif
                          curprint(tmp_name.str());
                        }
 
@@ -4797,7 +4812,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
             else
              {
-            // DQ (7/16/2012): Added new support for maultiple variables in the same declaration, output the name of the variable...
+            // DQ (7/16/2012): Added new support for multiple variables in the same declaration, output the name of the variable...
                tmp_name = decl_item->get_name();
                curprint ( tmp_name.str());
              }
@@ -6876,6 +6891,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->u_type->unparseType(btype, ninfo_for_type);
              }
 #else
+
+#error "DEAD CODE!"
+
           unp->u_type->unparseType(btype, ninfo_for_type);
 #endif
 
@@ -6892,6 +6910,15 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (10/7/2004): Moved the output of the name to before the output of the second part of the type
        // to handle the case of "typedef A* A_Type[10];" (see test2004_104.C).
+
+#if 0
+       // DQ (5/26/2014): The fix to output a space in unparseTemplateArgumentList() when we have an empty template argument list means
+       // that we no longer require this space to be output here (which was a problem for more general non template test codes that
+       // were using diff against a gold standard for there tests (in the ROSE regression tests).
+       // DQ (5/17/2014): With fixes to the determination of template declarations and template instantiation declarations, test2004_145.C
+       // (and associated test code test2014_58.C) now require  whitespace between the typedef's base type and the typedef's name.
+          curprint(" ");
+#endif
 
        // The name of the type (X, in the following example) has to appear after the 
        // declaration. Example: struct { int a; } X;

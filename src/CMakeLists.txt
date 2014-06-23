@@ -8,6 +8,7 @@ include_directories(
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
   ${CMAKE_BINARY_DIR}/src/roseSupport
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/transformationTracking
   ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser
 #-------------------------------------------------------------------------------
 # TOO1 (3/6/2014): Add Java includes for sageInterface.C: jni.h, jni_md.h, ecj.h
@@ -17,7 +18,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
 # DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
   ${CMAKE_SOURCE_DIR}/src/midend/astMatching
-  ${CMAKE_SOURCE_DIR}/src/util/sawyer)
+  ${CMAKE_SOURCE_DIR}/src/util)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -137,14 +138,14 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
-      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupRoff.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupPod.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
-  target_link_libraries(roseutil shlwapi.lib)
+  target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
 set_target_properties(roseutil PROPERTIES
   DEFINE_SYMBOL ROSE_UTIL_EXPORTS
@@ -450,11 +451,14 @@ set( midend_src
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
  ${CMAKE_SOURCE_DIR}/src/midend/astSnippet/Snippet.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/AbstractLocation.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDataFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCallingConvention.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryReturnValueUsed.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryTaintedFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/DwarfLineMapper.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
@@ -518,6 +522,14 @@ set( libastprocessing_SRC  ${libastprocessing_SRC}
    )
 endif (NOT WIN32)
 
+set(libastmatching_SRC
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/AstMatching.C
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherlexer.ll
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherparser.yy
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/MatchOperation.C
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/RoseAst.C
+   ${CMAKE_SOURCE_DIR}/src/midend/astMatching/matcherparser.C
+)
 
 set( midend_util_src
 ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface/CPPAstInterface.C
@@ -553,6 +565,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DataFlowSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherPowerpc.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherX86.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
@@ -913,6 +926,11 @@ set(failsafe_SRC
   ${CMAKE_SOURCE_DIR}/src/roseExtensions/failSafe/failSafePragma.C 
  )
 
+set(trans_tracking_SRC
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/transformationTracking/transformationTracking.cpp
+ )
+
+
 set(mstl_SRC
   ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
 if (NOT enable-internalFrontendDevelopment)
@@ -973,6 +991,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
  ${failsafe_SRC}
+ ${trans_tracking_SRC}
  ${binaryFrontend_SRC}
  ${AST_REWRITE_SRC}
  ${mstl_SRC}

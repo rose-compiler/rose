@@ -6216,6 +6216,9 @@ HEADER_TEMPLATE_PARAMETER_START
           static bool is_matching_nontype (const SgTemplateParameter & X, const SgTemplateParameter & Y);
           static bool is_matching_template(const SgTemplateParameter & X, const SgTemplateParameter & Y);
 
+       // DQ (5/19/2014): This is added to symetry in the functions that are template on either SgTemplateArgument or SgTemplateParameter.
+          static bool is_matching_template_pack_expansion (const SgTemplateParameter & X, const SgTemplateParameter & Y);
+
           static bool is_matching_kind    (const SgTemplateParameter & X, const SgTemplateParameter & Y);
 
 HEADER_TEMPLATE_PARAMETER_END
@@ -6273,6 +6276,9 @@ HEADER_TEMPLATE_ARGUMENT_START
           static bool is_matching_type    (const SgTemplateArgument & X, const SgTemplateArgument & Y);
           static bool is_matching_nontype (const SgTemplateArgument & X, const SgTemplateArgument & Y);
           static bool is_matching_template(const SgTemplateArgument & X, const SgTemplateArgument & Y);
+
+       // DQ (5/19/2014): This is added to symetry in the functions that are template on either SgTemplateArgument or SgTemplateParameter.
+          static bool is_matching_template_pack_expansion (const SgTemplateArgument & X, const SgTemplateArgument & Y);
 
           static bool is_matching_kind    (const SgTemplateArgument & X, const SgTemplateArgument & Y);
 
@@ -8185,7 +8191,51 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                           else
                                            {
                                           // ROSE_ASSERT(templateArgumentLocal->get_argumentType() != templateArgumentFromSymbol->get_argumentType());
-                                             ROSE_ASSERT(T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == false);
+                                          // DQ (5/19/2014): Output more debugging information.
+                                             if (T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
+                                                {
+#if 0
+                                                  printf ("Error: templateParameterOrArgumentLocal      = %p = %s \n",templateParameterOrArgumentLocal,templateParameterOrArgumentLocal->class_name().c_str());
+                                                  printf ("Error: templateParameterOrArgumentFromSymbol = %p = %s \n",templateParameterOrArgumentFromSymbol,templateParameterOrArgumentFromSymbol->class_name().c_str());
+#endif
+                                                  SgTemplateArgument* templateArgumentLocal        = isSgTemplateArgument(templateParameterOrArgumentLocal);
+                                                  SgTemplateArgument* templateArgumentFromSymbol   = isSgTemplateArgument(templateParameterOrArgumentFromSymbol);
+                                                  SgTemplateParameter* templateParameterLocal      = isSgTemplateParameter(templateParameterOrArgumentLocal);
+                                                  SgTemplateParameter* templateParameterFromSymbol = isSgTemplateParameter(templateParameterOrArgumentFromSymbol);
+                                                  if (templateArgumentLocal != NULL)
+                                                     {
+                                                       ROSE_ASSERT(templateArgumentFromSymbol != NULL);
+#if 0
+                                                       printf ("templateArgumentLocal->get_argumentType()      = %d \n",templateArgumentLocal->get_argumentType());
+                                                       printf ("templateArgumentFromSymbol->get_argumentType() = %d \n",templateArgumentFromSymbol->get_argumentType());
+#endif
+                                                     }
+                                                    else
+                                                     {
+                                                       ROSE_ASSERT(templateParameterLocal != NULL);
+                                                       ROSE_ASSERT(templateParameterFromSymbol != NULL);
+#if 0
+                                                       printf ("templateParameterLocal->get_parameterType()      = %d \n",templateParameterLocal->get_parameterType());
+                                                       printf ("templateParameterFromSymbol->get_parameterType() = %d \n",templateParameterFromSymbol->get_parameterType());
+#endif
+                                                     }
+                                                }
+
+                                          // DQ (5/19/2014): /include/boost/chrono/duration.hpp contains a new kind of template argument that maps to what EDG calls tak_start_of_pack_expansion.
+                                          // This support is not yet implemented in ROSE (version 1.50 of Boost and version 4.9 of EDG are required to detect this).
+                                          // returning "isTemplateType = false;" for now.
+                                          // ROSE_ASSERT(T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == false);
+                                             if (T::is_matching_template_pack_expansion(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
+                                                {
+#if 0
+                                                  printf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): This is the case of a template_pack_expansion: not yet supported (edg calls this tak_start_of_pack_expansion) \n");
+#endif
+                                                }
+                                               else
+                                                {
+                                                  ROSE_ASSERT(T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == false);
+                                                }
+
                                           // These are not the same type: so return false.
                                              isTemplateType = false;
                                            }
@@ -17369,6 +17419,16 @@ SgTemplateParameter::is_matching_template(const SgTemplateParameter & X, const S
      return (X.get_parameterType() == SgTemplateParameter::template_parameter) && (X.get_parameterType() == Y.get_parameterType());
    }
 
+// DQ (5/19/2014): This is added to symetry in the functions that are template on either SgTemplateArgument or SgTemplateParameter.
+bool
+SgTemplateParameter::is_matching_template_pack_expansion (const SgTemplateParameter & X, const SgTemplateParameter & Y)
+   {
+  // There is not associated value for the SgTemplateParameter enums, so this function should always return SgTemplateParameter::is_matching_kind().
+  // return true;
+  // return (X.get_parameterType() == Y.get_parameterType());
+     return is_matching_kind(X,Y);
+   }
+
 bool
 SgTemplateParameter::is_matching_kind (const SgTemplateParameter & X, const SgTemplateParameter & Y)
    {
@@ -17676,14 +17736,15 @@ SgTemplateArgument::get_mangled_name (void) const
                break;
              }
 
+       // DQ (5/19/2014): Added support for varadic template argument.
           case SgTemplateArgument::start_of_pack_expansion_argument:
              {
             // DQ (7/4/2013): Added support for additional template argument type.
                const SgExpression* expr = get_expression();
                assert(expr != NULL);
-
+#if 0
                printf ("WARNING: In SgTemplateArgument::get_mangled_name(): handling of mangled name for varadic template argument is incomplete! \n");
-
+#endif
             // mangled_name << mangleExpression(expr);
                mangled_name << "varadic_template_argument";
                break;
@@ -17906,6 +17967,13 @@ bool
 SgTemplateArgument::is_matching_template(const SgTemplateArgument & X, const SgTemplateArgument & Y)
    {
      return (X.get_argumentType() == SgTemplateArgument::template_template_argument) && (X.get_argumentType() == Y.get_argumentType());
+   }
+
+// DQ (5/19/2014): Added support for matching on this kind of template argument (only applies to SgTemplateArgument and not SgTemplateParemeter).
+bool
+SgTemplateArgument::is_matching_template_pack_expansion (const SgTemplateArgument & X, const SgTemplateArgument & Y)
+   {
+     return (X.get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument) && (X.get_argumentType() == Y.get_argumentType());
    }
 
 bool

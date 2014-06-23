@@ -11,7 +11,8 @@ esac
 # problem if it is not present (removes dependence within ROSE on dot).
 if (`dot -V >& /dev/null`) then
    echo "Found dot program in user's path, generating postscript file ..."
-   dot -v -Gratio=compact -Gfontname="Helvetica" $input -Tps2 -o $output.ps_temp -Gordering="out" -Gsize="7.5,10"
+ # dot -v -Gratio=compact -Gfontname="Helvetica" $input -Tps2 -o $output.ps_temp -Gordering="out" -Gsize="7.5,10"
+   dot -Gratio=compact -Gfontname="Helvetica" $input -Tps2 -o $output.ps_temp -Gordering="out" -Gsize="7.5,10"
    ps2pdf $output.ps_temp $output
    rm -f $output.ps_temp
 else

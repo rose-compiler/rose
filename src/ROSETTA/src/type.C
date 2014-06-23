@@ -205,19 +205,31 @@ Grammar::setUpTypes ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // MK: Type.excludeDataPrototype ("int","substitutedForTemplateParam","= 0");
 
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to reference type
+  // Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to pointer type
+  // Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
   // Reference to modifier nodes (I forget the purpose of this)
+  // Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
      Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Reference to typedef type \attention{(need to check that these are fully resolved within mapping from EDG)}
 #if 1
+  // DQ (4/23/2014): I would like to make this just NO_TRAVERSAL so that we can debug the type traversal through base_type data members.
+  // Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
      Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
   // #else
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
@@ -519,8 +531,15 @@ Grammar::setUpTypes ()
   // These classes have data fields
      TypeInt.setDataPrototype           ("int","field_size","= 0",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
+  // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
+  // and any other type with a base_type.
+  // PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
+  //                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+
      ReferenceType.setDataPrototype     ("SgType*","base_type","= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -627,8 +646,14 @@ Grammar::setUpTypes ()
   // Exclude the get_mangled function since we include it in the HEADER_MODIFIER_TYPE string
      ModifierType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      ModifierType.setFunctionPrototype ("HEADER_MODIFIER_TYPE", "../Grammar/Type.code" );
+
+  // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
+  // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
+  // and any other type with a base_type.
+  // ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
+  //                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // DQ (4/22/2004): Old way of handling modifiers
   // ModifierType.setDataPrototype     ("unsigned int","bitfield","= 0",
   //           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

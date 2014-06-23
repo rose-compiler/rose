@@ -669,6 +669,18 @@ traverseWithinFile(SgNode* node,
      traversalConstraint = true;
 
      SgFile* filenode = isSgFile(node);
+     if (filenode == NULL)
+        {
+          if (node == NULL)
+             {
+               printf ("Error: traverseWithinFile(): (node should be non-null) node = %p \n",node);
+             }
+            else
+             {
+            // DQ (4/22/2014): This will fail if the input is specified as a SgProject.
+               printf ("Error: traverseWithinFile(): (node should be type SgFile) node = %p = %s \n",node,node->class_name().c_str());
+             }
+        }
      ROSE_ASSERT(filenode != NULL); // this function will be extended to work with all nodes soon
 
      // GB (05/30/2007): changed to a SgFile* instead of a file name,
@@ -772,11 +784,17 @@ performTraversal(SgNode* node,
                   {
                  // ROSE_ASSERT(node->get_traversalSuccessorByIndex(idx) != NULL || node->get_traversalSuccessorByIndex(idx) == NULL);
                     child = node->get_traversalSuccessorByIndex(idx);
+
+                 // DQ (4/21/2014): Valgrind test to isolate uninitialised read reported where child is read below.
+                    ROSE_ASSERT(child == NULL || child != NULL);
                   }
                  else
                   {
                  // ROSE_ASSERT(succContainer[idx] != NULL || succContainer[idx] == NULL);
                     child = succContainer[idx];
+
+                 // DQ (4/21/2014): Valgrind test to isolate uninitialised read reported where child is read below.
+                    ROSE_ASSERT(child == NULL || child != NULL);
                   }
 
                if (child != NULL)
