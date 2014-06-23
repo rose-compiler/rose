@@ -152,6 +152,10 @@ public:
     /** @} */
 
 private:
+    // Helper for buildGraph
+    void buildGraphProcessInstruction(SgAsmInstruction*);
+
+private:
     // graph visitor for the buildGraphPerVertex method
     template<class CFG>
     struct BuildGraphPerVertex {

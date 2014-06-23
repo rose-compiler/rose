@@ -1,4 +1,7 @@
 #include "BinaryTaintedFlow.h"
+#include "stringify.h"
+
+using namespace rose;
 
 namespace BinaryAnalysis {
 
@@ -81,8 +84,15 @@ TaintedFlow::State::print(std::ostream &out) const {
 
 TaintedFlow::StatePtr
 TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) {
+    using namespace rose::Diagnostics;
+
     const DataFlow::Graph &dfg = index_[cfgVertex]; // data flow for this basic block
     StatePtr out = in->copy();
+
+    Stringifier taintednessStr(stringifyBinaryAnalysisTaintedFlowTaintedness);
+    Stringifier edgeTypeStr(stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType);
+
+    mlog[TRACE] <<"transfer function for CFG vertex " <<cfgVertex <<"\n";
 
     for (size_t edgeId=0; edgeId<dfg.nEdges(); ++edgeId) {
         // We're taking a shortcut here and assuming that data flow edge sequence number == edge ID. This will be true
@@ -94,6 +104,12 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
         const DataFlow::Variable &srcVariable = edge.source()->value();
         Taintedness srcTaint = out->lookup(srcVariable);
 
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"  xfer: flow from " <<srcVariable <<" (" <<taintednessStr(srcTaint) <<")\n";
+            mlog[DEBUG] <<"  xfer: flow to   " <<edge.target()->value()
+                        <<" (" <<taintednessStr(out->lookup(edge.target()->value())) <<")\n";
+        }
+
         switch (approximation_) {
             case UNDER_APPROXIMATE: {
                 Taintedness &dstTaint = out->lookup(edge.target()->value());
@@ -102,6 +118,8 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
                 } else {
                     dstTaint = merge(dstTaint, srcTaint);
                 }
+                if (mlog[DEBUG])
+                    mlog[DEBUG] <<"  xfer:   " <<edgeTypeStr(edge.value().edgeType) <<" to " <<taintednessStr(dstTaint) <<"\n";
                 break;
             }
 
@@ -116,8 +134,17 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
                         } else {
                             dstTaint = merge(dstTaint, srcTaint);
                         }
+                        if (mlog[DEBUG]) {
+                            mlog[DEBUG] <<"  xfer:   mustAlias " <<dstVariable <<"\n"
+                                        <<"  xfer:   " <<edgeTypeStr(edge.value().edgeType)
+                                        <<" to " <<taintednessStr(dstTaint) <<"\n";
+                        }
                     } else if (dstVariable.mayAlias(edge.target()->value(), smtSolver_)) {
                         dstTaint = merge(dstTaint, srcTaint);
+                        if (mlog[DEBUG]) {
+                            mlog[DEBUG] <<"  xfer:   mayAlias " <<dstVariable <<"\n"
+                                        <<"  xfer:   AUGMENT to " <<taintednessStr(dstTaint) <<"\n";
+                        }
                     }
                 }
                 out = tmp;
@@ -125,6 +152,8 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
             }
         }
     }
+    if (mlog[DEBUG])
+        mlog[DEBUG] <<"state after transfer function:\n" <<*out;
     return out;
 }
 

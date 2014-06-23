@@ -1,6 +1,8 @@
 #include "BinaryDataFlow.h"
 #include "Diagnostics.h"
 
+using namespace rose::Diagnostics;
+
 namespace BinaryAnalysis {
 
 using namespace BinaryAnalysis::InstructionSemantics2;
@@ -28,14 +30,32 @@ DataFlow::init(const BaseSemantics::DispatcherPtr &userDispatcher) {
     ASSERT_not_null(dispatcher_);
 }
 
+void
+DataFlow::buildGraphProcessInstruction(SgAsmInstruction *insn)
+{
+    mlog[DEBUG] <<"  processing " <<unparseInstructionWithAddress(insn) <<"\n";
+    dispatcher_->processInstruction(insn);
+}
+
 DataFlow::Graph
 DataFlow::buildGraph(SgAsmInstruction *insn) {
     ASSERT_this();
     ASSERT_not_null(insn);
     ASSERT_not_null(dispatcher_);
-    
     dfOps_->clearGraph();
-    dispatcher_->processInstruction(insn);
+
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"buildGraph: incoming state at " <<StringUtility::addrToString(insn->get_address()) <<":\n";
+        userOps_->print(mlog[DEBUG], "  |");
+    }
+
+    buildGraphProcessInstruction(insn);
+
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"  outgoing state:\n";
+        userOps_->print(mlog[DEBUG], "  |");
+    }
+
     return dfOps_->getGraph();
 }
 
@@ -45,10 +65,21 @@ DataFlow::buildGraph(SgAsmBlock *bb)
     ASSERT_this();
     ASSERT_not_null(bb);
     ASSERT_not_null(dispatcher_);
-    
     dfOps_->clearGraph();
+
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"buildGraph: incoming state at " <<StringUtility::addrToString(bb->get_address()) <<":\n";
+        userOps_->print(mlog[DEBUG], "  |");
+    }
+
     BOOST_FOREACH (SgAsmInstruction *insn, SageInterface::querySubTree<SgAsmInstruction>(bb))
-        dispatcher_->processInstruction(insn);
+        buildGraphProcessInstruction(insn);
+
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"  outgoing state:\n";
+        userOps_->print(mlog[DEBUG], "  |");
+    }
+
     return dfOps_->getGraph();
 }
 

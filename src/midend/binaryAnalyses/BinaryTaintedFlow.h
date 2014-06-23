@@ -119,9 +119,11 @@ protected:
         const DataFlow::VertexFlowGraphs &index_; // maps CFG vertex to data flow graph
         Approximation approximation_;
         SMTSolver *smtSolver_;
+        Sawyer::Message::Facility &mlog;
     public:
-        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, SMTSolver *solver)
-            : index_(index), approximation_(approx), smtSolver_(solver) {}
+        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, SMTSolver *solver,
+                         Sawyer::Message::Facility &mlog)
+            : index_(index), approximation_(approx), smtSolver_(solver), mlog(mlog) {}
 
         template<class CFG>
         StatePtr operator()(const CFG &cfg, size_t cfgVertex, const StatePtr &in) {
@@ -197,6 +199,10 @@ public:
         results_.clear();
         vlistInitialized_ = true;
         mesg <<"; found " <<StringUtility::plural(variableList_.size(), "variables") <<"\n";
+        if (mlog[DEBUG]) {
+            BOOST_FOREACH (const DataFlow::Variable &variable, variableList_)
+                mlog[DEBUG] <<"  found variable: " <<variable <<"\n";
+        }
     }
 
     /** Property: data flow graphs.
@@ -252,7 +258,7 @@ public:
         ASSERT_not_null(initialState);
         Stream mesg(mlog[WHERE] <<"runToFixedPoint starting at CFG vertex " <<cfgStartVertex);
         results_.clear();
-        TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_);
+        TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_, mlog);
         DataFlow::Engine<CFG, StatePtr, TransferFunction> dfEngine(cfg, xfer);
         dfEngine.runToFixedPoint(cfgStartVertex, initialState);
         results_ = dfEngine.getFinalStates();
