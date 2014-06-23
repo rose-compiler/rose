@@ -80,7 +80,7 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->boolean_(true), 32));
+        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(32), esp->boolean_(true)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
             SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
@@ -119,7 +119,8 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
 
         // Look at the top of the stack
         SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(dispatcher->REG_ESP),
-                                                        ops->get_protoval()->boolean_(true), 32));
+                                                        ops->get_protoval()->undefined_(32),
+                                                        ops->get_protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target) {
                 SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_EIP));
