@@ -2,8 +2,7 @@
 namespace A
    {
 #if 1
-     template <typename T>
-     bool operator== (T,T);
+     template <typename T> bool operator== (T,T);
 #endif
    }
 #endif
@@ -11,17 +10,15 @@ namespace A
 namespace A
    {
 #if 1
-     template <typename T>
-     bool operator== (T,int);
+     template <typename T> bool operator== (T,int);
 #endif
 
      class X
         {
           public:
-               template <typename T>
-               friend bool operator== (T,T);
+            // template <typename T> friend bool operator== (T,T);
         };
-#if 1
+#if 0
 //   }
 // namespace A
 //   {
@@ -41,7 +38,7 @@ namespace A
    }
 
 
-#if 1
+#if 0
 namespace A
    {
 #if 0

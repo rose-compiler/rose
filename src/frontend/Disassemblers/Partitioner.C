@@ -17,6 +17,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <sawyer/Optional.h>
+#include <sawyer/ProgressBar.h>
 #include <stdarg.h>
 
 using namespace rose;
@@ -73,7 +75,7 @@ Partitioner::isSgAsmx86Instruction(SgNode *node)
 
 /* Progress report class variables. */
 double Partitioner::progress_interval = 10.0;
-struct timeval Partitioner::progress_time;
+double Partitioner::progress_time = 0.0;
 
 /* Set progress reporting values. */
 void
@@ -87,9 +89,8 @@ void
 Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
 {
     if (progress_interval>=0 && mlog[INFO]) {
-        struct timeval curtime;
-        gettimeofday(&curtime, NULL);
-        if (Sawyer::Message::timevalDelta(progress_time, curtime) >= progress_interval) {
+        double curtime = Sawyer::Message::now();
+        if (curtime - progress_time >= progress_interval) {
             mlog[INFO] <<"starting " <<stringifySgAsmBlockReason(reason, "BLK_") <<" pass " <<pass
                        <<": " <<StringUtility::plural(functions.size(), "functions")
                        <<", " <<StringUtility::plural(insns.size(), "instructions")
@@ -98,6 +99,33 @@ Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
             progress_time = curtime;
         }
     }
+}
+
+struct ProgressSuffix {
+    const Partitioner *p;
+    ProgressSuffix(): p(NULL) {}
+    ProgressSuffix(const Partitioner *p): p(p) {}
+    void print(std::ostream &o) const {
+        if (p!=NULL) {
+            o <<(1==p->basic_blocks.size() ? " block" : " blocks");// label for value printed by ProgressBar
+            o <<" " <<StringUtility::plural(p->functions.size(), "functions");
+        }
+    }
+};
+
+std::ostream& operator<<(std::ostream &o, const ProgressSuffix &suffix) {
+    suffix.print(o);
+    return o;
+}
+
+void
+Partitioner::update_progress() const
+{
+    static Sawyer::ProgressBar<size_t, ProgressSuffix> *progressBar = NULL;
+    if (!progressBar)
+        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[INFO], "");
+    progressBar->suffix(ProgressSuffix(this));
+    progressBar->value(basic_blocks.size());
 }
 
 /* Parse argument for "-rose:partitioner_search" command-line swich. */
@@ -964,6 +992,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         return NULL;
     if (!create || insn->bblock!=NULL)
         return insn->bblock;
+    update_progress();
     BasicBlock *bb = insn->bblock;
     if (!bb) {
         bb = new BasicBlock;
@@ -1130,14 +1159,14 @@ Partitioner::mark_ipd_configuration()
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
             MemoryMap::Segment text_sgmt(MemoryMap::ExternBuffer::create(&(bconf->sucs_program[0]), bconf->sucs_program.size()),
                                          0, MemoryMap::MM_PROT_RX, block_name + " successors program text");
-            map->insert(Extent(text_va, bconf->sucs_program.size()), text_sgmt);
+            map->insert(AddressInterval::baseSize(text_va, bconf->sucs_program.size()), text_sgmt);
 
             /* Create a stack */
             static const size_t stack_size = 8192;
             rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
             MemoryMap::Segment stack_sgmt(MemoryMap::AnonymousBuffer::create(stack_size), 0,
                                           MemoryMap::MM_PROT_RW, block_name + " successors stack");
-            map->insert(Extent(stack_va, stack_size), stack_sgmt);
+            map->insert(AddressInterval::baseSize(stack_va, stack_size), stack_sgmt);
             rose_addr_t stack_ptr = stack_va + stack_size;
 
             /* Create an area for the returned vector of successors */
@@ -1145,7 +1174,7 @@ Partitioner::mark_ipd_configuration()
             rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
             MemoryMap::Segment svec_sgmt(MemoryMap::AnonymousBuffer::create(svec_size), 0,
                                          MemoryMap::MM_PROT_RW, block_name + " successors vector");
-            map->insert(Extent(svec_va, svec_size), svec_sgmt);
+            map->insert(AddressInterval::baseSize(svec_va, svec_size), svec_sgmt);
 
             /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
              * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
@@ -1780,8 +1809,12 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict_map)
-        unassigned.erase_ranges(restrict_map->va_extents().invert<ExtentMap>());
+    if (restrict_map) {
+        AddressIntervalSet nonmappedAddrs = restrict_map->va_extents();
+        nonmappedAddrs.invert(AddressInterval::hull(0, (rose_addr_t)(-1)));
+        ExtentMap toRemove = toExtentMap(nonmappedAddrs);
+        unassigned.erase_ranges(toRemove);
+    }
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
@@ -3508,10 +3541,10 @@ Partitioner::is_used_address(rose_addr_t va)
     return used_addresses.find(va) != used_addresses.end();
 }
 
-boost::optional<rose_addr_t>
+Sawyer::Optional<rose_addr_t>
 Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
 {
-    static const boost::optional<rose_addr_t> NOT_FOUND;
+    Sawyer::Nothing NOT_FOUND;
     ExtentMap unused = unused_addresses();              // all unused addresses regardless of whether they're mapped
 
     while (1) {
@@ -3522,14 +3555,14 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
         rose_addr_t unused_va = std::max(start_va, ui->first.first());
 
         // get the next mapped address, but it might not be unused
-        boost::optional<rose_addr_t> mapped_unused_va = map.next(unused_va);
-        if (!mapped_unused_va)
-            return NOT_FOUND;                           // no higher mapped addresses
-        if (unused.contains(Extent(*mapped_unused_va)))
+        rose_addr_t mapped_unused_va;
+        if (!map.next(unused_va).apply(mapped_unused_va))
+            return NOT_FOUND;                           // no higher mapped address
+        if (unused.contains(Extent(mapped_unused_va)))
             return mapped_unused_va;                    // found
 
         // try again at a higher address
-        start_va = *mapped_unused_va + 1;
+        start_va = mapped_unused_va + 1;
         if (start_va==0)
             return NOT_FOUND;                           // overflow
     }
@@ -3549,24 +3582,24 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
 
     debug <<"discover_post_padding_functions()\n";
 
-    rose_addr_t next_va = map.hull().first;             // first address in the map
+    rose_addr_t next_va = map.hull().least();           // first address in the map
     while (1) {
         debug <<"  current position is " <<addrToString(next_va) <<"\n";
 
         // Find an address that is mapped but not part of any function.
-        boost::optional<rose_addr_t> unused_va = next_unused_address(map, next_va);
-        if (!unused_va)
+        rose_addr_t unused_va;
+        if (!next_unused_address(map, next_va).apply(unused_va))
             break;
-        debug <<"  next unused address is " <<addrToString(*unused_va) <<"\n";
+        debug <<"  next unused address is " <<addrToString(unused_va) <<"\n";
 
         // Find the next occurrence of padding bytes.
-        Extent search_limits = Extent::inin(*unused_va, map.hull().second);
-        boost::optional<rose_addr_t> padding_va = map.find_any(search_limits, padding_bytes);
-        if (!padding_va)
+        Extent search_limits = Extent::inin(unused_va, map.hull().greatest());
+        rose_addr_t padding_va;
+        if (!map.find_any(search_limits, padding_bytes).apply(padding_va))
             break;
 
         // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).
-        rose_addr_t candidate_va = *padding_va;
+        rose_addr_t candidate_va = padding_va;
         while (1) {
             uint8_t byte;
             if (1!=map.read1(&byte, candidate_va, 1) ||
@@ -3574,7 +3607,7 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
                 break;
             ++candidate_va;
         }
-        rose_addr_t npadding = candidate_va - *padding_va;
+        rose_addr_t npadding = candidate_va - padding_va;
         next_va = candidate_va + 1;                     // for next time through this loop
         debug <<"  address after padding is " <<addrToString(candidate_va) <<"\n"
               <<"  number of padding bytes is " <<npadding <<"\n";

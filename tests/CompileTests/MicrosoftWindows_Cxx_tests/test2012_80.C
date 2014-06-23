@@ -1,8 +1,7 @@
 class X
    {
      public:
-          template <typename T>
-          friend bool operator== (T,int);
+//          template <typename T> friend bool operator== (T,int);
    };
 
 #if 1

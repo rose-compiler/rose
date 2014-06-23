@@ -1953,6 +1953,7 @@ void
 Rose::Cmdline::Java::
 ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
 {
+  project->set_Java_only(false);
   bool is_java_only =
       CommandlineProcessing::isOption(
           argv,
@@ -3680,6 +3681,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
+#if 0
+     printf ("***** hasRoseUpcEnabled = %s \n",hasRoseUpcEnabled ? "true" : "false");
+#endif
+
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled)
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -3690,6 +3695,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
           CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
         }
+
+#if 0
+     printf ("***** get_UPC_only() = %s \n",get_UPC_only() ? "true" : "false");
+#endif
 
   // DQ (9/19/2010): Added support for UPC++.  This uses the UPC mode and internally processes the code as C++ instead of C.
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
@@ -5334,7 +5343,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
 #else
   // DQ (4/21/2014): The preinclude file we generate for ROSE is specific to the backend and for Windows code might be too specific to Linux.
-     printf ("Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+  // But we certainly don't want the -D options: e.g "-D__GNUG__=4 -D__GNUC__=4 -D__GNUC_MINOR__=4 -D__GNUC_PATCHLEVEL__=7"
+     printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+  // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
+     commandLine.push_back("--preinclude");
+     commandLine.push_back("rose_edg_required_macros_and_functions.h");
 #endif
 
   // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used

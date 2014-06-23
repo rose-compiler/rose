@@ -2,6 +2,7 @@
 #define Sawyer_Interval_H
 
 #include <sawyer/Assert.h>
+#include <sawyer/Sawyer.h>
 
 namespace Sawyer {
 namespace Container {
@@ -32,6 +33,7 @@ public:
     /** Constructs a singleton interval. */
     Interval(T value): lo_(value), hi_(value) {}
 
+#if 0 // [Robb Matzke 2014-05-14]: too much confusion with "hi" vs. "size". Use either baseSize or hull instead.
     /** Constructs an interval from endpoints.
      *
      *  The first end point must be less than or equal to the second end point.  If both endpoints are equal then a singleton
@@ -39,12 +41,16 @@ public:
     Interval(T lo, T hi): lo_(lo), hi_(hi) {
         ASSERT_require(lo <= hi);
     }
+#endif
 
     /** Construct an interval from two endpoints.
      *
      *  Returns the smallest interal that contains both points. */
     static Interval hull(T v1, T v2) {
-        return Interval(std::min(v1, v2), std::max(v1, v2));
+        Interval retval;
+        retval.lo_ = std::min(v1, v2);
+        retval.hi_ = std::max(v1, v2);
+        return retval;
     }
 
     /** Construct an interval from one endpoint and a size.
@@ -53,7 +59,7 @@ public:
      *  then an empty interval is created, in which case @p lo is irrelevant. */
     static Interval baseSize(T lo, T size) {
         ASSERT_require2(lo + size >= lo, "overflow");
-        return 0==size ? Interval() : Interval(lo, lo+size-1);
+        return 0==size ? Interval() : Interval::hull(lo, lo+size-1);
     }
 
     /** Assignment from an interval. */
@@ -88,7 +94,7 @@ public:
     bool isSingleton() const { return lo_ == hi_; }
 
     /** True if interval covers entire space. */
-    bool isWhole() const { return !isEmpty && hi_ + 1 == lo_; }
+    bool isWhole() const { return !isEmpty() && hi_ + 1 == lo_; }
 
     /** True if two intervals overlap.
      *
@@ -146,7 +152,8 @@ public:
 
     /** Equality test.
      *
-     *  Two intervals are equal if they have the same lower and upper bound, and unequal if either bound differs.
+     *  Two intervals are equal if they have the same lower and upper bound, and unequal if either bound differs. Two empty
+     *  ranges are considered to be equal.
      *
      *  @{ */
     bool operator==(const Interval &other) const {
@@ -163,19 +170,21 @@ public:
     Interval intersection(const Interval &other) const {
         if (isEmpty() || other.isEmpty() || greatest()<other.least() || least()>other.greatest())
             return Interval();
-        return Interval(std::max(least(), other.least()), std::min(greatest(), other.greatest()));
+        return Interval::hull(std::max(least(), other.least()), std::min(greatest(), other.greatest()));
     }
 
     /** Hull.
      *
-     *  Returns the smallest interval that contains both this interval and the @p other interval. */
+     *  Returns the smallest interval that contains both this interval and the @p other interval.
+     *
+     *  @sa join */
     Interval hull(const Interval &other) const {
         if (isEmpty()) {
             return other;
         } else if (other.isEmpty()) {
             return *this;
         } else {
-            return Interval(std::min(least(), other.least()), std::max(greatest(), other.greatest()));
+            return Interval::hull(std::min(least(), other.least()), std::max(greatest(), other.greatest()));
         }
     }
 
@@ -186,9 +195,46 @@ public:
         if (isEmpty()) {
             return Interval(value);
         } else {
-            return Interval(std::min(least(), value), std::max(greatest(), value));
+            return Interval::hull(std::min(least(), value), std::max(greatest(), value));
         }
     }
+
+    /** Split interval in two.
+     *
+     *  Returns two interval by splitting this interval so that @p splitPoint is in the left returned interval.  If the split
+     *  is not a member of this interval then one of the two returned intervals will be empty, depending on whether the split
+     *  point is less than or greater than this interval.  If this interval is empty then both returned intervals will be empty
+     *  regardless of the split point. */
+    std::pair<Interval, Interval> split(T splitPoint) const {
+        if (isEmpty()) {
+            return std::make_pair(Interval(), Interval());
+        } else if (splitPoint < least()) {
+            return std::make_pair(Interval(), *this);
+        } else if (splitPoint <= greatest()) {
+            return std::make_pair(Interval(least(), splitPoint), Interval(splitPoint+1, greatest()));
+        } else {
+            return std::make_pair(*this, Interval());
+        }
+    }
+
+    /** Creates an interval by joining two adjacent intervals.
+     *
+     *  Concatenates this interval with the @p right interval and returns the result.  This is similar to @ref hull except
+     *  when neither interval is empty then the greatest value of this interval must be one less than the least value of the @p
+     *  right interval.
+     *
+     *  @sa hull */
+    Interval join(const Interval &right) const {
+        if (isEmpty()) {
+            return right;
+        } else if (right.isEmpty()) {
+            return *this;
+        } else {
+            ASSERT_require(greatest()+1 == right.least() && right.least() > greatest());
+            return hull(right);
+        }
+    }
+    
 };
 
 } // namespace

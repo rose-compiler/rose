@@ -1,5 +1,14 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+INCLUDES = $(ROSE_INCLUDES)
+
+bin_PROGRAMS = sharedMemoryDSL
+
+sharedMemoryDSL_SOURCES = sharedMemoryDSL.C sharedMemoryTypeTraversal.C
+
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+
 #####################################################################################
 # These are UPC testcodes targeting aspects of UPCC that might not be a subset of C #
 #####################################################################################
@@ -138,6 +147,155 @@ rose_shared.upc.aa:rose_shared.upc
 	test -f rose_shared.upc.aa
 	test -f rose_shared.upc.ab
 
+
+testSharedMemoryDSL_1: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_01.upc
+
+testSharedMemoryDSL_2: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_02.upc
+
+testSharedMemoryDSL_3: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_03.upc
+
+testSharedMemoryDSL_4: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_04.upc
+
+testSharedMemoryDSL_5: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_05.upc
+
+testSharedMemoryDSL_6: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_06.upc
+
+testSharedMemoryDSL_7: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_07.upc
+
+testSharedMemoryDSL_8: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_08.upc
+
+testSharedMemoryDSL_9: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_09.upc
+
+testSharedMemoryDSL_10: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_10.upc
+
+testSharedMemoryDSL_11: sharedMemoryDSL
+	./sharedMemoryDSL -rose:UPC -c $(srcdir)/test2014_11.upc
+
+testSharedMemoryDSL_12: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_12.c
+
+testSharedMemoryDSL_13: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_13.c
+
+testSharedMemoryDSL_14: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_14.c
+
+testSharedMemoryDSL_15: sharedMemoryDSL
+	./sharedMemoryDSL -c $(srcdir)/test2014_15.c
+
+testSharedMemoryDSL_16: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_16.c
+
+testSharedMemoryDSL_17: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_17.c
+
+testSharedMemoryDSL_18: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_18.c
+
+testSharedMemoryDSL_19: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_19.c
+
+testSharedMemoryDSL_20: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_20.c
+
+testSharedMemoryDSL_21: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_21.c
+
+testSharedMemoryDSL_22: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_22.c
+
+testSharedMemoryDSL_23: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_23.c
+
+testSharedMemoryDSL_24: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_24.c
+
+testSharedMemoryDSL_25: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_25.c
+
+testSharedMemoryDSL_26: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_26.c
+
+testSharedMemoryDSL_27: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_27.c
+
+testSharedMemoryDSL_28: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_28.c
+
+testSharedMemoryDSL_29: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_29.c
+
+testSharedMemoryDSL_30: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_30.c
+
+testSharedMemoryDSL_31: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_31.c
+
+testSharedMemoryDSL_32: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_32.c
+
+testSharedMemoryDSL_33: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_33.c
+
+testSharedMemoryDSL_34: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_34.c
+
+testSharedMemoryDSL_35: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_35.c
+
+testSharedMemoryDSL_36: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_36.c
+
+testSharedMemoryDSL_37: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_37.c
+
+testSharedMemoryDSL_38: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_38.c
+
+testSharedMemoryDSL_39: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_39.c
+
+testSharedMemoryDSL_40: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_40.c
+
+testSharedMemoryDSL_41: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_41.c
+
+testSharedMemoryDSL_42: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_42.c
+
+testSharedMemoryDSL_43: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_43.c
+
+
+# DQ (4/30/2014): List of test codes to test the shared memory DSL work.
+SharedMemoryDSL_testcodes = \
+   testSharedMemoryDSL_1 testSharedMemoryDSL_2 testSharedMemoryDSL_3 testSharedMemoryDSL_4 testSharedMemoryDSL_5 \
+   testSharedMemoryDSL_6 testSharedMemoryDSL_7 testSharedMemoryDSL_8 testSharedMemoryDSL_9 testSharedMemoryDSL_10 \
+   testSharedMemoryDSL_11 testSharedMemoryDSL_12 testSharedMemoryDSL_13 testSharedMemoryDSL_14 testSharedMemoryDSL_15 \
+   testSharedMemoryDSL_16 testSharedMemoryDSL_17 testSharedMemoryDSL_18 testSharedMemoryDSL_19 testSharedMemoryDSL_20 \
+   testSharedMemoryDSL_21 testSharedMemoryDSL_22 testSharedMemoryDSL_23 testSharedMemoryDSL_24 testSharedMemoryDSL_25 \
+   testSharedMemoryDSL_26 testSharedMemoryDSL_27 testSharedMemoryDSL_28 testSharedMemoryDSL_29 testSharedMemoryDSL_30 \
+   testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34 \
+   testSharedMemoryDSL_36 testSharedMemoryDSL_37 testSharedMemoryDSL_38 testSharedMemoryDSL_39 testSharedMemoryDSL_40 \
+   testSharedMemoryDSL_41 
+
+# DQ (6/1/2014): This is still not passing although a simpler version of the test is passing.
+# testSharedMemoryDSL_42
+
+testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
+
+
 QMTEST_Objects = ${ALL_TESTCODES:.upc=.qmt}
 
 # Make rule to build the QMTest database files
@@ -159,6 +317,7 @@ check-local:
 	@echo "Tests for UPC examples."
 	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) rose_shared.upc.aa
+	@$(MAKE) testSharedMemoryDSL
 #	@echo "Tests for UPC++ examples."
 #	@$(MAKE) $(UPCXX_TEST_Objects)
 #	DQ (2/5/2011): This failed for a very few Hudson tests, but they are not critical

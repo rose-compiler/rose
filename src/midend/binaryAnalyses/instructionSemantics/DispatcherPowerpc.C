@@ -557,7 +557,8 @@ struct IP_lmw: P {
         rose_addr_t offset = 0;
         for (unsigned minor=reg.get_minor(); minor<32; minor+=1, offset+=4) {
             BaseSemantics::SValuePtr addr = ops->add(base, ops->number_(32, offset));
-            BaseSemantics::SValuePtr value = ops->readMemory(RegisterDescriptor(), addr, ops->boolean_(true), 32);
+            BaseSemantics::SValuePtr dflt = ops->undefined_(32);
+            BaseSemantics::SValuePtr value = ops->readMemory(RegisterDescriptor(), addr, dflt, ops->boolean_(true));
             reg.set_minor(minor);
             ops->writeRegister(reg, value);
         }
@@ -574,7 +575,7 @@ struct IP_lwzu: P {
         assert(binaryAdd);
         SgAsmExpression *ra = binaryAdd->get_lhs();
         BaseSemantics::SValuePtr addr = d->effectiveAddress(args[1], 32);
-        d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->boolean_(true), 32));
+        d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), ops->boolean_(true)));
         d->write(ra, addr);
     }
 };

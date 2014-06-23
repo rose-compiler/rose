@@ -97,8 +97,22 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_47.C \
    test2014_48.C \
    test2014_49.C \
+   test2014_50.C \
+   test2014_53.C \
+   test2014_54.C \
+   test2014_55.C \
+   test2014_56.C \
+   test2014_57.C \
+   test2014_58.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (5/19/2014): Failing tests
+#   test2014_51.C (Not clear what is wrong with this, if anything. EDG does not accept it as valid C++).
+#   test2014_52.C (__int128 is not available everywhere, so this fails on some versions of gnu before 4.8).
+#   test2014_59.C (This is a name qualification error, type hiding error needs name qualification to be properly resolved).
+#   test2014_60.C (failing test for function pointer casts (reported to rose user list).
+#   test2014_61.C (Isolated version of test2014_60.C).
 
 # DQ (4/6/2014): Failing tests
 #   test2014_14.C 
@@ -736,6 +750,10 @@ testParser:../../testParser
 # This requires a special makefile rule
 test2005_56.o: $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
+
+test2014_54.o: $(TEST_TRANSLATOR)
+	@echo "Running boost specific test."
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
 test2010_01.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."

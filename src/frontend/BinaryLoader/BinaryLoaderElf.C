@@ -1,6 +1,6 @@
 #include "sage3basic.h"
-#include "Assert.h"                                     // Sawyer::Assert
 #include "BinaryLoaderElf.h"
+#include "Diagnostics.h"
 #include "integerOps.h"                 /* needed for signExtend() */
 #include "MemoryMap.h"
 

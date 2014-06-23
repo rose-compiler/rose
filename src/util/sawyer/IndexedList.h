@@ -2,9 +2,12 @@
 #define Sawyer_IndexedList_H
 
 #include <sawyer/Assert.h>
+#include <sawyer/DefaultAllocator.h>
+#include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
+
 #include <boost/range/iterator_range.hpp>
 #include <iterator>
-#include <list>
 #include <vector>
 
 namespace Sawyer {
@@ -48,10 +51,11 @@ namespace Container {
  *  upper-case letter and methods begin with a lower-case letter.  This may be surprising for users accustomed to the STL
  *  naming scheme.  For instance, iterators are named <code>Iterator</code>, <code>ConstIterator</code>, etc., rather than
  *  <code>iterator</code>, <code>const_iterator</code>, etc. */
-template<class T>
+template<class T, class Alloc = DefaultAllocator>
 class IndexedList {
 public:
     typedef T Value;                                    /**< Type of values stored in this container. */
+    typedef Alloc Allocator;                            /**< Allocator for the storage nodes. */
     class Node;                                         /**< Type of node holding values. */
 
 private:
@@ -96,6 +100,10 @@ private:
     };
 
 public:
+    /** Combination user-defined value and ID number.
+     *
+     *  This class represents the user-defined value and an ID number and serves as the type of object stored by the underlying
+     *  list. */
     class Node {
         ProtoNode linkage_;                             // This member MUST BE FIRST so ProtoNode::dereference works
         Value value_;                                   // User-supplied data for each node
@@ -103,14 +111,27 @@ public:
         friend class IndexedList;
         Node(size_t id, const Value &value): linkage_(id), value_(value) { ASSERT_forbid(linkage_.isHead()); }
     public:
+        /** Unique identification number.
+         *
+         *  Obtains the unique (within this container) identification number for a storage node.  Identification numbers are
+         *  zero through the size of the list (exclusive) but not necessarily in the same order as the nodes of the list.  IDs
+         *  are stable across insertion but not erasure. When a node is erased from the list, the node that had the highest ID
+         *  number (if not the one being erased) is renumbered to fill the gap left by the one that was erased. */
         const size_t& id() const { return linkage_.id; }
+
+        /** Accessor for user-defined value.
+         *
+         *  The user defined value can be accessed by this method, which returns either a reference to a const value or a
+         *  reference to a mutable value depending on whether this container is const or mutable.
+         *
+         *  @{ */
         Value& value() { return value_; }
         const Value& value() const { return value_; }
-
         Value& operator*() { return value_; }
         const Value& operator*() const { return value_; }
         Value* operator->() { return &value_; }
         const Value* operator->() const { return &value_; }
+        /** @} */
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,13 +156,15 @@ private:
     protected:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }
+    public:
         const BaseIterator& base() const { return base_; }
     };
 
 public:
-    /** List iterator.
+    /** List node bidirectional iterator.
      *
-     *  This iterator traverse the elements of the list in the order they are stored in the list.  If one wants to traverse
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to a
+     *  storage node (@ref Node, a user-defined value and associated ID number) when dereferenced.  If one wants to traverse
      *  elements in the order of the ID numbers instead, just use a "for" loop to iterate from zero to the number of items in
      *  the list and make use of the constant-time lookup-by-ID feature.
      *
@@ -151,9 +174,7 @@ public:
      *
      *  Node ID numbers are accessed from the iterator by invoking its <code>id</code> method.  ID numbers are stable across
      *  insertion, but not erasure; erasing an element from the list will cause zero or one other element to receive a new ID
-     *  number, and this new ID will be immediately reflected in all existing iterators that point to the affected node.
-     *
-     * @{ */
+     *  number, and this new ID will be immediately reflected in all existing iterators that point to the affected node. */
     class NodeIterator: public IteratorBase<NodeIterator, Node, ProtoNode*> {
         typedef                IteratorBase<NodeIterator, Node, ProtoNode*> Super;
     public:
@@ -167,6 +188,20 @@ public:
         NodeIterator(Node *node): Super(&node->linkage_) {}
     };
 
+    /** List const node bidirectional iterator.
+     *
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to a
+     *  const storage node (@ref Node, a user-defined value and associated ID number) when dereferenced.  If one wants to
+     *  traverse elements in the order of the ID numbers instead, just use a "for" loop to iterate from zero to the number of
+     *  items in the list and make use of the constant-time lookup-by-ID feature.
+     *
+     *  Iterators are stable across insertion and erasure.  In other words, an iterator is guaranteed to not become invalid
+     *  when other elements are added to or removed from the container.  Added elements will become part of any existing
+     *  iterator traversals when they are inserted between that iterator's current and ending position.
+     *
+     *  Node ID numbers are accessed from the iterator by invoking its <code>id</code> method.  ID numbers are stable across
+     *  insertion, but not erasure; erasing an element from the list will cause zero or one other element to receive a new ID
+     *  number, and this new ID will be immediately reflected in all existing iterators that point to the affected node. */
     class ConstNodeIterator: public IteratorBase<ConstNodeIterator, const Node, const ProtoNode*> {
         typedef                     IteratorBase<ConstNodeIterator, const Node, const ProtoNode*> Super;
     public:
@@ -181,6 +216,16 @@ public:
         ConstNodeIterator(const Node *node): Super(&node->linkage_) {}
     };
 
+    /** List value bidirectional iterator.
+     *
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to the
+     *  user-defined value when dereferenced.  If one wants to traverse elements in the order of the ID numbers instead, just
+     *  use a "for" loop to iterate from zero to the number of items in the list and make use of the constant-time lookup-by-ID
+     *  feature.
+     *
+     *  Iterators are stable across insertion and erasure.  In other words, an iterator is guaranteed to not become invalid
+     *  when other elements are added to or removed from the container.  Added elements will become part of any existing
+     *  iterator traversals when they are inserted between that iterator's current and ending position. */
     class ValueIterator: public IteratorBase<ValueIterator, Value, ProtoNode*> {
         typedef                 IteratorBase<ValueIterator, Value, ProtoNode*> Super;
     public:
@@ -195,6 +240,16 @@ public:
         ValueIterator(Node *node): Super(&node->linkage_) {}
     };
 
+    /** List const value bidirectional iterator.
+     *
+     *  This iterator traverse the elements of the list in the order they are stored in the list and returns a reference to the
+     *  user-defined const value when dereferenced.  If one wants to traverse elements in the order of the ID numbers instead,
+     *  just use a "for" loop to iterate from zero to the number of items in the list and make use of the constant-time
+     *  lookup-by-ID feature.
+     *
+     *  Iterators are stable across insertion and erasure.  In other words, an iterator is guaranteed to not become invalid
+     *  when other elements are added to or removed from the container.  Added elements will become part of any existing
+     *  iterator traversals when they are inserted between that iterator's current and ending position. */
     class ConstValueIterator: public IteratorBase<ConstValueIterator, const Value, const ProtoNode*> {
         typedef                      IteratorBase<ConstValueIterator, const Value, const ProtoNode*> Super;
     public:
@@ -213,9 +268,10 @@ public:
     /** @} */
 
 private:
-    ProtoNode *head_;                                   // always point to a list head, not a true node
-    typedef std::vector<Node*> Index;
-    Index index_;
+    Allocator allocator_;                               // provided allocator for list nodes
+    ProtoNode *head_;                                   // always point to a list head, not a true node (normal allocator)
+    typedef std::vector<Node*> Index;                   // allocated with provided allocator
+    Index index_;                                       // allocated with normal allocator
 
 public:
 
@@ -227,16 +283,22 @@ public:
     /** Default constructor.
      *
      *  Create a new list which is empty. */
-    IndexedList(): head_(new ProtoNode) {}
+    explicit IndexedList(const Allocator &allocator = Allocator())
+        : allocator_(allocator), head_(new ProtoNode) {}
 
-    IndexedList(const IndexedList &other): head_(new ProtoNode) {
+    /** Copy constructor.
+     *
+     *  The newly constructed list's allocator is copy-constructed from the source list's allocator.  For allocators that
+     *  contain state (like pool allocators), this copies the settings but not the pools of allocated data. */
+    IndexedList(const IndexedList &other): allocator_(other.allocator_), head_(new ProtoNode) {
         for (ConstValueIterator otherIter=other.values().begin(); otherIter!=other.values().end(); ++otherIter)
             pushBack(*otherIter);
     }
 
     /** Copy constructor. */
-    template<class T2>
-    IndexedList(const IndexedList<T2> &other): head_(new ProtoNode) {
+    template<class T2, class Alloc2>
+    IndexedList(const IndexedList<T2, Alloc2> &other, const Allocator &allocator = Allocator())
+        : allocator_(Allocator()), head_(new ProtoNode) {
         typedef typename IndexedList<T2>::ConstValueIterator OtherIter;
         for (OtherIter otherIter=other.values.begin(); otherIter!=other.values.end(); ++otherIter)
             pushBack(Value(*otherIter));
@@ -245,7 +307,8 @@ public:
     /** Filling constructor.
      *
      *  Constructs the list by inserting @p nElmts copies of @p val. */
-    explicit IndexedList(size_t nElmts, const Value &val = Value()): head_(new ProtoNode) {
+    explicit IndexedList(size_t nElmts, const Value &val = Value(), const Allocator &allocator = Allocator())
+        : allocator_(allocator), head_(new ProtoNode) {
         index_.reserve(nElmts);
         for (size_t i=0; i<nElmts; ++i)
             pushBack(val);
@@ -277,6 +340,13 @@ public:
         delete head_;
     }
 
+    /** Allocator.
+     *
+     *  Returns a reference to the allocator that's being used for elements of this list. */
+    const Allocator& allocator() const {
+        return allocator_;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Iteration
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,8 +519,8 @@ public:
     }
     /** @} */
 
-    boost::optional<Value> get(size_t id) const {
-        return id < size() ? boost::optional<Value>(index_[id]) : boost::optional<Value>();
+    Optional<Value> get(size_t id) const {
+        return id < size() ? Optional<Value>(index_[id]) : Optional<Value>();
     }
 
     Value& getOrElse(size_t id, Value &dflt) {
@@ -489,7 +559,7 @@ public:
      *  than the previously largest ID number in this list.  No other element ID numbers are changed by this operation. */
     NodeIterator insert(const ValueIterator &position, const Value &value) {
         ProtoNode *pos = position.base();
-        Node *node = new Node(index_.size(), value);
+        Node *node = new (allocator_.allocate(sizeof(Node))) Node(index_.size(), value);
         index_.push_back(node);
         pos->insert(node->linkage_);
         return NodeIterator(node);
@@ -524,8 +594,10 @@ public:
      *
      *  Clears the list by removing all elements from it. This operation is linear time. */
     void clear() {
-        for (size_t i=0; i<index_.size(); ++i)
-            delete index_[i];
+        for (size_t i=0; i<index_.size(); ++i) {
+            index_[i]->~Node();
+            allocator_.deallocate((void*)index_[i], sizeof(Node));
+        }
         index_.clear();
         head_->next = head_->prev = head_;
     }
@@ -549,7 +621,8 @@ public:
             std::swap(index_.back(), index_[id]);
             index_[id]->linkage_.id = id;
         }
-        delete index_.back();
+        index_.back()->~Node();
+        allocator_.deallocate(index_.back(), sizeof(Node));
         index_.pop_back();
         return NodeIterator(next);
     }

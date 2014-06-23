@@ -3,7 +3,6 @@ using this memory map for disassembly:
 
 
 
-
 0x08048310: ================================== Function (entry point, pattern) <entry_function>
 0x08048310: No known callers.
 

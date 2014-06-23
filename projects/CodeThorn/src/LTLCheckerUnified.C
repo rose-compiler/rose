@@ -10,6 +10,7 @@
 // Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory
 // Written by Adrian Prantl <adrian@llnl.gov>.
+// Several bugfixes & improvements (c) 2013 Adrian Prantl.
 //
 // UCRL-CODE-155962.
 // All rights reserved.
@@ -126,6 +127,24 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   return preds;
 }
 
+#if 0
+// not used anywere, generates warnings
+static AType::BoolLattice flip(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice raise(AType::BoolLattice b) {
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice lower(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  return b;
+}
+#endif
 
 /**
  * DOT visualization of the LTL Checker result
@@ -180,6 +199,18 @@ public:
     int node = newNode(a);
     s<<node<<" ["<<color(state.valstack[e])<<",label=\"¬Input "<<string(1, expr->c)
      <<" = "<<state.valstack[e]<<"\"];\n    ";
+    return newAttr(node);
+  }
+  IAttr visit(True* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(state.valstack[e])<<",label=\"true\"];\n    ";
+    return newAttr(node);
+  }
+  IAttr visit(False* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(state.valstack[e])<<",label=\"false\"];\n    ";
     return newAttr(node);
   }
   IAttr visit(NegOutputSymbol* expr, IAttr a) {
@@ -401,7 +432,6 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e,
 class UVerifier {
   EStateSet& eStateSet;
   deque<const EState*> endpoints;
-  Label start;
   unsigned short progress;
   const Formula& f;
 
@@ -413,8 +443,8 @@ public:
   LTLStateTransitionGraph stg;
 
   UVerifier(EStateSet& ess, BoostTransitionGraph& g,
-    Label start_label, Label max_label, const Formula& _f)
-    : eStateSet(ess), start(start_label), progress(0), f(_f) {
+    Label max_label, const Formula& _f)
+    : eStateSet(ess), progress(0), f(_f) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
 
@@ -479,9 +509,9 @@ public:
       //cerr<<"** added new node "<<v<<": "<<new_state<<endl;
     } else {
       v = (*i).second;
-
+      //#define MERGE_TOP_STATES
 #ifdef MERGE_TOP_STATES
-      if (new_state.val.isTrue() || new_state.val.isFalse()) {
+      if (new_state.top().isTrue() || new_state.top().isFalse()) {
     // If there is both A and !A, create a single A=Top instead
     LTLState neg_state = new_state;
     neg_state.val = !new_state.val;
@@ -558,8 +588,16 @@ public:
     updateInputVar(state.estate, input_vars);
       }
 
-      worklist.push(stg.vertex[state]);
     } END_FOR;
+    if (endpoints.empty()) {
+      FOR_EACH_VERTEX(v, stg.g) {
+      worklist.push(v);
+      } END_FOR;
+    } else {
+      for (unordered_set<LTLVertex>::iterator i = endpoints.begin();
+       i!= endpoints.end(); ++i) 
+    worklist.push(*i);
+    }
 
     //cerr<<stg.vertex.size()<<endl;
     //cerr<<num_vertices(stg.g)<<endl;
@@ -580,11 +618,12 @@ public:
     if (endpoints.count(succ) == 0) {
       //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
       // Orphan: did it become an orphan because it was replaced by a new node?
+          // (technically, this is the inverse of an orphan: A parent without kids. A DINK?)
       FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
         FOR_EACH_SUCCESSOR(s, pred, stg.g)
           worklist.push(s);
         END_FOR;
-        // should be redundant: worklist.push(pred);
+        worklist.push(pred);
       } END_FOR;
       // Cut it off.
       clear_vertex(succ, stg.g);
@@ -680,7 +719,8 @@ public:
         FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
           worklist.push(v_succ);
         END_FOR;
-        // should be redundant: worklist.push(v);
+        // Add v to the worklist so it can be removed if it has no other successors any more.
+    worklist.push(v);
 
 #ifdef ANIM_OUTPUT
         if (anim_i++ > ANIM_START) {
@@ -963,6 +1003,19 @@ public:
       result.valstack[expr->label] = new_val;
     }
 
+    /**                                                                                                                                             * TRUE 
+     */
+    void visit(const True* expr) {
+      result.valstack[expr->label] = true;
+    }
+
+    /**                                                                                                                                             * FALSE 
+     */
+    void visit(const False* expr) {
+      result.valstack[expr->label] = false;
+    }
+
+
     /**
      * NOT
      */
@@ -996,7 +1049,12 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
+      // Use the neutral element instead of Bot.
+#ifdef INIT_TO_NEUTRAL_ELEMENT      
+      BoolLattice new_val  = /*old_val ||*/ e1 || (succ_val.isBot()?false:succ_val);
+#else
       BoolLattice new_val  = /*old_val ||*/ e1 || succ_val;
+#endif
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1014,10 +1072,11 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
-      // TODO: I'm not sure about the correct way to combine old_val with the new one
-      // And my current intuition is that it is safe to ignore it, since it
-      // will be propagated back to this node, if we have a loop, anyway.
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      BoolLattice new_val = /*old_val &&*/ e1 && (succ_val.isBot()?true:succ_val);
+#else
       BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
+#endif
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1069,7 +1128,11 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && (succ_val.isBot()?true:succ_val)));
+#else
       BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
+#endif
       if (verbose) cerr<<"  Until(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1093,6 +1156,7 @@ public:
      * Implementation status: DONE
      */
     void visit(const WeakUntil* expr) {
+      // Lowered in the parser.
       assert(false);
     }
 
@@ -1108,7 +1172,11 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || (succ_val.isBot()?false:succ_val)));
+#else
       BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
+#endif
       if (verbose) cerr<<"  Release(old="<<old_val
         <<", e1="<<e1<<", e2="<<e1
         <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1132,11 +1200,15 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   }
   //cerr<<" finished labeling "<<flush;
 
+  // Do not add the start state.
+  const EState *start = transitionGraph.getStartEState();
+
   BoostTransitionGraph full_graph(ess.size());
   FOR_EACH_TRANSITION(t) {
     Label src = estate_label[((*t).source)];
     Label tgt = estate_label[((*t).target)];
-    add_edge(src, tgt, full_graph);
+    if ((*t).source != start)
+      add_edge(src, tgt, full_graph);
     full_graph[src] = (*t).source;
     full_graph[tgt] = (*t).target;
     //cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
@@ -1144,9 +1216,6 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     assert(full_graph[tgt]);
   }
   cerr<<"done"<<endl;
-  //start = estate_label[transitionGraph.begin()->source];
-  Transition st = transitionGraph.getStartTransition();
-  start = estate_label[st.source];
 
   // Optimization
   if(option_debug_mode==200) {
@@ -1158,7 +1227,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 
   if(boolOptions["post-collapse-stg"]) {
     // Optimization
-    start = collapse_transition_graph(full_graph, g);
+    collapse_transition_graph(full_graph, g);
 
   } else {
     g = full_graph;
@@ -1177,16 +1246,17 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
  *
  * Creates reduced_eStateSet
  */
-Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
-              BoostTransitionGraph& reduced) const {
+void UChecker::collapse_transition_graph(BoostTransitionGraph& g,
+                     BoostTransitionGraph& reduced) const {
   Label n = 0;
   vector<Label> renumbered(num_vertices(g));
+  bool isTree = boolOptions["eliminate-stg-back-edges"];
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
     assert(g[label]);
 
-    // Completele eradicate error states. This is part of the RERS rules.
+    // Completely eradicate error states. This is part of the RERS rules.
     if (g[label]->io.op == InputOutput::STDERR_VAR ||
     g[label]->io.op == InputOutput::STDERR_CONST ||
     g[label]->io.op == InputOutput::FAILED_ASSERT) {
@@ -1231,8 +1301,8 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
     //cerr<<label<<endl;
     assert(g[label]);
 
-    if (( in_degree(label, g) >= 1) && // keep start
-    (out_degree(label, g) >= 0) && // DO NOT keep exits
+    if (!isTree && ( in_degree(label, g) >= 1) && // keep start
+      (out_degree(label, g) >= 0) && // DO NOT keep exits
     (g[label]->io.op == InputOutput::NONE /*||
                         g[label]->io.op == InputOutput::FAILED_ASSERT*/)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
@@ -1278,8 +1348,6 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   //cerr<<"## done "<<endl<<endl;
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
-
-  return renumbered[start];
 }
 
 
@@ -1288,7 +1356,7 @@ UChecker::verify(const Formula& f)
 {
   // Verify!
   const Expr& e = f;
-  UVerifier v(eStateSet, g, start, num_vertices(g), f);
+  UVerifier v(eStateSet, g, num_vertices(g), f);
   v.analyze(boolOptions["ltl-verbose"]);
 
   // Visualization:
@@ -1314,7 +1382,11 @@ UChecker::verify(const Formula& f)
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
       //cerr<<"Value at START = "<<s.top()<<endl;
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      b = b && lower(s.top());
+#else
       b = b && s.top();
+#endif
     }
   } END_FOR
   cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;

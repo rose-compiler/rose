@@ -2,7 +2,9 @@
 
 #include "sawyer/Assert.h"
 #include "AsmUnparser.h"                                // rose::AsmUnparser
+#include "BinaryDataFlow.h"                             // BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // rose::BinaryLoader
+#include "BinaryTaintedFlow.h"                          // BinaryAnalysis::TaintedFlow
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::Disassembler
 #include "Partitioner.h"                                // rose::Partitioner
@@ -25,7 +27,7 @@ void initialize() {
         facilities.insert(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
-        Sawyer::Assert::assertionStream = mlog[FATAL];
+        Sawyer::Message::assertionStream = mlog[FATAL];
 
         // Register logging facilities from other software layers.  These facilities should already be in a usable, but
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
@@ -35,6 +37,8 @@ void initialize() {
         Disassembler::initDiagnostics();
         Partitioner::initDiagnostics();
         AsmUnparser::initDiagnostics();
+        BinaryAnalysis::DataFlow::initDiagnostics();
+        BinaryAnalysis::TaintedFlow::initDiagnostics();
 
         // By default, only messages of informational importance and above are dispalyed.
         facilities.control("none, >=info");

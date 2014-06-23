@@ -39,7 +39,7 @@ FILE* ltl_input = NULL;
 
 %}
 
-%token IN_SYMBOL OUT_SYMBOL WU END
+%token IN_SYMBOL OUT_SYMBOL WU FALSE TRUE END
 /* operator precedences */
 %nonassoc G
 %nonassoc R
@@ -88,6 +88,9 @@ lit:
 '(' bin_expr ')' { $$ = $2; }
 | IN_SYMBOL	 { $$ = new InputSymbol(ltl_next_char); }
 | OUT_SYMBOL	 { $$ = new OutputSymbol(ltl_next_char); }
+| TRUE  	 { $$ = new True(); }
+| FALSE  	 { $$ = new False(); }
+
 
 un_expr:
   lit        		{ $$ = $1; }
@@ -178,6 +181,16 @@ int ltl_lex(void) {
                 ungetc(ltl_next_char, ltl_input);
                 return ltl_next_char;
               }
+  case 'f':   if(getc(ltl_input) == 'a' && 
+		 getc(ltl_input) == 'l' &&
+		 getc(ltl_input) == 's' &&
+		 getc(ltl_input) == 'e') return FALSE;
+              return '#';
+  case 't':   if(getc(ltl_input) == 'r' && 
+		 getc(ltl_input) == 'u' &&
+		 getc(ltl_input) == 'e') return TRUE;
+              return '#';
+
   case '\r':
   case '\n':  ltl_line++; 
               ltl_pos=0;

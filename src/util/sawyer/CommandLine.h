@@ -4,17 +4,20 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/Map.h>
+#include <sawyer/Markup.h>
 #include <sawyer/Message.h>
+#include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
+#include <sawyer/SharedPointer.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/any.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
-#include <boost/optional.hpp>
-#include <boost/shared_ptr.hpp>
 #include <cerrno>
+#include <ctype.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -151,10 +154,15 @@ namespace Sawyer { // documented in Sawyer.h
  */
 namespace CommandLine {
 
-extern const std::string STR_NONE;
+SAWYER_EXPORT extern const std::string STR_NONE;
 class Switch;
 class Parser;
 class ParserResult;
+
+/** Check that documentation markup is valid.
+ *
+ *  Tests the supplied markup string for validity, throwing an <code>std::runtime_error</code> if something is wrong. */
+SAWYER_EXPORT void checkMarkup(const std::string&);
 
 /** The order in which things are sorted in the documentation. */
 enum SortOrder {
@@ -177,7 +185,7 @@ enum SortOrder {
  *  an index to a particular character of a particular string.
  *
  * @sa Cursor::location */
-struct Location {
+struct SAWYER_EXPORT Location {
     size_t idx;                                                 /**< Index into some vector of program argument strings. */
     size_t offset;                                              /**< Character offset within a program argument string. */
 
@@ -206,19 +214,21 @@ struct Location {
 };
 
 /** Print a location. Prints a location as the dotted pair <em>idx</em>.<em>offset</em>. */
-std::ostream& operator<<(std::ostream&, const Location&);
+SAWYER_EXPORT std::ostream& operator<<(std::ostream&, const Location&);
 
 /** Indicates an invalid location.  The library uses this to indicate that a string came from somewhere other than the
  *  command-line.  The constant <code>NOWHERE</code> compares equal to itself but unequal to (less than) all valid
  *  locations. */
-extern const Location NOWHERE;
+SAWYER_EXPORT extern const Location NOWHERE;
 
 /** Input stream for command line arguments.
  *
  *  A cursor is an ordered set of strings and a current position in that set. */
-class Cursor {
+class SAWYER_EXPORT Cursor {
+#include <sawyer/WarningsOff.h>
     std::vector<std::string> strings_;
     Location loc_;
+#include <sawyer/WarningsRestore.h>
 public:
     /** Construct a cursor from an ordered set of strings.  The cursor's initial position is the first character of the first
      *  string, or the end if the set contains no strings or contains only empty strings. */
@@ -348,11 +358,11 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // used internally
-class ValueSaver {
+class SAWYER_EXPORT ValueSaver: public SharedObject {
 protected:
     ValueSaver() {}
 public:
-    typedef boost::shared_ptr<ValueSaver> Ptr;
+    typedef SharedPointer<ValueSaver> Ptr;
     virtual ~ValueSaver() {}
     virtual void save(const boost::any&) const = 0;
 };
@@ -364,7 +374,7 @@ class TypedSaver: public ValueSaver {
 protected:
     TypedSaver(T &storage): storage_(storage) {}
 public:
-    typedef boost::shared_ptr<TypedSaver> Ptr;
+    typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(T &storage) { return Ptr(new TypedSaver(storage)); }
     virtual void save(const boost::any &value) const /*override*/ {
         storage_ = boost::any_cast<T>(value);
@@ -378,7 +388,7 @@ class TypedSaver<std::vector<T> >: public ValueSaver {
 protected:
     TypedSaver(std::vector<T> &storage): storage_(storage) {}
 public:
-    typedef boost::shared_ptr<TypedSaver> Ptr;
+    typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(std::vector<T> &storage) { return Ptr(new TypedSaver(storage)); }
     virtual void save(const boost::any &value) const /*override*/ {
         T typed = boost::any_cast<T>(value);
@@ -397,7 +407,8 @@ public:
  *  string, a ParsedValue object is constructed to describe it.  These objects hold the value, the string from whence the value
  *  was parsed, and information about where the value came from and with which switch it is associated.  This class also
  *  provides a number of methods for conveniently and safely casting the value to other types. */
-class ParsedValue {
+class SAWYER_EXPORT ParsedValue {
+#include <sawyer/WarningsOff.h>
     boost::any value_;
     Location valueLocation_;                            /**< Where this value came from on the command-line; or NOWHERE. */
     std::string valueString_;                           /**< String representation of the value. */
@@ -407,6 +418,7 @@ class ParsedValue {
     size_t keySequence_;                                /**< Relation of this value w.r.t. other values for same key. */
     size_t switchSequence_;                             /**< Relation of this value w.r.t. other values for the switch name. */
     ValueSaver::Ptr valueSaver_;                        /**< Saves the value during ParserResult::apply. */
+#include <sawyer/WarningsRestore.h>
 
 public:
     /** Construct a new empty value.  The @ref isEmpty method will return true for values that are default constructed. */
@@ -525,7 +537,7 @@ public:
 };
 
 /** Print some information about a parsed value. */
-std::ostream& operator<<(std::ostream&, const ParsedValue&);
+SAWYER_EXPORT std::ostream& operator<<(std::ostream&, const ParsedValue&);
 
 /** A vector of parsed values. */
 typedef std::vector<ParsedValue> ParsedValues;
@@ -589,8 +601,10 @@ typedef std::vector<ParsedValue> ParsedValues;
  *
  * @sa
  *  @ref parser_factories */
-class ValueParser: public boost::enable_shared_from_this<ValueParser> {
+class SAWYER_EXPORT ValueParser: public SharedFromThis<ValueParser> {
+#include <sawyer/WarningsOff.h>
     ValueSaver::Ptr valueSaver_;
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use @c instance or factories instead. */
     ValueParser() {}
@@ -599,7 +613,7 @@ protected:
     explicit ValueParser(const ValueSaver::Ptr &valueSaver): valueSaver_(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ValueParser> Ptr;
+    typedef SharedPointer<ValueParser> Ptr;
 
     virtual ~ValueParser() {}
 
@@ -628,7 +642,7 @@ public:
      *  is saved until apply is called--this allows command-lines to be parsed for their error side effects without actually
      *  changing any program state.
      * @{ */
-    Ptr valueSaver(const ValueSaver::Ptr &f) { valueSaver_ = f; return shared_from_this(); }
+    Ptr valueSaver(const ValueSaver::Ptr &f) { valueSaver_ = f; return sharedFromThis(); }
     const ValueSaver::Ptr valueSaver() const { return valueSaver_; }
     /** @} */
 
@@ -691,7 +705,7 @@ protected:
     AnyParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<AnyParser> Ptr;
+    typedef SharedPointer<AnyParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new AnyParser object.  Uses will most likely want to use the @ref
      *  anyParser factory instead, which requires less typing.
@@ -758,7 +772,7 @@ protected:
     explicit IntegerParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<IntegerParser> Ptr;
+    typedef SharedPointer<IntegerParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref
      *  integerParser factory instead, which requires less typing.
@@ -803,7 +817,7 @@ protected:
     NonNegativeIntegerParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<NonNegativeIntegerParser> Ptr;
+    typedef SharedPointer<NonNegativeIntegerParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new NonNegativeIntegerParser object.  Uses will most likely want to use
      *  the @ref nonNegativeIntegerParser factory instead, which requires less typing.
@@ -850,7 +864,7 @@ protected:
     RealNumberParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<RealNumberParser> Ptr;
+    typedef SharedPointer<RealNumberParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new RealNumberParser object.  Uses will most likely want to use
      *  the @ref realNumberParser factory instead, which requires less typing.
@@ -888,7 +902,7 @@ protected:
     BooleanParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<BooleanParser> Ptr;
+    typedef SharedPointer<BooleanParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new BooleanParser object.  Uses will most likely want to use the @ref
      *  booleanParser factory instead, which requires less typing.
@@ -909,7 +923,7 @@ private:
             const char **list = 0==negpos ? neg : pos;
             size_t listsz = 0==negpos ? sizeof(neg)/sizeof(*neg) : sizeof(pos)/sizeof(*pos);
             for (size_t i=0; i<listsz; ++i) {
-                if (0==strncasecmp(list[i], input, strlen(list[i]))) {
+                if (0==my_strncasecmp(list[i], input, strlen(list[i]))) {
                     *rest = input + strlen(list[i]);
                     while (isspace(**rest)) ++*rest;
                     std::string parsed(start, *rest-start);
@@ -918,6 +932,21 @@ private:
             }
         }
         throw std::runtime_error("Boolean expected");
+    }
+
+    // Microsoft doesn't have the POSIX.1-2001 strncasecmp function
+    int my_strncasecmp(const char *a, const char *b, size_t nchars) {
+        ASSERT_not_null(a);
+        ASSERT_not_null(b);
+        for (size_t i=0; i<nchars; ++i) {
+            if (!a[i] || !b[i])
+                return a[i] ? 1 : (b[i] ? -1 : 0);
+            char achar = tolower(a[i]);
+            char bchar = tolower(b[i]);
+            if (achar != bchar)
+                return achar < bchar ? -1 : 1;
+        }
+        return 0;
     }
 };
 
@@ -929,8 +958,10 @@ private:
  *  is an <code>std::string</code>.
  *
  * @sa parser_factories */
-class StringSetParser: public ValueParser {
+class SAWYER_EXPORT StringSetParser: public ValueParser {
+#include <sawyer/WarningsOff.h>
     std::vector<std::string> strings_;
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     StringSetParser() {}
@@ -939,7 +970,7 @@ protected:
     StringSetParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<StringSetParser> Ptr;
+    typedef SharedPointer<StringSetParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new StringSetParser object.  Uses will most likely want to use
      *  the @ref stringSetParser factory instead, which requires less typing.
@@ -958,7 +989,7 @@ public:
     template<class InputIterator>
     Ptr with(InputIterator begin, InputIterator end) {
         strings_.insert(strings_.end(), begin, end);
-        return boost::dynamic_pointer_cast<StringSetParser>(shared_from_this());
+        return sharedFromThis().dynamicCast<StringSetParser>();
     }
     /** @} */
 
@@ -985,7 +1016,7 @@ protected:
     EnumParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver), strParser_(StringSetParser::instance()) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<EnumParser> Ptr;
+    typedef SharedPointer<EnumParser> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new EnumParser object.  Uses will most likely want to use the @ref
      *  enumParser factory instead, which requires less typing.
@@ -1001,7 +1032,7 @@ public:
     Ptr with(const std::string &name, T value) {
         strParser_->with(name);
         members_.insert(name, value);
-        return boost::dynamic_pointer_cast<EnumParser>(shared_from_this());
+        return sharedFromThis().template dynamicCast<EnumParser>();
     }
 private:
     virtual ParsedValue operator()(Cursor &cursor) /*override*/ {
@@ -1017,10 +1048,12 @@ private:
  *  whose value is an STL @c list with members that are the ParsedValue objects return by the list element parsers.
  *
  * @sa parser_factories */
-class ListParser: public ValueParser {
+class SAWYER_EXPORT ListParser: public ValueParser {
     typedef std::pair<ValueParser::Ptr, std::string> ParserSep;
+#include <sawyer/WarningsOff.h>
     std::vector<ParserSep> elements_;
     size_t minLength_, maxLength_;                      // limits on the number of values permitted
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     ListParser(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe)
@@ -1029,7 +1062,7 @@ protected:
     }
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ListParser> Ptr;
+    typedef SharedPointer<ListParser> Ptr;
 
     /** Value type for list ParsedValue. */
     typedef std::list<ParsedValue> ValueList;
@@ -1053,7 +1086,7 @@ public:
      *  characters. */
     Ptr nextMember(const ValueParser::Ptr &elmtType, const std::string &separatorRe="[,;:]\\s*") {
         elements_.push_back(ParserSep(elmtType, separatorRe));
-        return boost::dynamic_pointer_cast<ListParser>(shared_from_this());
+        return sharedFromThis().dynamicCast<ListParser>();
     }
 
     /** Specify limits for the number of values parsed.
@@ -1198,12 +1231,10 @@ typename EnumParser<T>::Ptr enumParser() {
     return EnumParser<T>::instance();
 }
 
+SAWYER_EXPORT StringSetParser::Ptr stringSetParser(std::string &storage);
+SAWYER_EXPORT StringSetParser::Ptr stringSetParser();
 
-StringSetParser::Ptr stringSetParser(std::string &storage);
-StringSetParser::Ptr stringSetParser();
-
-
-ListParser::Ptr listParser(const ValueParser::Ptr&, const std::string &sepRe="[,;:]\\s*");
+SAWYER_EXPORT ListParser::Ptr listParser(const ValueParser::Ptr&, const std::string &sepRe="[,;:]\\s*");
 /** @} */
 
 
@@ -1225,10 +1256,12 @@ ListParser::Ptr listParser(const ValueParser::Ptr&, const std::string &sepRe="[,
  *  declared to have one argument and to save a value for each occurrence (see Switch::whichValue).
  *
  *  Users seldom use this class directly, but rather call Switch::argument to declare arguments. */
-class SwitchArgument {
+class SAWYER_EXPORT SwitchArgument {
+#include <sawyer/WarningsOff.h>
     std::string name_;                                  // argument name for synopsis
     ValueParser::Ptr parser_;                           // how to match and parse this argument
     ParsedValue defaultValue_;                          // default value if the argument is optional
+#include <sawyer/WarningsRestore.h>
 public:
     /** Construct a new required argument. The @p name is used in documentation and error messages and need not be
      *  unique. */
@@ -1300,36 +1333,61 @@ public:
  *  SwitchAction::Ptr action1 = UserAction::instance<MyFunctor>(myFunctor);
  *  SwitchAction::Ptr action2 = userAction(myFunctor);
  * @endcode */
-class SwitchAction {
+class SAWYER_EXPORT SwitchAction: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<SwitchAction> Ptr;
+    typedef SharedPointer<SwitchAction> Ptr;
     virtual ~SwitchAction() {}
 
     /** Runs the action.  Calling this method will cause the function operator to be invoked with the parser results. */
     void run(const ParserResult &parserResult) /*final*/ { (*this)(parserResult); }
-private:
+protected:
     virtual void operator()(const ParserResult&) = 0;
 };
 
 /** Functor to print a version string. The string supplied to the constructor is printed to standard error followed by a line
  *  feed. Although the string is intended to be a version number, it can be anything you like. Sometimes people use this action
  *  to aid debugging of the parsing. */
-class ShowVersion: public SwitchAction {
+class SAWYER_EXPORT ShowVersion: public SwitchAction {
+#include <sawyer/WarningsOff.h>
     std::string versionString_;
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit ShowVersion(const std::string &versionString): versionString_(versionString) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ShowVersion> Ptr;
+    typedef SharedPointer<ShowVersion> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new ShowVersion object.  Uses will most likely want to use the @ref
      *  showVersion factory instead, which requires less typing.
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
     static Ptr instance(const std::string &versionString) { return Ptr(new ShowVersion(versionString)); }
-private:
+protected:
+    virtual void operator()(const ParserResult&) /*overload*/;
+};
+
+/** Functor to print a version string and exit. This functor does the same thing as ShowVersion, but then it exits the program
+ *  with the specified status. */
+class SAWYER_EXPORT ShowVersionAndExit: public ShowVersion {
+    int exitStatus_;
+protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
+    explicit ShowVersionAndExit(const std::string &versionString, int exitStatus)
+        : ShowVersion(versionString), exitStatus_(exitStatus) {}
+public:
+    /** Reference counting pointer for this class. */
+    typedef SharedPointer<ShowVersionAndExit> Ptr;
+
+    /** Allocating constructor. Returns a pointer to a new ShowVersionAndExit object.  Uses will most likely want to use the
+     *  @ref showVersionAndExit factory instead, which requires less typing.
+     *
+     * @sa @ref action_factories, and the @ref SwitchAction class. */
+    static Ptr instance(const std::string &versionString, int exitStatus) {
+        return Ptr(new ShowVersionAndExit(versionString, exitStatus));
+    }
+protected:
     virtual void operator()(const ParserResult&) /*overload*/;
 };
 
@@ -1337,20 +1395,78 @@ private:
  *  the parser, and then invokes standard Unix commands to format the text and page it to standard output. Strange things might
  *  happen if standard input is not the terminal, since the pager will probably be expecting to read commands from standard
  *  input. */
-class ShowHelp: public SwitchAction {
+class SAWYER_EXPORT ShowHelp: public SwitchAction {
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     ShowHelp() {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ShowHelp> Ptr;
+    typedef SharedPointer<ShowHelp> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new ShowHelp object.  Uses will most likely want to use the @ref
      *  showHelp factory instead, which requires less typing.
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
     static Ptr instance() { return Ptr(new ShowHelp); }
-private:
+protected:
+    virtual void operator()(const ParserResult&) /*override*/;
+};
+
+/** Functor to print the Unix man page and exit.  This functor is the same as ShowHelp except it also exits with the specified
+ *  value. */
+class SAWYER_EXPORT ShowHelpAndExit: public ShowHelp {
+    int exitStatus_;
+protected:
+    /** Constructor for derived classes.  Non-subclass users should use @ref instance instead. */
+    ShowHelpAndExit(int exitStatus): exitStatus_(exitStatus) {}
+public:
+    /** Reference counting pointer for this class. */
+    typedef SharedPointer<ShowHelpAndExit> Ptr;
+
+    /** Allocating constructor.  Returns a pointer to a new ShowHelpAndExit object.  Users will most likely want to use the
+     * @ref showHelpAndExit factory instead, which requires less typing.
+     *
+     * @sa @ref action_factories, and the @ref SwitchAction class. */
+    static Ptr instance(int exitStatus) { return Ptr(new ShowHelpAndExit(exitStatus)); }
+protected:
+    virtual void operator()(const ParserResult&) /*override*/;
+};
+
+/** Functor to configure diagnostics.  This functor uses the string(s) from the specified switch key to configure the specified
+ *  message facilities object.  If a string is the word "list" then the message facility configuration is shown on standard
+ *  output.
+ *
+ *  Here's an example usage.  In particular, be sure to specify SAVE_ALL so that more than one <code>--log</code> switch can
+ *  appear on the command line, like: <tt>a.out --log ">=info" --log list</tt>
+ *
+ * @code
+ *  generic.insert(Switch("log")
+ *                 .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
+ *                 .argument("config")
+ *                 .whichValue(SAVE_ALL)
+ *                 .doc("Configures diagnostics..."));
+ * @endcode */
+class SAWYER_EXPORT ConfigureDiagnostics: public SwitchAction {
+#include <sawyer/WarningsOff.h>
+    std::string switchKey_;
+    Message::Facilities &facilities_;
+#include <sawyer/WarningsRestore.h>
+protected:
+    /** Constructor for derived classes.  Non-subclass users should use @ref instance instead. */
+    ConfigureDiagnostics(const std::string &switchKey, Message::Facilities &facilities)
+        : switchKey_(switchKey), facilities_(facilities) {}
+public:
+    /** Reference counting pointer for this class. */
+    typedef SharedPointer<ConfigureDiagnostics> Ptr;
+
+    /** Allocating constructor.  Returns a pointer to a new ConfigureDiagnostics object.  Users will most likely want to use
+     * the @ref configureDiagnostics factory instead, which requires less typing.
+     *
+     * @sa @ref action_factories, and the @ref SwitchAction class. */
+    static Ptr instance(const std::string &switchKey, Message::Facilities &facilities) {
+        return Ptr(new ConfigureDiagnostics(switchKey, facilities));
+    }
+protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
 
@@ -1360,8 +1476,8 @@ private:
  *  user has a function like this:
  *
  * @code
- *  void showRawManPage(const Parser *parser) {
- *      std::cout <<parser->manpage();
+ *  void showRawManPage(const ParserResult *cmdline) {
+ *      std::cout <<cmdline->parser()->manpage();
  *      exit(0);
  *  }
  * @endcode
@@ -1375,20 +1491,20 @@ private:
  * @endcode */
 template<class Functor>
 class UserAction: public SwitchAction {
-    const Functor &functor_;
+    Functor &functor_;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    UserAction(const Functor &f): functor_(f) {}
+    UserAction(Functor &f): functor_(f) {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<class UserAction> Ptr;
+    typedef SharedPointer<class UserAction> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new UserAction object.  Uses will most likely want to use the @ref
      *  userAction factory instead, which requires less typing.
      *
      * @sa @ref action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(const Functor &f) { return Ptr(new UserAction(f)); }
-private:
+    static Ptr instance(Functor &f) { return Ptr(new UserAction(f)); }
+protected:
     virtual void operator()(const ParserResult &parserResult) /*override*/ { (functor_)(parserResult); }
 };
 
@@ -1420,9 +1536,14 @@ private:
  *  @li Documentation for the returned class.
  * @{ */
 
-ShowVersion::Ptr showVersion(const std::string &versionString);
+SAWYER_EXPORT ShowVersion::Ptr showVersion(const std::string &versionString);
+SAWYER_EXPORT ShowVersionAndExit::Ptr showVersionAndExit(const std::string &versionString, int exitStatus);
 
-ShowHelp::Ptr showHelp();
+SAWYER_EXPORT ShowHelp::Ptr showHelp();
+
+SAWYER_EXPORT ShowHelpAndExit::Ptr showHelpAndExit(int exitStatus);
+
+SAWYER_EXPORT ConfigureDiagnostics::Ptr configureDiagnostics(const std::string&, Message::Facilities&);
 
 template<class Functor>
 typename UserAction<Functor>::Ptr userAction(const Functor &functor) {
@@ -1450,10 +1571,10 @@ typename UserAction<Functor>::Ptr userAction(const Functor &functor) {
  *
  *  Most subclasses will have factory functions to instantiate reference counted, allocated objects. See @ref
  *  augmenter_factories for a list. */
-class ValueAugmenter {
+class SAWYER_EXPORT ValueAugmenter: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<ValueAugmenter> Ptr;
+    typedef SharedPointer<ValueAugmenter> Ptr;
     virtual ~ValueAugmenter() {}
 
     /** Called when a switch's value is about to be stored into the ParserResult.  The previously stored switch values for all
@@ -1482,7 +1603,7 @@ protected:
     Sum() {}
 public:
     /** Reference counting pointer for this class. */
-    typedef boost::shared_ptr<Sum> Ptr;
+    typedef SharedPointer<Sum> Ptr;
 
     /** Allocating constructor. Returns a pointer to a new Sum object.  Uses will most likely want to use the @ref
      *  sum factory instead, which requires less typing.
@@ -1546,13 +1667,15 @@ typename Sum<T>::Ptr sum() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Used internally to pass around switch properties that are common among parsers, switch groups, and switches.
-struct ParsingProperties {
+struct SAWYER_EXPORT ParsingProperties {
+#include <sawyer/WarningsOff.h>
     std::vector<std::string> longPrefixes;              // Prefixes for long command-line switches
     bool inheritLongPrefixes;                           // True if this also inherits longPrefixes from a higher layer
     std::vector<std::string> shortPrefixes;
     bool inheritShortPrefixes;
     std::vector<std::string> valueSeparators;           // What separates a long switch from its value.
     bool inheritValueSeparators;
+#include <sawyer/WarningsRestore.h>
     ParsingProperties()
         : inheritLongPrefixes(true), inheritShortPrefixes(true), inheritValueSeparators(true) {}
     ParsingProperties inherit(const ParsingProperties &base) const;
@@ -1590,10 +1713,11 @@ enum WhichValue {
  *                                  "always"));                     // the default value
  * @endcode
  */
-class Switch {
+class SAWYER_EXPORT Switch {
 private:
+#include <sawyer/WarningsOff.h>
     std::vector<std::string> longNames_;                /**< Long name of switch, or empty string. */
-    std::string shortNames_;                            /**< Optional short names for this switch. */
+    std::string shortNames_;                            /**< %Optional short names for this switch. */
     std::string key_;                                   /**< Unique key, usually the long name or the first short name. */
     ParsingProperties properties_;                      /**< Properties valid at multiple levels of the hierarchy. */
     std::string synopsis_;                              /**< User-defined synopsis or empty string. */
@@ -1601,11 +1725,12 @@ private:
     std::string documentationKey_;                      /**< For sorting documentation. */
     bool hidden_;                                       /**< Whether to hide documentation. */
     std::vector<SwitchArgument> arguments_;             /**< Arguments with optional default values. */
-    SwitchAction::Ptr action_;                          /**< Optional action to perform during ParserResult::apply. */
+    SwitchAction::Ptr action_;                          /**< %Optional action to perform during ParserResult::apply. */
     WhichValue whichValue_;                             /**< Which switch values should be saved. */
     ValueAugmenter::Ptr valueAugmenter_;                /**< Used if <code>whichValue_==SAVE_AUGMENTED</code>. */
     ParsedValue intrinsicValue_;                        /**< Value for switches that have no declared arguments. */
     bool explosiveLists_;                               /**< Whether to expand ListParser::ValueList into separate values. */
+#include <sawyer/WarningsRestore.h>
 
 public:
     /** Constructs a switch declaration.  Every switch must have either a long or short name (or both), neither of which should
@@ -1692,7 +1817,7 @@ public:
      * @sa @ref doc
      *
      * @{ */
-    Switch& synopsis(const std::string &s) { synopsis_ = s; return *this; }
+    Switch& synopsis(const std::string &s) { checkMarkup(s); synopsis_ = s; return *this; }
     std::string synopsis() const;
     /** @} */
 
@@ -1733,7 +1858,7 @@ public:
      *  Even switches with no documentation will show up in the generated documentation--they will be marked as "Not
      *  documented".  To suppress them entirely, set their @ref hidden property to true.
      * @{ */
-    Switch& doc(const std::string &s) { documentation_ = s; return *this; }
+    Switch& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2085,13 +2210,15 @@ private:
  *
  *  When creating a switch group, switch declarations (@ref Switch) are copied into the switch group.  Eventually the switch
  *  group itself is copied into a parser. */
-class SwitchGroup {
+class SAWYER_EXPORT SwitchGroup {
+#include <sawyer/WarningsOff.h>
     std::vector<Switch> switches_;
     ParsingProperties properties_;
     std::string name_;
     std::string docKey_;
     std::string documentation_;
     SortOrder switchOrder_;
+#include <sawyer/WarningsRestore.h>
 public:
     /** Construct an unnamed group. */
     SwitchGroup(): switchOrder_(DOCKEY_ORDER) {}
@@ -2142,7 +2269,7 @@ public:
      *  within this group.
      *
      * @{ */
-    SwitchGroup& doc(const std::string &s) { documentation_ = s; return *this; }
+    SwitchGroup& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2233,7 +2360,8 @@ private:
  *  A parser is configured to describe the valid program switches, their arguments, and other information, and then the parser
  *  is then applied to a program command line to return a ParserResult. The process of parsing a command line is free of
  *  side-effects other than creating the result. */
-class Parser {
+class SAWYER_EXPORT Parser {
+#include <sawyer/WarningsOff.h>
     std::vector<SwitchGroup> switchGroups_;             /**< Declarations for all recognized switches. */
     ParsingProperties properties_;                      /**< Some properties inherited by switch groups and switches. */
     std::vector<std::string> terminationSwitches_;      /**< Special switch to terminate parsing; default is "-\-". */
@@ -2251,8 +2379,9 @@ class Parser {
     StringStringMap sectionDoc_;                        /**< Extra documentation for any section by lower-case section name. */
     StringStringMap sectionOrder_;                      /**< Maps section keys to section names. */
     Message::SProxy errorStream_;                       /**< Send errors here and exit instead of throwing runtime_error. */
-    boost::optional<std::string> exitMessage_;          /**< Additional message before exit when errorStream_ is not empty. */
+    Optional<std::string> exitMessage_;                 /**< Additional message before exit when errorStream_ is not empty. */
     SortOrder switchGroupOrder_;                        /**< Order of switch groups in the documentation. */
+#include <sawyer/WarningsRestore.h>
     
 public:
     /** Default constructor.  The default constructor sets up a new parser with defaults suitable for the operating
@@ -2330,7 +2459,7 @@ public:
      *  may nestle.
      * @{ */
     Parser& shortMayNestle(bool b) { shortMayNestle_ = b; return *this; }
-    bool shortMayNestle() const { return shortMayNestle(); }
+    bool shortMayNestle() const { return shortMayNestle_; }
     /** @} */
 
     /** Strings that indicate that arguments are to be read from a file.  The @ref resetInclusionPrefixes clears the list (and
@@ -2486,9 +2615,31 @@ public:
     std::string docForSection(const std::string &sectionName) const;
     /** @} */
 
-    /** Generate manpage documentation. The returned string is in the TROFF language normally used for Unix manual pages. The
-     *  string can be processed by various Unix commands to convert it to text, HTML, TeX, and a variety of other formats. */
-    std::string manpage() const;
+    /** Full documentation.
+     *
+     *  Combines all the documentation parts to return a string documenting the entire parser.  The returned string contains
+     *  markup in the Sawyer::Markup language, with some extensions specific to command-line parsing. */
+    std::string documentationMarkup() const;
+
+    /** Parsed documentation markup.
+     *
+     *  Parses the supplied documentation markup (or gets it via @ref documentationMarkup) and returns the result. An
+     *  <code>std::runtime_error</code> is thrown if there are any problems parsing the documentation string.
+     *
+     * @{ */
+    Markup::ParserResult parseDocumentation() const;
+    Markup::ParserResult parseDocumentation(const std::string&) const;
+    /** @} */
+
+    /** Generate Perl POD documentation.
+     *
+     *  Generates a Perl POD string for this parser. */
+    std::string podDocumentation() const;
+
+    /** Generate Unix man-page (nroff) documentation.
+     *
+     *  Generates NRoff source code for this parser. */
+    std::string manDocumentation() const;
 
     /** Print documentation to standard output. Use a pager if possible. */
     void emitDocumentationToPager() const;
@@ -2521,7 +2672,7 @@ private:
      *  pointer is valid only as long as this parser is allocated). If no switch is available for parsing then the null pointer
      *  is returned. If some other parsing error occurs then a null value is returned and the @p saved_error is updated to
      *  reflect the nature of the error.  This function does not throw <code>std::runtime_error</code> exceptions. */
-    const Switch* parseLongSwitch(Cursor&, ParsedValues&, boost::optional<std::runtime_error>&);
+    const Switch* parseLongSwitch(Cursor&, ParsedValues&, Optional<std::runtime_error>&);
 
     /** Parse one short switch.  Upon entry, the cursor is either at the beginning of a program argument, or at the beginning
      *  of a (potential) short switch name. On success, for non-nestled switches the cursor will be positioned at the beginning
@@ -2531,25 +2682,18 @@ private:
      *  available for parsing then the null pointer is returned. If some other parsing error occurs then a null value is
      *  returned and the @p saved_error is updated to reflect the nature of the error.  This function does not throw
      *  <code>std::runtime_error</code> exceptions. */
-    const Switch* parseShortSwitch(Cursor&, ParsedValues&, boost::optional<std::runtime_error>&, bool mayNestle);
+    const Switch* parseShortSwitch(Cursor&, ParsedValues&, Optional<std::runtime_error>&, bool mayNestle);
 
     // Returns true if the program argument at the cursor looks like it might be a switch.  Apparent switches are any program
     // argument that starts with a long or short prefix.
     bool apparentSwitch(const Cursor&) const;
 
-    // Returns documentation in the internal markup language
-    std::string documentationMarkup() const;
 
     // Returns the best prefix for each switch--the one used for documentation
     void preferredSwitchPrefixes(Container::Map<std::string, std::string> &prefixMap /*out*/) const;
 
-    // Terminal width in characters from TIOCGWINSZ, $COLUMNS, or 80
-    static int terminalWidth();
-    
     // FIXME[Robb Matzke 2014-02-21]: Some way to parse command-lines from a config file, or to merge parsed command-lines with
     // a yaml config file, etc.
-
-
 };
 
 /** The result from parsing a command line.
@@ -2576,7 +2720,8 @@ private:
  *  Parser().with(switches).parse(argc, argv).apply();
  * @endcode
  */
-class ParserResult {
+class SAWYER_EXPORT ParserResult {
+#include <sawyer/WarningsOff.h>
     Parser parser_;
     Cursor cursor_;
     ParsedValues values_;
@@ -2602,6 +2747,7 @@ class ParserResult {
 
     /** Switch actions to be called by @ref apply. We save one action per key. */
     Container::Map<std::string, SwitchAction::Ptr> actions_; 
+#include <sawyer/WarningsRestore.h>
 
 private:
     friend class Parser;

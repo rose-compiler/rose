@@ -2573,7 +2573,7 @@ Allocator statistics for SValue objects:
     Pool utilization:       0 percent
     High water:             27 objects
     High water utilization: 1.58203 percent
-      Bucket at 0x027670f0:	0 objects in use
+      Bucket at 0x01869830:	0 objects in use
   Pool #11
     Max object size:        96 bytes
     Max objects per bucket: 853
@@ -2581,9 +2581,9 @@ Allocator statistics for SValue objects:
     Objects in use:         0 objects
     Object memory:          0 bytes
     Pool utilization:       0 percent
-    High water:             44 objects
-    High water utilization: 5.15625 percent
-      Bucket at 0x02a147c0:	0 objects in use
+    High water:             46 objects
+    High water utilization: 5.39062 percent
+      Bucket at 0x01aa09e0:	0 objects in use
   Pool #13
     Max object size:        112 bytes
     Max objects per bucket: 731
@@ -2593,7 +2593,7 @@ Allocator statistics for SValue objects:
     Pool utilization:       0 percent
     High water:             81 objects
     High water utilization: 11.0742 percent
-      Bucket at 0x02538ce0:	0 objects in use
+      Bucket at 0x017e5af0:	0 objects in use
   Totals across all pools for this allocator
     Number of buckets:            3
     Memory allocated for buckets: 245760 bytes

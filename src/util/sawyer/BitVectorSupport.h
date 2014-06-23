@@ -1,12 +1,16 @@
 #ifndef Sawyer_BitVectorSupport_H
 #define Sawyer_BitVectorSupport_H
 
-#include <sawyer/Assert.h>
-#include <sawyer/Interval.h>
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cstring>
+#include <sawyer/Assert.h>
+#include <sawyer/Interval.h>
+#include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 #include <string>
+#include <vector>
 
 namespace Sawyer {
 namespace Container {
@@ -134,7 +138,6 @@ void nonoverlappingCopy(const Word *src, const BitRange &srcRange, Word *dst, co
     size_t srcLastIdx  = wordIndex<Word>(srcRange.greatest());
 
     size_t srcOffset = srcFirstIdx - dstFirstIdx; // overflow is okay
-    ssize_t srcOffsetSigned SAWYER_ATTR_UNUSED = srcOffset;// to debug overflow
 
     size_t srcBitIdx = bitIndex<Word>(srcRange.least());
     size_t dstBitIdx = bitIndex<Word>(dstRange.least());
@@ -262,7 +265,7 @@ void traverse2(Processor &processor, Word1 *vec1, const BitRange &range1, Word2 
     // the source and destination overlap.
     size_t offsetInWord = bitIndex<Word2>(range2.least());
     const size_t nWordsTmp = numberOfWords<Word2>(offsetInWord + range2.size());
-    typename RemoveConst<Word1>::Base tmp[nWordsTmp];
+    SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word1>::Base, tmp, nWordsTmp);
     memset(tmp, 0, sizeof tmp);                         // only for making debugging easier
     BitRange tmpRange = BitRange::baseSize(offsetInWord, range1.size());
     nonoverlappingCopy(vec1, range1, tmp, tmpRange);
@@ -299,7 +302,7 @@ void traverse2(Processor &processor, Word1 *vec1, const BitRange &range1, Word2 
     // the source and destination overlap.
     const size_t offsetInWord = bitIndex<Word2>(range2.least());
     const size_t nWordsTmp = numberOfWords<Word2>(offsetInWord + range2.size());
-    typename RemoveConst<Word1>::Base tmp[nWordsTmp];
+    SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word1>::Base, tmp, nWordsTmp);
     BitRange tmpRange = BitRange::baseSize(offsetInWord, range1.size());
     nonoverlappingCopy(vec1, range1, tmp, tmpRange);
 
@@ -465,7 +468,7 @@ void swap(Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2
 template<class Word>
 struct LeastSignificantSetBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     LeastSignificantSetBit(): offset(0) {}
     bool operator()(const Word &word, size_t nbits) {
         if (0 != (word & bitMask<Word>(0, nbits))) {
@@ -486,18 +489,18 @@ struct LeastSignificantSetBit {
  *  Returns the index of the least significant set bit within the specified range of bits. The return value is the
  *  absolute bit number in the entire vector.  If none of the bits in the range are set then nothing is returned. */
 template<class Word>
-boost::optional<size_t> leastSignificantSetBit(const Word *words, const BitRange &range) {
+Optional<size_t> leastSignificantSetBit(const Word *words, const BitRange &range) {
     LeastSignificantSetBit<Word> visitor;
     traverse(visitor, words, range, LowToHigh());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 template<class Word>
 struct LeastSignificantClearBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     LeastSignificantClearBit(): offset(0) {}
     bool operator()(const Word &word, size_t nbits) {
         if (bitMask<Word>(0, nbits) != (word & bitMask<Word>(0, nbits))) {
@@ -518,18 +521,18 @@ struct LeastSignificantClearBit {
  *  Returns the index of the least significant clear bit within the specified range of bits.  The return value is the absolute
  *  bit number in the entire vector.  If none of the bits in the range are clear then nothing is returned. */
 template<class Word>
-boost::optional<size_t> leastSignificantClearBit(const Word *words, const BitRange &range) {
+Optional<size_t> leastSignificantClearBit(const Word *words, const BitRange &range) {
     LeastSignificantClearBit<Word> visitor;
     traverse(visitor, words, range, LowToHigh());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 template<class Word>
 struct MostSignificantSetBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     MostSignificantSetBit(size_t nbits): offset(nbits) {}
     bool operator()(const Word &word, size_t nbits) {
         ASSERT_require(nbits <= offset);
@@ -551,18 +554,18 @@ struct MostSignificantSetBit {
  *  Returns the index of the most significant set bit within the specified range of bits. The return value is the
  *  absolute bit number in the entire vector.  If none of the bits in the range are set then nothing is returned. */
 template<class Word>
-boost::optional<size_t> mostSignificantSetBit(const Word *words, const BitRange &range) {
+Optional<size_t> mostSignificantSetBit(const Word *words, const BitRange &range) {
     MostSignificantSetBit<Word> visitor(range.size());
     traverse(visitor, words, range, HighToLow());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 template<class Word>
 struct MostSignificantClearBit {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     MostSignificantClearBit(size_t nbits): offset(nbits) {}
     bool operator()(const Word &word, size_t nbits) {
         ASSERT_require(nbits <= offset);
@@ -584,12 +587,12 @@ struct MostSignificantClearBit {
  *  Returns the index of the most significant zero bit within the specified range of bits. The return value is the
  *  absolute bit number in the entire vector.  If none of the bits in the range are set then nothing is returned. */
 template<class Word>
-boost::optional<size_t> mostSignificantClearBit(const Word *words, const BitRange &range) {
+Optional<size_t> mostSignificantClearBit(const Word *words, const BitRange &range) {
     MostSignificantClearBit<Word> visitor(range.size());
     traverse(visitor, words, range, HighToLow());
     if (visitor.result)
         return range.least() + *visitor.result;
-    return boost::none;
+    return Nothing();
 }
 
 /** True if all bits are set.
@@ -661,7 +664,7 @@ size_t nClear(const Word *words, const BitRange &range) {
 template<class Word>
 struct LeastSignificantDifference {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     LeastSignificantDifference(): offset(0) {}
     bool operator()(const Word &w1, const Word &w2, size_t nbits) {
         Word mask = bitMask<Word>(0, nbits);
@@ -684,8 +687,8 @@ struct LeastSignificantDifference {
  *  to the beginning of the sub-vectors where the first difference is found; it is not a bit index within the either
  *  vector-as-a-whole (unless the ranges start at zero). If no difference is found then nothing is returned. */
 template<class Word>
-boost::optional<size_t> leastSignificantDifference(const Word *vec1, const BitRange &range1,
-                                                   const Word *vec2, const BitRange &range2) {
+Optional<size_t> leastSignificantDifference(const Word *vec1, const BitRange &range1,
+                                            const Word *vec2, const BitRange &range2) {
     LeastSignificantDifference<Word> visitor;
     traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
     return visitor.result;
@@ -694,7 +697,7 @@ boost::optional<size_t> leastSignificantDifference(const Word *vec1, const BitRa
 template<class Word>
 struct MostSignificantDifference {
     size_t offset;
-    boost::optional<size_t> result;
+    Optional<size_t> result;
     MostSignificantDifference(size_t nbits): offset(nbits) {}
     bool operator()(const Word &w1, const Word &w2, size_t nbits) {
         ASSERT_require(nbits <= offset);
@@ -718,8 +721,8 @@ struct MostSignificantDifference {
  *  the beginning of the sub-vectors where the first difference is found; it is not a bit index within the either
  *  vector-as-a-whole (unless the ranges start at zero). If no difference is found then nothing is returned. */
 template<class Word>
-boost::optional<size_t> mostSignificantDifference(const Word *vec1, const BitRange &range1,
-                                                  const Word *vec2, const BitRange &range2) {
+Optional<size_t> mostSignificantDifference(const Word *vec1, const BitRange &range1,
+                                           const Word *vec2, const BitRange &range2) {
     MostSignificantDifference<Word> visitor(range1.size());
     traverse(visitor, vec1, range1, vec2, range2, HighToLow());
     return visitor.result;
@@ -802,7 +805,7 @@ void rotateRight(Word *words, const BitRange &range, size_t nShift) {
 
     // Save the low-order bits that will be shifted off
     size_t nSavedWords = numberOfWords<Word>(nShift);
-    Word saved[nSavedWords];
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, saved, nSavedWords);
     BitRange savedRange = BitRange::baseSize(0, nShift);
     copy(words, BitRange::baseSize(range.least(), nShift), saved, savedRange);
 
@@ -822,195 +825,6 @@ void rotateLeft(Word *words, const BitRange &range, size_t nShift) {
         return;
     nShift %= range.size();
     rotateRight(words, range, range.size()-nShift);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Arithmetic
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Assign an unsigned value to a bit range.
- *
- *  Zero extends or truncates @p value to the same width as @p range and copies it into the bit vector. */
-template<class Word>
-void fromInteger(Word *words, const BitRange &range, boost::uint64_t value) {
-    ASSERT_require(8==sizeof value);
-    if (range.isEmpty())
-        return;
-
-    // Create a bit vector that is just the value
-    size_t nbits = std::min(range.size(), (size_t)64);  // number of significant bits to copy, not fill
-    Word wordMask = bitMask<Word>(0, bitsPerWord<Word>::value);
-    size_t nTmpWords = numberOfWords<Word>(nbits);
-    Word tmp[nTmpWords];
-    for (size_t i=0; i<nTmpWords; ++i)
-        tmp[i] = (value >> (i * bitsPerWord<Word>::value)) & wordMask;
-
-    // Copy the value's bit vector to the destination and zero-fill
-    copy(tmp, BitRange::baseSize(0, nbits), words, BitRange::baseSize(range.least(), nbits));
-    if (range.size() >= 64) {
-        BitRange hi = BitRange::baseSize(range.least() + 64, range.size() - 64);
-        clear(words, hi);
-    }
-}
-
-/** Convert a bit vector to an integer.
- *
- *  Converts the specified range to an unsigned 64-bit value and returns that value. Returns zero if the range is empty.  If
- *  the range is wider than 64 bits then all of its high-order bits are ignored and only the lowest 64 bits are used. */
-template<class Word>
-boost::uint64_t toInteger(const Word *words, const BitRange &range) {
-    boost::uint64_t result = 0;
-    ASSERT_require(8==sizeof result);
-
-    // Copy the bits into the low bits of a temporary bit vector
-    size_t nbits = std::min(range.size(), (size_t)64);
-    size_t nTmpWords = numberOfWords<Word>(nbits);
-    typename RemoveConst<Word>::Base tmp[nTmpWords];
-    memset(tmp, 0, sizeof tmp);
-    BitRange lo = BitRange::baseSize(range.least(), nbits);
-    copy(words, lo, tmp, BitRange::baseSize(0, nbits));
-
-    // Convert the temporary bit vector to an integer
-    for (size_t i=0; i<nTmpWords; ++i)
-        result |= (boost::uint64_t)tmp[i] << (i * bitsPerWord<Word>::value);
-    return result;
-}
-
-/** Negate bits as an integer.
- *
- *  Interprets @p range of @p vec1 as a two's complement integer and negates its value. */
-template<class Word>
-void negate(Word *vec1, const BitRange &range) {
-    invert(vec1, range);
-    increment(vec1, range);
-}
-
-template<class Word>
-struct Increment {
-    bool carry;
-    Increment(): carry(true) {}
-    bool operator()(Word &word, size_t nbits) {
-        ASSERT_require(carry);
-        Word mask = bitMask<Word>(0, nbits);
-        Word arg1 = word & mask;
-        Word sum = arg1 + 1;
-        word &= ~mask;
-        word |= sum & mask;
-        carry = (sum & mask) < arg1;
-        return !carry;                                  // terminate traversal when carry is false
-    }
-};
-
-/** Increment.
- *
- *  Interprets @p range of @p vec1 as an integer and increments the value by one.  The return value is the carry-out bit. */
-template<class Word>
-bool increment(Word *vec1, const BitRange &range1) {
-    Increment<Word> visitor;
-    traverse(visitor, vec1, range1, LowToHigh());
-    return visitor.carry;
-}
-
-template<class Word>
-struct Decrement {
-    bool borrowed;
-    Decrement(): borrowed(true) {}
-    bool operator()(Word &word, size_t nbits) {
-        ASSERT_require(borrowed);
-        Word mask = bitMask<Word>(0, nbits);
-        Word arg1 = word & mask;
-        borrowed = 0==arg1;
-        Word difference = (arg1 - 1) & mask;
-        word &= ~mask;
-        word |= difference;
-        return !borrowed;                               // terminate traversal unless we borrowed
-    }
-};
-
-/** Decrement.
- *
- *  Interprets @p range of @p vec1 as an integer and decrements the value by one. Returns true if the original value was zero
- *  or empty. */
-template<class Word>
-bool decrement(Word *vec1, const BitRange &range1) {
-    Decrement<Word> visitor;
-    traverse(visitor, vec1, range1, LowToHigh());
-    return visitor.borrowed;
-}
-
-template<class Word>
-struct AddBits {
-    bool carry;
-    AddBits(bool carry): carry(carry) {}
-    bool operator()(const Word &w1, Word &w2, size_t nbits) {
-        Word mask = bitMask<Word>(0, nbits);
-        Word addend1(carry ? 1 : 0);
-        Word addend2(w1 & mask);
-        Word addend3(w2 & mask);
-        Word sum = addend1 + addend2 + addend3;
-        w2 &= ~mask;
-        w2 |= sum & mask;
-        if (nbits == bitsPerWord<Word>::value) {
-            carry = sum < addend2 || (sum==addend2 && carry);
-        } else {
-            carry = 0 != (sum & bitMask<Word>(nbits, 1));
-        }
-        return false;
-    }
-};
-
-/** Add bits.
- *
- *  Treats two sub-vectors as unsigned values and add them together, storing the result in the second vector. Both ranges must
- *  be the same size, and the sub-vectors are permitted to overlap. The return value is the carry-out bit. */
-template<class Word>
-bool add(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2, bool carryIn=false) {
-    AddBits<Word> visitor(carryIn);
-    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
-    return visitor.carry;
-}
-
-/** Subtract bits.
- *
- *  Treats two sub-vectors as unsigned values and subtracts @p vec1 from @p vec2 and stores the result in @p vec2.  Both ranges
- *  must be the same size, and the sub-vectors are permitted to overlap. The return value is false only when an overflow occurs
- *  (i.e., vec2 is unsigned-greater-than vec1). If the vectors are interpreted as 2's complement signed integers then an
- *  overflow is indicated whan both operands ahve the same sign and the result has a different sign. */
-template<class Word>
-bool subtract(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
-    size_t nTempWords = numberOfWords<Word>(range1.size());
-    Word temp[nTempWords];
-    BitRange tempRange = BitRange::baseSize(0, range1.size());
-    copy(vec1, range1, temp, tempRange);
-    invert(temp, tempRange);
-    return add(temp, tempRange, vec2, range2, true);
-}
-
-/** Sign extend.
- *
- *  Performs sign extension while copying bits from range1 to range2, which may overlap.  If range1 is empty then range2 is
- *  cleared. If range2 is smaller than range1 then the not all bits are copied (high-order bits in range1 are omitted). If
- *  range1 is non-empty and range2 is empty then nothing is copied. The return value is the new high-order (sign) bit of
- *  range2, or false if range2 is empty. */
-template<class Word>
-bool signExtend(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
-    if (range2.isEmpty()) {
-        return false;
-    } else if (range1.isEmpty()) {
-        clear(vec2, range2);
-        return false;
-    } else if (range1.size() < range2.size()) {         // sign extension
-        bool oldSign = get(vec1, range1.greatest());
-        copy(vec1, range1, vec2, BitRange::baseSize(range2.least(), range1.size()));
-        set(vec2, BitRange(range2.least()+range1.size(), range2.greatest()), oldSign);
-        return oldSign;
-    } else {                                            // truncation or plain copy
-        ASSERT_require(range1.size() >= range2.size());
-        BitRange copyFrom = BitRange::baseSize(range1.least(), range2.size());
-        copy(vec1, copyFrom, vec2, range2);
-        return get(vec2, range2.greatest());
-    }
 }
 
 
@@ -1091,6 +905,195 @@ void bitwiseXor(const Word *vec1, const BitRange &range1, Word *vec2, const BitR
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Arithmetic
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Assign an unsigned value to a bit range.
+ *
+ *  Zero extends or truncates @p value to the same width as @p range and copies it into the bit vector. */
+template<class Word>
+void fromInteger(Word *words, const BitRange &range, boost::uint64_t value) {
+    ASSERT_require(8==sizeof value);
+    if (range.isEmpty())
+        return;
+
+    // Create a bit vector that is just the value
+    size_t nbits = std::min(range.size(), (size_t)64);  // number of significant bits to copy, not fill
+    Word wordMask = bitMask<Word>(0, bitsPerWord<Word>::value);
+    size_t nTmpWords = numberOfWords<Word>(nbits);
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, tmp, nTmpWords);
+    for (size_t i=0; i<nTmpWords; ++i)
+        tmp[i] = (value >> (i * bitsPerWord<Word>::value)) & wordMask;
+
+    // Copy the value's bit vector to the destination and zero-fill
+    copy(tmp, BitRange::baseSize(0, nbits), words, BitRange::baseSize(range.least(), nbits));
+    if (range.size() >= 64) {
+        BitRange hi = BitRange::baseSize(range.least() + 64, range.size() - 64);
+        clear(words, hi);
+    }
+}
+
+/** Convert a bit vector to an integer.
+ *
+ *  Converts the specified range to an unsigned 64-bit value and returns that value. Returns zero if the range is empty.  If
+ *  the range is wider than 64 bits then all of its high-order bits are ignored and only the lowest 64 bits are used. */
+template<class Word>
+boost::uint64_t toInteger(const Word *words, const BitRange &range) {
+    boost::uint64_t result = 0;
+    ASSERT_require(8==sizeof result);
+
+    // Copy the bits into the low bits of a temporary bit vector
+    size_t nbits = std::min(range.size(), (size_t)64);
+    size_t nTmpWords = numberOfWords<Word>(nbits);
+    SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word>::Base, tmp, nTmpWords);
+    memset(tmp, 0, sizeof tmp);
+    BitRange lo = BitRange::baseSize(range.least(), nbits);
+    copy(words, lo, tmp, BitRange::baseSize(0, nbits));
+
+    // Convert the temporary bit vector to an integer
+    for (size_t i=0; i<nTmpWords; ++i)
+        result |= (boost::uint64_t)tmp[i] << (i * bitsPerWord<Word>::value);
+    return result;
+}
+
+template<class Word>
+struct Increment {
+    bool carry;
+    Increment(): carry(true) {}
+    bool operator()(Word &word, size_t nbits) {
+        ASSERT_require(carry);
+        Word mask = bitMask<Word>(0, nbits);
+        Word arg1 = word & mask;
+        Word sum = arg1 + 1;
+        word &= ~mask;
+        word |= sum & mask;
+        carry = (sum & mask) < arg1;
+        return !carry;                                  // terminate traversal when carry is false
+    }
+};
+
+/** Increment.
+ *
+ *  Interprets @p range of @p vec1 as an integer and increments the value by one.  The return value is the carry-out bit. */
+template<class Word>
+bool increment(Word *vec1, const BitRange &range1) {
+    Increment<Word> visitor;
+    traverse(visitor, vec1, range1, LowToHigh());
+    return visitor.carry;
+}
+
+template<class Word>
+struct Decrement {
+    bool borrowed;
+    Decrement(): borrowed(true) {}
+    bool operator()(Word &word, size_t nbits) {
+        ASSERT_require(borrowed);
+        Word mask = bitMask<Word>(0, nbits);
+        Word arg1 = word & mask;
+        borrowed = 0==arg1;
+        Word difference = (arg1 - 1) & mask;
+        word &= ~mask;
+        word |= difference;
+        return !borrowed;                               // terminate traversal unless we borrowed
+    }
+};
+
+/** Decrement.
+ *
+ *  Interprets @p range of @p vec1 as an integer and decrements the value by one. Returns true if the original value was zero
+ *  or empty. */
+template<class Word>
+bool decrement(Word *vec1, const BitRange &range1) {
+    Decrement<Word> visitor;
+    traverse(visitor, vec1, range1, LowToHigh());
+    return visitor.borrowed;
+}
+
+/** Negate bits as an integer.
+ *
+ *  Interprets @p range of @p vec1 as a two's complement integer and negates its value. */
+template<class Word>
+void negate(Word *vec1, const BitRange &range) {
+    invert(vec1, range);
+    increment(vec1, range);
+}
+
+template<class Word>
+struct AddBits {
+    bool carry;
+    AddBits(bool carry): carry(carry) {}
+    bool operator()(const Word &w1, Word &w2, size_t nbits) {
+        Word mask = bitMask<Word>(0, nbits);
+        Word addend1(carry ? 1 : 0);
+        Word addend2(w1 & mask);
+        Word addend3(w2 & mask);
+        Word sum = addend1 + addend2 + addend3;
+        w2 &= ~mask;
+        w2 |= sum & mask;
+        if (nbits == bitsPerWord<Word>::value) {
+            carry = sum < addend2 || (sum==addend2 && carry);
+        } else {
+            carry = 0 != (sum & bitMask<Word>(nbits, 1));
+        }
+        return false;
+    }
+};
+
+/** Add bits.
+ *
+ *  Treats two sub-vectors as unsigned values and add them together, storing the result in the second vector. Both ranges must
+ *  be the same size, and the sub-vectors are permitted to overlap. The return value is the carry-out bit. */
+template<class Word>
+bool add(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2, bool carryIn=false) {
+    AddBits<Word> visitor(carryIn);
+    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
+    return visitor.carry;
+}
+
+/** Subtract bits.
+ *
+ *  Treats two sub-vectors as unsigned values and subtracts @p vec1 from @p vec2 and stores the result in @p vec2.  Both ranges
+ *  must be the same size, and the sub-vectors are permitted to overlap. The return value is false only when an overflow occurs
+ *  (i.e., vec2 is unsigned-greater-than vec1). If the vectors are interpreted as 2's complement signed integers then an
+ *  overflow is indicated whan both operands ahve the same sign and the result has a different sign. */
+template<class Word>
+bool subtract(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
+    size_t nTempWords = numberOfWords<Word>(range1.size());
+    SAWYER_VARIABLE_LENGTH_ARRAY(Word, temp, nTempWords);
+    BitRange tempRange = BitRange::baseSize(0, range1.size());
+    copy(vec1, range1, temp, tempRange);
+    invert(temp, tempRange);
+    return add(temp, tempRange, vec2, range2, true);
+}
+
+/** Sign extend.
+ *
+ *  Performs sign extension while copying bits from range1 to range2, which may overlap.  If range1 is empty then range2 is
+ *  cleared. If range2 is smaller than range1 then the not all bits are copied (high-order bits in range1 are omitted). If
+ *  range1 is non-empty and range2 is empty then nothing is copied. The return value is the new high-order (sign) bit of
+ *  range2, or false if range2 is empty. */
+template<class Word>
+bool signExtend(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
+    if (range2.isEmpty()) {
+        return false;
+    } else if (range1.isEmpty()) {
+        clear(vec2, range2);
+        return false;
+    } else if (range1.size() < range2.size()) {         // sign extension
+        bool oldSign = get(vec1, range1.greatest());
+        copy(vec1, range1, vec2, BitRange::baseSize(range2.least(), range1.size()));
+        set(vec2, BitRange::hull(range2.least()+range1.size(), range2.greatest()), oldSign);
+        return oldSign;
+    } else {                                            // truncation or plain copy
+        ASSERT_require(range1.size() >= range2.size());
+        BitRange copyFrom = BitRange::baseSize(range1.least(), range2.size());
+        copy(vec1, copyFrom, vec2, range2);
+        return get(vec2, range2.greatest());
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Numeric comparison
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1137,13 +1140,13 @@ int compare(const Word *vec1, const BitRange &range1, const Word *vec2, const Bi
     } else if (range2.isEmpty()) {
         return isEqualToZero(vec1, range1) ? 0 : 1;
     } else if (range1.size() < range2.size()) {
-        BitRange hi(range2.least() + range1.size(), range2.greatest());
+        BitRange hi = BitRange::hull(range2.least() + range1.size(), range2.greatest());
         if (!isEqualToZero(vec2, hi))
             return -1;
         BitRange lo = BitRange::baseSize(range2.least(), range1.size());
         return compare(vec1, range1, vec2, lo);
     } else if (range1.size() > range2.size()) {
-        BitRange hi(range1.least() + range2.size(), range1.greatest());
+        BitRange hi = BitRange::hull(range1.least() + range2.size(), range1.greatest());
         if (!isEqualToZero(vec1, hi))
             return 1;
         BitRange lo = BitRange::baseSize(range1.least(), range2.size());
@@ -1168,19 +1171,19 @@ int compareSigned(const Word *vec1, const BitRange &range1, const Word *vec2, co
     if (range1.isEmpty() && range2.isEmpty()) {
         return 0;
     } else if (range1.isEmpty()) {
-        if (boost::optional<size_t> mssb = mostSignificantSetBit(vec2, range2)) {
+        if (Optional<size_t> mssb = mostSignificantSetBit(vec2, range2)) {
             return *mssb == range2.greatest() ? 1 : -1;
         } else {
             return 0;
         }
     } else if (range2.isEmpty()) {
-        if (boost::optional<size_t> mssb = mostSignificantSetBit(vec1, range1)) {
+        if (Optional<size_t> mssb = mostSignificantSetBit(vec1, range1)) {
             return *mssb == range1.greatest() ? -1 : 1;
         } else {
             return 0;
         }
     } else if (range1.size() < range2.size()) {
-        BitRange hi(range2.least()+range1.size(), range2.greatest());
+        BitRange hi = BitRange::hull(range2.least()+range1.size(), range2.greatest());
         bool neg1 = get(vec1, range1.greatest());
         bool neg2 = get(vec2, range2.greatest());
         if (!neg1 && !neg2) {                           // both are non-negative, so leverage unsigned comparison
@@ -1205,7 +1208,7 @@ int compareSigned(const Word *vec1, const BitRange &range1, const Word *vec2, co
         if (!neg1 && !neg2) {
             return compare(vec1, range1, vec2, range2);
         } else if (neg1 && neg2) {
-            if (boost::optional<size_t> diff = mostSignificantDifference(vec1, range1, vec2, range2)) {
+            if (Optional<size_t> diff = mostSignificantDifference(vec1, range1, vec2, range2)) {
                 return get(vec1, range1.least() + *diff) ? 1 : -1;
             } else {
                 return 0;
@@ -1349,7 +1352,7 @@ void fromString(Word *vec, const BitRange &range, const std::string &input) {
 
     // Zero fill high order stuff that we didn't already initialize
     if (offset < range.size())
-        clear(vec, BitRange(range.least()+offset, range.greatest()));
+        clear(vec, BitRange::hull(range.least()+offset, range.greatest()));
 }
 
 /** Obtain bits from a hexadecimal representation.

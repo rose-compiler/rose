@@ -235,7 +235,7 @@ public:
                         if (name.empty()) {
                             RTS_READ(process->rwlock()) {
                                 if (process->get_memory().exists(defn->get_entry_va())) {
-                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).second;
+                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).value();
                                     if (!sgmt.get_name().empty())
                                         name = "in " + sgmt.get_name();
                                 }

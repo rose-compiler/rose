@@ -4,7 +4,6 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
-#include "Assert.h"                                     // Sawyer::Assert, ASSERT_* macros
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
@@ -451,7 +450,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             /* Erase part of the mapping? */
             if (CONTRIBUTE_SUB==contrib) {
                 trace <<"    Subtracting contribution\n";
-                map->erase(Extent(va, mem_size));
+                map->erase(AddressInterval::baseSize(va, mem_size));
                 continue;
             }
 
@@ -460,16 +459,16 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
              * than trying to undo the parts that had been successful. Allocating a large region does not actually allocate any
              * memory. */
             try {
-                map->insert(Extent(va, mem_size),
+                map->insert(AddressInterval::baseSize(va, mem_size),
                             MemoryMap::Segment(MemoryMap::NullBuffer::create(mem_size), 0, MemoryMap::MM_PROT_NONE));
-                map->erase(Extent(va, mem_size));
+                map->erase(AddressInterval::baseSize(va, mem_size));
             } catch (const MemoryMap::Exception&) {
                 switch (resolve) {
                     case RESOLVE_THROW:
                         throw;
                     case RESOLVE_OVERMAP:
                         trace <<"    Conflict: resolved by making a hole\n";
-                        map->erase(Extent(va, mem_size));
+                        map->erase(AddressInterval::baseSize(va, mem_size));
                         break;
                     case RESOLVE_REMAP:
                     case RESOLVE_REMAP_ABOVE: {
@@ -522,7 +521,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 trace <<"    Mapping part beyond EOF(" <<StringUtility::addrToString(total) <<"):      "
                       <<"va=" <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
-                map->insert(Extent(a, n),
+                map->insert(AddressInterval::baseSize(a, n),
                             MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
                                                mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
@@ -536,7 +535,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 trace <<"    Mapping part beyond end of section:        va="
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
-                map->insert(Extent(a, n),
+                map->insert(AddressInterval::baseSize(a, n),
                             MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
                                                mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
@@ -549,7 +548,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 trace <<"    Mapping part before beginning of section: va="
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
-                map->insert(Extent(a, n),
+                map->insert(AddressInterval::baseSize(a, n),
                             MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
                                                mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 mem_size -= n;
@@ -569,13 +568,14 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     uint8_t *storage = new uint8_t[mem_size];
                     memcpy(storage, &(file->get_data()[offset]), mem_size);
                     MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(storage, mem_size);
-                    map->insert(Extent(va, mem_size),
+                    map->insert(AddressInterval::baseSize(va, mem_size),
                                 MemoryMap::Segment(buffer, 0, mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
                 } else {
                     // Create the buffer, but the buffer should not take ownership of data from the file.
                     MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(&(file->get_data())[0],
                                                                                   file->get_data().size());
-                    map->insert(Extent(va, mem_size), MemoryMap::Segment(buffer, offset, mapperms, melmt_name));
+                    map->insert(AddressInterval::baseSize(va, mem_size),
+                                MemoryMap::Segment(buffer, offset, mapperms, melmt_name));
                 }
             }
 

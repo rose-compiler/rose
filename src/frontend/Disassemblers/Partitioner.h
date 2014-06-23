@@ -3,6 +3,7 @@
 
 #include "callbacks.h"
 #include "Disassembler.h"
+#include <sawyer/Optional.h>
 
 #ifndef NAN
 #define INFINITY (DBL_MAX+DBL_MAX)
@@ -506,6 +507,7 @@ public:
     void set_progress_reporting(double min_interval);
 
     void update_progress(SgAsmBlock::Reason reason, size_t pass) const;
+    void update_progress() const;
 
     /*************************************************************************************************************************
      *                                                High-level Functions
@@ -1596,7 +1598,7 @@ public:
 
     /** Return the next unused address.  Scans through the memory map starting at the specified address and returns the first
      *  address found to be mapped but not belonging to any basic block or data block. Returns none on failure. */
-    virtual boost::optional<rose_addr_t> next_unused_address(const MemoryMap &map, rose_addr_t start_va);
+    virtual Sawyer::Optional<rose_addr_t> next_unused_address(const MemoryMap &map, rose_addr_t start_va);
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
@@ -1870,7 +1872,7 @@ public:
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
 
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
-    static timeval progress_time;                       /**< Time of last report, or zero if no report has been generated. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
 
 public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

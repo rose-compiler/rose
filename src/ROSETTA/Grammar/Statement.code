@@ -7355,17 +7355,20 @@ SgDeclarationStatement::testForBadGenerateTemplateName( const std::string & name
        // This could just be the input or output operators so make sure this is not that case!
           if ( (name.find("operator<<") == string::npos) && (name.find("operator>>") == string::npos) )
              {
+#if 0
             // OK, we have some sort of error to report!
                printf ("\n\n");
                printf ("Error: \"<<\" or \">>\" found in generated name, this could lead to an error in compiling the generated code later \n");
                printf ("..... name generated in processing a %s IR node \n",sage_class_name());
                printf ("..... generated name = %s \n",name.c_str());
                printf ("\n\n");
-
+#endif
             // DQ (7/27/2012): Modify this to handle a wide range of function names.
                if (name.find("operator") != string::npos)
                   {
+#if 0
                     printf ("This is an operator and so can have names that can violate our test for template names (but still not template arguments; these are rare). \n");
+#endif
                   }
                  else
                   {
@@ -8065,11 +8068,20 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
                               case SgTemplateArgument::template_template_argument:
                                  {
-                                // DQ (8/24/2006): This is not a name that needs to be reset,
-                                // so I think there is nothing to do here!
+                                // DQ (8/24/2006): This is not a name that needs to be reset, so I think there is nothing to do here!
                                    ROSE_ASSERT((*i)->get_templateDeclaration() != NULL);
 
                                 // printf ("Warning: SgTemplateArgument::template_template_argument not implemented \n");
+                                // ROSE_ASSERT(false);
+                                   break;
+                                 }
+
+                              case SgTemplateArgument::start_of_pack_expansion_argument:
+                                 {
+                                // DQ (5/19/2014): This is not a name that needs to be reset, so I think there is nothing to do here!
+                                // ROSE_ASSERT((*i)->get_templateDeclaration() != NULL);
+
+                                   printf ("Warning: SgTemplateArgument::start_of_pack_expansion_argument not implemented \n");
                                 // ROSE_ASSERT(false);
                                    break;
                                  }
@@ -9038,6 +9050,15 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
                printf ("ERROR: this = %p = %s and firstNondefiningDeclaration = %p = %s \n",this,this->class_name().c_str(),firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
              }
         }
+
+  // DQ (5/17/2014): Added debugging code.
+     if (firstNondefiningDeclaration != NULL && this->variantT() != firstNondefiningDeclaration->variantT())
+        {
+          printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
+               this,this->class_name().c_str(),firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+          this->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this: debug");
+          firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
+      }
 
   // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
      ROSE_ASSERT(firstNondefiningDeclaration == NULL || this->variantT() == firstNondefiningDeclaration->variantT());
@@ -11303,13 +11324,15 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
           SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
           if (definingClassDeclaration != NULL)
                parentScope = definingClassDeclaration->get_definition();
-
+#if 0
+       // DQ (5/20/2014): This results in an untolerable amount of output spew from Boost test codes.
           if (parentScope != NULL)
              {
                printf ("SgMemberFunctionDeclaration::get_class_scope(): memberFunction = %p = %s = %s classDeclaration = %p = %s = %s \n",
                     this,this->class_name().c_str(),SageInterface::get_name(this).c_str(),
                     classDeclaration,classDeclaration->class_name().c_str(),SageInterface::get_name(classDeclaration).c_str());
              }
+#endif
        // ROSE_ASSERT(parentScope != NULL);
         }
        else
@@ -11596,6 +11619,12 @@ SgVariableDeclaration::post_construction_initialization()
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
      printf ("In SgVariableDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
 #endif
+
+  // DQ (4/21/2014): Try to set this so that we can avoid a possible valgrind waring about this being sometimes unitialized.
+  // ==2562== 113 errors in context 34 of 34:
+  // ==2562== Conditional jump or move depends on uninitialised value(s)
+  // ==2562==    at 0x69758FB: Unparse_ExprStmt::unparseVarDeclStmt(SgStatement*, SgUnparse_Info&) (unparseCxx_statements.C:4421)
+     p_isAssociatedWithDeclarationList = false; // non list case
    }
 
 

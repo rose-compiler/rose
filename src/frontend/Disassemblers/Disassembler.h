@@ -229,7 +229,7 @@ public:
     Disassembler(const Disassembler& other)
         : p_registers(other.p_registers), p_partitioner(other.p_partitioner), p_search(other.p_search),
           p_wordsize(other.p_wordsize), p_sex(other.p_sex), p_alignment(other.p_alignment),
-          p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection), progress_time(other.progress_time)
+          p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection)
         {}
 
     virtual ~Disassembler() {}
@@ -684,7 +684,7 @@ protected:
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
-    struct timeval progress_time;                       /**< Time of last report, or zero if no report has been generated. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 };
 

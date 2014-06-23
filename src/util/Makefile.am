@@ -67,15 +67,17 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/Assert.C				\
 	sawyer/CommandLine.C			\
 	sawyer/Markup.C				\
-	sawyer/MarkupRoff.C			\
+	sawyer/MarkupPod.C			\
 	sawyer/Message.C			\
 	sawyer/ProgressBar.C			\
-	sawyer/Sawyer.C
+	sawyer/Sawyer.C				\
+	sawyer/useHeaders.C
 nobase_include_HEADERS   =			\
 	sawyer/Assert.h				\
 	sawyer/BitVector.h			\
 	sawyer/BitVectorSupport.h		\
 	sawyer/CommandLine.h			\
+	sawyer/DefaultAllocator.h		\
 	sawyer/Graph.h				\
 	sawyer/GraphBoost.h			\
 	sawyer/IndexedList.h			\
@@ -84,10 +86,15 @@ nobase_include_HEADERS   =			\
 	sawyer/IntervalSet.h			\
 	sawyer/Map.h				\
 	sawyer/Markup.h				\
-	sawyer/MarkupRoff.h			\
+	sawyer/MarkupPod.h			\
 	sawyer/Message.h			\
+	sawyer/Optional.h			\
+	sawyer/PoolAllocator.h			\
 	sawyer/ProgressBar.h			\
-	sawyer/Sawyer.h
+	sawyer/Sawyer.h				\
+	sawyer/SharedPointer.h			\
+	sawyer/WarningsOff.h			\
+	sawyer/WarningsRestore.h
 EXTRA_DIST += sawyer/CMakeLists.txt
 
 ########################################################################################################################

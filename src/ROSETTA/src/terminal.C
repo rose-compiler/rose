@@ -25,6 +25,16 @@ const std::vector<Terminal*>& SubclassListBuilder::getList() const {
   return children;
 }
 
+bool
+Terminal::isInnerNode() {
+  return subclasses.size()>0;
+}
+
+bool
+Terminal::isLeafNode() {
+  return subclasses.size()==0;
+}
+
 Terminal::~Terminal()
    {
    }

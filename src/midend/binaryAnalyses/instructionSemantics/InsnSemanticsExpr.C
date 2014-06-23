@@ -716,7 +716,8 @@ ConcatSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterato
     for (size_t sa=nbits; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
         sa -= leaf->get_nbits();
-        Sawyer::Container::BitVector::BitRange destination(sa, sa + leaf->get_nbits() - 1);
+        typedef Sawyer::Container::BitVector::BitRange BitRange;
+        BitRange destination = BitRange::hull(sa, sa + leaf->get_nbits() - 1);
         accumulator.copy(destination, leaf->get_bits(), leaf->get_bits().hull());
     }
     return LeafNode::create_constant(accumulator);
@@ -778,7 +779,8 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
     if (from_node && to_node && from_node->is_known() && to_node->is_known() &&
         operand->isLeafNode() && operand->isLeafNode()->is_known()) {
         Sawyer::Container::BitVector result(to-from);
-        Sawyer::Container::BitVector::BitRange source(from, to-1);
+        typedef Sawyer::Container::BitVector::BitRange BitRange;
+        BitRange source = BitRange::hull(from, to-1);
         result.copy(result.hull(), operand->isLeafNode()->get_bits(), source);
         return LeafNode::create_constant(result, inode->get_comment());
     }
@@ -1288,7 +1290,7 @@ LssbSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->is_known()) {
-        if (boost::optional<size_t> idx = a_leaf->get_bits().leastSignificantSetBit())
+        if (Sawyer::Optional<size_t> idx = a_leaf->get_bits().leastSignificantSetBit())
             return LeafNode::create_integer(inode->get_nbits(), *idx, inode->get_comment());
         return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
     }
@@ -1302,7 +1304,7 @@ MssbSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->is_known()) {
-        if (boost::optional<size_t> idx = a_leaf->get_bits().mostSignificantSetBit())
+        if (Sawyer::Optional<size_t> idx = a_leaf->get_bits().mostSignificantSetBit())
             return LeafNode::create_integer(inode->get_nbits(), *idx, inode->get_comment());
         return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
     }

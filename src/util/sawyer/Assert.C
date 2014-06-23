@@ -1,27 +1,27 @@
 #include <sawyer/Assert.h>
+#include <sawyer/Message.h>
+#include <sawyer/Sawyer.h>
 
 #include <cstdlib>
 
 namespace Sawyer {
 namespace Assert {
 
-Message::SProxy assertionStream;                        // can't be initialized yet
-
-void
+SAWYER_EXPORT void
 fail(const char *mesg, const char *expr, const std::string &note, const char *filename, unsigned linenum, const char *funcname)
 {
-    if (!assertionStream)
-        assertionStream = Message::mlog[Message::FATAL];
+    if (!Message::assertionStream)
+        Message::assertionStream = Message::mlog[Message::FATAL];
 
-    *assertionStream <<mesg <<":\n";
+    *Message::assertionStream <<mesg <<":\n";
     if (filename && *filename)
-        *assertionStream <<"  " <<filename <<":" <<linenum <<"\n";
+        *Message::assertionStream <<"  " <<filename <<":" <<linenum <<"\n";
     if (funcname && *funcname)
-        *assertionStream <<"  " <<funcname <<"\n";
+        *Message::assertionStream <<"  " <<funcname <<"\n";
     if (expr && *expr)
-        *assertionStream <<"  " <<expr <<"\n";
+        *Message::assertionStream <<"  " <<expr <<"\n";
     if (!note.empty())
-        *assertionStream <<"  " <<note <<"\n";
+        *Message::assertionStream <<"  " <<note <<"\n";
     abort();
 }
 

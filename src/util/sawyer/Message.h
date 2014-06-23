@@ -2,20 +2,19 @@
 #define Sawyer_Message_H
 
 #include <sawyer/Map.h>
+#include <sawyer/Optional.h>
 #include <sawyer/Sawyer.h>
+#include <sawyer/SharedPointer.h>
 
-#include <boost/enable_shared_from_this.hpp>
+#include <boost/config.hpp>
 #include <boost/logic/tribool.hpp>
-#include <boost/optional.hpp>
-#include <boost/shared_ptr.hpp>
+#include <cassert>
 #include <cstring>
-#include <ctime>
 #include <list>
 #include <ostream>
 #include <set>
 #include <streambuf>
 #include <string>
-#include <sys/time.h>
 #include <vector>
 
 namespace Sawyer {
@@ -137,7 +136,7 @@ namespace Sawyer {
  *
  *  All plumbing lattice nodes are dynamically allocated and reference counted. Instead of using the normal C++ constructors,
  *  plumbing objects are created with static @c instance methods that perform the allocation and return a smart pointer. The
- *  type names for smart pointers are the class names with a "Ptr" suffix, and <code>boost::shared_ptr</code> serves as the
+ *  type names for smart pointers are the class names with a "Ptr" suffix, and @ref Sawyer::SharedPointer serves as the
  *  implementation.
  *
  *  For instance, a lattice that accepts any kind of message, limits the output to at most one message per second,
@@ -267,10 +266,26 @@ namespace Message {
 /** Explicitly initialize the library. This initializes any global objects provided by the library to users.  This happens
  *  automatically for many API calls, but sometimes needs to be called explicitly. Calling this after the library has already
  *  been initialized does nothing. The function always returns true. */
-bool initializeLibrary();
+SAWYER_EXPORT bool initializeLibrary();
 
 /** True if the library has been initialized. @sa initializeLibrary(). */
-extern bool isInitialized;
+SAWYER_EXPORT extern bool isInitialized;
+
+// Any header that #defines words that are this common is just plain stupid!
+#if defined(DEBUG) || defined(TRACE) || defined(WHERE) || defined(INFO) || defined(WARN) || defined(ERROR) || defined(FATAL)
+# ifdef _MSC_VER
+#  pragma message("Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL")
+# else
+#  warning "Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL"
+# endif
+# undef DEBUG
+# undef TRACE
+# undef WHERE
+# undef INFO
+# undef WARN
+# undef ERROR
+# undef FATAL
+#endif
 
 /** Level of importance for a message.
  *
@@ -327,11 +342,10 @@ enum AnsiColor {    // the values are important: they are the ANSI foreground an
 //                                      Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string stringifyImportance(Importance);            /**< Convert an @ref Importance enum to a string. */
-std::string stringifyColor(AnsiColor);                  /**< Convert an @ref AnsiColor enum to a string. */
-double now();                                           /**< Return current time as floating point seconds since the epoch. */
-double timevalDelta(const timeval &begin, const timeval &end); /**< Floating ponit difference between two time values. */
-std::string escape(const std::string&);                 /**< Convert a string to its C representation. */
+SAWYER_EXPORT std::string stringifyImportance(Importance); /**< Convert an @ref Importance enum to a string. */
+SAWYER_EXPORT std::string stringifyColor(AnsiColor);       /**< Convert an @ref AnsiColor enum to a string. */
+SAWYER_EXPORT double now();                                /**< Current system time in seconds. */
+SAWYER_EXPORT std::string escape(const std::string&);      /**< Convert a string to its C representation. */
 
 
 
@@ -340,10 +354,12 @@ std::string escape(const std::string&);                 /**< Convert a string to
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** ANSI Color specification for text written to a terminal. */
-struct ColorSpec {
+struct SAWYER_EXPORT ColorSpec {
     AnsiColor foreground;                               /**< Foreground color, or @ref COLOR_DEFAULT. */
     AnsiColor background;                               /**< Background color, or @ref COLOR_DEFAULT. */
+#include <sawyer/WarningsOff.h>
     boost::tribool bold;                                /**< Use ANSI "bold" attribute? */
+#include <sawyer/WarningsRestore.h>
 
     /** Constructs an object with default foreground and background colors. */
     ColorSpec(): foreground(COLOR_DEFAULT), background(COLOR_DEFAULT), bold(false) {}
@@ -359,7 +375,7 @@ struct ColorSpec {
 };
 
 /** Colors to use for each message importance. */
-class ColorSet {
+class SAWYER_EXPORT ColorSet {
     ColorSpec spec_[N_IMPORTANCE];
 public:
     /** Returns a color set that uses only default colors.  Warning, error, and fatal messages will use the bold attribute, but
@@ -384,15 +400,17 @@ public:
 
 /** Properties for messages.  Each message property is optional.  When a message is sent through the plumbing, each node of the
  *  plumbing lattice may provide default values for properties that are not set, or may override properties that are set. */
-struct MesgProps {
-    boost::optional<std::string> facilityName;          /**< The name of the logging facility that produced this message. */
-    boost::optional<Importance> importance;             /**< The message importance level. */
+struct SAWYER_EXPORT MesgProps {
+#include <sawyer/WarningsOff.h>
+    Optional<std::string> facilityName;                 /**< The name of the logging facility that produced this message. */
+    Optional<Importance> importance;                    /**< The message importance level. */
     boost::tribool isBuffered;                          /**< Whether the output buffered and emitted on a per-message basis. */
-    boost::optional<std::string> completionStr;         /**< String to append to the end of each complete message. */
-    boost::optional<std::string> interruptionStr;       /**< String to append when a partial message is interrupted. */
-    boost::optional<std::string> cancelationStr;        /**< String to append to a partial message when it is destroyed. */
-    boost::optional<std::string> lineTermination;       /**< Line termination for completion, interruption, and cancelation. */
+    Optional<std::string> completionStr;                /**< String to append to the end of each complete message. */
+    Optional<std::string> interruptionStr;              /**< String to append when a partial message is interrupted. */
+    Optional<std::string> cancelationStr;               /**< String to append to a partial message when it is destroyed. */
+    Optional<std::string> lineTermination;              /**< Line termination for completion, interruption, and cancelation. */
     boost::tribool useColor;                            /**< Whether to use ANSI escape sequences to colorize output. */
+#include <sawyer/WarningsRestore.h>
 
     MesgProps(): isBuffered(boost::indeterminate), useColor(boost::indeterminate) {}
 
@@ -406,7 +424,7 @@ struct MesgProps {
 };
 
 /** Print the values for all message properties. @sa MesgProps::print(). */
-std::ostream& operator<<(std::ostream &o, const MesgProps &props);
+SAWYER_EXPORT std::ostream& operator<<(std::ostream &o, const MesgProps &props);
 
 
 
@@ -428,22 +446,22 @@ std::ostream& operator<<(std::ostream &o, const MesgProps &props);
  *        the stack and then try to use its address in a smart pointer situation.</li>
  *    <li>Users should use the @c instance class methods instead of constructors to instantiate an instance of such a class.
  *        These methods allocate a new object and return a smart pointer to that object.</li>
- *    <li>Sawyer uses <code>boost::shared_ptr</code> for its smart pointer implementation.</li>
+ *    <li>Sawyer uses @ref Sawyer::SharedPointer "SharedPointer" for its smart pointer implementation.</li>
  * </ol>
  * @{ */
-typedef boost::shared_ptr<class Destination> DestinationPtr;
-typedef boost::shared_ptr<class Multiplexer> MultiplexerPtr;
-typedef boost::shared_ptr<class Filter> FilterPtr;
-typedef boost::shared_ptr<class SequenceFilter> SequenceFilterPtr;
-typedef boost::shared_ptr<class TimeFilter> TimeFilterPtr;
-typedef boost::shared_ptr<class ImportanceFilter> ImportanceFilterPtr;
-typedef boost::shared_ptr<class Gang> GangPtr;
-typedef boost::shared_ptr<class Prefix> PrefixPtr;
-typedef boost::shared_ptr<class UnformattedSink> UnformattedSinkPtr;
-typedef boost::shared_ptr<class FdSink> FdSinkPtr;
-typedef boost::shared_ptr<class FileSink> FileSinkPtr;
-typedef boost::shared_ptr<class StreamSink> StreamSinkPtr;
-typedef boost::shared_ptr<class SyslogSink> SyslogSinkPtr;
+typedef SharedPointer<class Destination> DestinationPtr;
+typedef SharedPointer<class Multiplexer> MultiplexerPtr;
+typedef SharedPointer<class Filter> FilterPtr;
+typedef SharedPointer<class SequenceFilter> SequenceFilterPtr;
+typedef SharedPointer<class TimeFilter> TimeFilterPtr;
+typedef SharedPointer<class ImportanceFilter> ImportanceFilterPtr;
+typedef SharedPointer<class Gang> GangPtr;
+typedef SharedPointer<class Prefix> PrefixPtr;
+typedef SharedPointer<class UnformattedSink> UnformattedSinkPtr;
+typedef SharedPointer<class FdSink> FdSinkPtr;
+typedef SharedPointer<class FileSink> FileSinkPtr;
+typedef SharedPointer<class StreamSink> StreamSinkPtr;
+typedef SharedPointer<class SyslogSink> SyslogSinkPtr;
 /** @} */
 
 /** Baked properties for a destination.  Rather than recompute properties every time characters of a message are inserted into
@@ -465,10 +483,12 @@ typedef std::vector<BakedDestination> BakedDestinations;
  *  added to a message while it is in the partial state, but once the message is marked as completed or canceled the text
  *  becomes immutable.  Messages also have properties, which are fed into the plumbing lattice and adjusted as they traverse to
  *  the final destinations during a process called "baking". */
-class Mesg {
+class SAWYER_EXPORT Mesg {
     static unsigned nextId_;                            // class-wide unique ID numbers
     unsigned id_;                                       // unique message ID
+#include <sawyer/WarningsOff.h>
     std::string text_;                                  // text of the message
+#include <sawyer/WarningsRestore.h>
     bool isComplete_;                                   // true when the message is complete
     bool isCanceled_;                                   // true when message is being canceled without completing
     MesgProps props_;                                   // message properties
@@ -557,7 +577,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for all types of message destinations. This is the base class for all nodes in the plumbing lattice. */
-class Destination: public boost::enable_shared_from_this<Destination> {
+class SAWYER_EXPORT Destination: public SharedFromThis<Destination> {
 protected:
     MesgProps dflts_;                                   /**< Default properties merged into each incoming message. */
     MesgProps overrides_;                               /**< Override properties applied to incoming message. */
@@ -599,9 +619,11 @@ public:
 
 /** Sends incoming messages to multiple destinations.  This is the base class for all internal nodes of the plumbing
  *  lattice. */
-class Multiplexer: public Destination {
+class SAWYER_EXPORT Multiplexer: public Destination {
     typedef std::list<DestinationPtr> Destinations;
+#include <sawyer/WarningsOff.h>
     Destinations destinations_;
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     Multiplexer() {}
@@ -635,7 +657,7 @@ public:
 
 /** Base class for internal nodes that filter messages.  Filtering is applied when properties are baked, which should happen
  *  exactly once for each message, usually just before the message is posted for the first time. */
-class Filter: public Multiplexer {
+class SAWYER_EXPORT Filter: public Multiplexer {
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     Filter() {}
@@ -655,7 +677,7 @@ public:
 
 /** Filters messages based on how many messages have been seen.  The first @e n messages are skipped (not forwarded to
  *  children), the first one of every @e m messages thereafter is forwarded, for a total of @e t messages forwarded. */
-class SequenceFilter: public Filter {
+class SAWYER_EXPORT SequenceFilter: public Filter {
     size_t nSkip_;                                      // skip initial messages posted to this sequencer
     size_t rate_;                                       // emit only 1/Nth of the messages (0 and 1 both mean every message)
     size_t limit_;                                      // emit at most this many messages (0 means infinite)
@@ -675,7 +697,7 @@ public:
     /** Property: number of initial messages to skip. The first @p n messages sent through this filter are discarded.
      *  @{ */
     size_t nSkip() const { return nSkip_; }
-    SequenceFilterPtr nSkip(size_t n) { nSkip_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
+    SequenceFilterPtr nSkip(size_t n) { nSkip_ = n; return sharedFromThis().dynamicCast<SequenceFilter>(); }
     /** @} */
 
     /** Property: rate of messages to emit after initial messages are skipped.  A rate of @e n means the first message of
@@ -683,14 +705,14 @@ public:
      *  same thing as a rate of one--every message is forwarded.
      * @{ */
     size_t rate() const { return rate_; }
-    SequenceFilterPtr rate(size_t n) { rate_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
+    SequenceFilterPtr rate(size_t n) { rate_ = n; return sharedFromThis().dynamicCast<SequenceFilter>(); }
     /** @} */
 
     /** Property: total number of messages forwarded.  At most @e n messages are forwarded to children in the lattice, after
      *  which messages are discarded. A value of zero means no limit is in effect.
      *  @{ */
     size_t limit() const { return limit_; }
-    SequenceFilterPtr limit(size_t n) { limit_ = n; return boost::dynamic_pointer_cast<SequenceFilter>(shared_from_this()); }
+    SequenceFilterPtr limit(size_t n) { limit_ = n; return sharedFromThis().dynamicCast<SequenceFilter>(); }
     /** @} */
 
     /** Number of messages processed.  This includes messages forwarded and messages not forwarded. */
@@ -702,19 +724,16 @@ public:
 
 /** Filters messages based on time.  Any message posted within some specified time of a previously forwarded message will
  *  not be forwarded to children nodes in the plumbing lattice. */
-class TimeFilter: public Filter {
+class SAWYER_EXPORT TimeFilter: public Filter {
     double initialDelay_;                               // amount to delay before emitting the first message
     double minInterval_;                                // minimum time between messages
-    struct timeval prevMessageTime_;                    // time previous message was emitted
-    struct timeval lastBakeTime_;                       // time cached by shouldForward, used by forwarded
+    double prevMessageTime_;                            // time previous message was emitted
+    double lastBakeTime_;                               // time cached by shouldForward, used by forwarded
     size_t nPosted_;                                    // number of messages posted (including those suppressed)
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     explicit TimeFilter(double minInterval)
-        : initialDelay_(0.0), minInterval_(minInterval) {
-        memset(&prevMessageTime_, 0, sizeof(timeval));
-        memset(&lastBakeTime_, 0, sizeof(timeval));
-    }
+        : initialDelay_(0.0), minInterval_(minInterval), prevMessageTime_(0.0), lastBakeTime_(0.0) {}
 public:
     /** Allocating constructor. Creates an instance that limits forwarding of messages to at most one message every
      *  @p minInterval seconds. */
@@ -749,7 +768,7 @@ public:
  *  DestinationPtr d = ImportanceFilter::instance(false)->enable(FATAL)->enable(ERROR);
  * @endcode
  */
-class ImportanceFilter: public Filter {
+class SAWYER_EXPORT ImportanceFilter: public Filter {
     bool enabled_[N_IMPORTANCE];
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
@@ -769,7 +788,7 @@ public:
     bool enabled(Importance imp) const { return enabled_[imp]; }
     ImportanceFilterPtr enabled(Importance imp, bool b) {
         enabled_[imp] = b;
-        return boost::dynamic_pointer_cast<ImportanceFilter>(shared_from_this());
+        return sharedFromThis().dynamicCast<ImportanceFilter>();
     }
     /** @} */
 
@@ -790,7 +809,7 @@ public:
 /** @internal
  *  Keeps track of how much of a partial message was already emitted. */
 class HighWater {
-    boost::optional<unsigned> id_;                      /**< ID number of last message to be emitted, if any. */
+    Optional<unsigned> id_;                             /**< ID number of last message to be emitted, if any. */
     MesgProps props_;                                   /**< Properties used for the last emission. */
     size_t ntext_;                                      /**< Number of characters of the message we've seen already. */
 public:
@@ -810,8 +829,8 @@ public:
  *  A Gang is used to coordinate output from two or more sinks.  This is normally used by sinks writing the tty, such as a sink
  *  writing to stdout and another writing to stderr--they need to coordinate with each other if they're both going to the
  *  terminal.  A gang just keeps track of what message was most recently emitted. */
-class Gang: public HighWater {
-    typedef Container::Map<int, GangPtr> GangMap;
+class Gang: public HighWater, public SharedObject {
+    typedef Sawyer::Container::Map<int, GangPtr> GangMap;
     static GangMap gangs_;                              /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
 protected:
@@ -828,17 +847,19 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Information printed at the beginning of each free-format message. */
-class Prefix: public boost::enable_shared_from_this<Prefix> {
+class SAWYER_EXPORT Prefix: public SharedFromThis<Prefix> {
+#include <sawyer/WarningsOff.h>
     enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
     ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */
-    boost::optional<std::string> programName_;          /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
+    Optional<std::string> programName_;                 /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
     bool showProgramName_;
     bool showThreadId_;
-    boost::optional<timeval> startTime_;                /**< Time at which program started. */
+    Optional<double> startTime_;                        /**< Time at which program started. */
     bool showElapsedTime_;
     When showFacilityName_;                             /**< Whether the facility name should be displayed. */
     bool showImportance_;                               /**< Whether the message importance should be displayed. */
     void initFromSystem();                              /**< Initialize data from the operating system. */
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     Prefix()
@@ -865,8 +886,8 @@ public:
      *  the base name since this is typically added by libtool and doesn't correspond to the name that the user executed.
      *  @sa setProgramName showProgramName
      * @{ */
-    const boost::optional<std::string>& programName() const { return programName_; }
-    PrefixPtr programName(const std::string &s) { programName_ = s; return shared_from_this(); }
+    const Optional<std::string>& programName() const { return programName_; }
+    PrefixPtr programName(const std::string &s) { programName_ = s; return sharedFromThis(); }
     /** @} */
 
     /** Reset the program name from operating system information. @sa programName showProgramName */
@@ -875,20 +896,20 @@ public:
     /** Property: whether to show the program name in the message prefix area.  The default is true. @sa programName
      * @{ */
     bool showProgramName() const { return showProgramName_; }
-    PrefixPtr showProgramName(bool b) { showProgramName_ = b; return shared_from_this(); }
+    PrefixPtr showProgramName(bool b) { showProgramName_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Property: whether to show the thread ID in the message prefix area.  The default is true.
      * @{ */
     bool showThreadId() const { return showThreadId_; }
-    PrefixPtr showThreadId(bool b) { showThreadId_ = b; return shared_from_this(); }
+    PrefixPtr showThreadId(bool b) { showThreadId_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Property: start time when emitting time deltas.  On some systems the start time will be the time at which this object
      *  was created. @sa setStartTime showElapsedTime
      * @{ */
-    const boost::optional<timeval> startTime() const { return startTime_; }
-    PrefixPtr startTime(timeval t) { startTime_ = t; return shared_from_this(); }
+    const Optional<double> startTime() const { return startTime_; }
+    PrefixPtr startTime(double t) { startTime_ = t; return sharedFromThis(); }
     /** @} */
 
     /** Reset the start time from operating system information.  On some systems this will be the time at which the first
@@ -900,7 +921,7 @@ public:
      *  @sa startTime setStartTime
      * @{ */
     bool showElapsedTime() const { return showElapsedTime_; }
-    PrefixPtr showElapsedTime(bool b) { showElapsedTime_ = b; return shared_from_this(); }
+    PrefixPtr showElapsedTime(bool b) { showElapsedTime_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Property: whether to show the facilityName property. When set to SOMETIMES, the facility name is shown when it differs
@@ -908,13 +929,13 @@ public:
      *  value.
      * @{ */
     When showFacilityName() const { return showFacilityName_; }
-    PrefixPtr showFacilityName(When w) { showFacilityName_ = w; return shared_from_this(); }
+    PrefixPtr showFacilityName(When w) { showFacilityName_ = w; return sharedFromThis(); }
     /** @} */
 
     /** Property: whether to show the importance property. In any case, the importance level is not shown if it has no value.
      * @{ */
     bool showImportance() const { return showImportance_; }
-    PrefixPtr showImportance(bool b) { showImportance_ = b; return shared_from_this(); }
+    PrefixPtr showImportance(bool b) { showImportance_ = b; return sharedFromThis(); }
     /** @} */
 
     /** Return a prefix string. Generates a string from this prefix object. */
@@ -926,9 +947,11 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for final destinations that are free-format. These are destinations that emit messages as strings. */
-class UnformattedSink: public Destination {
+class SAWYER_EXPORT UnformattedSink: public Destination {
+#include <sawyer/WarningsOff.h>
     GangPtr gang_;
     PrefixPtr prefix_;
+#include <sawyer/WarningsRestore.h>
 protected:
     /** Constructor for derived classes. Non-subclass users should use <code>instance</code> factory methods instead. */
     UnformattedSink() {
@@ -947,7 +970,7 @@ public:
     const GangPtr& gang() const { return gang_; }
     UnformattedSinkPtr gang(const GangPtr &g) {
         gangInternal(g);
-        return boost::dynamic_pointer_cast<UnformattedSink>(shared_from_this());
+        return sharedFromThis().dynamicCast<UnformattedSink>();
     }
     /** @} */
 
@@ -957,7 +980,7 @@ public:
     const PrefixPtr& prefix() const { return prefix_; }
     UnformattedSinkPtr prefix(const PrefixPtr &p) {
         prefix_ = p;
-        return boost::dynamic_pointer_cast<UnformattedSink>(shared_from_this());
+        return sharedFromThis().dynamicCast<UnformattedSink>();
     }
     /** @} */
 
@@ -992,7 +1015,7 @@ private:
 };
 
 /** Send free-format messages to a Unix file descriptor. */
-class FdSink: public UnformattedSink {
+class SAWYER_EXPORT FdSink: public UnformattedSink {
     int fd_;                                            // file descriptor or -1
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
@@ -1009,7 +1032,7 @@ private:
 };
 
 /** Send free-format messages to a C @c FILE pointer. */
-class FileSink: public UnformattedSink {
+class SAWYER_EXPORT FileSink: public UnformattedSink {
     FILE *file_;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
@@ -1026,7 +1049,7 @@ private:
 };
 
 /** Send free-format messages to a C++ I/O stream. */
-class StreamSink: public UnformattedSink {
+class SAWYER_EXPORT StreamSink: public UnformattedSink {
     std::ostream &stream_;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
@@ -1040,8 +1063,9 @@ public:
     virtual void post(const Mesg&, const MesgProps&) /*override*/;
 };
 
+#ifndef BOOST_WINDOWS
 /** Sends messages to the syslog daemon. */
-class SyslogSink: public Destination {
+class SAWYER_EXPORT SyslogSink: public Destination {
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
     SyslogSink(const char *ident, int option, int facility);
@@ -1056,6 +1080,7 @@ public:
 private:
     void init();
 };
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Message streams
@@ -1065,8 +1090,9 @@ class Stream;
 
 /** @internal
  *  Only used internally; most of the API is in MessageStream. */
-class StreamBuf: public std::streambuf {
+class SAWYER_EXPORT StreamBuf: public std::streambuf {
     friend class Stream;
+#include <sawyer/WarningsOff.h>
     bool enabled_;                                      /**< Whether this stream is enabled. */
     MesgProps dflt_props_;                              /**< Default properties for new messages. */
     Mesg message_;                                      /**< Current message, never in an @ref isComplete state. */
@@ -1074,6 +1100,7 @@ class StreamBuf: public std::streambuf {
     BakedDestinations baked_;                           /**< Destinations baked at the start of each message. */
     bool isBaked_;                                      /**< True if @c baked_ is initialized. */
     bool anyUnbuffered_;                                /**< True if any baked destinations are unbuffered. */
+#include <sawyer/WarningsRestore.h>
 
 protected:
     StreamBuf(): enabled_(true), isBaked_(false), anyUnbuffered_(false) {}
@@ -1090,7 +1117,7 @@ private:
 
 /** @internal
  *  Adjusts reference counts for a stream and deletes the stream when the reference count hits zero. */
-class SProxy {
+class SAWYER_EXPORT SProxy {
     Stream *stream_;
 public:
     SProxy(): stream_(NULL) {}
@@ -1112,7 +1139,7 @@ public:
  *  (<code><<</code>).  A stream converts each line of output text to a single message, creating the message with properties
  *  defined for the stream and sending the results to a specified destination. Streams typically impart a facility name and
  *  importance level to each message via the stream's properties. */
-class Stream: public std::ostream {
+class SAWYER_EXPORT Stream: public std::ostream {
     friend class SProxy;
     size_t nrefs_;                                      // used when we don't have std::move semantics
     StreamBuf *streambuf_;                              // each stream has its own
@@ -1180,6 +1207,7 @@ public:
         if (!other)
             throw "Sawyer::Message::Stream initializer is not a Sawyer::Message::Stream (only a std::ostream)";
         initFrom(*other);
+        return *this;
     }
     
     ~Stream() {
@@ -1234,11 +1262,14 @@ public:
      *  mlog[DEBUG] and mlog[DEBUG] <<"the memory map is: " <<memoryMap <<"\n";
      *  
      *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
-     * @endcode */
+     * @endcode
+     *
+     *  Note: Although "and" looks slightly better than "&&" in the above examples, it is not portable across Microsoft
+     *  compilers. */
     operator bool() { return enabled(); }
 
     // See Stream::bool()
-    #define SAWYER_MESG(message_stream) message_stream and message_stream
+    #define SAWYER_MESG(message_stream) message_stream && message_stream
 
     /** Enable or disable a stream.  A disabled stream buffers the latest partial message and enabling the stream will cause
      * the entire accumulated message to be emitted--whether the partial message immediately appears on the output is up to
@@ -1303,9 +1334,11 @@ public:
  * @code
  *  mlog[ERROR] <<"I got an error\n";
  * @endcode  */
- class Facility {
+ class SAWYER_EXPORT Facility {
+#include <sawyer/WarningsOff.h>
     std::string name_;
     std::vector<SProxy> streams_;
+#include <sawyer/WarningsRestore.h>
 public:
     /** Construct an empty facility.  The facility will have no name and all streams will be uninitialized.  Any attempt to
      *  emit anything to a facility in the default state will cause an <code>std::runtime_error</code> to be thrown with a
@@ -1359,14 +1392,16 @@ public:
  *  maintained automatically: when the first facility is inserted, its enabled importance levels initialize the default set.
  *  Whenever a message importance level is enabled or diabled via the version of @ref enable or @ref disable that takes an
  *  importance argument, the set is adjusted. */
-class Facilities {
+class SAWYER_EXPORT Facilities {
 public:
     typedef std::set<Importance> ImportanceSet;         /**< A set of importance levels. */
 private:
     typedef Container::Map<std::string, Facility*> FacilityMap;
+#include <sawyer/WarningsOff.h>
     FacilityMap facilities_;
     ImportanceSet impset_;
     bool impsetInitialized_;
+#include <sawyer/WarningsRestore.h>
 public:
 
     /** Constructs an empty container of Facility objects. */
@@ -1493,7 +1528,7 @@ private:
         ControlTerm(const std::string &facilityName, bool enable)
             : facilityName(facilityName), lo(DEBUG), hi(DEBUG), enable(enable) {}
         std::string toString() const;                   /**< String representation of this struct for debugging. */
-        std::string facilityName;                       /**< Optional facility name. Empty implies all facilities. */
+        std::string facilityName;                       /**< %Optional facility name. Empty implies all facilities. */
         Importance lo, hi;                              /**< Inclusive range of importances. */
         bool enable;                                    /**< New state. */
     };
@@ -1519,15 +1554,25 @@ private:
 
 /** Library-provided message destination.  This is the top of a lattice that sends all messages to file descriptor 2, which is
  *  usually standard error. */
-extern DestinationPtr merr;
+SAWYER_EXPORT extern DestinationPtr merr;
 
 /** Facility used by Sawyer components. This facility is added to the @ref mfacilities group with the name "sawyer". */
-extern Facility mlog;
+SAWYER_EXPORT extern Facility mlog;
 
 /** Library-provided facility group. When the library is initialized, this group contains only @ref mlog with the name
  *  "sawyer". Users are free to manipulate this facility however they choose, and if everyone uses this group then all the
  *  facilities across all users can be controlled from this one place. */
-extern Facilities mfacilities;
+SAWYER_EXPORT extern Facilities mfacilities;
+
+/** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
+ *  initialized at the first call to @ref Assert::fail if it is a null pointer. Users can assign a different stream to it any
+ *  time before then:
+ *
+ * @code
+ * int main(int argc, char *argv[]) {
+ *     Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
+ * @endcode */
+SAWYER_EXPORT extern SProxy assertionStream;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      The most commonly used stuff

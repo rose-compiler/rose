@@ -1,7 +1,7 @@
 #ifndef Sawyer_Assert_H
 #define Sawyer_Assert_H
 
-#include <sawyer/Message.h>
+#include <sawyer/Sawyer.h>
 #include <string>
 
 // If SAWYER_NDEBUG is defined then some of the macros defined in this header become no-ops.  For interoperability with the
@@ -74,27 +74,24 @@ namespace Sawyer {                                      // documented elsewhere
  *  vectors must be the same size". Writing notes in the affirmative has two benefits: (1) the note documents the code, and (2)
  *  if the assertion fails the message makes sense to the user, namely "assertion failed: name and ID vectors must be the same
  *  size".
- */
+ *
+ *  Failed assertions output to Sawyer::Message::assertionStream, which defaults to
+ *  <code>Sawyer::Message::mlog[FATAL]</code>. This variable is initialized at the first call to @ref fail if it is a null
+ *  pointer. Users can assign a different stream to it any time before then:
+ *
+ * @code
+ *  int main(int argc, char *argv[]) {
+ *      Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
+ * @endcode */
 namespace Assert {
 
 /** Cause immediate failure.  This function is the low-level function called by most of the other Sawyer::Assert macros
  *  when an assertion fails. Calls to this function do not return. */
-void fail(const char *mesg, const char *expr, const std::string &note,
-          const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
-
-/** The stream to be used for assertions. The default is to use <code>Sawyer::Message::mlog[FATAL]</code>. This variable is
- *  initialized at the first call to @ref fail if it is a null pointer. Users can assign a different stream to it any time
- *  before then:
- *
- * @code
- * int main(int argc, char *argv[]) {
- *     Sawyer::Assert::assertionStream = Sawer::Message::mlog[FATAL];
- * @endcode */
-extern Message::SProxy assertionStream;
+SAWYER_EXPORT void fail(const char *mesg, const char *expr, const std::string &note,
+                        const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
 
 } // namespace
 } // namespace
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // These "always" macros are enabled regardless of whether SAWYER_NDEBUG is defined.  Don't use them for
@@ -105,37 +102,37 @@ extern Message::SProxy assertionStream;
 #define ASSERT_always_require2(expr, note)                                                                                     \
     ((expr) ?                                                                                                                  \
         static_cast<void>(0) :                                                                                                 \
-        Sawyer::Assert::fail("assertion failed", "required: "__STRING(expr), (note),                                           \
-                             __FILE__, __LINE__, __PRETTY_FUNCTION__))
+        Sawyer::Assert::fail("assertion failed", "required: " #expr, (note),                                                   \
+                             __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 #define ASSERT_always_forbid(expr) ASSERT_always_forbid2(expr, "")
 #define ASSERT_always_forbid2(expr, note)                                                                                      \
     (!(expr) ?                                                                                                                 \
         static_cast<void>(0) :                                                                                                 \
         Sawyer::Assert::fail("assertion failed",                                                                               \
-                             "forbidden: "__STRING(expr), (note), __FILE__, __LINE__, __PRETTY_FUNCTION__))
+                             "forbidden: " #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 #define ASSERT_always_not_null(expr) ASSERT_always_not_null2(expr, "")
 #define ASSERT_always_not_null2(expr, note)                                                                                    \
     ((expr)!=NULL ?                                                                                                            \
         static_cast<void>(0) :                                                                                                 \
         Sawyer::Assert::fail("null pointer",                                                                                   \
-                             __STRING(expr), (note), __FILE__, __LINE__, __PRETTY_FUNCTION__))
+                             #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 #define ASSERT_always_not_reachable(note)                                                                                      \
     Sawyer::Assert::fail("reached impossible state", NULL, (note),                                                             \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__);
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION);
 
 #define ASSERT_always_not_implemented(note)                                                                                    \
     Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__)
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #define ASSERT_always_this()                                                                                                   \
     (this ?                                                                                                                    \
         static_cast<void>(0) :                                                                                                 \
         Sawyer::Assert::fail("assertion failed",                                                                               \
                              "required: this!=NULL", "'this' cannot be null in an object method",                              \
-                             __FILE__, __LINE__, __PRETTY_FUNCTION__))
+                             __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The non-"always" macros might change behavior based on whether SAWYER_NDEBUG is defined.
@@ -173,10 +170,10 @@ extern Message::SProxy assertionStream;
 
 #define TODO(note)                                                                                                             \
     Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__)
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #define FIXME(note)                                                                                                            \
     Sawyer::Assert::fail("needs to be fixed", NULL, (note),                                                                    \
-                         __FILE__, __LINE__, __PRETTY_FUNCTION__)
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #endif

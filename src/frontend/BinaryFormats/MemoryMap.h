@@ -2,8 +2,8 @@
 #define ROSE_MemoryMap_H
 
 #include "ByteOrder.h"
-#include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
+#include <sawyer/Optional.h>
 
 /* Increase ADDR if necessary to make it a multiple of ALMNT */
 #define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
@@ -42,9 +42,9 @@
  *
  *  // Create the memory map.
  *  MemoryMap map;
- *  map.insert(Extent(0x08040000, file_buf->size()),
+ *  map.insert(AddressInterval::baseSize(0x08040000, file_buf->size()),
  *             MemoryMap::Segment(file_buf, 0, MemoryMap::MM_PROT_READ, "the file contents"));
- *  map.insert(Extent(0x08042000, data_buf->size()),
+ *  map.insert(AddressInterval::baseSize(0x08042000, data_buf->size()),
  *             MemoryMap::Segment(data_buf, 0, MemoryMap::MM_PROT_RW, "data overlay"));
  * @endcode
  *
@@ -58,14 +58,15 @@
  *  assert(nread==sizeof data);
  * @endcode
  *
- *  A MemoryMap is built on top of a RangeMap<Extent,Segment> and the map is available with via the segments() method.
- *  Therefore, all the usual RangeMap operations are available.  For instance, here's one way to determine if there's a large
- *  free area at 0xc0000000:
+ *  A MemoryMap is built on top of a Sawyer::Container::IntervalMap<AddressInterval,Segment> and the map is available with
+ *  via the segments() method. Therefore, all the usual IntervalMap operations are available.  For instance, here's one way
+ *  to determine if there's a large free area at 0xc0000000:
  *
  * @code
  *  // The set of addresses that are unmapped
- *  ExtentMap free_areas = map.segments().invert<ExtentMap>();
- *  bool b = free_areas.contains(Extent(0xc0000000,0x20000000));
+ *  AddressIntervalSet addresses = map.segments();                     // addresses in use
+ *  addresses.invert(AddressInterval::hull(0, (rose_addr_t)(-1)));  // addresses that are free
+ *  bool b = addresses.contains(AddressInterval::hull(0xc0000000,0x20000000));
  * @endcode
  */
 class MemoryMap {
@@ -324,7 +325,7 @@ public:
          *
          *  If the @p first_bad_va pointer is non-null, then it will be initialized with the lowest address in @p range which
          *  is invalid.  The initialization only occurs when check() returns false. */
-        bool check(const Extent &range, rose_addr_t *first_bad_va=NULL) const;
+        bool check(const AddressInterval &range, rose_addr_t *first_bad_va=NULL) const;
 
         /** Mapping permissions.  The mapping permissions are a bit vector of MemoryMap::Protection bits.  These bits describe
          *  what operations can be performed on a segment's address space.  The set of operations can be further restricted by
@@ -347,7 +348,7 @@ public:
          *  within the range of virtual addresses represented by this segment.
          * @{ */
         rose_addr_t get_buffer_offset() const { return buffer_offset; }
-        rose_addr_t get_buffer_offset(const Extent &my_range, rose_addr_t va) const;
+        rose_addr_t get_buffer_offset(const AddressInterval &my_range, rose_addr_t va) const;
         void set_buffer_offset(rose_addr_t n);
         /** @} */
 
@@ -370,22 +371,14 @@ public:
         void set_name(const std::string &s) { name = s; }
         /** @} */
 
+        void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream&, const Segment&);
 
-    private:
         // Stuff for manipulating segment debug names
         typedef std::map<std::string, std::set<std::string> > NamePairings;
         void merge_names(const Segment &other);
         std::string get_name_pairings(NamePairings*) const;
         void set_name(const NamePairings&, const std::string &s1, const std::string &s2);
-
-        // The following methods are part of the RangeMap interface.  See documentation in RangeMap::RangeMapVoid.
-        friend class RangeMap<Extent, Segment>;
-        void removing(const Extent &range);
-        void truncate(const Extent &range, rose_addr_t new_end);
-        bool merge(const Extent &range, const Extent &other_range, const Segment &other_segment);
-        Segment split(const Extent &range, rose_addr_t new_end);
-        void print(std::ostream&) const;
 
     private:
         BufferPtr buffer;               /**< The buffer holding data for this segment. */
@@ -395,15 +388,22 @@ public:
         bool copy_on_write;             /**< Does the buffer need to be copied on the next write operation? */
     };
 
+    // See Sawyer::Container::MergePolicy
+    class SegmentMergePolicy {
+    public:
+        bool merge(const AddressInterval &leftInterval, Segment &leftValue,
+                   const AddressInterval &rightInterval, Segment &rightValue);
+        Segment split(const AddressInterval &interval, Segment &value, rose_addr_t splitPoint);
+        void truncate(const AddressInterval &interval, Segment &value, rose_addr_t splitPoint) {}
+    };
+    
     /**************************************************************************************************************************
      *                                  RangeMap-related things
      **************************************************************************************************************************/
 public:
-    typedef RangeMap<Extent, Segment> Segments;
-    typedef Segments::iterator iterator;
-    typedef Segments::const_iterator const_iterator;
-    typedef Segments::reverse_iterator reverse_iterator;
-    typedef Segments::const_reverse_iterator const_reverse_iterator;
+    typedef Sawyer::Container::IntervalMap<AddressInterval, Segment, SegmentMergePolicy> Segments;
+    typedef Segments::NodeIterator NodeIterator;
+    typedef Segments::ConstNodeIterator ConstNodeiterator;
 
     /**************************************************************************************************************************
      *                                  Visitors
@@ -413,7 +413,7 @@ public:
     class Visitor {
     public:
         virtual ~Visitor() {}
-        virtual bool operator()(const MemoryMap*, const Extent&, const Segment&) = 0;
+        virtual bool operator()(const MemoryMap*, const AddressInterval&, const Segment&) = 0;
     };
 
     /**************************************************************************************************************************
@@ -434,20 +434,20 @@ public:
     };
 
     /** Exception for an inconsistent mapping. This exception occurs when an attemt is made to insert a new segment but the
-     *  address range of the new segment is alread defined by an existing segment.  The @p new_range and @p new_segment are
+     *  address range of the new segment is already defined by an existing segment.  The @p new_range and @p new_segment are
      *  information about the segment that was being inserted, and the @p old_range and @p old_segment is information about
      *  an existing segment that conflicts with the new one. */
     struct Inconsistent : public Exception {
         Inconsistent(const std::string &mesg, const MemoryMap *map,
-                     const Extent &new_range, const Segment &new_segment,
-                     const Extent &old_range, const Segment &old_segment)
+                     const AddressInterval &new_range, const Segment &new_segment,
+                     const AddressInterval &old_range, const Segment &old_segment)
             : Exception(mesg, map),
               new_range(new_range), old_range(old_range),
               new_segment(new_segment), old_segment(old_segment) {}
         virtual ~Inconsistent() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const Inconsistent&);
-        Extent new_range, old_range;
+        AddressInterval new_range, old_range;
         Segment new_segment, old_segment;
     };
 
@@ -506,7 +506,7 @@ public:
 
     /** Determines if a memory map is empty.  Returns true if this memory map contains no mappings. Returns false if at least
      *  one address is mapped. */
-    bool empty() const { return p_segments.empty(); }
+    bool empty() const { return p_segments.isEmpty(); }
 
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
@@ -515,7 +515,7 @@ public:
     size_t size() const;
 
     /** Minimum and maximum addresses that are mapped.  This should only be called if @ref empty returns false. */
-    std::pair<rose_addr_t, rose_addr_t> hull() const;
+    AddressInterval hull() const;
 
     /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
      *  The default byte order is little-endian.
@@ -532,7 +532,7 @@ public:
      *  If the @p range overlaps with existing segments and @p erase_prior is set (the default), then the overlapping parts of
      *  the virtual address space are first removed from the mapping.  Otherwise an overlap throws a MemoryMap::Inconsistent
      *  exception.   If an exception is thrown, then the memory map is not changed. */
-    void insert(const Extent &range, const Segment &segment, bool erase_prior=true);
+    void insert(const AddressInterval &range, const Segment &segment, bool erase_prior=true);
 
     /** Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
      *  creates a new MmapBuffer and inserts it into the mapping. Returns the size of the file mapping. */
@@ -544,8 +544,8 @@ public:
      *  required_perms is non-zero, then the address (or all addresses in the range) must be mapped with at least those
      *  permission bits.
      * @{ */
-    bool exists(rose_addr_t va, unsigned required_perms=0) const { return exists(Extent(va), required_perms); }
-    bool exists(Extent range, unsigned required_perms=0) const;
+    bool exists(rose_addr_t va, unsigned required_perms=0) const { return exists(AddressInterval(va), required_perms); }
+    bool exists(AddressInterval range, unsigned required_perms=0) const;
     /** @} */
 
     /** Returns the next valid address.
@@ -553,7 +553,7 @@ public:
      *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions.  If no
      *  permissions are specified then the address need only be mapped.  Returns none if there is no valid address greater than or
      *  equal to @p va. */
-    boost::optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
+    Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
      *  necessarily need to correspond to a similar add() call; for instance, it's possible to add a large address space and
@@ -561,7 +561,7 @@ public:
      *
      *  It is not an error to erase parts of the virtual address space that are not defined.  Note that it is more efficient to
      *  call clear() than to erase the entire virtual address space. */
-    void erase(const Extent &range);
+    void erase(const AddressInterval &range);
 
     /** Erase a single extent from a memory map.  Erasing by range is more efficient (O(ln N) vs O(N)) but sometimes it's more
      *  convenient to erase a single segment when we don't know it's range. */
@@ -570,7 +570,7 @@ public:
     /** Get information about an address.  The return value is a pair containing the range of virtual addresses in the
      *  segment and a copy of the Segment object.  If the value is not found, then a RangeMap::NotMapped exception is thrown.
      *  See also, exists(). */
-    std::pair<Extent, Segment> at(rose_addr_t va) const;
+    const Segments::Node& at(rose_addr_t va) const;
 
     /** Search for free space in the mapping.  This is done by looking for the lowest possible address not less than @p
      *  start_va and with the specified alignment where there are at least @p size free bytes. Throws a MemoryMap::NoFreeSpace
@@ -663,24 +663,24 @@ public:
      *  Searches for the first occurrence of the specified bytes anywhere completely contained within the specified limits.
      *  The bytes must appear in the order they are specified.  Returns the address of the start of the sequence if found, or
      *  none if not found. */
-    boost::optional<rose_addr_t> find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
-                                               unsigned req_perms=MM_PROT_READ) const;
+    Sawyer::Optional<rose_addr_t> find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                                unsigned req_perms=MM_PROT_READ) const;
 
     /** Search for any byte.
      *
      *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
      *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
      *  method returns none. */
-    boost::optional<rose_addr_t> find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
-                                          unsigned req_perms=MM_PROT_READ) const;
+    Sawyer::Optional<rose_addr_t> find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                           unsigned req_perms=MM_PROT_READ) const;
 
     /** Returns just the virtual address extents for a memory map. */
-    ExtentMap va_extents() const;
+    AddressIntervalSet va_extents() const;
 
     /** Sets protection bits for the specified address range.  The entire address range must already be mapped, but if @p
      *  relax is set then no exception is thrown if part of the range is not mapped (that part is just ignored).  This
      *  operation is somewhat like the POSIX mprotect() function. */
-    void mprotect(Extent range, unsigned perms, bool relax=false);
+    void mprotect(AddressInterval range, unsigned perms, bool relax=false);
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output.

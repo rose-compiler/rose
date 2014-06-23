@@ -129,6 +129,7 @@ elf_exe_x86_specimens =				\
     i386-pxor					\
     i386-stmxcsr				\
     i386-wait					\
+    i386-taintflow1				\
     i686-test1.O0.bin				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\

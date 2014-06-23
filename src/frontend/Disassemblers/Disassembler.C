@@ -29,7 +29,7 @@ std::vector<Disassembler*> Disassembler::disassemblers;
 /* Diagnostics */
 Sawyer::Message::Facility Disassembler::mlog("Disassembler");
 double Disassembler::progress_interval = 10.0;
-struct timeval progress_time;
+double Disassembler::progress_time = 0.0;
 
 void Disassembler::initDiagnostics() {
     static bool initialized = false;
@@ -290,9 +290,8 @@ Disassembler::update_progress(SgAsmInstruction *insn)
         if (insn) {
             ++p_ndisassembled;
             if (progress_interval>=0 && mlog[INFO]) {
-                struct timeval curtime;
-                gettimeofday(&curtime, NULL);
-                if (Sawyer::Message::timevalDelta(progress_time, curtime) >= progress_interval) {
+                double curtime = Sawyer::Message::now();
+                if (curtime - progress_time >= progress_interval) {
                     if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
                         mlog[INFO] <<"at va " <<addrToString(insn->get_address())
                                    <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
@@ -312,7 +311,7 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
     MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, buf_size);
     MemoryMap::Segment segment(buffer, 0, MemoryMap::MM_PROT_RX, "disassembleOne temp");
     MemoryMap map;
-    map.insert(Extent(buf_va, buf_size), segment);
+    map.insert(AddressInterval::baseSize(buf_va, buf_size), segment);
     return disassembleOne(&map, start_va, successors);
 }
 
@@ -412,7 +411,7 @@ Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, siz
     MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, buf_size);
     MemoryMap::Segment segment(buffer, 0, MemoryMap::MM_PROT_RX, "disassembleBlock temp");
     MemoryMap map;
-    map.insert(Extent(buf_va, buf_size), segment);
+    map.insert(AddressInterval::baseSize(buf_va, buf_size), segment);
     return disassembleBlock(&map, start_va, successors, cache);
 }
 
@@ -560,12 +559,12 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
         AddressSet *worklist;
         const InstructionMap &tried;
         Visitor(Disassembler *d, AddressSet *worklist, const InstructionMap &tried): d(d), worklist(worklist), tried(tried) {}
-        virtual bool operator()(const MemoryMap *map, const Extent &range, const MemoryMap::Segment &segment) {
-            rose_addr_t va = range.first();
+        virtual bool operator()(const MemoryMap *map, const AddressInterval &range, const MemoryMap::Segment &segment) {
+            rose_addr_t va = range.least();
             va = ALIGN_UP(va, d->get_alignment());
 
             /* Scan through this segment */
-            while (va+d->get_wordsize() <= range.last()) {
+            while (va+d->get_wordsize() <= range.greatest()) {
                 rose_addr_t constant = 0; /*virtual address*/
                 unsigned char buf[sizeof constant];
                 ASSERT_require(d->get_wordsize()<=sizeof constant);
@@ -611,19 +610,19 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
 
         /* Advance to the next valid mapped address if necessary by scanning for the first map element that has a higher
          * virtual address and is executable. */
-        MemoryMap::Segments::const_iterator si = map->segments().lower_bound(next_va);
-        if (si==map->segments().end())
+        MemoryMap::Segments::ConstNodeIterator si = map->segments().lowerBound(next_va);
+        if (si==map->segments().nodes().end())
             return; // no subsequent valid mapped address
-        const Extent &range = si->first;
-        const MemoryMap::Segment &segment = si->second;
-        ASSERT_require(range.last()>=next_va);
+        const AddressInterval &range = si->key();
+        const MemoryMap::Segment &segment = si->value();
+        ASSERT_require(range.greatest()>=next_va);
 
         if (0==(segment.get_mapperms() & MemoryMap::MM_PROT_EXEC)) {
-            next_va = range.last() + 1;
+            next_va = range.greatest() + 1;
             continue;
         }
 
-        next_va = std::max(next_va, range.first());
+        next_va = std::max(next_va, range.least());
 
         /* If we tried to disassemble at this address and failed, then try the next address. */
         if (tried.exists(next_va)) {
@@ -704,7 +703,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, si
                                 AddressSet *successors, BadMap *bad)
 {
     MemoryMap map;
-    map.insert(Extent(buf_va, buf_size),
+    map.insert(AddressInterval::baseSize(buf_va, buf_size),
                MemoryMap::Segment(MemoryMap::ExternBuffer::create(buf, buf_size), 0,
                                   MemoryMap::MM_PROT_RX, "disassembleBuffer temp"));
     return disassembleBuffer(&map, start_va, successors, bad);
@@ -722,7 +721,7 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
     MemoryMap::Segment sgmt(MemoryMap::ExternBuffer::create(file_buf, section->get_size()), 0,
                             MemoryMap::MM_PROT_RX, section->get_name()->get_string());
     MemoryMap map;
-    map.insert(Extent(section_va, section->get_size()), sgmt);
+    map.insert(AddressInterval::baseSize(section_va, section->get_size()), sgmt);
     return disassembleBuffer(&map, section_va+start_offset, successors, bad);
 }
 
@@ -810,7 +809,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     SgAsmGenericFile *file = NULL;
     const SgAsmGenericFilePtrList &files = interp->get_files();
     bool was_tracking = false; // only valid when file!=NULL  (value here is to shut of used-before-defined warnings from GCC)
-    MemoryMap::Segments::const_iterator si = map->segments().end();
+    MemoryMap::Segments::ConstNodeIterator si = map->segments().nodes().end();
 
     /* Re-read each instruction so the file has a chance to track the reference. */
     try {
@@ -822,13 +821,13 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 
             while (nbytes>0) {
                 /* Find the memory map segment and the file that goes with that segment (if any) */
-                if (si==map->segments().end() || !si->first.contains(Extent(va))) {
+                if (si==map->segments().nodes().end() || !si->key().isContaining(va)) {
                     if (file) {
                         file->set_tracking_references(was_tracking);
                         file = NULL;
                     }
                     si = map->segments().find(va);
-                    if (si==map->segments().end()) {
+                    if (si==map->segments().nodes().end()) {
                         /* This byte of the instruction is not mapped. Perhaps the next one is. */
                         ++va;
                         --nbytes;
@@ -837,21 +836,20 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 
                     /* Find the file that goes with this segment. */
                     for (size_t i=0; i<files.size(); i++) {
-                        if (&(files[i]->get_data()[0]) == si->second.get_buffer()->get_data_ptr()) {
+                        if (&(files[i]->get_data()[0]) == si->value().get_buffer()->get_data_ptr()) {
                             file = files[i];
                             was_tracking = file->get_tracking_references();
                             file->set_tracking_references(true);
                             break;
                         }
                     }
-
                 }
 
                 /* Read the file for its reference tracking side effect. */
-                size_t sgmt_offset = va - si->first.first();
-                size_t n = std::min(nbytes, (size_t)si->first.size()-sgmt_offset);
+                size_t sgmt_offset = va - si->key().least();
+                size_t n = std::min(nbytes, (size_t)si->key().size()-sgmt_offset);
                 if (file) {
-                    size_t file_offset = si->second.get_buffer_offset() + sgmt_offset;
+                    size_t file_offset = si->value().get_buffer_offset() + sgmt_offset;
                     file->read_content(file_offset, buf, n, false);
                 }
                 nbytes -= n;

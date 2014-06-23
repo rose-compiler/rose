@@ -8,6 +8,7 @@
 
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
+#include "transformationTracking.h"
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -352,6 +353,20 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
           nodelabel += string("\\n name = ") + name;
         }
+
+#if 0
+  // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
+  // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
+  // I need this for debugging, but I think we might not want this to be used all of the time.
+     SgExpression* expression = isSgExpression(node);
+     if (expression != NULL)
+        {
+          SgType* type = expression->get_type();
+          ROSE_ASSERT(type != NULL);
+          string unparsedTypeString = type->unparseToString();
+          nodelabel += string("\\n type = ") + unparsedTypeString;
+        }
+#endif
 
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
@@ -951,7 +966,7 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
   // print number of max successors (= container size)
      AstSuccessorsSelectors::SuccessorsContainer c;
      AstSuccessorsSelectors::selectDefaultSuccessors(node,c);
-     ss << c.size() << "\\n";
+     ss <<"child_count:"<< c.size() << "\\n";
 
   // add memory location of node to dot output
      ss << node << "\\n";
@@ -981,7 +996,9 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
           ss << "\\n";
           ss << "\\n";
         }
-
+     // Liao, 4/3/2014  display Unique ID for some nodes
+     if (TransformationTracking::getId(node) != 0)
+       ss <<"ID:"<<TransformationTracking::getId(node)<<"\\n";
      return ss.str();
    }
 
