@@ -91,11 +91,17 @@ private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         ASSERT_not_reachable("should not be called by user code");
+#ifdef _MSC_VER
+        return BaseSemantics::RiscOperatorsPtr();
+#endif
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         ASSERT_not_reachable("should not be called by user code");
+#ifdef _MSC_VER
+        return BaseSemantics::RiscOperatorsPtr();
+#endif
     }
 
     // Dynamic pointer cast
