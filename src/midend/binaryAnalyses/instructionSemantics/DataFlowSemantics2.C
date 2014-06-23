@@ -78,6 +78,9 @@ public:
 
     virtual uint64_t get_number() const {
         ASSERT_not_reachable("DataFlowSementics::SValue are never concrete");
+#ifdef _MSC_VER
+        return 0;
+#endif
     }
 
     virtual void print(std::ostream &out, BaseSemantics::Formatter &fmt) const /*override*/ {
@@ -147,11 +150,17 @@ private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         ASSERT_not_reachable("should not be called by user code");
+#ifdef _MSC_VER
+        return BaseSemantics::RiscOperatorsPtr();
+#endif
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         ASSERT_not_reachable("should not be called by user code");
+#ifdef _MSC_VER
+        return BaseSemantics::RiscOperatorsPtr();
+#endif
     }
 
     // Dynamic pointer cast
@@ -310,6 +319,9 @@ public:
 
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) /*override*/ {
         ASSERT_not_reachable("readRegister is not possible for this semantic domain");
+#ifdef _MSC_VER
+        return BaseSemantics::SValuePtr();
+#endif
     }
 
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) /*override*/ {
@@ -321,6 +333,9 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) /*override*/ {
         ASSERT_not_reachable("readMemory is not possible for this semantic domain");
+#ifdef _MSC_VER
+        return BaseSemantics::SValuePtr();
+#endif
     }
     
     virtual void writeMemory(const RegisterDescriptor &segreg,
