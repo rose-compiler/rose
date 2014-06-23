@@ -120,6 +120,7 @@ elf_exe_x86_specimens =				\
     i386-pivot_root				\
     i386-pointers				\
     i386-poweroff				\
+    i386-taintflow1				\
     i686-test1.O0.bin				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\

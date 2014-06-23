@@ -67,7 +67,7 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval);
+        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -110,7 +110,8 @@ public:
     // Methods we override from the super class
 public:
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond, size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) /*override*/;
 

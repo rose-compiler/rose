@@ -12,8 +12,9 @@ namespace LlvmSemantics {
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
+    size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
     return svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_READ,
                                             LeafNode::create_memory(nbits), addr->get_expression()));
@@ -38,7 +39,7 @@ RiscOperators::reset()
     BaseSemantics::MemoryStatePtr mem = state->get_memory_state();
 
     RegisterStatePtr new_regs = RegisterState::promote(regs->create(get_protoval(), regs->get_register_dictionary()));
-    BaseSemantics::MemoryStatePtr new_mem = mem->create(get_protoval());
+    BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
 
     new_regs->initialize_nonoverlapping(get_important_registers(), false);

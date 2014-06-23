@@ -145,7 +145,7 @@ public:
 static bool returnValueUsed(const Cfg &cfg, CfgVertex startVertex, const RegisterDictionary *regdict) {
     BaseSemantics::SValuePtr protoval = NullSemantics::SValue::instance();
     RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+    BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     BaseSemantics::RiscOperatorsPtr ops = NullSemantics::RiscOperators::instance(state);
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
