@@ -713,25 +713,22 @@ struct M68k_adda: M68k {
     }
 };
 
-// ADDI.B #<data>, Dx
-// ADDI.W #<data>, Dx
-// ADDI.L #<data>, Dx
-//
-// Note: Reference manual text says all "data alterable" modes allowed, but the table lacks program counter memory
-// indirect modes. I am favoring the table over the text. [Robb P. Matzke 2013-10-07]
+// ADDI.B #<data>, <ea>
+// ADDI.W #<data>, <ea>
+// ADDI.L #<data>, <ea>
 struct M68k_addi: M68k {
     M68k_addi(): M68k("addi", m68k_family,
                       OP(0) & BITS<8, 11>(0x6) & (BITS<6, 7>(0) | BITS<6, 7>(1) | BITS<6, 7>(2)) &
                       EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        size_t nbits = 0;
+        size_t nbits=0, opandWords=0;
         switch (extract<6, 7>(w0)) {
-            case 0: nbits=8; break;
-            case 1: nbits=16; break;
-            case 2: nbits=32; break;
+            case 0: nbits=8;    opandWords=1; break;
+            case 1: nbits=16;   opandWords=1; break;
+            case 2: nbits=32;   opandWords=2; break;
         }
         SgAsmExpression *src = d->makeImmediateExtension(nbits, 0); // immediate argument is in extension word(s)
-        SgAsmExpression *dst = d->makeDataRegister(extract<0, 2>(w0), nbits);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, opandWords);
         return d->makeInstruction(m68k_addi, "addi."+sizeToLetter(nbits), src, dst);
     }
 };
@@ -843,25 +840,22 @@ struct M68k_and_2: M68k {
     }
 };
 
-// ANDI.B #<data>, <ea>x
-// ANDI.W #<data>, <ea>x
-// ANDI.L #<data>, <ea>x
-//
-// Note: Reference manual text says "data alterable modes" are allowed, but the table lacks program counter memory indirect
-// modes.  I am favoring the table over the text. [Robb P. Matzke 2013-10-07]
+// ANDI.B #<data>, <ea>
+// ANDI.W #<data>, <ea>
+// ANDI.L #<data>, <ea>
 struct M68k_andi: M68k {
     M68k_andi(): M68k("andi", m68k_family,
                       OP(0) & BITS<8, 12>(2) & (BITS<6, 7>(0) | BITS<6, 7>(1) | BITS<6, 7>(2)) &
                       EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        size_t nbits = 0;
+        size_t nbits=0, opandWords=0;
         switch (extract<6, 7>(w0)) {
-            case 0: nbits=8; break;
-            case 1: nbits=16; break;
-            case 2: nbits=32; break;
+            case 0: nbits=8;  opandWords=1; break;
+            case 1: nbits=16; opandWords=1; break;
+            case 2: nbits=32; opandWords=2; break;
         }
         SgAsmExpression *src = d->makeImmediateExtension(nbits, 0);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 32==nbits?2:1);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, opandWords);
         return d->makeInstruction(m68k_andi, "andi."+sizeToLetter(nbits), src, dst);
     }
 };
@@ -1510,7 +1504,7 @@ struct M68k_cmp2: M68k {
             case 1: nbits = 16; break;
             case 2: nbits = 32; break;
         }
-        SgAsmExpression *bounds = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
+        SgAsmExpression *bounds = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 1);
         SgAsmExpression *src2 = d->makeDataAddressRegister(extract<12, 15>(d->instruction_word(1)), nbits);
         return d->makeInstruction(m68k_cmp2, "cmp2."+sizeToLetter(nbits), bounds, src2);
     }
@@ -1655,7 +1649,7 @@ struct M68k_divrem_l: M68k {
         } else {
             // remainder
             M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_rems : m68k_remu;
-            SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
+            SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1);
             SgAsmExpression *dw = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32);
             SgAsmExpression *dx  = d->makeDataRegister(extract<0, 2>(d->instruction_word(1)), 32);
             return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dw, dx);
@@ -2093,7 +2087,7 @@ struct M68k_multiply_l: M68k {
                             WORD<1>(BIT<15>(0) & BITS<3, 10>(0))) {} // BITS<0,2> are unused and unspecified
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_muls : m68k_mulu;
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1);
         SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32);
         return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dst);
     }
@@ -2107,7 +2101,7 @@ struct M68k_multiply_64: M68k {
                              WORD<1>(BIT<15>(0) & BITS<3, 10>(0x80))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_muls : m68k_mulu;
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1);
         SgAsmExpression *dh = d->makeDataRegister(extract<0, 2>(d->instruction_word(1)), 32);
         SgAsmExpression *dl = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), 32);
         return d->makeInstruction(m68k_muls, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dh, dl);
@@ -2574,7 +2568,7 @@ struct M68k_subi: M68k {
             case 2: nbits = 32; break;
         }
         SgAsmExpression *src = d->makeImmediateExtension(nbits, 0);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 32==nbits?2:1);
         return d->makeInstruction(m68k_subi, "subi."+sizeToLetter(nbits), src, dst);
     }
 };
