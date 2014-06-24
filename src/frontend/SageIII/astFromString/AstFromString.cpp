@@ -332,8 +332,11 @@ namespace AstFromString
           ref_exp = buildFunctionRefExp(isSgFunctionSymbol(sym));
           c_parsed_node = ref_exp;  
           break;
+        case V_SgEnumFieldSymbol:
+          c_parsed_node = SageBuilder::buildEnumVal(isSgEnumFieldSymbol(sym));
+          break;
         case V_SgLabelSymbol:
-          c_parsed_node = isSgLabelSymbol(sym);;  
+          c_parsed_node = isSgLabelSymbol(sym);
           break;
         default:
           {
@@ -351,7 +354,7 @@ namespace AstFromString
 */
     else
     {
-      //printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);
+      printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);
       //c_parsed_node = NULL;
       //assert(0);
       //c_char = old_char;

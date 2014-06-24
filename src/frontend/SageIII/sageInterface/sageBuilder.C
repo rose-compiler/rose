@@ -5222,6 +5222,17 @@ SgEnumVal* SageBuilder::buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgN
      return enumVal;
    }
 
+SgEnumVal* SageBuilder::buildEnumVal(SgEnumFieldSymbol * sym) {
+  SgInitializedName * init_name = sym->get_declaration();
+  assert(init_name != NULL);
+  SgAssignInitializer * assign_init = isSgAssignInitializer(init_name->get_initptr());
+  assert(assign_init != NULL);
+  SgEnumVal * enum_val = isSgEnumVal(assign_init->get_operand_i());
+  assert(enum_val != NULL);
+  enum_val = isSgEnumVal(SageInterface::copyExpression(enum_val));
+  return enum_val;
+}
+
 SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 {
   SgLongDoubleVal* result = new SgLongDoubleVal(value,"");
