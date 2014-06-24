@@ -81,7 +81,10 @@ template <>
 bool Parser::parse<size_t>(size_t &) const;
 
 template <>
-bool Parser::parse<SgExpression *>(SgExpression * &) const;
+bool Parser::parse<std::pair<SgExpression *, SgExpression *> >(std::pair<SgExpression *, SgExpression *> &) const;
+
+template <>
+bool Parser::parse<size_t>(size_t &) const;
 
 template <>
 bool Parser::parse<SgVariableSymbol *>(SgVariableSymbol * &) const;

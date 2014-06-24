@@ -147,7 +147,9 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     SgPragmaDeclaration * pragma_decl = *it_pragma_decl;
     assert(pragma_decl != NULL);
     std::string directive_string = pragma_decl->get_pragma()->get_pragma();
-    translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, parse(directive_string, pragma_decl)));
+    directive_t * directive = parse(directive_string, pragma_decl);
+    if (directive != NULL)
+      translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, directive));
   }
 
   typename std::map<SgLocatedNode *, directive_t *>::const_iterator it;

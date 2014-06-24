@@ -110,12 +110,23 @@ bool Parser::parse<size_t>(size_t & val) const {
 template <>
 bool Parser::parse<SgExpression *>(SgExpression * & expr) const {
   skip_whitespace();
-  if (!AstFromString::afs_match_expression()) 
-    return false;
+  if (!AstFromString::afs_match_assignment_expression()) // AstFromString::afs_match_expression would match expression list too
+     return false;
   skip_whitespace();
 
   expr = isSgExpression(AstFromString::c_parsed_node);
   return expr != NULL;
+}
+
+template <>
+bool Parser::parse<std::pair<SgExpression *, SgExpression *> >(std::pair<SgExpression *, SgExpression *> & pair) const {
+  skip_whitespace();
+  if (!parse<SgExpression *>(pair.first)) return false;
+  skip_whitespace();
+  if (!consume(',')) return false;
+  skip_whitespace();
+  if (!parse<SgExpression *>(pair.second)) return false;
+  return true;
 }
  
 template <>
