@@ -31,12 +31,23 @@ class Data {
       SgExpression * stride;
     } section_t;
 
+    typedef struct data_distribution_t {
+      size_t distributed_dimension;
+      enum {
+        e_acc_split_contiguous,
+        e_acc_split_chunk
+      } kind;
+      std::vector<size_t> portions;
+    } data_distribution_t;
+
   protected:
     SgVariableSymbol * p_variable_symbol;
 
     SgType * p_base_type;
 
     std::vector<section_t> p_sections;
+
+    data_distribution_t * p_data_distribution;
 
   public:
     std::vector<Annotation> annotations;
@@ -55,13 +66,20 @@ class Data {
     Data(SgVariableSymbol * variable, size_t dims = 0);
     virtual ~Data();
 
-    void addSection(const section_t & section);
+    void addSection(const section_t & section) { p_sections.push_back(section); }
 
-    SgVariableSymbol * getVariableSymbol() const;
+    SgVariableSymbol * getVariableSymbol() const { return p_variable_symbol; }
 
-    SgType * getBaseType() const;
+    SgType * getBaseType() const { return p_base_type; }
 
-    const std::vector<section_t> & getSections() const;
+    const std::vector<section_t> & getSections() const { return p_sections; }
+
+    bool isDistributed() const { return p_data_distribution != NULL; }
+
+    const data_distribution_t & getDistribution() const {
+      assert(p_data_distribution);
+      return *p_data_distribution;
+    }
 
     bool isFlowIn() const;
     bool isFlowOut() const;
@@ -104,6 +122,7 @@ Data<Annotation>::Data(SgVariableSymbol * variable, size_t dims) :
   p_variable_symbol(variable),
   p_base_type(NULL),
   p_sections(),
+  p_data_distribution(),
   annotations()
 {
   p_base_type = p_variable_symbol->get_type();
@@ -156,21 +175,7 @@ Data<Annotation>::Data(SgVariableSymbol * variable, size_t dims) :
 }
 
 template <class Annotation>
-SgType * Data<Annotation>::getBaseType() const {
-  return p_base_type;
-}
-
-template <class Annotation>
 Data<Annotation>::~Data() {}
-
-template <class Annotation>
-void Data<Annotation>::addSection(const section_t & section) { p_sections.push_back(section); }
-
-template <class Annotation>
-SgVariableSymbol * Data<Annotation>::getVariableSymbol() const { return p_variable_symbol; }
-
-template <class Annotation>
-const std::vector<typename Data<Annotation>::section_t> & Data<Annotation>::getSections() const { return p_sections; }
 
 
 template <class Annotation>

@@ -58,6 +58,7 @@ class Kernel {
       std::map<SgVariableSymbol *, SgVariableSymbol *> parameters;
       std::map<SgVariableSymbol *, SgVariableSymbol *> scalars;
       std::map<Data<Annotation> *, SgVariableSymbol *> datas;
+      std::map<Data<Annotation> *, SgVariableSymbol *> data_offsets;
       std::map<SgVariableSymbol *, SgVariableSymbol *> iterators;
       SgVariableSymbol * context;
     };
@@ -65,9 +66,7 @@ class Kernel {
     struct a_kernel {
       std::string kernel_name;
 
-      size_t num_gangs[3];
-      size_t num_workers[3];
-      size_t vector_length;
+      typename Runtime::config_t config;
 
       std::vector<typename Runtime::a_loop> loops;
     };
@@ -121,6 +120,7 @@ class Kernel {
       id(id_cnt++),
       p_loop_tree(loop_tree),
       p_looptree_roots(),
+      p_loops(),
       p_data_flow(),
       p_arguments(),
       p_generated_kernels()

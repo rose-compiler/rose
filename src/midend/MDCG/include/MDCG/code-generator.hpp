@@ -49,10 +49,16 @@ class CodeGenerator {
 
       p_mfb_driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
-      std::vector<Model::field_t>::const_iterator it_field;
-      unsigned field_id = 0;
-      for (it_field = element->scope->field_children.begin(); it_field != element->scope->field_children.end(); it_field++)
-        expr_list->append_expression(ModelTraversal::createFieldInitializer(*this, *it_field, field_id++, input, file_id));
+      std::vector<Model::field_t>::const_iterator it_field = element->scope->field_children.begin();
+      SgExpression * expr = ModelTraversal::createFieldInitializer(*this, *it_field, 0, input, file_id);
+      if (expr == NULL) return NULL;
+      it_field++;
+      unsigned field_id = 1;
+      for (; it_field != element->scope->field_children.end(); it_field++) {
+        expr = ModelTraversal::createFieldInitializer(*this, *it_field, field_id++, input, file_id);
+        assert(expr != NULL);
+        expr_list->append_expression(expr);
+      }
 
       return SageBuilder::buildAggregateInitializer(expr_list);
     }
@@ -88,8 +94,11 @@ class CodeGenerator {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
       Iterator it;
-      for (it = input_begin; it != input_end; it++)
-        expr_list->append_expression(createInitializer<ModelTraversal>(element, *it, file_id));
+      for (it = input_begin; it != input_end; it++) {
+        SgExpression * expr = createInitializer<ModelTraversal>(element, *it, file_id);
+        if (expr != NULL)
+          expr_list->append_expression(expr);
+      }
 
       return SageBuilder::buildAggregateInitializer(expr_list);
     }
@@ -108,9 +117,12 @@ class CodeGenerator {
 
       Iterator it;
       for (it = input_begin; it != input_end; it++) {
-        std::ostringstream decl_name;
-        decl_name << decl_prefix << "_" << cnt++;
-        expr_list->append_expression(createPointer<ModelTraversal>(element, *it, file_id, decl_name.str()));
+        SgExpression * expr = createPointer<ModelTraversal>(element, *it, file_id, decl_name.str())
+        if (expr != NULL) {
+          std::ostringstream decl_name;
+          decl_name << decl_prefix << "_" << cnt++;
+          expr_list->append_expression(expr);
+        }
       }
 
       return SageBuilder::buildAggregateInitializer(expr_list);
