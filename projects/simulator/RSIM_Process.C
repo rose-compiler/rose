@@ -4,6 +4,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>
 #include <sys/mman.h>
@@ -265,12 +266,12 @@ public:
         MemoryMap::BufferPtr vdso_buffer = MemoryMap::ByteBuffer::create_from_file(vdso_name);
         assert(vdso_buffer->size()==(size_t)sb.st_size);
         MemoryMap::Segment vdso_segment(vdso_buffer, 0, MemoryMap::MM_PROT_RX, "[vdso]");
-        map->insert(Extent(vdso_mapped_va, vdso_buffer->size()), vdso_segment);
+        map->insert(AddressInterval::baseSize(vdso_mapped_va, vdso_buffer->size()), vdso_segment);
 
         if (vdso_buffer->size()!=ALIGN_UP(vdso_buffer->size(), PAGE_SIZE)) {
             rose_addr_t anon_va = vdso_mapped_va + vdso_buffer->size();
             rose_addr_t anon_size = ALIGN_UP(vdso_buffer->size(), PAGE_SIZE) - vdso_buffer->size();
-            map->insert(Extent(anon_va, anon_size),
+            map->insert(AddressInterval::baseSize(anon_va, anon_size),
                         MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(anon_size), 0,
                                            MemoryMap::MM_PROT_RX, vdso_segment.get_name()));
         }
@@ -394,7 +395,7 @@ RSIM_Process::load(const char *name)
     /* Find a disassembler. */
     if (!disassembler) {
         disassembler = Disassembler::lookup(interpretation)->clone();
-        disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
+        disassembler->set_progress_reporting(-1); /* turn off progress reporting */
     }
 
 #if 0
@@ -933,9 +934,9 @@ RSIM_Process::my_addr(uint32_t va, size_t nbytes)
         /* Obtain mapping information and check that the specified number of bytes are mapped. */
         if (!get_memory().exists(va))
             break;
-        std::pair<Extent, MemoryMap::Segment> me = get_memory().at(va);
-        size_t offset = me.second.get_buffer_offset(me.first, va);
-        uint8_t *base = (uint8_t*)me.second.get_buffer()->get_data_ptr();
+        const MemoryMap::Segments::Node &me = get_memory().at(va);
+        size_t offset = me.value().get_buffer_offset(me.key(), va);
+        uint8_t *base = (uint8_t*)me.value().get_buffer()->get_data_ptr();
         if (!base)
             break;
         retval = base + offset;
@@ -948,15 +949,14 @@ RSIM_Process::guest_va(void *addr, size_t nbytes)
 {
     uint32_t retval = 0;
     RTS_READ(rwlock()) {
-        const MemoryMap::Segments &segments = get_memory().segments();
-        for (MemoryMap::Segments::const_iterator si=segments.begin(); si!=segments.end(); ++si) {
-            const Extent &range = si->first;
-            const MemoryMap::Segment &segment = si->second;
+        BOOST_FOREACH (const MemoryMap::Segments::Node &node, get_memory().segments().nodes()) {
+            const AddressInterval &range = node.key();
+            const MemoryMap::Segment &segment = node.value();
             uint8_t *base = (uint8_t*)segment.get_buffer()->get_data_ptr();
             rose_addr_t offset = segment.get_buffer_offset();
             size_t size = range.size();
             if (base && addr>=base+offset && (uint8_t*)addr+nbytes<=base+offset+size) {
-                retval = range.first() + ((uint8_t*)addr - (base+offset));
+                retval = range.least() + ((uint8_t*)addr - (base+offset));
                 break;
             }
         }
@@ -1079,11 +1079,11 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
     RTS_WRITE(rwlock()) {
         if (newbrk > brk_va) {
             size_t size = newbrk - brk_va;
-            get_memory().insert(Extent(brk_va, size),
+            get_memory().insert(AddressInterval::baseSize(brk_va, size),
                                 MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(size), 0, MemoryMap::MM_PROT_RW, "[heap]"));
             brk_va = newbrk;
         } else if (newbrk>0 && newbrk<brk_va) {
-            get_memory().erase(Extent(newbrk, brk_va-newbrk));
+            get_memory().erase(AddressInterval::baseSize(newbrk, brk_va-newbrk));
             brk_va = newbrk;
         }
         retval= brk_va;
@@ -1103,7 +1103,7 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
         /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
         ExtentMap extents;
         extents.insert(Extent(va, sz));
-        extents.erase_ranges(get_memory().va_extents());
+        extents.erase_ranges(toExtentMap(get_memory().va_extents()));
         if (!extents.empty()) {
             retval = -ENOMEM;
             break;
@@ -1113,16 +1113,16 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
          * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
         uint8_t *ptr = NULL;
         try {
-            std::pair<Extent, MemoryMap::Segment> me = get_memory().at(va);
-            size_t offset = me.second.get_buffer_offset(me.first, va);
-            ptr = (uint8_t*)me.second.get_buffer()->get_data_ptr() + offset;
+            const MemoryMap::Segments::Node &me = get_memory().at(va);
+            size_t offset = me.value().get_buffer_offset(me.key(), va);
+            ptr = (uint8_t*)me.value().get_buffer()->get_data_ptr() + offset;
             if (0==(uint64_t)ptr % (uint64_t)PAGE_SIZE && 0==(uint64_t)sz % (uint64_t)PAGE_SIZE)
                 (void)munmap(ptr, sz);
         } catch (const MemoryMap::NotMapped) {
         }
 
         /* Erase the mapping from the simulation */
-        get_memory().erase(Extent(va, sz));
+        get_memory().erase(AddressInterval::baseSize(va, sz));
 
         /* Tracing */
         if (mesg && mesg->get_file())
@@ -1177,7 +1177,7 @@ RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsign
             break;
         } else {
             try {
-                get_memory().mprotect(Extent(va, aligned_sz), rose_perms);
+                get_memory().mprotect(AddressInterval::baseSize(va, aligned_sz), rose_perms);
                 retval = 0;
             } catch (const MemoryMap::NotMapped &e) {
                 retval = -ENOMEM;
@@ -1240,7 +1240,7 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                 }
             }
             
-            get_memory().insert(Extent(start, aligned_size),
+            get_memory().insert(AddressInterval::baseSize(start, aligned_size),
                                 MemoryMap::Segment(MemoryMap::ExternBuffer::create(buf, aligned_size), 0, rose_perms,
                                                    "mmap("+melmt_name+")"));
         }
@@ -1288,7 +1288,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         static const size_t stack_size = 0x00015000;
         size_t sp = main_thread->policy.readRegister<32>(main_thread->policy.reg_esp).known_value();
         size_t stack_addr = sp - stack_size;
-        get_memory().insert(Extent(stack_addr, stack_size),
+        get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
                             MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(stack_size), 0,
                                                MemoryMap::MM_PROT_RW, "[stack]"));
 

@@ -1,31 +1,29 @@
 #include "sage3basic.h"
 #include "Registers.h"
 #include "AsmUnparser.h"
+#include "Diagnostics.h"
 
 #include <iomanip>
 
+using namespace rose;                                   // temporary until this API lives in the "rose" name space
+using namespace rose::Diagnostics;
+
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseMipsMnemonic(SgAsmMipsInstruction *insn) {
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
     return insn->get_mnemonic();
 }
 
 /** Returns the name of a MIPS register.
  *
  * FIXME: This assumes MIPS32 */
-std::string unparseMipsRegister(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
+std::string unparseMipsRegister(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *registers) {
     using namespace StringUtility;
     if (!registers)
         registers = RegisterDictionary::dictionary_mips32();
     std::string name = registers->lookup(reg);
-    if (name.empty()) {
-        std::cerr <<"unparseMipsRegister(" <<reg <<"): register descriptor not found in dictionary.\n";
-        return (std::string("BAD_REGISTER(") +
-                numberToString(reg.get_major()) + "." +
-                numberToString(reg.get_minor()) + "." +
-                numberToString(reg.get_offset()) + "." +
-                numberToString(reg.get_nbits()) + ")");
-    }
+    if (name.empty())
+        name = AsmUnparser::invalid_register(insn, reg, registers);
     return name;
 }
 
@@ -43,7 +41,7 @@ static std::string mipsValToLabel(uint64_t val, const AsmUnparser::LabelMap *lab
 
 static std::string mipsTypeToPtrName(SgAsmType* ty) {
     if (NULL==ty) {
-        std::cerr <<"mipsTypeToPtrName: null type" <<std::endl;
+        mlog[ERROR] <<"mipsTypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
 
@@ -53,9 +51,7 @@ static std::string mipsTypeToPtrName(SgAsmType* ty) {
         case V_SgAsmTypeDoubleWord: return "WORD";
         case V_SgAsmTypeQuadWord: return "DOUBLEWORD";
         default: {
-            std::cerr << "MipsTypeToPtrName: Bad class " << ty->class_name() << std::endl;
-            assert(!"bad type class");
-            abort();
+            ASSERT_not_reachable("invalid MIPS type: " + ty->class_name());
         }
     }
 }
@@ -80,14 +76,15 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         }
 
         case V_SgAsmMipsRegisterReferenceExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
             SgAsmMipsRegisterReferenceExpression* rr = isSgAsmMipsRegisterReferenceExpression(expr);
-            result = unparseMipsRegister(rr->get_descriptor(), registers);
+            result = unparseMipsRegister(insn, rr->get_descriptor(), registers);
             break;
         }
 
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
-            assert(ival!=NULL);
+            ASSERT_not_null(ival);
             uint64_t value = ival->get_absolute_value(); // not sign extended
             result = StringUtility::signedToHex2(value, ival->get_significant_bits());
 
@@ -103,8 +100,7 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         }
 
         default: {
-            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
-            ROSE_ASSERT (false);
+            ASSERT_not_reachable("invalid MIPS expression: " + expr->class_name());
         }
     }
 

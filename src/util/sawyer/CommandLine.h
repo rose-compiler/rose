@@ -4,6 +4,7 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/Map.h>
+#include <sawyer/Markup.h>
 #include <sawyer/Message.h>
 #include <sawyer/Optional.h>
 #include <sawyer/Sawyer.h>
@@ -157,6 +158,11 @@ SAWYER_EXPORT extern const std::string STR_NONE;
 class Switch;
 class Parser;
 class ParserResult;
+
+/** Check that documentation markup is valid.
+ *
+ *  Tests the supplied markup string for validity, throwing an <code>std::runtime_error</code> if something is wrong. */
+SAWYER_EXPORT void checkMarkup(const std::string&);
 
 /** The order in which things are sorted in the documentation. */
 enum SortOrder {
@@ -1470,8 +1476,8 @@ protected:
  *  user has a function like this:
  *
  * @code
- *  void showRawManPage(const Parser *parser) {
- *      std::cout <<parser->manpage();
+ *  void showRawManPage(const ParserResult *cmdline) {
+ *      std::cout <<cmdline->parser()->manpage();
  *      exit(0);
  *  }
  * @endcode
@@ -1811,7 +1817,7 @@ public:
      * @sa @ref doc
      *
      * @{ */
-    Switch& synopsis(const std::string &s) { synopsis_ = s; return *this; }
+    Switch& synopsis(const std::string &s) { checkMarkup(s); synopsis_ = s; return *this; }
     std::string synopsis() const;
     /** @} */
 
@@ -1852,7 +1858,7 @@ public:
      *  Even switches with no documentation will show up in the generated documentation--they will be marked as "Not
      *  documented".  To suppress them entirely, set their @ref hidden property to true.
      * @{ */
-    Switch& doc(const std::string &s) { documentation_ = s; return *this; }
+    Switch& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2263,7 +2269,7 @@ public:
      *  within this group.
      *
      * @{ */
-    SwitchGroup& doc(const std::string &s) { documentation_ = s; return *this; }
+    SwitchGroup& doc(const std::string &s) { checkMarkup(s); documentation_ = s; return *this; }
     const std::string& doc() const { return documentation_; }
     /** @} */
 
@@ -2609,9 +2615,31 @@ public:
     std::string docForSection(const std::string &sectionName) const;
     /** @} */
 
-    /** Generate manpage documentation. The returned string is in the TROFF language normally used for Unix manual pages. The
-     *  string can be processed by various Unix commands to convert it to text, HTML, TeX, and a variety of other formats. */
-    std::string manpage() const;
+    /** Full documentation.
+     *
+     *  Combines all the documentation parts to return a string documenting the entire parser.  The returned string contains
+     *  markup in the Sawyer::Markup language, with some extensions specific to command-line parsing. */
+    std::string documentationMarkup() const;
+
+    /** Parsed documentation markup.
+     *
+     *  Parses the supplied documentation markup (or gets it via @ref documentationMarkup) and returns the result. An
+     *  <code>std::runtime_error</code> is thrown if there are any problems parsing the documentation string.
+     *
+     * @{ */
+    Markup::ParserResult parseDocumentation() const;
+    Markup::ParserResult parseDocumentation(const std::string&) const;
+    /** @} */
+
+    /** Generate Perl POD documentation.
+     *
+     *  Generates a Perl POD string for this parser. */
+    std::string podDocumentation() const;
+
+    /** Generate Unix man-page (nroff) documentation.
+     *
+     *  Generates NRoff source code for this parser. */
+    std::string manDocumentation() const;
 
     /** Print documentation to standard output. Use a pager if possible. */
     void emitDocumentationToPager() const;
@@ -2660,19 +2688,12 @@ private:
     // argument that starts with a long or short prefix.
     bool apparentSwitch(const Cursor&) const;
 
-    // Returns documentation in the internal markup language
-    std::string documentationMarkup() const;
 
     // Returns the best prefix for each switch--the one used for documentation
     void preferredSwitchPrefixes(Container::Map<std::string, std::string> &prefixMap /*out*/) const;
 
-    // Terminal width in characters from TIOCGWINSZ, $COLUMNS, or 80
-    static int terminalWidth();
-    
     // FIXME[Robb Matzke 2014-02-21]: Some way to parse command-lines from a config file, or to merge parsed command-lines with
     // a yaml config file, etc.
-
-
 };
 
 /** The result from parsing a command line.

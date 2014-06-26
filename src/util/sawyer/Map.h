@@ -2,6 +2,7 @@
 #define Sawyer_Map_H
 
 #include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
 #include <map>
 #include <stdexcept>

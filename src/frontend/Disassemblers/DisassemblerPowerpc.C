@@ -65,7 +65,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, 
     /* Disassemble the instruction */
     startInstruction(start_va, c);
     SgAsmPowerpcInstruction *insn = disassemble(); /*throws an exception on error*/
-    ROSE_ASSERT(insn);
+    ASSERT_not_null(insn);
 
     /* Note successors if necessary */
     if (successors) {
@@ -124,7 +124,7 @@ DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std:
 {
     // Constructor: SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
     SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, mnemonic, kind);
-    ROSE_ASSERT (instruction);
+    ASSERT_not_null(instruction);
 
     if (mnemonic.size() >= 7 && mnemonic.substr(mnemonic.size() - 7) == "_record") {
         instruction->set_mnemonic(mnemonic.substr(0, mnemonic.size() - 7) + ".");
@@ -239,17 +239,17 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             throw ExceptionPowerpc("not a real register", this);
         /* Don't add a "default" or else we won't get compiler warnings if a new class is defined. */
     }
-    ROSE_ASSERT(!name.empty());
+    ASSERT_forbid(name.empty());
 
     /* Obtain a register descriptor from the dictionary */
-    ROSE_ASSERT(get_registers()!=NULL);
+    ASSERT_not_null(get_registers());
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     if (!rdesc)
         throw ExceptionPowerpc("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name(), this);
     
     /* Construct the return value */
     SgAsmPowerpcRegisterReferenceExpression *rre = new SgAsmPowerpcRegisterReferenceExpression(*rdesc);
-    ROSE_ASSERT(rre);
+    ASSERT_not_null(rre);
     return rre;
 }
 
@@ -285,7 +285,7 @@ DisassemblerPowerpc::disassemble()
                     instruction = decode_X_formInstruction_00();
                   }
 
-               ROSE_ASSERT(instruction != NULL);
+               ASSERT_not_null(instruction);
                break;
              }
 
@@ -392,7 +392,7 @@ DisassemblerPowerpc::disassemble()
                     instruction = decode_X_formInstruction_3F(); // Also includes XFL form
                   }
 
-               ROSE_ASSERT(instruction != NULL);
+               ASSERT_not_null(instruction);
                break;
              }
 
@@ -404,7 +404,7 @@ DisassemblerPowerpc::disassemble()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
    
@@ -464,7 +464,7 @@ DisassemblerPowerpc::decode_I_formInstruction()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -527,7 +527,7 @@ DisassemblerPowerpc::decode_B_formInstruction()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -538,7 +538,7 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT(primaryOpcode == 0x11);
+     ASSERT_require(primaryOpcode == 0x11);
 
   // Get bit 30, 1 bit as the reserved flag
      uint8_t constantOneOpcode = (insn >> 1) & 0x1;
@@ -551,7 +551,7 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 
      instruction = MAKE_INSN1(sc, LEV());
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -568,7 +568,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT (primaryOpcode == 0x1F);
+     ASSERT_require(primaryOpcode == 0x1F);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -740,7 +740,6 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
 
                  // See note on page 124 of User Instruction Set Architecture version 2.02
                     throw ExceptionPowerpc("mtocrf is an old form of the mtcrf instruction", this);
-                    ROSE_ASSERT(false);
                   }
                break;
              }
@@ -753,7 +752,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -764,7 +763,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT (primaryOpcode == 0x3F);
+     ASSERT_require(primaryOpcode == 0x3F);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -797,7 +796,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -836,7 +835,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -847,7 +846,7 @@ DisassemblerPowerpc::decode_XL_formInstruction()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT(primaryOpcode == 0x13);
+     ASSERT_require(primaryOpcode == 0x13);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -901,7 +900,7 @@ DisassemblerPowerpc::decode_XL_formInstruction()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -949,7 +948,7 @@ DisassemblerPowerpc::decode_A_formInstruction_00()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -982,7 +981,7 @@ DisassemblerPowerpc::decode_A_formInstruction_04()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -1012,7 +1011,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3B()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -1049,7 +1048,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3F()
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 

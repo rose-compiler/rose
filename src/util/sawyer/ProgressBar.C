@@ -3,33 +3,39 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <cmath>
 #include <cstdio>
+#include <sawyer/Sawyer.h>
 #include <sstream>
 
 namespace Sawyer {
 
-double ProgressBarImpl::initialDelay_ = 5.0;
-double ProgressBarImpl::minUpdateInterval_ = 0.1;
+SAWYER_EXPORT double ProgressBarImpl::initialDelay_ = 5.0;
+SAWYER_EXPORT double ProgressBarImpl::minUpdateInterval_ = 0.1;
 
 
-double ProgressBarSettings::initialDelay() {
+SAWYER_EXPORT double
+ProgressBarSettings::initialDelay() {
     return ProgressBarImpl::initialDelay_;
 }
 
-void ProgressBarSettings::initialDelay(double s) {
+SAWYER_EXPORT void
+ProgressBarSettings::initialDelay(double s) {
     ProgressBarImpl::initialDelay_ = s;
 }
 
-double ProgressBarSettings::minimumUpdateInterval() {
+SAWYER_EXPORT double
+ProgressBarSettings::minimumUpdateInterval() {
     return ProgressBarImpl::minUpdateInterval_;
 }
 
-void ProgressBarSettings::minimumUpdateInterval(double s) {
+SAWYER_EXPORT void
+ProgressBarSettings::minimumUpdateInterval(double s) {
     ProgressBarImpl::minUpdateInterval_ = s;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ProgressBarImpl::init() {
+SAWYER_EXPORT void
+ProgressBarImpl::init() {
     static const char *clearLine = "\r\033[K";          // clear entire line of an ANSI terminal
     overridesAnsi_.isBuffered = false;
     overridesAnsi_.completionStr = clearLine;
@@ -41,7 +47,8 @@ void ProgressBarImpl::init() {
         lastUpdateTime_ = Message::now() + initialDelay_;
 }
 
-void ProgressBarImpl::cleanup() {
+SAWYER_EXPORT void
+ProgressBarImpl::cleanup() {
     if (*stream_) {
         Message::BakedDestinations baked;
         stream_->destination()->bakeDestinations(stream_->properties(), baked);
@@ -58,7 +65,8 @@ void ProgressBarImpl::cleanup() {
     }
 }
 
-std::string ProgressBarImpl::makeBar(double ratio, bool isBackward) {
+SAWYER_EXPORT std::string
+ProgressBarImpl::makeBar(double ratio, bool isBackward) {
     std::string prefix, bar, suffix;
     if (!prefix_.empty())
         prefix = prefix_ + ": ";
@@ -94,7 +102,8 @@ std::string ProgressBarImpl::makeBar(double ratio, bool isBackward) {
     return prefix + leftEnd_ + bar + rightEnd_ + suffix;
 }
 
-void ProgressBarImpl::updateTextMesg(double ratio) {
+SAWYER_EXPORT void
+ProgressBarImpl::updateTextMesg(double ratio) {
     if (shouldSpin_) {
         if (textMesg_.isEmpty() || textMesg_.text().size() > width_) {
             textMesg_ = Message::Mesg();
@@ -130,7 +139,8 @@ void ProgressBarImpl::updateTextMesg(double ratio) {
     }
 }
 
-void ProgressBarImpl::update(double ratio, bool isBackward) {
+SAWYER_EXPORT void
+ProgressBarImpl::update(double ratio, bool isBackward) {
     if (*stream_ && width_>0) {
         Message::BakedDestinations baked;
         stream_->destination()->bakeDestinations(stream_->properties(), baked);
@@ -151,11 +161,13 @@ void ProgressBarImpl::update(double ratio, bool isBackward) {
     }
 }
 
-void ProgressBarImpl::configUpdate(double ratio, bool isBackward) {
+SAWYER_EXPORT void
+ProgressBarImpl::configUpdate(double ratio, bool isBackward) {
     update(ratio, isBackward);
 }
 
-void ProgressBarImpl::valueUpdate(double ratio, bool isBackward) {
+SAWYER_EXPORT void
+ProgressBarImpl::valueUpdate(double ratio, bool isBackward) {
     double curTime = Message::now();
     if (curTime - lastUpdateTime_ >= minUpdateInterval_) {
         update(ratio, isBackward);

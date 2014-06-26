@@ -20,7 +20,7 @@ fi
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
     Assert BitVector BitVectorSupport CommandLine DefaultAllocator Graph GraphBoost IndexedList \
-    Interval IntervalMap IntervalSet Map Markup MarkupRoff Message Optional PoolAllocator ProgressBar \
+    Interval IntervalMap IntervalSet Map Markup MarkupPod Message Optional PoolAllocator ProgressBar \
     Sawyer SharedPointer WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/sawyer/$f";

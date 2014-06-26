@@ -8,7 +8,7 @@
 #include <cmath>
 
 struct UnexecutableSegments: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment) {
+    virtual bool operator()(const MemoryMap*, const AddressInterval&, const MemoryMap::Segment &segment) {
         return 0 == (segment.get_mapperms() & MemoryMap::MM_PROT_EXEC);
     }
 } is_unexecutable;
@@ -80,7 +80,8 @@ main(int argc, char *argv[])
     rose_addr_t start_va = 0;
     MemoryMap map;
     MemoryMap::BufferPtr buffer = MemoryMap::MmapBuffer::create(filename, O_RDONLY, PROT_READ, MAP_PRIVATE);
-    map.insert(Extent(start_va, buffer->size()), MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_RX, filename));
+    map.insert(AddressInterval::baseSize(start_va, buffer->size()),
+               MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_RX, filename));
 
     SgAsmGenericHeader *fake_header = new SgAsmPEFileHeader(new SgAsmGenericFile());
     Disassembler *disassembler = Disassembler::lookup(fake_header)->clone();
@@ -95,7 +96,7 @@ main(int argc, char *argv[])
 
     MemoryMap map2 = map;
     map2.prune(is_unexecutable);
-    Partitioner::RegionStats *stats = partitioner->region_statistics(map.va_extents());
+    Partitioner::RegionStats *stats = partitioner->region_statistics(toExtentMap(map.va_extents()));
 
     /* Initialize a code criteria object with some reasonable values. */
     Partitioner::RegionStats m, v;

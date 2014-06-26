@@ -3,7 +3,6 @@ using this memory map for disassembly:
     va 0x08048060 + 0x00000018 = 0x08048078 r-x- at buffer aae   + 0x00000060 memreadwrite(.text)
     va 0x08048078 + 0x00000190 = 0x08048208 r-xp at buffer aac   + 0x00000078 memreadwrite(LOAD#0)
     va 0x08048208 + 0x00000df8 = 0x08049000 r-xp at anon aab     + 0x00000000 memreadwrite(LOAD#0)
-disassembled 4078 instructions and 1 failure (use --show-bad to see errors)
 
 
 0x08048060: ================================== Function (entry point) unknown name
@@ -2499,4 +2498,3 @@ disassembled 4078 instructions and 1 failure (use --show-bad to see errors)
 
 
 
-generating ASCII dump...
