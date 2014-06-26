@@ -93,6 +93,10 @@ export prefix	# for use by policy scripts
 enforce_policies:
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
+# Most checks in ROSE are named "check-whatever", so do the same for policy checking
+.PHONY: check-policies
+check-policies: enforce_policies
+
 
 # DQ (6/29/2004): I don't think we need this!
 # LIBS = @LIBS@ ${SAGE_LIBS}

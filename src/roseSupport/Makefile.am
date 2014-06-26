@@ -29,7 +29,8 @@ libroseSupport_la_SOURCES =			\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
 	LinearCongruentialGenerator.C		\
-	Combinatorics.C
+	Combinatorics.C				\
+	Diagnostics.C
 
 nodist_libroseSupport_la_SOURCES =		\
 	stringify.C
@@ -47,7 +48,8 @@ pkginclude_HEADERS =				\
 	IncludeDirective.h			\
 	SqlDatabase.h				\
 	LinearCongruentialGenerator.h		\
-	Combinatorics.h
+	Combinatorics.h				\
+	Diagnostics.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 
 # based on nm and was not robust.  Instead we instantiate all templates and figure out which 
