@@ -43,23 +43,14 @@ class LoopTrees {
       node_t * parent;
 
       node_t() : parent(NULL) {}
-
-      virtual size_t numberLoops() const = 0;
+      virtual ~node_t() {}
     };
 
     struct block_t : public node_t {
       std::vector<node_t *> children;
 
       block_t() : node_t(), children() {}
-
-      virtual size_t numberLoops() const {
-        size_t cnt = 0;
-        typename std::vector<node_t *>::const_iterator it;
-        for (it = children.begin(); it != children.end(); it++)
-          if (*it != NULL)
-            cnt += (*it)->numberLoops();
-        return cnt;
-      }
+      virtual ~block_t() {}
     };
 
     struct cond_t : public node_t {
@@ -69,10 +60,7 @@ class LoopTrees {
       block_t * block_false;
 
       cond_t(SgExpression * cond = NULL) : node_t(), condition(cond), block_true(NULL), block_false(NULL) {};
-
-      virtual size_t numberLoops() const {
-        return (block_true != NULL ? block_true->numberLoops() : 0) + (block_false != NULL ? block_false->numberLoops() : 0);
-      }
+      virtual ~cond_t() {}
     };
 
     struct loop_t : public node_t {
@@ -100,22 +88,17 @@ class LoopTrees {
         annotations(),
         block(NULL)
       {}
-
-      virtual size_t numberLoops() const {
-        return (block != NULL ? block->numberLoops() : 0) + 1;
-      }
+      virtual ~loop_t() {}
 
       bool isDistributed() const;
+      bool isSplitted() const;
     };
 
     struct stmt_t : public node_t {
       SgStatement * statement;
 
       stmt_t(SgStatement * stmt = NULL) : node_t(), statement(stmt) {}
-
-      virtual size_t numberLoops() const {
-        return 0;
-      }
+      virtual ~stmt_t() {}
     };
 
   private:
@@ -124,6 +107,9 @@ class LoopTrees {
   protected:
     /// List of loop tree in textual order
     std::vector<node_t *> p_trees;
+
+    /// All loops in text order
+    std::vector<loop_t *> p_loops;
 
     /// Datas used by loop trees
     std::vector<Data<Annotation> *> p_datas;
@@ -134,35 +120,30 @@ class LoopTrees {
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::vector<SgVariableSymbol *> p_parameters;
 
-    bool getLoopID_rec(node_t * curr, loop_t * targ, size_t & idx) const {
-      assert(targ != NULL);
+    void registerLoops(typename LoopTrees<Annotation>::node_t * node) {
+      assert(node != NULL);
 
-      if (curr == NULL) return false;
-
-      typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(curr);
-      typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(curr);
-      typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(curr);
-      typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(curr);
+      typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
+      typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
+      typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
+      typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(node);
 
       if (loop != NULL) {
-        if (loop == targ)
-          return true;
-        else {
-          idx++;
-          return getLoopID_rec(loop->block, targ, idx);
-        }
+        p_loops.push_back(loop);
+        registerLoops(loop->block);
       }
-      else if (cond != NULL)
-        return getLoopID_rec(cond->block_true, targ, idx) && getLoopID_rec(cond->block_false, targ, idx);
+      else if (cond != NULL) {
+        if (cond->block_true != NULL)
+          registerLoops(cond->block_true);
+        if (cond->block_false != NULL)
+          registerLoops(cond->block_false);
+      }
       else if (block != NULL) {
         typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
         for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
-          if (getLoopID_rec(*it_child, targ, idx) == true)
-            return true;
-        return false;
+            registerLoops(*it_child);
       }
-      else if (stmt != NULL) return false;
-      else assert(false);
+      else assert(stmt != NULL);
     }
 
   public:
@@ -179,13 +160,24 @@ class LoopTrees {
 
     const std::vector<SgVariableSymbol *> & getParameters() const { return p_parameters; }
     size_t getNumParameters() const { return p_parameters.size(); }
+    
+    size_t getNumberLoops() const { return p_loops.size(); }
+    const std::vector<loop_t *> & getLoops() const { return p_loops; }
+    size_t getLoopID(loop_t * loop) const {
+      typename std::vector<loop_t *>::const_iterator it_loop = std::find(p_loops.begin(), p_loops.end(), loop);
+      assert(it_loop != p_loops.end());
+      return it_loop - p_loops.begin();
+    }
 
   public:
     LoopTrees();
     virtual ~LoopTrees();
 
     /// Add a tree at the end of the list
-    void addTree(node_t * tree) { p_trees.push_back(tree); }
+    void addTree(node_t * tree) {
+      p_trees.push_back(tree);
+      registerLoops(tree);
+    }
 
     /// Add a data used by loop trees
     void addData(Data<Annotation> * data) { if (std::find(p_datas.begin(), p_datas.end(), data) == p_datas.end()) p_datas.push_back(data); }
@@ -206,16 +198,6 @@ class LoopTrees {
     
     /// Write a lisp like text
     void toText(std::ostream & out) const;
-    
-    size_t numberLoops() const;
-    size_t getLoopID(loop_t * loop) const {
-      size_t idx = 0;
-      typename std::vector<node_t *>::const_iterator it_tree;
-      for (it_tree = p_trees.begin(); it_tree != p_trees.end(); it_tree++)
-        if (getLoopID_rec(*it_tree, loop, idx))
-          return idx;
-      assert(false);
-    }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -327,6 +309,7 @@ template <class Annotation>
 LoopTrees<Annotation>::LoopTrees() :
   id(id_cnt++),
   p_trees(),
+  p_loops(),
   p_datas(),
   p_scalars(),
   p_parameters(),
@@ -830,16 +813,6 @@ void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std
       symbols.insert((*it_var_ref)->get_symbol());
   }
   else assert(false);
-}
-
-template <class Annotation> 
-size_t LoopTrees<Annotation>::numberLoops() const {
-  size_t cnt = 0;
-  typename std::vector<node_t *>::const_iterator it_node;
-  for (it_node = p_trees.begin(); it_node != p_trees.end(); it_node++)
-    cnt += (*it_node)->numberLoops();
-
-  return cnt;
 }
 
 /** @} */

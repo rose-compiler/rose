@@ -52,6 +52,7 @@ class CodeGenerator {
       std::vector<Model::field_t>::const_iterator it_field = element->scope->field_children.begin();
       SgExpression * expr = ModelTraversal::createFieldInitializer(*this, *it_field, 0, input, file_id);
       if (expr == NULL) return NULL;
+      expr_list->append_expression(expr);
       it_field++;
       unsigned field_id = 1;
       for (; it_field != element->scope->field_children.end(); it_field++) {
@@ -117,12 +118,11 @@ class CodeGenerator {
 
       Iterator it;
       for (it = input_begin; it != input_end; it++) {
-        SgExpression * expr = createPointer<ModelTraversal>(element, *it, file_id, decl_name.str())
-        if (expr != NULL) {
-          std::ostringstream decl_name;
+        std::ostringstream decl_name;
           decl_name << decl_prefix << "_" << cnt++;
+        SgExpression * expr = createPointer<ModelTraversal>(element, *it, file_id, decl_name.str());
+        if (expr != NULL)
           expr_list->append_expression(expr);
-        }
       }
 
       return SageBuilder::buildAggregateInitializer(expr_list);
