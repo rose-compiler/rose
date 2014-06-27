@@ -174,6 +174,13 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
   typename std::list<Kernel<Annotation, Language, Runtime> *>::const_iterator it_kernel;
   typename std::set<IterationMap<Annotation, Language, Runtime> *>::const_iterator it_iteration_map;
 
+  typename DataFlow<Annotation, Language, Runtime>::context_t df_ctx;
+
+  // 0 - init data flow
+
+  cg_config.getDataFlow().createContextFromLoopTree(loop_trees, df_ctx);
+  cg_config.getDataFlow().markSplittedData(df_ctx);
+
   // 1 - Loop Selection : Generate multiple list of kernel that implement the given LoopTree
 
   cg_config.getLoopMapper().createKernels(loop_trees, kernel_lists);
@@ -181,7 +188,7 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
   // 2 - Data Flow : performs data-flow analysis for each list of kernel
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
-    cg_config.getDataFlow().generateFlowSets(loop_trees, *it_kernel_list);
+    cg_config.getDataFlow().generateFlowSets(*it_kernel_list, df_ctx);
 
   // 3 - Arguments : determines the list of arguments needed by each kernel
 
@@ -212,21 +219,6 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       unsigned cnt = 0;
       typename std::set<std::map<typename LoopTrees<Annotation>::loop_t *, typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> >::iterator it_loop_tiling_map;
       for (it_loop_tiling_map = loop_tiling_set.begin(); it_loop_tiling_map != loop_tiling_set.end(); it_loop_tiling_map++) {
-
-#if 0 && VERBOSE
-        std::cerr << "Generate kernel version " << cnt << "/" << loop_shape_set.size() << std::endl;
-        for (it_loop_shape = it_loop_tiling_map->begin(); it_loop_shape != it_loop_tiling_map->end(); it_loop_shape++) {
-          std::cerr << "  Loop: " << it_loop_shape->first->iterator->get_name().getString() << std::endl;
-          if (it_loop_shape->second != NULL) {
-            std::cerr << "      Tile 0: " << it_loop_shape->second->tile_0 << " " << it_loop_shape->second->unroll_tile_0 << std::endl;
-            std::cerr << "      Tile 1: " << it_loop_shape->second->tile_1 << " " << it_loop_shape->second->unroll_tile_1 << std::endl;
-            std::cerr << "      Tile 2: " << it_loop_shape->second->tile_2 << " " << it_loop_shape->second->unroll_tile_2 << std::endl;
-            std::cerr << "      Tile 3: " << it_loop_shape->second->tile_3 << " " << it_loop_shape->second->unroll_tile_3 << std::endl;
-          }
-          else
-            std::cerr << "      No shape information." << std::endl;
-        }
-#endif /* VERBOSE */
 
 
         typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);

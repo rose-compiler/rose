@@ -8,6 +8,6 @@ KLT_core_include_HEADERS= \
   loop-tiler.hpp \
   kernel.hpp \
   loop-mapper.hpp \
-  loop-trees.hpp \ 
+  loop-trees.hpp \
   mfb-klt.hpp
 

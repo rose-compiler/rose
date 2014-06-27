@@ -34,8 +34,8 @@ class Data {
     typedef struct data_distribution_t {
       size_t distributed_dimension;
       enum {
-        e_acc_split_contiguous,
-        e_acc_split_chunk
+        e_split_contiguous,
+        e_split_chunk
       } kind;
       std::vector<size_t> portions;
     } data_distribution_t;
@@ -67,6 +67,8 @@ class Data {
     virtual ~Data();
 
     void addSection(const section_t & section) { p_sections.push_back(section); }
+
+    void setDistribution(data_distribution_t * data_distribution) { p_data_distribution = data_distribution; }
 
     SgVariableSymbol * getVariableSymbol() const { return p_variable_symbol; }
 

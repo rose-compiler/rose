@@ -111,6 +111,9 @@ class LoopTrees {
     /// All loops in text order
     std::vector<loop_t *> p_loops;
 
+    /// All node in text order
+    std::vector<node_t *> p_nodes;
+
     /// Datas used by loop trees
     std::vector<Data<Annotation> *> p_datas;
 
@@ -120,8 +123,10 @@ class LoopTrees {
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::vector<SgVariableSymbol *> p_parameters;
 
-    void registerLoops(typename LoopTrees<Annotation>::node_t * node) {
+    void registerLoopsAndNodes(typename LoopTrees<Annotation>::node_t * node) {
       assert(node != NULL);
+
+      p_nodes.push_back(node);
 
       typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
       typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
@@ -130,18 +135,25 @@ class LoopTrees {
 
       if (loop != NULL) {
         p_loops.push_back(loop);
-        registerLoops(loop->block);
+        registerLoopsAndNodes(loop->block);
+        loop->block->parent = loop;
       }
       else if (cond != NULL) {
-        if (cond->block_true != NULL)
-          registerLoops(cond->block_true);
-        if (cond->block_false != NULL)
-          registerLoops(cond->block_false);
+        if (cond->block_true != NULL) {
+          registerLoopsAndNodes(cond->block_true);
+          cond->block_true->parent = cond;
+        }
+        if (cond->block_false != NULL) {
+          registerLoopsAndNodes(cond->block_false);
+          cond->block_false->parent = cond;
+        }
       }
       else if (block != NULL) {
         typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
-        for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
-            registerLoops(*it_child);
+        for (it_child = block->children.begin(); it_child != block->children.end(); it_child++) {
+          registerLoopsAndNodes(*it_child);
+          (*it_child)->parent = block;
+        }
       }
       else assert(stmt != NULL);
     }
@@ -169,6 +181,8 @@ class LoopTrees {
       return it_loop - p_loops.begin();
     }
 
+    const std::vector<node_t *> & getNodes() const { return p_nodes; }
+
   public:
     LoopTrees();
     virtual ~LoopTrees();
@@ -176,7 +190,7 @@ class LoopTrees {
     /// Add a tree at the end of the list
     void addTree(node_t * tree) {
       p_trees.push_back(tree);
-      registerLoops(tree);
+      registerLoopsAndNodes(tree);
     }
 
     /// Add a data used by loop trees
@@ -310,6 +324,7 @@ LoopTrees<Annotation>::LoopTrees() :
   id(id_cnt++),
   p_trees(),
   p_loops(),
+  p_nodes(),
   p_datas(),
   p_scalars(),
   p_parameters(),

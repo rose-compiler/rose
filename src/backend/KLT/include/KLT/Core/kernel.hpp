@@ -80,6 +80,9 @@ class Kernel {
     /// All loops in text order
     std::vector<typename LoopTrees<Annotation>::loop_t *> p_loops;
 
+    /// All nodes in text order
+    std::vector<typename LoopTrees<Annotation>::node_t *> p_nodes;
+
     /// Set of data sorted accordingly to how they flow through the kernel
     dataflow_t p_data_flow;
 
@@ -89,8 +92,10 @@ class Kernel {
     /// All actual kernels that have been generated for this kernel (different decisions made in shape interpretation)
     std::vector<a_kernel *> p_generated_kernels;
 
-    void registerLoops(typename LoopTrees<Annotation>::node_t * node) {
+    void registerLoopsAndNodes(typename LoopTrees<Annotation>::node_t * node) {
       assert(node != NULL);
+
+      p_nodes.push_back(node);
 
       typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
       typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
@@ -99,18 +104,18 @@ class Kernel {
 
       if (loop != NULL) {
         p_loops.push_back(loop);
-        registerLoops(loop->block);
+        registerLoopsAndNodes(loop->block);
       }
       else if (cond != NULL) {
         if (cond->block_true != NULL)
-          registerLoops(cond->block_true);
+          registerLoopsAndNodes(cond->block_true);
         if (cond->block_false != NULL)
-          registerLoops(cond->block_false);
+          registerLoopsAndNodes(cond->block_false);
       }
       else if (block != NULL) {
         typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
         for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
-            registerLoops(*it_child);
+            registerLoopsAndNodes(*it_child);
       }
       else assert(stmt != NULL);
     }
@@ -121,6 +126,7 @@ class Kernel {
       p_loop_tree(loop_tree),
       p_looptree_roots(),
       p_loops(),
+      p_nodes(),
       p_data_flow(),
       p_arguments(),
       p_generated_kernels()
@@ -132,7 +138,7 @@ class Kernel {
 
     void appendRoot(typename LoopTrees<Annotation>::node_t * node) {
       p_looptree_roots.push_back(node);
-      registerLoops(node);
+      registerLoopsAndNodes(node);
     }
     const std::list<typename LoopTrees<Annotation>::node_t *> & getRoots() const { return p_looptree_roots; }
 
@@ -148,6 +154,8 @@ class Kernel {
     const LoopTrees<Annotation> & getLoopTree() const { return p_loop_tree; }
 
     const std::vector<typename LoopTrees<Annotation>::loop_t *> & getLoops() const { return p_loops; }
+
+    const std::vector<typename LoopTrees<Annotation>::node_t *> & getNodes() const { return p_nodes; }
 
   private:
     static unsigned long id_cnt;
@@ -236,6 +244,8 @@ void generateKernelBody(
   }
   else if (cond != NULL) {
 //  std::cout << "[generateKernelBody]  cond != NULL" << std::endl;
+
+    /// \todo translation of 'cond->condition'
     SgExprStatement * cond_stmt = SageBuilder::buildExprStatement(cond->condition);
     SgBasicBlock * bb_true = SageBuilder::buildBasicBlock();
     SgBasicBlock * bb_false = SageBuilder::buildBasicBlock();
