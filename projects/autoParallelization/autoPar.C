@@ -108,6 +108,14 @@ main (int argc, char *argv[])
 	LoopTransformInterface::set_aliasInfo(&array_interface);
        
         // X. Loop normalization for all loops within body
+        //midend/programTransformation/loopProcessing/driver/LoopTransformInterface.h
+        /* normalize the forloops in C
+          i<x is normalized to i<= (x-1)
+          i>x is normalized to i>= (x+1)
+        
+          i++ is normalized to i=i+1
+          i-- is normalized to i=i-1
+        */
         NormalizeForLoop(fa_body, AstNodePtrImpl(body));
 
 	for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
