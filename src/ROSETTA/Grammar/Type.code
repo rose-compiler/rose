@@ -2933,6 +2933,7 @@ SgJavaParameterizedType::get_name() const {
 SgName
 SgJavaParameterizedType::get_name() const {
     ROSE_ASSERT(! "[FATAL] ROSE was not configured with Java support");
+    return "";
 }
 #endif
 
@@ -2960,6 +2961,7 @@ SgJavaParameterizedType::get_qualified_name() const {
 SgName
 SgJavaParameterizedType::get_qualified_name() const {
     ROSE_ASSERT(! "[FATAL] ROSE was not configured with Java support");
+    return "";
 }
 #endif
 

@@ -14,7 +14,7 @@ BUILT_SOURCES = parseDotGrammar.h
 DISTCLEANFILES = parseDotGrammar.h parseDotGrammar.cc parseDot.cc
 
 # Header files that need to be included in the distribution
-include_HEADERS = parse_header.h
+pkginclude_HEADERS = parse_header.h
 
 clean-local:
 	rm -f *.o *~ *.gml

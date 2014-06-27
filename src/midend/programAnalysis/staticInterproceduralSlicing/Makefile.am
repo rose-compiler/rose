@@ -21,7 +21,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = DebugTool.h  DefUseExtension.h  DependenceGraph.h  InterproceduralInfo.h  SimpleDirectedGraph.h  SlicingInfo.h EDefUse.h SDGLibraryExtender.h CreateSlice.h CreateSliceSet.h ControlFlowGraph.h
+pkginclude_HEADERS = DebugTool.h  DefUseExtension.h  DependenceGraph.h  InterproceduralInfo.h  SimpleDirectedGraph.h  SlicingInfo.h EDefUse.h SDGLibraryExtender.h CreateSlice.h CreateSliceSet.h ControlFlowGraph.h
 
 # New files (not yet used) and representing bug fixes from University of Wisc not yet passing
 # "make check" rule in tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests

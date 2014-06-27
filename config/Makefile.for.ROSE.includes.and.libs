@@ -294,9 +294,11 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
      -I$(top_srcdir)/src/midend/abstractMemoryObject \
+     -I$(top_srcdir)/src/midend/abstractLayer \
      -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/programTransformation/astInlining \
      -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \
+     -I$(top_srcdir)/src/midend/programTransformation/transformationTracking \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astMatching \
      -I$(top_srcdir)/src/midend/astQuery \

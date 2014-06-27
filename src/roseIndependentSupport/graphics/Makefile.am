@@ -8,7 +8,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #     stlDOTgraph.h \
 #     stlgraph.h
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      stlDOTgraph.h \
      stlgraph.h
 
