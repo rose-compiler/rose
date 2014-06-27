@@ -27,7 +27,7 @@ libastTokenStream_la_LIBADD       =
 libastTokenStream_la_DEPENDENCIES = 
 
 # Leave these header file reference in the Makefile.am (so we will pass the policy tests).
-include_HEADERS = createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h \
+pkginclude_HEADERS = createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h \
    tokenStreamMapping.h frontierDetection.h previousAndNextNode.h
 
 

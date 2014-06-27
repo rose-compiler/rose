@@ -109,6 +109,7 @@ class ConstIntLattice {
   bool isTrue() const;
   bool isFalse() const;
   bool isBot() const;
+  // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
   ConstIntLattice operator!();
   ConstIntLattice operator-(); // unary minus
@@ -127,10 +128,12 @@ class ConstIntLattice {
   ValueType getValueType() const;
   int getIntValue() const;
   long hash() const;
+  static bool arithTop;
  private:
   ValueType valueType;
   int intValue;
 };
+
 // arithmetic operators
  AType::ConstIntLattice operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
  AType::ConstIntLattice operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b);

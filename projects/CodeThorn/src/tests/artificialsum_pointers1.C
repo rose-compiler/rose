@@ -12,13 +12,13 @@ main() {
   i=n;
   j=n;
   while (i>0) {
-	*ap=*ap+1;
-	i=i-1;
-	j=i;
-	while (j>0) {
-	  *bp=*bp+1;
-	  j=j-1;
-	}
+    *ap=*ap+1;
+    i=i-1;
+    j=i;
+    while (j>0) {
+      *bp=*bp+1;
+      j=j-1;
+    }
   }
   sum=*ap + *bp;
   printf("%d\n",sum);

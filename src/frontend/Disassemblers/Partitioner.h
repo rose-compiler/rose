@@ -327,8 +327,8 @@ protected:
          *  function may be set if set in @p other, but it will never be cleared.  Returns @p this. */
         Function *init_properties(const Function &other);
 
-        /** Emit function property values. This is mostly for debugging.  If the file handle is null then nothing happens. */
-        void show_properties(FILE*) const;
+        /** Emit function property values. This is mostly for debugging. */
+        void show_properties(std::ostream&) const;
 
         /** Return the pointer to the basic block at the entry address. Returns null if there is no basic block assigned
          *  to this function at that address. */
@@ -417,9 +417,10 @@ public:
 
     Partitioner()
         : aggregate_mean(NULL), aggregate_variance(NULL), code_criteria(NULL), disassembler(NULL), map(NULL),
-          func_heuristics(SgAsmFunction::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true)
+          func_heuristics(SgAsmFunction::FUNC_DEFAULT), allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
+    static void initDiagnostics();
 
     /*************************************************************************************************************************
      *                                              Accessors for Properties
@@ -477,16 +478,6 @@ public:
         return allow_discont_blocks;
     }
 
-    /** Sends diagnostics to the specified output stream. Null (the default) turns off debugging. */
-    void set_debug(FILE *f) {
-        debug = f;
-    }
-
-    /** Returns the file currently used for debugging; null implies no debugging. */
-    FILE *get_debug() const {
-        return debug;
-    }
-
     /** Accessors for the memory maps.
      *
      *  The first argument is usually the complete memory map.  It should define all memory that holds instructions, either
@@ -510,9 +501,12 @@ public:
     /** @} */
 
     /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
-     * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
-     * a null pointer for the file.  Progress report properties are class variables. */
-    void set_progress_reporting(FILE*, unsigned min_interval);
+     * (default is 10).  Progress reporting can be disabled by supplying a negative value. Progress report properties are class
+     * variables. */
+    void set_progress_reporting(double min_interval);
+
+    void update_progress(SgAsmBlock::Reason reason, size_t pass) const;
+    void update_progress() const;
 
     /*************************************************************************************************************************
      *                                                High-level Functions
@@ -1526,11 +1520,6 @@ public:
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
 
-    /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
-     *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
-     *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
-    void progress(FILE*, const char *fmt, ...) const __attribute__((format(printf, 3, 4)));
-
     /** Splits thunks off of the start of functions.  Splits as many thunks as possible from the front of all known functions.
      *  Returns the number of thunks split off from functions.  It's not important that this be done, but doing so results in
      *  functions that more closely match what some other disassemblers do when provided with debug info. */
@@ -1845,13 +1834,12 @@ public:
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunction::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
 
-    FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
+    static Sawyer::Message::Facility mlog;              /**< Logging facility for partitioners. */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
 
-    static time_t progress_interval;                    /**< Minimum interval between progress reports. */
-    static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
-    static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
+    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
 
 public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;

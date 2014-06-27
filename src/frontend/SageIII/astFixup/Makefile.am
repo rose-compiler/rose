@@ -21,7 +21,7 @@ libastFixup_la_SOURCES      = \
 libastFixup_la_LIBADD       = 
 libastFixup_la_DEPENDENCIES = 
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      AstFixup.h \
      fixupFunctionDefinitions.h \
      fixupStorageAccessOfForwardTemplateDeclarations.h \

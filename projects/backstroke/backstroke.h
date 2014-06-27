@@ -6,6 +6,7 @@
 
 #include "pluggableReverser/eventProcessor.h"
 
+#include "SgNodeHelper.h"
 
 namespace Backstroke
 {
