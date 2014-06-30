@@ -352,7 +352,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                         cache->insert(std::make_pair(va, (SgAsmInstruction*)0));
                     if (insns.size()==0 || !(p_search & SEARCH_DEADEND)) {
                         trace <<"  disassembly failed at " <<addrToString(e.ip)
-                              <<" in block " <<addrToString(start_va) <<": " <<e.what() <<"\n";
+                              <<" in block " <<addrToString(start_va) <<": " <<e.what()<<"\n";
                         if (!cache) {
                             for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
                                 SageInterface::deleteAST(ii->second);
@@ -477,7 +477,7 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
             try {
                 bb = disassembleBlock(map, va, &worklist, &icache);
                 insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
-                assert(icache.exists(va));
+                ASSERT_require(icache.exists(va));
             } catch(const Exception &e) {
                 if (bad)
                     bad->insert(std::make_pair(va, e));

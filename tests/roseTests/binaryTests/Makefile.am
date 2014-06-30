@@ -791,6 +791,33 @@ $(llvmTranscoder_TestTargets): llvm_%.passed: $(BINARY_SAMPLES)/% llvmTranscoder
 check-llvm: $(llvmTranscoder_TestTargets)
 
 ###############################################################################################################################
+# Binary tainted flow analysis
+###############################################################################################################################
+
+noinst_PROGRAMS += taintedFlow
+taintedFlow_SOURCES = taintedFlow.C
+taintedFlow_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+taintedFlow_Specimens = i386-taintflow1
+taintedFlow_TestTargets = $(addprefix taint_, $(addsuffix .passed, $(taintedFlow_Specimens)))
+taintedFlow_TestAnswers = $(addprefix taint_, $(addsuffix .ans, $(taintedFlow_Specimens)))
+
+TEST_TARGETS += $(taintedFlow_TestTargets)
+EXTRA_DIST += $(taintedFlow_TestAnswers) taintedFlow.conf
+
+$(taintedFlow_TestTargets): taint_%.passed: $(BINARY_SAMPLES)/% taintedFlow taintedFlow.conf
+	@$(RTH_RUN) \
+		TITLE="Tainted flow for $* [$@]" \
+		USE_SUBDIR=yes \
+		CMD="$(abspath ./taintedFlow) --approx=under --blocks --names='^f[0-9]' -- $(abspath $<)" \
+		ANS="$(abs_srcdir)/taint_$*.ans" \
+		$(abs_srcdir)/taintedFlow.conf $@
+
+.PHONY: check-taint
+check-taint: $(taintedFlow_TestTargets)
+
+
+###############################################################################################################################
 # DEMOS
 #
 # These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless
