@@ -5,6 +5,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/Map.h>
 #include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 
 namespace Sawyer {
 namespace Container {

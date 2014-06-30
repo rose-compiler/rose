@@ -1,6 +1,5 @@
 using this memory map for disassembly:
     va 0x00000000 + 0x0000318f = 0x0000318f rwx- at buffer aab   + 0x00000060 exefmt.exe(DOS real-mode text/data)
-disassembled 11907 instructions and 509 failures (use --show-bad to see errors)
 
 
 0x00000100: ================================== Function (entry point) unknown name
@@ -112,4 +111,3 @@ disassembled 11907 instructions and 509 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

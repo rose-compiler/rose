@@ -2,6 +2,7 @@
 #define Sawyer_DefaultAllocator_H
 
 #include <cstddef>
+#include <sawyer/Sawyer.h>
 
 namespace Sawyer {
 

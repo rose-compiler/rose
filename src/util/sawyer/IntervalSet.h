@@ -3,6 +3,7 @@
 
 #include <sawyer/IntervalMap.h>
 #include <sawyer/Optional.h>
+#include <sawyer/Sawyer.h>
 
 #include <boost/integer_traits.hpp>
 #include <boost/iterator/iterator_facade.hpp>

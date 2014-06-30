@@ -28,7 +28,7 @@ libRoseCommandlineUtil_la_SOURCES = $(libRoseCommandlineUtilSources)
 #	$(CXX_SHARED_LIB_UPDATE) $@ $(libRoseCommandlineUtil_so_OBJECTS)
 #	test -f $@ || exit 1
 
-include_HEADERS = sla.h commandline_processing.h
+pkginclude_HEADERS = sla.h commandline_processing.h
 
 # DQ (2/28/2010): New binary AST merge tests.
 READ_TRANSLATOR = $(top_builddir)/tests/testAstFileRead

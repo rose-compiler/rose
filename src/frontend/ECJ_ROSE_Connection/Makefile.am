@@ -32,7 +32,7 @@ libroseJava_la_SOURCES = \
 
 libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
 
-include_HEADERS = ecj.h jserver.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
+pkginclude_HEADERS = ecj.h jserver.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
 
 extract_rose_required_ecj_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files

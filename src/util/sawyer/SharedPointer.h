@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <ostream>
 #include <sawyer/Assert.h>
+#include <sawyer/Sawyer.h>
 
 namespace Sawyer {
 

@@ -1,12 +1,17 @@
 #include "sage3basic.h"
 #include "Registers.h"
 #include "AsmUnparser.h"
+#include "Diagnostics.h"
+#include "stringify.h"
 
 #include <iomanip>
 
+using namespace rose;                                   // temporary until this API lives in the "rose" name space
+using namespace rose::Diagnostics;
+
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
     std::string result;
     if (insn->get_lockPrefix())
         result += "lock ";
@@ -15,7 +20,8 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
         case x86_branch_prediction_none: break;
         case x86_branch_prediction_taken: result += ",pt"; break;
         case x86_branch_prediction_not_taken: result += ",pn"; break;
-        default: ROSE_ASSERT (!"Bad branch prediction");
+        default:
+            ASSERT_not_reachable("bad x86 branch prediction: " + stringifyX86BranchPrediction(insn->get_branchPrediction()));
     }
     return result;
 }
@@ -24,34 +30,17 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
  *
  *  We use the amd64 architecture if no register dictionary is specified because, since it's backward compatible with the 8086,
  *  it contains definitions for all the registers from older architectures. */
-std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
-    using namespace StringUtility;
+std::string unparseX86Register(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *registers) {
     if (!registers)
         registers = RegisterDictionary::dictionary_amd64();
     std::string name = registers->lookup(reg);
-    if (name.empty()) {
-        static bool dumped_dict = false;
-        std::cerr <<"unparseX86Register(" <<reg <<"): warning: register descriptor not found in dictionary.\n";
-        if (!dumped_dict) {
-            std::cerr <<"  This warning is caused by instructions using registers that don't have names in the\n"
-                      <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
-                      <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
-                      <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
-                      <<"  chooses a dictionary based on the architecture specified in the file header. For example,\n"
-                      <<"  this warning may be caused by a file whose header specifies i386 but the instructions in\n"
-                      <<"  the file are for the amd64 architecture.  The assembly listing will indicate unnamed\n"
-                      <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
-                      <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
-                      <<"  register, and \"d\" is the number of significant bits.\n";
-            dumped_dict = true;
-        }
-        return (std::string("BAD_REGISTER(") +
-                numberToString(reg.get_major()) + "." +
-                numberToString(reg.get_minor()) + "." +
-                numberToString(reg.get_offset()) + "." +
-                numberToString(reg.get_nbits()) + ")");
-    }
+    if (name.empty())
+        name = AsmUnparser::invalid_register(insn, reg, registers);
     return name;
+}
+
+std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
+    return unparseX86Register(NULL, reg, registers);
 }
 
 static std::string x86ValToLabel(uint64_t val, const AsmUnparser::LabelMap *labels)
@@ -68,7 +57,7 @@ static std::string x86ValToLabel(uint64_t val, const AsmUnparser::LabelMap *labe
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
     if (NULL==ty) {
-        std::cerr <<"x86TypeToPtrName: null type" <<std::endl;
+        mlog[ERROR] <<"x86TypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
 
@@ -86,8 +75,7 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
             return "V" + StringUtility::numberToString(v->get_elementCount()) + x86TypeToPtrName(v->get_elementType());
         }
         default: {
-            std::cerr << "x86TypeToPtrName: Bad class " << ty->class_name() << std::endl;
-            ROSE_ASSERT(false);
+            ASSERT_not_reachable("bad class " + ty->class_name());
             return "error in x86TypeToPtrName()";// DQ (11/29/2009): Avoid MSVC warning.
         }
     }
@@ -125,14 +113,15 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         }
 
         case V_SgAsmx86RegisterReferenceExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
             SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
-            result = unparseX86Register(rr->get_descriptor(), registers);
+            result = unparseX86Register(insn, rr->get_descriptor(), registers);
             break;
         }
 
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
-            assert(ival!=NULL);
+            ASSERT_not_null(ival);
             uint64_t value = ival->get_absolute_value(); // not sign extended
 
             // If the value looks like it might be an address, then don't bother showing the decimal form.
@@ -155,8 +144,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         }
 
         default: {
-            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
-            ROSE_ASSERT (false);
+            ASSERT_not_reachable("invalid x86 expression: " + expr->class_name());
         }
     }
 
@@ -172,6 +160,6 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmx86Instruction(node);
     }
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
     return unparseX86Expression(expr, labels, registers, insn->get_kind()==x86_lea);
 }

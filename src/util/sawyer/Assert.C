@@ -1,12 +1,13 @@
 #include <sawyer/Assert.h>
 #include <sawyer/Message.h>
+#include <sawyer/Sawyer.h>
 
 #include <cstdlib>
 
 namespace Sawyer {
 namespace Assert {
 
-void
+SAWYER_EXPORT void
 fail(const char *mesg, const char *expr, const std::string &note, const char *filename, unsigned linenum, const char *funcname)
 {
     if (!Message::assertionStream)

@@ -4,6 +4,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/DefaultAllocator.h>
 #include <sawyer/IndexedList.h>
+#include <sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
 #include <ostream>
 #if 1 /*DEBUGGING [Robb Matzke 2014-04-21]*/

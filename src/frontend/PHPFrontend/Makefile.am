@@ -8,9 +8,9 @@ noinst_LTLIBRARIES = librosePHPFrontend.la
 librosePHPFrontend_la_DEPENDENCIES =
 librosePHPFrontend_la_SOURCES = PHPFrontend.C PHPFrontend.h
 
-dist_include_HEADERS = PHPFrontend.h
+dist_pkginclude_HEADERS = PHPFrontend.h
 
-include_HEADERS = 
+pkginclude_HEADERS = 
 
 
 EXTRA_DIST = CMakeLists.txt
