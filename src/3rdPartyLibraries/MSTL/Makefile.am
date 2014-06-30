@@ -26,7 +26,7 @@ distclean-local:
 	rm -rf Templates.DB
 
 # Some source files are included so that templates can be included
-include_HEADERS = \
+pkginclude_HEADERS = \
    PDFGeneration.h AttributeMechanism.h DOTGeneration.h DOTRepresentation.h \
    Translator.h DOTSubgraphRepresentation.h DOTGraphInterface.h TreeTraversal.h \
    DOTRepresentationImpl.h DOTGenerationImpl.h \

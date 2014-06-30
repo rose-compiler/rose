@@ -43,7 +43,7 @@ libroseutil_la_LIBADD = \
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 # DISTCLEANFILES = rose_paths.C
 
-include_HEADERS =				\
+pkginclude_HEADERS =				\
 	compilationFileDatabase.h		\
 	FormatRestorer.h			\
 	GraphUtility.h				\
@@ -67,12 +67,12 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/Assert.C				\
 	sawyer/CommandLine.C			\
 	sawyer/Markup.C				\
-	sawyer/MarkupRoff.C			\
+	sawyer/MarkupPod.C			\
 	sawyer/Message.C			\
 	sawyer/ProgressBar.C			\
 	sawyer/Sawyer.C				\
 	sawyer/useHeaders.C
-nobase_include_HEADERS   =			\
+nobase_pkginclude_HEADERS   =			\
 	sawyer/Assert.h				\
 	sawyer/BitVector.h			\
 	sawyer/BitVectorSupport.h		\
@@ -86,7 +86,7 @@ nobase_include_HEADERS   =			\
 	sawyer/IntervalSet.h			\
 	sawyer/Map.h				\
 	sawyer/Markup.h				\
-	sawyer/MarkupRoff.h			\
+	sawyer/MarkupPod.h			\
 	sawyer/Message.h			\
 	sawyer/Optional.h			\
 	sawyer/PoolAllocator.h			\

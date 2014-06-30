@@ -111,6 +111,8 @@ set( STORAGECLASSES_SRC
 # are included in other source files as required. They do not need to be compiled 
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
+      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
+      ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
@@ -136,13 +138,12 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
-      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupRoff.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupPod.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
      )
 add_library(roseutil SHARED ${rose_util_src})
-set_target_properties(roseutil PROPERTIES DEFINE_SYMBOL "SAWYER_DO_EXPORTS")
 if (WIN32)
   target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
@@ -275,6 +276,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/SqlDatabase.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/LinearCongruentialGenerator.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/Combinatorics.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/Diagnostics.C
      )
 
 
