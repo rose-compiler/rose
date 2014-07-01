@@ -2746,16 +2746,31 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                SgAccessModifier::access_modifier_enum firstNondefiningDeclaration_access_modifier = firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().get_modifier();
                if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
                   {
-                    printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                 // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
+                    if (isSgTemplateInstantiationDecl(definingDeclaration) != NULL)
+                       {
+                         printf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         printf ("Waringg: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                       }
+		      else
+		       {
+                         printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
 
-                    firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
-                    definingDeclaration->get_file_info()->display("definingDeclaration");
+                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
+                         definingDeclaration->get_file_info()->display("definingDeclaration");
 
-                    printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                    printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                         printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                       }
                   }
-               
-               ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+
+            // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
+            // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+               if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL)
+                 {
+                   ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+                 }
              }
         }
 
