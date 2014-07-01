@@ -10,6 +10,7 @@ dep_distance.c \
 doall.c \
 firstprivate.c \
 firstprivate2.c \
+firstprivate3.c \
 foo.c \
 functionCall.c \
 ifAndFor.c \
@@ -101,6 +102,7 @@ dep_distance.c \
 doall.c \
 firstprivate.c \
 firstprivate2.c \
+firstprivate3.c \
 foo.c \
 functionCall.c \
 ifAndFor.c \

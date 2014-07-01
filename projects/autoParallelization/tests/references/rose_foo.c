@@ -24,7 +24,7 @@ void goo(double *o1,double *o2,double *a,double *b,double *c,int **idx,int len)
     double volold_o8 = 0.5 * a[i] * b[i];
     
 #pragma omp parallel for private (ii) firstprivate (volnew_o8,volold_o8)
-    for (ii = 0; ii <= 6 - 1; ii += 1) {
+    for (ii = 0; ii <= 5; ii += 1) {
       int llidx = lidx[ii];
       o1[lidx[ii]] += volnew_o8;
       o2[lidx[ii]] += volold_o8;

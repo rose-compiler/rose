@@ -21,7 +21,7 @@ void StressCheckEpsFail(double eps_failure_model)
   int index;
   
 #pragma omp parallel for private (index,i) firstprivate (eps_failure_model)
-  for (i = 0; i <= 100 - 1; i += 1) {
+  for (i = 0; i <= 99; i += 1) {
     index = zoneset[i];
     eps[zoneset[i]] = eps_failure_model * 1.01;
     eps[zoneset[i]] = 1.01;
@@ -35,7 +35,7 @@ void StressCheckEpsFaili2(double eps_failure_model)
   int index1;
   
 #pragma omp parallel for private (index1,i) firstprivate (eps_failure_model)
-  for (i = 0; i <= 100 - 1; i += 1) {
+  for (i = 0; i <= 99; i += 1) {
     index1 = zoneset[i];
     int index2 = index1;
     eps[zoneset[i]] = eps_failure_model * 1.01;
@@ -55,7 +55,7 @@ void foo()
   int zoneset[m];
   for (i = 0; i <= n - 1; i += 1) {
     
-#pragma omp parallel for private (index,j) firstprivate (m,i)
+#pragma omp parallel for private (index,j)
     for (j = 0; j <= m - 1; j += 1) {
       index = zoneset[j];
       b[i][zoneset[j]] = b[i - 1][index - 1];

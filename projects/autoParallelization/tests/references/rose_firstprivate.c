@@ -9,7 +9,7 @@ void foo()
   int b[100];
   
 #pragma omp parallel for private (y,i) firstprivate (x)
-  for (i = 0; i <= 100 - 1; i += 1) {
+  for (i = 0; i <= 99; i += 1) {
     y = x + 1 + g;
     b[i] = x + 1 + g;
 // x=...
@@ -28,7 +28,7 @@ void foo2()
 // since the true dependence between tmp in an iteration
 // and tmp in the following iteration.
 // Even firstprivate cannot help this.
-  for (i = 0; i <= 100 - 1; i += 1) {
+  for (i = 0; i <= 99; i += 1) {
     a[i] = tmp;
     tmp = a[i] + i;
   }

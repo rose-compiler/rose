@@ -95,6 +95,8 @@ namespace AutoParallelization
 
   bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
   {
+    if (project == NULL)
+      project = SageInterface::getProject();
     // Prepare def-use analysis
     if (defuse==NULL) 
     { 
@@ -265,7 +267,7 @@ namespace AutoParallelization
         SgNode* firstnode= edge.target().getNode();
         liveIns0 = liv->getIn(firstnode);
         if (enable_debug)
-          cout<<"Live-in variables for loop:"<<endl;
+          cout<<"Live-in variables for loop:"<<firstnode->get_file_info()->get_line()<<endl;
         for (std::vector<SgInitializedName*>::iterator iter = liveIns0.begin();
             iter!=liveIns0.end(); iter++)
         {
@@ -285,7 +287,7 @@ namespace AutoParallelization
         SgNode* firstnode= edge.target().getNode();
         liveOuts0 = liv->getIn(firstnode);
         if (enable_debug)
-          cout<<"Live-out variables for loop:"<<endl;
+          cout<<"Live-out variables for loop before line:"<<firstnode->get_file_info()->get_line()<< endl;
         for (std::vector<SgInitializedName*>::iterator iter = liveOuts0.begin();
             iter!=liveOuts0.end(); iter++)
         {
@@ -564,7 +566,7 @@ namespace AutoParallelization
     //GetLiveVariables(sg_node,liveIns,liveOuts,true);
     // TODO Loop normalization messes up AST or 
     // the existing analysis can not be called multiple times
-    GetLiveVariables(sg_node,liveIns0,liveOuts0,false);
+    GetLiveVariables(sg_node,liveIns0,liveOuts0, false);
     // Remove loop invariant variable, which is always private 
     SgInitializedName* invarname = getLoopInvariant(sg_node);
     remove(liveIns0.begin(),liveIns0.end(),invarname);

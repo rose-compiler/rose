@@ -6,8 +6,9 @@ void foo()
   int a[100];
   
 #pragma omp parallel for private (i)
-  for (i = 0; i <= 100 - 1; i += 1) 
+  for (i = 0; i <= 99; i += 1) {
     a[i] = a[i] + 1;
+  }
 }
 /*  
  *  ..= a[i]+1 // read

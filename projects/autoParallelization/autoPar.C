@@ -47,12 +47,13 @@ main (int argc, char *argv[])
          {
            SgForStatement* cur_loop = isSgForStatement(*iter);
            ROSE_ASSERT(cur_loop);
-           SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+          // SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+           SageInterface::forLoopNormalization(cur_loop);
          }
 
 #endif
   //Prepare liveness analysis etc.
-  initialize_analysis (project,false);   
+  initialize_analysis (project,enable_debug);   
   // For each source file in the project
     SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
@@ -108,6 +109,7 @@ main (int argc, char *argv[])
 	LoopTransformInterface::set_aliasInfo(&array_interface);
        
         // X. Loop normalization for all loops within body
+        // Merged into SageInterface::forLoopNormalization()
         //midend/programTransformation/loopProcessing/driver/LoopTransformInterface.h
         /* normalize the forloops in C
           i<x is normalized to i<= (x-1)
@@ -116,7 +118,7 @@ main (int argc, char *argv[])
           i++ is normalized to i=i+1
           i-- is normalized to i=i-1
         */
-        NormalizeForLoop(fa_body, AstNodePtrImpl(body));
+//        NormalizeForLoop(fa_body, AstNodePtrImpl(body));
 
 	for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
 	    iter!= loops.end(); iter++ ) 

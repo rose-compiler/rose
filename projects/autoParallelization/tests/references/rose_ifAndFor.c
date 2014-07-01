@@ -8,7 +8,8 @@ void foo(int j)
   if (j != - 1) {
     
 #pragma omp parallel for private (i)
-    for (i = 0; i <= 100 - 1; i += 1) 
+    for (i = 0; i <= 99; i += 1) {
       a[i] = a[i] + 1;
+    }
   }
 }
