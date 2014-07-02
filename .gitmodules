@@ -1,6 +1,6 @@
 [submodule "src/frontend/CxxFrontend/EDG"]
 	path = src/frontend/CxxFrontend/EDG
-	url = rose-dev@rosecompiler1.llnl.gov:rose/edg4x/edg.git
+	url = git@github.com:tristanvdb/rose-edg.git
 [submodule "projects/vulnerabilitySeeding"]
 	path = projects/vulnerabilitySeeding
 	url = rose-dev@rosecompiler1.llnl.gov:rose/vulnerabilitySeeding.git

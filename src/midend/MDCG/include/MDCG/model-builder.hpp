@@ -10,8 +10,6 @@
 
 #include "MDCG/model.hpp"
 
-//#include "MDCG/handle-builder.hpp"
-
 #include <map>
 #include <vector>
 #include <iostream>
@@ -31,10 +29,7 @@ namespace MDCG {
  * @{
 */
 
-class ModelBuilder /*:
-  public Handles::handle_hook_t<ModelBuilder, build_model_t>,
-  public Handles::handle_hook_t<ModelBuilder, get_model_t>*/
-{
+class ModelBuilder {
   private:
     MFB::Driver<MFB::Sage> & p_mfb_driver;
     std::vector<Model::model_t> p_models;
