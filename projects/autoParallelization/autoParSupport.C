@@ -1420,6 +1420,23 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     //OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
     OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(e_unknown, NULL, false);
     ROSE_ASSERT(omp_attribute != NULL);
+
+#if 0
+    if (enable_debug)
+    {
+      // write out dot graph of CFG with liveness analysis results
+      // TODO: make sure one copy for a single function , not every loop
+      string output_file_name = StringUtility::stripPathFromFileName(loop->get_file_info()->get_filenameString()) + "_" + 
+                     StringUtility::numberToString(loop->get_file_info()->get_line()) + ".dot";
+      std::ofstream f1(output_file_name.c_str());
+      std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
+      SgFunctionDeclaration* funcDecl = SageInterface::getEnclosingFunctionDeclaration (loop);
+      FilteredCFGNode<IsDFAFilter> rem_source = FilteredCFGNode<IsDFAFilter> ( funcDecl->cfgForEnd());
+      dfaFunctions.push_back(rem_source);
+      dfaToDot (f1, output_file_name, dfaFunctions, (DefUseAnalysis*)defuse, liv);
+      f1.close();
+    }
+#endif
     AutoScoping(sg_node, omp_attribute,depgraph);
 
     //X. Eliminate irrelevant dependence relations.

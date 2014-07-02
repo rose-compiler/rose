@@ -93,6 +93,11 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 	$(MAKE) -C ../. autoPar
 
 # we want to use diff to compare generated files with reference files
+# Pending test cases: TODO
+#jacobi_seq.c # still fails due to some missed live-in variables
+#minusMinus.c  
+#multiReduction.c // not supported 
+# TODO: diff patches is a better choice.  Tolerate other differences introduced by ROSE.
 C_TESTCODES_REQUIRED_TO_VERIFY = \
 anti_dep.c \
 array_scalar.c \
@@ -106,7 +111,16 @@ firstprivate3.c \
 foo.c \
 functionCall.c \
 ifAndFor.c \
-indirectIndex.c
+indirectIndex.c \
+livenessTest.c \
+matrixmultiply.c \
+matrixmultiply2.c \
+matrixVectormultiply.c \
+outer_only.c \
+output_dep3.c \
+plusAssign.c \
+plusplus.c \
+lastprivate.c
 
 # TODO discard this list once all files are verified
 
