@@ -65,7 +65,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    static_test2011_12.upc \
    static_test2011_13.upc \
    test2013_01.upc \
-   test2013_02.upc
+   test2013_02.upc \
+   type_field_shared_struct.upc
 
 # upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
@@ -277,6 +278,39 @@ testSharedMemoryDSL_42: sharedMemoryDSL
 testSharedMemoryDSL_43: sharedMemoryDSL
 	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_43.c
 
+testSharedMemoryDSL_44: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_44.c
+
+testSharedMemoryDSL_45: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_45.c
+
+testSharedMemoryDSL_46: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_46.c
+
+testSharedMemoryDSL_47: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_47.c
+
+testSharedMemoryDSL_48: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_48.c
+
+testSharedMemoryDSL_49: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_49.c
+
+testSharedMemoryDSL_50: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_50.c
+
+testSharedMemoryDSL_51: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_51.c
+
+testSharedMemoryDSL_52: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_52.c
+
+testSharedMemoryDSL_53: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_53.c
+
+testSharedMemoryDSL_54: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_54.c
+
 
 # DQ (4/30/2014): List of test codes to test the shared memory DSL work.
 SharedMemoryDSL_testcodes = \
@@ -286,12 +320,11 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_16 testSharedMemoryDSL_17 testSharedMemoryDSL_18 testSharedMemoryDSL_19 testSharedMemoryDSL_20 \
    testSharedMemoryDSL_21 testSharedMemoryDSL_22 testSharedMemoryDSL_23 testSharedMemoryDSL_24 testSharedMemoryDSL_25 \
    testSharedMemoryDSL_26 testSharedMemoryDSL_27 testSharedMemoryDSL_28 testSharedMemoryDSL_29 testSharedMemoryDSL_30 \
-   testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34 \
+   testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34 testSharedMemoryDSL_35 \
    testSharedMemoryDSL_36 testSharedMemoryDSL_37 testSharedMemoryDSL_38 testSharedMemoryDSL_39 testSharedMemoryDSL_40 \
-   testSharedMemoryDSL_41 
-
-# DQ (6/1/2014): This is still not passing although a simpler version of the test is passing.
-# testSharedMemoryDSL_42
+   testSharedMemoryDSL_41 testSharedMemoryDSL_42 testSharedMemoryDSL_43 testSharedMemoryDSL_44 testSharedMemoryDSL_45 \
+   testSharedMemoryDSL_46 testSharedMemoryDSL_47 testSharedMemoryDSL_48 testSharedMemoryDSL_49 testSharedMemoryDSL_50 \
+   testSharedMemoryDSL_51 testSharedMemoryDSL_52 testSharedMemoryDSL_53 testSharedMemoryDSL_54
 
 testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
 

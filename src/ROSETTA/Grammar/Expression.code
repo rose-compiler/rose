@@ -4507,6 +4507,14 @@ SgPointerDerefExp::get_type() const
              {
                SgPointerType* pointerType = isSgPointerType(someType);
                returnType = pointerType->get_base_type();
+#if 0
+               printf ("In SgPointerDerefExp::get_type(): SgPointerType: BEFORE stripType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
+            // DQ (6/11/2014): We also need to take any associated SgModifierType node chains used to modity the SgPointerType (e.g. defining const or UPC shared type attributes).
+               returnType = returnType->stripType (SgType::STRIP_MODIFIER_TYPE);
+#if 0
+               printf ("In SgPointerDerefExp::get_type(): SgPointerType: AFTER stripType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
                break;
              }
           case V_SgArrayType:
@@ -4981,6 +4989,10 @@ SgPntrArrRefExp::get_type() const
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
 
+#if 0
+     printf ("In SgPntrArrRefExp::get_type(): this = %p \n",this);
+#endif
+
   // SgType* returnType = get_lhs_operand()->get_type();
      SgType* someType = get_lhs_operand()->get_type();
      ROSE_ASSERT(someType != NULL);
@@ -4993,6 +5005,11 @@ SgPntrArrRefExp::get_type() const
      SgType* returnType = NULL;
      keepStripping:
      ROSE_ASSERT (someType);
+
+#if 0
+     printf ("In SgPntrArrRefExp::get_type(): someType = %p = %s \n",someType,someType->class_name().c_str());
+#endif
+
      switch(someType->variantT())
         {
        // These cases all have base types and the pointer dereferencing returns the base type
@@ -5002,6 +5019,14 @@ SgPntrArrRefExp::get_type() const
              {
                SgPointerType* pointerType = isSgPointerType(someType);
                returnType = pointerType->get_base_type();
+#if 0
+               printf ("In SgPntrArrRefExp::get_type(): SgPointerType: BEFORE stripType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
+            // DQ (6/11/2014): We also need to take any associated SgModifierType node chains used to modity the SgPointerType (e.g. defining const or UPC shared type attributes).
+               returnType = returnType->stripType (SgType::STRIP_MODIFIER_TYPE);
+#if 0
+               printf ("In SgPntrArrRefExp::get_type(): SgPointerType: AFTER stripType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
                break;
              }
           case V_SgArrayType:
@@ -5058,7 +5083,7 @@ SgPntrArrRefExp::get_type() const
           default:
              {
 #if 1
-               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %s \n",someType->class_name().c_str());
+               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %p = %s \n",someType,someType->class_name().c_str());
                get_file_info()->display("location of error: debug");
 
             // DQ (9/27/2006): This can be a compiler generated IR nde so look at the parent.
@@ -5066,20 +5091,26 @@ SgPntrArrRefExp::get_type() const
                if (locatedNode != NULL)
                     locatedNode->get_file_info()->display("location of parent: debug");
 #endif
-               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %s \n",someType->class_name().c_str());
+               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %p = %s \n",someType,someType->class_name().c_str());
                ROSE_ASSERT(false);
              }
 #else
        // DQ (12/31/2008): This is a better fit for the new EDG/ROSE translation interface.
           default:
              {
+#if 0
+               printf ("In SgPntrArrRefExp::get_type(): default case: someType = %p = %s \n",someType,someType->class_name().c_str());
+#endif
                returnType = someType;
              }
 #endif
         }
 
      ROSE_ASSERT(returnType != NULL);
-  // printf ("In SgPntrArrRefExp::get_type(): returnType = %s \n",returnType->class_name().c_str());
+
+#if 0
+     printf ("In SgPntrArrRefExp::get_type(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+#endif
 
      return returnType;
    }

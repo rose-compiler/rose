@@ -37,10 +37,14 @@ class Traversal : public SgTopDownBottomUpProcessing<InheritedAttribute,Synthesi
      private:
           std::vector<SgNode*> nodeListWithTypesToModify;
 
+          SgVariableDeclaration* supportingOffset;
+
      public:
        // Functions required to overload the pure virtual functions in the abstract base class.
           InheritedAttribute evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute );
           SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
+
+          Traversal();
 
           std::vector<SgNode*> & get_nodeListWithTypesToModify();
           bool isSharedType(SgType* type);
