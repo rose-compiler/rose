@@ -54,6 +54,10 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
 
             // DQ (8/6/2012): This is a part of fixing the CPP directives for templates until they are no longer unparsed as strings.
                isPartOfTemplateDeclaration = false;
+
+            // DQ (7/1/2014): We need to make sure that CPP directives will not be attached to template instantiations that might 
+            // not be unparsed (see test2014_68.C).
+               isPartOfTemplateInstantiationDeclaration = false;
              }
 #endif
 
@@ -62,6 +66,10 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
 
        // DQ (8/6/2012): This is a part of fixing the CPP directives for templates until they are no longer unparsed as strings.
           bool isPartOfTemplateDeclaration;
+
+       // DQ (7/1/2014): We need to make sure that CPP directives will not be attached to template instantiations that might 
+       // not be unparsed (see test2014_68.C).
+          bool isPartOfTemplateInstantiationDeclaration;
    };
 
 // This is an empty class, meaning that we could likely just have implemented a TopDownProcessing traversal.
