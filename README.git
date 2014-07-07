@@ -926,3 +926,11 @@ Make a backup using git:
 Delete the backup:
    git branch -D backup
 
+Working with the new_app branch on tux231:
+   470  17:17   smgit commit -am "Fixed more bugs specific to new C++ applications (added test codes for each case)."
+   473  17:18   smgit push origin HEAD:refs/heads/dquinlan/dq-new_app-rc
+
+   496  8:38    smgit fetch origin
+   497  8:39    smgit merge origin/dquinlan/dq-new_app-rc
+
+Working with the new_app branch on zeus:
