@@ -2059,6 +2059,103 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    }
 
 
+
+
+#if 1
+// DQ (7/6/2014): A different version of this is in the unparseCxx_expressions.C file.
+bool
+partOfArrowOperatorChain(SgExpression* expr)
+   {
+#define DEBUG_ARROW_OPERATOR_CHAIN 0
+
+     SgBinaryOp* binary_op = isSgBinaryOp(expr);
+  // ROSE_ASSERT(binary_op != NULL);
+
+     bool result = false;
+
+  // DQ (7/6/2014): We need this test to avoid more general cases where this function can be called.
+     if (binary_op != NULL)
+        {
+#if DEBUG_ARROW_OPERATOR_CHAIN
+          printf ("Inside of partOfArrowOperatorChain(): binary_op = %p = %s \n",binary_op,binary_op->class_name().c_str());
+#endif
+
+  // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
+  // required in places even though we have historically defaulted to the generation of the 
+  // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
+     SgNode* possibleParentFunctionCall = binary_op->get_parent();
+
+  // DQ (4/9/2013): This fails for test2006_92.C.
+  // ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool parent_is_a_function_call                    = false;
+     bool parent_function_call_uses_operator_syntax    = false;
+     bool parent_function_is_overloaded_arrow_operator = false;
+     bool parent_function_call_is_compiler_generated   = false;
+     if (possibleParentFunctionCall != NULL)
+        {
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
+          if (functionCallExp != NULL)
+             {
+               parent_is_a_function_call                  = true;
+               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+#if 1
+            // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
+               SgExpression* rhs = binary_op->get_rhs_operand();
+            // bool isRelevantOverloadedOperator = false;
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
+               if (memberFunctionRefExp != NULL)
+                  {
+                    string functionName = memberFunctionRefExp->get_symbol()->get_name();
+#if DEBUG_ARROW_OPERATOR_CHAIN
+                    printf ("--- parent function is: functionName = %s \n",functionName.c_str());
+#endif
+                    if (functionName == "operator->")
+                       {
+                         parent_function_is_overloaded_arrow_operator = true;
+                       }
+                  }
+#endif
+               if (parent_function_is_overloaded_arrow_operator == true)
+                  {
+                    SgExpression* expression = isSgExpression(functionCallExp->get_parent());
+                    if (expression != NULL)
+                       {
+                         SgCastExp* castExp = isSgCastExp(expression);
+                         if (castExp != NULL)
+                            {
+                           // Skip over an SgCastExp IR nodes (see test2014_72.C).
+                              expression = isSgExpression(castExp->get_parent());
+                            }
+
+                         SgArrowExp* arrowExp = isSgArrowExp(expression);
+                         if (arrowExp != NULL)
+                            {
+                              result = true;
+                            }
+                           else
+                            {
+                              result = partOfArrowOperatorChain(expression);
+                            }
+                       }
+                      else
+                       {
+                         result = false;
+                       }
+                  }
+                 else
+                  {
+                    result = false;
+                  }
+             }
+        }
+        }
+
+     return result;
+   }
+#endif
+
+
 template <class T>
 void
 Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& info )
@@ -2072,6 +2169,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
 #if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
+#if MFuncRefSupport_DEBUG
+     curprint ("\n /* Inside of unparseMFuncRef " + StringUtility::numberToString(expr) + " */ \n");
 #endif
 
   // info.display("Inside of unparseMFuncRef");
@@ -2092,16 +2192,25 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(possibleFunctionCall != NULL);
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
      bool uses_operator_syntax = false;
+     bool is_compiler_generated = false;
      if (functionCallExp != NULL)
         {
-          uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
+          uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+          is_compiler_generated = functionCallExp->isCompilerGenerated();
         }
 
+     SgExpression* binary_op = isSgExpression(mfunc_ref->get_parent());
+     ROSE_ASSERT(binary_op != NULL);
+     bool isPartOfArrowOperatorChain = partOfArrowOperatorChain(binary_op);
+
 #if MFuncRefSupport_DEBUG
-     printf ("In unparseMFuncRefSupport(): uses_operator_syntax = %s \n",uses_operator_syntax ? "true" : "false");
+     printf ("In unparseMFuncRefSupport(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
+     printf ("In unparseMFuncRefSupport(): uses_operator_syntax  = %s \n",uses_operator_syntax ? "true" : "false");
+     printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
 #endif
 #if MFuncRefSupport_DEBUG
-     curprint (string("\n /* Inside of unparseMFuncRef: uses_operator_syntax = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
+     curprint (string("\n /* Inside of unparseMFuncRef: uses_operator_syntax  = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
+     curprint (string("\n /* Inside of unparseMFuncRef: is_compiler_generated = ") + (is_compiler_generated ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (11/17/2004): Interface modified, use get_class_scope() if we want a
@@ -2354,14 +2463,19 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
 
 #if MFuncRefSupport_DEBUG
-     printf ("In unparseMFuncRefSupport(): func_name after processing to remove >> references = %s \n",func_name.c_str());
+     printf("In unparseMFuncRefSupport(): func_name after processing to remove >> references = %s \n",func_name.c_str());
+     curprint("\n /* Inside of unparseMFuncRef (after name qualification and before output of function name) func_name = " + func_name + " */ \n");
 #endif
 
+  // DQ (7/6/2014): Added support for if the operator is compiler generated (undid this change 
+  // since overloaded operators using operator syntax will always be marked as compiler generated).
   // DQ (11/24/2004): unparse conversion operators ("operator X&();") as "result.operator X&()"
   // instead of "(X&) result" (which appears as a cast instead of a function call.
   // check that this an operator overloading function and that colons were not printed
   // if (!unp->opt.get_overload_opt() && !strncmp(func_name, "operator", 8) && !print_colons)
   // if (!unp->opt.get_overload_opt() && func_name.size() >= 8 && func_name.substr(0, 8) == "operator" &&  !print_colons && !mfd->get_specialFunctionModifier().isConversion())
+  // if (!unp->opt.get_overload_opt() && (uses_operator_syntax == true) && func_name.size() >= 8 && func_name.substr(0, 8) == "operator" &&  !print_colons && !mfd->get_specialFunctionModifier().isConversion())
+  // if (!unp->opt.get_overload_opt() && (uses_operator_syntax == true && is_compiler_generated == true) && func_name.size() >= 8 && func_name.substr(0, 8) == "operator" &&  !print_colons && !mfd->get_specialFunctionModifier().isConversion())
      if (!unp->opt.get_overload_opt() && (uses_operator_syntax == true) && func_name.size() >= 8 && func_name.substr(0, 8) == "operator" &&  !print_colons && !mfd->get_specialFunctionModifier().isConversion())
         {
           func_name = func_name.substr(8);
@@ -2691,15 +2805,24 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                       // functions a unary operator has zero arguments, and a binary operator has a single argument).
                          bool is_unary_operator = (mfd->get_args().size() == 0);
 #if MFuncRefSupport_DEBUG
-                         printf ("In unparseMFuncRefSupport(): is_unary_operator = %s \n",is_unary_operator ? "true" : "false");
+                         printf ("In unparseMFuncRefSupport(): is_unary_operator     = %s \n",is_unary_operator     ? "true" : "false");
+                         printf ("In unparseMFuncRefSupport(): is_compiler_generated = %s \n",is_compiler_generated ? "true" : "false");
 #endif
+#if 1
+                      // DQ (7/6/2014): If this is compiler generated then supress the output of the operator name.
+                      // if (is_compiler_generated == false)
+                         if (isPartOfArrowOperatorChain == false)
+                            {
+#endif
+                      // DQ (7/5/2014): Adding operator-> as an additional special case.
                       // These operators require special handling since they are prefix operators when unparsed using operator syntax.
                       // if (full_function_name != "operator*" && full_function_name != "operator&")
                          if ( (is_unary_operator == false) || (is_unary_operator == true && full_function_name != "operator*" && full_function_name != "operator&"))
+                      // if ( (is_unary_operator == false) || (is_unary_operator == true && full_function_name != "operator*" && full_function_name != "operator&" && full_function_name != "operator->"))
                             {
 #if MFuncRefSupport_DEBUG
-                              printf ("In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output \n");
-                              curprint("/* In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output */ \n");
+                              printf ("In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name IS output: func_name = %s \n",func_name.c_str());
+                              curprint("/* In unparseMFuncRefSupport(): not overloaded reference or dereference operator: function name = " + func_name + " IS output */ \n");
 #endif
                               curprint(" " + func_name + " ");
                            // curprint(" /* In unparseMFuncRefSupport(): function name is NOT output (not overloaded reference or dereference operator) */ " + func_name + " ");
@@ -2717,11 +2840,23 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                                 else
                                  {
 #if MFuncRefSupport_DEBUG
-                                   printf ("In unparseMFuncRefSupport(): function name is NOT output for prefix operator \n");
-                                   curprint("/* In unparseMFuncRefSupport(): function name is NOT output for prefix operator */ \n");
+                                   printf ("In unparseMFuncRefSupport(): function name is NOT output for this operator: func_name = %s \n",func_name.c_str());
+                                   curprint("/* In unparseMFuncRefSupport(): function name is NOT output for this operator:  func_name = " + func_name + " */ \n");
 #endif
                                  }
                             }
+#if 1
+                            }
+                           else
+                            {
+#if MFuncRefSupport_DEBUG
+                           // printf ("In unparseMFuncRefSupport(): case of compiler generated function: function name is NOT output for this operator: func_name = %s \n",func_name.c_str());
+                           // curprint("/* In unparseMFuncRefSupport(): case of compiler generated function: function name is NOT output for this operator:  func_name = " + func_name + " */ \n");
+                              printf ("In unparseMFuncRefSupport(): case of isPartOfArrowOperatorChain == true: function name is NOT output for this operator: func_name = %s \n",func_name.c_str());
+                              curprint("/* In unparseMFuncRefSupport(): case of isPartOfArrowOperatorChain == true: function name is NOT output for this operator:  func_name = " + func_name + " */ \n");
+#endif
+                            }
+#endif
                        }
                   }
 #if 0
@@ -3263,7 +3398,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
 #if 0
      printf ("In Unparse_ExprStmt::unparseFuncCall(): expr = %p unp->opt.get_overload_opt() = %s \n",expr,(unp->opt.get_overload_opt() == true) ? "true" : "false");
-     curprint ( "\n/* In unparseFuncCall() */ \n");
+     curprint ( "\n/* In Unparse_ExprStmt::unparseFuncCall " + StringUtility::numberToString(expr) + " */ \n");
 #endif
 
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
@@ -3848,8 +3983,8 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
         }
 
 #if 0
-     printf ("Leaving Unparse_ExprStmt::unparseFuncCall \n");
-     curprint ( "\n/* Leaving Unparse_ExprStmt::unparseFuncCall */ \n");
+     printf ("Leaving Unparse_ExprStmt::unparseFuncCall = %p \n",expr);
+     curprint ( "\n/* Leaving Unparse_ExprStmt::unparseFuncCall " + StringUtility::numberToString(expr) + " */ \n");
 #endif
    }
 

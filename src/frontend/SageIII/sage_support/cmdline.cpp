@@ -5274,7 +5274,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
      int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
-  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+
+  // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
+     emulate_gnu_version_number = 4*10000 + 8*100 + 1;
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("In SgFile::build_EDG_CommandLine(): emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+        }
+
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
 #endif

@@ -108,6 +108,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_67.C \
    test2014_68.C \
    test2014_70.C \
+   test2014_71.C \
+   test2014_72.C \
+   test2014_73.C \
+   test2014_74.C \
+   test2014_75.C \
+   test2013_117.C \
    lulesh.C \
    luleshTALC.C
 
@@ -203,7 +209,7 @@ test2013_197.C
 # Not clear how to fix this at the moment, it was a made up test that I will work on later.
 # test2013_185.C 
 
-
+# DQ (7/6/2014): This test code is not fixed.
 # DQ (4/21/2013): failing regression tests (result of fix for operator vs. non-operator syntax in function calls).
 # test2013_117.C 
 

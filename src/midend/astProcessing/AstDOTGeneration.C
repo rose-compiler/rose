@@ -971,6 +971,18 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
   // add memory location of node to dot output
      ss << node << "\\n";
 
+  // DQ (7/4/2014): Adding more debug support to the AST visualization.
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(node);
+     if (functionCallExp != NULL)
+        {
+          string value = "false";
+          if (functionCallExp->get_uses_operator_syntax() == true)
+             {
+               value = "true";
+             }
+          ss << string("uses_operator_syntax() = ") << value << "\\n";
+        }
+
   // DQ (8/31/2013): Added more information about the IR node to the dot graph.
      ss << sourcePositionInformation(node);
 
