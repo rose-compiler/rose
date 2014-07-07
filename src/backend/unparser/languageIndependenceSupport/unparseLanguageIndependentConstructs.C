@@ -2665,6 +2665,93 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
    }
 
 
+
+
+#if 0
+// DQ (7/6/2014): A different version of this is in the unparseCxx_expressions.C file.
+bool
+partOfArrowOperatorChain(SgExpression* expr)
+   {
+#define DEBUG_ARROW_OPERATOR_CHAIN 1
+
+     SgBinaryOp* binary_op = isSgBinaryOp(expr);
+     ROSE_ASSERT(binary_op != NULL);
+
+     bool result = false;
+
+#if DEBUG_ARROW_OPERATOR_CHAIN
+     printf ("Inside of partOfArrowOperatorChain(): binary_op = %p = %s \n",binary_op,binary_op->class_name().c_str());
+#endif
+
+  // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
+  // required in places even though we have historically defaulted to the generation of the 
+  // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
+     SgNode* possibleParentFunctionCall = binary_op->get_parent();
+
+  // DQ (4/9/2013): This fails for test2006_92.C.
+  // ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool parent_is_a_function_call                    = false;
+     bool parent_function_call_uses_operator_syntax    = false;
+     bool parent_function_is_overloaded_arrow_operator = false;
+     bool parent_function_call_is_compiler_generated   = false;
+     if (possibleParentFunctionCall != NULL)
+        {
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
+          if (functionCallExp != NULL)
+             {
+               parent_is_a_function_call                  = true;
+               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+#if 1
+            // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
+               SgExpression* rhs = binary_op->get_rhs_operand();
+               bool isRelevantOverloadedOperator = false;
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
+               if (memberFunctionRefExp != NULL)
+                  {
+                    string functionName = memberFunctionRefExp->get_symbol()->get_name();
+#if DEBUG_ARROW_OPERATOR_CHAIN
+                    printf ("--- parent function is: functionName = %s \n",functionName.c_str());
+#endif
+                    if (functionName == "operator->")
+                       {
+                         parent_function_is_overloaded_arrow_operator = true;
+                       }
+                  }
+#endif
+               if (parent_function_is_overloaded_arrow_operator == true)
+                  {
+                    SgExpression* expression = isSgExpression(functionCallExp->get_parent());
+                    if (expression != NULL)
+                       {
+                         SgArrowExp* arrowExp = isSgArrowExp(expression);
+                         if (arrowExp != NULL)
+                            {
+                              result = true;
+                            }
+                           else
+                            {
+                              result = partOfArrowOperatorChain(expression);
+                            }
+                       }
+                      else
+                       {
+                         result = false;
+                       }
+                  }
+                 else
+                  {
+                    result = false;
+                  }
+             }
+        }
+
+     return result;
+   }
+#endif
+
+
+
 // DQ (4/14/2013): This is the new reimplemented version of the function (above).
 void
 UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info) 
@@ -2677,17 +2764,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
 #if DEBUG_BINARY_OPERATORS
       curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
-      printf ("\n @@@@@ In unparseBinaryExpr() expr = %p %s \n",expr,expr->class_name().c_str());
+      printf ("\n @@@@@ In unparseBinaryExpr(): expr = %p %s \n",expr,expr->class_name().c_str());
 #endif
 
    // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
       bool suppressOutputOfDotExp = isDotExprWithAnonymousUnion(expr);
 
 #if DEBUG_BINARY_OPERATORS
-  // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
-      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + binary_op->class_name() + " */ \n");
-      curprint ( string("\n /*                              lhs class name         = ") + binary_op->get_lhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              rhs class name         = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
+   // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
+      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " */ \n");
+      curprint ( string("\n /*                              lhs class name         = ") + StringUtility::numberToString(binary_op->get_lhs_operand()) + " = " + binary_op->get_lhs_operand()->class_name() + " */ \n");
+      curprint ( string("\n /*                              rhs class name         = ") + StringUtility::numberToString(binary_op->get_rhs_operand()) + " = " + binary_op->get_rhs_operand()->class_name() + " */ \n");
       curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
 #endif
 
@@ -2698,26 +2785,60 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
   // DQ (4/9/2013): This fails for test2006_92.C.
   // ROSE_ASSERT(possibleFunctionCall != NULL);
-     bool parent_function_call_uses_operator_syntax = false;
+     bool parent_is_a_function_call                    = false;
+     bool parent_function_call_uses_operator_syntax    = false;
+     bool parent_function_is_overloaded_arrow_operator = false;
+     bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
           if (functionCallExp != NULL)
              {
-               parent_function_call_uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
+               parent_is_a_function_call                  = true;
+               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+#if 1
+            // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
+               SgExpression* rhs = binary_op->get_rhs_operand();
+            // bool isRelevantOverloadedOperator = false;
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
+               if (memberFunctionRefExp != NULL)
+                  {
+                    string functionName = memberFunctionRefExp->get_symbol()->get_name();
+#if DEBUG_BINARY_OPERATORS
+                    printf ("--- parent function is: functionName = %s \n",functionName.c_str());
+#endif
+                    if (functionName == "operator->")
+                       {
+                         parent_function_is_overloaded_arrow_operator = true;
+                       }
+                  }
+#endif
              }
         }
+
+  // bool isPartOfArrowOperatorChain = partOfArrowOperatorChain(binary_op);
+
+#if DEBUG_BINARY_OPERATORS
+  // printf ("In unparseBinaryExpr(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
+     printf ("In unparseBinaryExpr(): suppressOutputOfDotExp                       = %s \n",suppressOutputOfDotExp     ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
+#endif
 
   // DQ (4/13/13): Checking the current level function call expression.
      SgNode* possibleFunctionCall = binary_op->get_lhs_operand();
      ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool is_currently_a_function_call = false;
      bool current_function_call_uses_operator_syntax = false;
+     bool current_function_call_is_compiler_generated = false;
      if (possibleFunctionCall != NULL)
         {
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
           if (functionCallExp != NULL)
              {
-               current_function_call_uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
+               is_currently_a_function_call                = true;
+               current_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               current_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
              }
         }
 
@@ -2735,8 +2856,13 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
      current_function_call_uses_operator_syntax = true;
 #endif
 #if DEBUG_BINARY_OPERATORS
-     printf ("In unparseBinaryExpr(): parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax  == true ? "true" : "false");
-     printf ("In unparseBinaryExpr(): current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): binary_op = %p = %s isCompilerGenerated() = %s \n",binary_op,binary_op->class_name().c_str(),binary_op->isCompilerGenerated() == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_is_a_function_call                    = %s \n",parent_is_a_function_call                   == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax   == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_function_call_is_compiler_generated   = %s \n",parent_function_call_is_compiler_generated  == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): is_currently_a_function_call                 = %s \n",is_currently_a_function_call                == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax  == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): current_function_call_is_compiler_generated  = %s \n",current_function_call_is_compiler_generated == true ? "true" : "false");
 #endif
 
   // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
@@ -2796,7 +2922,6 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #if DEBUG_BINARY_OPERATORS
                     printf ("In unparseBinaryExp(): Case 1.1.1 \n");
 #endif
-
                     if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
                        {
                       // ... nothing to do here (output the operator later!) ???
@@ -2829,9 +2954,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                          unparseExpression(binary_op->get_rhs_operand(), info);
                        }
                   }
+                 else
+                  {
+#if DEBUG_BINARY_OPERATORS
+                    printf ("In unparseBinaryExp(): Case 1.1.2 binary_op->get_rhs_operand() is NOT a unary operator (skipping output) \n");
+#endif
+                  }
              }
             else
              {
+               ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+                
 #if DEBUG_BINARY_OPERATORS
                printf ("In unparseBinaryExp(): Case 1.2 \n");
 #endif
@@ -2879,11 +3012,15 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
 #if DEBUG_BINARY_OPERATORS
-          curprint ("/* lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          curprint ("/* STARTING LHS: Calling unparseExpression(): " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          printf ("STARTING LHS: Calling unparseExpression(): for LHS = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
 #endif
+
           unparseExpression(binary_op->get_lhs_operand(), info);
+
 #if DEBUG_BINARY_OPERATORS
-          curprint ("/* DONE: lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          curprint ("/* FINISHED LHS: Calling unparseExpression(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          printf ("FINISHED LHS: Calling unparseExpression(): binary_op = %p = %s for LHS = %p = %s \n",binary_op,binary_op->class_name().c_str(),binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
 #endif
 
        // if (SageInterface::isPrefixOperator(binary_op->get_rhs_operand()) == true)
@@ -2907,8 +3044,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           curprint ( string("\n/*    --- parent_function_call_uses_operator_syntax  = ") + (parent_function_call_uses_operator_syntax ? "true" : "false") + " */ \n");
 #endif
 #if DEBUG_BINARY_OPERATORS
-          printf ("parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
-          printf ("current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
+       // printf ("parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
+       // printf ("current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
+
+          printf ("In unparseBinaryExpr(): (after LHS) binary_op = %p = %s isCompilerGenerated() = %s \n",binary_op,binary_op->class_name().c_str(),binary_op->isCompilerGenerated() == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) suppressOutputOfDotExp                       = %s \n",suppressOutputOfDotExp                      == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) parent_is_a_function_call                    = %s \n",parent_is_a_function_call                   == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax   == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) parent_function_call_is_compiler_generated   = %s \n",parent_function_call_is_compiler_generated  == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) is_currently_a_function_call                 = %s \n",is_currently_a_function_call                == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax  == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) current_function_call_is_compiler_generated  = %s \n",current_function_call_is_compiler_generated == true ? "true" : "false");
 #endif
 
 #if 0
@@ -2922,6 +3068,9 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           bool isAnonymousName = false;
           if (rhs_is_varRef == true)
              {
+
+#error "DEAD CODE!"
+
 #if DEBUG_BINARY_OPERATORS
                printf ("Identified a SgVarRefExp: checking the name for __anonymous_0x \n");
 #endif
@@ -2939,34 +3088,55 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              }
 #endif
 
+       // DQ: This is handling that is specific to anonomous unions.
           if (suppressOutputOfDotExp == false)
-          {
-          if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
-                 isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
              {
+               if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
+                       isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
+                  {
 #if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): Case 1.4.2.2.1 \n");
+                    printf("In unparseBinaryExp(): Case 1.4.2.2.1 \n");
+                    printf("   --- In unparseBinaryExpr(): Output operator name = %s \n",info.get_operator_name().c_str());
+                    curprint("/* Output operator name = " + info.get_operator_name() + " */\n ");
 #endif
+                    curprint ( string(" ") + info.get_operator_name() + " ");
+
+                 // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (is_currently_a_function_call == true)
+                       {
+                      // DQ (7/5/2014): Reset based on test2004_149.C (can't be set true or false based on test2004_149.C).
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/5/2014): Reset based on test2004_142.C (can't be set true or false based on test2004_149.C).
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                       }
+                 }
+                else
+                 {
 #if DEBUG_BINARY_OPERATORS
-               printf ("   --- In unparseBinaryExpr(): Output operator name = %s \n",info.get_operator_name().c_str());
-               curprint ( "/* Output operator name = " + info.get_operator_name() + " */\n ");
+                    printf("~~~~~~~ In unparseBinaryExpr(): SKIPPING output of SgDotExp (operator name = %s) \n",info.get_operator_name().c_str());
+                    curprint("/* SKIPPING output of operator name = " + info.get_operator_name() + " */\n ");
 #endif
-               curprint ( string(" ") + info.get_operator_name() + " ");
-            }
-           else
-            {
-#if DEBUG_BINARY_OPERATORS
-               printf ("~~~~~~~ In unparseBinaryExpr(): SKIPPING output of operator name = %s \n",info.get_operator_name().c_str());
-               curprint ( "/* SKIPPING output of operator name = " + info.get_operator_name() + " */\n ");
-#endif
-            }
-          }
-          else
+                 // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (is_currently_a_function_call == true)
+                       {
+                      // DQ (7/5/2014): Reset based on test2013_113.C (can't be set true or false based on test2004_47.C).
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/5/2014): Reset based on test2010_04.C (can't be set true or false based on test2004_47.C).
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                       }
+                 }
+             }
+            else
              {
             // If this is the case of suppressOutputOfDotExp == true, then output a space to seperate the output tokens (simplifies debugging).
                curprint(" ");
              }
-          
 
        // DQ (2/9/2010): Shouldn't this be true (it should also return a bool type).
           ROSE_ASSERT(info.get_nested_expression() != 0);
@@ -2979,33 +3149,49 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
        // DQ (4/13/2013): We need to detect if this is a prefix operator, and if we unparse it before 
        // the LHS if we are using the oprator syntax, e.g. when current_function_call_uses_operator_syntax == true
 
+#if DEBUG_BINARY_OPERATORS
+          printf ("In unparseBinaryExp(): Case 1.6 \n");
+          curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
+#endif
+       // unparseExpression(rhs, info);
+
+#if DEBUG_BINARY_OPERATORS
+          printf ("++++++++++++++++ Evaluate use of RHS: parent_function_call_uses_operator_syntax = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
+#endif
+
+#if DEBUG_BINARY_OPERATORS
+          printf ("parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
+          printf ("parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
+          printf ("is_currently_a_function_call                 = %s \n",is_currently_a_function_call ? "true" : "false");
+          printf ("current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
+#endif
+       // DQ (7/4/2014): Consider this as a possible fix (put back so I can look at this in the morning).
+       // Use (current_function_call_uses_operator_syntax == false) only if the child is a function call.
+
+#define NEW_CASE 0
+
+#if NEW_CASE
+       // if (parent_function_call_uses_operator_syntax == true)
+       // if (current_function_call_uses_operator_syntax == false && parent_function_call_uses_operator_syntax == true)
+       // if ( (is_currently_a_function_call == false) || (is_currently_a_function_call == true && current_function_call_uses_operator_syntax == false) )
 #if 0
-       // DQ (4/21/2013): I don't think this should be a special case.
-          if (info.get_operator_name() == ",")
+          if ( (parent_function_call_uses_operator_syntax == false) || 
+                    ( (is_currently_a_function_call == false) || 
+                      ( (is_currently_a_function_call == true) && 
+                        (current_function_call_uses_operator_syntax == false) && 
+                        (parent_function_is_overloaded_arrow_operator == false) ) ) )
+#endif
+          if ( (parent_function_call_uses_operator_syntax == false) || 
+                    (parent_function_is_overloaded_arrow_operator == false) ||
+                    ( (is_currently_a_function_call == false) || 
+                      ( (is_currently_a_function_call == true) && 
+                        (current_function_call_uses_operator_syntax == false) ) ) )
+#endif
              {
-#if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): Case 1.5 \n");
-#endif
-               SgUnparse_Info newinfo(info);
-               newinfo.set_inRhsExpr();
-               unp->u_debug->printDebugInfo("rhs: ", false);
 
-               unparseExpression(rhs, newinfo);
-             }
-            else
-#endif
-
-             {
-#if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): Case 1.6 \n");
-               curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
-#endif
-            // unparseExpression(rhs, info);
-
-#if DEBUG_BINARY_OPERATORS
-               printf ("++++++++++++++++ Evaluate use of RHS: parent_function_call_uses_operator_syntax = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
-#endif
+            // DQ (7/6/2014): change this to be symetric with prefix operator handling (switched back: see test2014_75.C).
                if (parent_function_call_uses_operator_syntax == true)
+            // if (current_function_call_uses_operator_syntax == true)
                   {
                  // DQ (4/20/2013): I think we want to restrict this to the case of overloaded operators for "->" (and maybe ".").
                  // test2013_114.C demonstrates where just because we detect a cast we don't want to skip the output of other operators.
@@ -3013,7 +3199,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                  // to be calls (e.g. SgArrowExp or it's overloaded version).  I am unclear if the SgDotExp can be caused to be generated 
                  // by a cases (but I expect it can).
 
+                 // DQ (7/4/2014): I think that we need to check if the current_function_call_uses_operator_syntax, if true then we don't 
+                 // want to output the operator here.  This is the key point of the bug associated with test2014_75.C.  This would avoid
+                 // and elaborate lookup from the rhs expression to see if there were to sequential calls to output an overloaded operator 
+                 // (such as "->").
+
+                    ROSE_ASSERT(parent_function_call_uses_operator_syntax == true);
+                 // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+
                     bool isRelevantOverloadedOperator = false;
+#if 1
+                 // DQ (7/6/2014): I would like to eliminate this code to simplify the handling of operator syntax.
                     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
                     if (memberFunctionRefExp != NULL)
                        {
@@ -3023,12 +3219,22 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
                          if (functionName == "operator->")
                             {
+                           // DQ (7/6/2014): Only allow this when it is not compiler generated.
+#if 1
                               isRelevantOverloadedOperator = true;
+#else
+                           // DQ (7/6/2014): This was a bad idea.
+                              if (parent_function_call_is_compiler_generated == false)
+                                 {
+                                   isRelevantOverloadedOperator = true;
+                                 }
+#endif
                             }
                        }
-
+#endif
 #if DEBUG_BINARY_OPERATORS
                     printf ("++++++++++++++++ binary_op = %p = %s parent_function_call_uses_operator_syntax == true: search for SgCastExp \n",binary_op,binary_op->class_name().c_str());
+                    printf ("++++++++++++++++ isRelevantOverloadedOperator = %s \n",isRelevantOverloadedOperator ? "true" : "false");
 #endif
                  // If this is a consequence of a cast that was implicit (compiler generated), then we don't want to output this operator.
                     ROSE_ASSERT(binary_op->get_parent() != NULL);
@@ -3058,42 +3264,120 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                            else
                             {
 #if DEBUG_BINARY_OPERATORS
+                              printf ("++++++++++++++++ output of the RHS 1 \n");
                               curprint ( "\n /* unparseBinaryExpr(): output RHS 1 */ \n");
 #endif
+                           // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                              if (is_currently_a_function_call == true)
+                                 {
+                                   ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                                   ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                                 }
+
+                           // DQ (7/6/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                              if (parent_is_a_function_call == true)
+                                 {
+                                // DQ (7/6/2014): This is true only because of the outer predicate.
+                                // ROSE_ASSERT(parent_function_call_uses_operator_syntax == true);
+                                   ROSE_ASSERT(parent_function_call_is_compiler_generated == false);
+                                 }
+
                               unparseExpression(rhs, info);
                             }
                        }
                       else
                        {
 #if DEBUG_BINARY_OPERATORS
+                         printf ("++++++++++++++++ output of the RHS 2 \n");
                          curprint ( "\n /* unparseBinaryExpr(): output RHS 2 */ \n");
 #endif
+                      // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                         if (is_currently_a_function_call == true)
+                            {
+                           // DQ (7/6/2014): Reset based on test2013_117.C (can't be set based on test2013_117.C).
+                           // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                           // DQ (7/5/2014): Reset based on test2013_38.C (can't be set based on test2010_04.C).
+                           // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                           // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                            }
+
+                      // DQ (7/6/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                         if (parent_is_a_function_call == true)
+                            {
+                           // DQ (7/6/2014): This is true only because of the outer predicate.
+                           // ROSE_ASSERT(parent_function_call_uses_operator_syntax == true);
+
+                           // DQ (7/5/2014): Reset based on test2004_47.C (can't be set according to test2005_141.C).
+                           // ROSE_ASSERT(parent_function_call_is_compiler_generated == true);
+                            }
+
                          unparseExpression(rhs, info);
                        }
                   }
                  else
                   {
 #if DEBUG_BINARY_OPERATORS
+                    printf ("++++++++++++++++ output of the RHS 3 (non-operator syntax used) \n");
                     curprint ( "\n /* unparseBinaryExpr(): output RHS 3 */ \n");
 #endif
+                    ROSE_ASSERT(parent_function_call_uses_operator_syntax == false);
+                 // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
                     unparseExpression(rhs, info);
 
+                 // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (is_currently_a_function_call == true)
+                       {
+                      // DQ (7/5/2014): Reset based on test2004_149.C (can't be set according to test2004_47.C).
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/5/2014): Reset based on test2014_75.C (can't be set according to test2004_149.C).
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                       }
+#if 0
+                 // DQ (7/6/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (parent_is_a_function_call == true)
+                       {
+                      // DQ (7/6/2014): Reset based on test2001_28.C // (can't be set according to test2004_149.C).
+                         ROSE_ASSERT(parent_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/6/2014): Reset based on test2004_141.C (can't be set according to test2001_28.C).
+                      // ROSE_ASSERT(parent_function_call_is_compiler_generated == true);
+                       }
+#endif
 #if DEBUG_BINARY_OPERATORS
                     curprint ( "\n /* DONE: unparseBinaryExpr(): output RHS 3 */ \n");
 #endif
                   }
+             }
+#if NEW_CASE
+            else
+             {
+#if DEBUG_BINARY_OPERATORS
+               printf ("++++++++++++++++ skipping output of the RHS 4 \n");
+#endif
+            // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+               if (is_currently_a_function_call == true)
+                  {
+                    ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                    ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                  }
+             }
+#endif
 
 #if DEBUG_BINARY_OPERATORS
                curprint ( "\n /* unparseBinaryExpr(): Test 6  after unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
 #endif
-             }
         }
 
      info.unset_nested_expression();
 
 #if DEBUG_BINARY_OPERATORS
      printf ("Leaving unparseBinaryExpr(): exp = %p = %s \n",expr,expr->class_name().c_str());
-     curprint ( "\n /* Leaving unparseBinaryExpr */ \n");
+     curprint ( "\n /* Leaving unparseBinaryExpr (expr = " + expr->class_name() + " = " + StringUtility::numberToString(expr) + ") */ \n");
 #endif
    }
 
@@ -3126,6 +3410,22 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
           binary_op,binary_op->class_name().c_str(), current_function_call_uses_operator_syntax ? "true" : "false",parent_function_call_uses_operator_syntax ? "true" : "false");
      printf ("   --- binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
      printf ("   --- binary_op->get_rhs_operand() = %p = %s \n",binary_op->get_rhs_operand(),binary_op->get_rhs_operand()->class_name().c_str());
+
+#endif
+
+#if 1
+  // DQ (7/6/2014): Simpler appraoch, but wrong since overloaded operators unparsed 
+  // using operator syntax will always be marked as compiler generated.
+  // bool is_compiler_generated = binary_op->isCompilerGenerated();
+
+     bool isArrowExp = (isSgArrowExp(binary_op) != NULL);
+
+     if (isArrowExp == true)
+        {
+          return true;
+        }
+
+  // returnValue = (is_compiler_generated == false || isArrowExp);
 #endif
 
   // if (unp->u_sage->isOperator(binary_op->get_rhs_operand()) == false)
