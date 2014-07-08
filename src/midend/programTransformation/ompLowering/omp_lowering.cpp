@@ -1319,10 +1319,12 @@ static void insert_libxompf_h(SgNode* startNode)
  //Step 3. Using device thread id and replace reference of original loop index with the thread index
   // Declare device thread id variable
    //int i = blockDim.x * blockIdx.x + threadIdx.x;
-   //TODO: better build of CUDA variables later !!
-  SgAssignInitializer* init_idx =  buildAssignInitializer( 
-                                       buildAddOp( buildMultiplyOp (buildVarRefExp("blockDim.x"), buildVarRefExp("blockIdx.x")) , 
-                                        buildVarRefExp("threadIdx.x", bb1)));
+  //SgAssignInitializer* init_idx =  buildAssignInitializer( 
+  //                                     buildAddOp( buildMultiplyOp (buildVarRefExp("blockDim.x"), buildVarRefExp("blockIdx.x")) , 
+  //                                      buildVarRefExp("threadIdx.x", bb1)));
+   //Better build of CUDA variables within a runtime library call so these variables are hidden from the translation
+   //  getLoopIndexFromCUDAVariables(1)
+   SgAssignInitializer* init_idx =  buildAssignInitializer(buildFunctionCallExp(SgName("getLoopIndexFromCUDAVariables"), buildIntType(),buildExprListExp(buildIntVal(1)),bb1), buildIntType());
 
   SgVariableDeclaration* dev_i_decl = buildVariableDeclaration("_dev_i", buildIntType(), init_idx, bb1); 
   prependStatement (dev_i_decl, bb1);
