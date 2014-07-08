@@ -33,6 +33,7 @@ include $(srcdir)/programTransformation/implicitCodeGeneration/Makefile_variable
 include $(srcdir)/programTransformation/astInlining/Makefile_variables
 include $(srcdir)/programTransformation/astOutlining/Makefile_variables
 include $(srcdir)/programTransformation/ompLowering/Makefile_variables
+include $(srcdir)/programTransformation/transformationTracking/Makefile_variables
 
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
@@ -116,7 +117,7 @@ libmidend_la_LIBADD=\
 libmidend_la_DEPENDENCIES=\
 	$(mAstQuery_la_dependencies)
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 	$(mAbstractHandle_includeHeaders) \
 	$(mAbstractLayer_includeHeaders) \
 	$(mAbstractMemoryObject_includeHeaders) \

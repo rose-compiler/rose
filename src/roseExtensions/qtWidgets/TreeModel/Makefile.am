@@ -20,7 +20,7 @@ headerTarget_HEADERS = ItemTreeModel.h\
                        ItemTreeNode.h
 
 
-include_HEADERS = ItemTreeModel.h
+pkginclude_HEADERS = ItemTreeModel.h
 
 endif
 

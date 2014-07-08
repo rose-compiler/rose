@@ -7,7 +7,7 @@ noinst_HEADERS = \
      adaptor_statistics.h annotations.h broadway.h cpattern.h broadway_expr.h \
      procedure.h rule.h unification_ann.h
 
-include_HEADERS = 
+pkginclude_HEADERS = 
 
 noinst_LTLIBRARIES = libannotationLanguageParser.la
 
