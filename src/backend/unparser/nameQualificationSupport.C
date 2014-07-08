@@ -4250,6 +4250,34 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
         }
 
+
+  // DQ (7/8/2014): Adding support for name qualification of the SgNamespaceDeclarationStatement referenced by a SgNamespaceAliasDeclarationStatement.
+  // Handle references in SgNamespaceAliasDeclarationStatement...
+     SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(n);
+     if (namespaceAliasDeclaration != NULL)
+        {
+          SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceAliasDeclaration->get_namespaceDeclaration();
+          ROSE_ASSERT(namespaceDeclaration != NULL);
+          SgScopeStatement* currentScope = namespaceAliasDeclaration->get_scope();
+          ROSE_ASSERT(currentScope != NULL);
+
+          int amountOfNameQualificationRequired = nameQualificationDepth(namespaceDeclaration,currentScope,namespaceAliasDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("SgNamespaceAliasDeclarationStatement's SgNamespaceDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+          setNameQualification(namespaceAliasDeclaration,namespaceDeclaration,amountOfNameQualificationRequired);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("DONE: SgNamespaceAliasDeclarationStatement's SgNamespaceDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+#if 0
+       // We want to debug this case later!
+          printf ("Exiting in unimplemented case of name qualification for the SgNamespaceDeclarationStatement in a SgNamespaceAliasDeclarationStatement \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+
   // DQ (5/12/2011): We want to located name qualification information about referenced functions 
   // at the SgFunctionRefExp and SgMemberFunctionRefExp IR node instead of the SgFunctionCallExp IR node.
      SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(n);
@@ -5931,6 +5959,45 @@ NameQualificationTraversal::setNameQualification ( SgUsingDirectiveStatement* us
           printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),usingDirective,usingDirective->class_name().c_str());
 #endif
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(usingDirective,qualifier));
+        }
+       else
+        {
+          printf ("Error: name in qualifiedNameMapForNames already exists... \n");
+          ROSE_ASSERT(false);
+        }
+   }
+
+
+// DQ (7/8/2014): Adding support for name qualification of SgNamespaceDeclarations within a SgNamespaceAliasDeclarationStatement.
+void
+NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired )
+   {
+  // Setup call to refactored code.
+     int  outputNameQualificationLength = 0;
+     bool outputGlobalQualification     = false;
+     bool outputTypeEvaluation          = false;
+
+     string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+     namespaceAliasDeclaration->set_global_qualification_required(outputGlobalQualification);
+     namespaceAliasDeclaration->set_name_qualification_length(outputNameQualificationLength);
+     namespaceAliasDeclaration->set_type_elaboration_required(outputTypeEvaluation);
+
+  // There should be no type evaluation required for a variable reference, as I recall.
+     ROSE_ASSERT(outputTypeEvaluation == false);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In NameQualificationTraversal::setNameQualification(): namespaceAliasDeclaration->get_name_qualification_length()     = %d \n",namespaceAliasDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): namespaceAliasDeclaration->get_type_elaboration_required()     = %s \n",namespaceAliasDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): namespaceAliasDeclaration->get_global_qualification_required() = %s \n",namespaceAliasDeclaration->get_global_qualification_required() ? "true" : "false");
+#endif
+
+     if (qualifiedNameMapForNames.find(namespaceAliasDeclaration) == qualifiedNameMapForNames.end())
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),namespaceAliasDeclaration,namespaceAliasDeclaration->class_name().c_str());
+#endif
+          qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(namespaceAliasDeclaration,qualifier));
         }
        else
         {
