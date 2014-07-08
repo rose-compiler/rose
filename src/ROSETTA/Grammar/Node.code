@@ -11,6 +11,8 @@ HEADER_NODE_PREDECLARATION_START
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <sawyer/Interval.h>
+#include <sawyer/IntervalSet.h>
 
 #include "Cxx_Grammar.h"
 
@@ -74,12 +76,21 @@ bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
 #endif
 
+/** An interval of virtual addresses. */
+typedef Sawyer::Container::Interval<rose_addr_t> AddressInterval;
+std::ostream& operator<<(std::ostream&, const AddressInterval&);
+
+/** A set of virtual addresses. This is optimized for cases when many addresses are contiguous. */
+typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
+
+// deprecated. Use AddressInterval instead for all new code.
 typedef Range<rose_addr_t> Extent;
 
 /** Specialized printing for ROSE addresses. */
 template<>
 void Range<rose_addr_t>::print(std::ostream &o) const;
 
+// deprecated. Use AddressSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
 public:
 	ExtentMap(): RangeMap<Extent>() {}
@@ -95,6 +106,11 @@ public:
 	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
+// deprecated. Conversion functions, to be deleted when the old types are no longer needed.
+Extent toExtent(const AddressInterval&);
+AddressInterval toAddressInterval(const Extent&);
+ExtentMap toExtentMap(const AddressIntervalSet&);
+AddressIntervalSet toAddressIntervalSet(const ExtentMap&);
 
 // #ifndef ROSE_USE_SWIG_SUPPORT
 

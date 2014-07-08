@@ -2,8 +2,10 @@
 #include "sage3basic.h"
 #include "stringify.h"          /* used in error messages */
 #include "integerOps.h"
+#include "Diagnostics.h"
 
 using namespace rose;
+using namespace rose::Diagnostics;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Documentation for ROSETTA-generated things.
@@ -126,10 +128,7 @@ SgAsmIntegerValueExpression::virtual_address(SgNode *node)
         return 0;
     }
 
-    std::cerr <<"SgAsmIntegerValueExpression::virtual_address: non-addressable node type: "
-              <<stringifyVariantT(node->variantT(), "V_") <<std::endl;
-    assert(!"need addressable node type"); // to get location info in error messsage
-    abort(); // if asserts are disabled
+    ASSERT_not_reachable("need addressable node type, got " + stringifyVariantT(node->variantT(), "V_"));
 }
 
 /** Returns a label for the value.  The label consists of the base object name (if available) or address, followed by a plus

@@ -7,7 +7,7 @@ INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
   
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto
-include_HEADERS = qrose.h QRMacros.h QRMain.h QRException.h QRTiledWidget.h QRWidgetAccess.h QRWindow.h QRPanel.h QRSpaceWidget.h QRGroup.h
+pkginclude_HEADERS = qrose.h QRMacros.h QRMain.h QRException.h QRTiledWidget.h QRWidgetAccess.h QRWindow.h QRPanel.h QRSpaceWidget.h QRGroup.h
 noinst_LTLIBRARIES = libqrframework.la 
 
 MOC_SOURCES = moc_QRMain_p.C moc_QRWindow.C moc_QRTiledWidget.C moc_QRSpaceWidget.C moc_QRGroup.C

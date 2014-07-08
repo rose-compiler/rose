@@ -8,7 +8,7 @@ INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto
 
-include_HEADERS = QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h QRSeparator.h QRTree.h 
+pkginclude_HEADERS = QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h QRSeparator.h QRTree.h 
 
 noinst_LTLIBRARIES = libqrwidgets.la
 
