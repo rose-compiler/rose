@@ -934,3 +934,5 @@ Working with the new_app branch on tux231:
    497  8:39    smgit merge origin/dquinlan/dq-new_app-rc
 
 Working with the new_app branch on zeus:
+   145  9:45    smgit fetch origin
+   146  9:46    smgit merge origin/dquinlan/dq-new_app-rc

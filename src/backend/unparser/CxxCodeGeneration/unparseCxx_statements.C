@@ -1081,10 +1081,32 @@ Unparse_ExprStmt::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, 
      SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceAliasDeclaration != NULL);
 
-     curprint ( string("\nnamespace "));
+     curprint ("\nnamespace ");
      curprint ( namespaceAliasDeclaration->get_name().str());
-     curprint ( string(" = "));
+     curprint (" = ");
      ROSE_ASSERT(namespaceAliasDeclaration->get_namespaceDeclaration() != NULL);
+
+  // DQ (7/8/2014): Support for new name qualification.
+     SgUnparse_Info tmp_info(info);
+     tmp_info.set_name_qualification_length(namespaceAliasDeclaration->get_name_qualification_length());
+     tmp_info.set_global_qualification_required(namespaceAliasDeclaration->get_global_qualification_required());
+
+#if 0
+  // DQ (7/8/2014): Compute the name qualification separately.
+     curprint ( usingDirective->get_namespaceDeclaration()->get_name().str();
+     curprint ( usingDirective->get_namespaceDeclaration()->get_qualified_name().str();
+#endif
+
+  // DQ (7/8/2014): We store the information about the name qualification in the reference to the namespace, 
+  // and not in the namespace.  This is so that multiple references to the namespace can be supported using 
+  // different levels of qualification.
+     SgName nameQualifier = namespaceAliasDeclaration->get_qualified_name_prefix();
+
+#if 0
+     printf ("In unparseNamespaceAliasDeclarationStatement(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+     curprint ( nameQualifier);
+
      curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
      curprint ( string(";\n"));
    }

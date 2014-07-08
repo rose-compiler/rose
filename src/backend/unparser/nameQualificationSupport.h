@@ -176,6 +176,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // void setNameQualification ( SgClassDeclaration* classDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgClassDeclaration* classDeclaration, int amountOfNameQualificationRequired );
 
+       // DQ (7/8/2014): Adding support for name qualification of SgNamespaceDeclarations within a SgNamespaceAliasDeclarationStatement.
+          void setNameQualification ( SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
        // This is a separate function just for setting the information specific to the name qualification of return types.
        // This information cannot be stored in the SgFunctionType since that might be shared and referenced from different locations.
        // void setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
