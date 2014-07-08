@@ -1353,7 +1353,18 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgModifierType returned from SgFunctionCallExp::get_type() member function \n");
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeVoid returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+#endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (7/7/2014): This case is required for ROSE compiling ROSE header files.
+                    case V_SgTypeUnknown:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
 #endif
                          break;
                        }
