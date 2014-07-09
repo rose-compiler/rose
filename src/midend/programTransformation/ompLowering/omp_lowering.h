@@ -150,6 +150,9 @@ namespace OmpSupport
   //! Build a non-reduction variable clause for a given OpenMP directive. It directly returns the clause if the clause already exists
   ROSE_DLL_API SgOmpVariablesClause* buildOmpVariableClause(SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
 
+  //! Remove one or more clauses of type vt 
+  ROSE_DLL_API int removeClause (SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
+
   //! Check if an OpenMP statement has a clause of type vt
   ROSE_DLL_API bool hasClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt);
 
