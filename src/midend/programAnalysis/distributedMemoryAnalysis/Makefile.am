@@ -18,7 +18,7 @@ INCLUDES =  $(ROSE_INCLUDES) -DROSE_MPI
 noinst_LTLIBRARIES = libdistributedMemoryAnalysis.la
 libdistributedMemoryAnalysis_la_SOURCES = DistributedMemoryAnalysis.C functionNames.C
 
-include_HEADERS =  functionNames.h DistributedMemoryAnalysis.h DistributedMemoryAnalysisImplementation.h functionLevelTraversal.h
+pkginclude_HEADERS =  functionNames.h DistributedMemoryAnalysis.h DistributedMemoryAnalysisImplementation.h functionLevelTraversal.h
 
 endif
 
