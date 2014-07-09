@@ -117,7 +117,7 @@ libmidend_la_LIBADD=\
 libmidend_la_DEPENDENCIES=\
 	$(mAstQuery_la_dependencies)
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 	$(mAbstractHandle_includeHeaders) \
 	$(mAbstractLayer_includeHeaders) \
 	$(mAbstractMemoryObject_includeHeaders) \

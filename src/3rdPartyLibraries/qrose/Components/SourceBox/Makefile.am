@@ -7,7 +7,7 @@ INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto
 
-include_HEADERS = QRSourceBox.h 
+pkginclude_HEADERS = QRSourceBox.h 
 
 noinst_LTLIBRARIES = libqrsourcebox.la
 

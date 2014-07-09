@@ -15,6 +15,6 @@ libastHiddenTypeAndDeclarationLists_la_LIBADD       =
 libastHiddenTypeAndDeclarationLists_la_DEPENDENCIES = 
 
 # DQ (6/22/2011): I think all of these files are no longer required in ROSE.
-include_HEADERS = HiddenList.h  HiddenList_Intersection.h  HiddenList_Output.h
+pkginclude_HEADERS = HiddenList.h  HiddenList_Intersection.h  HiddenList_Output.h
 
 EXTRA_DIST = CMakeLists.txt

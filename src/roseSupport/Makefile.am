@@ -35,7 +35,7 @@ libroseSupport_la_SOURCES =			\
 nodist_libroseSupport_la_SOURCES =		\
 	stringify.C
 
-include_HEADERS =				\
+pkginclude_HEADERS =				\
 	callbacks.h				\
 	transformationSupport.h			\
 	optionDeclaration.h			\

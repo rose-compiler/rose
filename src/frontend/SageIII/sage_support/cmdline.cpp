@@ -32,7 +32,7 @@ void
 Rose::Cmdline::
 makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result)
    {
-     string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include/edg");
      for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           ROSE_ASSERT (!i->empty());

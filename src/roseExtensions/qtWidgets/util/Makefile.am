@@ -47,7 +47,7 @@ headerTarget_HEADERS = AsmToSourceMapper.h\
                        StreamRedirector.h
 
 
-include_HEADERS = AsmToSourceMapper.h\
+pkginclude_HEADERS = AsmToSourceMapper.h\
                        AstDisplayInfo.h\
                        AstFilters.h\
                        ItemModelHelper.h\

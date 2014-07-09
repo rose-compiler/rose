@@ -56,7 +56,7 @@ libbinaryMidend_la_SOURCES +=					\
     libraryIdentification/functionIdentification.C 
 endif
 
-include_HEADERS =					\
+pkginclude_HEADERS =					\
     AbstractLocation.h					\
     binary_analysis.h					\
     GraphAlgorithms.h					\
