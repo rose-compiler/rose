@@ -22,6 +22,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 # They will be compiled only, not executed.
 C_TESTCODES_REQUIRED_TO_COMPILE = \
 	alignment.c \
+	collapse.c \
 	dijkstra_open_mp.c \
 	dynamicChunk.c \
 	endif.c \
@@ -53,7 +54,8 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
-        jacobi-ompacc-opt1.c
+        jacobi-ompacc-opt1.c \
+        jacobi-ompacc-opt2.c
 
 OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp
@@ -81,6 +83,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	hello-ordered.c \
 	hello.c \
 	jacobi.c \
+	jacobi-collapse.c \
 	lastprivate.c \
 	lastprivate0.c \
 	lockarray.c \
@@ -88,11 +91,13 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	nestedpar.c \
 	nestedpar1.c \
 	masterSingle.c \
+	matrixmultiply.c \
 	multiple_return.c \
 	ordered.c \
 	ordered2.c \
 	omp1.c \
 	ompfor.c \
+	ompfor_c99.c \
 	ompfor2.c \
 	ompfor3.c \
 	ompfor4.c \
@@ -180,7 +185,6 @@ CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
 # TODO: npb, validation suite, developer tests, epcc
 # full_verify.c complex #if #endif
 TESTCODE_CURRENTLY_FAILING = \
-	collapse.c \
 	copyin.c \
 	copyprivate.c \
 	copyprivate2.c \
@@ -455,6 +459,7 @@ clean-local:
 	rm -f $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
 	rm -f $(addsuffix .passed, $(PASSING_OMP_ACC_TEST_CXX_EXE_Files))
 	rm -f $(addsuffix .failed, $(PASSING_OMP_ACC_TEST_CXX_EXE_Files))
+	rm -f *.out *.dot
 
 
 EXTRA_DIST = referenceResults

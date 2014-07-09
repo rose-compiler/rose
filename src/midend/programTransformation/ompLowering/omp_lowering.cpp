@@ -4366,6 +4366,28 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
 
     return result;
   }
+
+  //! Remove one or more clauses of type vt
+  int removeClause (SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt)
+  {
+    ROSE_ASSERT(clause_stmt != NULL);
+    SgOmpClausePtrList& clause_list= clause_stmt->get_clauses ();  
+    std::vector< Rose_STL_Container<SgOmpClause*>::iterator > iter_vec; 
+    Rose_STL_Container<SgOmpClause*>::iterator iter ;
+    // collect iterators pointing the matching clauses
+    for (iter = clause_list.begin(); iter != clause_list.end(); iter ++)
+    {
+      SgOmpClause* c_clause = *iter;
+      if (c_clause->variantT() == vt)
+        iter_vec.push_back(iter);
+    }
+
+    //erase them one by one
+   std::vector< Rose_STL_Container<SgOmpClause*>::iterator >::reverse_iterator r_iter;
+   for (r_iter = iter_vec.rbegin(); r_iter!= iter_vec.rend();r_iter ++)
+     clause_list.erase (*r_iter);
+   return iter_vec.size();  
+  }
    
   //! Add a variable into a non-reduction clause of an OpenMP statement, create the clause transparently if it does not exist
     void addClauseVariable(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt)
@@ -4763,6 +4785,9 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
     int collapse_factor = atoi(isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
     SgExprListExp * new_var_list = SageInterface::loopCollapsing(for_loop, collapse_factor);
 
+    // remove the collapse clause
+    removeClause(node,V_SgOmpCollapseClause);
+    
     /*
     *Winnie, we need to add the new variables into the map in list, if there is a SgOmpTargetStatement
     */
@@ -4819,7 +4844,7 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
         {
             mapin_var_list.push_back(isSgVarRefExp(new_vars[i]));
         }
-    }
+    } // end if target
 }//Winnie, end of loop collapse
 
 
@@ -4869,7 +4894,7 @@ void lower_omp(SgSourceFile* file)
     /*Winnie, handle Collapse clause.*/
     if(  isSgOmpClauseBodyStatement(node) != NULL && hasClause(isSgOmpClauseBodyStatement(node), V_SgOmpCollapseClause))
         transOmpCollapse(isSgOmpClauseBodyStatement(node));
-    
+#if 1 // debugging code after collapsing the loops     
     switch (node->variantT())
     {
       case V_SgOmpParallelStatement:
@@ -4990,6 +5015,7 @@ void lower_omp(SgSourceFile* file)
         }
     }// switch
 
+#endif
 
   } 
 

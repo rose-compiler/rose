@@ -1,3 +1,4 @@
+// test the collapse clause
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -13,7 +14,7 @@ double time_stamp()
 {
   struct timeval t;
   double time;
-  gettimeofday(&t, NULL);
+  gettimeofday(&t,(struct timezone*)NULL);
   time = t.tv_sec + 1.0e-6*t.tv_usec;
   return time;
 }
@@ -32,11 +33,12 @@ void error_check(void);
 *
 * Modified: Sanjiv Shah,       Kuck and Associates, Inc. (KAI), 1998
 * Author:   Joseph Robicheaux, Kuck and Associates, Inc. (KAI), 1998
+*
 * This c version program is translated by 
 * Chunhua Liao, University of Houston, Jan, 2005 
 * 
-* Directives are used in this code to achieve paralleism. 
-* All do loops are parallized with default 'static' scheduling.
+* Directives are used in this code to achieve parallelism. 
+* All do loops are parallelized with default 'static' scheduling.
 * 
 * Input :  n - grid dimension in x direction 
 *          m - grid dimension in y direction
@@ -50,16 +52,17 @@ void error_check(void);
 *       : f(n,m) - Right hand side function 
 *************************************************************/
 
- #define MSIZE 512
- int n,m,mits; 
- double tol,relax=1.0,alpha=0.0543; 
- double u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
- double dx,dy;
- double error_ref= 9.213041E-04, resid_ref = 2.355794E-08; // depending on MSIZE and precision (double vs. float) !!
+#define REAL float // flexible between float and double
+#define MSIZE 512
+REAL error_ref= 9.212746E-04, resid_ref = 2.356027E-08; // depending on MSIZE, precision, and number of threads !!
+int n,m,mits; 
+REAL tol,relax=1.0,alpha=0.0543; 
+REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
+REAL dx,dy;
 
 int main (void) 
 {
-  float toler;
+//  float toler;
   /*      printf("Input n,m (< %d) - grid dimension in x,y direction:\n",MSIZE); 
           scanf ("%d",&n);
           scanf ("%d",&m);
@@ -86,9 +89,9 @@ int main (void)
 
 /*************************************************************
 * Subroutine driver () 
-* This is where the arrays are allocated and initialized. 
+* This is where the arrays are allocated and initialzed. 
 *
-* Working variables/arrays 
+* Working varaibles/arrays 
 *     dx  - grid spacing in x direction 
 *     dy  - grid spacing in y direction 
 *************************************************************/
@@ -127,7 +130,7 @@ void initialize( )
 
 /* Initialize initial condition and RHS */
 
-#pragma omp parallel for private(xx,yy,j,i)
+#pragma omp parallel for private(xx,yy,j,i) collapse(2)
        for (i=0;i<n;i++)
          for (j=0;j<m;j++)      
            {
@@ -163,9 +166,9 @@ void initialize( )
 
 void jacobi( )
 {
-  double omega;
+  REAL omega;
   int i,j,k;
-  double  error,resid,ax,ay,b;
+  REAL error,resid,ax,ay,b; 
   //      double  error_local;
 
   //      float ta,tb,tc,td,te,ta1,ta2,tb1,tb2,tc1,tc2,td1,td2;
@@ -187,15 +190,14 @@ void jacobi( )
   {
     error = 0.0;    
 
-    /* Copy new solution into old */
 #pragma omp parallel
     {
-#pragma omp for private(j,i)
+#pragma omp for private(j,i) collapse(2)
       for(i=0;i<n;i++)   
-        for(j=0;j<m;j++)   
+        for(j=0;j<m;j++)
           uold[i][j] = u[i][j]; 
 
-#pragma omp for private(resid,j,i) reduction(+:error) nowait
+#pragma omp for private(resid,j,i) reduction(+:error) collapse(2) nowait
       for (i=1;i<(n-1);i++)  
         for (j=1;j<(m-1);j++)   
         { 
@@ -211,19 +213,21 @@ void jacobi( )
 
     /* Error check */
 
-    k = k + 1;
-    if (k%500==0) 
-      printf("Finished %d iteration.\n",k);
+    if (k%500==0)
+      printf("Finished %d iteration with error =%f\n",k, error);
     error = sqrt(error)/(n*m);
 
+    k = k + 1;
   }          /*  End iteration loop */
 
   printf("Total Number of Iterations:%d\n",k); 
   printf("Residual:%E\n", error); 
-  printf("Residual_ref :%E\n", resid_ref);
+  printf("Residual_ref :%E\n", resid_ref); 
   printf ("Diff ref=%E\n", fabs(error-resid_ref));
-  assert (fabs(error-resid_ref)/resid_ref < 1E-5);
+  assert (fabs(error-resid_ref)/resid_ref < 1E-4);
+
 }
+
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
       implicit none 
 ************************************************************
@@ -233,13 +237,13 @@ void jacobi( )
 void error_check ( )
 { 
   int i,j;
-  double xx,yy,temp,error; 
+  REAL xx,yy,temp,error; 
 
   dx = 2.0 / (n-1);
   dy = 2.0 / (m-1);
   error = 0.0 ;
 
-#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error)
+#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error) collapse(2)
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)
     { 
@@ -252,6 +256,7 @@ void error_check ( )
   printf("Solution Error :%E \n",error);
   printf("Solution Error Ref :%E \n",error_ref);
   printf ("Diff ref=%E\n", fabs(error-error_ref));
-  assert (fabs(error-error_ref)/error_ref < 1E-5);
+  assert (fabs(error-error_ref)/error_ref < 1E-4);
 }
+
 
