@@ -22,7 +22,8 @@ void initialize() {
         // point to something.  This is also the place where one might want to assign some other message plumbing to
         // rose::Diagnostics::destination (such as sending messages to additional locations).
         Sawyer::initializeLibrary();
-        destination = Sawyer::Message::merr;
+        if (destination==NULL)
+            destination = Sawyer::Message::merr;
         mlog.initStreams(destination);
         facilities.insert(mlog);
 
