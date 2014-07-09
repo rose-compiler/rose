@@ -146,6 +146,9 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
   for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
     SgPragmaDeclaration * pragma_decl = *it_pragma_decl;
     assert(pragma_decl != NULL);
+
+//  SageInterface::replaceMacroCallsWithExpandedStrings(pragma_decl);
+
     std::string directive_string = pragma_decl->get_pragma()->get_pragma();
     directive_t * directive = parse(directive_string, pragma_decl);
     if (directive != NULL)
