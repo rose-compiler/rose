@@ -17698,6 +17698,10 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      */
     SgForStatement *& target_loop = loop;
 
+    // we use global scope to help generate unique variable name later
+    // local scope-based unique names may cause conflicts if the declarations are moved around (in OpenMP target data promotion)
+    SgGlobal* global_scope = getGlobalScope (loop); 
+    ROSE_ASSERT (global_scope != NULL);
     SgInitializedName** ivar = new SgInitializedName*[collapsing_factor];
     SgExpression** lb = new SgExpression*[collapsing_factor];
     SgExpression** ub = new SgExpression*[collapsing_factor];
@@ -17781,7 +17785,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         //insert the new variable (store real iteration number of each level of the loop) before the target loop
         string iter_var_name= "_total_iters";
         //iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
-        iter_var_name = ivar[i]->get_name().getString() + iter_var_name+ generateUniqueVariableName (scope,"");
+        iter_var_name = ivar[i]->get_name().getString() + iter_var_name+ generateUniqueVariableName (global_scope,"");
         SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
         insertStatementBefore(insert_target, total_iter);    
         constantFolding (total_iter);
@@ -17796,7 +17800,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     /*Winnie, build another variable to store final total iteration counter of the loop after collapsing*/
     //string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
-    string final_iter_counter_name = "final_total_iters" + generateUniqueVariableName(scope,"");
+    string final_iter_counter_name = "final_total_iters" + generateUniqueVariableName(global_scope,"");
     SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
     insertStatementBefore(insert_target, final_total_iter);
     ub_exp = buildVarRefExp(final_iter_counter_name, scope);
@@ -17811,7 +17815,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
             interval[i] = buildMultiplyOp(total_iters[j], interval[i]); 
         }
         //string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
-        string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueVariableName (scope,"");
+        string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueVariableName (global_scope,"");
         SgVariableDeclaration* temp_interval = buildVariableDeclaration(interval_name, buildIntType(), buildAssignInitializer(copyExpression(interval[i]), buildIntType()), scope);
         insertStatementBefore(insert_target, temp_interval);
         interval[i] = buildVarRefExp(interval_name, scope);

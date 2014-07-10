@@ -205,7 +205,7 @@
             uold[i][j] = u[i][j]; 
 
 #pragma omp target //map(in:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(out:u[0:n][0:m])
-#pragma omp parallel for private(resid,j,i) reduction(+:error) // nowait
+#pragma omp parallel for private(resid,j,i) reduction(+:error) collapse(2) // nowait
         for (i=1;i<(n-1);i++)  
           for (j=1;j<(m-1);j++)   
           { 
