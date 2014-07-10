@@ -451,7 +451,6 @@ void gatherReferences( const Rose_STL_Container< SgNode* >& expr, Rose_STL_Conta
   //! Replace variable references within root based on a map from old symbols to new symbols
   /* This function is mostly used by transOmpVariables() to handle private, firstprivate, reduction, etc.
    *  
-   
    *   
    */
   int replaceVariableReferences(SgNode* root, VariableSymbolMap_t varRemap)
@@ -1331,6 +1330,7 @@ static void insert_libxompf_h(SgNode* startNode)
   SgVariableSymbol* dev_i_symbol = getFirstVarSym (dev_i_decl);
   ROSE_ASSERT (dev_i_symbol != NULL);
 
+#if 1 // test mysterious replace with _dev_i
   // replace reference to loop index with reference to device i variable
   ROSE_ASSERT (orig_index != NULL);
   SgSymbol * orig_symbol = orig_index ->get_symbol_from_symbol_table () ;
@@ -1343,7 +1343,7 @@ static void insert_libxompf_h(SgNode* startNode)
     if (vRef->get_symbol() == orig_symbol)
       vRef->set_symbol(dev_i_symbol);
   }
-
+#endif 
   
   // Step 4. build the if () condition statement, move the loop body into the true body
   // Liao, 2/21/2013. We must be accurate about the range of iterations or the computation may result in WRONG results!!
@@ -2646,6 +2646,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
        }
        shared_data = buildMultiplyOp (buildVarRefExp(threads_per_block_decl), buildSizeOfOp (base_type) );
     }
+
     // generate the cuda kernel launch statement
     //e.g.  axpy_ompacc_cuda <<<numBlocks, threadsPerBlock>>>(dev_x,  dev_y, VEC_LEN, a);
    
@@ -2703,6 +2704,8 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
      insertStatementBefore (target, buildExprStatement(func_call_exp2));
     }
 
+    // num_blocks is referenced before the declaration is inserted. So we must fix it, otherwise the symbol of unkown type will be cleaned up later.
+    SageInterface::fixVariableReferences(num_blocks_decl->get_scope());
     //------------now remove omp parallel since everything within it has been outlined to a function
     removeStatement (target);
   }
@@ -4100,7 +4103,9 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
         //SgScopeStatement* scope_for_insertion = enclosing_omp_target->get_scope();
         SgScopeStatement* scope_for_insertion = isSgScopeStatement(enclosing_omp_parallel->get_scope());
         ROSE_ASSERT (scope_for_insertion != NULL);
-        SgExprListExp* parameter_list = buildExprListExp(buildMultiplyOp( buildVarRefExp("_num_blocks_", scope_for_insertion), buildSizeOfOp(orig_type) ));
+        SgVarRefExp* blk_ref = buildVarRefExp("_num_blocks_", scope_for_insertion);
+        SgExpression* multi_exp = buildMultiplyOp( blk_ref, buildSizeOfOp(orig_type) );
+        SgExprListExp* parameter_list = buildExprListExp(multi_exp);
         SgExpression* init_exp = buildCastExp(buildFunctionCallExp(SgName("xomp_deviceMalloc"), buildPointerType(buildVoidType()), parameter_list, scope_for_insertion),  
                                               buildPointerType(orig_type));
        // the prefix of "_dev_per_block_" is important for later handling when calling outliner: add them into the parameter list
@@ -4796,11 +4801,12 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
     *                or, #pragma omp parallel, when is not OmpTarget
     *   inside this if condition, ompacc=false means there is no map clause, we need to create one
     *   outside this if condition, ompacc=false means, no need to add new variables in the map in clause
+    *   TODO: adding the variables into the map() clause is not sufficient.
+    *         we have to move the corresponding variable declarations to be in front of the directive containing map(). 
     */
     SgStatement * target_stmt = isSgStatement(node->get_parent()->get_parent());
     if(isSgOmpTargetStatement(target_stmt))
     {
-
         Rose_STL_Container<SgOmpClause*> map_clauses;
         SgOmpMapClause * map_in;
 
@@ -4837,13 +4843,16 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
             cerr <<"prepare to create a map in clause" << endl;
         }
         
-        
         SgVarRefExpPtrList & mapin_var_list = map_in->get_variables();
         SgExpressionPtrList new_vars = new_var_list->get_expressions();
         for(int i = 0; i < new_vars.size(); i++)
         {
-            mapin_var_list.push_back(isSgVarRefExp(new_vars[i]));
+            mapin_var_list.push_back(deepCopy(isSgVarRefExp(new_vars[i])));
         }
+
+        // TODO We also have to move the relevant variable declarations to sit in front of the map() clause
+        // Liao 7/9/2014
+         
     } // end if target
 }//Winnie, end of loop collapse
 

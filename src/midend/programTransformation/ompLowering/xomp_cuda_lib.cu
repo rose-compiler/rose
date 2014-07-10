@@ -722,23 +722,4 @@ void xomp_deviceDataEnvironmentExit()
   }  
 }
 
-#if 0
-// A wrapper function for  blockDim.x * blockIdx.x + threadIdx.x
-// Essentially we just hide CUDA variables (blockDim.x etc) inside this function
-// since there are three dimensions x, y, z. we use dimension_no to indicate which dimension is requested.
-// dimension_no start from 1 to 3, corresponding to x, y, z dimensions.
-int getLoopIndexFromCUDAVariables(int dimension_no)
-{
-  if (dimension_no == 1)
-   return blockDim.x * blockIdx.x + threadIdx.x; 
-  else if (dimension_no == 2)
-   return blockDim.y * blockIdx.y + threadIdx.y; 
-  else if (dimension_no == 3)
-   return blockDim.z * blockIdx.z + threadIdx.z; 
-  else 
-  {
-    printf("getLoopIndexFromCUDAVariables() accept a parameter of range from 1 to 3 only\n");
-   assert (false);
-  }
-}
-#endif
+

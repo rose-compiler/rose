@@ -202,6 +202,7 @@ __device__ void XOMP_accelerator_loop_default(int lower, int upper, int stride, 
 _p_num_threads: number of threads of the thread team participating the scheduling
 _p_thread_id: the current thread's id within the current team
 
+  lb and up are inclusive bounds (after normalization)
 Return the adjusted numbers including:
   loop_chunk_size: the real chunk size considering original chunksize and step
   loop_sched_index: the lower bound for current thread
@@ -311,4 +312,22 @@ __device__ int getLoopIndexFromCUDAVariables(int dimension_no)
     //assert (false);
   }
 }
+
+// A wrapper function for gridDim.x * blockDim.x, to hide CUDA variables gridDim.x and blockDim.x.
+__device__ int getCUDABlockThreadCount(int dimension_no)
+{
+   if (dimension_no == 1)
+   return gridDim.x * blockDim.x;
+  else if (dimension_no == 2)
+   return gridDim.y * blockDim.y;
+  else if (dimension_no == 3)
+   return gridDim.z * blockDim.z;
+  else
+  {
+    //printf("getCUDABlockThreadCount() accept a parameter of range from 1 to 3 only\n");
+    //assert (false);
+  }
+ 
+}
+
 
