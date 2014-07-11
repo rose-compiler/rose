@@ -357,6 +357,7 @@ set(roseBinaryFormats_fileList_part0
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Hexdump.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/MemoryMap.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Rva.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/SRecord.C
 
    ### Generic Base Classes ###
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/GenericDynamicLinking.C
