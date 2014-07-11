@@ -27,8 +27,10 @@ void initialize() {
         Sawyer::initializeLibrary();
         if (mprefix==NULL)
             mprefix = Sawyer::Message::Prefix::instance();
-        if (destination==NULL)
-            destination = Sawyer::Message::StreamSink::instance(std::cerr)->prefix(mprefix);
+        if (destination==NULL) {
+            // use FileSink or FdSink because StreamSink can't tell whether output is a tty or not.
+            destination = Sawyer::Message::FileSink::instance(stderr)->prefix(mprefix);
+        }
         mlog.initStreams(destination);
         facilities.insert(mlog);
 
