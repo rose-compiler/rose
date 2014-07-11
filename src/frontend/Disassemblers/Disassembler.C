@@ -6,6 +6,7 @@
 #include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
+#include "DisassemblerM68k.h"
 #include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
 #include "BinaryLoader.h"
@@ -152,6 +153,7 @@ Disassembler::initclass()
     RTS_INIT_RECURSIVE(class_mutex) {
         register_subclass(new DisassemblerArm());
         register_subclass(new DisassemblerPowerpc());
+        register_subclass(new DisassemblerM68k());
         register_subclass(new DisassemblerMips());
         register_subclass(new DisassemblerX86(2)); /*16-bit*/
         register_subclass(new DisassemblerX86(4)); /*32-bit*/
@@ -883,3 +885,4 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
 
     return successors;
 }
+

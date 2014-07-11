@@ -690,6 +690,18 @@ MemoryMap::at(rose_addr_t va) const
     return *found;
 }
 
+Sawyer::Optional<rose_addr_t>
+MemoryMap::next(rose_addr_t start_va, unsigned req_perms) const
+{
+    for (Segments::ConstNodeIterator si=p_segments.lowerBound(start_va); si!=p_segments.nodes().end(); ++si) {
+        const AddressInterval &extent = si->key();
+        const Segment &segment = si->value();
+        if (req_perms == (segment.get_mapperms() & req_perms))
+            return std::max(start_va, extent.least());
+    }
+    return Sawyer::Optional<rose_addr_t>();             // no next address
+}
+
 rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {

@@ -22,6 +22,10 @@ HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_START
 #include "InstructionEnumsMips.h"
 HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_END
 
+HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION_START
+#include "InstructionEnumsM68k.h"
+HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION_END
+
 HEADER_GENERIC_SECTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_GENERIC_SECTION_PREDECLARATION_END
@@ -3654,6 +3658,18 @@ HEADER_BINARY_MIPS_INSTRUCTION_START
                 virtual bool is_unknown() const /*override*/;
                 virtual bool get_branch_target(rose_addr_t *target) /*override*/;
 HEADER_BINARY_MIPS_INSTRUCTION_END
+
+
+HEADER_BINARY_M68K_INSTRUCTION_START
+	public:
+		virtual bool terminates_basic_block() /*override*/;
+		virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
+			     		      rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+		virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
+                virtual bool is_unknown() const /*override*/;
+		virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+HEADER_BINARY_M68K_INSTRUCTION_END
 
 
 

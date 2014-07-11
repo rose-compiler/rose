@@ -855,3 +855,80 @@ RegisterDictionary::dictionary_mips32_altnames()
     return regs;
 }
 
+/** Motorola M68330 register names */
+const RegisterDictionary *
+RegisterDictionary::dictionary_m68000() 
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("m68000");
+
+        // 32-bit integer data and address registers
+        for (size_t i=0; i<8; ++i) {
+            regs->insert("d"+StringUtility::numberToString(i),       m68k_regclass_data, i, 0,  32);
+            regs->insert("d"+StringUtility::numberToString(i)+".l",  m68k_regclass_data, i, 0,  16);
+            regs->insert("d"+StringUtility::numberToString(i)+".u",  m68k_regclass_data, i, 16, 16);
+            regs->insert("a"+StringUtility::numberToString(i),       m68k_regclass_addr, i, 0,  32);
+            regs->insert("a"+StringUtility::numberToString(i)+".l",  m68k_regclass_addr, i, 0,  16);
+            regs->insert("a"+StringUtility::numberToString(i)+".u",  m68k_regclass_addr, i, 16, 16);
+        }
+        regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
+
+        // Special-purpose registers
+        regs->insert("pc",    m68k_regclass_spr, m68k_spr_pc, 0,  32);          // program counter
+        regs->insert("ccr",   m68k_regclass_spr, m68k_spr_sr, 0,  8);           // condition code register
+        regs->insert("ccr_c", m68k_regclass_spr, m68k_spr_sr, 0,  1);           // condition code carry bit
+        regs->insert("ccr_v", m68k_regclass_spr, m68k_spr_sr, 1,  1);           // condition code overflow
+        regs->insert("ccr_z", m68k_regclass_spr, m68k_spr_sr, 2,  1);           // condition code zero bit
+        regs->insert("ccr_n", m68k_regclass_spr, m68k_spr_sr, 3,  1);           // condition code negative
+        regs->insert("ccr_x", m68k_regclass_spr, m68k_spr_sr, 4,  1);           // condition code extend
+        regs->insert("sr",    m68k_regclass_spr, m68k_spr_sr, 0,  16);          // status register
+        regs->insert("sr_i",  m68k_regclass_spr, m68k_spr_sr, 8,  3);           // interrupt priority mask
+        regs->insert("sr_s",  m68k_regclass_spr, m68k_spr_sr, 13, 1);           // status register user mode bit
+        regs->insert("sr_t",  m68k_regclass_spr, m68k_spr_sr, 14, 2);           // status register trace mode bits
+
+        // Floating point registers
+        for (size_t i=0; i<8; ++i)
+            regs->insert("fp"+StringUtility::numberToString(i),      m68k_regclass_fpr,  i, 0,  80);
+        regs->insert("fpcr",       m68k_regclass_spr, m68k_spr_fpcr,  0, 32);   // floating-point control register
+        regs->insert("fpcr_mctl",  m68k_regclass_spr, m68k_spr_fpcr,  0,  8);   // mode control
+        regs->insert("fpcr_xen",   m68k_regclass_spr, m68k_spr_fpcr,  8,  8);   // exception enable
+        regs->insert("fpcr_rnd",   m68k_regclass_spr, m68k_spr_fpcr,  4,  2);   // rounding mode
+        regs->insert("fpcr_prec",  m68k_regclass_spr, m68k_spr_fpcr,  6,  2);   // rounding precision
+        regs->insert("fpcr_inex1", m68k_regclass_spr, m68k_spr_fpcr,  8,  1);   // inexact decimal input
+        regs->insert("fpcr_inex2", m68k_regclass_spr, m68k_spr_fpcr,  9,  1);   // inexact operation
+        regs->insert("fpcr_dz",    m68k_regclass_spr, m68k_spr_fpcr, 10,  1);   // divide by zero
+        regs->insert("fpcr_unfl",  m68k_regclass_spr, m68k_spr_fpcr, 11,  1);   // underflow
+        regs->insert("fpcr_ovfl",  m68k_regclass_spr, m68k_spr_fpcr, 12,  1);   // overflow
+        regs->insert("fpcr_operr", m68k_regclass_spr, m68k_spr_fpcr, 13,  1);   // operand error
+        regs->insert("fpcr_snan",  m68k_regclass_spr, m68k_spr_fpcr, 14,  1);   // signaling not-a-number
+        regs->insert("fpcr_bsun",  m68k_regclass_spr, m68k_spr_fpcr, 15,  1);   // branch/set on unordered
+        regs->insert("fpsr",       m68k_regclass_spr, m68k_spr_fpsr,  0, 32);   // floating-point status register
+        regs->insert("fpsr_aexc",  m68k_regclass_spr, m68k_spr_fpsr,  0,  8);   // accrued exception status
+        regs->insert("aexc_inex",  m68k_regclass_spr, m68k_spr_fpsr,  3,  1);   // inexact
+        regs->insert("aexc_dz",    m68k_regclass_spr, m68k_spr_fpsr,  4,  1);   // divide by zero
+        regs->insert("aexc_unfl",  m68k_regclass_spr, m68k_spr_fpsr,  5,  1);   // underflow
+        regs->insert("aexc_ovfl",  m68k_regclass_spr, m68k_spr_fpsr,  6,  1);   // overflow
+        regs->insert("aexc_iop",   m68k_regclass_spr, m68k_spr_fpsr,  7,  1);   // invalid operation
+        regs->insert("fpsr_exc",   m68k_regclass_spr, m68k_spr_fpsr,  8,  8);   // exception status
+        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input
+        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation
+        regs->insert("exc_dz",     m68k_regclass_spr, m68k_spr_fpsr, 10,  1);   // divide by zero
+        regs->insert("exc_unfl",   m68k_regclass_spr, m68k_spr_fpsr, 11,  1);   // underflow
+        regs->insert("exc_ovfl",   m68k_regclass_spr, m68k_spr_fpsr, 12,  1);   // overflow
+        regs->insert("exc_operr",  m68k_regclass_spr, m68k_spr_fpsr, 13,  1);   // operand error
+        regs->insert("exc_snan",   m68k_regclass_spr, m68k_spr_fpsr, 14,  1);   // signaling not-a-number
+        regs->insert("exc_bsun",   m68k_regclass_spr, m68k_spr_fpsr, 15,  1);   // branch/set on unordered
+        regs->insert("fpsr_quot",  m68k_regclass_spr, m68k_spr_fpsr, 16,  8);   // quotient
+        regs->insert("fpcc",       m68k_regclass_spr, m68k_spr_fpsr, 24,  8);   // floating-point conditon code
+        regs->insert("fpcc_nan",   m68k_regclass_spr, m68k_spr_fpsr, 24,  1);   // not-a-number or unordered
+        regs->insert("fpcc_i",     m68k_regclass_spr, m68k_spr_fpsr, 25,  1);   // infinity
+        regs->insert("fpcc_z",     m68k_regclass_spr, m68k_spr_fpsr, 25,  1);   // zero
+        regs->insert("fpcc_n",     m68k_regclass_spr, m68k_spr_fpsr, 26,  1);   // negative
+        regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
+        
+        // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
+        regs->insert("ssp",     m68k_regclass_sup, m68k_sup_ssp,     0, 32);    // supervisor A7 stack pointer
+    }
+    return regs;
+}

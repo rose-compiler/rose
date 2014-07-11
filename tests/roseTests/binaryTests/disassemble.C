@@ -29,6 +29,7 @@
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
+#include "DisassemblerM68k.h"
 #include "Diagnostics.h"
 
 /*FIXME: Rose cannot parse this file.*/
@@ -57,6 +58,8 @@ get_disassembler(const std::string &name)
         return new DisassemblerX86(4);
     } else if (0==name.compare("amd64")) {
         return new DisassemblerX86(8);
+    } else if (0==name.compare("m68k")) {
+        return new DisassemblerM68k();
     } else {
         return NULL;
     }

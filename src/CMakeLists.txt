@@ -299,6 +299,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerMips.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerM68k.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerPowerpc.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerX86.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
@@ -409,6 +410,7 @@ set( roseAsmUnparser_SRC
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseX86Asm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseArmAsm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparsePowerpcAsm.C 
+     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseM68kAsm.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseMipsAsm.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser_compat.C
