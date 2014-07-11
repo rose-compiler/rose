@@ -216,6 +216,12 @@ MemoryMap::ExternBuffer::write(const void *buf, size_t offset, size_t nbytes)
 }
 
 MemoryMap::BufferPtr
+MemoryMap::ByteBuffer::create(size_t size)
+{
+    return BufferPtr(new ByteBuffer(size));
+}
+
+MemoryMap::BufferPtr
 MemoryMap::ByteBuffer::create(void *data, size_t size)
 {
     return BufferPtr(new ByteBuffer((uint8_t*)data, size));
