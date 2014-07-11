@@ -121,8 +121,14 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_80.C \
    test2014_81.C \
    test2014_82.C \
+   test2014_85.C \
+   test2014_86.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (7/10/2014): Remaining bugs in new application.
+#  test2014_83.C 
+#  test2014_84.C 
 
 # DQ (7/3/2014): This C++ language feature is only properly supported in EDG version 4.9
 if ROSE_USE_EDG_VERSION_4_9

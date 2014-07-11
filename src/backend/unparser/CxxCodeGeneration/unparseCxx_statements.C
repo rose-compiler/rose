@@ -273,10 +273,65 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
    {
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
+     ROSE_ASSERT (initializedName != NULL);
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
-     ROSE_ASSERT (initializedName!= NULL);
+
+  // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
+     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+        {
+       // Here we want to use the type syntx that originally appears with this function declaration in the original code.
+          SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
+          ROSE_ASSERT(function_type != NULL);
+#if 0
+       // printf ("Found the original function type syntax: function_type = %p = %s \n",function_type,function_type->unparseToString().c_str());
+          printf ("In unparseFunctionParameterDeclaration(): Found the original function type syntax: function_type = %p = %s \n",function_type,function_type->class_name().c_str());
+#endif
+          SgFunctionParameterTypeList* type_argument_list = function_type->get_argument_list();
+          ROSE_ASSERT(type_argument_list != NULL);
+
+       // find the associated index from the initializedName.
+          SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
+          ROSE_ASSERT(name_argument_list != NULL);
+
+          SgInitializedNamePtrList & name_list = name_argument_list->get_args();
+
+          SgInitializedNamePtrList::iterator i = name_list.begin();
+          size_t counter = 0;
+          while (i != name_list.end() && (*i) != initializedName)
+             {
+#if 0
+               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %zu \n",counter);
+#endif
+               counter++;
+               i++;
+             }
+
+          ROSE_ASSERT(i != name_list.end());
+#if 0
+          printf ("In unparseFunctionParameterDeclaration(): counter = %zu \n",counter);
+#endif
+       // SgTypePtrList & get_arguments()
+          tmp_type = type_argument_list->get_arguments()[counter];
+#if 0
+          printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
+#if 0
+          printf ("In unparseFunctionParameterDeclaration(): (funcdecl_stmt->get_type_syntax_is_available() == true): exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+       // DQ (7/10/2014): Enforce this rule.
+          ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
+        }
+
+#if 0
+     printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // DQ (8/9/2013): refactored to support additional refactoring to seperate out code to unparse SgInitializedName.
      bool oldStyleDefinition = funcdecl_stmt->get_oldStyleDefinition();
@@ -3039,6 +3094,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("calling unparse_helper \n");
           curprint ("/* calling unparse_helper */");
 #endif
           unparse_helper(funcdecl_stmt, ninfo);
@@ -3047,6 +3103,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_declstatement_ptr(NULL);
 
 #if 0
+          printf ("DONE: calling unparse_helper \n");
           curprint ("/* DONE: calling unparse_helper */");
 #endif
 
