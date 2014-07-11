@@ -311,6 +311,7 @@ __device__ int getLoopIndexFromCUDAVariables(int dimension_no)
     //printf("getLoopIndexFromCUDAVariables() accept a parameter of range from 1 to 3 only\n");
     //assert (false);
   }
+   return -1; 
 }
 
 // A wrapper function for gridDim.x * blockDim.x, to hide CUDA variables gridDim.x and blockDim.x.
@@ -327,7 +328,7 @@ __device__ int getCUDABlockThreadCount(int dimension_no)
     //printf("getCUDABlockThreadCount() accept a parameter of range from 1 to 3 only\n");
     //assert (false);
   }
- 
+   return -1; 
 }
 
 
