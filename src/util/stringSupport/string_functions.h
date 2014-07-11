@@ -442,8 +442,14 @@ namespace StringUtility
             /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
             ROSE_UTIL_API std::string htmlEscape(const std::string& s);
 
+   /** Escape as for C/C++ string literals. */
+   ROSE_UTIL_API std::string cEscape(const std::string&);
+
     // DQ (2/3/2009): Moved this function from attach_all_info.C
        ROSE_UTIL_API std::vector<std::string> readWordsInFile( std::string filename);
+
+   /** Convert an ASCII hexadecimal character to an integer. */
+   ROSE_UTIL_API unsigned hexadecimalToInt(char);
 
    /** Convert a number to a hexadecimal and decimal string.
     *
