@@ -30,10 +30,6 @@ bin_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C linux_syscalls.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-bin_PROGRAMS += dumpSRecords
-dumpSRecords_SOURCES = dumpSRecords.C
-dumpSRecords_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
-
 ###############################################################################################################################
 # The executables and their test cases...
 ###############################################################################################################################

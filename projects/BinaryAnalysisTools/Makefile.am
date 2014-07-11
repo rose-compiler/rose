@@ -13,6 +13,14 @@ linearDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets
 
+bin_PROGRAMS += dumpSRecords
+dumpSRecords_SOURCES = dumpSRecords.C
+dumpSRecords_CPPFLAGS = $(ROSE_INCLUDES)
+dumpSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# x86-call-targets
+
 bin_PROGRAMS += x86-call-targets
 x86_call_targets_SOURCES = x86-call-targets.C
 x86_call_targets_CPPFLAGS = $(ROSE_INCLUDES)
