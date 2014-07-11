@@ -189,6 +189,31 @@ ValueParser::operator()(const char *s, const char **rest, const Location &loc) {
     throw std::runtime_error("subclass must implement an operator() with a cursor or C strings");
 }
 
+SAWYER_EXPORT AnyParser<std::string>::Ptr
+anyParser() {
+    return AnyParser<std::string>::instance();
+}
+
+SAWYER_EXPORT IntegerParser<int>::Ptr
+integerParser() {
+    return IntegerParser<int>::instance();
+}
+
+SAWYER_EXPORT NonNegativeIntegerParser<unsigned>::Ptr
+nonNegativeIntegerParser() {
+    return NonNegativeIntegerParser<unsigned>::instance();
+}
+
+SAWYER_EXPORT RealNumberParser<double>::Ptr
+realNumberParser() {
+    return RealNumberParser<double>::instance();
+}
+
+SAWYER_EXPORT BooleanParser<bool>::Ptr
+booleanParser() {
+    return BooleanParser<bool>::instance();
+}
+
 SAWYER_EXPORT ParsedValue
 StringSetParser::operator()(Cursor &cursor) {
     Location locStart = cursor.location();
@@ -324,7 +349,33 @@ SAWYER_EXPORT void
 ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
     BOOST_FOREACH (const ParsedValue &value, parserResult.parsed(switchKey_)) {
         if (0==value.string().compare("list")) {
+            std::cout <<"Logging facilities status\n"
+                //       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
+                      <<"  Letters indicate a stream that is enabled; hyphens indicate disabled.\n"
+                      <<"  D=debug, T=trace, W=where, I=info, W=warning, E=error, F=fatal\n";
             facilities_.print(std::cout);
+        } else if (0==value.string().compare("help")) {
+            //           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
+            std::cout <<"Logging is controlled with a simple language consisting of a comma-separated\n"
+                      <<"list of facility specifications, where each facility specification is a\n"
+                      <<"facility name (use \"list\" to get a listing of facilities) followed by a\n"
+                      <<"parentheses-enclosed, comma-separated list of importance specifications. An\n"
+                      <<"importance specification is an importance name (debug, trace, where, info,\n"
+                      <<"warn, error, fatal). Each importance name may be preceded by a bang (\"!\")\n"
+                      <<"to disable that stream, or a relational operator (\"<\", \"<=\", \">\", or \">=\")\n"
+                      <<"to enable related streams.  The special name \"all\" means all importance levels\n"
+                      <<"and the name \"none\" is an alias for \"!all\" (i.e., disable all levels).  If\n"
+                      <<"the facility name and parentheses are omitted, then the naked importance levels\n"
+                      <<"affect all facilities.  The specification is processed from left to right.\n"
+                      <<"Examples:\n"
+                      <<"   help                           -- show this documentation\n"
+                      <<"   list                           -- list status for all streams\n"
+                      <<"   all                            -- turn on everything\n"
+                      <<"   all,!debug                     -- turn on everything except debug\n"
+                      <<"   none, foo(debug)               -- turn off everything bug foo's debug\n"
+                      <<"   none, >=info, foo(none,debug)  -- info and greater everywhere; foo's debug\n";
+            if (exitOnHelp_)
+                exit(0);
         } else {
             std::string errorMessage = facilities_.control(value.string());
             if (!errorMessage.empty())
@@ -348,8 +399,8 @@ SAWYER_EXPORT ShowHelpAndExit::Ptr
 showHelpAndExit(int exitStatus) { return ShowHelpAndExit::instance(exitStatus); }
 
 SAWYER_EXPORT ConfigureDiagnostics::Ptr
-configureDiagnostics(const std::string &switchKey, Message::Facilities &facilities) {
-    return ConfigureDiagnostics::instance(switchKey, facilities);
+configureDiagnostics(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp) {
+    return ConfigureDiagnostics::instance(switchKey, facilities, exitOnHelp);
 }
 
 /*******************************************************************************************************************************
