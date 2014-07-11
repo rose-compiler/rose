@@ -9,10 +9,13 @@
 #include "Disassembler.h"                               // rose::Disassembler
 #include "Partitioner.h"                                // rose::Partitioner
 
+#include <cstdarg>
+
 namespace rose {
 namespace Diagnostics {
 
 Sawyer::Message::DestinationPtr destination;
+Sawyer::Message::PrefixPtr mprefix;
 Sawyer::Message::Facility mlog("rose");
 Sawyer::Message::Facilities facilities;
 
@@ -22,8 +25,10 @@ void initialize() {
         // point to something.  This is also the place where one might want to assign some other message plumbing to
         // rose::Diagnostics::destination (such as sending messages to additional locations).
         Sawyer::initializeLibrary();
+        if (mprefix==NULL)
+            mprefix = Sawyer::Message::Prefix::instance();
         if (destination==NULL)
-            destination = Sawyer::Message::merr;
+            destination = Sawyer::Message::StreamSink::instance(std::cerr)->prefix(mprefix);
         mlog.initStreams(destination);
         facilities.insert(mlog);
 
@@ -49,6 +54,40 @@ void initialize() {
 bool isInitialized() {
     return destination!=NULL;
 }
+
+StreamPrintf mfprintf(std::ostream &stream) {
+    return StreamPrintf(stream);
+}
+
+int StreamPrintf::operator()(const char *fmt, ...) {
+    char buf_[1024];                                    // arbitrary size; most strings will be smaller
+    char *buf = buf_;
+    int bufsz = sizeof buf_, need = 0;
+
+    while (1) {
+        va_list ap;
+        va_start(ap, fmt);
+        need = vsnprintf(buf, bufsz, fmt, ap);          // "need" does not include NUL termination
+        va_end(ap);
+        if (need >= bufsz) {
+            if (buf!=buf_)
+                delete[] buf;
+            bufsz = need + 1;                           // +1 for NUL termination
+            buf = new char[bufsz];
+        } else {
+            break;
+        }
+    }
+    stream <<buf;
+    if (buf!=buf_)
+        delete[] buf;
+
+    return need;
+}
+
+        
+    
+
 
 } // namespace
 } // namespace
