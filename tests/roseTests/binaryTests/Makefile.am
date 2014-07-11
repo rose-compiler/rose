@@ -23,6 +23,18 @@ TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
 TEST_SPECIMEN = $(srcdir)/specimen_tests.conf
 
 ###############################################################################################################################
+# These are tools that should be installed
+###############################################################################################################################
+
+bin_PROGRAMS += disassemble
+disassemble_SOURCES = disassemble.C linux_syscalls.C
+disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+bin_PROGRAMS += dumpSRecords
+dumpSRecords_SOURCES = dumpSRecords.C
+dumpSRecords_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
+###############################################################################################################################
 # The executables and their test cases...
 ###############################################################################################################################
 
@@ -431,12 +443,6 @@ testRNG.passed: testRNG
 # Disassembly tests
 ###############################################################################################################################
 
-# "disassemble" is more of a tool than a test, so we install it.
-bin_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C linux_syscalls.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += disassemble.conf
-
 # Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
 # MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
 # PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
@@ -444,7 +450,7 @@ disassemble1_specimens = $(filter-out $(any_any_mips_specimens) $(any_any_ppc_sp
 disassemble1_directory = $(top_srcdir)/binaries/samples
 disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
 disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
-EXTRA_DIST += $(disassemble1_answers)
+EXTRA_DIST += $(disassemble1_answers) disassemble.conf
 TEST_TARGETS += $(disassemble1_test_targets)
 
 $(disassemble1_test_targets): disassemble1_%.passed: $(disassemble1_directory)/% disassemble disassemble.conf disassemble1_%.ans
