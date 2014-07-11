@@ -1042,6 +1042,20 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/9/2014): Example test2014_85.C demonstrates that the declared type of a function can be 
+  // equivalent to other same functions (associated defining and non-defining declarations), but 
+  // syntatically different in a way that makes a difference to the code generated from the unparser 
+  // (but not to the formal type system).  I am not clear if this type should be traversed, I think 
+  // not, since it is a function type used only for the representation of syntax.
+     FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type_syntax", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL /* || DEF2TYPE_TRAVERSAL */, NO_DELETE);
+
+  // DQ (7/9/2014): Added boolean flag to communicate when the function's type syntax is different from 
+  // the function's type.  However, when the type_syntax is non-null, it is always an equivalent type.
+  // Future work will enforce this concept fo type equivalence, not yet supported.
+     FunctionDeclaration.setDataPrototype ( "bool","type_syntax_is_available", "= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
