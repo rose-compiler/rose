@@ -352,7 +352,7 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
             std::cout <<"Logging facilities status\n"
                 //       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
                       <<"  Letters indicate a stream that is enabled; hyphens indicate disabled.\n"
-                      <<"  D=debug, T=trace, W=where, I=info, W=warning, E=error, F=fatal\n";
+                      <<"  D=debug, T=trace, H=where, I=info, W=warning, E=error, F=fatal\n";
             facilities_.print(std::cout);
         } else if (0==value.string().compare("help")) {
             //           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
@@ -372,7 +372,7 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
                       <<"   list                           -- list status for all streams\n"
                       <<"   all                            -- turn on everything\n"
                       <<"   all,!debug                     -- turn on everything except debug\n"
-                      <<"   none, foo(debug)               -- turn off everything bug foo's debug\n"
+                      <<"   none, foo(debug)               -- turn off everything but foo's debug\n"
                       <<"   none, >=info, foo(none,debug)  -- info and greater everywhere; foo's debug\n";
             if (exitOnHelp_)
                 exit(0);
