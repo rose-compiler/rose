@@ -1,9 +1,18 @@
 #include "SRecord.h"
 #include "Diagnostics.h"
 #include "StringUtility.h"
+#include "integerOps.h"
 #include <boost/foreach.hpp>
 
+using namespace rose::Diagnostics;
+
 namespace BinaryAnalysis {
+
+std::ostream&
+operator<<(std::ostream &stream, const SRecord &x) {
+    x.print(stream);
+    return stream;
+}
 
 // class method
 size_t
@@ -33,7 +42,7 @@ SRecord::parse(const std::string &input)
     using namespace StringUtility;
 
     // Header: 'S' + type
-    if (input.size() < 1+1+2)                           // 'S' type payloadsize
+    if (input.size() < 1+1+2)                           // 'S' + type + payloadsize
         return SRecord().error("short input");
     if (input[0]!='S')
         return SRecord().error("not an S-Record");
@@ -156,6 +165,71 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
         }
     }
     return startingAddr;
+}
+
+// class method
+size_t
+SRecord::dump(const MemoryMap &map, std::ostream &out, size_t addrSize) {
+    ASSERT_require(2==addrSize || 3==addrSize || 4==addrSize);
+    SRecord::Type type = SREC_NONE;
+    switch (addrSize) {
+        case 2: type = SREC_DATA16; break;
+        case 3: type = SREC_DATA24; break;
+        case 4: type = SREC_DATA32; break;
+    }
+
+    size_t nRecords = 0;
+    rose_addr_t va = 0;
+    static const size_t maxBytesPerRecord = 28;         // common value so each S-Record fits on an 80-character screen
+    uint8_t buffer[maxBytesPerRecord];
+    while (map.next(va).apply(va)) {
+        size_t nread = map.read(buffer, va, maxBytesPerRecord, MemoryMap::MM_PROT_NONE);
+        ASSERT_require(nread>0);                        // since map.next() returned true
+        SRecord srec(type, va, buffer, nread);
+        out <<srec <<"\n";
+        va += nread;
+        ++nRecords;
+    }
+    return nRecords;
+}
+
+void
+SRecord::print(std::ostream &out) const {
+    // Header
+    switch (type_) {
+        case SREC_HEADER:   out <<"S0"; break;
+        case SREC_DATA16:   out <<"S1"; break;
+        case SREC_DATA24:   out <<"S2"; break;
+        case SREC_DATA32:   out <<"S3"; break;
+        case SREC_RESERVED: out <<"S4"; break;
+        case SREC_COUNT16:  out <<"S5"; break;
+        case SREC_COUNT24:  out <<"S6"; break;
+        case SREC_START32:  out <<"S7"; break;
+        case SREC_START24:  out <<"S8"; break;
+        case SREC_START16:  out <<"S9"; break;
+        default:
+            ASSERT_not_reachable("invalid S-Record type " + StringUtility::numberToString(type_));
+    }
+
+    // Payload size
+    size_t size = addressNBytes(type_) + data_.size() + 1 /*checksum*/;
+    ASSERT_forbid2(size > 255, "S-Record size is too large");
+    mfprintf(out)("%02X", size);
+
+    // Address
+    rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(8*addressNBytes(type_));
+    if ((addr_ & ~addrMask) != 0) {
+        throw std::runtime_error("S-Record address " + StringUtility::addrToString(addr_) +
+                                 " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");
+    }
+    mfprintf(out)("%0*"PRIX64, 2*addressNBytes(type_), addr_);
+
+    // Data
+    BOOST_FOREACH (uint8_t byte, data_)
+        mfprintf(out)("%02X", (unsigned)byte);
+
+    // Checksum
+    mfprintf(out)("%02X", (unsigned)checksum());
 }
 
 size_t
