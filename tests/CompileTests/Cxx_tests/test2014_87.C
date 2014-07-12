@@ -23,8 +23,8 @@ class PertHypreSolver
 
 } // namespace XXX
 
-// With this using declaration, we do NOT properly name qualify "SAMRAI::tbox::Dimension m_dim;"
-using namespace SAMRAI;
+// Without this using declaration, we properly name qualify "SAMRAI::tbox::Dimension m_dim;"
+// using namespace SAMRAI;
 
 namespace XXX {
 

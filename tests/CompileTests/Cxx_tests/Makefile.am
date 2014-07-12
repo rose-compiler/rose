@@ -123,6 +123,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_82.C \
    test2014_85.C \
    test2014_86.C \
+   test2014_87.C \
+   test2014_88.C \
+   test2014_89.C \
+   test2014_90.C \
+   test2014_91.C \
    lulesh.C \
    luleshTALC.C
 
