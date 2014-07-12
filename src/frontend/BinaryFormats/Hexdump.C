@@ -60,7 +60,12 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
                         f <<numeric_sep;
                     if (j>0 && 0 == j % fmt.colsize)
                         f <<" ";
-                    f <<str_printf(numeric_fmt, data[i+j]);
+                    std::map<unsigned char, std::string>::const_iterator special = fmt.numeric_fmt_special.find(data[i+j]);
+                    if (special == fmt.numeric_fmt_special.end()) {
+                        f <<str_printf(numeric_fmt, data[i+j]);
+                    } else {
+                        f <<str_printf(special->second.c_str(), special->first);
+                    }
                 } else if (fmt.pad_numeric) {
                     if (j>0)
                         f <<numeric_sep;
