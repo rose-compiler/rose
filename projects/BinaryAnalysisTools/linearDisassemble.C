@@ -78,8 +78,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                          "rounding up causes addresses after a valid instruction to be skipped then a warning is printed. "
                          "No warning is printed if the alignment skips addresses after a disassembly failure."));
     switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
-                    .doc("Show version number ("ROSE_PACKAGE_VERSION") on standard output and exit."));
+                    .action(showVersionAndExit(version_message(), 0))
+                    .doc("Shows version information for various ROSE components and then exits."));
 
     Parser parser;
     parser
@@ -139,6 +139,6 @@ int main(int argc, char *argv[])
             ++va;
         }
     }
-    
+
     exit(0);
 }

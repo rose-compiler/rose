@@ -3246,40 +3246,34 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
 
-  // Event logging.  We need all of the '-rose:log WHAT' command-line switches in the order they appear, which seems to mean
-  // that we need to parse the argv vector ourselves. CommandlineParsing doesn't have a suitable function, and the sla code in
-  // sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API, specifically the
-  // part about being able to return an array of values.
-
+  //
+  // Diagnostic logging.  We need all of the '-rose:log WHAT' command-line switches in the order they appear, which seems to
+  // mean that we need to parse the argv vector ourselves. CommandlineParsing doesn't have a suitable function, and the sla
+  // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
+  // specifically the part about being able to return an array of values.
+  //
      Diagnostics::initialize();                         // this maybe should go somewhere else?
      static const std::string removalString = "-rose:log (REMOVE_ME)";
      for (size_t i=0; i<argv.size(); ++i) {
-         std::string switchValue;
-         if (0==strncmp(argv[i].c_str(), "-rose:log=", 10)) {
-             switchValue = argv[i].substr(10);
+         if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
              argv[i] = removalString;
-         } else if ((0==strcmp(argv[i].c_str(), "-rose:log")) &&
-                    i+1 < argv.size()) {
+             std::string switchValue = argv[++i];
              argv[i] = removalString;
-             switchValue = argv[++i];
-             argv[i] = removalString;
-         } else {
-             continue;
-         }
 
-         // This is a bit of a roundabout way to do this, but it supports "help", "list", etc and keeps ROSE's capabilities up
-         // to date with the latest documentation in Sawyer.
-         using namespace Sawyer::CommandLine;
-         SwitchGroup switches;
-         switches.insert(Switch("rose:log")
-                         .resetLongPrefixes("-")
-                         .action(configureDiagnostics("rose:log", Diagnostics::facilities))
-                         .argument("config"));
-         std::vector<std::string> args;
-         args.push_back("-rose:log");
-         args.push_back(switchValue);
-         Parser parser;
-         parser.with(switches).parse(args).apply();
+             // This is a bit of a roundabout way to do this, but it supports "help", "list", etc and keeps ROSE's capabilities
+             // up to date with the latest documentation in Sawyer.
+             using namespace Sawyer::CommandLine;
+             SwitchGroup switches;
+             switches.insert(Switch("rose:log")
+                             .resetLongPrefixes("-")    // ROSE switches only support single hyphens
+                             .action(configureDiagnostics("rose:log", Diagnostics::facilities))
+                             .argument("config"));
+             std::vector<std::string> args;
+             args.push_back("-rose:log");
+             args.push_back(switchValue);
+             Parser parser;
+             parser.with(switches).parse(args).apply(); // causes configureDiagnostics to be called
+         }
      }
      argv.erase(std::remove(argv.begin(), argv.end(), removalString), argv.end());
      

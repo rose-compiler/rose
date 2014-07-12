@@ -220,14 +220,6 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     std::cout <<"\n\n";
 }
     
-static void showVersionAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
-    std::vector<std::string> args;
-    args.push_back(cmdline.parser().programName());
-    args.push_back("--version");
-    frontend(args);
-    exit(0);
-}
-
 int main(int argc, char *argv[])
 {
     // Configure diagnostic output
@@ -272,12 +264,10 @@ int main(int argc, char *argv[])
                     .intrinsicValue(false, useInstructions)
                     .hidden(true));
     switches.insert(Switch("log", 'L')
-                    .whichValue(SAVE_ALL)
-                    .argument("config")
-                    .action(configureDiagnostics("log", rose::Diagnostics::facilities))
-                    .doc("Configure diagnostic facilities.  This switch can appear multiple times and is processed in the "
-                         "order it appears.  Each string can be either the word \"list\" or a facilities control "
-                         "sentence, the syntax of which can be found in the Sawyer::Message::Facilities::control method."));
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::facilities))
+                    .argument("logspec")
+                    .whichValue(Sawyer::CommandLine::SAVE_ALL)
+                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
     std::vector<std::string> functionNameRegexList;
     switches.insert(Switch("names")
                     .whichValue(SAVE_ALL)
@@ -285,9 +275,8 @@ int main(int argc, char *argv[])
                     .doc("Specifies a regular expression for function names that will be analyzed.  If more than one regular "
                          "expression is given then a function is analyzed if it's name matches any of the expressions."));
     switches.insert(Switch("version", 'V')
-                    .action(userAction(::showVersionAndExit))
-                    .doc("Emit the ROSE version number to the standard output stream and exit. This version "
-                         "number should be included in all bug reports (see below)."));
+                    .action(showVersionAndExit(version_message(), 0))
+                    .doc("Shows version information for various ROSE components and then exits."));
 
     Sawyer::CommandLine::Parser cmdline_parser;
     cmdline_parser.errorStream(mlog[FATAL]);
@@ -304,7 +293,7 @@ int main(int argc, char *argv[])
     cmdline_parser.doc("Options",
                        "These are the switches recognized by the @prop{programName} tool itself. Documentation for switches "
                        "that can be passed to ROSE's frontend() function is available by using \"-rose:help\" in the "
-                       "@v{rose_switches} part of the command-line (the \"--\" and a specimen name are require because "
+                       "@v{rose_switches} part of the command-line (the \"--\" and a specimen name are required because "
                        "frontend tries to parse the program before it spits out the help message, so do it this way: "
                        "\"@prop{programName} -- -rose:help @v{specimen}\").");
 

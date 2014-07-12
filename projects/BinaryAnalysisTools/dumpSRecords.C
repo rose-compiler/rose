@@ -16,14 +16,6 @@ struct Options {
     Options(): quiet(false) {}
 };
 
-static void showVersionAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
-    std::vector<std::string> args;
-    args.push_back(cmdline.parser().programName());
-    args.push_back("--version");
-    frontend(args);
-    exit(0);
-}
-
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Options &opts) {
     using namespace Sawyer::CommandLine;
@@ -33,7 +25,7 @@ parseCommandLine(int argc, char *argv[], Options &opts) {
                     .action(showHelpAndExit(0))
                     .doc("Shows this documentation and exits."));
     switches.insert(Switch("version", 'V')
-                    .action(userAction(::showVersionAndExit))
+                    .action(showVersionAndExit(version_message(), 0))
                     .doc("Shows version information for various ROSE components and then exits."));
     switches.insert(Switch("log", 'L')
                     .action(configureDiagnostics("log", Diagnostics::facilities))
@@ -88,8 +80,9 @@ main(int argc, char *argv[]) {
     }
 
     // Read input file and parse S-Records
-    mlog[WHERE] <<"parsing S-Records from " <<inputFileName <<"\n";
+    Sawyer::Message::Stream where(mlog[WHERE] <<"parsing S-Records from " <<inputFileName);
     std::vector<BinaryAnalysis::SRecord> srecs = BinaryAnalysis::SRecord::parse(input);
+    where <<"; " <<StringUtility::plural(srecs.size(), "records") <<"\n";
     for (size_t i=0; i<srecs.size(); ++i) {
         if (!srecs[i].error().empty()) {
             mlog[ERROR] <<inputFileName <<":" <<(i+1) <<": " <<srecs[i].error() <<"\n";
@@ -129,6 +122,8 @@ main(int argc, char *argv[]) {
     if (!opts.quiet) {
         mlog[WHERE] <<"dumping memory in hexdump format\n";
         HexdumpFormat fmt;
+        fmt.numeric_fmt_special[0x00] = " .";           // make zeros less obtrusive
+        fmt.numeric_fmt_special[0xff] = "##";           // make 0xff more obtrusive
         BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
             const AddressInterval &interval = node.key();
             const MemoryMap::Segment &segment = node.value();

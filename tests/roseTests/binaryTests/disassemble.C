@@ -710,14 +710,6 @@ static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
     exit(0);
 }
 
-static void showVersionAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
-    std::vector<std::string> args;
-    args.push_back(cmdline.parser().programName());
-    args.push_back("--version");
-    frontend(args);
-    exit(0);
-}
-
 int
 main(int argc, char *argv[]) 
 {
@@ -828,6 +820,12 @@ main(int argc, char *argv[])
                          "disassembling. This argument may appear more than once, or the individual paths may be separated "
                          "from one another by colons."));
                     
+    switches.insert(Switch("log", 'L')
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::facilities))
+                    .argument("logspec")
+                    .whichValue(Sawyer::CommandLine::SAVE_ALL)
+                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
+
     rose_addr_t anon_pages = 8;
     switches.insert(Switch("omit-anon")
                     .argument("npages", Sawyer::CommandLine::nonNegativeIntegerParser(anon_pages))
@@ -991,7 +989,7 @@ main(int argc, char *argv[])
                          "to determine system call names."));
 
     switches.insert(Switch("version", 'V')
-                    .action(Sawyer::CommandLine::userAction(showVersionAndExit))
+                    .action(Sawyer::CommandLine::showVersionAndExit(version_message(), 0))
                     .doc("Shows version information for various ROSE components and then exits."));
 
     /*------------------------------------------------------------------------------------------------------------------------
