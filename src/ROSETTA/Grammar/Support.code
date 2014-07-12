@@ -4101,6 +4101,9 @@ HEADER_SYMBOL_TABLE_START
           static bool get_force_search_of_base_classes();
           static void set_force_search_of_base_classes( bool value );
 
+       // DQ (7/12/2014): Adding support for static data member.
+          static SgNodeSet & get_aliasSymbolCausalNodeSet();
+
      protected:
 
 #if 0
@@ -8897,6 +8900,74 @@ SgSymbolTable::find_symbol_support (const SgName & nm, SgTemplateParameterPtrLis
    }
 #endif
 
+#if 0
+bool
+isSubset(const std::vector<SgNode*>& a, const std::vector<SgNode*>& b)
+   {
+  // DQ (7/12/2014): I am not aware of a faster algorithm for this. Using the shorter 
+  // vector (from the SgAliasSymbol) first will generally reduce the complexity for 
+  // order N instead of N^2.  The value of N would be the number of causal SgNode objects
+  // (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement, SgBaseClass, etc.).
+
+     for (std::vector<SgNode*>::const_iterator i = a.begin(); i != a.end(); i++)
+        {
+          bool found = false;
+
+          for (std::vector<SgNode*>::const_iterator j = b.begin(); j != b.end(); j++)
+             {
+               if (*i == *j)
+                  {
+                    found = true;
+                    break;
+                  }
+             }
+
+          if (!found)
+             {
+               return false;
+             }
+        }
+
+     return true;
+   }
+#endif
+
+
+bool
+isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
+   {
+  // DQ (7/12/2014): I am not aware of a faster algorithm for this. Using the shorter 
+  // vector (from the SgAliasSymbol) first will generally reduce the complexity for 
+  // order Na * log Nb instead of log Nb.  The value of Na would be the number of 
+  // causal nodes for any SgAliasSymbol (typically one) and Nb would be the number 
+  // of causal SgNode objects (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement, 
+  // SgBaseClass, etc.). 
+
+     for (std::vector<SgNode*>::const_iterator i = a_vector.begin(); i != a_vector.end(); i++)
+        {
+          bool found = false;
+#if 0
+          for (std::set<SgNode*>::const_iterator j = b_set.begin(); j != b_set.end(); j++)
+             {
+               if (*i == *j)
+                  {
+                    found = true;
+                    break;
+                  }
+             }
+#else
+          std::set<SgNode*>::const_iterator j = find(b_set.begin(),b_set.end(),*i);
+          found = (j != b_set.end());
+#endif
+          if (!found)
+             {
+               return false;
+             }
+        }
+
+     return true;
+   }
+
 
 // DQ (7/31/2013): Added support for template parameters and template specialization.
 // template<class ReturnType> ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type)
@@ -9159,7 +9230,41 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                       // DQ (8/8/2013): I think we should return the symbol rather than break.
                       // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
                       // break;
+#if 1
+                      // DQ (7/12/2014): To support better symbol handling for name qualification. At this point were 
+                      // we have identified the target aliased symbol, we need to check if the associated reason for 
+                      // it being an alias symbol has been see in the AST yet.  The cause for the alias symbol is a
+                      // causal node that is stored in the SgAliasSymbol (new modification to SgAliasSymbol).  The list
+                      // of possible causal nodes for alis symbols to be inserted is help in a static member of the 
+                      // SgSymbolTable (new modification to SgSymbolTable).
+                      // if (aliasSymbolCausalNodeSet.find(original_aliased_symbol->get_causal_nodes().begin(),original_aliased_symbol->get_causal_nodes().end()) != aliasSymbolCausalNodeSet.end())
+                         bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
+                         if (foundCausalNode == true)
+                            {
+#if 0
+                              printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
+                              printf (" --- aliasedSymbol->get_causal_nodes().size() = %zu \n",aliasedSymbol->get_causal_nodes().size());
+                              printf (" --- get_aliasSymbolCausalNodeSet().size()    = %zu \n",get_aliasSymbolCausalNodeSet().size());
+#endif
+                              return original_aliased_symbol;
+                            }
+                           else
+                            {
+                           // DQ (7/12/2014): If we didn't find the causal node then we can't consider the alias to exist 
+                           // yet in the traversal of the AST represented by the symbol tabel query at this point.
+                              original_aliased_symbol = NULL;
+#if 0
+                              printf ("associated causal nodes not seen yet in traversal of AST: \n",aliasedSymbol->get_causal_nodes().size());
+                              for (std::vector<SgNode*>::iterator i = aliasedSymbol->get_causal_nodes().begin(); i != aliasedSymbol->get_causal_nodes().end(); i++)
+                                 {
+                                   printf ("   --- causal node = %p = %s \n",*i,(*i)->class_name().c_str());
+                                 }
+#endif
+                            }
+#else
+                      // DQ (7/12/2014): Older original version of code.
                          return original_aliased_symbol;
+#endif
                        }
                       else
                        {
@@ -9179,7 +9284,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // DQ (3/28/2014): If we reach this point, then in the case of Java, we have to search the 
        // base class definitions (since the representation of Java base class does not presently 
        // inject the base class symbols into the derived class symbol table.  There are pros and 
-       // const to this design.  But this function wil at least make the API semantics that same.
+       // const to this design.  But this function will at least make the API semantics that same.
           SgNode* parentNode = this->get_parent();
           ROSE_ASSERT(parentNode != NULL);
           SgClassDefinition* classDefinition = isSgClassDefinition(parentNode);
@@ -10230,6 +10335,9 @@ SgSymbolTable::maxCollisions()
 // DQ (3/30/2014): Declaration of space for static data member.
 bool SgSymbolTable::p_force_search_of_base_classes = false;
 
+// DQ (7/12/2014): Declaration of space for static data member.
+SgNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
+
 bool
 SgSymbolTable::get_force_search_of_base_classes()
    {
@@ -10241,6 +10349,14 @@ SgSymbolTable::set_force_search_of_base_classes( bool value )
    {
      p_force_search_of_base_classes = value;
    }
+
+// DQ (7/12/2014): Access function for static data member.
+SgNodeSet &
+SgSymbolTable::get_aliasSymbolCausalNodeSet()
+   {
+     return p_aliasSymbolCausalNodeSet;
+   }
+
 
 SOURCE_SYMBOL_TABLE_END
 

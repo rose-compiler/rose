@@ -5081,8 +5081,11 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
-                              printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
-                                   node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                              if (SgProject::get_verbose() > 0)
+                                 {
+                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                        node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                                 }
                             }
 #else
                       // DQ (9/26/2011): Trying to handle this via a better implementation of this test.

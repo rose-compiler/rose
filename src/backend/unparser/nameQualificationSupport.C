@@ -268,6 +268,19 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
                break;
              }
 
+       // DQ (7/11/2014): Added this case to support test2014_84.C.
+          case V_SgFunctionDefinition:
+             {
+               SgFunctionDefinition* definition = isSgFunctionDefinition(scope);
+               ROSE_ASSERT(definition != NULL);
+
+               SgFunctionDeclaration* declaration = isSgFunctionDeclaration(definition->get_declaration());
+               ROSE_ASSERT(declaration != NULL);
+
+               return_declaration = declaration;
+               break;
+             }
+
        // Some scopes don't have an associated declaration (return NULL in these cases).
        // Also missing some of the Fortran specific scopes.
           case V_SgGlobal:
@@ -590,9 +603,14 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
                SgAliasSymbol* alias = isSgAliasSymbol(symbol);
                ROSE_ASSERT(alias != NULL);
 
+            // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+               ROSE_ASSERT(false);
+
                SgSymbol* baseSymbol = alias->get_alias();
                ROSE_ASSERT(baseSymbol != NULL);
-
+#if 1
+               printf ("NameQualificationTraversal::requiresTypeElaboration(): Detected a SgAliasSymbol: alias = %p baseSymbol = %p = %s \n",alias,baseSymbol,baseSymbol->class_name().c_str());
+#endif
                typeElaborationRequired = requiresTypeElaboration(baseSymbol);
                break;
              }
@@ -817,11 +835,20 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                printf ("Lookup symbol based on name only (via parents starting at currentScope = %p = %s: name = %s symbol = %p = %s) \n",currentScope,currentScope->class_name().c_str(),name.str(),symbol,symbol->class_name().c_str());
 #endif
                SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+
+            // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+               ROSE_ASSERT(aliasSymbol == NULL);
+
                if (aliasSymbol != NULL)
                   {
                     symbol = aliasSymbol->get_alias();
                     ROSE_ASSERT(symbol != NULL);
 
+                 // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+                    ROSE_ASSERT(false);
+#if 1
+                    printf ("In NameQualificationTraversal::nameQualificationDepth(): Detected a SgAliasSymbol: alias = %p baseSymbol = %p = %s \n",aliasSymbol,symbol,symbol->class_name().c_str());
+#endif
 #if 1
                  // DQ (8/21/2012): Commented out the assertion, but warn about how nesting appears to be present.
                  // DQ (8/20/2012): The symbol in side the SgAliasSymbol should not be another alias. This fails for test2004_48.C).
@@ -1596,6 +1623,20 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
             // DQ (5/6/2011): Now we have fixed derived class symbol tables to inject there base classes symbols into the derived class.
                SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
 
+            // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+               ROSE_ASSERT(aliasSymbol == NULL);
+#if 1
+            // DQ (7/12/2014): debugging use of SgAliasSymbol.
+               if (aliasSymbol != NULL)
+                  {
+                 // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+                    ROSE_ASSERT(false);
+
+                    ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
+                    printf ("In NameQualificationTraversal::nameQualificationDepth(): Detected a SgAliasSymbol: alias = %p baseSymbol = %p = %s \n",aliasSymbol,aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str());
+                  }
+#endif
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
 #endif
@@ -1679,10 +1720,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                  // However, since symbol != NULL, the numberOfSymbols should be non-zero.
                  // ROSE_ASSERT(numberOfSymbols > 0);
 
+                 // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+                    ROSE_ASSERT(aliasSymbol == NULL);
+
                  // Not clear if we want to resolve this to another scope since the alias sysmbols scope 
                  // is want might have to be qualified (not the scope of the aliased declaration).
                     if (aliasSymbol != NULL)
                        {
+                      // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+                         ROSE_ASSERT(false);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("Resetting the symbol to that stored in the SgAliasSymbol \n");
 #endif
@@ -2493,8 +2540,18 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
 #else
        // Loop over possible chain of alias symbols to find the original sysmbol.
           SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+
+       // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+          ROSE_ASSERT(aliasSymbol == NULL);
+
           while (aliasSymbol != NULL) 
              {
+            // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
+               ROSE_ASSERT(false);
+#if 1
+            // DQ (7/12/2014): debugging use of SgAliasSymbol.
+               printf ("In NameQualificationTraversal::nameQualificationDepth(): resolving alias symbol in loop: alias = %p baseSymbol = %p = %s \n",aliasSymbol,aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str());
+#endif
                symbol = aliasSymbol->get_alias();
                aliasSymbol = isSgAliasSymbol(symbol);
              }
@@ -2747,7 +2804,10 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
           if (typeNameString.length() > 6000)
              {
-               printf ("Warning: type names should not be this long...(unless this is boost) typeNameString.length() = %zu \n",typeNameString.length());
+               if (SgProject::get_verbose() > 0)
+                  {
+                    printf ("Warning: type names should not be this long...(unless this is boost) typeNameString.length() = %zu \n",typeNameString.length());
+                  }
 #if 0
             // DQ (6/30/2013): Allow the output of an example so that we can verify that this make 
             // sense (and that it is not a result of some comment output from the unparsing of types).
@@ -4364,9 +4424,28 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
                if (currentStatement == NULL)
                   {
+                 // DQ (7/11/2014): test2014_83.C demonstrates how this can happen because the SgMemberFunctionRefExp 
+                 // appears in an index expression of an array type in a variable declaration.
                     printf ("Error: Location of where we can't associate the expression to a statement \n");
                     memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
                     memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+
+                 // DQ (7/11/2014): Added wupport for when this is a nested call and the scope where the call is made from is essential.
+                    if (explictlySpecifiedCurrentScope != NULL)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("explictlySpecifiedCurrentScope = %p = %s \n",explictlySpecifiedCurrentScope,explictlySpecifiedCurrentScope->class_name().c_str());
+#endif
+                         currentStatement = explictlySpecifiedCurrentScope;
+                       }
+                      else
+                       {
+                         printf ("Error: explictlySpecifiedCurrentScope == NULL \n");
+
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+
                   }
                ROSE_ASSERT(currentStatement != NULL);
 
@@ -4622,8 +4701,31 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     SgInitializedName* initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-                    ROSE_ASSERT(variableDeclaration != NULL);
+#if 1
+                    currentStatement = explictlySpecifiedCurrentScope;
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("In case SgVarRefExp: (currentStatement == NULL) Calling nameQualificationDepth() variableDeclaration = %p initializedName->get_parent() = %p = %s \n",
+                         variableDeclaration,initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+                 // ROSE_ASSERT(variableDeclaration != NULL);
+                    if (variableDeclaration == NULL)
+                       {
+                      // DQ (7/11/2014): Test code test2014_84.C demonstrates this problem.
+                         ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
 
+                         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
+                         ROSE_ASSERT(functionParameterList != NULL);
+
+                         int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
+                         setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+                         int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
+                         setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                       }
+#else
+                    ROSE_ASSERT(variableDeclaration != NULL);
                     currentStatement = explictlySpecifiedCurrentScope;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -4632,6 +4734,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
 
                     setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+#endif
                   }
              }
         }
@@ -4965,6 +5068,20 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                printf ("declarationForReferencedNameSet = %p NOT added to referencedNameSet \n",declarationForReferencedNameSet);
 #endif
              }
+        }
+
+  // DQ (7/12/2014): Add any possible nodes that can generate SgAliasSymbols to the SgSymbolTable::p_aliasSymbolCausalNodeSet SgNodeSet.
+  // This is used by the symbol table to know when to use or ignore SgAliasSymbols in symbol table lookups.
+     if (isSgUsingDirectiveStatement(n) != NULL || isSgUsingDeclarationStatement(n) != NULL || isSgBaseClass(n) != NULL)
+        {
+       // SgNodeSet & get_aliasSymbolCausalNodeSet()
+
+          SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(n);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): Added SgAliasSymbols causal node = %p = %s to SgSymbolTable::p_aliasSymbolCausalNodeSet size = %zu \n",
+               n,n->class_name().c_str(),SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
+#endif
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
