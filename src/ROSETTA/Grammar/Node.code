@@ -634,6 +634,10 @@ class SgUntypedFunctionDeclaration;
 typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
 typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
 
+class SgAsmRegisterReferenceExpression;
+typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
+typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
+
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;

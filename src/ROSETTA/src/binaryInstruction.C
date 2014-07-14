@@ -211,6 +211,10 @@ Grammar::setUpBinaryInstructions()
                                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
+    // An ordered list of registers
+    NEW_TERMINAL_MACRO(AsmRegisterNames, "AsmRegisterNames", "AsmRegisterNamesTag");
+    AsmRegisterNames.setDataPrototype("SgAsmRegisterReferenceExpressionPtrList", "registers", "",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
     NEW_TERMINAL_MACRO(AsmIntegerValueExpression, "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag");
     AsmIntegerValueExpression.setFunctionPrototype("HEADER_INTEGER_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
@@ -298,7 +302,7 @@ Grammar::setUpBinaryInstructions()
     NEW_NONTERMINAL_MACRO(AsmExpression,
                           AsmValueExpression           | AsmBinaryExpression            | AsmUnaryExpression        |
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
-                          AsmCommonSubExpression       | AsmExprListExp,
+                          AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames,
                           "AsmExpression", "AsmExpressionTag", false);
     AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
