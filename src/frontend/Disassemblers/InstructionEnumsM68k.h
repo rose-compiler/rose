@@ -123,8 +123,8 @@ enum M68kSupervisorRegister {
  *     Base Displacement           (bd,PC,Xn)       111  011     X    X      X       -           m68k_eam_pcidxbd
  *
  * Program counter memory indirect                                                               m68k_eam_pcmi
- *     Postindexed                 ([bd,PC],Xn,od)  111  011     X    X      X       X           m68k_eam_pcmpost
- *     Preindexed                  ([bd,PC,Xn],od)  111  011     X    X      X       X           m68k_eam_pcmpre
+ *     Postindexed                 ([bd,PC],Xn,od)  111  011     X    X      X       X(+)        m68k_eam_pcmpost
+ *     Preindexed                  ([bd,PC,Xn],od)  111  011     X    X      X       X(+)        m68k_eam_pcmpre
  *
  * Absolute data addressing                                                                      m68k_eam_abs
  *     Short                       (xxx).W          111  000     X    X      X       X(+)        m68k_eam_absw

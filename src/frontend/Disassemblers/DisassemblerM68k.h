@@ -78,6 +78,13 @@ public:
      *  created; when @p regnum is eight through 15 an address register is created. */
     SgAsmM68kRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
+    /** Create a list of data and/or address registers.
+     *
+     *  The bit mask indicates the registers. Starting at the least significant bit, the register are either:
+     *  D0, D1, ... D7, A0, A1, ... A7 if @p reverse is false, or A7, A6, ... A0, D7, D6, ... D0 if @p reverse is true.  The
+     *  returned list has the registers in order starting at the least significant bit. */
+    SgAsmRegisterNames *makeRegistersFromMask(unsigned mask, size_t nbits, bool reverse=false);
+
     /** Create a reference to the status register. */
     SgAsmM68kRegisterReferenceExpression *makeStatusRegister();
 

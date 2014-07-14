@@ -218,6 +218,20 @@ DisassemblerM68k::makeDataAddressRegister(unsigned regnum, size_t nbits, size_t 
     return regnum <= 7 ? makeDataRegister(regnum, nbits, bit_offset) : makeAddressRegister(regnum-8, nbits, bit_offset);
 }
 
+SgAsmRegisterNames *
+DisassemblerM68k::makeRegistersFromMask(unsigned mask, size_t nbits, bool reverse)
+{
+    SgAsmRegisterNames *reglist = new SgAsmRegisterNames;
+    for (unsigned bitnum=0; bitnum<16; ++bitnum) {
+        if (0 != (mask & IntegerOps::shl1<unsigned>(bitnum))) {
+            SgAsmM68kRegisterReferenceExpression *reg = makeDataAddressRegister(reverse?15-bitnum:bitnum, nbits, 0);
+            reglist->get_registers().push_back(reg);
+            reg->set_parent(reglist);
+        }
+    }
+    return reglist;
+}
+
 SgAsmM68kRegisterReferenceExpression *
 DisassemblerM68k::makeStatusRegister()
 {
@@ -2018,10 +2032,11 @@ struct M68k_move16_a: M68k {
 struct M68k_movem_rm: M68k {
     M68k_movem_rm(): M68k("movem_rm", m68k_family,
                           OP(4) & BITS<7, 11>(0x11) &
-                          EAM(m68k_eam_ari|m68k_eam_dec|m68k_eam_dsp|m68k_eam_idx|m68k_eam_mi|m68k_eam_abs)) {}
+                          EAM((m68k_eam_control & m68k_eam_alter & ~m68k_eam_pcmi) | m68k_eam_dec)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = extract<6, 6>(w0) ? 32 : 16;
-        SgAsmExpression *src = d->makeImmediateExtension(16, 0);
+        bool isPreDecrement = extract<3, 5>(w0) == 4;
+        SgAsmRegisterNames *src = d->makeRegistersFromMask(d->instruction_word(1), nbits, isPreDecrement);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 1);
         return d->makeInstruction(m68k_movem, "movem."+sizeToLetter(nbits), src, dst);
     }
@@ -2035,7 +2050,7 @@ struct M68k_movem_mr: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = extract<6, 6>(w0) ? 32 : 16;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 1);
-        SgAsmExpression *dst = d->makeImmediateExtension(16, 0);
+        SgAsmExpression *dst = d->makeRegistersFromMask(d->instruction_word(1), nbits);
         return d->makeInstruction(m68k_movem, "movem."+sizeToLetter(nbits), src, dst);
     }
 };
