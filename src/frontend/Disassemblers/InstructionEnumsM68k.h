@@ -340,8 +340,8 @@ enum M68kInstructionKind {
 //    m68k_msac,                          /**< Multiply subtract */
     m68k_muls,                                          /**< Signed multiply */
     m68k_mulu,                                          /**< Unsigned multiply */
-//    m68k_mvs,                           /**< Move with sign extend */
-//    m68k_mvz,                           /**< Move with zero fill */
+    m68k_mvs,                                           /**< Move with sign extend */
+    m68k_mvz,                                           /**< Move with zero fill */
     m68k_nbcd,                                          /**< Negate decimal with extend */
     m68k_neg,                                           /**< Negate */
     m68k_negx,                                          /**< Negate with extend */

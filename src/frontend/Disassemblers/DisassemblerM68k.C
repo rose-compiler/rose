@@ -2254,6 +2254,33 @@ struct M68k_mulu_w: M68k {
     }
 };
 
+// MVS.B <ea>y, Dx
+// MVS.W <ea>y, Dx
+struct M68k_mvs: M68k {
+    M68k_mvs(): M68k("mvs", m68k_fsisa_b,
+                     OP(7) & BITS<7, 8>(2) & EAM(m68k_eam_all & ~m68k_eam_234)) {}
+
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        size_t nbits = extract<6, 6>(w0) ? 16 : 8;
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
+        SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
+        return d->makeInstruction(m68k_mvs, "mvs."+sizeToLetter(nbits), src, dst);
+    }
+};
+
+// MVZ.B <ea>y, Dx
+// MVZ.W <ea>y, Dx
+struct M68k_mvz: M68k {
+    M68k_mvz(): M68k("mvz", m68k_fsisa_b,
+                     OP(7) & BITS<7, 8>(3) & EAM(m68k_eam_all & ~m68k_eam_234)) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        size_t nbits = extract<6, 6>(w0) ? 16 : 8;
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
+        SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
+        return d->makeInstruction(m68k_mvz, "mvz."+sizeToLetter(nbits), src, dst);
+    }
+};
+
 // NBCD.B <ea>
 struct M68k_nbcd: M68k {
     M68k_nbcd(): M68k("nbcd", m68k_family,
@@ -3159,37 +3186,6 @@ struct M68k_unpk: M68k {
 //      }
 //  };
 //  
-//  // MVS.B <ea>y, Dx
-//  // MVS.W <ea>y, Dx
-//  //
-//  // Note: Reference manual table shows all effective addressing modes are possible, but the text near the table says "use only
-//  // data addressing modes from the following table", which according to the definition in section 2.2.13 excludes the address
-//  // register direct mode. [Robb P. Matzke 2013-10-02]
-//  struct M68k_mvs: M68k {
-//      M68k_mvs(): M68k("mvs", OP(7) & BITS<7, 8>(2) & EAM(m68k_eam_data)) {}
-//      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-//          size_t nbits = extract<6, 6>(w0) ? 16 : 8;
-//          SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
-//          SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
-//          return d->makeInstruction(m68k_mvs, "mvs."+sizeToLetter(nbits), src, dst);
-//      }
-//  };
-//  
-//  // MVZ.B <ea>y, Dx
-//  // MVZ.W <ea>y, Dx
-//  //
-//  // Note: Reference manual table shows all effective addressing modes are possible, but the text above the table says "use
-//  // the following data addressing modes", which according to the definition in section 2.2.13 excludes the address register
-//  // direct mode. [Robb P. Matzke 2013-10-02]
-//  struct M68k_mvz: M68k {
-//      M68k_mvz(): M68k("mvz", OP(7) & BITS<7, 8>(3) & EAM(m68k_eam_data)) {}
-//      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-//          size_t nbits = extract<6, 6>(w0) ? 16 : 8;
-//          SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
-//          SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), 32);
-//          return d->makeInstruction(m68k_mvz, "mvz."+sizeToLetter(nbits), src, dst);
-//      }
-//  };
 //  
 //  // PULSE
 //  struct M68k_pulse: M68k {
@@ -3364,6 +3360,8 @@ DisassemblerM68k::init()
     M68k_DECODER(multiply_l);
     M68k_DECODER(multiply_64);
     M68k_DECODER(mulu_w);
+    M68k_DECODER(mvs);
+    M68k_DECODER(mvz);
     M68k_DECODER(nbcd);
     M68k_DECODER(neg);
     M68k_DECODER(negx);
