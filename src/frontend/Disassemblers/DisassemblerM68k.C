@@ -229,6 +229,7 @@ DisassemblerM68k::makeRegistersFromMask(unsigned mask, size_t nbits, bool revers
             reg->set_parent(reglist);
         }
     }
+    reglist->set_mask(mask);
     return reglist;
 }
 
