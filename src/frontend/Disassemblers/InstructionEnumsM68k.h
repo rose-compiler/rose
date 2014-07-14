@@ -37,6 +37,13 @@ enum M68kFamily {
     // Freescale CPUs based on m68k
     m68k_freescale      = 0xff000000,                   /**< Freescale CPUs based on Motorola 683xx */
     m68k_cpu32          = 0x01000000,                   /**< Freescale CPU32 (similar to MC68020 w/out bitfield insns */
+    m68k_fsisa_a        = 0x02000000,                   /**< Freescale ISA_A, the original ColdFire ISA (subset of M68000) */
+    m68k_fsisa_b        = 0x04000000,                   /**< Freescale ISA_B, improved data movement instructions, etc. */
+    m68k_fsisa_c        = 0x08000000,                   /**< Freescale ISA_C, improved bit manipulation instructions */
+    m68k_fsisa_fpu      = 0x10000000,                   /**< Freescale FPU, original ColdFire floating point ISA. */
+    m68k_fsisa_mac      = 0x20000000,                   /**< Freescale MAC, original ColdFire multiply-accumulate ISA. */
+    m68k_fsisa_emac     = 0x40000000,                   /**< Freescale EMAC, enhanced multiply-accumulate ISA. */
+    m68k_fsisa_emacb    = 0x80000000,                   /**< Freescale EMAC_B, dual accumulation instructions. */
 };
 
 enum M68kRegisterClass {
@@ -95,47 +102,47 @@ enum M68kSupervisorRegister {
  *
  * @code
  *                                                 Mode   Reg.
- * Addressing Modes                Syntax          Field  Field  Data Memory Control Alterable   Symbol
- * ------------------------------- --------------- -----  -----  ---- ------ ------- ---------   -----------------
- * Register direct                                                                               m68k_eam_rd
- *     Data                        Dn               000  reg#    X    -      -       X           m68k_eam_drd
- *     Address                     An               001  reg#    -    -      -       X           m68k_eam_ard
+ * Addressing Modes                Syntax          Field  Field  Data Mem Ctl Alter 234  Symbol
+ * ------------------------------- --------------- -----  -----  ---- --- --- ----- ---  -----------------
+ * Register direct                                                                       m68k_eam_rd
+ *     Data                        Dn               000  reg#    X    -   -   X     -    m68k_eam_drd
+ *     Address                     An               001  reg#    -    -   -   X     -    m68k_eam_ard
  *
- * Register indirect                                                                             m68k_eam_ri
- *     Address                     (An)             010  reg#    X    X      X       X           m68k_eam_ari
- *     Address with postincrement  (An)+            011  reg#    X    X      -       X           m68k_eam_inc
- *     Address with predecrement   -(An)            100  reg#    X    X      -       X           m68k_eam_dec
- *     Address with displacement   (d16,An)         101  reg#    X    X      X       X           m68k_eam_dsp
+ * Register indirect                                                                     m68k_eam_ri
+ *     Address                     (An)             010  reg#    X    X   X   X     -    m68k_eam_ari
+ *     Address with postincrement  (An)+            011  reg#    X    X   -   X     -    m68k_eam_inc
+ *     Address with predecrement   -(An)            100  reg#    X    X   -   X     -    m68k_eam_dec
+ *     Address with displacement   (d16,An)         101  reg#    X    X   X   X     -    m68k_eam_dsp
  *
- * Address register indirect with index                                                          m68k_eam_idx
- *     8-bit displacement          (d8,An,Xn)       110  reg#    X    X      X       X           m68k_eam_idx8
- *     Base Displacement           (bd,An,Xn)       110  reg#    X    X      X       X           m68k_eam_idxbd
+ * Address register indirect with index                                                  m68k_eam_idx
+ *     8-bit displacement          (d8,An,Xn)       110  reg#    X    X   X   X     -    m68k_eam_idx8
+ *     Base Displacement           (bd,An,Xn)       110  reg#    X    X   X   X     X    m68k_eam_idxbd
  *
- * Memory indirect                                                                               m68k_eam_mi
- *     Postindexed                 ([bd,An],Xn,od)  110  reg#    X    X      X       X           m68k_eam_mpost
- *     Preindexed                  ([bd,An,Xn],od)  110  reg#    X    X      X       X           m68k_eam_mpre
+ * Memory indirect                                                                       m68k_eam_mi
+ *     Postindexed                 ([bd,An],Xn,od)  110  reg#    X    X   X   X     X    m68k_eam_mpost
+ *     Preindexed                  ([bd,An,Xn],od)  110  reg#    X    X   X   X     X    m68k_eam_mpre
  *
- * Program counter indirect                                                                      m68k_eam_pci
- *     With displacement           (d16,PC)         111  010     X    X      X       -           m68k_eam_pcdsp
+ * Program counter indirect                                                              m68k_eam_pci
+ *     With displacement           (d16,PC)         111  010     X    X   X   -     -    m68k_eam_pcdsp
  *
- * Program counter indirect with index                                                           m68k_eam_pcidx
- *     8-Bit Displacement          (d8,PC,Xn)       111  011     X    X      X       -           m68k_eam_pcidx8
- *     Base Displacement           (bd,PC,Xn)       111  011     X    X      X       -           m68k_eam_pcidxbd
+ * Program counter indirect with index                                                   m68k_eam_pcidx
+ *     8-Bit Displacement          (d8,PC,Xn)       111  011     X    X   X   -     -    m68k_eam_pcidx8
+ *     Base Displacement           (bd,PC,Xn)       111  011     X    X   X   -     X    m68k_eam_pcidxbd
  *
- * Program counter memory indirect                                                               m68k_eam_pcmi
- *     Postindexed                 ([bd,PC],Xn,od)  111  011     X    X      X       X(+)        m68k_eam_pcmpost
- *     Preindexed                  ([bd,PC,Xn],od)  111  011     X    X      X       X(+)        m68k_eam_pcmpre
+ * Program counter memory indirect                                                       m68k_eam_pcmi
+ *     Postindexed                 ([bd,PC],Xn,od)  111  011     X    X   X   X(+)  X    m68k_eam_pcmpost
+ *     Preindexed                  ([bd,PC,Xn],od)  111  011     X    X   X   X(+)  X    m68k_eam_pcmpre
  *
- * Absolute data addressing                                                                      m68k_eam_abs
- *     Short                       (xxx).W          111  000     X    X      X       X(+)        m68k_eam_absw
- *     Long                        (xxx).L          111  001(*)  X    X      X       X(+)        m68k_eam_absl
+ * Absolute data addressing                                                              m68k_eam_abs
+ *     Short                       (xxx).W          111  000     X    X   X   X(+)  -    m68k_eam_absw
+ *     Long                        (xxx).L          111  001(*)  X    X   X   X(+)  -    m68k_eam_absl
  *
- * Immediate                       #<xxx>           111  100     X    X      -       -           m68k_eam_imm
+ * Immediate                       #<xxx>           111  100     X    X   -   -     -    m68k_eam_imm
  *
  * Unused
- *     NA                          NA               111  101     -    -      -       -
- *     NA                          NA               111  110     -    -      -       -
- *     NA                          NA               111  111     -    -      -       -
+ *     NA                          NA               111  101     -    -   -   -     -
+ *     NA                          NA               111  110     -    -   -   -     -
+ *     NA                          NA               111  111     -    -   -   -     -
  * @endcode
  *
  * Note *: the "reg field" for absolute data addressing long is indicated as "000" in the documentation but I believe it should
@@ -184,7 +191,7 @@ enum M68kEffectiveAddressMode {
     m68k_eam_pcmi    = 0x00006000,      /**< Program counter memory indirect */
     m68k_eam_abs     = 0x00018000,      /**< Absolute data addressing */
 
-    // masks for the data, memory, control, and alterable columns of the table above.
+    // masks for the data, mem, ctl, alter, and 234 columns of the table above.
     m68k_eam_data    = 0x0003fffd,      /**< Data addressing modes. All modes except address register direct. */
     m68k_eam_memory  = 0x0003fffc,      /**< Memory addressing modes. All modes except register direct. */
     m68k_eam_control = 0x0001ffe4,      /**< Control addressing modes. Memory modes except increment, decrement, and
@@ -194,6 +201,7 @@ enum M68kEffectiveAddressMode {
                                          *   documentation excludes absolute addressing modes from the definition of alterable
                                          *   modes, but then includes the absolute addressing modes in all the instructions
                                          *   that say they use alterable addressing modes. */
+    m68k_eam_234     = 0x00007380,      /**< Addressing modes specific to m680{20,30,40}. */
 
     // additional useful masks
     m68k_eam_direct  = 0x00000003,      /**< All register direct addressing modes. */
@@ -320,7 +328,7 @@ enum M68kInstructionKind {
     m68k_lsl,                                           /**< Logical shift left */
     m68k_lsr,                                           /**< Logical shift right */
 //    m68k_mac,                           /**< Multiply accumulate */
-//    m68k_mov3q,                         /**< Move 3-bit data quick */
+    m68k_mov3q,                                         /**< Move 3-bit data quick */
 //    m68k_movclr,
     m68k_move,                                          /**< Move from source to destination (data, CCR, ACC, MACSR, MASK) */
     m68k_move16,                                        /**< Move 16-byte block */

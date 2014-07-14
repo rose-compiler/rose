@@ -2023,6 +2023,20 @@ struct M68k_lshift_mem: M68k {
     }
 };
 
+// MOV3Q.L #<data>, <ea>x
+struct M68k_mov3q: M68k {
+    M68k_mov3q(): M68k("mov3q", m68k_fsisa_b,
+                       OP(10) & BITS<6, 8>(5) &
+                       EAM(m68k_eam_alter & ~m68k_eam_234)) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        int32_t val = signExtend<3, 32>((int32_t)extract<9, 11>(w0));
+        if (0==val)
+            val = -1;
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
+        return d->makeInstruction(m68k_mov3q, "mov3q.l", d->makeImmediateValue(32, val), dst);
+    }
+};
+
 // MOVE.B <ea>y, <ea>x
 // MOVE.W <ea>y, <ea>x
 // MOVE.L <ea>y, <ea>x
@@ -2808,7 +2822,7 @@ struct M68k_trapcc: M68k {
         M68kInstructionKind kind = m68k_unknown_instruction;
         switch (extract<8, 11>(w0)) {
             case 0x0: kind = m68k_trapt;  break;
-            case 0x1: kind = m68k_trapf;  break;
+            case 0x1: kind = m68k_trapf;  break;        // aka. TPF
             case 0x2: kind = m68k_traphi; break;
             case 0x3: kind = m68k_trapls; break;
             case 0x4: kind = m68k_trapcc; break;
@@ -3000,24 +3014,6 @@ struct M68k_unpk: M68k {
 //      }
 //  };
 //  
-//  // MOV3Q.L #<data>, <ea>x
-//  //
-//  // Note: The reference manual addressing mode table lists address register direct as a valid addressing mode but the
-//  // text says "use only data addressing modes listed in the following table."  According to 2.2.13, the address register direct
-//  // mode is not a data addressing mode.  I am assuming that the table is correct rather than the text is correct, since the
-//  // table omits the non-alterable modes but the text includes them (and it doesn't make sense for the destination to be
-//  // non-alterable). [Robb P. Matzke 2013-10-02]
-//  struct M68k_mov3q: M68k {
-//      M68k_mov3q(): M68k("mov3q", OP(10) & BITS<6, 8>(5) &
-//                         EAM(m68k_eam_all & ~(m68k_eam_imm | m68k_eam_pc))) {}
-//      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-//          int32_t val = signExtend<3, 32>(extract<9, 11>(w0));
-//          if (0==val)
-//              val = -1;
-//          SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 0);
-//          return d->makeInstruction(m68k_mov3q, "mov3q.l", d->makeImmediateValue(32, val), dst);
-//      }
-//  };
 //  
 //  
 //  // MOVE.L ACC, Rx
@@ -3352,6 +3348,7 @@ DisassemblerM68k::init()
     M68k_DECODER(lshift_rr);
     M68k_DECODER(lshift_ir);
     M68k_DECODER(lshift_mem);
+    M68k_DECODER(mov3q);
     M68k_DECODER(move);
     M68k_DECODER(movea);
     M68k_DECODER(move_from_ccr);
