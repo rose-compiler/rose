@@ -313,6 +313,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmFunction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInterpretation.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmM68kInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmMipsInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmX86Instruction.C
@@ -358,6 +359,7 @@ set(roseBinaryFormats_fileList_part0
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Hexdump.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/MemoryMap.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Rva.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/SRecord.C
 
    ### Generic Base Classes ###
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/GenericDynamicLinking.C
@@ -453,11 +455,14 @@ set( midend_src
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
  ${CMAKE_SOURCE_DIR}/src/midend/astSnippet/Snippet.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/AbstractLocation.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDataFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCallingConvention.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryReturnValueUsed.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryTaintedFlow.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/DwarfLineMapper.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
@@ -564,6 +569,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DataFlowSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherPowerpc.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/DispatcherX86.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C

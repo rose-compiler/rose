@@ -61,7 +61,7 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/tutorial
-	cp rosePublicConfig.h $(DESTDIR)$(includedir)/
+	cp rosePublicConfig.h $(pkgincludedir)
 
 install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
@@ -146,7 +146,7 @@ distclean-local:
 # into the distribution instead; from which then rose_config.h is generated).
 # However, the public version should be installed and distributed.
 noinst_HEADERS = rose_config.h
-include_HEADERS = rosePublicConfig.h
+pkginclude_HEADERS = rosePublicConfig.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
 # called when compiling the /src/util directory (perhaps it should be located in 
@@ -169,7 +169,8 @@ install-data-local: uninstall-local
 	-mkdir $(DESTDIR)$(includedir)
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
 #	if !ROSE_USE_NEW_EDG_INTERFACE
-	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
+	mkdir -p "$(DESTDIR)$(includedir)/edg"
+	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/edg"
 #	endif
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'

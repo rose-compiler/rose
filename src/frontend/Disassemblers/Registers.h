@@ -1,6 +1,8 @@
 #ifndef ROSE_BINARY_REGISTERS_H
 #define ROSE_BINARY_REGISTERS_H
 
+#include "sage3basic.h"                                 // for RegisterDescriptor
+
 #include <map>
 #include <queue>
 #include <string>

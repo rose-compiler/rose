@@ -7,6 +7,7 @@ libbinaryMidend_la_DEPENDENCIES =
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
+    AbstractLocation.C						\
     binary_analysis.C						\
     RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp	\
     RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp	\
@@ -17,6 +18,7 @@ libbinaryMidend_la_SOURCES =					\
     dataflowanalyses/RoseBin_Emulate.cpp			\
     dataflowanalyses/RoseBin_DataFlowAbstract.cpp		\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/DataFlowSemantics2.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
     instructionSemantics/NullSemantics2.C			\
@@ -36,10 +38,12 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/YicesSolver.C				\
     GraphAlgorithms.C						\
     BinaryControlFlow.C						\
+    BinaryDataFlow.C						\
     BinaryDominance.C						\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
     BinaryReturnValueUsed.C					\
+    BinaryTaintedFlow.C						\
     DwarfLineMapper.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
@@ -52,7 +56,8 @@ libbinaryMidend_la_SOURCES +=					\
     libraryIdentification/functionIdentification.C 
 endif
 
-include_HEADERS =					\
+pkginclude_HEADERS =					\
+    AbstractLocation.h					\
     binary_analysis.h					\
     GraphAlgorithms.h					\
     RoseBin_CallGraphAnalysis.h				\
@@ -72,6 +77,7 @@ include_HEADERS =					\
     instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/DataFlowSemantics2.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
     instructionSemantics/IntervalSemantics.h		\
@@ -96,12 +102,14 @@ include_HEADERS =					\
     libraryIdentification/libraryIdentification.h	\
     ether.h						\
     BinaryControlFlow.h					\
+    BinaryDataFlow.h					\
     BinaryDominance.h					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryTaintedFlow.h					\
     DwarfLineMapper.h
 
 

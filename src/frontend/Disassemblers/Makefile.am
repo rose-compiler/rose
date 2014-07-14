@@ -22,12 +22,10 @@ else
    libroseDisassemblers_la_SOURCES = dummyDisassembler.C
 endif
 
-include_HEADERS =													\
-	Partitioner.h Registers.h BitPattern.h										\
+pkginclude_HEADERS =											\
+	Partitioner.h Registers.h BitPattern.h									\
 	Disassembler.h DisassemblerArm.h DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h	\
-	Assembler.h AssemblerX86.h AssemblerX86Init.h									\
+	Assembler.h AssemblerX86.h AssemblerX86Init.h							\
 	InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h
-
-dist_include_HEADERS =
 
 EXTRA_DIST = CMakeLists.txt dummyDisassembler.C

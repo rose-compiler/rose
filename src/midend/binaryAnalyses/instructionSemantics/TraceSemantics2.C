@@ -890,11 +890,11 @@ RiscOperators::writeRegister(const RegisterDescriptor &a, const BaseSemantics::S
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
-                          size_t d)
+                          const BaseSemantics::SValuePtr &d)
 {
     before("readMemory", a, b, c, d);
     try {
-        return check_width(after(subdomain->readMemory(a, b, c, d)), d);
+        return check_width(after(subdomain->readMemory(a, b, c, d)), c->get_width());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

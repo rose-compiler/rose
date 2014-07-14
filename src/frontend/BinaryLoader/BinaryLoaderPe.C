@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "BinaryLoaderPe.h"
+#include "Diagnostics.h"
 #include "MemoryMap.h"
 
 /* This binary loader can handle all PE files. */

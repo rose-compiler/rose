@@ -453,7 +453,6 @@ DisassemblerArm::decodeMiscInstruction() const
 SgAsmArmInstruction *
 DisassemblerArm::disassemble()
 {
-      // fprintf(stderr, "Disassembling insn 0x%08" PRIx32 " at addr 0x%08" PRIx32 "\n", insn, p.ip);
       uint8_t condField = (insn >> 28) & 0xF;
       bool bit4 = (insn >> 4) & 1;
       bool bit7 = (insn >> 7) & 1;

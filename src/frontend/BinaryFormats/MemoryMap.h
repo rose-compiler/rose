@@ -228,6 +228,9 @@ public:
     public:
         virtual ~ByteBuffer() { delete[] p_data; }
 
+        /** Construct a buffer that initially contains all zero bytes. */
+        static BufferPtr create(size_t size);
+
         /** Construct from caller-supplied data.  The caller supplies a pointer to data allocated on the heap (with new) and
          *  the size of that data.  The new buffer object takes ownership of the data, which is deleted when the buffer object
          *  is destroyed. */
@@ -238,6 +241,7 @@ public:
         static BufferPtr create_from_file(const std::string &filename, size_t start_offset=0);
 
     protected:
+        ByteBuffer(size_t size): ExternBuffer(new uint8_t[size], size) { memset(p_data, 0, size); }
         ByteBuffer(uint8_t *data, size_t size): ExternBuffer(data, size) {}
     };
 

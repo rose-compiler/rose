@@ -17,7 +17,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h IntraProcAliasAnalysis.h PtrAliasAnalysis.h VirtualFunctionAnalysis.h 
+pkginclude_HEADERS = IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h IntraProcAliasAnalysis.h PtrAliasAnalysis.h VirtualFunctionAnalysis.h 
 
 
 

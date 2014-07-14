@@ -485,21 +485,12 @@ Partitioner::pops_return_address(rose_addr_t va)
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), orig_retaddr, policy.true_());
         Semantics semantics(policy);
 
-#if 0
-        fputs("Partitioner::pops_return_address:\n", stderr);
-#endif
         try {
             for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 if (!insn) return false;
                 if (insn==last_insn && insn->get_kind()==x86_ret) break;
                 semantics.processInstruction(insn);
-#if 0
-                std::ostringstream s;
-                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.get_state()
-                fputs(s.str().c_str(), stderr);
-#endif
             }
             on_stack = policy.on_stack(orig_retaddr);
             if (!on_stack)

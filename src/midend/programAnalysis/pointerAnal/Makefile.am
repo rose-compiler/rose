@@ -16,7 +16,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = steensgaard.h PtrAnal.h
+pkginclude_HEADERS = steensgaard.h PtrAnal.h
 
 
 

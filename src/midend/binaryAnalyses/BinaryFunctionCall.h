@@ -396,8 +396,8 @@ BinaryAnalysis::FunctionCall::copy(const FunctionCallGraph &src, FunctionCallGra
     typename boost::graph_traits<const FunctionCallGraph>::edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end)=boost::edges(src); ei!=ei_end; ++ei) {
         if (NO_VERTEX!=src_to_dst[boost::source(*ei, src)] && NO_VERTEX!=src_to_dst[boost::target(*ei, src)]) {
-            SgAsmFunction *func1 = boost::get(boost::vertex_name, src, boost::source(*ei, src));
-            SgAsmFunction *func2 = boost::get(boost::vertex_name, src, boost::target(*ei, src));
+            SgAsmFunction *func1 = get_ast_node(src, boost::source(*ei, src));
+            SgAsmFunction *func2 = get_ast_node(src, boost::target(*ei, src));
             if (!is_edge_filtered(func1, func2))
                 boost::add_edge(src_to_dst[boost::source(*ei, src)], src_to_dst[boost::target(*ei, src)], dst);
         }

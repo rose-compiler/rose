@@ -48,7 +48,16 @@ enum SyscallMethod { SYSCALL_NONE, SYSCALL_LINUX32 };
 static Disassembler *
 get_disassembler(const std::string &name)
 {
-    if (0==name.compare("arm")) {
+    if (0==name.compare("list")) {
+        std::cout <<"recognized disassembler names are:\n"
+                  <<"  arm      - ARM\n"
+                  <<"  ppc      - PowerPC\n"
+                  <<"  mips     - MIPS\n"
+                  <<"  i386     - Intel x86 32-bit\n"
+                  <<"  amd64    - Intel x86 64-bit\n"
+                  <<"  m68k     - Motoroal/Freescale M68000\n";
+        exit(0);
+    } else if (0==name.compare("arm")) {
         return new DisassemblerArm();
     } else if (0==name.compare("ppc")) {
         return new DisassemblerPowerpc();
@@ -701,14 +710,6 @@ static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
     exit(0);
 }
 
-static void showVersionAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
-    std::vector<std::string> args;
-    args.push_back(cmdline.parser().programName());
-    args.push_back("--version");
-    frontend(args);
-    exit(0);
-}
-
 int
 main(int argc, char *argv[]) 
 {
@@ -801,7 +802,8 @@ main(int argc, char *argv[])
     switches.insert(Switch("isa")
                     .argument("architecture", Sawyer::CommandLine::anyParser(isa))
                     .doc("Specify an instruction set architecture in order to choose a disassembler.  If an ISA is "
-                         "specified then it overrides the disassembler that would have been chosen based on the file format"));
+                         "specified then it overrides the disassembler that would have been chosen based on the file format. "
+                         "Use \"@s{isa}=list\" to get a list of valid disassembler names."));
     
     bool do_linear = false;
     switches.insert(Switch("linear")
@@ -818,6 +820,12 @@ main(int argc, char *argv[])
                          "disassembling. This argument may appear more than once, or the individual paths may be separated "
                          "from one another by colons."));
                     
+    switches.insert(Switch("log", 'L')
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::facilities))
+                    .argument("logspec")
+                    .whichValue(Sawyer::CommandLine::SAVE_ALL)
+                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
+
     rose_addr_t anon_pages = 8;
     switches.insert(Switch("omit-anon")
                     .argument("npages", Sawyer::CommandLine::nonNegativeIntegerParser(anon_pages))
@@ -981,7 +989,7 @@ main(int argc, char *argv[])
                          "to determine system call names."));
 
     switches.insert(Switch("version", 'V')
-                    .action(Sawyer::CommandLine::userAction(showVersionAndExit))
+                    .action(Sawyer::CommandLine::showVersionAndExit(version_message(), 0))
                     .doc("Shows version information for various ROSE components and then exits."));
 
     /*------------------------------------------------------------------------------------------------------------------------

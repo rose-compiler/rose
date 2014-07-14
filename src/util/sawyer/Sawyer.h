@@ -169,11 +169,14 @@
 // FIXME[Robb Matzke 2014-06-18]: get rid of ROSE_UTIL_EXPORTS; cmake can only have one DEFINE_SYMBOL
 #   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_UTIL_EXPORTS) // defined in CMake when compiling libsawyer
 #       define SAWYER_EXPORT __declspec(dllexport)
+#       define SAWYER_EXPORT_NORETURN __declspec(dllexport noreturn)
 #   else
 #       define SAWYER_EXPORT __declspec(dllimport)
+#       define SAWYER_EXPORT_NORETURN __declspec(noreturn)
 #   endif
 #else
 #   define SAWYER_EXPORT /*void*/
+#   define SAWYER_EXPORT_NORETURN /*void*/
 #endif
 
 

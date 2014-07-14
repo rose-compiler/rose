@@ -11,6 +11,19 @@ linearDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 linearDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# S-Record utilities
+
+bin_PROGRAMS += dumpSRecords
+dumpSRecords_SOURCES = dumpSRecords.C
+dumpSRecords_CPPFLAGS = $(ROSE_INCLUDES)
+dumpSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+bin_PROGRAMS += fileToSRecords
+fileToSRecords_SOURCES = fileToSRecords.C
+fileToSRecords_CPPFLAGS = $(ROSE_INCLUDES)
+fileToSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets
 
 bin_PROGRAMS += x86-call-targets
