@@ -225,6 +225,7 @@ SgAsmPowerpcInstruction
 SgAsmPowerpcRegisterReferenceExpression
 SgAsmProgramHeader
 SgAsmProgramHeaderList
+SgAsmRegisterNames
 SgAsmRegisterReferenceExpression
 SgAsmSectionHeader
 SgAsmSectionHeaderList
