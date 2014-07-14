@@ -458,7 +458,7 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, size_t nbits
     } else if (5==mode) {
         // m68k_eam_dsp: address register indirect with displacement
         SgAsmM68kRegisterReferenceExpression *rre = makeAddressRegister(reg, 32);
-        uint64_t displacement_n = signExtend<16, 32>(instruction_word(ext_offset+1));
+        uint64_t displacement_n = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
         SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32);
         SgAsmExpression *address = SageBuilderAsm::makeAdd(rre, displacement);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
@@ -468,18 +468,18 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, size_t nbits
         throw Exception("FIXME[Robb P. Matzke 2014-06-19]: cannot distinguish between m68k_eam_{idx8,idxbd}");
     } else if (7==mode && 0==reg) {
         // m68k_eam_absw: absolute short addressing mode
-        uint64_t val = signExtend<16, 32>(instruction_word(ext_offset+1));
+        uint64_t val = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
         SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
     } else if (7==mode && 1==reg) {
         // m68k_eam_absl: absolute long addressing mode
-        uint64_t val = shiftLeft<32>(instruction_word(ext_offset+1), 16) | instruction_word(ext_offset+2);
+        uint64_t val = shiftLeft<32>((uint64_t)instruction_word(ext_offset+1), 16) | (uint64_t)instruction_word(ext_offset+2);
         SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
     } else if (7==mode && 2==reg) {
         // m68k_eam_pcdsp: program counter indirect with displacement
         SgAsmM68kRegisterReferenceExpression *rre = makeProgramCounter();
-        uint64_t displacement_n = signExtend<16, 32>(instruction_word(ext_offset+1));
+        uint64_t displacement_n = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
         SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32);
         SgAsmExpression *address = SageBuilderAsm::makeAdd(rre, displacement);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
@@ -1119,13 +1119,13 @@ struct M68k_branch: M68k {
         rose_addr_t base = d->get_insn_va() + 2;
         int32_t offset = signExtend<8, 32>(extract<0, 7>(w0));
         if (0==offset) {
-            offset = signExtend<16, 32>(d->instruction_word(1));
+            offset = signExtend<16, 32>((uint32_t)d->instruction_word(1));
             mnemonic += ".w";
         } else if (-1==offset) {
             // FIXME: documentation is not clear about order of the two 16-bit words. I'm assuming that, like other cases
             // of 32-bit values, the high 16 bits are in the first word following the instruction word, and the low-order
             // 16 bits are in the second word after the instruction word. [Robb P. Matzke 2013-08-06]
-            offset = shiftLeft<32>(d->instruction_word(1), 16) | d->instruction_word(2);
+            offset = shiftLeft<32>((uint32_t)d->instruction_word(1), 16) | (uint32_t)d->instruction_word(2);
             mnemonic += ".l";
         } else {
             mnemonic += ".b";
@@ -1733,7 +1733,7 @@ struct M68k_dbcc: M68k {
             case 15: kind = m68k_dble; break;
         }
         std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
-        rose_addr_t target_va = d->get_insn_va() + 2 + signExtend<16, 32>(d->instruction_word(1));
+        rose_addr_t target_va = d->get_insn_va() + 2 + signExtend<16, 32>((rose_addr_t)d->instruction_word(1));
         target_va &= GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(32, target_va);
         return d->makeInstruction(kind, mnemonic+".w", target);
