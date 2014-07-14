@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "Registers.h"
 #include "AsmUnparser.h"
+#include <boost/foreach.hpp>
 
 /** Returns a string containing everything before the first operand in a typical m68k statement. */
 std::string
@@ -14,7 +15,7 @@ std::string
 unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers)
 {
     if (!registers)
-        registers = RegisterDictionary::dictionary_m68000();
+        registers = RegisterDictionary::dictionary_m68000_altnames();
     RegisterNames name_of(registers);
     std::string result = "";
     if (expr==NULL)
@@ -54,6 +55,17 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
             label = ival->get_label();
         if (!label.empty())
             result += "<" + label + ">";
+    } else if (SgAsmRegisterNames *regs = isSgAsmRegisterNames(expr)) {
+        // The usual assembly is to show only an integer register mask.  That's not very friendly, especially since the meaning
+        // of the bits is dependent on the addressing mode of the other instruction.  So we show the register names instead in
+        // curly braces.
+        int nregs = 0;
+        result = "{";
+        BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, regs->get_registers())
+            result += (nregs++ ? ", " : "") + unparseM68kExpression(rre, labels, registers);
+        result += "}";
+        if (regs->get_mask()!=0)
+            result += "<" + StringUtility::toHex2(regs->get_mask(), 16, false, false) + ">";
     } else {
         result = "<UNHANDLED_EXPRESSION type=" + expr->class_name() + ">";
     }
