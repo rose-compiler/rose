@@ -8,5 +8,5 @@ noinst_LTLIBRARIES =  libSSA_UnfilteredCfg.la
 libSSA_UnfilteredCfg_la_DEPENDENCIES =
 libSSA_UnfilteredCfg_la_SOURCES = ssaUnfilteredCfgCalculation.C ssaUnfilteredCfgQueries.C  defsAndUsesUnfilteredCfg.C \
 		reachingDefUnfilteredCfg.C
-include_HEADERS = ssaUnfilteredCfg.h defsAndUsesUnfilteredCfg.h reachingDefUnfilteredCfg.h 
+pkginclude_HEADERS = ssaUnfilteredCfg.h defsAndUsesUnfilteredCfg.h reachingDefUnfilteredCfg.h 
 

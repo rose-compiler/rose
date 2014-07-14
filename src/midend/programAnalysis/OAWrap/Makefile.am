@@ -21,7 +21,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  OAWrap.h SAGE2OA.h OAConfig.h
+pkginclude_HEADERS =  OAWrap.h SAGE2OA.h OAConfig.h
 
 
 
