@@ -119,6 +119,100 @@ EAM(unsigned eamodes, size_t lobit=0)
     return retval;
 }
 
+// Like EAM but matches REG:MODE rather than MODE:REG
+static Pattern
+EAM_BACKWARD(unsigned eamodes, size_t lobit=0)
+{
+    ASSERT_require(eamodes!=0);
+    Pattern retval;
+    size_t hibit = lobit + 6 - 1; // inclusive
+    for (size_t bitnum=0; eamodes!=0; ++bitnum) {
+        unsigned bit = IntegerOps::shl1<unsigned>(bitnum);
+        if (0 != (eamodes & bit)) {
+            eamodes &= ~bit;
+            M68kEffectiveAddressMode eam = (M68kEffectiveAddressMode)bit;
+            switch (eam) {
+                case m68k_eam_drd:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, reg<<3, 0);
+                    break;
+                case m68k_eam_ard:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, (reg<<3)|1, 0);
+                    break;
+                case m68k_eam_ari:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, (reg<<3)|2, 0);
+                    break;
+                case m68k_eam_inc:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, (reg<<3)|3, 0);
+                    break;
+                case m68k_eam_dec:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, (reg<<3)|4, 0);
+                    break;
+                case m68k_eam_dsp:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, (reg<<3)|5, 0);
+                    break;
+                case m68k_eam_idx8:
+                    for (size_t reg=0; reg<8; ++reg)
+                        retval |= Pattern(lobit, hibit, (reg<<3)|6, 0);
+                    break;
+                case m68k_eam_idxbd:
+                    if (0 == (eamodes & m68k_eam_idx8)) {
+                        for (size_t reg=0; reg<8; ++reg)
+                            retval |= Pattern(lobit, hibit, (reg<<3)|6, 0);
+                    }
+                    break;
+                case m68k_eam_mpost:
+                    if (0 == (eamodes & m68k_eam_idx)) {
+                        for (size_t reg=0; reg<8; ++reg)
+                            retval |= Pattern(lobit, hibit, (reg<<3)|6, 0);
+                    }
+                    break;
+                case m68k_eam_mpre:
+                    if (0 == (eamodes & (m68k_eam_idx | m68k_eam_mpost))) {
+                        for (size_t reg=0; reg<8; ++reg)
+                            retval |= Pattern(lobit, hibit, (reg<<3)|6, 0);
+                    }
+                    break;
+                case m68k_eam_pcdsp:
+                    retval |= Pattern(lobit, hibit, 0x17, 0);
+                    break;
+                case m68k_eam_pcidx8:
+                    retval |= Pattern(lobit, hibit, 0x1f, 0);
+                    break;
+                case m68k_eam_pcidxbd:
+                    if (0 == (eamodes & m68k_eam_pcidx8))
+                        retval |= Pattern(lobit, hibit, 0x1f, 0);
+                    break;
+                case m68k_eam_pcmpost:
+                    if (0 == (eamodes & m68k_eam_pcidx))
+                        retval |= Pattern(lobit, hibit, 0x1f, 0);
+                    break;
+                case m68k_eam_pcmpre:
+                    if (0 == (eamodes & (m68k_eam_pcidx | m68k_eam_pcmpost)))
+                        retval |= Pattern(lobit, hibit, 0x1f, 0);
+                    break;
+                case m68k_eam_absw:
+                    retval |= Pattern(lobit, hibit, 0x07, 0);
+                    break;
+                case m68k_eam_absl:
+                    retval |= Pattern(lobit, hibit, 0x0f, 0);
+                    break;
+                case m68k_eam_imm:
+                    retval |= Pattern(lobit, hibit, 0x27, 0);
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid effective address mode: " + toHex(eam));
+            }
+        }
+    }
+    return retval;
+}
+    
 template<size_t lo, size_t hi>
 Pattern BITS(unsigned val)
 {
@@ -330,8 +424,19 @@ DisassemblerM68k::makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext
 {
     ASSERT_require(8==nbits || 16==nbits || 32==nbits);
     ASSERT_require(ext_offset<=2);
-    unsigned reg  = modreg & 7;
     unsigned mode = (modreg >> 3) & 7;
+    unsigned reg  = modreg & 7;
+    return makeEffectiveAddress(mode, reg, nbits, ext_offset);
+}
+
+SgAsmExpression *
+DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, size_t nbits, size_t ext_offset)
+{
+    ASSERT_require(mode < 8);
+    ASSERT_require(reg < 8);
+    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require(ext_offset <= 2);
+
     SgAsmType *type = makeIntegerType(nbits);
 
     if (0==mode) {
@@ -1924,7 +2029,7 @@ struct M68k_lshift_mem: M68k {
 struct M68k_move: M68k {
     M68k_move(): M68k("move", m68k_family,
                       (OP(1) | OP(2) | OP(3)) &
-                      EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi, 6) &
+                      EAM_BACKWARD(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi, 6) &
                       EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = 0;
@@ -1934,7 +2039,7 @@ struct M68k_move: M68k {
             case 3: nbits = 16; break;
         }
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), nbits, 0);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<6, 11>(w0), nbits, 0);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<6, 8>(w0), extract<9, 11>(w0), nbits, 0);
         return d->makeInstruction(m68k_move, "move."+sizeToLetter(nbits), src, dst);
     }
 };

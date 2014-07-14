@@ -112,8 +112,12 @@ public:
     /** Create an expression for m68k "<ea>x" or "<ea>y". The @p modreg is a six-bit value whose high-order three bits are the
      * addressing mode and whose low-order three bits are (usually) a register number. The return value has a type of the
      * specified size measured in bits. The @p ext_offset indicates how many instruction extension words have already been
-     * consumed. */
+     * consumed.
+     *
+     * @{ */
     SgAsmExpression *makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext_offset);
+    SgAsmExpression *makeEffectiveAddress(unsigned mode, unsigned reg, size_t nbits, size_t ext_offset);
+    /** @} */
 
     /** Create an offset width pair from an extension word.  The extension word contains an offset and width expression each of
      *  which is either a 5-bit unsigned integer or a data register number. This is used by various bit field instructions. */
