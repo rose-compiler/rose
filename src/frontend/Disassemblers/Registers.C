@@ -235,6 +235,9 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
         case EFF::ISA_PowerPC_64bit:
             return dictionary_powerpc();
 
+        case EFF::ISA_M68K_Family:
+            return dictionary_m68000_altnames();
+
         default:
             return NULL;
     }
@@ -872,7 +875,6 @@ RegisterDictionary::dictionary_m68000()
             regs->insert("a"+StringUtility::numberToString(i)+".l",  m68k_regclass_addr, i, 0,  16);
             regs->insert("a"+StringUtility::numberToString(i)+".u",  m68k_regclass_addr, i, 16, 16);
         }
-        regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
 
         // Special-purpose registers
         regs->insert("pc",    m68k_regclass_spr, m68k_spr_pc, 0,  32);          // program counter
@@ -929,6 +931,19 @@ RegisterDictionary::dictionary_m68000()
         
         // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
         regs->insert("ssp",     m68k_regclass_sup, m68k_sup_ssp,     0, 32);    // supervisor A7 stack pointer
+    }
+    return regs;
+}
+
+const RegisterDictionary *
+RegisterDictionary::dictionary_m68000_altnames()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("m68000");
+        regs->insert(dictionary_m68000());
+        regs->insert("bp", m68k_regclass_addr, 6, 0, 32);                       // a6 is conventionally the stack frame pointer
+        regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
     }
     return regs;
 }

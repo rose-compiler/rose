@@ -3158,7 +3158,7 @@ struct M68k_unpk: M68k {
 void
 DisassemblerM68k::init()
 {
-    set_registers(RegisterDictionary::dictionary_m68000()); // only a default
+    set_registers(RegisterDictionary::dictionary_m68000_altnames()); // only a default
     set_wordsize(2);
     set_alignment(2);
     set_sex(ByteOrder::ORDER_MSB);
