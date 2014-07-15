@@ -6,10 +6,19 @@
 #include "InstructionEnumsM68k.h"
 #include "BitPattern.h"
 
+/** Disassembler for Motorola M68k-based instruction set architectures. */
 class DisassemblerM68k: public Disassembler {
 public:
-    DisassemblerM68k()
-        : map(NULL), insn_va(0), niwords(0), niwords_used(0) {
+    /** Constructor for a specific family.
+     *
+     *  The @p family argument selectively activates certain features of the generic m68k disassembler.  For instance, to get a
+     *  disassembler specific to the FreeScale ColdFire series using "ISA_B", invoke as:
+     *
+     * @code
+     *  Disassembler *disassembler = new DisassemblerM68k(m68k_freescale_isab);
+     * @endcode */
+    explicit DisassemblerM68k(M68kFamily family)
+        : family(family), map(NULL), insn_va(0), niwords(0), niwords_used(0) {
         init();
     }
     virtual DisassemblerM68k *clone() const /*override*/ { return new DisassemblerM68k(*this); }
@@ -23,7 +32,10 @@ public:
      *  instructions) will define a subclass whose operator() unparses a single instruction and returns a
      *  SgAsmM68kInstruction. These functors are allocated and inserted into a list. When an instruction is to be
      *  disassembled, the list is scanned to find the first entry that matches, and then its operator() is invoked.  An entry
-     *  matches if the instruction bits to be disassembled match any of the BitPattern objects. */
+     *  matches if the instruction bits to be disassembled match any of the BitPattern objects.
+     *
+     *  An instruction decoder is enabled if the disassembler's family (see DisassemblerM68k constructors) bit-wise ANDed with
+     *  the decoder family (see DisassemblerM68k::M68k constructor) is non-zero. */
     class M68k {
     public:
         M68k(const std::string &name, unsigned family, const BitPattern<uint16_t> &pattern)
@@ -133,6 +145,7 @@ public:
 
 private:
     void init();
+    M68kFamily  family;                         /**< Specific family being disassembled. */
     const MemoryMap *map;                       /**< Map from which to read instruction words. */
     rose_addr_t insn_va;                        /**< Address of instruction. */
     uint16_t    iwords[11];                     /**< Instruction words. */

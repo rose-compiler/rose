@@ -463,9 +463,30 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, size_t nbits
         SgAsmExpression *address = SageBuilderAsm::makeAdd(rre, displacement);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
     } else if (6==mode) {
-        // m68k_eam_idx8: address register indirect with index (8-bit displacement)
-        // m68k_eam_idxbd: address register indirect with index (base displacement)
-        throw Exception("FIXME[Robb P. Matzke 2014-06-19]: cannot distinguish between m68k_eam_{idx8,idxbd}");
+        if (family & (m68k_generation_2 | m68k_generation_3)) {
+            // m68k_eam_idxbd: address register indirect with index (base displacement)
+            throw Exception("FIXME[Robb P. Matzke 2014-07-14]: m68k_eam_idxbd not implemented yet");
+        } else {
+            // m68k_eam_idx8: address register indirect with index (8-bit displacement)
+            // Uses the brief extension word format (1 word having D/A, Register, W/L, Scale, and 8-bit displacement)
+            ASSERT_require((0==extract<8, 8>(instruction_word(ext_offset+1))));
+            bool wl = 0 != extract<11, 11>(instruction_word(ext_offset+1));
+            if (0==wl) {
+                throw Exception("FIXME[Robb P. Matzke 2014-07-14]: word index register not implemented yet");
+            } else {
+                SgAsmExpression *retval = makeAddressRegister(reg, 32);
+                uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instruction_word(ext_offset+1)));
+                SgAsmIntegerValueExpression *dispExpr = new SgAsmIntegerValueExpression(disp, 32);
+                retval = SageBuilderAsm::makeAdd(retval, dispExpr);
+
+                unsigned indexRegisterNumber = extract<12, 15>(instruction_word(ext_offset+1));
+                SgAsmM68kRegisterReferenceExpression *indexRRE = makeDataAddressRegister(indexRegisterNumber, 32);
+                uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instruction_word(ext_offset+1)));
+                SgAsmIntegerValueExpression *scaleExpr = new SgAsmIntegerValueExpression(scale, 32);
+                retval = SageBuilderAsm::makeAdd(retval, SageBuilderAsm::makeMul(indexRRE, scaleExpr));
+                return retval;
+            }
+        }
     } else if (7==mode && 0==reg) {
         // m68k_eam_absw: absolute short addressing mode
         uint64_t val = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
@@ -1332,7 +1353,7 @@ struct M68k_bftst: M68k {
 
 // BKPT #<data>
 struct M68k_bkpt: M68k {
-    M68k_bkpt(): M68k("bkpt", m68k_68ec000|m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_bkpt(): M68k("bkpt", m68k_68ec000|m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                       OP(4) & BITS<3, 11>(0x109)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *data = d->makeImmediateValue(8, extract<0, 2>(w0));
@@ -1498,7 +1519,7 @@ struct M68k_chk: M68k {
 // CHK2.W <ea>, Rn
 // CHK2.L <ea>, Rn
 struct M68k_chk2: M68k {
-    M68k_chk2(): M68k("chk2", m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_chk2(): M68k("chk2", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                       OP(0) & BIT<11>(0) & (BITS<9, 10>(0) | BITS<9, 10>(1) | BITS<9, 10>(2)) & BITS<6, 8>(3) &
                       EAM(m68k_eam_control) &
                       INSN_WORD<1>(BITS<0, 11>(0x800))) {}
@@ -1613,7 +1634,7 @@ struct M68k_cmpm: M68k {
 // CMP2.W <ea>, Rn
 // CMP2.L <ea>, Rn
 struct M68k_cmp2: M68k {
-    M68k_cmp2(): M68k("cmp2", m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_cmp2(): M68k("cmp2", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                       OP(0) & BIT<11>(0) & (BITS<9, 10>(0) | BITS<9, 10>(1) | BITS<9, 10>(2)) &
                       BITS<6, 8>(3) & EAM(m68k_eam_control) &
                       INSN_WORD<1>(BITS<0, 11>(0))) {}
@@ -1756,7 +1777,7 @@ struct M68k_divs_w: M68k {
 // REMS.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
 // REMU.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
 struct M68k_divrem_l: M68k {
-    M68k_divrem_l(): M68k("divrem_l", m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_divrem_l(): M68k("divrem_l", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                           OP(4) & BITS<6, 11>(0x31) & EAM(m68k_eam_data) &
                           INSN_WORD<1>(BIT<15>(0) & BITS<3, 9>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
@@ -2025,7 +2046,7 @@ struct M68k_lshift_mem: M68k {
 
 // MOV3Q.L #<data>, <ea>x
 struct M68k_mov3q: M68k {
-    M68k_mov3q(): M68k("mov3q", m68k_fsisa_b,
+    M68k_mov3q(): M68k("mov3q", m68k_freescale_isab,
                        OP(10) & BITS<6, 8>(5) &
                        EAM(m68k_eam_alter & ~m68k_eam_234)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
@@ -2073,7 +2094,7 @@ struct M68k_movea: M68k {
 
 // MOVE.W CCR, Dx
 struct M68k_move_from_ccr: M68k {
-    M68k_move_from_ccr(): M68k("move_from_ccr", m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_move_from_ccr(): M68k("move_from_ccr", m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                                OP(4) & BITS<6, 11>(0x0b) &
                                EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
@@ -2217,7 +2238,7 @@ struct M68k_muls_w: M68k {
 // MULS.L <ea>y, Dx             32 x 32 -> 32
 // MULU.L <ea>y, Dx             32 x 32 -> 32
 struct M68k_multiply_l: M68k {
-    M68k_multiply_l(): M68k("multiply_l", m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_multiply_l(): M68k("multiply_l", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                             OP(4) & BITS<6, 11>(0x30) & EAM(m68k_eam_data) &
                             INSN_WORD<1>(BIT<15>(0) & BITS<3, 10>(0))) {} // BITS<0,2> are unused and unspecified
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
@@ -2231,7 +2252,7 @@ struct M68k_multiply_l: M68k {
 // MULS.L <ea>y, Dh, Dl         32 x 32 -> 64
 // MULU.L <ea>y, Dh, DL         32 x 32 -> 64
 struct M68k_multiply_64: M68k {
-    M68k_multiply_64(): M68k("multiply_64", m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_multiply_64(): M68k("multiply_64", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                              OP(4) & BITS<6, 11>(0x30) & EAM(m68k_eam_data) &
                              INSN_WORD<1>(BIT<15>(0) & BITS<3, 10>(0x80))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
@@ -2257,7 +2278,7 @@ struct M68k_mulu_w: M68k {
 // MVS.B <ea>y, Dx
 // MVS.W <ea>y, Dx
 struct M68k_mvs: M68k {
-    M68k_mvs(): M68k("mvs", m68k_fsisa_b,
+    M68k_mvs(): M68k("mvs", m68k_freescale_isab,
                      OP(7) & BITS<7, 8>(2) & EAM(m68k_eam_all & ~m68k_eam_234)) {}
 
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
@@ -2271,7 +2292,7 @@ struct M68k_mvs: M68k {
 // MVZ.B <ea>y, Dx
 // MVZ.W <ea>y, Dx
 struct M68k_mvz: M68k {
-    M68k_mvz(): M68k("mvz", m68k_fsisa_b,
+    M68k_mvz(): M68k("mvz", m68k_freescale_isab,
                      OP(7) & BITS<7, 8>(3) & EAM(m68k_eam_all & ~m68k_eam_234)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = extract<6, 6>(w0) ? 16 : 8;
@@ -2560,7 +2581,7 @@ struct M68k_rotate_extend_mem: M68k {
 
 // RTD #<displacement>
 struct M68k_rtd: M68k {
-    M68k_rtd(): M68k("rtd", m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_rtd(): M68k("rtd", m68k_68010|m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                      OP(4) & BITS<0, 11>(0xe74)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *disp = d->makeImmediateExtension(16, 0);
@@ -2837,7 +2858,7 @@ struct M68k_trap: M68k {
 //      gt       greater than           1110    e
 //      le       less or equal          1111    f
 struct M68k_trapcc: M68k {
-    M68k_trapcc(): M68k("trapcc", m68k_68020|m68k_68030|m68k_68040|m68k_cpu32,
+    M68k_trapcc(): M68k("trapcc", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
                         OP(5) & BITS<3, 7>(0x1f) & (BITS<0, 2>(2) | BITS<0, 2>(3) | BITS<0, 2>(4))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         size_t nbits = 0;

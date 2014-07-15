@@ -36,14 +36,14 @@ enum M68kFamily {
     m68k_68040          = 0x00070000,                   /**< MC68040 and embedded versions thereof */
     // Freescale CPUs based on m68k
     m68k_freescale      = 0xff000000,                   /**< Freescale CPUs based on Motorola 683xx */
-    m68k_cpu32          = 0x01000000,                   /**< Freescale CPU32 (similar to MC68020 w/out bitfield insns */
-    m68k_fsisa_a        = 0x02000000,                   /**< Freescale ISA_A, the original ColdFire ISA (subset of M68000) */
-    m68k_fsisa_b        = 0x04000000,                   /**< Freescale ISA_B, improved data movement instructions, etc. */
-    m68k_fsisa_c        = 0x08000000,                   /**< Freescale ISA_C, improved bit manipulation instructions */
-    m68k_fsisa_fpu      = 0x10000000,                   /**< Freescale FPU, original ColdFire floating point ISA. */
-    m68k_fsisa_mac      = 0x20000000,                   /**< Freescale MAC, original ColdFire multiply-accumulate ISA. */
-    m68k_fsisa_emac     = 0x40000000,                   /**< Freescale EMAC, enhanced multiply-accumulate ISA. */
-    m68k_fsisa_emacb    = 0x80000000,                   /**< Freescale EMAC_B, dual accumulation instructions. */
+    m68k_freescale_cpu32= 0x01000000,                   /**< Freescale CPU32 (similar to MC68020 w/out bitfield insns */
+    m68k_freescale_isaa = 0x02000000,                   /**< Freescale ISA_A, the original ColdFire ISA (subset of M68000) */
+    m68k_freescale_isab = 0x04000000,                   /**< Freescale ISA_B, improved data movement instructions, etc. */
+    m68k_freescale_isac = 0x08000000,                   /**< Freescale ISA_C, improved bit manipulation instructions */
+    m68k_freescale_fpu  = 0x10000000,                   /**< Freescale FPU, original ColdFire floating point ISA. */
+    m68k_freescale_mac  = 0x20000000,                   /**< Freescale MAC, original ColdFire multiply-accumulate ISA. */
+    m68k_freescale_emac = 0x40000000,                   /**< Freescale EMAC, enhanced multiply-accumulate ISA. */
+    m68k_freescale_emacb= 0x80000000,                   /**< Freescale EMAC_B, dual accumulation instructions. */
 };
 
 enum M68kRegisterClass {

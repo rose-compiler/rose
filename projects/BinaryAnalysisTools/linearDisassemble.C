@@ -41,7 +41,7 @@ getDisassembler(const std::string &name)
     } else if (0==name.compare("amd64")) {
         return new DisassemblerX86(8);
     } else if (0==name.compare("m68k")) {
-        return new DisassemblerM68k();
+        return new DisassemblerM68k(m68k_freescale_isab);
     } else {
         throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
     }
