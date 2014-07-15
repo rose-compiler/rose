@@ -255,7 +255,11 @@ class StreamPrintf {
     std::ostream &stream;
 public:
     StreamPrintf(std::ostream &stream): stream(stream) {}
+#ifdef _MSC_VER
     int operator()(const char *fmt, ...);
+#else
+    int operator()(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+#endif
 };
 
 /** Print to a C++ stream using a printf-like API.
