@@ -1,3 +1,4 @@
+// Liao, 7/9/2014, add collapse() inside jacobi()
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -198,13 +199,13 @@
   //#pragma omp parallel
   //    {
 #pragma omp target //map(in:n, m, u[0:n][0:m]) map(out:uold[0:n][0:m])
-#pragma omp parallel for private(j,i)
+#pragma omp parallel for private(j,i) collapse(2)
         for(i=0;i<n;i++)   
           for(j=0;j<m;j++)
             uold[i][j] = u[i][j]; 
 
 #pragma omp target //map(in:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(out:u[0:n][0:m])
-#pragma omp parallel for private(resid,j,i) reduction(+:error) // nowait
+#pragma omp parallel for private(resid,j,i) reduction(+:error) collapse(2) // nowait
         for (i=1;i<(n-1);i++)  
           for (j=1;j<(m-1);j++)   
           { 

@@ -53,7 +53,7 @@ void error_check(void);
 
 #define REAL float // flexible between float and double
 #define MSIZE 512
-REAL error_ref= 9.212767E-04, resid_ref = 2.355429E-08; // depending on MSIZE!!
+REAL error_ref= 9.212767E-04, resid_ref = 2.355429E-08; // depending on MSIZE!
 int n,m,mits; 
 REAL tol,relax=1.0,alpha=0.0543; 
 REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
@@ -169,7 +169,7 @@ void jacobi( )
 {
   REAL omega;
   int i,j,k;
-  REAL error,resid,ax,ay,b; 
+  REAL error,resid,ax,ay,b;
   //      double  error_local;
 
   //      float ta,tb,tc,td,te,ta1,ta2,tb1,tb2,tc1,tc2,td1,td2;
@@ -229,7 +229,7 @@ void jacobi( )
 
   printf("Total Number of Iterations:%d\n",k); 
   printf("Residual:%E\n", error); 
-  printf("Residual_ref :%E\n", resid_ref); 
+  printf("Residual_ref :%E\n", resid_ref);
   printf ("Diff ref=%E\n", fabs(error-resid_ref));
   assert (fabs(error-resid_ref) < 1E-14);
 
@@ -263,7 +263,7 @@ void error_check ( )
   printf("Solution Error :%E \n",error);
   printf("Solution Error Ref :%E \n",error_ref);
   printf ("Diff ref=%E\n", fabs(error-error_ref));
-  assert (fabs(error-error_ref) < 1E-14);
+  assert (fabs(error-error_ref) < 1E-8);
 }
 
 
