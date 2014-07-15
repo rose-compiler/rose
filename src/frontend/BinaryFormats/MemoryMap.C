@@ -1035,7 +1035,7 @@ MemoryMap::find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFin
     // which is good if a match is unlikely.  But if a match is likely, then it's better to use a smaller buffer so we don't
     // ready more than necessary to find a match.  We'll compromise by starting with a small buffer that grows up to some
     // limit.
-    rose_addr_t nremaining = limits.size();             // bytes remaining to search (could be zero if limits is universe)
+    size_t nremaining = limits.size();                  // bytes remaining to search (could be zero if limits is universe)
     size_t bufsize = 8;                                 // initial buffer size
     uint8_t buffer[4096];                               // full buffer
 
