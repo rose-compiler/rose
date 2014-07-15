@@ -214,7 +214,7 @@ SRecord::print(std::ostream &out) const {
     // Payload size
     size_t size = addressNBytes(type_) + data_.size() + 1 /*checksum*/;
     ASSERT_forbid2(size > 255, "S-Record size is too large");
-    mfprintf(out)("%02X", size);
+    mfprintf(out)("%02zX", size);
 
     // Address
     rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(8*addressNBytes(type_));
@@ -222,7 +222,7 @@ SRecord::print(std::ostream &out) const {
         throw std::runtime_error("S-Record address " + StringUtility::addrToString(addr_) +
                                  " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");
     }
-    mfprintf(out)("%0*"PRIX64, 2*addressNBytes(type_), addr_);
+    mfprintf(out)("%0*"PRIX64, 2*(int)addressNBytes(type_), addr_);
 
     // Data
     BOOST_FOREACH (uint8_t byte, data_)

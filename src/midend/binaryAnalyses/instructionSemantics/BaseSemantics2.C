@@ -206,9 +206,9 @@ Allocator::assertInvariants() const
             ASSERT_require(bm2.find((uint64_t)item)!=bm2.nodes().end());
             const Bucket *b1 = bm1[(char*)item];
             const Bucket *b2 = bm2[(uint64_t)item];
-            ASSERT_not_null(b1);
-            ASSERT_not_null(b2);
-            ASSERT_require(b1 == b2);
+            ASSERT_always_not_null(b1);
+            ASSERT_always_not_null(b2);
+            ASSERT_always_require(b1 == b2);
         }
         std::cerr <<"[nfree " <<nfree <<"]";
 

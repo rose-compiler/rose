@@ -258,7 +258,7 @@ public:
 #ifdef _MSC_VER
     int operator()(const char *fmt, ...);
 #else
-    int operator()(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+    int operator()(const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 #endif
 };
 

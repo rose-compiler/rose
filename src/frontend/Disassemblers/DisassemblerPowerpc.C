@@ -536,9 +536,9 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 {
      SgAsmPowerpcInstruction* instruction = NULL;
 
-  // The primaryOpcode 
+  // The primaryOpcode
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ASSERT_require(primaryOpcode == 0x11);
+     ASSERT_always_require(primaryOpcode == 0x11);
 
   // Get bit 30, 1 bit as the reserved flag
      uint8_t constantOneOpcode = (insn >> 1) & 0x1;
@@ -566,9 +566,9 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
 {
      SgAsmPowerpcInstruction* instruction = NULL;
 
-  // The primaryOpcode 
+  // The primaryOpcode
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ASSERT_require(primaryOpcode == 0x1F);
+     ASSERT_always_require(primaryOpcode == 0x1F);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -763,7 +763,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ASSERT_require(primaryOpcode == 0x3F);
+     ASSERT_always_require(primaryOpcode == 0x3F);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -846,7 +846,7 @@ DisassemblerPowerpc::decode_XL_formInstruction()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ASSERT_require(primaryOpcode == 0x13);
+     ASSERT_always_require(primaryOpcode == 0x13);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;

@@ -107,7 +107,7 @@ BinaryLoader::load(SgBinaryComposite *composite, bool read_executable_file_forma
     /* Parse the initial binary file to create an AST and the initial SgAsmInterpretation(s). */
     ASSERT_require(composite->get_genericFileList()->get_files().empty());
     SgAsmGenericFile *file = createAsmAST(composite, composite->get_sourceFileNameWithPath());
-    ASSERT_not_null(file);
+    ASSERT_always_not_null(file);
     
     /* Find an appropriate loader for each interpretation and parse, map, link, and/or relocate each interpretation as
      * specified by the loader properties. */
@@ -722,8 +722,8 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     int64_t Aa = m * t * a + Ma;
     int64_t Ab = m * u * b + Mb;
     trace <<"      Adjustment:   " <<Aa <<"\n";
-    ASSERT_require(Aa==Ab);
-    ASSERT_require2(Aa>0, "FIXME[Robb Matzke 2010-09-07]: add multiples of lcm(a,b) to make this positive");
+    ASSERT_always_require(Aa==Ab);
+    ASSERT_always_require2(Aa>0, "FIXME[Robb Matzke 2010-09-07]: add multiples of lcm(a,b) to make this positive");
     return (rose_addr_t)Aa;
 }
 
