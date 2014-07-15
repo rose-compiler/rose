@@ -20,7 +20,7 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
     if (expr==NULL)
         return "BUGUS:NULL";
 
-    if (SgAsmM68kRegisterReferenceExpression *rre = isSgAsmM68kRegisterReferenceExpression(expr)) {
+    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr)) {
         int adjustment = rre->get_adjustment();
         if (adjustment < 0)
             result = "--";

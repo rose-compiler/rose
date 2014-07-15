@@ -199,7 +199,8 @@ Grammar::setUpBinaryInstructions()
                           "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag", false);
     AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
                                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+    AsmRegisterReferenceExpression.setDataPrototype("int", "adjustment", "=0", // post-increment/pre-decrement amount
+                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 

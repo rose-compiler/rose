@@ -1649,7 +1649,7 @@ Partitioner::pattern5(const InstructionMap &insns, InstructionMap::const_iterato
     const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
     if (args.size()!=2)
         return insns.end();
-    SgAsmM68kRegisterReferenceExpression *rre = isSgAsmM68kRegisterReferenceExpression(args[0]);
+    SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
     SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[1]);
     if (!rre || !ival)
         return insns.end();
