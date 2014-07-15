@@ -135,14 +135,14 @@ MallocAndFree::visit(SgNode* node) {
 	    SgAsmExpressionPtrList& opsList = ops->get_operands();
 	    SgAsmExpressionPtrList::iterator itOP = opsList.begin();
 	    SgAsmMemoryReferenceExpression* mem=NULL;
-	    SgAsmx86RegisterReferenceExpression* reg = NULL;
+	    SgAsmRegisterReferenceExpression* reg = NULL;
 	    int iteration=0;
 	    for (;itOP!=opsList.end();++itOP) {
 	      SgAsmExpression* exp = *itOP;
 	      ROSE_ASSERT(exp);
 	      if (iteration==1) {
 		// right hand side
-		reg = isSgAsmx86RegisterReferenceExpression(exp);		
+		reg = isSgAsmRegisterReferenceExpression(exp);		
 	      }
 	      if (iteration==0) {
 		// left hand side
@@ -264,7 +264,7 @@ MallocAndFree::visit(SgNode* node) {
 		    //	    rose_addr_t addrDest=0;
 		    SgAsmExpressionPtrList::iterator itOP = opsList.begin();
 		    SgAsmMemoryReferenceExpression* mem=NULL;
-		    SgAsmx86RegisterReferenceExpression* reg=NULL;
+		    SgAsmRegisterReferenceExpression* reg=NULL;
 		    int iteration=0;
 		    for (;itOP!=opsList.end();++itOP) {
 		      SgAsmExpression* exp = *itOP;
@@ -275,7 +275,7 @@ MallocAndFree::visit(SgNode* node) {
 		      }
 		      if (iteration==0) {
 			// left hand side
-			reg = isSgAsmx86RegisterReferenceExpression(exp);		
+			reg = isSgAsmRegisterReferenceExpression(exp);		
 			iteration++;
 		      }
 		    } //for

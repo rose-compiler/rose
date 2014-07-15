@@ -75,9 +75,9 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
             break;
         }
 
-        case V_SgAsmMipsRegisterReferenceExpression: {
+        case V_SgAsmDirectRegisterExpression: {
             SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
-            SgAsmMipsRegisterReferenceExpression* rr = isSgAsmMipsRegisterReferenceExpression(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparseMipsRegister(insn, rr->get_descriptor(), registers);
             break;
         }

@@ -68,9 +68,9 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             }
             break;
         }
-        case V_SgAsmPowerpcRegisterReferenceExpression: {
+        case V_SgAsmDirectRegisterExpression: {
             SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
-            SgAsmPowerpcRegisterReferenceExpression* rr = isSgAsmPowerpcRegisterReferenceExpression(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparsePowerpcRegister(insn, rr->get_descriptor(), registers);
             break;
         }

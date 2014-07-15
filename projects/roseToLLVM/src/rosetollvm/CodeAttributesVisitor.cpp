@@ -1471,9 +1471,6 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //                 SgAsmUnaryArmSpecialRegisterList
      //             SgAsmMemoryReferenceExpression
      //             SgAsmRegisterReferenceExpression:
-     //                 SgAsmx86RegisterReferenceExpression
-     //                 SgAsmArmRegisterReferenceExpression
-     //                 SgAsmPowerpcRegisterReferenceExpression
      //             SgAsmControlFlagsExpression
      //             SgAsmCommonSubExpression
      //             SgAsmExprListExp
@@ -3488,9 +3485,6 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //                 SgAsmUnaryArmSpecialRegisterList
      //             SgAsmMemoryReferenceExpression
      //             SgAsmRegisterReferenceExpression:
-     //                 SgAsmx86RegisterReferenceExpression
-     //                 SgAsmArmRegisterReferenceExpression
-     //                 SgAsmPowerpcRegisterReferenceExpression
      //             SgAsmControlFlagsExpression
      //             SgAsmCommonSubExpression
      //             SgAsmExprListExp

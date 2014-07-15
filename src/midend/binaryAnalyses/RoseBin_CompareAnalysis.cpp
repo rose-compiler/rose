@@ -89,7 +89,7 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
     SgAsmOperandList* opList = inst->get_operandList();
     SgAsmExpressionPtrList exprList = opList->get_operands();
     SgAsmExpression* binExp = *(exprList.begin());
-    SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp); 
+    SgAsmRegisterReferenceExpression* refExp = isSgAsmRegisterReferenceExpression(binExp); 
     X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
     int reg = refExp->get_descriptor().get_minor();
     if (cl == x86_regclass_gpr && reg==x86_gpr_bp) 
@@ -103,7 +103,7 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
       SgAsmOperandList* opList = inst->get_operandList();
       SgAsmExpressionPtrList exprList = opList->get_operands();
       SgAsmExpression* binExp = *(exprList.begin());
-      SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp); 
+      SgAsmRegisterReferenceExpression* refExp = isSgAsmRegisterReferenceExpression(binExp); 
       X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
       int reg = refExp->get_descriptor().get_minor();
       if (cl == x86_regclass_gpr && reg==x86_gpr_cx) 
@@ -129,7 +129,7 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
           SgAsmExpression* binExp = (*it);
           ROSE_ASSERT(binExp);
           //cerr << " type " << binExp->class_name() << endl;
-          SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
+          SgAsmRegisterReferenceExpression* refExp = isSgAsmRegisterReferenceExpression(binExp);
           if (refExp) {
             //ROSE_ASSERT(refExp);
             X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
@@ -162,7 +162,7 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
             SgAsmExpression* binExp = (*it);
             ROSE_ASSERT(binExp);
             //cerr << " type " << binExp->class_name() << endl;
-            SgAsmx86RegisterReferenceExpression* refExp = isSgAsmx86RegisterReferenceExpression(binExp);
+            SgAsmRegisterReferenceExpression* refExp = isSgAsmRegisterReferenceExpression(binExp);
             SgAsmValueExpression* valExp = isSgAsmValueExpression(binExp);
             if (refExp && iteration==0) {
               X86RegisterClass cl = (X86RegisterClass)refExp->get_descriptor().get_major();
@@ -299,22 +299,15 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
   SgAsmOperandList* opList = mov->get_operandList();
   SgAsmExpressionPtrList exprList = opList->get_operands();
   SgAsmExpressionPtrList::iterator it = exprList.begin();
-  //  SgAsmx86RegisterReferenceExpression* myexp=NULL;
   int iteration=0;
   string value="";
   for (;it!=exprList.end();it++) {
     SgAsmExpression* binExp = (*it);
     ROSE_ASSERT(binExp);
     string str="";
-    //myexp = isSgAsmx86RegisterReferenceExpression(binExp);
-    //if (myexp) {
-    // register
-    //SgAsmx86RegisterReferenceExpression::x86_register_enum reg = myexp->get_x86_register_code();
-    //string regName = resolveRegister(reg);
-    //SgAsmMemoryReferenceExpression* memref = isSgAsmMemoryReferenceExpression(myexp->get_offset());
     SgAsmMemoryReferenceExpression* memref = isSgAsmMemoryReferenceExpression(binExp);
     if (memref) {
-      SgAsmx86RegisterReferenceExpression* myexp = isSgAsmx86RegisterReferenceExpression(memref->get_segment());
+      SgAsmRegisterReferenceExpression* myexp = isSgAsmRegisterReferenceExpression(memref->get_segment());
       if (myexp) {
         // register
         string regName = resolveRegister(myexp->get_descriptor());
@@ -529,7 +522,7 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
           //local_last_variable = roh_val;
           isSgIntVal(op)->setAttribute(attributeName,createAttribute(2));
           isSgAsmIntegerValueExpression(valExp)->setAttribute(attributeName,createAttribute(2));
-          isSgAsmx86RegisterReferenceExpression(refExp_Left)->setAttribute(attributeName,createAttribute(2));
+          isSgAsmRegisterReferenceExpression(refExp_Left)->setAttribute(attributeName,createAttribute(2));
         }
       }
     }
@@ -555,7 +548,7 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
     ROSE_ASSERT(binExp);
     //cerr << " type " << binExp->class_name() << endl;
     if (iteration==0) {
-      refExp_Left = isSgAsmx86RegisterReferenceExpression(binExp);
+      refExp_Left = isSgAsmRegisterReferenceExpression(binExp);
       if (refExp_Left ) {
         // first operand is refExp (variabledecl || assignOp)
         if (refExp_Left->get_descriptor().get_major() == x86_regclass_segment &&
@@ -567,7 +560,7 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
       }
     }
     if (iteration==1) {
-      refExp_Right = isSgAsmx86RegisterReferenceExpression(binExp);
+      refExp_Right = isSgAsmRegisterReferenceExpression(binExp);
       valExp = isSgAsmValueExpression(binExp);
       if (valExp ) {
         // second operand is Value (variabledecl)
