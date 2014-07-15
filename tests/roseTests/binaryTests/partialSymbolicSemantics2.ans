@@ -2899,33 +2899,3 @@ memory:
   addr=v5600+0x4[32] value=v5603[32]
   addr=v5600[32] value=v5601[32]
 analyzed headers: 1
-Before vacuum...
-Allocator statistics for SValue objects:
-  Pool #5
-    Max object size:        48 bytes
-    Max objects per bucket: 1706
-    Number of buckets:      1
-    Objects in use:         0 objects
-    Object memory:          0 bytes
-    Pool utilization:       0 percent
-    High water:             61 objects
-    High water utilization: 3.57422 percent
-      Bucket at 0x00efb870:	0 objects in use
-  Pool #13
-    Max object size:        112 bytes
-    Max objects per bucket: 731
-    Number of buckets:      1
-    Objects in use:         0 objects
-    Object memory:          0 bytes
-    Pool utilization:       0 percent
-    High water:             81 objects
-    High water utilization: 11.0742 percent
-      Bucket at 0x00e77b30:	0 objects in use
-  Totals across all pools for this allocator
-    Number of buckets:            2
-    Memory allocated for buckets: 163840 bytes
-    Memory in use for objects:    0 bytes inc. internal fragmentation
-    Utilization:                  0 percent
-After vacuum...
-Allocator statistics for SValue objects:
-  allocator is empty
