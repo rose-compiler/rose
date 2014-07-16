@@ -446,8 +446,8 @@ private:
      *  BASE_REG and INDEX_REG are optional register reference expressions and SCALE and DISPLACEMENT are optional value
      *  expressions. */
     static MemoryReferencePattern parse_memref(SgAsmInstruction *insn, SgAsmMemoryReferenceExpression *expr,
-                                               SgAsmx86RegisterReferenceExpression **base_reg/*out*/,
-                                               SgAsmx86RegisterReferenceExpression **index_reg/*out*/,
+                                               SgAsmRegisterReferenceExpression **base_reg/*out*/,
+                                               SgAsmRegisterReferenceExpression **index_reg/*out*/,
                                                SgAsmValueExpression **scale/*out*/, SgAsmValueExpression **displacement/*out*/);
 
     /** Builds the ModR/M byte, SIB byte. Also adjusts the REX prefix byte and returns any displacement value. */

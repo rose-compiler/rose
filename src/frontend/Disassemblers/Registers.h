@@ -31,18 +31,19 @@ public:
     typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
     /* Functions that return a dictionary for a particular machine architecute. (See implementation for documentation.) */
-    static const RegisterDictionary *dictionary_i8086();
-    static const RegisterDictionary *dictionary_i8088();
-    static const RegisterDictionary *dictionary_i286();
-    static const RegisterDictionary *dictionary_i386();
-    static const RegisterDictionary *dictionary_i386_387();
-    static const RegisterDictionary *dictionary_i486();
-    static const RegisterDictionary *dictionary_pentium();
-    static const RegisterDictionary *dictionary_pentium4();
-    static const RegisterDictionary *dictionary_amd64();
-    static const RegisterDictionary *dictionary_arm7();
+    static const RegisterDictionary *dictionary_i8086();                // Intel 8086
+    static const RegisterDictionary *dictionary_i8088();                // Intel 8088
+    static const RegisterDictionary *dictionary_i286();                 // Intel 80286
+    static const RegisterDictionary *dictionary_i386();                 // Intel 80386
+    static const RegisterDictionary *dictionary_i386_387();             // Intel 80386 with 80387 math coprocessor
+    static const RegisterDictionary *dictionary_i486();                 // Intel 80486
+    static const RegisterDictionary *dictionary_pentium();              // Intel Pentium
+    static const RegisterDictionary *dictionary_pentiumiii();           // Intel Pentium III
+    static const RegisterDictionary *dictionary_pentium4();             // Intel Pentium 4
+    static const RegisterDictionary *dictionary_amd64();                // AMD Athlon 64
+    static const RegisterDictionary *dictionary_arm7();                 // ARMv7-M architecture (ARM Cortex-M3)
     static const RegisterDictionary *dictionary_powerpc();
-    static const RegisterDictionary *dictionary_mips32();
+    static const RegisterDictionary *dictionary_mips32();               // MIPS32 Release 1
     static const RegisterDictionary *dictionary_mips32_altnames();
     static const RegisterDictionary *dictionary_m68000();
     static const RegisterDictionary *dictionary_m68000_altnames();

@@ -18,6 +18,10 @@
  *
  * NOTE:  Please use three blank lines between IR node definitions to help make this file more readable.  Unless those IR
  *        nodes are so closely related to one another that it's better to keep them close.
+ *
+ * NOTE:  If you get thousands of compile errors in Cxx_Grammar.h that seem to have absolutely nothing to do with the node
+ *        you just added, then double check that the new node type is listed as the descendant of some other node type in
+ *        a NEW_NONTERMINAL_MACRO macro expansion.
  *-----------------------------------------------------------------------------------------------------------------------------*/
 
 #include "ROSETTA_macros.h"
@@ -165,50 +169,38 @@ Grammar::setUpBinaryInstructions()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
+    // Direct register references, like x86 EAX (as opposed to, say, ST(0)).  The only purpose of this class is because SageIII
+    // doesn't allow traversals on non-terminal classes.
+    NEW_TERMINAL_MACRO(AsmDirectRegisterExpression,
+                       "AsmDirectRegisterExpression", "AsmDirectRegisterExpressionTag");
+    AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                 NO_DELETE);
+
+    
+
+    // Indirect registers, as in x86 ST(1), which has base="st", stride={0,1,0,0}, offset="fpstatus_top",
+    // index=1, and modulus=8.
+    NEW_TERMINAL_MACRO(AsmIndirectRegisterExpression,
+                       "AsmIndirectRegisterExpression", "AsmIndirectRegisterExpressionTag");
+    AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("size_t", "index", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmIndirectRegisterExpression.setDataPrototype("size_t", "modulus", "",
+                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
     // References to registers
-    NEW_TERMINAL_MACRO(Asmx86RegisterReferenceExpression,
-                       "Asmx86RegisterReferenceExpression", "Asmx86RegisterReferenceExpressionTag");
-    Asmx86RegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION",
-                                                           "../Grammar/BinaryInstruction.code");
-    Asmx86RegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION",
-                                                        "../Grammar/BinaryInstruction.code");
-
-
-
-    NEW_TERMINAL_MACRO(AsmArmRegisterReferenceExpression ,
-                       "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag");
-    AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
-                                                           "../Grammar/BinaryInstruction.code");
-    AsmArmRegisterReferenceExpression.setDataPrototype("unsigned", "psr_mask", "=0",
-                                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-    NEW_TERMINAL_MACRO(AsmPowerpcRegisterReferenceExpression,
-                       "AsmPowerpcRegisterReferenceExpression", "AsmPowerpcRegisterReferenceExpressionTag");
-
-
-
-
-    NEW_TERMINAL_MACRO(AsmMipsRegisterReferenceExpression,
-                       "AsmMipsRegisterReferenceExpression", "AsmMipsRegisterReferenceExpressionTag");
-
-
-
-    NEW_TERMINAL_MACRO(AsmM68kRegisterReferenceExpression,
-                       "AsmM68kRegisterReferenceExpression", "AsmM68kRegisterReferenceExpressionTag");
-    AsmM68kRegisterReferenceExpression.setDataPrototype("int", "adjustment", "=0", // post-increment/pre-decrement amount
-                                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                                        NO_DELETE);
-    
-    NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression,
-                          Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression |
-                          AsmPowerpcRegisterReferenceExpression | AsmMipsRegisterReferenceExpression |
-                          AsmM68kRegisterReferenceExpression,
-                          "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
+    NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression, AsmDirectRegisterExpression|AsmIndirectRegisterExpression,
+                          "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag", false);
     AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
                                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmRegisterReferenceExpression.setDataPrototype("int", "adjustment", "=0", // post-increment/pre-decrement amount
+                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
     // An ordered list of registers
@@ -226,6 +218,7 @@ Grammar::setUpBinaryInstructions()
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmIntegerValueExpression.setDataPrototype("size_t", "significant_bits", "=0",
                                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
     // Floating point constants (FIXME: These use x86 nomenclature and will likely be changed. [Robb P. Matzke 2013-02-13])

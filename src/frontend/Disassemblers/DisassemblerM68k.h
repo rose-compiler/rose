@@ -73,10 +73,10 @@ public:
     SgAsmType *makeIntegerType(size_t nbits);
 
     /** Create a data register reference expression. */
-    SgAsmM68kRegisterReferenceExpression *makeDataRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeDataRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
     /** Create an address register reference expression. */
-    SgAsmM68kRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
     /** Make a memory reference expression using an address register in pre-decrement mode. The @p nbits are the size of the
      *  memory reference; all 32-bits of the address register are accessed. */
@@ -88,7 +88,7 @@ public:
 
     /** Create either a data or address register reference expression. When @p regnum is zero through seven a data register is
      *  created; when @p regnum is eight through 15 an address register is created. */
-    SgAsmM68kRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
 
     /** Create a list of data and/or address registers.
      *
@@ -98,22 +98,22 @@ public:
     SgAsmRegisterNames *makeRegistersFromMask(unsigned mask, size_t nbits, bool reverse=false);
 
     /** Create a reference to the status register. */
-    SgAsmM68kRegisterReferenceExpression *makeStatusRegister();
+    SgAsmRegisterReferenceExpression *makeStatusRegister();
 
     /** Create a reference to the condition code register. This is the low-order 8 bits of the status register. */
-    SgAsmM68kRegisterReferenceExpression *makeConditionCodeRegister();
+    SgAsmRegisterReferenceExpression *makeConditionCodeRegister();
 
     /** Create a reference to the program counter register. */
-    SgAsmM68kRegisterReferenceExpression *makeProgramCounter();
+    SgAsmRegisterReferenceExpression *makeProgramCounter();
 
     /** Create a MAC register reference expression. */
-    SgAsmM68kRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
+    SgAsmRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
 
     /** Create an EMAC register reference expression. */
-    SgAsmM68kRegisterReferenceExpression *makeEmacRegister(M68kEmacRegister);
+    SgAsmRegisterReferenceExpression *makeEmacRegister(M68kEmacRegister);
 
     /** Generic ways to make a register. */
-    SgAsmM68kRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
+    SgAsmRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
 
     /** Create an integer expression from a specified value. */
     SgAsmIntegerValueExpression *makeImmediateValue(size_t nbits, unsigned value);

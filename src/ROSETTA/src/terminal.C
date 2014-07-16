@@ -57,6 +57,8 @@ Terminal::Terminal ( const string& lexemeString , Grammar & X , const string& st
      associatedGrammar(&X)
    {
      for (size_t i = 0; i < subclasses.size(); ++i) {
+       // If the next assertion fails, it's probably because you have an IR type that appears in more than one
+       // NEW_NONTERMINAL_MACRO() [Robb P. Matzke 2014-05-07]
        ROSE_ASSERT (subclasses[i]->getBaseClass() == NULL);
        ROSE_ASSERT (subclasses[i]);
        subclasses[i]->setBaseClass(this);

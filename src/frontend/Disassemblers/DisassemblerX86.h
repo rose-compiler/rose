@@ -181,25 +181,25 @@ private:
                                          SgAsmExpression *op3=NULL, SgAsmExpression *op4=NULL);
 
     /** Constructs a register reference expression for the instruction pointer register. */
-    SgAsmx86RegisterReferenceExpression *makeIP();
+    SgAsmRegisterReferenceExpression *makeIP();
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber);
+    SgAsmRegisterReferenceExpression *makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber);
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber);
+    SgAsmRegisterReferenceExpression *makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber);
 
     /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
      *  than one type. */
-    SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
+    SgAsmRegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
+    SgAsmRegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
         return makeRegister(fullRegisterNumber, effectiveOperandMode());
     }
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeRegisterEffective(bool rexExtension, uint8_t registerNumber) {
+    SgAsmRegisterReferenceExpression *makeRegisterEffective(bool rexExtension, uint8_t registerNumber) {
         return makeRegister(registerNumber + (rexExtension ? 8 : 0), effectiveOperandMode());
     }
 
@@ -240,7 +240,7 @@ private:
 
     /** Builds the register reference expression for the ModR/M byte. See getModRegRM(). The @p mrType is only used for vector
      *  registers. */
-    SgAsmx86RegisterReferenceExpression *makeModrmRegister(RegisterMode, SgAsmType* mrType=NULL);
+    SgAsmRegisterReferenceExpression *makeModrmRegister(RegisterMode, SgAsmType* mrType=NULL);
 
     /** Throw an exceptions if the instruction requires the "Mod" part of the ModR/M byte to have the value 3. */
     void requireMemory() const {

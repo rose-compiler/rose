@@ -12,7 +12,6 @@ SgArrayType
 SgArrowExp
 SgArrowStarOp
 SgAsmArmInstruction
-SgAsmArmRegisterReferenceExpression
 SgAsmBasicString
 SgAsmBinaryAdd
 SgAsmBinaryAddPostupdate
@@ -40,6 +39,7 @@ SgAsmDOSFileHeader
 SgAsmSynthesizedDataStructureDeclaration
 SgAsmSynthesizedDeclaration
 SgAsmDoubleFloatValueExpression
+SgAsmDirectRegisterExpression
 SgAsmDwarfAccessDeclaration
 SgAsmDwarfArrayType
 SgAsmDwarfBaseType
@@ -171,6 +171,7 @@ SgAsmGenericString
 SgAsmGenericStrtab
 SgAsmGenericSymbol
 SgAsmGenericSymbolList
+SgAsmIndirectRegisterExpression
 SgAsmInstruction
 SgAsmIntegerValueExpression
 SgAsmInterpretation
@@ -189,7 +190,6 @@ SgAsmM68kInstruction
 SgAsmM68kRegisterReferenceExpression
 SgAsmMemoryReferenceExpression
 SgAsmMipsInstruction
-SgAsmMipsRegisterReferenceExpression
 SgAsmNEEntryPoint
 SgAsmNEEntryTable
 SgAsmNEFileHeader
@@ -222,7 +222,6 @@ SgAsmPESectionTable
 SgAsmPESectionTableEntry
 SgAsmPEStringSection
 SgAsmPowerpcInstruction
-SgAsmPowerpcRegisterReferenceExpression
 SgAsmProgramHeader
 SgAsmProgramHeaderList
 SgAsmRegisterNames
@@ -253,7 +252,6 @@ SgAsmUnaryPlus
 SgAsmUnaryRrx
 SgAsmValueExpression
 SgAsmx86Instruction
-SgAsmx86RegisterReferenceExpression
 SgAsmBinaryAddressSymbol
 SgAsmBinaryDataSymbol
 SgAssertStmt

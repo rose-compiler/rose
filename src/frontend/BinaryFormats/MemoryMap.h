@@ -518,6 +518,9 @@ public:
     /** Number of bytes mapped. */
     size_t size() const;
 
+    /** Minimum and maximum addresses that are mapped.  This should only be called if @ref empty returns false. */
+    AddressInterval hull() const;
+
     /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
      *  The default byte order is little-endian.
      * @{ */
@@ -551,8 +554,8 @@ public:
 
     /** Returns the next valid address.
      *
-     *  Returns the next mapped address greater than or equal to @p va and having all of the require
-     *  permissions are specified then the address need only be mapped.  Returns nothing if there is no
+     *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions.  If no
+     *  permissions are specified then the address need only be mapped.  Returns nothing if there is no valid address greater than or
      *  equal to @p va. */
     Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
 
@@ -652,6 +655,28 @@ public:
     size_t write(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
     size_t write1(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
     /** @} */
+
+    /** Searches for a prefix.
+     *
+     *  Reads bytes from the specified address and matches them against a search vector, returning the number of bytes that
+     *  matched. */
+    size_t match_bytes(rose_addr_t start_va, const std::vector<uint8_t> &bytesToFind, unsigned req_perms=MM_PROT_READ) const;
+
+    /** Search for a byte sequence.
+     *
+     *  Searches for the first occurrence of the specified bytes anywhere completely contained within the specified limits.
+     *  The bytes must appear in the order they are specified.  Returns the address of the start of the sequence if found, or
+     *  none if not found. */
+    Sawyer::Optional<rose_addr_t> find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                                unsigned req_perms=MM_PROT_READ) const;
+
+    /** Search for any byte.
+     *
+     *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
+     *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
+     *  method returns none. */
+    Sawyer::Optional<rose_addr_t> find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                           unsigned req_perms=MM_PROT_READ) const;
 
     /** Returns just the virtual address extents for a memory map. */
     AddressIntervalSet va_extents() const;

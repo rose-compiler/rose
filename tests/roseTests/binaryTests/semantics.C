@@ -60,7 +60,7 @@
 #   error "invalid value for SMT_SOLVER"
 #endif
 
-const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
+const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
 
 #include "TraceSemantics2.h"
 
@@ -366,6 +366,12 @@ analyze_interp(SgAsmInterpretation *interp)
             dispatcher = DispatcherX86::instance(operators);
         }
         operators->set_solver(make_solver());
+
+        // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
+        if (const RegisterDescriptor *REG_FPSTATUS_TOP = regdict->lookup("fpstatus_top")) {
+            BaseSemantics::SValuePtr st_top = operators->number_(REG_FPSTATUS_TOP->get_nbits(), 0);
+            operators->writeRegister(*REG_FPSTATUS_TOP, st_top);
+        }
 #else   // OLD_API
         typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
         MyPolicy operators;
@@ -534,5 +540,13 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
     }
+#if SEMANTIC_API == NEW_API
+    std::ostream &info = std::cout;
+    info <<"Before vacuum...\n";
+    BaseSemantics::SValue::allocator.printStatistics(info);
+    BaseSemantics::SValue::allocator.vacuum();
+    info <<"After vacuum...\n";
+    BaseSemantics::SValue::allocator.printStatistics(info);
+#endif
     return 0;
 }
