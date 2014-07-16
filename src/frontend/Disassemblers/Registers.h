@@ -47,6 +47,8 @@ public:
     static const RegisterDictionary *dictionary_mips32_altnames();
     static const RegisterDictionary *dictionary_m68000();
     static const RegisterDictionary *dictionary_m68000_altnames();
+    static const RegisterDictionary *dictionary_coldfire();             // FreeScale ColdFire (generic hardware)
+    static const RegisterDictionary *dictionary_coldfire_emac();        // FreeScale ColdFire (generic hardware)
 
     RegisterDictionary(const std::string &name)
         :name(name) {}

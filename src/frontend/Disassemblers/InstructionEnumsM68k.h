@@ -47,27 +47,31 @@ enum M68kFamily {
 };
 
 enum M68kRegisterClass {
-    m68k_regclass_data,                 /**< Data registers. */
-    m68k_regclass_addr,                 /**< Address registers. */
-    m68k_regclass_fpr,                  /**< Floating point registers. */
-    m68k_regclass_spr,                  /**< Special purpose registers. */
-    m68k_regclass_mac,                  /**< Multiply-accumulate registers. */
-    m68k_regclass_emac,                 /**< Extended multiply-accumulate registers. */
-    m68k_regclass_sup,                  /**< Supervisor registers. */
+    m68k_regclass_data,                                 /**< Data registers. */
+    m68k_regclass_addr,                                 /**< Address registers. */
+    m68k_regclass_fpr,                                  /**< Floating point registers. */
+    m68k_regclass_spr,                                  /**< Special purpose registers. */
+    m68k_regclass_mac,                                  /**< Multiply-accumulate registers (includes EMAC registers). */
+    m68k_regclass_sup,                                  /**< Supervisor registers. */
 };
 
 enum M68kSpecialPurposeRegister {
-    m68k_spr_pc,                        /**< Program counter. */
-    m68k_spr_sr,                        /**< Status register, including condition codes. */
-    m68k_spr_fpcr,                      /**< Floating-point control register. */
-    m68k_spr_fpsr,                      /**< Floating-point status register. */
-    m68k_spr_fpiar,                     /**< Floating-point instruction address register. */
+    m68k_spr_pc,                                        /**< Program counter. */
+    m68k_spr_sr,                                        /**< Status register, including condition codes. */
+    m68k_spr_fpcr,                                      /**< Floating-point control register. */
+    m68k_spr_fpsr,                                      /**< Floating-point status register. */
+    m68k_spr_fpiar,                                     /**< Floating-point instruction address register. */
 };
 
 enum M68kMacRegister {
-    m68k_mac_macsr,                     /**< MAC status register. */
-    m68k_mac_acc,                       /**< MAC 32-bit accumulator. */
-    m68k_mac_mask,                      /**< MAC mask register. */
+    m68k_mac_macsr,                                     /**< MAC status register. */
+    m68k_mac_acc0,                                      /**< MAC 32-bit accumulator #0. */
+    m68k_mac_acc1,                                      /**< MAC 32-bit accumulator #1. */
+    m68k_mac_acc2,                                      /**< MAC 32-bit accumulator #2. */
+    m68k_mac_acc3,                                      /**< MAC 32-bit accumulator #3. */
+    m68k_mac_ext01,                                     /**< Extensions for ACC0 and ACC1. */
+    m68k_mac_ext23,                                     /**< Extensions for ACC2 and ACC3. */
+    m68k_mac_mask,                                      /**< MAC mask register. */
 };
 
 enum M68kEmacRegister {
@@ -208,6 +212,20 @@ enum M68kEffectiveAddressMode {
     m68k_eam_pc      = 0x00007c00,      /**< All PC address modes. */
 };
 
+/** M68k data formats for floating-point operations.
+ *
+ *  The integer values are important: they are the bit patterns in floating point instruction encodings. */
+enum M68kDataFormat {
+    m68k_fmt_i32 = 0,                                   /**< 32-bit integer. */
+    m68k_fmt_f32 = 1,                                   /**< 32-bit floating point, "single real". */
+    m68k_fmt_f96 = 2,                                   /**< 96-bit floating point, "extended real". */
+    m68k_fmt_p96 = 3,                                   /**< Three 32-bit words of binary coded decimal. */
+    m68k_fmt_i16 = 4,                                   /**< 16-bit integer. */
+    m68k_fmt_f64 = 5,                                   /**< 64-bit floating point, "double real". */
+    m68k_fmt_i8  = 6,                                   /**< 8-bit integer. */
+    m68k_fmt_unknown = 255,                             /**< Invalid format. */
+};
+
 enum M68kInstructionKind {
     m68k_unknown_instruction,
     m68k_abcd,                                          /**< Add decimal with extended */
@@ -261,7 +279,9 @@ enum M68kInstructionKind {
     m68k_cmp2,                                          /**< Compare register against bounds */
     m68k_cmpa,                                          /**< Compare address */
     m68k_cmpi,                                          /**< Compare immediate */
-//    m68k_cpushl,
+    m68k_cpusha,                                        /**< Push and invalidate all */
+    m68k_cpushl,                                        /**< Push and invalidate cache lines */
+    m68k_cpushp,                                        /**< Push and invalidate cache pages */
     m68k_dbt,                                           /**< Decrement and branch if true */
     m68k_dbf,                                           /**< Decrement and branch if false */
     m68k_dbhi,                                          /**< Decrement and branch if high */
@@ -300,7 +320,7 @@ enum M68kInstructionKind {
 //    m68k_ff1,                           /**< Find first one in register */
 //    m68k_fint,
 //    m68k_fintrz,
-//    m68k_fmove,
+    m68k_fmove,                                         /**< Move floating-point data register */
 //    m68k_fmovem,
 //    m68k_fmul,
 //    m68k_fneg,
@@ -327,7 +347,7 @@ enum M68kInstructionKind {
     m68k_link,                                          /**< Link and allocate */
     m68k_lsl,                                           /**< Logical shift left */
     m68k_lsr,                                           /**< Logical shift right */
-//    m68k_mac,                           /**< Multiply accumulate */
+    m68k_mac,                                           /**< Multiply accumulate */
     m68k_mov3q,                                         /**< Move 3-bit data quick */
 //    m68k_movclr,
     m68k_move,                                          /**< Move from source to destination (data, CCR, ACC, MACSR, MASK) */

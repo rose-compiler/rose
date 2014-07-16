@@ -69,8 +69,10 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
     } else {
         result = "<UNHANDLED_EXPRESSION type=" + expr->class_name() + ">";
     }
-    if (expr->get_replacement() != "") {
-        result += " <" + expr->get_replacement() + ">";
-    }
+
+    if (expr->get_replacement() != "")
+        result += "<" + expr->get_replacement() + ">";
+    if (expr->get_comment() != "")
+        result += "<" + expr->get_comment() + ">";
     return result;
 }

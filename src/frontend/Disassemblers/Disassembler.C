@@ -154,7 +154,7 @@ Disassembler::initclass()
     RTS_INIT_RECURSIVE(class_mutex) {
         register_subclass(new DisassemblerArm());
         register_subclass(new DisassemblerPowerpc());
-        register_subclass(new DisassemblerM68k());
+        register_subclass(new DisassemblerM68k(m68k_freescale_isab));
         register_subclass(new DisassemblerMips());
         register_subclass(new DisassemblerX86(2)); /*16-bit*/
         register_subclass(new DisassemblerX86(4)); /*32-bit*/

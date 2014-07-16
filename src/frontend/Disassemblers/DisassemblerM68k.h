@@ -69,33 +69,33 @@ public:
     /** Return the Nth instruction word. */
     uint16_t instruction_word(size_t n);
 
-    /** Create an integer data type of specified width. */
-    SgAsmType *makeIntegerType(size_t nbits);
+    /** Create a ROSE data type for m68k data format. */
+    SgAsmType *makeType(M68kDataFormat);
 
     /** Create a data register reference expression. */
-    SgAsmRegisterReferenceExpression *makeDataRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeDataRegister(unsigned regnum, M68kDataFormat, size_t bit_offset=0);
 
     /** Create an address register reference expression. */
-    SgAsmRegisterReferenceExpression *makeAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeAddressRegister(unsigned regnum, M68kDataFormat, size_t bit_offset=0);
 
-    /** Make a memory reference expression using an address register in pre-decrement mode. The @p nbits are the size of the
+    /** Make a memory reference expression using an address register in pre-decrement mode. The @p fmt is the format of the
      *  memory reference; all 32-bits of the address register are accessed. */
-    SgAsmMemoryReferenceExpression *makeAddressRegisterPreDecrement(unsigned regnum, size_t nbits);
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPreDecrement(unsigned regnum, M68kDataFormat fmt);
 
-    /** Make a memory reference expression using an address register in post-increment mode. The @p nbits are the size of the
+    /** Make a memory reference expression using an address register in post-increment mode. The @p fmt is the format of the
      *  memory reference; all 32-bits of the address register are accessed. */
-    SgAsmMemoryReferenceExpression *makeAddressRegisterPostIncrement(unsigned regnum, size_t nbits);
+    SgAsmMemoryReferenceExpression *makeAddressRegisterPostIncrement(unsigned regnum, M68kDataFormat fmt);
 
     /** Create either a data or address register reference expression. When @p regnum is zero through seven a data register is
      *  created; when @p regnum is eight through 15 an address register is created. */
-    SgAsmRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, size_t nbits, size_t bit_offset=0);
+    SgAsmRegisterReferenceExpression *makeDataAddressRegister(unsigned regnum, M68kDataFormat fmt, size_t bit_offset=0);
 
     /** Create a list of data and/or address registers.
      *
      *  The bit mask indicates the registers. Starting at the least significant bit, the register are either:
      *  D0, D1, ... D7, A0, A1, ... A7 if @p reverse is false, or A7, A6, ... A0, D7, D6, ... D0 if @p reverse is true.  The
      *  returned list has the registers in order starting at the least significant bit. */
-    SgAsmRegisterNames *makeRegistersFromMask(unsigned mask, size_t nbits, bool reverse=false);
+    SgAsmRegisterNames *makeRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool reverse=false);
 
     /** Create a reference to the status register. */
     SgAsmRegisterReferenceExpression *makeStatusRegister();
@@ -109,26 +109,26 @@ public:
     /** Create a MAC register reference expression. */
     SgAsmRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
 
-    /** Create an EMAC register reference expression. */
-    SgAsmRegisterReferenceExpression *makeEmacRegister(M68kEmacRegister);
+    /** Create a floating point register. */
+    SgAsmRegisterReferenceExpression *makeFPRegister(unsigned regnum);
 
     /** Generic ways to make a register. */
     SgAsmRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
 
     /** Create an integer expression from a specified value. */
-    SgAsmIntegerValueExpression *makeImmediateValue(size_t nbits, unsigned value);
+    SgAsmIntegerValueExpression *makeImmediateValue(M68kDataFormat fmt, unsigned value);
 
     /** Create an integer expression from extension words. */
-    SgAsmIntegerValueExpression *makeImmediateExtension(size_t nbits, size_t ext_word_idx);
+    SgAsmIntegerValueExpression *makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_idx);
 
     /** Create an expression for m68k "<ea>x" or "<ea>y". The @p modreg is a six-bit value whose high-order three bits are the
      * addressing mode and whose low-order three bits are (usually) a register number. The return value has a type of the
-     * specified size measured in bits. The @p ext_offset indicates how many instruction extension words have already been
+     * specified data format. The @p ext_offset indicates how many instruction extension words have already been
      * consumed.
      *
      * @{ */
-    SgAsmExpression *makeEffectiveAddress(unsigned modreg, size_t nbits, size_t ext_offset);
-    SgAsmExpression *makeEffectiveAddress(unsigned mode, unsigned reg, size_t nbits, size_t ext_offset);
+    SgAsmExpression *makeEffectiveAddress(unsigned modreg, M68kDataFormat fmt, size_t ext_offset);
+    SgAsmExpression *makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataFormat fmt, size_t ext_offset);
     /** @} */
 
     /** Create an offset width pair from an extension word.  The extension word contains an offset and width expression each of

@@ -236,7 +236,7 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
             return dictionary_powerpc();
 
         case EFF::ISA_M68K_Family:
-            return dictionary_m68000_altnames();
+            return dictionary_m68000();
 
         default:
             return NULL;
@@ -1015,6 +1015,62 @@ RegisterDictionary::dictionary_m68000_altnames()
         regs->insert(dictionary_m68000());
         regs->insert("bp", m68k_regclass_addr, 6, 0, 32);                       // a6 is conventionally the stack frame pointer
         regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
+    }
+    return regs;
+}
+
+// FIXME[Robb P. Matzke 2014-07-15]: This is fairly generic at this point. Eventually we'll split this function into
+// dictionaries for each specific Freescale ColdFire architecture.
+const RegisterDictionary *
+RegisterDictionary::dictionary_coldfire()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("freescale MAC");
+        regs->insert(dictionary_m68000());
+
+        // Floating point: The ColdFire processors have 64-bit floating point registers rather than 80-bit floating point
+        // registers.
+        for (int i=0; i<8; ++i)
+            regs->resize("fp"+StringUtility::numberToString(i), 64);
+
+        // MAC unit
+        regs->insert("macsr",     m68k_regclass_mac, m68k_mac_macsr, 0, 32);    // MAC status register
+        regs->insert("macsr_c",   m68k_regclass_mac, m68k_mac_macsr, 0,  1);    //   Carry flag; this field is always zero.
+        regs->insert("macsr_v",   m68k_regclass_mac, m68k_mac_macsr, 1,  1);    //   Overflow flag
+        regs->insert("macsr_z",   m68k_regclass_mac, m68k_mac_macsr, 2,  1);    //   Zero flag
+        regs->insert("macsr_n",   m68k_regclass_mac, m68k_mac_macsr, 3,  1);    //   Negative flag
+        regs->insert("macsr_rt",  m68k_regclass_mac, m68k_mac_macsr, 4,  1);    //   Round/truncate mode
+        regs->insert("macsr_fi",  m68k_regclass_mac, m68k_mac_macsr, 5,  1);    //   Fraction/integer mode
+        regs->insert("macsr_su",  m68k_regclass_mac, m68k_mac_macsr, 6,  1);    //   Signed/unsigned operations mode
+        regs->insert("macsr_omc", m68k_regclass_mac, m68k_mac_macsr, 7,  1);    //   Overflow/saturation mode
+        regs->insert("acc",       m68k_regclass_mac, m68k_mac_acc0,  0, 32);    // MAC accumulator
+        regs->insert("mask",      m68k_regclass_mac, m68k_mac_mask,  0, 32);    // MAC mask register (upper 16 bits are set)
+    }
+    return regs;
+}
+
+// FreeScale ColdFire CPUs with EMAC (extended multiply-accumulate) unit.
+const RegisterDictionary *
+RegisterDictionary::dictionary_coldfire_emac()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("freescale EMAC");
+        regs->insert(dictionary_coldfire());
+        
+        regs->insert("macsr_pav0", m68k_regclass_mac, m68k_mac_macsr,  8,  1);  // overflow flag for accumulator 0
+        regs->insert("macsr_pav1", m68k_regclass_mac, m68k_mac_macsr,  9,  1);  // overflow flag for accumulator 1
+        regs->insert("macsr_pav2", m68k_regclass_mac, m68k_mac_macsr, 10,  1);  // overflow flag for accumulator 2
+        regs->insert("macsr_pav3", m68k_regclass_mac, m68k_mac_macsr, 11,  1);  // overflow flag for accumulator 3
+
+        regs->insert("acc0",       m68k_regclass_mac, m68k_mac_acc0,   0, 32);  // accumulator #0
+        regs->insert("acc1",       m68k_regclass_mac, m68k_mac_acc1,   0, 32);  // accumulator #1
+        regs->insert("acc2",       m68k_regclass_mac, m68k_mac_acc2,   0, 32);  // accumulator #2
+        regs->insert("acc3",       m68k_regclass_mac, m68k_mac_acc3,   0, 32);  // accumulator #3
+
+        regs->insert("accext01",   m68k_regclass_mac, m68k_mac_ext01,  0, 32);  // extensions for acc0 and acc1
+        regs->insert("accext23",   m68k_regclass_mac, m68k_mac_ext23,  0, 32);  // extensions for acc2 and acc3
     }
     return regs;
 }
