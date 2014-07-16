@@ -1,3 +1,4 @@
+// test the collapse clause
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -53,7 +54,7 @@ void error_check(void);
 
 #define REAL float // flexible between float and double
 #define MSIZE 512
-REAL error_ref= 9.212767E-04, resid_ref = 2.355429E-08; // depending on MSIZE!!
+REAL error_ref= 9.212746E-04, resid_ref = 2.356027E-08; // depending on MSIZE, precision, and number of threads !!
 int n,m,mits; 
 REAL tol,relax=1.0,alpha=0.0543; 
 REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
@@ -75,7 +76,6 @@ int main (void)
   m=MSIZE;
   tol=0.0000000001;
   mits=5000;
-#if 0 // Not yet support concurrent CPU and GPU threads  
 #ifdef _OPENMP
 #pragma omp parallel
   {
@@ -83,7 +83,6 @@ int main (void)
     printf("Running using %d threads...\n",omp_get_num_threads());
   }
 #endif
-#endif  
   driver ( ) ;
   return 0;
 }
@@ -131,7 +130,7 @@ void initialize( )
 
 /* Initialize initial condition and RHS */
 
-//#pragma omp parallel for private(xx,yy,j,i)
+#pragma omp parallel for private(xx,yy,j,i) collapse(2)
        for (i=0;i<n;i++)
          for (j=0;j<m;j++)      
            {
@@ -191,20 +190,14 @@ void jacobi( )
   {
     error = 0.0;    
 
-    /* Copy new solution into old */
-// Must split the omp for into two parallel for regions since the translation focuses on parallel to generate the outlined kernel
-// We need two CUDA kernels for implementing global synchronization so we have to have two omp parallel directives!!
-//#pragma omp target map(in:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
-//#pragma omp parallel
-//    {
-#pragma omp target map(in:n, m, u[0:n][0:m]) map(out:uold[0:n][0:m])
-#pragma omp parallel for private(j,i)
+#pragma omp parallel
+    {
+#pragma omp for private(j,i) collapse(2)
       for(i=0;i<n;i++)   
         for(j=0;j<m;j++)
           uold[i][j] = u[i][j]; 
 
-#pragma omp target map(in:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(out:u[0:n][0:m])
-#pragma omp parallel for private(resid,j,i) reduction(+:error) // nowait
+#pragma omp for private(resid,j,i) reduction(+:error) collapse(2) nowait
       for (i=1;i<(n-1);i++)  
         for (j=1;j<(m-1);j++)   
         { 
@@ -215,7 +208,7 @@ void jacobi( )
           error = error + resid*resid ;   
         }
 
-//    }
+    }
     /*  omp end parallel */
 
     /* Error check */
@@ -231,7 +224,7 @@ void jacobi( )
   printf("Residual:%E\n", error); 
   printf("Residual_ref :%E\n", resid_ref); 
   printf ("Diff ref=%E\n", fabs(error-resid_ref));
-  assert (fabs(error-resid_ref) < 1E-14);
+  assert (fabs(error-resid_ref)/resid_ref < 1E-4);
 
 }
 
@@ -250,7 +243,7 @@ void error_check ( )
   dy = 2.0 / (m-1);
   error = 0.0 ;
 
-//#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error)
+#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error) collapse(2)
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)
     { 
@@ -263,7 +256,7 @@ void error_check ( )
   printf("Solution Error :%E \n",error);
   printf("Solution Error Ref :%E \n",error_ref);
   printf ("Diff ref=%E\n", fabs(error-error_ref));
-  assert (fabs(error-error_ref) < 1E-14);
+  assert (fabs(error-error_ref)/error_ref < 1E-4);
 }
 
 
