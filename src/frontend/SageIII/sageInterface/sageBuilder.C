@@ -1255,7 +1255,9 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // DQ (7/18/2012): Added debugging code (should fail for test2011_75.C).
      SgVariableSymbol* variableSymbol = scope->lookup_variable_symbol(name);
   // ROSE_ASSERT(variableSymbol == NULL);
-
+#if 0
+     printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol = %p \n",variableSymbol);
+#endif
   // If there was a previous use of the variable, then there will be an existing symbol with it's declaration pointing to the SgInitializedName object.
      SgVariableDeclaration * varDecl = NULL;
      if (variableSymbol == NULL)
@@ -1267,6 +1269,14 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           SgInitializedName* initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
           SgVariableDeclaration* associatedVariableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+#if 0
+          printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_parent() = %p \n",initializedName->get_parent());
+          if (initializedName->get_parent() != NULL)
+             {
+               printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+             }
+          printf ("In SageBuilder::buildVariableDeclaration_nfi(): associatedVariableDeclaration = %p \n",associatedVariableDeclaration);
+#endif
           if (associatedVariableDeclaration != NULL)
              {
             // Build a seperate SgVariableDeclaration so that we can avoid sharing the SgInitializedName 
@@ -1278,6 +1288,9 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
              {
             // If there is not an associated SgVariableDeclaration then reuse the existing SgInitializedName.
                varDecl = new SgVariableDeclaration(initializedName);
+
+            // DQ (7/14/2014): Set the variable initialized (see test2014_107.C, also required for boost for_each support)).
+               initializedName->set_initptr(varInit);
              }
         }
 #endif
