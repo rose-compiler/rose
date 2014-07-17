@@ -67,7 +67,10 @@ public:
     }
 
     /** Return the Nth instruction word. */
-    uint16_t instruction_word(size_t n);
+    uint16_t instructionWord(size_t n);
+
+    /** Returns number of instruction words referenced so far in the current instruction. */
+    size_t extensionWordsUsed() const;
 
     /** Create a ROSE data type for m68k data format. */
     SgAsmType *makeType(M68kDataFormat);
@@ -97,6 +100,13 @@ public:
      *  returned list has the registers in order starting at the least significant bit. */
     SgAsmRegisterNames *makeRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool reverse=false);
 
+    /** Create a list of floating-point data registers.
+     *
+     *  The bit mask indicates the registers. Starting at the least significant bit, the registers are either:
+     *  FP0 through FP7 if @p reverse is false, or FP7 through FP0 if @p reverse is true.  The returned list has the registers
+     *  in order starting at the least significant bit. */
+    SgAsmRegisterNames *makeFPRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool reverse=false);
+
     /** Create a reference to the status register. */
     SgAsmRegisterReferenceExpression *makeStatusRegister();
 
@@ -109,7 +119,9 @@ public:
     /** Create a MAC register reference expression. */
     SgAsmRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
 
-    /** Create a floating point register. */
+    /** Create a floating point register.  Floating point registers are different sizes on different platforms. For example,
+     * the M68040 has 80-bit registers that can store 96-bit extended-precision real values (16-bits of which are zero), but
+     * the follow on FreeScale ColdFire processors have only 64-bit registers that hold double-precision real values. */
     SgAsmRegisterReferenceExpression *makeFPRegister(unsigned regnum);
 
     /** Generic ways to make a register. */
@@ -143,6 +155,9 @@ public:
     /** Return the address of the instruction we are disassembling. */
     rose_addr_t get_insn_va() const { return insn_va; }
 
+    /** Returns ISA family specified in constructor. */
+    M68kFamily get_family() const { return family; }
+
 private:
     void init();
     M68kFamily  family;                         /**< Specific family being disassembled. */
@@ -150,7 +165,7 @@ private:
     rose_addr_t insn_va;                        /**< Address of instruction. */
     uint16_t    iwords[11];                     /**< Instruction words. */
     size_t      niwords;                        /**< Number of instruction words read. */
-    size_t      niwords_used;                   /**< High water number of instruction words used by instruction_word(). */
+    size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
     typedef std::list<M68k*> IdisTable;
     IdisTable idis_table;                       /**< Instruction specific disassemblers. */
 };

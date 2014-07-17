@@ -279,6 +279,7 @@ enum M68kInstructionKind {
     m68k_cmp2,                                          /**< Compare register against bounds */
     m68k_cmpa,                                          /**< Compare address */
     m68k_cmpi,                                          /**< Compare immediate */
+    m68k_cmpm,                                          /**< Compare memory */
     m68k_cpusha,                                        /**< Push and invalidate all */
     m68k_cpushl,                                        /**< Push and invalidate cache lines */
     m68k_cpushp,                                        /**< Push and invalidate cache pages */
@@ -305,39 +306,71 @@ enum M68kInstructionKind {
     m68k_exg,                                           /**< Exchange registers */
     m68k_ext,                                           /**< Sign extend */
     m68k_extb,                                          /**< Sign extend byte to longword */
-//    m68k_fabs,
-//    m68k_fadd,
-//    m68k_fcmp,
-//    m68k_fdabs,
-//    m68k_fdadd,
-//    m68k_fddiv,
-//    m68k_fdiv,
-//    m68k_fdmove,
-//    m68k_fdmul,
-//    m68k_fdneg,
-//    m68k_fdsqrt,
-//    m68k_fdsub,
+    m68k_fabs,                                          /**< Floating-point absolute value with FPCR rounding */
+    m68k_fadd,                                          /**< Floating-point add with FPCR rounding */
+    m68k_fbeq,                                          /**< Floating-point branch if equal */
+    m68k_fbne,                                          /**< Floating-point branch if not equal */
+    m68k_fbgt,                                          /**< Floating-point branch if greater than */
+    m68k_fbngt,                                         /**< Floating-point branch if not greater than */
+    m68k_fbge,                                          /**< Floating-point branch if greater than or equal */
+    m68k_fbnge,                                         /**< Floating-point branch if not greater than or equal */
+    m68k_fblt,                                          /**< Floating-point branch if less than */
+    m68k_fbnlt,                                         /**< Floating-point branch if not less than */
+    m68k_fble,                                          /**< Floating-point branch if less than or equal */
+    m68k_fbnle,                                         /**< Floating-point branch if not less than or equal */
+    m68k_fbgl,                                          /**< Floating-point branch if greater or less than */
+    m68k_fbngl,                                         /**< Floating-point branch if not greater or less than */
+    m68k_fbgle,                                         /**< Floating-point branch if greater, less, or equal */
+    m68k_fbngle,                                        /**< Floating-point branch if not greater, less, or equal */
+    m68k_fbogt,                                         /**< Floating-point branch if ordered greater than */
+    m68k_fbule,                                         /**< Floating-point branch if unordered or less or equal */
+    m68k_fboge,                                         /**< Floating-point branch if ordered greater than or equal */
+    m68k_fbult,                                         /**< Floating-point branch if unordered less than */
+    m68k_fbolt,                                         /**< Floating-point branch if ordered less than */
+    m68k_fbuge,                                         /**< Floating-point branch if unordered or greater than or equal */
+    m68k_fbole,                                         /**< Floating-point branch if ordered less than or equal */
+    m68k_fbugt,                                         /**< Floating-point branch if unordered or greater than */
+    m68k_fbogl,                                         /**< Floating-point branch if ordered greater or less than */
+    m68k_fbueq,                                         /**< Floating-point branch if unordered or equal */
+    m68k_fbor,                                          /**< Floating-point branch if ordered */
+    m68k_fbun,                                          /**< Floating-point branch if unordered */
+    m68k_fbf,                                           /**< Floating-point branch if false */
+    m68k_fbt,                                           /**< Floating-point branch if true */
+    m68k_fbsf,                                          /**< Floating-point branch if signaling false */
+    m68k_fbst,                                          /**< Floating-point branch if signaling true */
+    m68k_fbseq,                                         /**< Floating-point branch if signaling equal */
+    m68k_fbsne,                                         /**< Floating-point branch if signaling not equal */
+    m68k_fcmp,                                          /**< Floating-point compare */
+    m68k_fdabs,                                         /**< Floating-point absolute value with double-precision rounding */
+    m68k_fdadd,                                         /**< Floating-point add with double-precision rounding */
+    m68k_fddiv,                                         /**< Floating-point divide with double-precision rounding */
+    m68k_fdiv,                                          /**< Floating-point divide with FPCR rounding */
+    m68k_fdmove,                                        /**< Move floating-point data with double-precision rounding */
+    m68k_fdmul,                                         /**< Floating-point multiple with double-precision rounding */
+    m68k_fdneg,                                         /**< Floating-point negation with double-precision rounding */
+    m68k_fdsqrt,                                        /**< Floating-point square root with double-precision rounding */
+    m68k_fdsub,                                         /**< Floating-point subtract with double-precision rounding */
 //    m68k_ff1,                           /**< Find first one in register */
-//    m68k_fint,
-//    m68k_fintrz,
-    m68k_fmove,                                         /**< Move floating-point data register */
-//    m68k_fmovem,
-//    m68k_fmul,
-//    m68k_fneg,
-//    m68k_fnop,
+    m68k_fint,                                          /**< Floating-point integer part */
+    m68k_fintrz,                                        /**< Floating-point integer part rounded-to-zero */
+    m68k_fmove,                                         /**< Move floating-point data with FPCR rounding */
+    m68k_fmovem,                                        /**< Move multiple floating-point data registers */
+    m68k_fmul,                                          /**< Floating-point multiply with FPCR rounding */
+    m68k_fneg,                                          /**< Floating-pont negate with FPCR rounding */
+    m68k_fnop,                                          /**< Floating-point no operation */
 //    m68k_frestore,
-//    m68k_fsabs,
-//    m68k_fsadd,
+    m68k_fsabs,                                         /**< Floating-point absolute value with single-precision rounding */
+    m68k_fsadd,                                         /**< Floating-point add with single-precision rounding */
 //    m68k_fsave,
-//    m68k_fsdiv,
-//    m68k_fsmove,
-//    m68k_fsmul,
-//    m68k_fsneg,
-//    m68k_fsqrt,
-//    m68k_fssqrt,
-//    m68k_fssub,
-//    m68k_fsub,
-//    m68k_ftst,
+    m68k_fsdiv,                                         /**< Floating-point divide with single-precision rounding */
+    m68k_fsmove,                                        /**< Move floating-point data with single-precision rounding */
+    m68k_fsmul,                                         /**< Floating-point multiply with single-precision rounding */
+    m68k_fsneg,                                         /**< Floating-point negation with single-precision rounding */
+    m68k_fsqrt,                                         /**< Floating-point square root with FPCR rounding */
+    m68k_fssqrt,                                        /**< Floating-point square root with single-precision rounding */
+    m68k_fssub,                                         /**< Floating-point subtract with single-precision rounding */
+    m68k_fsub,                                          /**< Floating-point subtract with FPCR rounding */
+    m68k_ftst,                                          /**< Floating point test */
 //    m68k_halt,                          /**< Halt the CPU */
     m68k_illegal,                                       /**< Take illegal instruction trap */
 //    m68k_intouch,

@@ -937,14 +937,23 @@ RegisterDictionary::dictionary_m68000()
     if (!regs) {
         regs = new RegisterDictionary("m68000");
 
-        // 32-bit integer data and address registers
+        // 32-bit integer data and address registers. When the low-order 16-bits of a data or address register is accessed by a
+        // word instruction, or the low-order 8-bits of a data register is accessed by a byte instruction, the size of the
+        // access is implied by the suffix of the instruction (e.g., "MOV.B" vs "MOV.W", vs. MOV.L") and the usual m68k
+        // assembly listings to not have special names for the register parts.  ROSE on the other hand gives names to each
+        // register part.
         for (size_t i=0; i<8; ++i) {
-            regs->insert("d"+StringUtility::numberToString(i),       m68k_regclass_data, i, 0,  32);
-            regs->insert("d"+StringUtility::numberToString(i)+".l",  m68k_regclass_data, i, 0,  16);
-            regs->insert("d"+StringUtility::numberToString(i)+".u",  m68k_regclass_data, i, 16, 16);
-            regs->insert("a"+StringUtility::numberToString(i),       m68k_regclass_addr, i, 0,  32);
-            regs->insert("a"+StringUtility::numberToString(i)+".l",  m68k_regclass_addr, i, 0,  16);
-            regs->insert("a"+StringUtility::numberToString(i)+".u",  m68k_regclass_addr, i, 16, 16);
+            std::string regnum = StringUtility::numberToString(i);
+            regs->insert("d"+regnum,       m68k_regclass_data, i,  0, 32);
+            regs->insert("d"+regnum+".w0", m68k_regclass_data, i,  0, 16);
+            regs->insert("d"+regnum+".w1", m68k_regclass_data, i, 16, 16);
+            regs->insert("d"+regnum+".b0", m68k_regclass_data, i,  0,  8);
+            regs->insert("d"+regnum+".b1", m68k_regclass_data, i,  8,  8);
+            regs->insert("d"+regnum+".b2", m68k_regclass_data, i, 12,  8);
+            regs->insert("d"+regnum+".b3", m68k_regclass_data, i, 16,  8);
+            regs->insert("a"+regnum,       m68k_regclass_addr, i,  0, 32);
+            regs->insert("a"+regnum+".w0", m68k_regclass_addr, i,  0, 16);
+            regs->insert("a"+regnum+".w1", m68k_regclass_addr, i, 16, 16);
         }
 
         // Special-purpose registers
@@ -960,9 +969,14 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("sr_s",  m68k_regclass_spr, m68k_spr_sr, 13, 1);           // status register user mode bit
         regs->insert("sr_t",  m68k_regclass_spr, m68k_spr_sr, 14, 2);           // status register trace mode bits
 
-        // Floating point registers
+        // Floating point data registers
+        // These registers hold 96-bit extended-precision real format ("X") values. However, since the X format has
+        // 16 reserved zero bits at positions 64-79, inclusive, the value can be stored in 80 bits.  Therefore, the
+        // floating point data registers are only 80-bits wide.
         for (size_t i=0; i<8; ++i)
             regs->insert("fp"+StringUtility::numberToString(i),      m68k_regclass_fpr,  i, 0,  80);
+
+        // Floating point control registers
         regs->insert("fpcr",       m68k_regclass_spr, m68k_spr_fpcr,  0, 32);   // floating-point control register
         regs->insert("fpcr_mctl",  m68k_regclass_spr, m68k_spr_fpcr,  0,  8);   // mode control
         regs->insert("fpcr_xen",   m68k_regclass_spr, m68k_spr_fpcr,  8,  8);   // exception enable
@@ -976,6 +990,8 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("fpcr_operr", m68k_regclass_spr, m68k_spr_fpcr, 13,  1);   // operand error
         regs->insert("fpcr_snan",  m68k_regclass_spr, m68k_spr_fpcr, 14,  1);   // signaling not-a-number
         regs->insert("fpcr_bsun",  m68k_regclass_spr, m68k_spr_fpcr, 15,  1);   // branch/set on unordered
+
+        // Floating point status registers
         regs->insert("fpsr",       m68k_regclass_spr, m68k_spr_fpsr,  0, 32);   // floating-point status register
         regs->insert("fpsr_aexc",  m68k_regclass_spr, m68k_spr_fpsr,  0,  8);   // accrued exception status
         regs->insert("aexc_inex",  m68k_regclass_spr, m68k_spr_fpsr,  3,  1);   // inexact
@@ -998,6 +1014,8 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("fpcc_i",     m68k_regclass_spr, m68k_spr_fpsr, 25,  1);   // infinity
         regs->insert("fpcc_z",     m68k_regclass_spr, m68k_spr_fpsr, 25,  1);   // zero
         regs->insert("fpcc_n",     m68k_regclass_spr, m68k_spr_fpsr, 26,  1);   // negative
+
+        // Other floating point registers
         regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
         
         // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
@@ -1029,8 +1047,9 @@ RegisterDictionary::dictionary_coldfire()
         regs = new RegisterDictionary("freescale MAC");
         regs->insert(dictionary_m68000());
 
-        // Floating point: The ColdFire processors have 64-bit floating point registers rather than 80-bit floating point
-        // registers.
+        // Floating point data registers.
+        // The ColdFire processors do not support extended precision real ("X") format values, and therefore don't need
+        // full 80-bit floating point data registers.  Their FP data registers are only 64 bits.
         for (int i=0; i<8; ++i)
             regs->resize("fp"+StringUtility::numberToString(i), 64);
 

@@ -239,15 +239,36 @@ integerFormat(unsigned fmtNumber)
         case 1: return m68k_fmt_i16;
         case 2: return m68k_fmt_i32;
     }
-    ASSERT_not_reachable("invalid integer format number: " + StringUtility::numberToString(fmtNumber));
+    ASSERT_not_reachable("invalid integer format number: " + numberToString(fmtNumber));
 }
 
+// Floating point format as encoded in a floating-point instruction.  The M68kDataFormat enums have the same value as the
+// format field in the instruction.
 static M68kDataFormat
 floatingFormat(unsigned fmtNumber)
 {
     return (M68kDataFormat)fmtNumber;
 }
 
+// Default format for floating-point operations. Floating point values are converted to this type internally before any
+// operations are performed on them.
+static M68kDataFormat
+floatingFormatForFamily(M68kFamily family)
+{
+    if (0 != (family & m68k_freescale)) {
+        // FreeScale ColdFire processors operate on 64-bit double-precision real format ("D") values stored in 64-bit
+        // floating-point data registers.
+        return m68k_fmt_f64;
+    }
+    if (0 != (family & m68k_generation_3)) {
+        // The M68040 family of processors operate on 96-bit extended-precision real format ("X") values stored in 80-bit
+        // floating-point data registers (16 bits of an X-format value are always zero).
+        return m68k_fmt_f96;
+    }
+    ASSERT_not_reachable("M68k family has no floating point hardware: " + addrToString(family));
+}
+
+// Convert a numeric format to a letter that's appended to instruction mnemonics.
 static std::string
 formatLetter(M68kDataFormat fmt)
 {
@@ -374,6 +395,21 @@ DisassemblerM68k::makeRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool 
     return reglist;
 }
 
+SgAsmRegisterNames *
+DisassemblerM68k::makeFPRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool reverse)
+{
+    SgAsmRegisterNames *reglist = new SgAsmRegisterNames;
+    for (unsigned bitnum=0; bitnum<8; ++bitnum) {
+        if (0 != (mask & IntegerOps::shl1<unsigned>(bitnum))) {
+            SgAsmRegisterReferenceExpression *reg = makeFPRegister(reverse?8-bitnum:bitnum);
+            reglist->get_registers().push_back(reg);
+            reg->set_parent(reglist);
+        }
+    }
+    reglist->set_mask(mask);
+    return reglist;
+}
+
 SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeStatusRegister()
 {
@@ -405,8 +441,19 @@ DisassemblerM68k::makeMacRegister(M68kMacRegister minor)
 SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeFPRegister(unsigned regnum)
 {
-    size_t nbits = (family & m68k_freescale) ? 64 : 80;
-    RegisterDescriptor desc(m68k_regclass_fpr, regnum, 0, nbits);
+    size_t registerNBits = 0;
+    M68kDataFormat fmt = floatingFormatForFamily(family);
+    switch (fmt) {
+        case m68k_fmt_f64:
+            registerNBits = 64;
+            break;
+        case m68k_fmt_f96:
+            registerNBits = 80;                         // 16-bits for X format are always zero
+            break;
+        default:
+            ASSERT_not_reachable("invalid default floating-point format: " + stringifyM68kDataFormat(fmt));
+    }
+    RegisterDescriptor desc(m68k_regclass_fpr, regnum, 0, registerNBits);
     return new SgAsmDirectRegisterExpression(desc);
 }
 
@@ -431,14 +478,14 @@ DisassemblerM68k::makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_num
     uint64_t value = 0;
     switch (nbits) {
         case 8:
-            value = extract<0, 7>(instruction_word(ext_word_number+1));
+            value = extract<0, 7>(instructionWord(ext_word_number+1));
             break;
         case 16:
-            value = instruction_word(ext_word_number+1);
+            value = instructionWord(ext_word_number+1);
             break;
         case 32: {
-            uint32_t hi_part = instruction_word(ext_word_number+1);
-            uint32_t lo_part = instruction_word(ext_word_number+2);
+            uint32_t hi_part = instructionWord(ext_word_number+1);
+            uint32_t lo_part = instructionWord(ext_word_number+2);
             value = IntegerOps::shiftLeft<32>(hi_part, 16) | lo_part;
             break;
         }
@@ -456,7 +503,7 @@ DisassemblerM68k::makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_num
 SgAsmExpression *
 DisassemblerM68k::makeEffectiveAddress(unsigned modreg, M68kDataFormat fmt, size_t ext_offset)
 {
-    ASSERT_require2(0 == (modreg & ~0x3f), "modreg should be 6 bits wide; got " + StringUtility::addrToString(modreg));
+    ASSERT_require2(0 == (modreg & ~0x3f), "modreg should be 6 bits wide; got " + addrToString(modreg));
     unsigned mode = (modreg >> 3) & 7;
     unsigned reg  = modreg & 7;
     return makeEffectiveAddress(mode, reg, fmt, ext_offset);
@@ -490,7 +537,7 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
     } else if (5==mode) {
         // m68k_eam_dsp: address register indirect with displacement
         SgAsmRegisterReferenceExpression *rre = makeAddressRegister(reg, m68k_fmt_i32);
-        uint64_t displacement_n = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
+        uint64_t displacement_n = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
         SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32);
         SgAsmExpression *address = SageBuilderAsm::makeAdd(rre, displacement);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
@@ -501,39 +548,39 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
         } else {
             // m68k_eam_idx8: address register indirect with index (8-bit displacement)
             // Uses the brief extension word format (1 word having D/A, Register, W/L, Scale, and 8-bit displacement)
-            if (0!=extract<8, 8>(instruction_word(ext_offset+1)))
+            if (0!=extract<8, 8>(instructionWord(ext_offset+1)))
                 throw Exception("m68k_eam_idx8 mode requires that bit 8 of the extension word is clear");
-            bool wl = 0 != extract<11, 11>(instruction_word(ext_offset+1));
+            bool wl = 0 != extract<11, 11>(instructionWord(ext_offset+1));
             if (0==wl) {
                 throw Exception("FIXME[Robb P. Matzke 2014-07-14]: word index register not implemented yet");
             } else {
-                SgAsmExpression *retval = makeAddressRegister(reg, m68k_fmt_i32);
-                uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instruction_word(ext_offset+1)));
+                SgAsmExpression *address = makeAddressRegister(reg, m68k_fmt_i32);
+                uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instructionWord(ext_offset+1)));
                 SgAsmIntegerValueExpression *dispExpr = new SgAsmIntegerValueExpression(disp, 32);
-                retval = SageBuilderAsm::makeAdd(retval, dispExpr);
+                address = SageBuilderAsm::makeAdd(address, dispExpr);
 
-                unsigned indexRegisterNumber = extract<12, 15>(instruction_word(ext_offset+1));
+                unsigned indexRegisterNumber = extract<12, 15>(instructionWord(ext_offset+1));
                 SgAsmRegisterReferenceExpression *indexRRE = makeDataAddressRegister(indexRegisterNumber, m68k_fmt_i32);
-                uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instruction_word(ext_offset+1)));
+                uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instructionWord(ext_offset+1)));
                 SgAsmIntegerValueExpression *scaleExpr = new SgAsmIntegerValueExpression(scale, 32);
-                retval = SageBuilderAsm::makeAdd(retval, SageBuilderAsm::makeMul(indexRRE, scaleExpr));
-                return retval;
+                address = SageBuilderAsm::makeAdd(address, SageBuilderAsm::makeMul(indexRRE, scaleExpr));
+                return SageBuilderAsm::makeMemoryReference(address, NULL /*segment*/, type);
             }
         }
     } else if (7==mode && 0==reg) {
         // m68k_eam_absw: absolute short addressing mode
-        uint64_t val = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
+        uint64_t val = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
         SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
     } else if (7==mode && 1==reg) {
         // m68k_eam_absl: absolute long addressing mode
-        uint64_t val = shiftLeft<32>((uint64_t)instruction_word(ext_offset+1), 16) | (uint64_t)instruction_word(ext_offset+2);
+        uint64_t val = shiftLeft<32>((uint64_t)instructionWord(ext_offset+1), 16) | (uint64_t)instructionWord(ext_offset+2);
         SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
     } else if (7==mode && 2==reg) {
         // m68k_eam_pcdsp: program counter indirect with displacement
         SgAsmRegisterReferenceExpression *rre = makeProgramCounter();
-        uint64_t displacement_n = signExtend<16, 32>((uint64_t)instruction_word(ext_offset+1));
+        uint64_t displacement_n = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
         SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32);
         SgAsmExpression *address = SageBuilderAsm::makeAdd(rre, displacement);
         return SageBuilderAsm::makeMemoryReference(address, NULL/*segment*/, type);
@@ -553,7 +600,7 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
         
 //        case m68k_eam_idx8:
 //        case m68k_eam_pcidx8: {
-//            unsigned ext1 = instruction_word(ext_offset+1);
+//            unsigned ext1 = instructionWord(ext_offset+1);
 //            SgAsmM68kRegisterReferenceExpression *areg = eam==m68k_eam_idx ? makeAddressRegister(reg, 32) : makeProgramCounter();
 //            uint64_t val = signExtend<8, 32>(extract<0, 7>(ext1));
 //            SgAsmIntegerValueExpression *dsp = new SgAsmIntegerValueExpression(val, 32);
@@ -612,6 +659,7 @@ DisassemblerM68k::makeInstruction(M68kInstructionKind kind, const std::string &m
                                   SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3,
                                   SgAsmExpression *op4, SgAsmExpression *op5, SgAsmExpression *op6)
 {
+    ASSERT_forbid2(m68k_unknown_instruction==kind, "should have called make_unknown_instruction instead");
     SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(get_insn_va(), mnemonic, kind);
 
     SgAsmOperandList *operands = new SgAsmOperandList;
@@ -706,14 +754,20 @@ DisassemblerM68k::makeInstruction(M68kInstructionKind kind, const std::string &m
 //      Destination effective address extension (if any, one to six words)
 
 uint16_t
-DisassemblerM68k::instruction_word(size_t n)
+DisassemblerM68k::instructionWord(size_t n)
 {
-    if (n>11)
+    if (n>10)
         throw Exception("malformed instruction uses more than 11 extension words");
     if (n>=niwords)
         throw Exception("short read for instruction word " + numberToString(n));
     niwords_used = std::max(niwords_used, n+1);
     return iwords[n];
+}
+
+size_t
+DisassemblerM68k::extensionWordsUsed() const
+{
+    return niwords_used==0 ? 0 : niwords_used-1;
 }
 
 // see base class
@@ -734,9 +788,9 @@ DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
 
     SgAsmM68kInstruction *insn = NULL;
     if (M68k *idis = find_idis(iwords, niwords))
-        insn = (*idis)(this, instruction_word(0));
+        insn = (*idis)(this, instructionWord(0));
     if (!insn)
-        throw Exception("cannot disassemble m68k instruction: "+addrToString(instruction_word(0), 16), start_va);
+        throw Exception("cannot disassemble m68k instruction: "+addrToString(instructionWord(0), 16), start_va);
 
     ASSERT_require(niwords_used>0);
     SgUnsignedCharList raw_bytes(buf+0, buf+2*niwords_used);
@@ -991,7 +1045,7 @@ struct M68k_andi_to_ccr: M68k {
                              OP(0) & BITS<0, 11>(0x23c) & INSN_WORD<1>(BITS<8, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = m68k_fmt_i8;
-        SgAsmExpression *src = d->makeImmediateValue(fmt, extract<0, 7>(d->instruction_word(1)));
+        SgAsmExpression *src = d->makeImmediateValue(fmt, extract<0, 7>(d->instructionWord(1)));
         SgAsmExpression *dst = d->makeConditionCodeRegister();
         return d->makeInstruction(m68k_andi, "andi."+formatLetter(fmt), src, dst);
     }
@@ -1114,13 +1168,13 @@ struct M68k_branch: M68k {
         rose_addr_t base = d->get_insn_va() + 2;
         int32_t offset = signExtend<8, 32>(extract<0, 7>(w0));
         if (0==offset) {
-            offset = signExtend<16, 32>((uint32_t)d->instruction_word(1));
+            offset = signExtend<16, 32>((uint32_t)d->instructionWord(1));
             mnemonic += ".w";
         } else if (-1==offset) {
             // FIXME: documentation is not clear about order of the two 16-bit words. I'm assuming that, like other cases
             // of 32-bit values, the high 16 bits are in the first word following the instruction word, and the low-order
             // 16 bits are in the second word after the instruction word. [Robb P. Matzke 2013-08-06]
-            offset = shiftLeft<32>((uint32_t)d->instruction_word(1), 16) | (uint32_t)d->instruction_word(2);
+            offset = shiftLeft<32>((uint32_t)d->instructionWord(1), 16) | (uint32_t)d->instructionWord(2);
             mnemonic += ".l";
         } else {
             mnemonic += ".b";
@@ -1227,7 +1281,7 @@ struct M68k_bfchg: M68k {
                        OP(0xe) & BITS<6, 11>(0x2b) & EAM(m68k_eam_drd | (m68k_eam_control & m68k_eam_alter & ~m68k_eam_pcmi)) &
                        INSN_WORD<1>(BITS<12, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         return d->makeInstruction(m68k_bfchg, "bfchg", dst, offset_width.first, offset_width.second);
     }
@@ -1239,7 +1293,7 @@ struct M68k_bfclr: M68k {
                        OP(0xe) & BITS<6, 11>(0x33) & EAM(m68k_eam_drd | (m68k_eam_control & m68k_eam_alter & ~m68k_eam_pcmi)) &
                        INSN_WORD<1>(BITS<12, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         return d->makeInstruction(m68k_bfclr, "bfclr", dst, offset_width.first, offset_width.second);
     }
@@ -1251,9 +1305,9 @@ struct M68k_bfexts: M68k {
                         OP(0xe) & BITS<6, 11>(0x2f) & EAM(m68k_eam_drd | m68k_eam_control) &
                         INSN_WORD<1>(BIT<15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         return d->makeInstruction(m68k_bfexts, "bfexts", src, offset_width.first, offset_width.second, dst);
     }
 };
@@ -1264,9 +1318,9 @@ struct M68k_bfextu: M68k {
                         OP(0xe) & BITS<6, 11>(0x27) & EAM(m68k_eam_drd | m68k_eam_control) &
                         INSN_WORD<1>(BIT<15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         return d->makeInstruction(m68k_bfextu, "bfextu", src, offset_width.first, offset_width.second, dst);
     }
 };
@@ -1280,9 +1334,9 @@ struct M68k_bfffo: M68k {
                        OP(0xe) & BITS<6, 11>(0x27) & EAM(m68k_eam_drd | m68k_eam_control) &
                        INSN_WORD<1>(BIT<15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        ExpressionPair offset_width d->makeOffsetWidthPair(d->instruction_word(1));
+        ExpressionPair offset_width d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         return d->makeInstruction(m68k_bfffo, "bfffo", src, offset_width.first, offset_width.second, dst);
     }
 };
@@ -1294,8 +1348,8 @@ struct M68k_bfins: M68k {
                        OP(0xe) & BITS<6, 11>(0x3f) & EAM(m68k_eam_drd | (m68k_eam_control & m68k_eam_alter & ~m68k_eam_pcmi)) &
                        INSN_WORD<1>(BIT<15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
-        SgAsmExpression *src = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
+        SgAsmExpression *src = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         return d->makeInstruction(m68k_bfins, "bfins", src, dst, offset_width.first, offset_width.second);
     }
@@ -1307,7 +1361,7 @@ struct M68k_bfset: M68k {
                        OP(0xe) & BITS<6, 11>(0x3b) & EAM(m68k_eam_drd | (m68k_eam_control & m68k_eam_alter & ~m68k_eam_pcmi)) &
                        INSN_WORD<1>(BITS<12, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         return d->makeInstruction(m68k_bfset, "bfset", dst, offset_width.first, offset_width.second);
     }
@@ -1319,7 +1373,7 @@ struct M68k_bftst: M68k {
                        OP(0xe) & BITS<6, 11>(0x23) & EAM(m68k_eam_drd | m68k_eam_control) &
                        INSN_WORD<1>(BITS<12, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instruction_word(1));
+        DisassemblerM68k::ExpressionPair offset_width = d->makeOffsetWidthPair(d->instructionWord(1));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         return d->makeInstruction(m68k_bftst, "bftst", src, offset_width.first, offset_width.second);
     }
@@ -1449,7 +1503,7 @@ struct M68k_cas: M68k {
                      OP(0) & BIT<11>(1) & BITS<6, 8>(3) & EAM(m68k_eam_memory & m68k_eam_alter & ~m68k_eam_pcmi) &
                      INSN_WORD<1>(BITS<9, 15>(0) & BITS<3, 5>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        unsigned w1 = d->instruction_word(1);
+        unsigned w1 = d->instructionWord(1);
         SgAsmExpression *du = d->makeDataRegister(extract<6, 8>(w1), m68k_fmt_i32);
         SgAsmExpression *dc = d->makeDataRegister(extract<0, 2>(w1), m68k_fmt_i32);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
@@ -1464,8 +1518,8 @@ struct M68k_cas2: M68k {
                       INSN_WORD<1>(BITS<9, 11>(0) & BITS<3, 5>(0)) &
                       INSN_WORD<2>(BITS<9, 11>(0) & BITS<3, 5>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        unsigned w1 = d->instruction_word(1);
-        unsigned w2 = d->instruction_word(2);
+        unsigned w1 = d->instructionWord(1);
+        unsigned w2 = d->instructionWord(2);
         SgAsmExpression *rx1 = d->makeDataAddressRegister(extract<12, 15>(w1), m68k_fmt_i32);
         SgAsmExpression *rx2 = d->makeDataAddressRegister(extract<12, 15>(w2), m68k_fmt_i32);
         SgAsmExpression *du1 = d->makeDataRegister(extract<6, 8>(w1), m68k_fmt_i32);
@@ -1572,7 +1626,7 @@ struct M68k_cmpm: M68k {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeAddressRegisterPostIncrement(extract<0, 2>(w0), fmt);
         SgAsmExpression *dst = d->makeAddressRegisterPostIncrement(extract<9, 11>(w0), fmt);
-        return d->makeInstruction(m68k_cmpa, "cmpa."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(m68k_cmpm, "cmpm."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -1587,7 +1641,7 @@ struct M68k_cmp2: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<9, 10>(w0));
         SgAsmExpression *bounds = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
-        SgAsmExpression *src2 = d->makeDataAddressRegister(extract<12, 15>(d->instruction_word(1)), fmt);
+        SgAsmExpression *src2 = d->makeDataAddressRegister(extract<12, 15>(d->instructionWord(1)), fmt);
         return d->makeInstruction(m68k_cmp2, "cmp2."+formatLetter(fmt), bounds, src2);
     }
 };
@@ -1600,7 +1654,7 @@ struct M68k_cpbcc: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         // Not implemented because we don't know what co-processors are present, and the co-processor determines the
         // size of this instruction. [Robb P. Matzke 2014-02-20]
-        throw DisassemblerM68k::Exception("M68k CPBcc is not implemented");
+        throw DisassemblerM68k::Exception("M68k CPBcc is not implemented: " + addrToString(w0, 16));
     }
 };
 
@@ -1730,7 +1784,7 @@ struct M68k_dbcc: M68k {
             case 15: kind = m68k_dble; break;
         }
         std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
-        rose_addr_t target_va = d->get_insn_va() + 2 + signExtend<16, 32>((rose_addr_t)d->instruction_word(1));
+        rose_addr_t target_va = d->get_insn_va() + 2 + signExtend<16, 32>((rose_addr_t)d->instructionWord(1));
         target_va &= GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(m68k_fmt_i32, target_va);
         return d->makeInstruction(kind, mnemonic+".w", target);
@@ -1757,18 +1811,18 @@ struct M68k_divrem_l: M68k {
                           OP(4) & BITS<6, 11>(0x31) & EAM(m68k_eam_data) &
                           INSN_WORD<1>(BIT<15>(0) & BITS<3, 9>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        if (extract<12, 14>(d->instruction_word(1)) == extract<0, 2>(d->instruction_word(1))) {
+        if (extract<12, 14>(d->instructionWord(1)) == extract<0, 2>(d->instructionWord(1))) {
             // division
-            M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_divs : m68k_divu;
+            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
             SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-            SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+            SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
             return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dst);
         } else {
             // remainder
-            M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_rems : m68k_remu;
+            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_rems : m68k_remu;
             SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-            SgAsmExpression *dw = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
-            SgAsmExpression *dx  = d->makeDataRegister(extract<0, 2>(d->instruction_word(1)), m68k_fmt_i32);
+            SgAsmExpression *dw = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
+            SgAsmExpression *dx  = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
             return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dw, dx);
         }
     }
@@ -1883,24 +1937,632 @@ struct M68k_extb_l: M68k {
     }
 };
 
+// FABS.B Dx, FPy
+// FABS.W Dx, FPy
+// FABS.L Dx, FPy
+// FABS.S Dx, FPy
+// FSABS.B Dx, FPy
+// FSABS.W Dx, FPy
+// FSABS.L Dx, FPy
+// FSABS.S Dx, FPy
+// FDABS.B Dx, FPy
+// FDABS.W Dx, FPy
+// FDABS.L Dx, FPy
+// FDABS.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fabs_from_drd: M68k {
+    M68k_fabs_from_drd(): M68k("fabs_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            (BITS<0, 6>(0x18) | BITS<0, 6>(0x58) | BITS<0, 6>(0x5c)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x18: kind = m68k_fabs; break;
+            case 0x58: kind = m68k_fsabs; break;
+            case 0x5c: kind = m68k_fdabs; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FABS.B <ea>, FPx
+// FABS.W <ea>, FPx
+// FABS.L <ea>, FPx
+// FABS.S <ea>, FPx
+// FABS.D <ea>, FPx
+// FABS.X <ea>, FPx
+// FABS.P <ea>, FPx
+// FSABS.B <ea>, FPx
+// FSABS.W <ea>, FPx
+// FSABS.L <ea>, FPx
+// FSABS.S <ea>, FPx
+// FSABS.D <ea>, FPx
+// FSABS.X <ea>, FPx
+// FSABS.P <ea>, FPx
+// FDABS.B <ea>, FPx
+// FDABS.W <ea>, FPx
+// FDABS.L <ea>, FPx
+// FDABS.S <ea>, FPx
+// FDABS.D <ea>, FPx
+// FDABS.X <ea>, FPx
+// FDABS.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fabs_from_drd
+struct M68k_fabs_mr: M68k {
+    M68k_fabs_mr(): M68k("fabs_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) &
+                                      (BITS<0, 6>(0x18) | BITS<0, 6>(0x58) | BITS<0, 6>(0x5c)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x18: kind = m68k_fabs; break;
+            case 0x58: kind = m68k_fsabs; break;
+            case 0x5c: kind = m68k_fdabs; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FABS.<fmt> FPx, FPy
+// FSABS.<fmt> FPx, FPy
+// FDABS.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fabs_rr: M68k {
+    M68k_fabs_rr(): M68k("fabs_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) &
+                                      (BITS<0, 6>(0x18) | BITS<0, 6>(0x58) | BITS<0, 6>(0x5c)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x18: kind = m68k_fabs; break;
+            case 0x58: kind = m68k_fsabs; break;
+            case 0x5c: kind = m68k_fdabs; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FADD.B Dx, FPy
+// FADD.W Dx, FPy
+// FADD.L Dx, FPy
+// FADD.S Dx, FPy
+// FSADD.B Dx, FPy
+// FSADD.W Dx, FPy
+// FSADD.L Dx, FPy
+// FSADD.S Dx, FPy
+// FDADD.B Dx, FPy
+// FDADD.W Dx, FPy
+// FDADD.L Dx, FPy
+// FDADD.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fadd_from_drd: M68k {
+    M68k_fadd_from_drd(): M68k("fadd_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            (BITS<0, 6>(0x22) | BITS<0, 6>(0x62) | BITS<0, 6>(0x66)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x22: kind = m68k_fadd; break;
+            case 0x62: kind = m68k_fsadd; break;
+            case 0x66: kind = m68k_fdadd; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FADD.B <ea>, FPx
+// FADD.W <ea>, FPx
+// FADD.L <ea>, FPx
+// FADD.S <ea>, FPx
+// FADD.D <ea>, FPx
+// FADD.X <ea>, FPx
+// FADD.P <ea>, FPx
+// FSADD.B <ea>, FPx
+// FSADD.W <ea>, FPx
+// FSADD.L <ea>, FPx
+// FSADD.S <ea>, FPx
+// FSADD.D <ea>, FPx
+// FSADD.X <ea>, FPx
+// FSADD.P <ea>, FPx
+// FDADD.B <ea>, FPx
+// FDADD.W <ea>, FPx
+// FDADD.L <ea>, FPx
+// FDADD.S <ea>, FPx
+// FDADD.D <ea>, FPx
+// FDADD.X <ea>, FPx
+// FDADD.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fadd_from_drd
+struct M68k_fadd_mr: M68k {
+    M68k_fadd_mr(): M68k("fadd_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) &
+                                      (BITS<0, 6>(0x22) | BITS<0, 6>(0x62) | BITS<0, 6>(0x66)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x22: kind = m68k_fadd; break;
+            case 0x62: kind = m68k_fsadd; break;
+            case 0x66: kind = m68k_fdadd; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FADD.<fmt> FPx, FPy
+// FSADD.<fmt> FPx, FPy
+// FDADD.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fadd_rr: M68k {
+    M68k_fadd_rr(): M68k("fadd_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) &
+                                      (BITS<0, 6>(0x22) | BITS<0, 6>(0x62) | BITS<0, 6>(0x66)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x22: kind = m68k_fadd; break;
+            case 0x62: kind = m68k_fsadd; break;
+            case 0x66: kind = m68k_fdadd; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FBEQ.W <label>
+// FBEQ.L <label>
+// FBNE.W <label>
+// FBNE.L <label>
+// FBGT.W <label>
+// FBGT.L <label>
+// FBNGT.W <label>
+// FBNGT.L <label>
+// FBGE.W <label>
+// FBGE.L <label>
+// FBNGE.W <label>
+// FBNGE.L <label>
+// FBLT.W <label>
+// FBLT.L <label>
+// FBNLT.W <label>
+// FBNLT.L <label>
+// FBLE.W <label>
+// FBLE.L <label>
+// FBNLE.W <label>
+// FBNLE.L <label>
+// FBGL.W <label>
+// FBGL.L <label>
+// FBNGL.W <label>
+// FBNGL.L <label>
+// FBGLE.W <label>
+// FBGLE.L <label>
+// FBNGLE.W <label>
+// FBNGLE.L <label>
+// FBOGT.W <label>
+// FBOGT.L <label>
+// FBULE.W <label>
+// FBULE.L <label>
+// FBOGE.W <label>
+// FBOGE.L <label>
+// FBULT.W <label>
+// FBULT.L <label>
+// FBOLT.W <label>
+// FBOLT.L <label>
+// FBUGE.W <label>
+// FBUGE.L <label>
+// FBOLE.W <label>
+// FBOLE.L <label>
+// FBUGT.W <label>
+// FBUGT.L <label>
+// FBOGL.W <label>
+// FBOGL.L <label>
+// FBUEQ.W <label>
+// FBUEQ.L <label>
+// FBOR.W <label>
+// FBOR.L <label>
+// FBUN.W <label>
+// FBUN.L <label>
+// FBF.W <label>
+// FBF.L <label>
+// FBT.W <label>
+// FBT.L <label>
+// FBSF.W <label>
+// FBSF.L <label>
+// FBST.W <label>
+// FBST.L <label>
+// FBSEQ.W <label>
+// FBSEQ.L <label>
+// FBSNE.W <label>
+// FBSNE.L <label>
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fb: M68k {
+    M68k_fb(): M68k("fb", m68k_generation_3|m68k_freescale_fpu,
+                    OP(15) & BITS<9, 11>(1) & BITS<7, 8>(1) & BIT<5>(0)) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        // predicate: table 2-23 "Floating-point conditional tests" in "M68000 family progammer's reference manual"
+        switch (extract<0, 5>(w0)) {
+            case 0x01: kind = m68k_fbeq; break;
+            case 0x0e: kind = m68k_fbne; break;
+            case 0x12: kind = m68k_fbgt; break;
+            case 0x1d: kind = m68k_fbngt; break;
+            case 0x13: kind = m68k_fbge; break;
+            case 0x1c: kind = m68k_fbnge; break;
+            case 0x14: kind = m68k_fblt; break;
+            case 0x1b: kind = m68k_fbnlt; break;
+            case 0x15: kind = m68k_fble; break;
+            case 0x1a: kind = m68k_fbnle; break;
+            case 0x16: kind = m68k_fbgl; break;
+            case 0x19: kind = m68k_fbngl; break;
+            case 0x17: kind = m68k_fbgle; break;
+            case 0x18: kind = m68k_fbngle; break;
+            case 0x02: kind = m68k_fbogt; break;
+            case 0x0d: kind = m68k_fbule; break;
+            case 0x03: kind = m68k_fboge; break;
+            case 0x0c: kind = m68k_fbult; break;
+            case 0x04: kind = m68k_fbolt; break;
+            case 0x0b: kind = m68k_fbuge; break;
+            case 0x05: kind = m68k_fbole; break;
+            case 0x0a: kind = m68k_fbugt; break;
+            case 0x06: kind = m68k_fbogl; break;
+            case 0x09: kind = m68k_fbueq; break;
+            case 0x07: kind = m68k_fbor; break;
+            case 0x08: kind = m68k_fbun; break;
+            case 0x00: kind = m68k_fbf; break;
+            case 0x0f: kind = m68k_fbt; break;
+            case 0x10: kind = m68k_fbsf; break;
+            case 0x1f: kind = m68k_fbst; break;
+            case 0x11: kind = m68k_fbseq; break;
+            case 0x1e: kind = m68k_fbsne; break;
+        }
+        M68kDataFormat fmt = m68k_fmt_unknown;
+        int32_t offset = 0;
+        if (extract<6, 6>(w0)) {
+            fmt = m68k_fmt_i32;
+            offset = shiftLeft<32>((uint32_t)d->instructionWord(1), 16) | (uint32_t)d->instructionWord(2);
+        } else {
+            fmt = m68k_fmt_i16;
+            offset = signExtend<16, 32>((uint32_t)d->instructionWord(1));
+        }
+        rose_addr_t base = d->get_insn_va() + 2;
+        rose_addr_t target_va = (base + offset) & GenMask<rose_addr_t, 32>::value;
+        SgAsmIntegerValueExpression *target = d->makeImmediateValue(m68k_fmt_i32, target_va);
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), target);
+    }
+};
+
+// FCMP.B Dx, FPy
+// FCMP.W Dx, FPy
+// FCMP.L Dx, FPy
+// FCMP.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    The ColdFire documentation says bits<0,6> of the first extension word are 0x38, but the M68000 documentation
+//    says that they are 0x0c. I'm using the ColdFire version.
+struct M68k_fcmp_from_drd: M68k {
+    M68k_fcmp_from_drd(): M68k("fcmp_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            BITS<0, 6>(0x38))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fcmp, "fcmp."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FCMP.B <ea>, FPx
+// FCMP.W <ea>, FPx
+// FCMP.L <ea>, FPx
+// FCMP.S <ea>, FPx
+// FCMP.D <ea>, FPx
+// FCMP.X <ea>, FPx
+// FCMP.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fcmp_from_drd
+//    The ColdFire documentation says bits<0,6> of the first extension word are 0x38, but the M68000 documentation
+//    says that they are 0x0c. I'm using the ColdFire version.
+struct M68k_fcmp_mr: M68k {
+    M68k_fcmp_mr(): M68k("fcmp_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) & BITS<0, 6>(0x38))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fcmp, "fcmp."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FCMP.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    The ColdFire documentation says bits<0,6> of the first extension word are 0x38, but the M68000 documentation
+//    says that they are 0x0c. I'm using the ColdFire version.
+struct M68k_fcmp_rr: M68k {
+    M68k_fcmp_rr(): M68k("fcmp_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x38))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fcmp, "fcmp."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FDIV.B Dx, FPy
+// FDIV.W Dx, FPy
+// FDIV.L Dx, FPy
+// FDIV.S Dx, FPy
+// FSDIV.B Dx, FPy
+// FSDIV.W Dx, FPy
+// FSDIV.L Dx, FPy
+// FSDIV.S Dx, FPy
+// FDDIV.B Dx, FPy
+// FDDIV.W Dx, FPy
+// FDDIV.L Dx, FPy
+// FDDIV.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fdiv_from_drd: M68k {
+    M68k_fdiv_from_drd(): M68k("fdiv_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            (BITS<0, 6>(0x20) | BITS<0, 6>(0x60) | BITS<0, 6>(0x64)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x20: kind = m68k_fdiv; break;
+            case 0x60: kind = m68k_fsdiv; break;
+            case 0x64: kind = m68k_fddiv; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FDIV.B <ea>, FPx
+// FDIV.W <ea>, FPx
+// FDIV.L <ea>, FPx
+// FDIV.S <ea>, FPx
+// FDIV.D <ea>, FPx
+// FDIV.X <ea>, FPx
+// FDIV.P <ea>, FPx
+// FSDIV.B <ea>, FPx
+// FSDIV.W <ea>, FPx
+// FSDIV.L <ea>, FPx
+// FSDIV.S <ea>, FPx
+// FSDIV.D <ea>, FPx
+// FSDIV.X <ea>, FPx
+// FSDIV.P <ea>, FPx
+// FDDIV.B <ea>, FPx
+// FDDIV.W <ea>, FPx
+// FDDIV.L <ea>, FPx
+// FDDIV.S <ea>, FPx
+// FDDIV.D <ea>, FPx
+// FDDIV.X <ea>, FPx
+// FDDIV.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fdiv_from_drd
+struct M68k_fdiv_mr: M68k {
+    M68k_fdiv_mr(): M68k("fdiv_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) &
+                                      (BITS<0, 6>(0x20) | BITS<0, 6>(0x60) | BITS<0, 6>(0x64)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x20: kind = m68k_fdiv; break;
+            case 0x60: kind = m68k_fsdiv; break;
+            case 0x64: kind = m68k_fddiv; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FDIV.<fmt> FPx, FPy
+// FSDIV.<fmt> FPx, FPy
+// FDDIV.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fdiv_rr: M68k {
+    M68k_fdiv_rr(): M68k("fdiv_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) &
+                                      (BITS<0, 6>(0x20) | BITS<0, 6>(0x60) | BITS<0, 6>(0x64)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x20: kind = m68k_fdiv; break;
+            case 0x60: kind = m68k_fsdiv; break;
+            case 0x64: kind = m68k_fddiv; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FINT.B Dx, FPy
+// FINT.W Dx, FPy
+// FINT.L Dx, FPy
+// FINT.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fint_from_drd: M68k {
+    M68k_fint_from_drd(): M68k("fint_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            BITS<0, 6>(0x01))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fint, "fint."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FINT.B <ea>, FPx
+// FINT.W <ea>, FPx
+// FINT.L <ea>, FPx
+// FINT.S <ea>, FPx
+// FINT.D <ea>, FPx
+// FINT.X <ea>, FPx
+// FINT.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fint_from_drd
+struct M68k_fint_mr: M68k {
+    M68k_fint_mr(): M68k("fint_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) & BITS<0, 6>(0x01))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fint, "fint."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FINT.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fint_rr: M68k {
+    M68k_fint_rr(): M68k("fint_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x01))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fint, "fint."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FINTRZ.B Dx, FPy
+// FINTRZ.W Dx, FPy
+// FINTRZ.L Dx, FPy
+// FINTRZ.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fintrz_from_drd: M68k {
+    M68k_fintrz_from_drd(): M68k("fintrz_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                                 OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                                 INSN_WORD<1>(BITS<13, 15>(2) &
+                                              (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                               BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                              BITS<0, 6>(0x03))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fintrz, "fintrz."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FINTRZ.B <ea>, FPx
+// FINTRZ.W <ea>, FPx
+// FINTRZ.L <ea>, FPx
+// FINTRZ.S <ea>, FPx
+// FINTRZ.D <ea>, FPx
+// FINTRZ.X <ea>, FPx
+// FINTRZ.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fintrz_from_drd
+struct M68k_fintrz_mr: M68k {
+    M68k_fintrz_mr(): M68k("fintrz_mr", m68k_generation_3|m68k_freescale_fpu,
+                           OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                           INSN_WORD<1>(BITS<13, 15>(2) & BITS<0, 6>(0x03))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fintrz, "fintrz."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FINTRZ.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fintrz_rr: M68k {
+    M68k_fintrz_rr(): M68k("fintrz_rr", m68k_generation_3|m68k_freescale_fpu,
+                           OP(15) & BITS<0, 11>(0x200) &
+                           INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x03))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_fintrz, "fintrz."+formatLetter(fmt), src, dst);
+    }
+};
+
 // FMOVE.B Dy, FPx
 // FMOVE.W Dy, FPx
 // FMOVE.L Dy, FPx
 // FMOVE.S Dy, FPx
-//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 4 only
-//    FIXME[Robb P. Matzke 2014-07-16]: Only FMOVE is implemented (not FSMOVE or FDMOVE); bits 0-6 are clear
+// FSMOVE.B Dy, FPx
+// FSMOVE.W Dy, FPx
+// FSMOVE.L Dy, FPx
+// FSMOVE.S Dy, FPx
+// FDMOVE.B Dy, FPx
+// FDMOVE.W Dy, FPx
+// FDMOVE.L Dy, FPx
+// FDMOVE.S Dy, FPx
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
 struct M68k_fmove_from_drd: M68k {
     M68k_fmove_from_drd(): M68k("fmove_from_drd", m68k_generation_3|m68k_freescale_fpu,
-                                OP(15) & BITS<9, 11>(4) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                                OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
                                 INSN_WORD<1>(BITS<13, 15>(2) &
                                              (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
                                               BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
-                                             BITS<0, 6>(0))) {}
+                                             (BITS<0, 6>(0) | BITS<0, 6>(0x40) | BITS<0, 6>(0x44)))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instruction_word(1)));
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
-        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instruction_word(1)));
-        return d->makeInstruction(m68k_fmove, "fmove."+formatLetter(fmt), src, dst);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x00: kind = m68k_fmove; break;
+            case 0x40: kind = m68k_fsmove; break;
+            case 0x44: kind = m68k_fdmove; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -1910,20 +2572,36 @@ struct M68k_fmove_from_drd: M68k {
 // FMOVE.S <ea>, FPx
 // FMOVE.D <ea>, FPx
 // FMOVE.X <ea>, FPx
-//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 4 only
-//    FIXME[Robb P. Matzke 2014-07-16]: BCD format (P) is not implemented yet; k-factor bits are always zero
-//    FIXME[Robb P. Matzke 2014-07-16]: register-to-register mode (R/M=0) not handled here
-//    FIXME[Robb P. Matzke 2014-07-16]: Only FMOVE is implemented (not FSMOVE or FDMOVE); bits 0-6 are clear
+// FSMOVE.B <ea>, FPx
+// FSMOVE.W <ea>, FPx
+// FSMOVE.L <ea>, FPx
+// FSMOVE.S <ea>, FPx
+// FSMOVE.D <ea>, FPx
+// FSMOVE.X <ea>, FPx
+// FDMOVE.B <ea>, FPx
+// FDMOVE.W <ea>, FPx
+// FDMOVE.L <ea>, FPx
+// FDMOVE.S <ea>, FPx
+// FDMOVE.D <ea>, FPx
+// FDMOVE.X <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
 //    Note: the data register direct source is handled by M68k_fmove_from_drd
 struct M68k_fmove_mr: M68k {
     M68k_fmove_mr(): M68k("fmove_mr", m68k_generation_3|m68k_freescale_fpu,
-                          OP(15) & BITS<6, 11>(0x08) & EAM(m68k_eam_ri|m68k_eam_pci) &
-                          INSN_WORD<1>(BITS<13, 15>(2) & BITS<0, 6>(0))) {}
+                          OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                          INSN_WORD<1>(BITS<13, 15>(2) &
+                                       (BITS<0, 6>(0) | BITS<0, 6>(0x40) | BITS<0, 6>(0x44)))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instruction_word(1)));
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
-        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instruction_word(1)));
-        return d->makeInstruction(m68k_fmove, "fmove."+formatLetter(fmt), src, dst);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x00: kind = m68k_fmove; break;
+            case 0x40: kind = m68k_fsmove; break;
+            case 0x44: kind = m68k_fdmove; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -1933,31 +2611,43 @@ struct M68k_fmove_mr: M68k {
 // FMOVE.S FPx, <ea>
 // FMOVE.D FPx, <ea>
 // FMOVE.X FPx, <ea>
-//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 4 only
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
 //    FIXME[Robb P. Matzke 2014-07-16]: BCD format (P) is not implemented yet; k-factor bits are always zero
 //    Note: the data register direct destination is handled by M68k_fmove_to_drd
 struct M68k_fmove_rm: M68k {
     M68k_fmove_rm(): M68k("fmove_rm", m68k_generation_3|m68k_freescale_fpu,
-                          OP(15) & BITS<6, 11>(0x08) & EAM(m68k_eam_ri|m68k_eam_pci) &
+                          OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) &
+                          EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_pcmi & ~m68k_eam_drd) &
                           INSN_WORD<1>(BITS<13, 15>(0x3) & BITS<0, 6>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instruction_word(1)));
-        SgAsmExpression *src = d->makeFPRegister(extract<7, 9>(d->instruction_word(1)));
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
         return d->makeInstruction(m68k_fmove, "fmove."+formatLetter(fmt), src, dst);
     }
 };
 
-// FMOVE.D FPx, FPy
-//    FIXME[Robb P. Matzke 2014-07-16]: Only FMOVE is implemented (not FSMOVE or FDMOVE); bits 0-6 are clear
+// FMOVE.<fmt> FPx, FPy
+// FSMOVE.<fmt> FPx, FPy
+// FDMOVE.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
 struct M68k_fmove_rr: M68k {
     M68k_fmove_rr(): M68k("fmove_rr", m68k_generation_3|m68k_freescale_fpu,
-                          OP(15) & BITS<6, 11>(0x08) & BITS<0, 5>(0) &
-                          INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0))) {}
+                          OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & BITS<0, 5>(0) &
+                          INSN_WORD<1>(BITS<13, 15>(0) &
+                                       (BITS<0, 6>(0) | BITS<0, 6>(0x40) | BITS<0, 6>(0x44)))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instruction_word(1)));
-        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instruction_word(1)));
-        return d->makeInstruction(m68k_fmove, "fmove.d", src, dst);
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x00: kind = m68k_fmove; break;
+            case 0x40: kind = m68k_fsmove; break;
+            case 0x44: kind = m68k_fdmove; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -1965,21 +2655,542 @@ struct M68k_fmove_rr: M68k {
 // FMOVE.W FPx, Dy
 // FMOVE.L FPx, Dy
 // FMOVE.S FPx, Dy
-//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 4 only
-//    FIXME[Robb P. Matzke 2014-07-16]: Only FMOVE is implemented (not FSMOVE or FDMOVE); bits 0-6 are clear
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
+//    FIXME[Robb P. Matzke 2014-07-16]: BCD format (P) is not implemented yet; k-factor bits are always zero
 struct M68k_fmove_to_drd: M68k {
     M68k_fmove_to_drd(): M68k("fmove_to_drd", m68k_generation_3|m68k_freescale_fpu,
-                               OP(15) & BITS<6, 11>(0x08) & EAM(m68k_eam_drd) &
-                               INSN_WORD<1>(BITS<13, 15>(3) &
+                              OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                              INSN_WORD<1>(BITS<13, 15>(3) &
+                                           (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                            BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                           BITS<0, 6>(0))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        ASSERT_require(fmt==m68k_fmt_i8 || fmt==m68k_fmt_i16 || fmt==m68k_fmt_i32 || fmt==m68k_fmt_f32);
+        SgAsmExpression *src = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        return d->makeInstruction(m68k_fmove, "fmove." + formatLetter(fmt), src, dst);
+    }
+};
+
+// FMOVEM.<fmt> <ea>, #list
+//    where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
+struct M68k_fmovem_mr: M68k {
+    M68k_fmovem_mr(): M68k("fmovem_mr", m68k_generation_3|m68k_freescale_fpu,
+                           OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) &
+                           EAM(m68k_eam_control | m68k_eam_inc) &
+                           INSN_WORD<1>(BITS<14, 15>(3) & BIT<13>(0) & BITS<8, 10>(0))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        bool dynamicList = extract<11, 11>(w0) != 0;
+        bool postIncMode = extract<12, 12>(w0) != 0;
+        if (!postIncMode && extract<3, 5>(w0)==3) {
+            throw DisassemblerM68k::Exception("pre-decrement mode and [Ax+] source address are "
+                                              "incompatible for the register-to-memory version of FMOVEM");
+        }
+        SgAsmExpression *dst = NULL;
+        if (dynamicList) {
+            dst = d->makeDataRegister(extract<4, 6>(d->instructionWord(1)), m68k_fmt_i8, 0);
+        } else {
+            dst = d->makeFPRegistersFromMask(extract<0, 8>(d->instructionWord(1)), fmt, true); // order is FN7 to FN0
+        }
+        return d->makeInstruction(m68k_fmovem, "fmovem."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FMOVEM.<fmt> #list, <ea>
+//    where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-16]: Coprocessor 1 only
+struct M68k_fmovem_rm: M68k {
+    M68k_fmovem_rm(): M68k("fmovem_rm", m68k_generation_3|m68k_freescale_fpu,
+                           OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) &
+                           EAM((m68k_eam_control & m68k_eam_alter & ~m68k_eam_pcmi) | m68k_eam_dec) &
+                           INSN_WORD<1>(BITS<14, 15>(3) & BIT<13>(1) & BITS<8, 10>(0))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        bool dynamicList = extract<11, 11>(w0) != 0;
+        bool postIncMode = extract<12, 12>(w0) != 0;
+        if (postIncMode && extract<3, 5>(w0)==4) {
+            throw DisassemblerM68k::Exception("post-increment mode and [-Ax] destination address are "
+                                              "incompatible for the register-to-memory version of FMOVEM");
+        }
+        SgAsmExpression *src = NULL;
+        if (dynamicList) {
+            src = d->makeDataRegister(extract<4, 6>(d->instructionWord(1)), m68k_fmt_i8, 0);
+        } else {
+            src = d->makeFPRegistersFromMask(extract<0, 8>(d->instructionWord(1)), fmt); // order is FN0 to FN7
+        }
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        return d->makeInstruction(m68k_fmovem, "fmovem."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FMUL.B Dx, FPy
+// FMUL.W Dx, FPy
+// FMUL.L Dx, FPy
+// FMUL.S Dx, FPy
+// FSMUL.B Dx, FPy
+// FSMUL.W Dx, FPy
+// FSMUL.L Dx, FPy
+// FSMUL.S Dx, FPy
+// FDMUL.B Dx, FPy
+// FDMUL.W Dx, FPy
+// FDMUL.L Dx, FPy
+// FDMUL.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fmul_from_drd: M68k {
+    M68k_fmul_from_drd(): M68k("fmul_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
                                             (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
                                              BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
-                                            BITS<0, 6>(0))) {}
+                                            (BITS<0, 6>(0x23) | BITS<0, 6>(0x63) | BITS<0, 6>(0x67)))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instruction_word(1)));
-        ASSERT_require(fmt==m68k_fmt_i8 || fmt==m68k_fmt_i16 || fmt==m68k_fmt_i32 || fmt==m68k_fmt_f32);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
-        SgAsmExpression *src = d->makeFPRegister(extract<7, 9>(d->instruction_word(1)));
-        return d->makeInstruction(m68k_fmove, "fmove." + formatLetter(fmt), src, dst);
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x23: kind = m68k_fmul; break;
+            case 0x63: kind = m68k_fsmul; break;
+            case 0x67: kind = m68k_fdmul; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FMUL.B <ea>, FPx
+// FMUL.W <ea>, FPx
+// FMUL.L <ea>, FPx
+// FMUL.S <ea>, FPx
+// FMUL.D <ea>, FPx
+// FMUL.X <ea>, FPx
+// FMUL.P <ea>, FPx
+// FSMUL.B <ea>, FPx
+// FSMUL.W <ea>, FPx
+// FSMUL.L <ea>, FPx
+// FSMUL.S <ea>, FPx
+// FSMUL.D <ea>, FPx
+// FSMUL.X <ea>, FPx
+// FSMUL.P <ea>, FPx
+// FDMUL.B <ea>, FPx
+// FDMUL.W <ea>, FPx
+// FDMUL.L <ea>, FPx
+// FDMUL.S <ea>, FPx
+// FDMUL.D <ea>, FPx
+// FDMUL.X <ea>, FPx
+// FDMUL.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fmul_from_drd
+struct M68k_fmul_mr: M68k {
+    M68k_fmul_mr(): M68k("fmul_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) &
+                                      (BITS<0, 6>(0x23) | BITS<0, 6>(0x63) | BITS<0, 6>(0x67)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x23: kind = m68k_fmul; break;
+            case 0x63: kind = m68k_fsmul; break;
+            case 0x67: kind = m68k_fdmul; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FMUL.<fmt> FPx, FPy
+// FSMUL.<fmt> FPx, FPy
+// FDMUL.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fmul_rr: M68k {
+    M68k_fmul_rr(): M68k("fmul_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) &
+                                      (BITS<0, 6>(0x23) | BITS<0, 6>(0x63) | BITS<0, 6>(0x67)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x23: kind = m68k_fmul; break;
+            case 0x63: kind = m68k_fsmul; break;
+            case 0x67: kind = m68k_fdmul; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FNEG.B Dx, FPy
+// FNEG.W Dx, FPy
+// FNEG.L Dx, FPy
+// FNEG.S Dx, FPy
+// FSNEG.B Dx, FPy
+// FSNEG.W Dx, FPy
+// FSNEG.L Dx, FPy
+// FSNEG.S Dx, FPy
+// FDNEG.B Dx, FPy
+// FDNEG.W Dx, FPy
+// FDNEG.L Dx, FPy
+// FDNEG.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fneg_from_drd: M68k {
+    M68k_fneg_from_drd(): M68k("fneg_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            (BITS<0, 6>(0x1a) | BITS<0, 6>(0x5a) | BITS<0, 6>(0x5e)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x1a: kind = m68k_fneg; break;
+            case 0x5a: kind = m68k_fsneg; break;
+            case 0x5e: kind = m68k_fdneg; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FNEG.B <ea>, FPx
+// FNEG.W <ea>, FPx
+// FNEG.L <ea>, FPx
+// FNEG.S <ea>, FPx
+// FNEG.D <ea>, FPx
+// FNEG.X <ea>, FPx
+// FNEG.P <ea>, FPx
+// FSNEG.B <ea>, FPx
+// FSNEG.W <ea>, FPx
+// FSNEG.L <ea>, FPx
+// FSNEG.S <ea>, FPx
+// FSNEG.D <ea>, FPx
+// FSNEG.X <ea>, FPx
+// FSNEG.P <ea>, FPx
+// FDNEG.B <ea>, FPx
+// FDNEG.W <ea>, FPx
+// FDNEG.L <ea>, FPx
+// FDNEG.S <ea>, FPx
+// FDNEG.D <ea>, FPx
+// FDNEG.X <ea>, FPx
+// FDNEG.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fneg_from_drd
+struct M68k_fneg_mr: M68k {
+    M68k_fneg_mr(): M68k("fneg_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) &
+                                      (BITS<0, 6>(0x1a) | BITS<0, 6>(0x5a) | BITS<0, 6>(0x5e)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x1a: kind = m68k_fneg; break;
+            case 0x5a: kind = m68k_fsneg; break;
+            case 0x5e: kind = m68k_fdneg; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FNEG.<fmt> FPx, FPy
+// FSNEG.<fmt> FPx, FPy
+// FDNEG.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fneg_rr: M68k {
+    M68k_fneg_rr(): M68k("fneg_rr", m68k_generation_3|m68k_freescale_fpu,
+                          OP(15) & BITS<0, 11>(0x200) &
+                          INSN_WORD<1>(BITS<13, 15>(0) &
+                                       (BITS<0, 6>(0x1a) | BITS<0, 6>(0x5a) | BITS<0, 6>(0x5e)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x1a: kind = m68k_fneg; break;
+            case 0x5a: kind = m68k_fsneg; break;
+            case 0x5e: kind = m68k_fdneg; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FNOP
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fnop: M68k {
+    M68k_fnop(): M68k("fnop", m68k_generation_3|m68k_freescale_fpu,
+                      OP(15) & BITS<9, 11>(1) & BITS<0, 8>(0x080) &
+                      INSN_WORD<1>(BITS<0, 15>(0))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        return d->makeInstruction(m68k_fnop, "fnop");
+    }
+};
+
+// FSQRT.B Dx, FPy
+// FSQRT.W Dx, FPy
+// FSQRT.L Dx, FPy
+// FSQRT.S Dx, FPy
+// FSSQRT.B Dx, FPy
+// FSSQRT.W Dx, FPy
+// FSSQRT.L Dx, FPy
+// FSSQRT.S Dx, FPy
+// FDSQRT.B Dx, FPy
+// FDSQRT.W Dx, FPy
+// FDSQRT.L Dx, FPy
+// FDSQRT.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fsqrt_from_drd: M68k {
+    M68k_fsqrt_from_drd(): M68k("fsqrt_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                                OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                                INSN_WORD<1>(BITS<13, 15>(2) &
+                                             (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                              BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                             (BITS<0, 6>(0x04) | BITS<0, 6>(0x41) | BITS<0, 6>(0x45)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x00: kind = m68k_fsqrt; break;
+            case 0x41: kind = m68k_fssqrt; break;
+            case 0x44: kind = m68k_fdsqrt; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FSQRT.B <ea>, FPx
+// FSQRT.W <ea>, FPx
+// FSQRT.L <ea>, FPx
+// FSQRT.S <ea>, FPx
+// FSQRT.D <ea>, FPx
+// FSQRT.X <ea>, FPx
+// FSQRT.P <ea>, FPx
+// FSSQRT.B <ea>, FPx
+// FSSQRT.W <ea>, FPx
+// FSSQRT.L <ea>, FPx
+// FSSQRT.S <ea>, FPx
+// FSSQRT.D <ea>, FPx
+// FSSQRT.X <ea>, FPx
+// FSSQRT.P <ea>, FPx
+// FDSQRT.B <ea>, FPx
+// FDSQRT.W <ea>, FPx
+// FDSQRT.L <ea>, FPx
+// FDSQRT.S <ea>, FPx
+// FDSQRT.D <ea>, FPx
+// FDSQRT.X <ea>, FPx
+// FDSQRT.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fsqrt_from_drd
+struct M68k_fsqrt_mr: M68k {
+    M68k_fsqrt_mr(): M68k("fsqrt_mr", m68k_generation_3|m68k_freescale_fpu,
+                          OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                          INSN_WORD<1>(BITS<13, 15>(2) &
+                                       (BITS<0, 6>(0x04) | BITS<0, 6>(0x41) | BITS<0, 6>(0x45)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x00: kind = m68k_fsqrt; break;
+            case 0x41: kind = m68k_fssqrt; break;
+            case 0x44: kind = m68k_fdsqrt; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FSQRT.<fmt> FPx, FPy
+// FSSQRT.<fmt> FPx, FPy
+// FDSQRT.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fsqrt_rr: M68k {
+    M68k_fsqrt_rr(): M68k("fsqrt_rr", m68k_generation_3|m68k_freescale_fpu,
+                          OP(15) & BITS<0, 11>(0x200) &
+                          INSN_WORD<1>(BITS<13, 15>(0) &
+                                       (BITS<0, 6>(0x04) | BITS<0, 6>(0x41) | BITS<0, 6>(0x45)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x00: kind = m68k_fsqrt; break;
+            case 0x41: kind = m68k_fssqrt; break;
+            case 0x44: kind = m68k_fdsqrt; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FSUB.B Dx, FPy
+// FSUB.W Dx, FPy
+// FSUB.L Dx, FPy
+// FSUB.S Dx, FPy
+// FSSUB.B Dx, FPy
+// FSSUB.W Dx, FPy
+// FSSUB.L Dx, FPy
+// FSSUB.S Dx, FPy
+// FDSUB.B Dx, FPy
+// FDSUB.W Dx, FPy
+// FDSUB.L Dx, FPy
+// FDSUB.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fsub_from_drd: M68k {
+    M68k_fsub_from_drd(): M68k("fsub_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            (BITS<0, 6>(0x28) | BITS<0, 6>(0x68) | BITS<0, 6>(0x6c)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x28: kind = m68k_fsub; break;
+            case 0x68: kind = m68k_fssub; break;
+            case 0x6c: kind = m68k_fdsub; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FSUB.B <ea>, FPx
+// FSUB.W <ea>, FPx
+// FSUB.L <ea>, FPx
+// FSUB.S <ea>, FPx
+// FSUB.D <ea>, FPx
+// FSUB.X <ea>, FPx
+// FSUB.P <ea>, FPx
+// FSSUB.B <ea>, FPx
+// FSSUB.W <ea>, FPx
+// FSSUB.L <ea>, FPx
+// FSSUB.S <ea>, FPx
+// FSSUB.D <ea>, FPx
+// FSSUB.X <ea>, FPx
+// FSSUB.P <ea>, FPx
+// FDSUB.B <ea>, FPx
+// FDSUB.W <ea>, FPx
+// FDSUB.L <ea>, FPx
+// FDSUB.S <ea>, FPx
+// FDSUB.D <ea>, FPx
+// FDSUB.X <ea>, FPx
+// FDSUB.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_fsub_from_drd
+struct M68k_fsub_mr: M68k {
+    M68k_fsub_mr(): M68k("fsub_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) &
+                                      (BITS<0, 6>(0x28) | BITS<0, 6>(0x68) | BITS<0, 6>(0x6c)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x28: kind = m68k_fsub; break;
+            case 0x68: kind = m68k_fssub; break;
+            case 0x6c: kind = m68k_fdsub; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FSUB.<fmt> FPx, FPy
+// FSSUB.<fmt> FPx, FPy
+// FDSUB.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+struct M68k_fsub_rr: M68k {
+    M68k_fsub_rr(): M68k("fsub_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) &
+                                      (BITS<0, 6>(0x28) | BITS<0, 6>(0x68) | BITS<0, 6>(0x6c)))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
+        M68kInstructionKind kind = m68k_unknown_instruction;
+        switch (extract<0, 6>(d->instructionWord(1))) {
+            case 0x28: kind = m68k_fsub; break;
+            case 0x68: kind = m68k_fssub; break;
+            case 0x6c: kind = m68k_fdsub; break;
+        }
+        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+    }
+};
+
+// FTST.B Dx, FPy
+// FTST.W Dx, FPy
+// FTST.L Dx, FPy
+// FTST.S Dx, FPy
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Destination register field is unused (bits 7-9) and recommended, but not required, to be zero
+struct M68k_ftst_from_drd: M68k {
+    M68k_ftst_from_drd(): M68k("ftst_from_drd", m68k_generation_3|m68k_freescale_fpu,
+                               OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_drd) &
+                               INSN_WORD<1>(BITS<13, 15>(2) &
+                                            (BITS<10, 12>(0)/*i32*/ | BITS<10, 12>(1)/*f32*/ |
+                                             BITS<10, 12>(4)/*i16*/ | BITS<10, 12>(6)/*i8*/) &
+                                            BITS<0, 6>(0x3a))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        return d->makeInstruction(m68k_ftst, "ftst."+formatLetter(fmt), src);
+    }
+};
+
+// FTST.B <ea>, FPx
+// FTST.W <ea>, FPx
+// FTST.L <ea>, FPx
+// FTST.S <ea>, FPx
+// FTST.D <ea>, FPx
+// FTST.X <ea>, FPx
+// FTST.P <ea>, FPx
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Note: data register direct mode is handled by M68k_ftst_from_drd
+//    Destination register field is unused (bits 7-9) and recommended, but not required, to be zero
+struct M68k_ftst_mr: M68k {
+    M68k_ftst_mr(): M68k("ftst_mr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<9, 11>(1) & BITS<6, 8>(0) & EAM(m68k_eam_data & ~m68k_eam_drd) &
+                         INSN_WORD<1>(BITS<13, 15>(2) & BITS<0, 6>(0x3a))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormat(extract<10, 12>(d->instructionWord(1)));
+        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
+        return d->makeInstruction(m68k_ftst, "ftst."+formatLetter(fmt), src);
+    }
+};
+
+// FTST.<fmt> FPx, FPy
+//    Where <fmt> is either "D" or "X" depending on the architecture
+//    FIXME[Robb P. Matzke 2014-07-17]: Coprocessor 1 only
+//    Destination register field is unused (bits 7-9) and recommended, but not required, to be zero
+struct M68k_ftst_rr: M68k {
+    M68k_ftst_rr(): M68k("ftst_rr", m68k_generation_3|m68k_freescale_fpu,
+                         OP(15) & BITS<0, 11>(0x200) &
+                         INSN_WORD<1>(BITS<13, 15>(0) & BITS<0, 6>(0x3a))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = floatingFormatForFamily(d->get_family());
+        SgAsmExpression *src = d->makeFPRegister(extract<10, 12>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_ftst, "ftst."+formatLetter(fmt), src);
     }
 };
 
@@ -2110,21 +3321,21 @@ struct M68k_mac_l2: M68k {
                         INSN_WORD<1>(BIT<11>(1) & BIT<8>(0) & BIT<4>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         // Multiplicand 1
-        unsigned ryRegisterNumber = extract<0, 3>(d->instruction_word(1));
+        unsigned ryRegisterNumber = extract<0, 3>(d->instructionWord(1));
         SgAsmExpression *ry = d->makeDataAddressRegister(ryRegisterNumber, m68k_fmt_i32, 0);
 
         // Multiplicand 2
-        unsigned rxRegisterNumber = extract<12, 15>(d->instruction_word(1));
+        unsigned rxRegisterNumber = extract<12, 15>(d->instructionWord(1));
         SgAsmExpression *rx = d->makeDataAddressRegister(rxRegisterNumber, m68k_fmt_i32, 0);
 
         // How to scale product: 0=>none; 1=>multiply by 2; 2=>reserved; 3=>divide by 2
-        SgAsmExpression *scaleFactor = d->makeImmediateValue(m68k_fmt_i8, extract<9, 10>(d->instruction_word(1)));
+        SgAsmExpression *scaleFactor = d->makeImmediateValue(m68k_fmt_i8, extract<9, 10>(d->instructionWord(1)));
 
         // Source loaded into Rw in parallel with ACC += product
         SgAsmExpression *source = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
 
         // Whether to use the MASK register when loading the source into Rw
-        SgAsmExpression *useMask = d->makeImmediateValue(m68k_fmt_i8, extract<5, 5>(d->instruction_word(1)));
+        SgAsmExpression *useMask = d->makeImmediateValue(m68k_fmt_i8, extract<5, 5>(d->instructionWord(1)));
 
         // Destination register for loading source
         unsigned rwRegisterNumber = (extract<6, 6>(w0)<<3) | extract<9, 11>(w0);
@@ -2142,23 +3353,23 @@ struct M68k_mac_w2: M68k {
                         INSN_WORD<1>(BIT<11>(0) & BIT<8>(0) & BIT<4>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         // Multiplicand 1
-        size_t ryOffset = extract<6, 6>(d->instruction_word(1)) ? 16 : 0;
-        unsigned ryRegisterNumber = extract<0, 3>(d->instruction_word(1));
+        size_t ryOffset = extract<6, 6>(d->instructionWord(1)) ? 16 : 0;
+        unsigned ryRegisterNumber = extract<0, 3>(d->instructionWord(1));
         SgAsmExpression *ry = d->makeDataAddressRegister(ryRegisterNumber, m68k_fmt_i16, ryOffset);
 
         // Multiplicand 2
-        size_t rxOffset = extract<7, 7>(d->instruction_word(1)) ? 16 : 0;
-        unsigned rxRegisterNumber = extract<12, 15>(d->instruction_word(1));
+        size_t rxOffset = extract<7, 7>(d->instructionWord(1)) ? 16 : 0;
+        unsigned rxRegisterNumber = extract<12, 15>(d->instructionWord(1));
         SgAsmExpression *rx = d->makeDataAddressRegister(rxRegisterNumber, m68k_fmt_i16, rxOffset);
 
         // How to scale product: 0=>none; 1=>multiply by 2; 2=>reserved; 3=>divide by 2
-        SgAsmExpression *scaleFactor = d->makeImmediateValue(m68k_fmt_i8, extract<9, 10>(d->instruction_word(1)));
+        SgAsmExpression *scaleFactor = d->makeImmediateValue(m68k_fmt_i8, extract<9, 10>(d->instructionWord(1)));
 
         // Source loaded into Rw in parallel with ACC += product
         SgAsmExpression *source = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
 
         // Whether to use the MASK register when loading the source into Rw
-        SgAsmExpression *useMask = d->makeImmediateValue(m68k_fmt_i8, extract<5, 5>(d->instruction_word(1)));
+        SgAsmExpression *useMask = d->makeImmediateValue(m68k_fmt_i8, extract<5, 5>(d->instructionWord(1)));
 
         // Destination register for loading source
         unsigned rwRegisterNumber = (extract<6, 6>(w0)<<3) | extract<9, 11>(w0);
@@ -2198,7 +3409,7 @@ struct M68k_move: M68k {
             case 3: fmt = m68k_fmt_i16; break;
         }
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<6, 8>(w0), extract<9, 11>(w0), fmt, 0);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<6, 8>(w0), extract<9, 11>(w0), fmt, d->extensionWordsUsed());
         return d->makeInstruction(m68k_move, "move."+formatLetter(fmt), src, dst);
     }
 };
@@ -2353,7 +3564,7 @@ struct M68k_move16_pp: M68k {
                            OP(15) & BITS<3, 11>(0xc4) & INSN_WORD<1>(BIT<15>(1) & BITS<0, 11>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeAddressRegisterPostIncrement(extract<0, 2>(w0), m68k_fmt_i32);
-        SgAsmExpression *dst = d->makeAddressRegisterPostIncrement(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        SgAsmExpression *dst = d->makeAddressRegisterPostIncrement(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         return d->makeInstruction(m68k_move16, "move16", src, dst);
     }
 };
@@ -2410,7 +3621,7 @@ struct M68k_movem_mr: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
-        SgAsmExpression *dst = d->makeRegistersFromMask(d->instruction_word(1), fmt);
+        SgAsmExpression *dst = d->makeRegistersFromMask(d->instructionWord(1), fmt);
         return d->makeInstruction(m68k_movem, "movem."+formatLetter(fmt), src, dst);
     }
 };
@@ -2424,7 +3635,7 @@ struct M68k_movem_rm: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         bool isPreDecrement = extract<3, 5>(w0) == 4;
-        SgAsmRegisterNames *src = d->makeRegistersFromMask(d->instruction_word(1), fmt, isPreDecrement);
+        SgAsmRegisterNames *src = d->makeRegistersFromMask(d->instructionWord(1), fmt, isPreDecrement);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
         return d->makeInstruction(m68k_movem, "movem."+formatLetter(fmt), src, dst);
     }
@@ -2476,9 +3687,9 @@ struct M68k_multiply_l: M68k {
                             OP(4) & BITS<6, 11>(0x30) & EAM(m68k_eam_data) &
                             INSN_WORD<1>(BIT<15>(0) & BITS<3, 10>(0))) {} // BITS<0,2> are unused and unspecified
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_muls : m68k_mulu;
+        M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_muls : m68k_mulu;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dst);
     }
 };
@@ -2490,10 +3701,10 @@ struct M68k_multiply_64: M68k {
                              OP(4) & BITS<6, 11>(0x30) & EAM(m68k_eam_data) &
                              INSN_WORD<1>(BIT<15>(0) & BITS<3, 10>(0x80))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        M68kInstructionKind kind = extract<11, 11>(d->instruction_word(1)) ? m68k_muls : m68k_mulu;
+        M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_muls : m68k_mulu;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-        SgAsmExpression *dh = d->makeDataRegister(extract<0, 2>(d->instruction_word(1)), m68k_fmt_i32);
-        SgAsmExpression *dl = d->makeDataRegister(extract<12, 14>(d->instruction_word(1)), m68k_fmt_i32);
+        SgAsmExpression *dh = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
+        SgAsmExpression *dl = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         return d->makeInstruction(m68k_muls, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dh, dl);
     }
 };
@@ -2647,7 +3858,7 @@ struct M68k_ori_to_ccr: M68k {
     M68k_ori_to_ccr(): M68k("ori_to_ccr", m68k_family,
                             OP(0) & BITS<0, 11>(0x03c) & INSN_WORD<1>(BITS<8, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        SgAsmExpression *src = d->makeImmediateValue(m68k_fmt_i8, extract<0, 7>(d->instruction_word(1)));
+        SgAsmExpression *src = d->makeImmediateValue(m68k_fmt_i8, extract<0, 7>(d->instructionWord(1)));
         SgAsmExpression *dst = d->makeConditionCodeRegister();
         return d->makeInstruction(m68k_ori, "ori.b", src, dst);
     }
@@ -2908,15 +4119,15 @@ struct M68k_sub_2: M68k {
     }
 };
 
-// SUBA.W <ea>y, Ax
-// SUBA.L <ea>y, Ax
+// SUBA.W <ea>, Ax
+// SUBA.L <ea>, Ax
 struct M68k_suba: M68k {
     M68k_suba(): M68k("suba", m68k_family,
-                      OP(9) & BITS<9, 10>(3) & EAM(m68k_eam_all)) {}
+                      OP(9) & BITS<6, 7>(3) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = extract<8, 8>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
-        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), fmt, 0);
+        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), m68k_fmt_i32, 0);
         return d->makeInstruction(m68k_suba, "suba."+formatLetter(fmt), src, dst);
     }
 };
@@ -3161,14 +4372,14 @@ struct M68k_unpk: M68k {
 //                         INSN_WORD<1>(BIT<11>(0) & BIT<8>(0))) {}
 //      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
 //          bool rx_is_areg = extract<6, 6>(w0) == 1; // is Rx an address register vs. data register?
-//          size_t rx_offset = extract<7, 7>(d->instruction_word(1)) ? 16 : 0;
-//          size_t ry_offset = extract<6, 6>(d->instruction_word(1)) ? 16 : 0;
+//          size_t rx_offset = extract<7, 7>(d->instructionWord(1)) ? 16 : 0;
+//          size_t ry_offset = extract<6, 6>(d->instructionWord(1)) ? 16 : 0;
 //          unsigned rx_regnum = extract<9, 11>(w0);
 //          SgAsmExpression *rx = rx_is_areg ?
 //                                d->makeAddressRegister(rx_regnum, 16, rx_offset) :
 //                                d->makeDataRegister(rx_regnum, 16, rx_offset);
 //          SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(w0), 16, ry_offset);
-//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instruction_word(1)));
+//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instructionWord(1)));
 //          return d->makeInstruction(m68k_mac, "mac.w", ry, rx, sf);
 //      }
 //  };
@@ -3190,7 +4401,7 @@ struct M68k_unpk: M68k {
 //          SgAsmExpression *ry = ry_is_areg ?
 //                                d->makeAddressRegister(ry_regnum, 32) :
 //                                d->makeDataRegister(ry_regnum, 32);
-//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instruction_word(1)));
+//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instructionWord(1)));
 //          return d->makeInstruction(m68k_mac, "mac.l", ry, rx, sf);
 //      }
 //  };
@@ -3211,13 +4422,13 @@ struct M68k_unpk: M68k {
 //      M68k_msac_w(): M68k("msac_w", OP(10) & BITS<7, 8>(0) & BITS<4, 5>(0) &
 //                          INSN_WORD<1>(BIT<11>(0) & BIT<8>(1))) {}
 //      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-//          size_t ry_offset = extract<6, 6>(d->instruction_word(1)) ? 16 : 0;
-//          size_t rx_offset = extract<7, 7>(d->instruction_word(1)) ? 16 : 0;
+//          size_t ry_offset = extract<6, 6>(d->instructionWord(1)) ? 16 : 0;
+//          size_t rx_offset = extract<7, 7>(d->instructionWord(1)) ? 16 : 0;
 //          SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(w0), 16, ry_offset);
 //          SgAsmExpression *rx = extract<6, 6>(w0) ?
 //                                d->makeAddressRegister(extract<9, 11>(w0), 16, rx_offset) :
 //                                d->makeDataRegister(extract<9, 11>(w0), 16, rx_offset);
-//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<8, 10>(d->instruction_word(1)));
+//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<8, 10>(d->instructionWord(1)));
 //          return d->makeInstruction(m68k_msac, "msac.w", ry, rx, sf);
 //      }
 //  };
@@ -3227,13 +4438,13 @@ struct M68k_unpk: M68k {
 //      M68k_msac_w2(): M68k("msac_w2", OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
 //                           INSN_WORD<1>(BIT<11>(0) & BIT<8>(1) & BIT<4>(0))) {}
 //      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-//          size_t ry_offset = extract<6, 6>(d->instruction_word(1)) ? 16 : 0;
-//          size_t rx_offset = extract<7, 7>(d->instruction_word(1)) ? 16 : 0;
-//          SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(d->instruction_word(1)), 16, ry_offset);
-//          SgAsmExpression *rx = d->makeDataAddressRegister(extract<12, 15>(d->instruction_word(1)), 16, rx_offset);
-//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instruction_word(1)));
+//          size_t ry_offset = extract<6, 6>(d->instructionWord(1)) ? 16 : 0;
+//          size_t rx_offset = extract<7, 7>(d->instructionWord(1)) ? 16 : 0;
+//          SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(d->instructionWord(1)), 16, ry_offset);
+//          SgAsmExpression *rx = d->makeDataAddressRegister(extract<12, 15>(d->instructionWord(1)), 16, rx_offset);
+//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instructionWord(1)));
 //          SgAsmExpression *eay = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1);
-//          SgAsmExpression *use_mask = d->makeImmediateValue(1, extract<5, 5>(d->instruction_word(1)));
+//          SgAsmExpression *use_mask = d->makeImmediateValue(1, extract<5, 5>(d->instructionWord(1)));
 //          SgAsmExpression *rw = extract<6, 6>(w0) ?
 //                                d->makeAddressRegister(extract<9, 11>(w0), 32) :
 //                                d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -3252,7 +4463,7 @@ struct M68k_unpk: M68k {
 //          SgAsmExpression *rx = extract<6, 6>(w0) ?
 //                                d->makeAddressRegister(extract<9, 11>(w0), 32) :
 //                                d->makeDataRegister(extract<9, 11>(w0), 32);
-//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<8, 10>(d->instruction_word(1)));
+//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<8, 10>(d->instructionWord(1)));
 //          return d->makeInstruction(m68k_msac, "msac.l", ry, rx, sf);
 //      }
 //  };
@@ -3263,11 +4474,11 @@ struct M68k_unpk: M68k {
 //      M68k_msac_l2(): M68k("msac_l2", OP(10) & BITS<7, 8>(1) & EAM(m68k_eam_ari|m68k_eam_inc|m68k_eam_dec|m68k_eam_dsp) &
 //                           INSN_WORD<1>(BIT<11>(1) & BIT<8>(1) & BIT<4>(0))) {}
 //      SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-//          SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(d->instruction_word(1)), 32);
-//          SgAsmExpression *rx = d->makeDataAddressRegister(extract<12, 15>(d->instruction_word(1)), 32);
-//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instruction_word(1)));
+//          SgAsmExpression *ry = d->makeDataAddressRegister(extract<0, 3>(d->instructionWord(1)), 32);
+//          SgAsmExpression *rx = d->makeDataAddressRegister(extract<12, 15>(d->instructionWord(1)), 32);
+//          SgAsmExpression *sf = d->makeImmediateValue(8, extract<9, 10>(d->instructionWord(1)));
 //          SgAsmExpression *eay = d->makeEffectiveAddress(extract<0, 5>(w0), 32, 1);
-//          SgAsmExpression *use_mask = d->makeImmediateValue(1, extract<5, 5>(d->instruction_word(1)));
+//          SgAsmExpression *use_mask = d->makeImmediateValue(1, extract<5, 5>(d->instructionWord(1)));
 //          SgAsmExpression *rw = extract<6, 6>(w0) ?
 //                                d->makeAddressRegister(extract<9, 11>(w0), 32) :
 //                                d->makeDataRegister(extract<9, 11>(w0), 32);
@@ -3431,11 +4642,48 @@ DisassemblerM68k::init()
     M68k_DECODER(ext_w);
     M68k_DECODER(ext_l);
     M68k_DECODER(extb_l);
+    M68k_DECODER(fabs_from_drd);
+    M68k_DECODER(fabs_mr);
+    M68k_DECODER(fabs_rr);
+    M68k_DECODER(fadd_from_drd);
+    M68k_DECODER(fadd_mr);
+    M68k_DECODER(fadd_rr);
+    M68k_DECODER(fb);
+    M68k_DECODER(fcmp_from_drd);
+    M68k_DECODER(fcmp_mr);
+    M68k_DECODER(fcmp_rr);
+    M68k_DECODER(fdiv_from_drd);
+    M68k_DECODER(fdiv_mr);
+    M68k_DECODER(fdiv_rr);
+    M68k_DECODER(fint_from_drd);
+    M68k_DECODER(fint_mr);
+    M68k_DECODER(fint_rr);
+    M68k_DECODER(fintrz_from_drd);
+    M68k_DECODER(fintrz_mr);
+    M68k_DECODER(fintrz_rr);
     M68k_DECODER(fmove_from_drd);
     M68k_DECODER(fmove_mr);
     M68k_DECODER(fmove_rm);
     M68k_DECODER(fmove_rr);
     M68k_DECODER(fmove_to_drd);
+    M68k_DECODER(fmovem_mr);
+    M68k_DECODER(fmovem_rm);
+    M68k_DECODER(fmul_from_drd);
+    M68k_DECODER(fmul_mr);
+    M68k_DECODER(fmul_rr);
+    M68k_DECODER(fneg_from_drd);
+    M68k_DECODER(fneg_mr);
+    M68k_DECODER(fneg_rr);
+    M68k_DECODER(fnop);
+    M68k_DECODER(fsqrt_from_drd);
+    M68k_DECODER(fsqrt_mr);
+    M68k_DECODER(fsqrt_rr);
+    M68k_DECODER(fsub_from_drd);
+    M68k_DECODER(fsub_mr);
+    M68k_DECODER(fsub_rr);
+    M68k_DECODER(ftst_from_drd);
+    M68k_DECODER(ftst_mr);
+    M68k_DECODER(ftst_rr);
     M68k_DECODER(illegal);
     M68k_DECODER(jmp);
     M68k_DECODER(jsr);
