@@ -236,7 +236,7 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
             return dictionary_powerpc();
 
         case EFF::ISA_M68K_Family:
-            return dictionary_m68000();
+            return dictionary_coldfire();
 
         default:
             return NULL;

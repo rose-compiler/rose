@@ -3666,9 +3666,12 @@ HEADER_BINARY_M68K_INSTRUCTION_START
 		virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
 			     		      rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
                 virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-		virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
 		virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+		virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
+                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
+                                                             bool* complete,
+                                                             MemoryMap *initial_memory=NULL) /*override*/;
+                virtual bool is_unknown() const /*override*/;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
 

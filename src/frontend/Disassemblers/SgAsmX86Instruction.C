@@ -132,7 +132,6 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
             return true;
         }
     }
-        
 
     return false;
 }
@@ -364,8 +363,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         debug <<"  successors:";
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
             debug <<" " <<StringUtility::addrToString(*si);
-        if (!*complete) std::cerr <<"...";
-        debug <<"\n";
+        debug <<(*complete?"":"...") <<"\n";
     }
 
     return successors;
