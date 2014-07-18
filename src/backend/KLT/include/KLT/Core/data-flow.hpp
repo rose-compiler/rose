@@ -89,7 +89,6 @@ void DataFlow<Annotation, Language, Runtime>::append_access(
     access_set.push_back(data_access_t());
     access_set.back().data = data;
     SgPntrArrRefExp * parent = isSgPntrArrRefExp(var_ref->get_parent());
-    assert(parent != NULL);
     while (parent != NULL) {
       access_set.back().subscripts.push_back(parent->get_rhs_operand_i());
       parent = isSgPntrArrRefExp(parent->get_parent());
