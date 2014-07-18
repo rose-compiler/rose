@@ -23,6 +23,7 @@ install(
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/BaseSemantics.h
     instructionSemantics/DataFlowSemantics2.h
+    instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
     instructionSemantics/findConstants.h
