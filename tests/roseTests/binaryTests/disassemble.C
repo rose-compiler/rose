@@ -55,7 +55,8 @@ get_disassembler(const std::string &name)
                   <<"  mips     - MIPS\n"
                   <<"  i386     - Intel x86 32-bit\n"
                   <<"  amd64    - Intel x86 64-bit\n"
-                  <<"  m68k     - Motoroal/Freescale M68000\n";
+                  <<"  m68k     - Motorola M68040\n"
+                  <<"  coldfire - Freescale ColdFire\n";
         exit(0);
     } else if (0==name.compare("arm")) {
         return new DisassemblerArm();
@@ -68,7 +69,9 @@ get_disassembler(const std::string &name)
     } else if (0==name.compare("amd64")) {
         return new DisassemblerX86(8);
     } else if (0==name.compare("m68k")) {
-        return new DisassemblerM68k();
+        return new DisassemblerM68k(m68k_68040);
+    } else if (0==name.compare("coldfire")) {
+        return new DisassemblerM68k(m68k_freescale_emac);
     } else {
         return NULL;
     }
