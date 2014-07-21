@@ -210,14 +210,13 @@ Grammar::setUpBinaryInstructions()
     AsmRegisterNames.setDataPrototype("unsigned", "mask", "=0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+    // Integer value.  The bits stored in the super-class (SgAsmConstantExpression) are interpretted as either a signed offset
+    // from a the address of a particular IR node, or as a signed or unsigned integer constant, depending on whether the
+    // baseNode is non-null or null, respectively.
     NEW_TERMINAL_MACRO(AsmIntegerValueExpression, "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag");
     AsmIntegerValueExpression.setFunctionPrototype("HEADER_INTEGER_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmIntegerValueExpression.setDataPrototype("SgNode*", "base_node", "=NULL",
+    AsmIntegerValueExpression.setDataPrototype("SgNode*", "baseNode", "=NULL",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmIntegerValueExpression.setDataPrototype("uint64_t", "relative_value", "=NULL",
-                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmIntegerValueExpression.setDataPrototype("size_t", "significant_bits", "=0",
-                                               NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -244,10 +243,21 @@ Grammar::setUpBinaryInstructions()
 
 
 
+    // Constants (integers, floating point, etc).  This class holds the actual bits for the constant value.  Subclasses provide
+    // the intepretation of those bits.
+    NEW_NONTERMINAL_MACRO(AsmConstantExpression,
+                          AsmIntegerValueExpression,
+                          "AsmConstantExpression", "AsmConstantExpressionTag", false);
+    AsmConstantExpression.setFunctionPrototype("HEADER_CONSTANT_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmConstantExpression.setPredeclarationString("HEADER_CONSTANT_EXPRESSION_PREDECLARATION",
+                                                       "../Grammar/BinaryInstruction.code");
+
+
+
     // Values that are addresses or references to data will have symbols in a function symbol table.  All other
     // values are assumed to be literals and will not have associated symbols.
     NEW_NONTERMINAL_MACRO(AsmValueExpression,
-                          AsmIntegerValueExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression,
+                          AsmConstantExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression,
                           "AsmValueExpression", "AsmValueExpressionTag", false);
     AsmValueExpression.setDataPrototype("SgAsmValueExpression*", "unfolded_expression_tree", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

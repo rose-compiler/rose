@@ -41,7 +41,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             SgAsmIntegerValueExpression *ee = isSgAsmIntegerValueExpression(e);
             std::ostringstream ss;
             ss <<"IntegerValue {value="
-               <<StringUtility::addrToString(ee->get_absolute_value(), ee->get_significant_bits())
+               <<StringUtility::addrToString(ee->get_absoluteValue(), ee->get_significantBits())
                <<"}";
             fprintf(f, ss.str().c_str());
             break;
@@ -557,7 +557,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 8==ive->get_significant_bits();
+                    return NULL!=ive && 8==ive->get_significantBits();
                 } else {
                     return *imm_p>=-128 && *imm_p<=127;
                 }
@@ -568,7 +568,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 16==ive->get_significant_bits();
+                    return NULL!=ive && 16==ive->get_significantBits();
                 } else {
                     return *imm_p>=-32768 && *imm_p<=32767;
                 }
@@ -579,7 +579,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 32==ive->get_significant_bits();
+                    return NULL!=ive && 32==ive->get_significantBits();
                 } else {
                     return *imm_p>=-2147483648LL && *imm_p<=2147483647LL;
                 }
@@ -590,7 +590,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 64==ive->get_significant_bits();
+                    return NULL!=ive && 64==ive->get_significantBits();
                 } else {
                     return true;
                 }
@@ -1060,7 +1060,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                     /* [register]+disp8  or  [register]+disp32 */
                     if (honor_operand_types) {
                         SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
-                        mod = disp_ive && 8==disp_ive->get_significant_bits() ? 1 : 2;
+                        mod = disp_ive && 8==disp_ive->get_significantBits() ? 1 : 2;
                     } else {
                         mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                     }
@@ -1112,7 +1112,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                 ROSE_ASSERT(base_reg && index_reg && disp_ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
-                    mod = disp_ive && 8==disp_ive->get_significant_bits() ? 1 : 2;
+                    mod = disp_ive && 8==disp_ive->get_significantBits() ? 1 : 2;
                 } else {
                     mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                 }
