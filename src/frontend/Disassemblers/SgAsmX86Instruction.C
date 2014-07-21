@@ -279,7 +279,7 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
             if (!ival)
                 return false;
             if (target)
-                *target = ival->get_absolute_value();
+                *target = ival->get_absoluteValue();
             return true;
         }
         default:

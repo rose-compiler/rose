@@ -537,7 +537,7 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
         for (size_t i=0; i<operands.size(); i++) {
             uint64_t constant=0;
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operands[i])) {
-                size_t nbits = ival->get_significant_bits();
+                size_t nbits = ival->get_significantBits();
                 if (nbits!=16 && nbits!=32 && nbits!=64)
                     continue; /* Not an appropriately-sized constant */
                 constant = ival->get_value();

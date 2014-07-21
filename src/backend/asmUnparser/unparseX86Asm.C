@@ -132,20 +132,20 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ival);
-            uint64_t value = ival->get_absolute_value(); // not sign extended
+            uint64_t value = ival->get_absoluteValue(); // not sign extended
 
             // If the value looks like it might be an address, then don't bother showing the decimal form.
-            if ((32==ival->get_significant_bits() || 64==ival->get_significant_bits()) &&
+            if ((32==ival->get_significantBits() || 64==ival->get_significantBits()) &&
                 value > 0x0000ffff && value < 0xffff0000) {
-                result = StringUtility::addrToString(value, ival->get_significant_bits());
+                result = StringUtility::addrToString(value, ival->get_significantBits());
             } else {
-                result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+                result = StringUtility::signedToHex2(value, ival->get_significantBits());
             }
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
             std::string label;
-            if (ival->get_significant_bits()>8)
+            if (ival->get_significantBits()>8)
                 label =x86ValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();

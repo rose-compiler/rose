@@ -610,7 +610,7 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
             SgAsmBlock *target_block = get_ast_node(cfg, boost::target(*ei, cfg));
             if (target_block && !is_edge_filtered(block, target_block)) {
                 SgAsmIntegerValueExpression *target = new SgAsmIntegerValueExpression(target_block->get_address());
-                target->make_relative_to(target_block);
+                target->makeRelativeTo(target_block);
                 target->set_parent(block);
                 block->get_successors().push_back(target);
             }
@@ -663,7 +663,7 @@ BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowG
     BOOST_FOREACH (Vertex sourceVertex, boost::vertices(cfg)) {
         SgAsmBlock *sourceBlock = get_ast_node(cfg, sourceVertex);
         BOOST_FOREACH (SgAsmIntegerValueExpression *integerValue, sourceBlock->get_successors()) {
-            Vertex targetVertex = addrToVertex.get_value_or(integerValue->get_absolute_value(), NO_VERTEX);
+            Vertex targetVertex = addrToVertex.get_value_or(integerValue->get_absoluteValue(), NO_VERTEX);
             if (targetVertex!=NO_VERTEX) {
                 SgAsmBlock *targetBlock = get_ast_node(cfg, targetVertex);
                 assert(targetBlock!=NULL); // since we have a vertex, there must be an SgAsmBlock!

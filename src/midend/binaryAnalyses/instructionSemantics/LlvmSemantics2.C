@@ -327,7 +327,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             const SgAsmIntegerValuePtrList &succs = bb->get_successors();
             std::vector<rose_addr_t> succs_va;
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si)
-                succs_va.push_back((*si)->get_absolute_value());
+                succs_va.push_back((*si)->get_absoluteValue());
 
             if (succs.size()==2 && true_func==func && false_func==func &&
                 std::min(succs_va[0], succs_va[1])==std::min(true_va, false_va) &&

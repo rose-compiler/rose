@@ -118,7 +118,7 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
   string res="...";
   ostringstream os;
   if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr)) {
-      switch (ival->get_significant_bits()) {
+      switch (ival->get_significantBits()) {
           case 8:
               byte_val = ival->get_value();
               break;
@@ -138,9 +138,9 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
           os <<hex <<ival->get_value();
           res = os.str();
       } else if (unparseSignedConstants) {
-          res = StringUtility::numberToString(ival->get_signed_value());
+          res = StringUtility::numberToString(ival->get_signedValue());
       } else {
-          res = StringUtility::addrToString(ival->get_value(), ival->get_significant_bits());
+          res = StringUtility::addrToString(ival->get_value(), ival->get_significantBits());
       }
   } else if (isSgAsmDoubleFloatValueExpression(expr)) {
       SgAsmDoubleFloatValueExpression* valExp = isSgAsmDoubleFloatValueExpression(expr);

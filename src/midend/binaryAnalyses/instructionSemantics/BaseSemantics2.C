@@ -1299,7 +1299,7 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->unsignedMultiply(lhs, rhs);
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(e)) {
-        retval = operators->number_(ival->get_significant_bits(), ival->get_value());
+        retval = operators->number_(ival->get_significantBits(), ival->get_value());
     }
 
     assert(retval!=NULL);

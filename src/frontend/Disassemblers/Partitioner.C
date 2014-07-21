@@ -1631,7 +1631,7 @@ Partitioner::pattern4(const InstructionMap &insns, InstructionMap::const_iterato
     if (args.size()!=2)
         return insns.end();
     SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
-    if (!arg || 0!=arg->get_absolute_value())
+    if (!arg || 0!=arg->get_absoluteValue())
         return insns.end();
 
     for (size_t i=0; i<insn->get_size(); ++i)
@@ -1656,7 +1656,7 @@ Partitioner::pattern5(const InstructionMap &insns, InstructionMap::const_iterato
     RegisterDescriptor reg = rre->get_descriptor();
     if (reg.get_major()!=m68k_regclass_addr || reg.get_minor()!=6/*link register*/)
         return insns.end();
-    int64_t displacement = ival->get_signed_value();
+    int64_t displacement = ival->get_signedValue();
     if (displacement>0)
         return insns.end();
 
@@ -1692,7 +1692,7 @@ Partitioner::pattern6(const InstructionMap &insns, InstructionMap::const_iterato
     SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(args[1]);
     if (!reg1 || reg1->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
         !reg2 || reg2->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
-        !addend || addend->get_signed_value()>0 || addend->get_signed_value()<4096 /*arbitrary*/)
+        !addend || addend->get_signedValue()>0 || addend->get_signedValue()<4096 /*arbitrary*/)
         return insns.end();
 
     return first;                                       // the LEA instruction is the start of a function
@@ -3081,7 +3081,7 @@ Partitioner::is_pe_dynlink_thunk(Instruction *insn)
     SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
     if (!addr)
         return false; // not a dynamic linking thunk: wrong addressing mode
-    return pe_iat_extents.contains(Extent(addr->get_absolute_value(), 4));
+    return pe_iat_extents.contains(Extent(addr->get_absoluteValue(), 4));
 }
 
 bool
@@ -4100,10 +4100,10 @@ Partitioner::fixup_cfg_edges(SgNode *ast)
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
                     SgAsmIntegerValueExpression *target = block->get_successors()[i];
-                    if (target && NULL==target->get_base_node()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
+                    if (target && NULL==target->get_baseNode()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absoluteValue());
                         if (bi!=block_map.end())
-                            target->make_relative_to(bi->second);
+                            target->makeRelativeTo(bi->second);
                     }
                 }
             }
@@ -4154,9 +4154,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
 
                 /* Don't monkey with constants that are already relative to some other node.  These are things that have been
                  * already fixed up by other methods. */
-                if (ival->get_base_node()!=NULL)
+                if (ival->get_baseNode()!=NULL)
                     return;
-                rose_addr_t va = ival->get_absolute_value();
+                rose_addr_t va = ival->get_absoluteValue();
 
                 /* If this constant is a code pointer, then make the pointer relative to the instruction it points to.  If that
                  * instruction is the entry instruction of a function, then point to the function instead.  A value is
@@ -4168,9 +4168,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                     0==(target_insn->bblock->function->reason & SgAsmFunction::FUNC_LEFTOVERS)) {
                     SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn->node);
                     if (target_func && target_func->get_entry_va()==target_insn->get_address()) {
-                        ival->make_relative_to(target_func);
+                        ival->makeRelativeTo(target_func);
                     } else {
-                        ival->make_relative_to(target_insn->node);
+                        ival->makeRelativeTo(target_insn->node);
                     }
                     return;
                 }
@@ -4182,7 +4182,7 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                     for (size_t i=0; i<dblock->nodes.size(); ++i) {
                         SgAsmStaticData *sd = dblock->nodes[i];
                         if (va>=sd->get_address() && va<sd->get_address()+sd->get_size()) {
-                            ival->make_relative_to(sd);
+                            ival->makeRelativeTo(sd);
                             return;
                         }
                     }
@@ -4190,9 +4190,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                 
                 /* If this constant points into a non-executable data segment, then make the pointer relative to that data
                  * segment. */
-                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absolute_value());
+                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absoluteValue());
                 if (section && !section->get_mapped_xperm()) {
-                    ival->make_relative_to(section);
+                    ival->makeRelativeTo(section);
                     return;
                 }
             }

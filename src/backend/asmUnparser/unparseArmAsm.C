@@ -204,7 +204,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ve = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ve);
-            uint64_t v = ve->get_absolute_value();
+            uint64_t v = ve->get_absoluteValue();
             result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
             if (labels && v!=0) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
@@ -257,7 +257,7 @@ std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::Label
         ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
         SgAsmIntegerValueExpression* tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
-        return StringUtility::addrToString(tgt->get_value(), tgt->get_significant_bits());
+        return StringUtility::addrToString(tgt->get_value(), tgt->get_significantBits());
     } else {
         return unparseArmExpression(expr, labels, registers, arm_sign_none);
     }

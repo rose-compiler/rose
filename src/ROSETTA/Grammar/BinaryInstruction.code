@@ -40,6 +40,10 @@ class MemoryMap;
 class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
+HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
+#include <sawyer/BitVector.h>
+HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
+
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
@@ -138,21 +142,45 @@ HEADER_BINARY_FILE_END
 
 
 
+HEADER_CONSTANT_EXPRESSION_START
+	protected:
+		Sawyer::Container::BitVector p_bitVector;
+	public:
+		const Sawyer::Container::BitVector& get_bitVector() const { return p_bitVector; }
+		Sawyer::Container::BitVector& get_bitVector() { return p_bitVector; }
+		void set_bitVector(const Sawyer::Container::BitVector &bv) { p_bitVector = bv; }
+HEADER_CONSTANT_EXPRESSION_END
+
+
 
 HEADER_INTEGER_VALUE_EXPRESSION_START
         public:
                 explicit SgAsmIntegerValueExpression(uint64_t n, size_t nbits=64)
-                        : p_base_node(NULL), p_relative_value(n), p_significant_bits(nbits) {}
-                static uint64_t virtual_address(SgNode*);
+                        : p_baseNode(NULL) {
+			p_bitVector.resize(nbits);
+			p_bitVector.fromInteger(n);
+		}
+                static uint64_t virtualAddress(SgNode*);
                 std::string get_label(bool quiet=false) const;
-                void set_significant_bits(size_t nbits);
-                size_t get_significant_bits() const;
-                void make_relative_to(SgNode *base_node);
-                uint64_t get_base_address() const;
-                uint64_t get_absolute_value(size_t nbits=0) const;
-                int64_t get_signed_value() const;
-                void set_absolute_value(uint64_t);
-		uint64_t get_value() const { return get_absolute_value(); }
+                size_t get_significantBits() const;
+                void makeRelativeTo(SgNode *baseNode);
+                uint64_t get_baseAddress() const;
+                uint64_t get_absoluteValue(size_t nbits=0) const;
+                void set_absoluteValue(uint64_t);
+                int64_t get_signedValue() const;
+		int64_t get_relativeValue() const;
+		void set_relativeValue(int64_t v, size_t nbits=64);
+		uint64_t get_value() const { return get_absoluteValue(); }
+
+		// These are deprecated; use CamelCase versions instead [Robb P. Matzke 2014-07-21]
+		size_t get_significant_bits() const ROSE_DEPRECATED_FUNCTION;
+		void make_relative_to(SgNode*) ROSE_DEPRECATED_FUNCTION;
+		uint64_t get_base_address() const ROSE_DEPRECATED_FUNCTION;
+		uint64_t get_absolute_value(size_t nbits=0) const ROSE_DEPRECATED_FUNCTION;
+		void set_absolute_value(uint64_t) ROSE_DEPRECATED_FUNCTION;
+		int64_t get_signed_value() const ROSE_DEPRECATED_FUNCTION;
+		int64_t get_relative_value() const ROSE_DEPRECATED_FUNCTION;
+		void set_relative_value(int64_t, size_t nbits=64) ROSE_DEPRECATED_FUNCTION;
 HEADER_INTEGER_VALUE_EXPRESSION_END
 
 

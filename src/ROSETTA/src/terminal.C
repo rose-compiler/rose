@@ -554,7 +554,11 @@ Terminal::addGrammarPrefixToName()
 
   // Error Checking! Check to make sure that grammar's name does not already exist in the
   // terminal's name.  This helps make sure that elements are not represented twice!
-     ROSE_ASSERT (GrammarString::isContainedIn(name,grammarName) == false);
+     if (GrammarString::isContainedIn(name, grammarName)) {
+         std::cerr <<"Grammar's name already exists in the terminal's name"
+                   <<"; name=" <<name <<", grammarName=" <<grammarName <<"\n";
+     }
+     ROSE_ASSERT(!GrammarString::isContainedIn(name,grammarName));
 
   // Set the name to include the grammar's prefix
   // Modify this statement to avoid Insure++ warning

@@ -85,13 +85,13 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ival);
-            uint64_t value = ival->get_absolute_value(); // not sign extended
-            result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+            uint64_t value = ival->get_absoluteValue(); // not sign extended
+            result = StringUtility::signedToHex2(value, ival->get_significantBits());
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
             std::string label;
-            if (ival->get_significant_bits()>8)
+            if (ival->get_significantBits()>8)
                 label =mipsValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();

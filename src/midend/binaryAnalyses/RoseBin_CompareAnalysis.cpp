@@ -204,7 +204,7 @@ string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
   string valStr="";
   if (rhs) {
       SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(rhs);
-    if ( ival && (8==ival->get_significant_bits() || 32==ival->get_significant_bits())) {
+    if ( ival && (8==ival->get_significantBits() || 32==ival->get_significantBits())) {
       short val = isSgAsmIntegerValueExpression(rhs)->get_value();
       //cerr << " checking local short variable at bp " << RoseBin_support::ToString(val) << endl;
       valStr = RoseBin_support::ToString(val);
@@ -512,7 +512,7 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
         ROSE_ASSERT(assInit);
         SgExpression* op = assInit->get_operand();
         if (isSgIntVal(op) && isSgAsmIntegerValueExpression(valExp) &&
-            32==isSgAsmIntegerValueExpression(valExp)->get_significant_bits()) {
+            32==isSgAsmIntegerValueExpression(valExp)->get_significantBits()) {
           // we got a integer && DoubleWord match
           nodes_matched++;
           isvar=true;

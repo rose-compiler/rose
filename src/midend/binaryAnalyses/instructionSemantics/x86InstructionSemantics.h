@@ -521,7 +521,7 @@ struct X86InstructionSemantics {
                                      readEffectiveAddress(e), policy.true_());
             }
             case V_SgAsmIntegerValueExpression: {
-                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signed_value();
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signedValue();
                 return number<8>(val & 0xFFU);
             }
             default: {
@@ -553,7 +553,7 @@ struct X86InstructionSemantics {
                                       readEffectiveAddress(e), policy.true_());
             }
             case V_SgAsmIntegerValueExpression: {
-                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signed_value();
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signedValue();
                 return number<16>(val & 0xFFFFU);
             }
             default: {

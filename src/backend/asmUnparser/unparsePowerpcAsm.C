@@ -75,7 +75,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             break;
         }
         case V_SgAsmIntegerValueExpression: {
-            uint64_t v = isSgAsmIntegerValueExpression(expr)->get_absolute_value();
+            uint64_t v = isSgAsmIntegerValueExpression(expr)->get_absoluteValue();
             if (useHex) {
                 result = StringUtility::intToHex(v);
             } else {

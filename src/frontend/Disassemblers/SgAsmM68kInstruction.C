@@ -572,6 +572,6 @@ SgAsmM68kInstruction::get_branch_target(rose_addr_t *target)
     if (!target_expr)
         return false;
     if (target)
-        *target = target_expr->get_absolute_value();
+        *target = target_expr->get_absoluteValue();
     return true;
 }

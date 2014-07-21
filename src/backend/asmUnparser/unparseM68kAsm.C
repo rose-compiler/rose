@@ -38,13 +38,13 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
                  unparseM68kExpression(mul->get_rhs(), labels, registers);
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr)) {
         assert(ival!=NULL);
-        uint64_t value = ival->get_absolute_value(); // not sign extended
-        result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+        uint64_t value = ival->get_absoluteValue(); // not sign extended
+        result = StringUtility::signedToHex2(value, ival->get_significantBits());
 
         // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
         // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
         std::string label;
-        if (ival->get_significant_bits()>8) {
+        if (ival->get_significantBits()>8) {
             if (0!=value && labels!=NULL) {
                 AsmUnparser::LabelMap::const_iterator li = labels->find(value);
                 if (li!=labels->end())
