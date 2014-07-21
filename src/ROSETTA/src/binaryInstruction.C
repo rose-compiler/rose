@@ -243,10 +243,21 @@ Grammar::setUpBinaryInstructions()
 
 
 
+    // Floating-point value.  The bits are stored in the super-class (SgAsmConstantExpression) and interpretted as various
+    // kinds of floating-point values.
+    NEW_NONTERMINAL_MACRO(AsmFloatValueExpression,
+                          AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression,
+                          "AsmFloatValueExpression", "AsmFloatValueExpressionTag", false);
+    AsmFloatValueExpression.setFunctionPrototype("HEADER_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+
+
+
+
+
     // Constants (integers, floating point, etc).  This class holds the actual bits for the constant value.  Subclasses provide
     // the intepretation of those bits.
     NEW_NONTERMINAL_MACRO(AsmConstantExpression,
-                          AsmIntegerValueExpression,
+                          AsmIntegerValueExpression | AsmFloatValueExpression,
                           "AsmConstantExpression", "AsmConstantExpressionTag", false);
     AsmConstantExpression.setFunctionPrototype("HEADER_CONSTANT_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmConstantExpression.setPredeclarationString("HEADER_CONSTANT_EXPRESSION_PREDECLARATION",
@@ -257,7 +268,7 @@ Grammar::setUpBinaryInstructions()
     // Values that are addresses or references to data will have symbols in a function symbol table.  All other
     // values are assumed to be literals and will not have associated symbols.
     NEW_NONTERMINAL_MACRO(AsmValueExpression,
-                          AsmConstantExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression,
+                          AsmConstantExpression,
                           "AsmValueExpression", "AsmValueExpressionTag", false);
     AsmValueExpression.setDataPrototype("SgAsmValueExpression*", "unfolded_expression_tree", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

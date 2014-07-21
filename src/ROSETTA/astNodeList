@@ -157,6 +157,7 @@ SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
 SgAsmSynthesizedFieldDeclaration
+SgAsmFloatValueExpression
 SgAsmFunction
 SgAsmGenericArchitecture
 SgAsmGenericDLL
