@@ -2964,9 +2964,9 @@ struct M68k_fsqrt_from_drd: M68k {
         SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
         M68kInstructionKind kind = m68k_unknown_instruction;
         switch (extract<0, 6>(d->instructionWord(1))) {
-            case 0x00: kind = m68k_fsqrt; break;
+            case 0x04: kind = m68k_fsqrt; break;
             case 0x41: kind = m68k_fssqrt; break;
-            case 0x44: kind = m68k_fdsqrt; break;
+            case 0x45: kind = m68k_fdsqrt; break;
         }
         return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
     }
@@ -3006,9 +3006,9 @@ struct M68k_fsqrt_mr: M68k {
         SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
         M68kInstructionKind kind = m68k_unknown_instruction;
         switch (extract<0, 6>(d->instructionWord(1))) {
-            case 0x00: kind = m68k_fsqrt; break;
+            case 0x04: kind = m68k_fsqrt; break;
             case 0x41: kind = m68k_fssqrt; break;
-            case 0x44: kind = m68k_fdsqrt; break;
+            case 0x45: kind = m68k_fdsqrt; break;
         }
         return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
     }
@@ -3030,9 +3030,9 @@ struct M68k_fsqrt_rr: M68k {
         SgAsmExpression *dst = d->makeFPRegister(extract<7, 9>(d->instructionWord(1)));
         M68kInstructionKind kind = m68k_unknown_instruction;
         switch (extract<0, 6>(d->instructionWord(1))) {
-            case 0x00: kind = m68k_fsqrt; break;
+            case 0x04: kind = m68k_fsqrt; break;
             case 0x41: kind = m68k_fssqrt; break;
-            case 0x44: kind = m68k_fdsqrt; break;
+            case 0x45: kind = m68k_fdsqrt; break;
         }
         return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
     }
