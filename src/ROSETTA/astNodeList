@@ -237,6 +237,7 @@ SgAsmStringStorage
 SgAsmType
 SgAsmType128bitFloat
 SgAsmType80bitFloat
+SgAsmType96bitFloat
 SgAsmTypeByte
 SgAsmTypeDoubleFloat
 SgAsmTypeDoubleQuadWord

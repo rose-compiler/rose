@@ -81,6 +81,7 @@ BUILD_BINARY_PROTO(Subtract)
      SgAsmTypeDoubleFloat*    buildAsmTypeDoubleFloat();
      SgAsmType128bitFloat*    buildAsmType128bitFloat();
      SgAsmType80bitFloat*     buildAsmType80bitFloat();
+     SgAsmType96bitFloat*     buildAsmType96bitFloat();
      SgAsmTypeDoubleQuadWord* buildAsmTypeDoubleQuadWord();
      SgAsmTypeVector*         buildAsmTypeVector();
 

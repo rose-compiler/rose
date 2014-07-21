@@ -1712,6 +1712,10 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmType80bitFloat>(*n));
         break;
 
+      case V_SgAsmType96bitFloat:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType96bitFloat>(*n));
+        break;
+
       case V_SgAsmType128bitFloat:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmType128bitFloat>(*n));
         break;

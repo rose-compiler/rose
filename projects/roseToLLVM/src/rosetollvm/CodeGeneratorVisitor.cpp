@@ -1553,6 +1553,7 @@ void CodeGeneratorVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmTypeQuadWord
      //             SgAsmTypeDoubleQuadWord
      //             SgAsmType80bitFloat
+     //             SgAsmType96bitFloat
      //             SgAsmType128bitFloat
      //             SgAsmTypeSingleFloat
      //             SgAsmTypeDoubleFloat
@@ -3358,6 +3359,7 @@ void CodeGeneratorVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmTypeQuadWord
      //             SgAsmTypeDoubleQuadWord
      //             SgAsmType80bitFloat
+     //             SgAsmType96bitFloat
      //             SgAsmType128bitFloat
      //             SgAsmTypeSingleFloat
      //             SgAsmTypeDoubleFloat

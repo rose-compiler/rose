@@ -206,6 +206,7 @@ SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_END
 
 
 
+
 // ************************************
 // NEW IR NODES FOR BINARY FILE FORMATS
 // ************************************
@@ -3955,6 +3956,10 @@ HEADER_BINARY_TYPE_80bit_FLOAT_START
           static SgAsmType80bitFloat* createType();
 HEADER_BINARY_TYPE_80bit_FLOAT_END
 
+HEADER_BINARY_TYPE_96bit_FLOAT_START
+	static SgAsmType96bitFloat* createType();
+HEADER_BINARY_TYPE_96bit_FLOAT_END
+
 HEADER_BINARY_TYPE_128bit_FLOAT_START
           static SgAsmType128bitFloat* createType();
 HEADER_BINARY_TYPE_128bit_FLOAT_END
@@ -4518,6 +4523,21 @@ $CLASSNAME* $CLASSNAME::createType() {
 }
        
 SOURCE_BINARY_TYPE_80bit_FLOAT_END
+
+
+SOURCE_BINARY_TYPE_96bit_FLOAT_START
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+       
+SOURCE_BINARY_TYPE_96bit_FLOAT_END
 
 
 SOURCE_BINARY_TYPE_128bit_FLOAT_START

@@ -369,6 +369,13 @@ Grammar::setUpBinaryInstructions()
                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
                                        NO_DELETE, NO_COPY_DATA);
 
+    NEW_TERMINAL_MACRO(AsmType96bitFloat, "AsmType96bitFloat", "AsmType96bitFloatTag");
+    AsmType96bitFloat.setFunctionPrototype("HEADER_BINARY_TYPE_96bit_FLOAT", "../Grammar/BinaryInstruction.code");
+    AsmType96bitFloat.setFunctionSource("SOURCE_BINARY_TYPE_96bit_FLOAT", "../Grammar/BinaryInstruction.code");
+    AsmType96bitFloat.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
+                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
+                                       NO_DELETE, NO_COPY_DATA);
+
     NEW_TERMINAL_MACRO(AsmType128bitFloat, "AsmType128bitFloat", "AsmType128bitFloatTag");
     AsmType128bitFloat.setFunctionPrototype("HEADER_BINARY_TYPE_128bit_FLOAT", "../Grammar/BinaryInstruction.code");
     AsmType128bitFloat.setFunctionSource("SOURCE_BINARY_TYPE_128bit_FLOAT", "../Grammar/BinaryInstruction.code");
@@ -386,7 +393,7 @@ Grammar::setUpBinaryInstructions()
 
     NEW_NONTERMINAL_MACRO(AsmType,
                           AsmTypeByte        | AsmTypeWord           | AsmTypeDoubleWord  |
-                          AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  |
+                          AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  | AsmType96bitFloat |
                           AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat |
                           AsmTypeVector,
                           "AsmType", "AsmTypeTag", false);

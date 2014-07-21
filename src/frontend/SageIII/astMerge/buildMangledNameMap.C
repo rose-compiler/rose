@@ -74,6 +74,7 @@ MangledNameMapTraversal::MangledNameMapTraversal ( MangledNameMapType & m, SetOf
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmTypeQuadWord)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmTypeDoubleQuadWord)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmType80bitFloat)
+     MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmType96bitFloat)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmType128bitFloat)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmTypeSingleFloat)
      MACRO_ADD_STATIC_TYPE_TO_MANGLED_MAP(SgAsmTypeDoubleFloat)
@@ -209,6 +210,7 @@ MangledNameMapTraversal::shareableIRnode ( const SgNode* node )
           ROSE_ASSERT(isSgAsmTypeQuadWord(node) == NULL);
           ROSE_ASSERT(isSgAsmTypeDoubleQuadWord(node) == NULL);
           ROSE_ASSERT(isSgAsmType80bitFloat(node) == NULL);
+          ROSE_ASSERT(isSgAsmType96bitFloat(node) == NULL);
           ROSE_ASSERT(isSgAsmType128bitFloat(node) == NULL);
           ROSE_ASSERT(isSgAsmTypeSingleFloat(node) == NULL);
           ROSE_ASSERT(isSgAsmTypeDoubleFloat(node) == NULL);

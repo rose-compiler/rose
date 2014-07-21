@@ -1484,6 +1484,7 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmTypeQuadWord
      //             SgAsmTypeDoubleQuadWord
      //             SgAsmType80bitFloat
+     //             SgAsmType96bitFloat
      //             SgAsmType128bitFloat
      //             SgAsmTypeSingleFloat
      //             SgAsmTypeDoubleFloat
@@ -3498,6 +3499,7 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmTypeQuadWord
      //             SgAsmTypeDoubleQuadWord
      //             SgAsmType80bitFloat
+     //             SgAsmType96bitFloat
      //             SgAsmType128bitFloat
      //             SgAsmTypeSingleFloat
      //             SgAsmTypeDoubleFloat

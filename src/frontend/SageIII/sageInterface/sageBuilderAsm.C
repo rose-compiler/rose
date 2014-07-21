@@ -156,6 +156,12 @@ SageBuilderAsm::buildAsmType80bitFloat()
      return new SgAsmType80bitFloat();
    }
 
+SgAsmType96bitFloat*
+SageBuilderAsm::buildAsmType96bitFloat()
+   {
+     return new SgAsmType96bitFloat();
+   }
+
 SgAsmTypeDoubleQuadWord*
 SageBuilderAsm::buildAsmTypeDoubleQuadWord()
    {

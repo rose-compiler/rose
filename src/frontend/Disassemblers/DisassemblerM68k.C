@@ -315,7 +315,7 @@ DisassemblerM68k::makeType(M68kDataFormat fmt)
     switch (fmt) {
         case m68k_fmt_i32: return SgAsmTypeDoubleWord::createType();
         case m68k_fmt_f32: return SgAsmTypeSingleFloat::createType();
-        case m68k_fmt_f96: ASSERT_not_implemented("96-bit floating point [Robb P. Matzke 2014-07-16]");
+        case m68k_fmt_f96: return SgAsmType96bitFloat::createType();
         case m68k_fmt_p96: ASSERT_not_implemented("96-bit binary coded decimal [Robb P. Matzke 2014-07-16]");
         case m68k_fmt_i16: return SgAsmTypeWord::createType();
         case m68k_fmt_f64: return SgAsmTypeDoubleFloat::createType();
