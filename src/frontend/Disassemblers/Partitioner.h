@@ -1437,6 +1437,12 @@ protected:
     static InstructionMap::const_iterator pattern5(const InstructionMap &insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 
+    /** Matches M68k "rts; (trapf)?; lea.l [a7+X], a7". X is an arbitrarily small-magnitude, negative number. The function
+     *  begins at the LEA instruction. */
+    static InstructionMap::const_iterator pattern6(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions

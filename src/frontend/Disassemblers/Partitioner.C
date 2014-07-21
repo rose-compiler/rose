@@ -1474,7 +1474,7 @@ Partitioner::mark_export_entries(SgAsmGenericHeader *fhdr)
     }
 }
 
-/* Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
+/* Tries to match x86 "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1665,6 +1665,39 @@ Partitioner::pattern5(const InstructionMap &insns, InstructionMap::const_iterato
     return first;
 }
 
+// class method: tries to match m68k instructions: "rts; (trapf)?; lea.l [a7-X], a7"
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern6(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    // rts
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_rts)
+        return insns.end();
+    ++first;
+
+    // trapf (padding)
+    insn = isSgAsmM68kInstruction(first->second);
+    if (insn && insn->get_kind()==m68k_trapf)
+        ++first;
+
+    // leal. [a7-X], a7
+    insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_lea || insn->get_operandList()->get_operands().size()!=2)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+    SgAsmBinaryAdd *sum = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
+    SgAsmDirectRegisterExpression *reg1 = sum ? isSgAsmDirectRegisterExpression(sum->get_lhs()) : NULL;
+    SgAsmIntegerValueExpression *addend = sum ? isSgAsmIntegerValueExpression(sum->get_rhs()) : NULL;
+    SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(args[1]);
+    if (!reg1 || reg1->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
+        !reg2 || reg2->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
+        !addend || addend->get_signed_value()>0 || addend->get_signed_value()<4096 /*arbitrary*/)
+        return insns.end();
+
+    return first;                                       // the LEA instruction is the start of a function
+}
+
 /** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
  *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
  *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
@@ -1717,7 +1750,8 @@ Partitioner::mark_func_patterns()
         if (exclude.find(ii->first)==exclude.end() &&
             ((found=pattern1(insns, ii, exclude))!=insns.end() ||
              (found=pattern4(insns, ii, exclude))!=insns.end() ||
-             (found=pattern5(insns, ii, exclude))!=insns.end()))
+             (found=pattern5(insns, ii, exclude))!=insns.end() ||
+             (found=pattern6(insns, ii, exclude))!=insns.end()))
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
