@@ -1660,12 +1660,8 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerValueExpression>(*n));
         break;
     
-      case V_SgAsmSingleFloatValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmSingleFloatValueExpression>(*n));
-        break;
-
-      case V_SgAsmDoubleFloatValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDoubleFloatValueExpression>(*n));
+      case V_SgAsmFloatValueExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatValueExpression>(*n));
         break;
 
       case V_SgAsmValueExpression:
@@ -1680,48 +1676,20 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmExpression>(*n));
         break;
 
-      case V_SgAsmTypeByte:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeByte>(*n));
+      case V_SgAsmIntegerType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerType>(*n));
         break;
 
-      case V_SgAsmTypeWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeWord>(*n));
+      case V_SgAsmFloatType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatType>(*n));
         break;
 
-      case V_SgAsmTypeDoubleWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeDoubleWord>(*n));
+      case V_SgAsmScalarType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmScalarType>(*n));
         break;
 
-      case V_SgAsmTypeQuadWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeQuadWord>(*n));
-        break;
-
-      case V_SgAsmTypeDoubleQuadWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeDoubleQuadWord>(*n));
-        break;
-
-      case V_SgAsmTypeSingleFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeSingleFloat>(*n));
-        break;
-
-      case V_SgAsmTypeDoubleFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeDoubleFloat>(*n));
-        break;
-
-      case V_SgAsmType80bitFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType80bitFloat>(*n));
-        break;
-
-      case V_SgAsmType96bitFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType96bitFloat>(*n));
-        break;
-
-      case V_SgAsmType128bitFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType128bitFloat>(*n));
-        break;
-
-      case V_SgAsmTypeVector:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeVector>(*n));
+      case V_SgAsmVectorType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmVectorType>(*n));
         break;
 
       case V_SgAsmType:

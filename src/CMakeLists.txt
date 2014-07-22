@@ -310,10 +310,12 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Registers.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmArmInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmBlock.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmFloatValueExpression.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmFunction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmIntegerValueExpression.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInterpretation.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmType.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmM68kInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmMipsInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C
