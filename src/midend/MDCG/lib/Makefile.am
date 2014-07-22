@@ -7,7 +7,7 @@ libMDCG_la_SOURCES= \
   model.cpp \
   model-builder.cpp \
   model-element.cpp \
-  code-generator.cpp
+  static-initializer.cpp
 libMDCG_la_CXXFLAGS= \
   -g \
   -I$(srcdir)/../include \

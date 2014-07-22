@@ -22,11 +22,11 @@
 namespace MDCG {
 
 /*!
- * \addtogroup grp_mdcg_codegen
+ * \addtogroup grp_mdcg_static_initializer
  * @{
 */
 
-class CodeGenerator {
+class StaticInitializer {
   private:
     static unsigned s_var_gen_cnt;
   
@@ -35,7 +35,7 @@ class CodeGenerator {
     SgVariableSymbol * instantiateDeclaration(std::string decl_name, unsigned file_id, SgType * type, SgInitializer * init) const;
 
   public:
-    CodeGenerator(MFB::Driver<MFB::Sage> & mfb_driver);
+    StaticInitializer(MFB::Driver<MFB::Sage> & mfb_driver);
 
     MFB::Driver<MFB::Sage> & getDriver() const;
 

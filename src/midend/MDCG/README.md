@@ -39,7 +39,7 @@ struct ModelA {
   typedef std::pair<char, int> input_t;
 
   static SgExpression * createFieldInitializer(
-    const MDCG::CodeGenerator & codegen,
+    const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t element,
     unsigned field_id,
     const input_t & input,
@@ -65,7 +65,7 @@ struct ModelB {
   };
 
   static SgExpression * createFieldInitializer(
-    const MDCG::CodeGenerator & codegen,
+    const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t element,
     unsigned field_id,
     const input_t & input,
@@ -76,7 +76,7 @@ struct ModelB {
         /// struct A a;
         MDCG::Model::type_t type = element->node->type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return codegen.createInitializer<ModelA>(
+        return static_initializer.createInitializer<ModelA>(
                  type->node->base_class,
                  input.base,
                  file_id
@@ -90,7 +90,7 @@ struct ModelB {
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
         type = type->node->base_type;
         assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return codegen.createArrayPointer<ModelA>(
+        return static_initializer.createArrayPointer<ModelA>(
                  type->node->base_class,
                  input.vector.size(),
                  input.vector.begin(),
@@ -115,6 +115,7 @@ int main() {
     driver.setCompiledFile(file_id);
 
   MDCG::ModelBuilder model_builder(mfb_driver);
+  MDCG::StaticInitializer static_initializer(driver);
 
   unsigned model_id = model_builder.create();
     model_builder.add(model_id, "input", ".", "h"); // load "input.h" from "." directory
@@ -131,7 +132,7 @@ int main() {
     input.vector[1] = std::pair<char, int>('g', 96);
     input.vector[2] = std::pair<char, int>('w', 84);
 
-  codegen.addDeclaration<ModelB>(structB, input, file_id, "output");
+  static_initializer.addDeclaration<ModelB>(structB, input, file_id, "output");
 
   return backend(project);
 }
@@ -150,3 +151,24 @@ struct B output = {
 };
 ```
 
+### TODO
+
+Provide an interface to verfiy that we have the good field in the switch statement
+For example, in case `2` of `ModelB::createFieldInitializer` we generate code for the field `struct A * arr;`.
+We only check that we have a pointer to a class type.
+We should check that:
+ * it is a pointer to a class
+ * the class is named `A`
+ * the field is named `arr`
+
+We need an interface such as:
+```c++
+/// to match 'struct class_name * field_name;'
+MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
+/// to match 'typedef struct class_name * typedef_name; typedef_name field_name;'
+MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForTypedefOnPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
+/// to match 'typedef struct class_name * typedef_name; typedef_name * field_name;'
+MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForPointerOnTypedefOnPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
+/// to match 'typedef struct class_name * typedef_name; typedef_name field_name[size];'
+MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForArrayOnTypedefOnPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
+```

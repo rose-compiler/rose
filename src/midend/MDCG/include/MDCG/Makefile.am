@@ -11,5 +11,5 @@ libMDCG_la_include_HEADERS= \
   model-method.hpp \
   model-namespace.hpp \
   model-builder.hpp \
-  code-generator.hpp
+  static-initializer.hpp
 
