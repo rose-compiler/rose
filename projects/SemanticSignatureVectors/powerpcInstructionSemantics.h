@@ -9,7 +9,6 @@
 #define ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 
 //#include "rose.h"
-#include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>

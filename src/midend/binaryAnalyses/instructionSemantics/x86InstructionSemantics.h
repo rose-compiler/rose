@@ -5,12 +5,16 @@
  * run automatically because it depends on setting up a slave machine who's architecture is what is being simulated by the
  * instruction semantics (not necessarily the same architecture that's running ROSE). */
 
-#include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include "integerOps.h"
 #include "AsmUnparser_compat.h" /* for unparseInstructionWithAddress() */
+
+static inline int numBytesInAsmType(SgAsmType* type) {
+    ASSERT_not_null(type);
+    return type->get_nBytes();
+}
 
 /* Returns the segment register corresponding to the specified register reference address expression. */
 static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferenceExpression* mr) {

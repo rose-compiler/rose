@@ -98,7 +98,6 @@ pkginclude_HEADERS =					\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
     instructionSemantics/flowEquations.h		\
-    instructionSemantics/semanticsModule.h		\
     instructionSemantics/x86InstructionSemantics.h	\
     libraryIdentification/functionIdentification.h	\
     libraryIdentification/libraryIdentification.h	\
