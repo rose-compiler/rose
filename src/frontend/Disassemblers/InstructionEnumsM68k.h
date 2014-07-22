@@ -190,7 +190,7 @@ enum M68kEffectiveAddressMode {
     m68k_eam_ri      = 0x0000003c,      /**< Register indirect addressing modes */
     m68k_eam_idx     = 0x000000c0,      /**< Address register indirect with scaled index */
     m68k_eam_mi      = 0x00000300,      /**< Memory indirect addressing modes */
-    m68k_eam_pci     = 0x00000400,      /**< Program counter indirect */
+    m68k_eam_pci     = 0x00000400,      /**< Program counter indirect */                                // NO_STRINGIFY
     m68k_eam_pcidx   = 0x00001800,      /**< Program counter indirect with index */
     m68k_eam_pcmi    = 0x00006000,      /**< Program counter memory indirect */
     m68k_eam_abs     = 0x00018000,      /**< Absolute data addressing */
@@ -208,7 +208,7 @@ enum M68kEffectiveAddressMode {
     m68k_eam_234     = 0x00007380,      /**< Addressing modes specific to m680{20,30,40}. */
 
     // additional useful masks
-    m68k_eam_direct  = 0x00000003,      /**< All register direct addressing modes. */
+    m68k_eam_direct  = 0x00000003,      /**< All register direct addressing modes. */                   // NO_STRINGIFY
     m68k_eam_pc      = 0x00007c00,      /**< All PC address modes. */
 };
 

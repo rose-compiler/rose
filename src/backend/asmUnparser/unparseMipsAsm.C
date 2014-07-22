@@ -45,15 +45,15 @@ static std::string mipsTypeToPtrName(SgAsmType* ty) {
         return "BAD_TYPE";
     }
 
-    switch (ty->variantT()) {
-        case V_SgAsmTypeByte: return "BYTE";
-        case V_SgAsmTypeWord: return "HALFWORD";
-        case V_SgAsmTypeDoubleWord: return "WORD";
-        case V_SgAsmTypeQuadWord: return "DOUBLEWORD";
-        default: {
-            ASSERT_not_reachable("invalid MIPS type: " + ty->class_name());
+    if (SgAsmIntegerType *it = isSgAsmIntegerType(ty)) {
+        switch (it->get_nBits()) {
+            case 8: return "BYTE";
+            case 16: return "HALFWORD";
+            case 32: return "WORD";
+            case 64: return "DOUBLEWORD";
         }
     }
+    ASSERT_not_reachable("invalid MIPS type: " + ty->toString());
 }
 
 

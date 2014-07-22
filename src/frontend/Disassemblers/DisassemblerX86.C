@@ -21,24 +21,24 @@ using namespace rose;
 /* See header file for full documentation. */
 
 // These are macros to make them look like constants while they are really function calls
-#define BYTET (SgAsmTypeByte::createType())
-#define WORDT (SgAsmTypeWord::createType())
-#define DWORDT (SgAsmTypeDoubleWord::createType())
-#define QWORDT (SgAsmTypeQuadWord::createType())
-#define DQWORDT (SgAsmTypeDoubleQuadWord::createType())
-#define FLOATT (SgAsmTypeSingleFloat::createType())
-#define DOUBLET (SgAsmTypeDoubleFloat::createType())
-#define LDOUBLET (SgAsmType80bitFloat::createType())
-#define V8BYTET (SgAsmTypeVector::createType(8, BYTET))
-#define V16BYTET (SgAsmTypeVector::createType(16, BYTET))
-#define V4WORDT (SgAsmTypeVector::createType(4, WORDT))
-#define V8WORDT (SgAsmTypeVector::createType(8, WORDT))
-#define V2DWORDT (SgAsmTypeVector::createType(2, DWORDT))
-#define V4DWORDT (SgAsmTypeVector::createType(4, DWORDT))
-#define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
-#define V4FLOATT (SgAsmTypeVector::createType(4, FLOATT))
-#define V2QWORDT (SgAsmTypeVector::createType(2, QWORDT))
-#define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
+#define BYTET (SageBuilderAsm::buildTypeX86Byte())
+#define WORDT (SageBuilderAsm::buildTypeX86Word())
+#define DWORDT (SageBuilderAsm::buildTypeX86DoubleWord())
+#define QWORDT (SageBuilderAsm::buildTypeX86QuadWord())
+#define DQWORDT (SageBuilderAsm::buildTypeX86DoubleQuadWord())
+#define FLOATT (SageBuilderAsm::buildTypeX86Float32())
+#define DOUBLET (SageBuilderAsm::buildTypeX86Float64())
+#define LDOUBLET (SageBuilderAsm::buildTypeX86Float80())
+#define V8BYTET (SageBuilderAsm::buildTypeVector(8, BYTET))
+#define V16BYTET (SageBuilderAsm::buildTypeVector(16, BYTET))
+#define V4WORDT (SageBuilderAsm::buildTypeVector(4, WORDT))
+#define V8WORDT (SageBuilderAsm::buildTypeVector(8, WORDT))
+#define V2DWORDT (SageBuilderAsm::buildTypeVector(2, DWORDT))
+#define V4DWORDT (SageBuilderAsm::buildTypeVector(4, DWORDT))
+#define V2FLOATT (SageBuilderAsm::buildTypeVector(2, FLOATT))
+#define V4FLOATT (SageBuilderAsm::buildTypeVector(4, FLOATT))
+#define V2QWORDT (SageBuilderAsm::buildTypeVector(2, QWORDT))
+#define V2DOUBLET (SageBuilderAsm::buildTypeVector(2, DOUBLET))
 
 /*========================================================================================================================
  * DisassemblerX86 primary methods, mostly defined by the superclass.
@@ -285,9 +285,9 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
 {
     switch (s) {
         case x86_insnsize_none: return NULL;
-        case x86_insnsize_16: return SgAsmTypeWord::createType();
-        case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
-        case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
+        case x86_insnsize_16: return SageBuilderAsm::buildTypeX86Word();
+        case x86_insnsize_32: return SageBuilderAsm::buildTypeX86DoubleWord();
+        case x86_insnsize_64: return SageBuilderAsm::buildTypeX86QuadWord();
         default: {
             abort();
             /* avoid MSCV warning by adding return stmt */
@@ -310,13 +310,13 @@ DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_si
     SgAsmValueExpression *retval = NULL;
     switch (effectiveAddressSize()) {
         case x86_insnsize_16:
-            retval = SageBuilderAsm::makeWordValue((uint16_t)val);
+            retval = SageBuilderAsm::buildValueX86Word((uint16_t)val);
             break;
         case x86_insnsize_32:
-            retval = SageBuilderAsm::makeDWordValue((uint32_t)val);
+            retval = SageBuilderAsm::buildValueX86DWord((uint32_t)val);
             break;
         case x86_insnsize_64:
-            retval = SageBuilderAsm::makeQWordValue((uint64_t)val);
+            retval = SageBuilderAsm::buildValueX86QWord((uint64_t)val);
             break;
         default:
             ASSERT_not_reachable("not a valid effective address size " + stringifyX86InstructionSize(effectiveAddressSize()));
@@ -577,7 +577,7 @@ DisassemblerX86::decodeModrmMemory()
         if (modeField == 0 && rmField == 6) {
             /* Special case */
             size_t bit_offset = 8*insnbufat;
-            SgAsmValueExpression *ve = SageBuilderAsm::makeWordValue(getWord());
+            SgAsmValueExpression *ve = SageBuilderAsm::buildValueX86Word(getWord());
             ve->set_bit_offset(bit_offset);
             ve->set_bit_size(32);
             addressExpr = ve;
@@ -585,19 +585,19 @@ DisassemblerX86::decodeModrmMemory()
             switch (rmField) {
                 case 0:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = SageBuilderAsm::makeAdd(makeRegister(3, rmWord), makeRegister(6, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(3, rmWord), makeRegister(6, rmWord));
                     break;
                 case 1:
                     defaultSeg = x86_segreg_ds;
-                    addressExpr = SageBuilderAsm::makeAdd(makeRegister(3, rmWord), makeRegister(7, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(3, rmWord), makeRegister(7, rmWord));
                     break;
                 case 2:
                     defaultSeg = x86_segreg_ss;
-                    addressExpr = SageBuilderAsm::makeAdd(makeRegister(5, rmWord), makeRegister(6, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(5, rmWord), makeRegister(6, rmWord));
                     break;
                 case 3:
                     defaultSeg = x86_segreg_ss;
-                    addressExpr = SageBuilderAsm::makeAdd(makeRegister(5, rmWord), makeRegister(7, rmWord));
+                    addressExpr = SageBuilderAsm::buildAddExpression(makeRegister(5, rmWord), makeRegister(7, rmWord));
                     break;
                 case 4:
                     defaultSeg = x86_segreg_ds;
@@ -623,19 +623,19 @@ DisassemblerX86::decodeModrmMemory()
                 case 1: {
                     size_t bit_offset = 8*insnbufat;
                     uint8_t offset = getByte();
-                    SgAsmValueExpression *wv = SageBuilderAsm::makeWordValue((int16_t)(int8_t)offset);
+                    SgAsmValueExpression *wv = SageBuilderAsm::buildValueX86Word((int16_t)(int8_t)offset);
                     wv->set_bit_offset(bit_offset);
                     wv->set_bit_size(8);
-                    addressExpr = SageBuilderAsm::makeAdd(addressExpr, wv);
+                    addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, wv);
                     break;
                 }
                 case 2: {
                     size_t bit_offset = 8*insnbufat;
                     uint16_t offset = getWord();
-                    SgAsmValueExpression *wv = SageBuilderAsm::makeWordValue(offset);
+                    SgAsmValueExpression *wv = SageBuilderAsm::buildValueX86Word(offset);
                     wv->set_bit_offset(bit_offset);
                     wv->set_bit_size(16);
-                    addressExpr = SageBuilderAsm::makeAdd(addressExpr, wv);
+                    addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, wv);
                     break;
                 }
                 default:
@@ -650,7 +650,7 @@ DisassemblerX86::decodeModrmMemory()
             uint32_t offset = getDWord();
             addressExpr = makeAddrSizeValue(IntegerOps::signExtend<32, 64>((uint64_t)offset), bit_offset, 32);
             if (insnSize == x86_insnsize_64) {
-                addressExpr = SageBuilderAsm::makeAdd(makeIP(), addressExpr);
+                addressExpr = SageBuilderAsm::buildAddExpression(makeIP(), addressExpr);
             }
         } else {
             if (rmField == 4) { /* Need SIB */
@@ -689,11 +689,12 @@ DisassemblerX86::decodeModrmMemory()
                 if (sibIndexField == 4 && !rexX) {
                     addressExpr = sibBase;
                 } else if (actualScale == 1) {
-                    addressExpr = SageBuilderAsm::makeAdd(sibBase, makeOperandRegisterFull(rexX, sibIndexField));
+                    addressExpr = SageBuilderAsm::buildAddExpression(sibBase, makeOperandRegisterFull(rexX, sibIndexField));
                 } else {
-                    addressExpr = SageBuilderAsm::makeAdd(sibBase,
-                                                          SageBuilderAsm::makeMul(makeOperandRegisterFull(rexX, sibIndexField),
-                                                                                  SageBuilderAsm::makeByteValue(actualScale)));
+                    SgAsmExpression *regExpr = makeOperandRegisterFull(rexX, sibIndexField);
+                    SgAsmExpression *scaleExpr = SageBuilderAsm::buildValueX86Byte(actualScale);
+                    SgAsmExpression *productExpr = SageBuilderAsm::buildMultiplyExpression(regExpr, scaleExpr);
+                    addressExpr = SageBuilderAsm::buildAddExpression(sibBase, productExpr);
                 }
             } else {
                 addressExpr = makeOperandRegisterFull(rexB, rmField);
@@ -706,19 +707,19 @@ DisassemblerX86::decodeModrmMemory()
                 case 1: {
                     size_t bit_offset = 8*insnbufat;
                     uint8_t offset = getByte();
-                    SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::makeByteValue(offset);
+                    SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::buildValueX86Byte(offset);
                     offsetExpr->set_bit_offset(bit_offset);
                     offsetExpr->set_bit_size(8);
-                    addressExpr = SageBuilderAsm::makeAdd(addressExpr, offsetExpr);
+                    addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, offsetExpr);
                     break;
                 }
                 case 2: {
                     size_t bit_offset = 8*insnbufat;
                     uint32_t offset = getDWord();
-                    SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::makeDWordValue(offset);
+                    SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::buildValueX86DWord(offset);
                     offsetExpr->set_bit_offset(bit_offset);
                     offsetExpr->set_bit_size(32);
-                    addressExpr = SageBuilderAsm::makeAdd(addressExpr, offsetExpr);
+                    addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, offsetExpr);
                     break;
                 }
                 default:
@@ -733,7 +734,7 @@ DisassemblerX86::decodeModrmMemory()
     } else {
         seg = defaultSeg;
     }
-    SgAsmMemoryReferenceExpression* mr = SageBuilderAsm::makeMemoryReference(addressExpr,
+    SgAsmMemoryReferenceExpression* mr = SageBuilderAsm::buildMemoryReferenceExpression(addressExpr,
                                                                              makeSegmentRegister(seg, insnSize==x86_insnsize_64));
     return mr;
 }
@@ -785,7 +786,7 @@ SgAsmExpression *
 DisassemblerX86::getImmByte()
 {
     size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::makeByteValue(getByte());
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Byte(getByte());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
@@ -795,7 +796,7 @@ SgAsmExpression *
 DisassemblerX86::getImmWord()
 {
     size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::makeWordValue(getWord());
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Word(getWord());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(16);
     return retval;
@@ -805,7 +806,7 @@ SgAsmExpression *
 DisassemblerX86::getImmDWord()
 {
     size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::makeDWordValue(getDWord());
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86DWord(getDWord());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(32);
     return retval;
@@ -815,7 +816,7 @@ SgAsmExpression *
 DisassemblerX86::getImmQWord()
 {
     size_t bit_offset = 8*insnbufat;
-    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(getQWord());
+    SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86QWord(getQWord());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(64);
     return retval;
@@ -869,13 +870,13 @@ DisassemblerX86::getImmJz()
     SgAsmValueExpression *retval = NULL;
     switch (insnSize) {
         case x86_insnsize_16:
-            retval = SageBuilderAsm::makeWordValue(target);
+            retval = SageBuilderAsm::buildValueX86Word(target);
             break;
         case x86_insnsize_32:
-            retval = SageBuilderAsm::makeDWordValue(target);
+            retval = SageBuilderAsm::buildValueX86DWord(target);
             break;
         default:
-            retval = SageBuilderAsm::makeQWordValue(target);
+            retval = SageBuilderAsm::buildValueX86QWord(target);
             break;
     }
     retval->set_bit_offset(bit_offset);
@@ -889,7 +890,7 @@ DisassemblerX86::getImmByteAsIv()
     SgAsmValueExpression *retval = NULL;
     size_t bit_offset = 8*insnbufat;
     uint8_t val = getByte();
-    retval = SageBuilderAsm::makeByteValue(val);
+    retval = SageBuilderAsm::buildValueX86Byte(val);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
@@ -923,13 +924,13 @@ DisassemblerX86::getImmJb()
     SgAsmValueExpression *retval=NULL;
     switch (insnSize) {
         case x86_insnsize_16:
-            retval = SageBuilderAsm::makeWordValue(target);
+            retval = SageBuilderAsm::buildValueX86Word(target);
             break;
         case x86_insnsize_32:
-            retval = SageBuilderAsm::makeDWordValue(target);
+            retval = SageBuilderAsm::buildValueX86DWord(target);
             break;
         default:
-            retval = SageBuilderAsm::makeQWordValue(target);
+            retval = SageBuilderAsm::buildValueX86QWord(target);
             break;
     }
     retval->set_bit_offset(bit_offset);
@@ -1991,26 +1992,26 @@ DisassemblerX86::disassemble()
         case 0xA0: {
             SgAsmExpression* addr = getImmForAddr();
             insn = makeInstruction(x86_mov, "mov", makeRegister(0, rmLegacyByte),
-                                         SageBuilderAsm::makeMemoryReference(addr, currentDataSegment(), BYTET));
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), BYTET));
             goto done;
         }
         case 0xA1: {
             SgAsmExpression* addr = getImmForAddr();
             insn = makeInstruction(x86_mov, "mov", makeRegisterEffective(0),
-                                         SageBuilderAsm::makeMemoryReference(addr, currentDataSegment(), effectiveOperandType()));
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), effectiveOperandType()));
             goto done;
         }
         case 0xA2: {
             SgAsmExpression* addr = getImmForAddr();
             insn = makeInstruction(x86_mov, "mov",
-                                         SageBuilderAsm::makeMemoryReference(addr, currentDataSegment(), BYTET),
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), BYTET),
                                          makeRegister(0, rmLegacyByte));
             goto done;
         }
         case 0xA3: {
             SgAsmExpression* addr = getImmForAddr();
             insn = makeInstruction(x86_mov, "mov",
-                                         SageBuilderAsm::makeMemoryReference(addr, currentDataSegment(), effectiveOperandType()),
+                                         SageBuilderAsm::buildMemoryReferenceExpression(addr, currentDataSegment(), effectiveOperandType()),
                                          makeRegisterEffective(0));
             goto done;
         }
@@ -2474,12 +2475,12 @@ DisassemblerX86::disassemble()
         }
         case 0xD0: {
             getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
-            insn = decodeGroup2(SageBuilderAsm::makeByteValue(1));
+            insn = decodeGroup2(SageBuilderAsm::buildValueX86Byte(1));
             goto done;
         }
         case 0xD1: {
             getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType());
-            insn = decodeGroup2(SageBuilderAsm::makeByteValue(1));
+            insn = decodeGroup2(SageBuilderAsm::buildValueX86Byte(1));
             goto done;
         }
         case 0xD2: {

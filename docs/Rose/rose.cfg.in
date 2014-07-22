@@ -418,11 +418,9 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-# NOTE: Robb places doxygen comments for Sg* class methods in the *.C files
+# NOTE: Robb places doxygen comments for Sg* class methods in the Sg*.C files
 #       rather than the docs/testDoxygen/*.docs files. This keeps the documentation
-#       near the function it documents. Unfortunately the *.C files need to be
-#       listed explicitly here (we can't add "*.C" to FILE_PATTERNS because
-#       doing so creates *lots* of doxygen entries for undocumented stuff).
+#       near the function it documents.
 
 # DQ (1/10/2014): Removed these files to permit doxygen to be run directly from docs/Rose directory.
 #                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_4.7/documentation.docs		     
@@ -436,20 +434,21 @@ INPUT                  =										     \
                          @top_srcdir@/docs/testDoxygen							     \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C				     \
                          @top_srcdir@/src/frontend/Disassemblers					     \
-                         @top_srcdir@/src/frontend/Disassemblers/Disassembler.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C			     \
-                         @top_srcdir@/src/frontend/Disassemblers/DisassemblerX86.C			     \
                          @top_srcdir@/src/frontend/Disassemblers/Expressions.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/Partitioner.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/Registers.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmArmInstruction.C			     \
 			 @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C				     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmFloatValueExpression.C		     \
 			 @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C			     \
 			 @top_srcdir@/src/frontend/Disassemblers/SgAsmInstruction.C			     \
 			 @top_srcdir@/src/frontend/Disassemblers/SgAsmIntegerValueExpression.C		     \
 			 @top_srcdir@/src/frontend/Disassemblers/SgAsmInterpretation.C			     \
+			 @top_srcdir@/src/frontend/Disassemblers/SgAsmM68kInstruction.C			     \
 			 @top_srcdir@/src/frontend/Disassemblers/SgAsmMipsInstruction.C			     \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C		     \
+                         @top_srcdir@/src/frontend/Disassemblers/SgAsmType.C				     \
                          @top_srcdir@/src/frontend/Disassemblers/SgAsmX86Instruction.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C			     \

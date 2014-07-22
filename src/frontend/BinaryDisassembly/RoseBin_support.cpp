@@ -142,18 +142,10 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
       } else {
           res = StringUtility::addrToString(ival->get_value(), ival->get_significantBits());
       }
-  } else if (isSgAsmDoubleFloatValueExpression(expr)) {
-      SgAsmDoubleFloatValueExpression* valExp = isSgAsmDoubleFloatValueExpression(expr);
-      double val = valExp->get_value(); 
+  } else if (SgAsmFloatValueExpression *fv = isSgAsmFloatValueExpression(expr)) {
+      double val = fv->get_nativeValue();
       os << "0x" << hex << val;
       res = os.str();
-      //res = "(dfloat)" + RoseBin_support::ToString(val);
-  } else if (isSgAsmSingleFloatValueExpression(expr)) {
-      SgAsmSingleFloatValueExpression* valExp = isSgAsmSingleFloatValueExpression(expr);
-      float val = valExp->get_value(); 
-      os << "0x" << hex << val;
-      res = os.str();
-      //res = "(float)" + RoseBin_support::ToString(val);
   }
 
   return res;

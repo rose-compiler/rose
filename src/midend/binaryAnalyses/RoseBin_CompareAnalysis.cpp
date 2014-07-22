@@ -208,15 +208,14 @@ string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
       short val = isSgAsmIntegerValueExpression(rhs)->get_value();
       //cerr << " checking local short variable at bp " << RoseBin_support::ToString(val) << endl;
       valStr = RoseBin_support::ToString(val);
-    } else
-      if (isSgAsmDoubleFloatValueExpression(rhs)) {
-        double val = isSgAsmDoubleFloatValueExpression(rhs)->get_value();
+    } else if (isSgAsmFloatValueExpression(rhs)) {
+        double val = isSgAsmFloatValueExpression(rhs)->get_nativeValue();
         //cerr << " checking local float variable at bp " << RoseBin_support::ToString(val) << endl;
         valStr = RoseBin_support::ToString(val);
-      } else {
+    } else {
           cerr << " the type of value is currently not handled - CompareAnalysis " << endl;
           exit(0);
-      }
+    }
   } else {
     cerr << " >> cannot check for variable location 3. " << endl;
     exit(0);

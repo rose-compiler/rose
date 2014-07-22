@@ -1600,7 +1600,7 @@ public:
                         if (SgAsmx86Instruction *ret = isSgAsmx86Instruction(node)) {
                             const SgAsmExpressionPtrList &args = ret->get_operandList()->get_operands();
                             if (x86_ret==ret->get_kind() && 1==args.size() && isSgAsmIntegerValueExpression(args[0]))
-                                nbytes = isSgAsmIntegerValueExpression(args[0])->get_absolute_value();
+                                nbytes = isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
                         }
                     }
                 } t1;

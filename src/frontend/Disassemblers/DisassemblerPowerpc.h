@@ -72,25 +72,25 @@ private:
         return makeRegister(powerpc_regclass_fpscr, fld<11, 13>(), powerpc_condreggranularity_field);
     }
     SgAsmValueExpression* BH() const {
-        return SageBuilderAsm::makeByteValue(fld<19, 20>());
+        return SageBuilderAsm::buildValueU8(fld<19, 20>());
     }
     SgAsmRegisterReferenceExpression* BI() const {
         return BA();
     }
     SgAsmValueExpression* BO() const {
-        return SageBuilderAsm::makeByteValue(fld<6, 10>());
+        return SageBuilderAsm::buildValueU8(fld<6, 10>());
     }
     SgAsmRegisterReferenceExpression* BT() const {
         return makeRegister(powerpc_regclass_cr, fld<6, 10>(), powerpc_condreggranularity_bit);
     }
     SgAsmValueExpression* D() const {
-        return SageBuilderAsm::makeQWordValue(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>()));
+        return SageBuilderAsm::buildValueU64be(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>()));
     }
     SgAsmValueExpression* DS() const {
-        return SageBuilderAsm::makeQWordValue(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>() & 0xfffc));
+        return SageBuilderAsm::buildValueU64be(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>() & 0xfffc));
     }
     SgAsmValueExpression* FLM() const {
-        return SageBuilderAsm::makeByteValue(fld<7, 14>());
+        return SageBuilderAsm::buildValueU8(fld<7, 14>());
     }
     SgAsmRegisterReferenceExpression* FRA() const {
         return makeRegister(powerpc_regclass_fpr, fld<11, 15>());
@@ -108,20 +108,20 @@ private:
         return FRS();
     }
     SgAsmValueExpression* FXM() const {
-        return SageBuilderAsm::makeByteValue(fld<12, 19>());
+        return SageBuilderAsm::buildValueU8(fld<12, 19>());
     }
           
     SgAsmValueExpression* L_10() const {
-        return SageBuilderAsm::makeByteValue(fld<10, 10>());
+        return SageBuilderAsm::buildValueU8(fld<10, 10>());
     }
     SgAsmValueExpression* L_15() const {
-        return SageBuilderAsm::makeByteValue(fld<15, 15>());
+        return SageBuilderAsm::buildValueU8(fld<15, 15>());
     }
     uint8_t L_sync() const {
         return fld<9, 10>();
     }
     SgAsmValueExpression* LEV() const {
-        return SageBuilderAsm::makeByteValue(fld<20, 26>());
+        return SageBuilderAsm::buildValueU8(fld<20, 26>());
     }
     uint64_t LI() const {
         return IntegerOps::signExtend<26, 64>(uint64_t(fld<6, 29>() * 4));
@@ -130,19 +130,19 @@ private:
         return fld<31, 31>();
     }
     SgAsmValueExpression* MB_32bit() const {
-        return SageBuilderAsm::makeByteValue(fld<21, 25>());
+        return SageBuilderAsm::buildValueU8(fld<21, 25>());
     }
     SgAsmValueExpression* ME_32bit() const {
-        return SageBuilderAsm::makeByteValue(fld<26, 30>());
+        return SageBuilderAsm::buildValueU8(fld<26, 30>());
     }
     SgAsmValueExpression* MB_64bit() const {
-        return SageBuilderAsm::makeByteValue(fld<21, 26>()); // FIXME check for splitting
+        return SageBuilderAsm::buildValueU8(fld<21, 26>()); // FIXME check for splitting
     } 
     SgAsmValueExpression* ME_64bit() const {
-        return SageBuilderAsm::makeByteValue(fld<21, 26>()); // FIXME check for splitting
+        return SageBuilderAsm::buildValueU8(fld<21, 26>()); // FIXME check for splitting
     }   
     SgAsmValueExpression* NB() const {
-        return SageBuilderAsm::makeByteValue(fld<16, 20>() == 0 ? 32 : fld<16, 20>());
+        return SageBuilderAsm::buildValueU8(fld<16, 20>() == 0 ? 32 : fld<16, 20>());
     }
     bool OE() const {
         return fld<21, 21>();
@@ -151,7 +151,7 @@ private:
         return makeRegister(powerpc_regclass_gpr, fld<11, 15>());
     }
     SgAsmExpression* RA_or_zero() const {
-        return fld<11, 15>() == 0 ? (SgAsmExpression*)SageBuilderAsm::makeByteValue(0) : RA();
+        return fld<11, 15>() == 0 ? (SgAsmExpression*)SageBuilderAsm::buildValueU8(0) : RA();
     }
     SgAsmRegisterReferenceExpression* RB() const {
         return makeRegister(powerpc_regclass_gpr, fld<16, 20>());
@@ -166,10 +166,10 @@ private:
         return RS();
     }
     SgAsmValueExpression* SH_32bit() const {
-        return SageBuilderAsm::makeByteValue(fld<16, 20>());
+        return SageBuilderAsm::buildValueU8(fld<16, 20>());
     }
     SgAsmValueExpression* SH_64bit() const {
-        return SageBuilderAsm::makeByteValue(fld<16, 20>() + fld<30, 30>() * 32); // FIXME check
+        return SageBuilderAsm::buildValueU8(fld<16, 20>() + fld<30, 30>() * 32); // FIXME check
     } 
     SgAsmValueExpression* SI() const {
         return D();
@@ -184,33 +184,34 @@ private:
         return makeRegister(powerpc_regclass_tbr, fld<16, 20>() * 32 + fld<11, 15>());
     }
     SgAsmValueExpression* TH() const {
-        return SageBuilderAsm::makeByteValue(fld<9, 10>());
+        return SageBuilderAsm::buildValueU8(fld<9, 10>());
     }
     SgAsmValueExpression* TO() const {
-        return SageBuilderAsm::makeByteValue(fld<6, 10>());
+        return SageBuilderAsm::buildValueU8(fld<6, 10>());
     }
     SgAsmValueExpression* U() const {
-        return SageBuilderAsm::makeByteValue(fld<16, 19>());
+        return SageBuilderAsm::buildValueU8(fld<16, 19>());
     }
     SgAsmValueExpression* UI() const {
-        return SageBuilderAsm::makeQWordValue(fld<16, 31>());
+        return SageBuilderAsm::buildValueU64be(fld<16, 31>());
     }
 
     SgAsmMemoryReferenceExpression* memref(SgAsmType* t) const {
-            return SageBuilderAsm::makeMemoryReference(SageBuilderAsm::makeAdd(RA_or_zero(), D()), NULL, t);
+            return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(), D()), NULL, t);
     }
     SgAsmMemoryReferenceExpression* memrefx(SgAsmType* t) const {
-            return SageBuilderAsm::makeMemoryReference(SageBuilderAsm::makeAdd(RA_or_zero(), RB()), NULL, t);
+            return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(), RB()),
+                                                                  NULL, t);
     }
     SgAsmMemoryReferenceExpression* memrefu(SgAsmType* t) const {
         if (fld<11, 15>() == 0)
             throw ExceptionPowerpc("bits 11-15 must be nonzero", this);
-        return SageBuilderAsm::makeMemoryReference(SageBuilderAsm::makeAdd(RA(), D()), NULL, t);
+        return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(), D()), NULL, t);
     }
     SgAsmMemoryReferenceExpression* memrefux(SgAsmType* t) const {
         if (fld<11, 15>() == 0)
             throw ExceptionPowerpc("bits 11-15 must be nonzero", this);
-        return SageBuilderAsm::makeMemoryReference(SageBuilderAsm::makeAdd(RA(), RB()), NULL, t);
+        return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(), RB()), NULL, t);
     }
 
     /* There are 15 different forms of PowerPC instructions, but all are 32-bit (fixed length instruction set). */

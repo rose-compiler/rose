@@ -992,14 +992,15 @@ bool isCopyConstructible(SgType* type)
     bool result = false;
     SgExpression * exp = t->get_index();
     SgMultiplyOp* multiply = isSgMultiplyOp(exp);
-    if (multiply)
-      if (isSgUpcThreads(multiply->get_rhs_operand()))
+    if (multiply) {
+      if (isSgUpcThreads(multiply->get_rhs_operand())) {
         result = true;
    // DQ (9/26/2011): Added else case to handle static compilation of UPC threads to be integer values.
-      else
+      } else {
         if (isSgIntVal(multiply->get_rhs_operand()))
           result = true;
-
+      }
+    }
     return result;  
   }
 

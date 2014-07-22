@@ -60,19 +60,15 @@ static unsigned gIM(unsigned insn_bits) { return extract< 0, 15>(insn_bits); }
 //    32 -- word                (ROSE "DoubleWord")
 //    64 -- double word         (ROSE "QuadWord")
 //
-// FIXME: ROSE's original type names were created back when ROSE only had an x86 disassembler. They will eventually be changed
-// to more agnostic terms when they appear in general contexts (e.g., "SgAsmTypeDoubleWord", used throughout ROSE and not just
-// in the x86 disassembler, might be renamed "SgAsmTypeBitvec32", "SgAsmTypeInteger32", and "SgAsmTypeUnsigned32"). [Robb
-// P. Matzke 2013-02-08]
-static SgAsmType *type_B8()  { return SgAsmTypeByte::createType(); }
-static SgAsmType *type_B16() { return SgAsmTypeWord::createType(); }
-static SgAsmType *type_B32() { return SgAsmTypeDoubleWord::createType(); }
-static SgAsmType *type_B64() { return SgAsmTypeQuadWord::createType(); }
-static SgAsmType *type_I8()  { return SgAsmTypeByte::createType(); }
-static SgAsmType *type_I16() { return SgAsmTypeWord::createType(); }
-static SgAsmType *type_I32() { return SgAsmTypeDoubleWord::createType(); }
-static SgAsmType *type_U8()  { return SgAsmTypeByte::createType(); }
-static SgAsmType *type_U16() { return SgAsmTypeWord::createType(); }
+static SgAsmType *type_B8()  { return SageBuilderAsm::buildTypeU8(); }
+static SgAsmType *type_B16() { return SageBuilderAsm::buildTypeU16le(); }
+static SgAsmType *type_B32() { return SageBuilderAsm::buildTypeU32le(); }
+static SgAsmType *type_B64() { return SageBuilderAsm::buildTypeU64le(); }
+static SgAsmType *type_I8()  { return SageBuilderAsm::buildTypeI8(); }
+static SgAsmType *type_I16() { return SageBuilderAsm::buildTypeI16le(); }
+static SgAsmType *type_I32() { return SageBuilderAsm::buildTypeI32le(); }
+static SgAsmType *type_U8()  { return SageBuilderAsm::buildTypeU8(); }
+static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16le(); }
 
 /*****************************************************************************************************************************/
 
@@ -461,7 +457,7 @@ SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate8(unsigned value, size_t bit_offset, size_t nbits)
 {
     ASSERT_require(0==(value & ~0xff));
-    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeByteValue(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU8(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
@@ -471,7 +467,7 @@ SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate16(unsigned value, size_t bit_offset, size_t nbits)
 {
     ASSERT_require(0==(value & ~0xffff));
-    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeWordValue(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU16le(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
@@ -481,7 +477,7 @@ SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate32(unsigned value, size_t bit_offset, size_t nbits)
 {
     ASSERT_require(0==(value & ~0xffffffffull));
-    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeDWordValue(value);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU32le(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
@@ -494,7 +490,7 @@ DisassemblerMips::makeBranchTargetRelative(unsigned pc_offset, size_t bit_offset
     pc_offset = shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
     pc_offset = signExtend<18, 32>(pc_offset);      // offsets are signed
     unsigned target = (get_ip() + 4 + pc_offset) & GenMask<unsigned, 32>::value; // measured from next instruction
-    SgAsmIntegerValueExpression *retval = SageBuilderAsm::makeDWordValue(target);
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU32le(target);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
@@ -511,7 +507,7 @@ DisassemblerMips::makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offse
     unsigned lo_target = shiftLeft<32>(insn_index, 2) & lo_mask;
     unsigned hi_target = (get_ip() + 4) & ~lo_mask;
     unsigned target = hi_target | lo_target;
-    return SageBuilderAsm::makeDWordValue(target);
+    return SageBuilderAsm::buildValueU32le(target);
 }
 
 SgAsmBinaryAdd *
@@ -520,8 +516,8 @@ DisassemblerMips::makeRegisterOffset(unsigned gprnum, unsigned offset16)
     SgAsmRegisterReferenceExpression *regref = makeRegister(gprnum);
     ASSERT_require(0==(offset16 & ~0xffff));
     unsigned offset32 = signExtend<16, 32>(offset16);
-    SgAsmIntegerValueExpression *offset = SageBuilderAsm::makeDWordValue(offset32);
-    SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(regref, offset);
+    SgAsmIntegerValueExpression *offset = SageBuilderAsm::buildValueU32le(offset32);
+    SgAsmBinaryAdd *retval = SageBuilderAsm::buildAddExpression(regref, offset);
     return retval;
 }
 
@@ -530,7 +526,7 @@ DisassemblerMips::makeRegisterIndexed(unsigned base_gprnum, unsigned index_gprnu
 {
     SgAsmRegisterReferenceExpression *base_reg = makeRegister(base_gprnum);
     SgAsmRegisterReferenceExpression *index_reg = makeRegister(index_gprnum);
-    SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(base_reg, index_reg);
+    SgAsmBinaryAdd *retval = SageBuilderAsm::buildAddExpression(base_reg, index_reg);
     return retval;
 }
 
@@ -539,7 +535,7 @@ DisassemblerMips::makeMemoryReference(SgAsmExpression *addr, SgAsmType *type)
 {
     ASSERT_not_null(addr);
     ASSERT_not_null(type);
-    return SageBuilderAsm::makeMemoryReference(addr, NULL, type);
+    return SageBuilderAsm::buildMemoryReferenceExpression(addr, NULL, type);
 }
 
 DisassemblerMips::Mips32 *

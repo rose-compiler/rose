@@ -317,7 +317,9 @@ AsmUnparser::invalid_register(SgAsmInstruction *insn, const RegisterDescriptor &
              <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
              <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
              <<"  register, and \"d\" is the number of significant bits.\n";
-            wasDescribed = true;
+        if (regdict!=NULL)
+            warn <<"  Dictionary in use at time of warning: " <<regdict->get_architecture_name() <<"\n";
+        wasDescribed = true;
     }
     return "BAD_REGISTER(" + regstr + ")";
 }

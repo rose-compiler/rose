@@ -19,9 +19,14 @@
  * NOTE:  Please use three blank lines between IR node definitions to help make this file more readable.  Unless those IR
  *        nodes are so closely related to one another that it's better to keep them close.
  *
- * NOTE:  If you get thousands of compile errors in Cxx_Grammar.h that seem to have absolutely nothing to do with the node
- *        you just added, then double check that the new node type is listed as the descendant of some other node type in
- *        a NEW_NONTERMINAL_MACRO macro expansion.
+ * ROSETTA FAILURE MODES:
+ *
+ * + If you get thousands of compile errors in Cxx_Grammar.h that seem to have absolutely nothing to do with the node
+ *   you just added, then double check that the new node type is listed as the descendant of some other node type in a
+ *   NEW_NONTERMINAL_MACRO macro expansion.
+ *
+ * + If CxxGrammarMetaProgram uses gigabytes and gigabytes of memory and never terminates then check that all the new
+ *   IR node types have a correctly spelled entry in the astNodeList file.
  *-----------------------------------------------------------------------------------------------------------------------------*/
 
 #include "ROSETTA_macros.h"
@@ -220,36 +225,11 @@ Grammar::setUpBinaryInstructions()
 
 
 
-    // Floating point constants (FIXME: These use x86 nomenclature and will likely be changed. [Robb P. Matzke 2013-02-13])
-    NEW_TERMINAL_MACRO(AsmSingleFloatValueExpression, "AsmSingleFloatValueExpression", "AsmSingleFloatValueExpressionTag");
-    AsmSingleFloatValueExpression.setFunctionPrototype("HEADER_SINGLE_FLOAT_VALUE_EXPRESSION",
-                                                       "../Grammar/BinaryInstruction.code");
-    AsmSingleFloatValueExpression.setFunctionSource("SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmSingleFloatValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
-    AsmSingleFloatValueExpression.setDataPrototype("float", "value", "= 0.0F",
-                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-    NEW_TERMINAL_MACRO(AsmDoubleFloatValueExpression, "AsmDoubleFloatValueExpression", "AsmDoubleFloatValueExpressionTag");
-    AsmDoubleFloatValueExpression.setFunctionPrototype("HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION",
-                                                       "../Grammar/BinaryInstruction.code");
-    AsmDoubleFloatValueExpression.setFunctionSource("SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmDoubleFloatValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
-    AsmDoubleFloatValueExpression.setDataPrototype("double", "value", "= 0.0",
-                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
-
-
     // Floating-point value.  The bits are stored in the super-class (SgAsmConstantExpression) and interpretted as various
     // kinds of floating-point values.
-    NEW_NONTERMINAL_MACRO(AsmFloatValueExpression,
-                          AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression,
-                          "AsmFloatValueExpression", "AsmFloatValueExpressionTag", false);
+    NEW_TERMINAL_MACRO(AsmFloatValueExpression, "AsmFloatValueExpression", "AsmFloatValueExpressionTag");
     AsmFloatValueExpression.setFunctionPrototype("HEADER_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-
+    AsmFloatValueExpression.setAutomaticGenerationOfConstructor(false); // so cache can be initialized
 
 
 
@@ -262,6 +242,8 @@ Grammar::setUpBinaryInstructions()
     AsmConstantExpression.setFunctionPrototype("HEADER_CONSTANT_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmConstantExpression.setPredeclarationString("HEADER_CONSTANT_EXPRESSION_PREDECLARATION",
                                                        "../Grammar/BinaryInstruction.code");
+    AsmConstantExpression.setDataPrototype("Sawyer::Container::BitVector", "bitVector", "",
+                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -328,96 +310,65 @@ Grammar::setUpBinaryInstructions()
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
+    /***************************************************************************************************************************
+     *                                  Data Types (new interface 2014-07)
+     *
+     * Data types are generally read-only objects because we need to be able to test type equality by testing pointer
+     * equality.  This is a basic features of ROSE: two types are equal if their pointers are equal.  The inverse should also
+     * be true, which means that when we ask for a particular type we get the same pointer as before.  This can only work if we
+     * don't allow types to be modified after they're created.
+     ***************************************************************************************************************************/
 
-    /**************************************************************************************************************************
-     *                                  Data types
-     * These are attached to the SgAsmNode object (the root for the IR used for binaries)
-     **************************************************************************************************************************/
+    // Integer types
+    NEW_TERMINAL_MACRO(AsmIntegerType, "AsmIntegerType", "AsmIntegerTypeTag");
+    AsmIntegerType.setFunctionPrototype("HEADER_INTEGER_TYPE", "../Grammar/BinaryInstruction.code");
+    AsmIntegerType.setDataPrototype("bool", "isSigned", "=false", // read-only property
+                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-    NEW_TERMINAL_MACRO(AsmTypeByte, "AsmTypeByte", "AsmTypeByteTag");
-    AsmTypeByte.setFunctionPrototype("HEADER_BINARY_TYPE_BYTE", "../Grammar/BinaryInstruction.code");
-    AsmTypeByte.setFunctionSource("SOURCE_BINARY_TYPE_BYTE", "../Grammar/BinaryInstruction.code");
-    AsmTypeByte.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                 NO_DELETE, NO_COPY_DATA);      // FIXME: Should that be '|' rather than '||'? [RPM 2011-09-26]
+    // Floating-point types.
+    NEW_TERMINAL_MACRO(AsmFloatType, "AsmFloatType", "AsmFloatTypeTag");
+    AsmFloatType.setFunctionPrototype("HEADER_FLOAT_TYPE", "../Grammar/BinaryInstruction.code");
+    AsmFloatType.setDataPrototype("size_t", "significandOffset", "=(size_t)(-1)", // offset to significand lsb; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("size_t", "significandNBits", "=(size_t)(-1)", // size of significand in bits; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("size_t", "signBitOffset", "=(size_t)(-1)", // significand sign bit offset; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("size_t", "exponentOffset", "=(size_t)(-1)", // offset to exponent lsb; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("size_t", "exponentNBits", "=(size_t)(-1)", // number of bits in the exponent; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("uint64_t", "exponentBias", "=0", // zero-point of exponent; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-    NEW_TERMINAL_MACRO(AsmTypeWord, "AsmTypeWord", "AsmTypeWordTag");
-    AsmTypeWord.setFunctionPrototype("HEADER_BINARY_TYPE_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeWord.setFunctionSource("SOURCE_BINARY_TYPE_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeWord.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                 NO_DELETE, NO_COPY_DATA);
+    // Scalar types
+    NEW_NONTERMINAL_MACRO(AsmScalarType,
+                          AsmIntegerType | AsmFloatType,
+                          "AsmScalarType", "AsmScalarTypeTag", false);
+    AsmScalarType.setFunctionPrototype("HEADER_SCALAR_TYPE", "../Grammar/BinaryInstruction.code");
+    AsmScalarType.setDataPrototype("ByteOrder::Endianness", "minorOrder", "= ByteOrder::ORDER_UNSPECIFIED", // read-only
+                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmScalarType.setDataPrototype("ByteOrder::Endianness", "majorOrder", "= ByteOrder::ORDER_UNSPECIFIED", // read-only
+                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmScalarType.setDataPrototype("size_t", "majorNBytes", "=0", // zero implies no major order needed; read-only
+                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmScalarType.setDataPrototype("size_t", "nBits", "=0", // read-only
+                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-    NEW_TERMINAL_MACRO(AsmTypeDoubleWord, "AsmTypeDoubleWord", "AsmTypeDoubleWordTag");
-    AsmTypeDoubleWord.setFunctionPrototype("HEADER_BINARY_TYPE_DOUBLE_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeDoubleWord.setFunctionSource("SOURCE_BINARY_TYPE_DOUBLE_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeDoubleWord.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                       NO_DELETE, NO_COPY_DATA);
 
-    NEW_TERMINAL_MACRO(AsmTypeQuadWord, "AsmTypeQuadWord", "AsmTypeQuadWordTag");
-    AsmTypeQuadWord.setFunctionPrototype("HEADER_BINARY_TYPE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeQuadWord.setFunctionSource("SOURCE_BINARY_TYPE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeQuadWord.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                     NO_DELETE, NO_COPY_DATA);
+    // Vector types
+    NEW_TERMINAL_MACRO(AsmVectorType, "AsmVectorType", "AsmVectorTypeTag");
+    AsmVectorType.setFunctionPrototype("HEADER_VECTOR_TYPE", "../Grammar/BinaryInstruction.code");
+    AsmVectorType.setDataPrototype("size_t", "nElmts", "=0", // read-only
+                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmVectorType.setDataPrototype("SgAsmType*", "elmtType", "=NULL", // read-only
+                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                          
 
-    NEW_TERMINAL_MACRO(AsmTypeDoubleQuadWord, "AsmTypeDoubleQuadWord", "AsmTypeDoubleQuadWordTag");
-    AsmTypeDoubleQuadWord.setFunctionPrototype("HEADER_BINARY_TYPE_DOUBLE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeDoubleQuadWord.setFunctionSource("SOURCE_BINARY_TYPE_DOUBLE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
-    AsmTypeDoubleQuadWord.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                           NO_DELETE, NO_COPY_DATA);
-
-    NEW_TERMINAL_MACRO(AsmTypeSingleFloat, "AsmTypeSingleFloat", "AsmTypeSingleFloatTag");
-    AsmTypeSingleFloat.setFunctionPrototype("HEADER_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmTypeSingleFloat.setFunctionSource("SOURCE_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmTypeSingleFloat.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                        NO_DELETE, NO_COPY_DATA);
-
-    NEW_TERMINAL_MACRO(AsmTypeDoubleFloat, "AsmTypeDoubleFloat", "AsmTypeDoubleFloatTag");
-    AsmTypeDoubleFloat.setFunctionPrototype("HEADER_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmTypeDoubleFloat.setFunctionSource("SOURCE_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmTypeDoubleFloat.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                        NO_DELETE, NO_COPY_DATA);
-
-    NEW_TERMINAL_MACRO(AsmType80bitFloat, "AsmType80bitFloat", "AsmType80bitFloatTag");
-    AsmType80bitFloat.setFunctionPrototype("HEADER_BINARY_TYPE_80bit_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmType80bitFloat.setFunctionSource("SOURCE_BINARY_TYPE_80bit_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmType80bitFloat.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                       NO_DELETE, NO_COPY_DATA);
-
-    NEW_TERMINAL_MACRO(AsmType96bitFloat, "AsmType96bitFloat", "AsmType96bitFloatTag");
-    AsmType96bitFloat.setFunctionPrototype("HEADER_BINARY_TYPE_96bit_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmType96bitFloat.setFunctionSource("SOURCE_BINARY_TYPE_96bit_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmType96bitFloat.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                       NO_DELETE, NO_COPY_DATA);
-
-    NEW_TERMINAL_MACRO(AsmType128bitFloat, "AsmType128bitFloat", "AsmType128bitFloatTag");
-    AsmType128bitFloat.setFunctionPrototype("HEADER_BINARY_TYPE_128bit_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmType128bitFloat.setFunctionSource("SOURCE_BINARY_TYPE_128bit_FLOAT", "../Grammar/BinaryInstruction.code");
-    AsmType128bitFloat.setDataPrototype("static $CLASSNAME*", "builtin_type", "",
-                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL,
-                                        NO_DELETE, NO_COPY_DATA);
-
-    NEW_TERMINAL_MACRO(AsmTypeVector, "AsmTypeVector", "AsmTypeVectorTag");
-    AsmTypeVector.setFunctionPrototype("HEADER_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
-    AsmTypeVector.setFunctionSource("SOURCE_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
-    AsmTypeVector.setDataPrototype("int", "elementCount", "= 0",
-                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    AsmTypeVector.setDataPrototype("SgAsmType*", "elementType", "= NULL",
-                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-    NEW_NONTERMINAL_MACRO(AsmType,
-                          AsmTypeByte        | AsmTypeWord           | AsmTypeDoubleWord  |
-                          AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  | AsmType96bitFloat |
-                          AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat |
-                          AsmTypeVector,
-                          "AsmType", "AsmTypeTag", false);
+    
+    // Binary types in general
+    NEW_NONTERMINAL_MACRO(AsmType, AsmScalarType | AsmVectorType, "AsmType", "AsmTypeTag", false);
+    AsmType.setFunctionPrototype("HEADER_TYPE", "../Grammar/BinaryInstruction.code");
 
 
 

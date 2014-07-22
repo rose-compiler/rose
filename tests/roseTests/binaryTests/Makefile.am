@@ -282,7 +282,7 @@ testAstIO_SOURCES=testAstIO.C
 testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testAstIO.passed
 EXTRA_DIST += testAstIO.conf
-MOSTLYCLEANFILES += i686-test1.O0.bin.ast
+MOSTLYCLEANFILES += i686-test1.O0.bin.ast i686-test1.O0.bin-1.dump i686-test1.O0.bin-2.dump
 testAstIO.passed: testAstIO.conf testAstIO
 	@$(RTH_RUN) INPUT=i686-test1.O0.bin $< $@
 

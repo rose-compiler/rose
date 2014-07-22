@@ -21,15 +21,15 @@
 
 // These are macros to make them look like constants while they are really
 // function calls
-#define BYTET (SgAsmTypeByte::createType())
-#define WORDT (SgAsmTypeWord::createType())
-#define DWORDT (SgAsmTypeDoubleWord::createType())
-#define QWORDT (SgAsmTypeQuadWord::createType())
-#define FLOATT (SgAsmTypeSingleFloat::createType())
-#define DOUBLET (SgAsmTypeDoubleFloat::createType())
-#define V2DWORDT (SgAsmTypeVector::createType(2, DWORDT))
-#define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
-#define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
+#define BYTET (SageBuilderAsm::buildTypeU8())
+#define WORDT (SageBuilderAsm::buildTypeU16be())
+#define DWORDT (SageBuilderAsm::buildTypeU32be())
+#define QWORDT (SageBuilderAsm::buildTypeU64be())
+#define FLOATT (SageBuilderAsm::buildIeee754Binary32be())
+#define DOUBLET (SageBuilderAsm::buildIeee754Binary64be())
+#define V2DWORDT (SageBuilderAsm::buildTypeVector(2, DWORDT))
+#define V2FLOATT (SageBuilderAsm::buildTypeVector(2, FLOATT))
+#define V2DOUBLET (SageBuilderAsm::buildTypeVector(2, DOUBLET))
 
 bool
 DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
@@ -115,7 +115,7 @@ DisassemblerPowerpc::fld() const {
 SgAsmIntegerValueExpression *
 DisassemblerPowerpc::makeBranchTarget ( uint64_t targetAddr ) const
 {
-    return SageBuilderAsm::makeQWordValue(targetAddr);
+    return SageBuilderAsm::buildValueU64be(targetAddr);
 }
 
 SgAsmPowerpcInstruction *

@@ -11,22 +11,8 @@ namespace InstructionSemantics2 {
  *******************************************************************************************************************************/
 
 static inline size_t asm_type_width(SgAsmType* ty) {
-    switch (ty->variantT()) {
-        case V_SgAsmTypeByte:                   return 8;
-        case V_SgAsmTypeWord:                   return 16;
-        case V_SgAsmTypeDoubleWord:             return 32;
-        case V_SgAsmTypeQuadWord:               return 64;
-        case V_SgAsmTypeDoubleQuadWord:         return 128;
-        case V_SgAsmTypeSingleFloat:            return 32;
-        case V_SgAsmTypeDoubleFloat:            return 64;
-        case V_SgAsmType80bitFloat:             return 80;
-        case V_SgAsmTypeVector: {
-            SgAsmTypeVector *vtype = isSgAsmTypeVector(ty);
-            return asm_type_width(vtype->get_elementType()) * vtype->get_elementCount();
-        }
-        default:
-            ASSERT_not_reachable("unhandled type: " + ty->class_name());
-    }
+    ASSERT_not_null(ty);
+    return ty->get_nBits();
 }
 
 /*******************************************************************************************************************************

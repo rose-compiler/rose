@@ -61,24 +61,25 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
         return "BAD_TYPE";
     }
 
-    switch (ty->variantT()) {
-        case V_SgAsmTypeByte: return "BYTE";
-        case V_SgAsmTypeWord: return "WORD";
-        case V_SgAsmTypeDoubleWord: return "DWORD";
-        case V_SgAsmTypeQuadWord: return "QWORD";
-        case V_SgAsmTypeDoubleQuadWord: return "DQWORD";
-        case V_SgAsmTypeSingleFloat: return "FLOAT";
-        case V_SgAsmTypeDoubleFloat: return "DOUBLE";
-        case V_SgAsmType80bitFloat: return "LDOUBLE";
-        case V_SgAsmTypeVector: {
-            SgAsmTypeVector* v = isSgAsmTypeVector(ty);
-            return "V" + StringUtility::numberToString(v->get_elementCount()) + x86TypeToPtrName(v->get_elementType());
+    if (SgAsmIntegerType *it = isSgAsmIntegerType(ty)) {
+        switch (it->get_nBits()) {
+            case 8: return "BYTE";
+            case 16: return "WORD";
+            case 32: return "DWORD";
+            case 64: return "QWORD";
         }
-        default: {
-            ASSERT_not_reachable("bad class " + ty->class_name());
-            return "error in x86TypeToPtrName()";// DQ (11/29/2009): Avoid MSVC warning.
+    } else if (SgAsmFloatType *ft = isSgAsmFloatType(ty)) {
+        switch (ft->get_nBits()) {
+            case 32: return "FLOAT";
+            case 64: return "DOUBLE";
+            case 80: return "LDOUBLE";
         }
+    } else if (ty == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64le())) {
+        return "DQWORD";
+    } else if (SgAsmVectorType *vt = isSgAsmVectorType(ty)) {
+        return "V" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());
     }
+    ASSERT_not_reachable("unhandled type: " + ty->toString());
 }
 
 std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,

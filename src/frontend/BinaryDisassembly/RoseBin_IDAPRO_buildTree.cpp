@@ -12,17 +12,18 @@ using namespace std;
 
 using namespace RoseBin_Def;
 
-SgAsmType* getRegisterType(const RegisterDescriptor &rdesc) {
-        SgAsmType* type = NULL;
-        switch(rdesc.get_nbits()) {
-                case 8:  type = SgAsmTypeByte::createType(); break;
-                case 16: type = SgAsmTypeWord::createType(); break;
-                case 32: type = SgAsmTypeDoubleWord::createType(); break; 
-                case 64: type = SgAsmTypeQuadWord::createType(); break; 
-                default:
-                        ROSE_ASSERT(false);
-        }
-        return type;
+SgAsmType*
+getRegisterType(const RegisterDescriptor &rdesc) {
+    SgAsmType* type = NULL;
+    switch(rdesc.get_nbits()) {
+        case 8:  type = SageBuilderAsm::buildTypeX86Byte(); break;
+        case 16: type = SageBuilderAsm::buildTypeX86Word(); break;
+        case 32: type = SageBuilderAsm::buildTypeX86DoubleWord(); break; 
+        case 64: type = SageBuilderAsm::buildTypeX86QuadWord(); break; 
+        default:
+            ASSERT_not_reachable("nbits="+StringUtility::numberToString(rdesc.get_nbits()));
+    }
+    return type;
 }
 
 /****************************************************
@@ -155,7 +156,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       // the child is another expression, like +, - , ...
       ROSE_ASSERT(child);
       binNode = new SgAsmMemoryReferenceExpression();
-      isSgAsmMemoryReferenceExpression(binNode)->set_type(SgAsmTypeQuadWord::createType());
+      isSgAsmMemoryReferenceExpression(binNode)->set_type(SageBuilderAsm::buildTypeX86QuadWord());
       ROSE_ASSERT (binNode->get_type());
 
       isSgAsmMemoryReferenceExpression(binNode)->set_address(child);
@@ -172,15 +173,15 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       if (isSgAsmMemoryReferenceExpression(binNode)) {
         SgAsmMemoryReferenceExpression* memRefT = isSgAsmMemoryReferenceExpression(binNode);
         if (expt->symbol=="b1") 
-          memRefT->set_type(SgAsmTypeByte::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86Byte());
         else if (expt->symbol=="b2") 
-          memRefT->set_type(SgAsmTypeWord::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86Word());
         else if (expt->symbol=="b4") 
-          memRefT->set_type(SgAsmTypeDoubleWord::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86DoubleWord());
         else if (expt->symbol=="b6") 
-          memRefT->set_type(SgAsmTypeByte::createType()); // FIXME
+            memRefT->set_type(SageBuilderAsm::buildTypeX86Byte()); // FIXME
         else if (expt->symbol=="b8") 
-          memRefT->set_type(SgAsmTypeQuadWord::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86QuadWord());
         ROSE_ASSERT (memRefT->get_type());
       } 
     }
@@ -203,29 +204,28 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
     if (typeOfOperand=="WORD") typeOfOperand="DWORD";
 
     if (typeOfOperand=="BYTE") {
-        binNode = SageBuilderAsm::makeByteValue(expt->immediate);
+        binNode = SageBuilderAsm::buildValueX86Byte(expt->immediate);
     } else 
       if (typeOfOperand=="WORD") {
-        binNode = SageBuilderAsm::makeWordValue(expt->immediate);
+        binNode = SageBuilderAsm::buildValueX86Word(expt->immediate);
       } else 
         if (typeOfOperand=="DWORD") {
-          binNode = SageBuilderAsm::makeDWordValue(expt->immediate);
+          binNode = SageBuilderAsm::buildValueX86DWord(expt->immediate);
         } else
           if (typeOfOperand=="QWORD") {
-            binNode = SageBuilderAsm::makeQWordValue(expt->immediate);
+            binNode = SageBuilderAsm::buildValueX86QWord(expt->immediate);
           } else 
             if (typeOfOperand=="SFLOAT") {
-              binNode = new SgAsmSingleFloatValueExpression();
-              isSgAsmSingleFloatValueExpression(binNode)->set_value(expt->immediate);
+                binNode = SageBuilderAsm::buildValueX86Float32(expt->immediate);
             } else 
               if (typeOfOperand=="DFLOAT") {
-                binNode = SageBuilderAsm::makeQWordValue(expt->immediate);
+                binNode = SageBuilderAsm::buildValueX86QWord(expt->immediate);
               } else {
                 cerr << "ERROR :: unhandled type of value: " << typeOfOperand << " val: " << 
                   RoseBin_support::ToString(expt->immediate) << endl;
                 //              exit(0);
                 // creating defualt for now
-                binNode = SageBuilderAsm::makeDWordValue(expt->immediate);
+                binNode = SageBuilderAsm::buildValueX86DWord(expt->immediate);
               }
     
     if (RoseBin_support::DEBUG_MODE())
