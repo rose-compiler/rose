@@ -1164,6 +1164,13 @@ public:
         return words_.empty() ? NULL : &words_[0];
     }
     /** @} */
+
+    /** Raw data size.
+     *
+     *  Returns the number of elements of type Word in the array returned by the @ref data method. */
+    size_t dataSize() {
+        return words_.size();
+    }
 };
 
 } // namespace
