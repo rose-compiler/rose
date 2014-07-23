@@ -6539,6 +6539,10 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
         {
          SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
          Sg_File_Info* file_info = fakeVar->get_file_info();
+
+      // TGWE (7/16/2014): on the advice of DQ who doesn't like the function at all 
+         fakeVar->set_parent(scope);
+
          file_info->unsetOutputInCodeGeneration ();
          SgVariableSymbol* fakeSymbol = getFirstVarSym (fakeVar);   
          result = buildVarRefExp(fakeSymbol);
