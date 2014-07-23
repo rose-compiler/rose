@@ -509,8 +509,8 @@ std::string EasyStorage<std::string> :: rebuildDataStoredInEasyStorageClass() co
 void
 EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Sawyer::Container::BitVector& data_) {
     typedef Sawyer::Container::BitVector::Word BVWord;
-    const BVWord *words = data_.data();                                         // the raw words of the bit vector or null
-    size_t nWords = (data_.size() + 8*sizeof(BVWord) - 1) / (8*sizeof(BVWord)); // number of words to save
+    const BVWord *words = data_.data();                 // the raw words of the bit vector or null
+    size_t nWords = data_.dataSize();                   // number of words to save
     BVWord excess = data_.size() % (8*sizeof(BVWord));  // number of bits in final word; zero means full word, or empty vector
     size_t idx = 0;                                     // index into the destination words
     long offset = Base::setPositionAndSizeAndReturnOffset(1+nWords);
