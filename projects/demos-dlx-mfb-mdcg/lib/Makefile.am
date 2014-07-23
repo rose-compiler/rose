@@ -1,0 +1,3 @@
+
+SUBDIRS=dlx mfb mdcg
+

@@ -119,6 +119,16 @@ bool Parser::parse<SgExpression *>(SgExpression * & expr) const {
 }
 
 template <>
+bool Parser::parse<SgValueExp *>(SgValueExp * & expr) const {
+  return false;
+}
+
+template <>
+bool Parser::parse<std::string>(std::string & str) const {
+  return false;
+}
+
+template <>
 bool Parser::parse<std::pair<SgExpression *, SgExpression *> >(std::pair<SgExpression *, SgExpression *> & pair) const {
   skip_whitespace();
   if (!parse<SgExpression *>(pair.first)) return false;

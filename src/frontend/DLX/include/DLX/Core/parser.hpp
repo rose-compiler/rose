@@ -81,10 +81,16 @@ template <>
 bool Parser::parse<size_t>(size_t &) const;
 
 template <>
-bool Parser::parse<std::pair<SgExpression *, SgExpression *> >(std::pair<SgExpression *, SgExpression *> &) const;
+bool Parser::parse<SgExpression *>(SgExpression * & expr) const;
 
 template <>
-bool Parser::parse<size_t>(size_t &) const;
+bool Parser::parse<SgValueExp *>(SgValueExp * & expr) const;
+
+template <>
+bool Parser::parse<std::string>(std::string & str) const;
+
+template <>
+bool Parser::parse<std::pair<SgExpression *, SgExpression *> >(std::pair<SgExpression *, SgExpression *> &) const;
 
 template <>
 bool Parser::parse<SgVariableSymbol *>(SgVariableSymbol * &) const;
