@@ -540,13 +540,15 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
     }
+
 #if SEMANTIC_API == NEW_API
-    std::ostream &info = std::cout;
+    std::ostream &info = std::cerr; // do not include in answer because objects vary in size per architecture
     info <<"Before vacuum...\n";
     BaseSemantics::SValue::allocator.printStatistics(info);
     BaseSemantics::SValue::allocator.vacuum();
     info <<"After vacuum...\n";
     BaseSemantics::SValue::allocator.printStatistics(info);
 #endif
+
     return 0;
 }

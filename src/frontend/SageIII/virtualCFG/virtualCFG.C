@@ -73,7 +73,7 @@ namespace VirtualCFG {
       } else {
         // nodeText = node->unparseToString(); -- Fortran CFG nodes can't always be unparsed
         ostringstream nt;
-        nt << "@line=" << node->get_startOfConstruct()->get_line();
+        nt << "@line=" << node->get_startOfConstruct()->get_line()<<", col=" <<node->get_startOfConstruct()->get_col();
         nodeText += nt.str();
       }
       if (nodeText.length() > 20) {nodeText.resize(20); nodeText += "...";}

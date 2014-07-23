@@ -291,6 +291,12 @@ public:
      * PartialSymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
+#if defined(__GNUC__)
+#if __GNUC__==4 && __GNUC_MINOR__==2
+        // This is needed to work around a bug in GCC-4.2.4 optimization. [Robb P. Matzke 2014-07-16]
+        volatile int x = protoval.get()->nrefs__;
+#endif
+#endif
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
         memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
