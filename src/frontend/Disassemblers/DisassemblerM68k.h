@@ -143,6 +143,11 @@ public:
     SgAsmExpression *makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataFormat fmt, size_t ext_offset);
     /** @} */
 
+    /** Converts a memory-reference expression to an address.  This is used for things like the JSR instruction that takes an
+     *  effective address that's a memory reference, and converts it to just an address. It also rewrites PC-relative addresses
+     *  since the PC is constant. */
+    SgAsmExpression *makeAddress(SgAsmExpression *expr);
+
     /** Create an offset width pair from an extension word.  The extension word contains an offset and width expression each of
      *  which is either a 5-bit unsigned integer or a data register number. This is used by various bit field instructions. */
     ExpressionPair makeOffsetWidthPair(unsigned extension_word);

@@ -624,8 +624,29 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
 //            addr = SageBuilderAsm::makeAdd(addr, product);
 //            return SageBuilderAsm::makeMemoryReference(addr, NULL/*segment*/, type);
 //        }
+}
 
+SgAsmExpression *
+DisassemblerM68k::makeAddress(SgAsmExpression *expr)
+{
+    SgAsmExpression *retval = NULL;
+    ASSERT_not_null(expr);
+    if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr))
+        retval = mre->get_address();
+    if (!retval)
+        return NULL;
 
+    // If address is pc+X then return a constant instead
+    if (SgAsmBinaryAdd *sum = isSgAsmBinaryAdd(retval)) {
+        SgAsmDirectRegisterExpression *lhs = isSgAsmDirectRegisterExpression(sum->get_lhs());
+        SgAsmIntegerValueExpression *rhs = isSgAsmIntegerValueExpression(sum->get_rhs());
+        if (lhs && rhs &&
+            lhs->get_descriptor().get_major()==m68k_regclass_spr && lhs->get_descriptor().get_minor()==m68k_spr_pc) {
+            retval = new SgAsmIntegerValueExpression(get_insn_va() + 2 + rhs->get_absoluteValue(), 32, makeType(m68k_fmt_i32));
+        }
+    }
+
+    return retval;
 }
 
 DisassemblerM68k::ExpressionPair
@@ -1490,8 +1511,10 @@ struct M68k_callm: M68k {
                        INSN_WORD<1>(BITS<8, 15>(0))) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *argcount = d->makeImmediateExtension(m68k_fmt_i8, 0);
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-        return d->makeInstruction(m68k_callm, "callm", argcount, src);
+        SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
+        SgAsmExpression *target = d->makeAddress(ea);
+        ASSERT_not_null2(target, "CALLM instruction must have a memory-referencing operand");
+        return d->makeInstruction(m68k_callm, "callm", argcount, target);
     }
 };
 
@@ -3209,8 +3232,10 @@ struct M68k_jmp: M68k {
     M68k_jmp(): M68k("jmp", m68k_family,
                      OP(4) & BITS<6, 11>(0x3b) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(m68k_jmp, "jmp", src);
+        SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 0);
+        SgAsmExpression *target = d->makeAddress(ea);
+        ASSERT_not_null2(target, "JMP instruction must have a memory-referencing operand");
+        return d->makeInstruction(m68k_jmp, "jmp", target);
     }
 };
                 
@@ -3219,8 +3244,10 @@ struct M68k_jsr: M68k {
     M68k_jsr(): M68k("jsr", m68k_family,
                      OP(4) & BITS<6, 11>(0x3a) & EAM(m68k_eam_control)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 0);
-        return d->makeInstruction(m68k_jsr, "jsr", src);
+        SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 0);
+        SgAsmExpression *target = d->makeAddress(ea);
+        ASSERT_not_null2(target, "JSR instruction must have a memory-referencing operand");
+        return d->makeInstruction(m68k_jsr, "jsr", target);
     }
 };
 
