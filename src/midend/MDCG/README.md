@@ -40,7 +40,7 @@ struct ModelA {
 
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
-    MDCG::Model::field_t element,
+    MDCG::Model::field_t field,
     unsigned field_id,
     const input_t & input,
     unsigned file_id
@@ -66,38 +66,34 @@ struct ModelB {
 
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
-    MDCG::Model::field_t element,
+    MDCG::Model::field_t field,
     unsigned field_id,
     const input_t & input,
     unsigned file_id
   ) {
     switch (field_id) {
       case 0:
-        /// struct A a;
-        MDCG::Model::type_t type = element->node->type;
-        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-        return static_initializer.createInitializer<ModelA>(
-                 type->node->base_class,
-                 input.base,
-                 file_id
-        );
+      {
+        /// Check that the field is "struct A a;" and returns MDCG's representation of "struct A"
+        MDCG::Model::class_t base_class = MDCG::StaticInitializer::getBaseClassForClass(field, "A", "a");
+        return static_initializer.createInitializer<ModelA>(base_class, input.base, file_id);
+      }
       case 1:
         /// int n;
         return SageBuilder::buildIntVal(input.vector.size());
       case 2:
-        /// struct A * arr;
-        MDCG::Model::type_t type = element->node->type;
-        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
-        type = type->node->base_type;
-        assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+      {
+        /// Check that the field is "struct A * arr;" and returns MDCG's representation of "struct A"
+        MDCG::Model::class_t base_class = MDCG::StaticInitializer::getBaseClassForPointerOnClass(field, "A", "arr");
         return static_initializer.createArrayPointer<ModelA>(
-                 type->node->base_class,
+                 base_class,
                  input.vector.size(),
                  input.vector.begin(),
                  input.vector.end(),
                  file_id,
                  "vector"
                );
+      }
       default:
         assert(false);
     }
@@ -151,24 +147,3 @@ struct B output = {
 };
 ```
 
-### TODO
-
-Provide an interface to verfiy that we have the good field in the switch statement
-For example, in case `2` of `ModelB::createFieldInitializer` we generate code for the field `struct A * arr;`.
-We only check that we have a pointer to a class type.
-We should check that:
- * it is a pointer to a class
- * the class is named `A`
- * the field is named `arr`
-
-We need an interface such as:
-```c++
-/// to match 'struct class_name * field_name;'
-MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
-/// to match 'typedef struct class_name * typedef_name; typedef_name field_name;'
-MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForTypedefOnPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
-/// to match 'typedef struct class_name * typedef_name; typedef_name * field_name;'
-MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForPointerOnTypedefOnPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
-/// to match 'typedef struct class_name * typedef_name; typedef_name field_name[size];'
-MDCG::Model::class_t MDCG::StaticInitializer::getBaseClassForArrayOnTypedefOnPointerOnClass(MDCG::Model::field_t field, std::string & class_name, std::string & field_name);
-```
