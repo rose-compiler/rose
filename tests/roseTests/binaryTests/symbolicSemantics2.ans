@@ -199,9 +199,9 @@ registers:
   pf           [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
   sf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
   zf           [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
+  of           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1,false]}
   af           [writer=0x08048340] = v16746[1]
-  cf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
+  cf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -214,9 +214,9 @@ registers:
   pf           [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
   sf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
   zf           [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
+  of           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1,false]}
   af           [writer=0x08048340] = v16746[1]
-  cf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
+  cf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] esp_0[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v16750[32])
@@ -234,9 +234,9 @@ registers:
   pf           [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1]}
   sf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
   zf           [writer=0x08048340] = {defs={0x08048340}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
+  of           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1,false]}
   af           [writer=0x08048340] = v16746[1]
-  cf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1]}
+  cf           [writer=0x08048340] = {defs={0x08048340}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] esp_0[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v16750[32])
@@ -254,9 +254,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] esp_0[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v16750[32])
@@ -274,9 +274,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xffffffff<4294967295,-1>[32])} writer=0x08048348 value=(extract[8] 0x00000018[32] 0x00000020[32] eax_0[32])
@@ -298,9 +298,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xfffffffb<4294967291,-5>[32])} writer=0x08048349 value={defs={0x08048342,0x08048345,0x08048348}, expr=(extract[8] 0x00000018[32] 0x00000020[32] (add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xfffffffc<4294967292,-4>[32]))}
@@ -326,9 +326,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xfffffff7<4294967287,-9>[32])} writer=0x0804834a value=(extract[8] 0x00000018[32] 0x00000020[32] edx_0[32])
@@ -358,9 +358,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xfffffff3<4294967283,-13>[32])} writer=0x0804834b value={defs={0x0804834b}, expr=0x08[8]}
@@ -394,9 +394,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xffffffef<4294967279,-17>[32])} writer=0x08048350 value={defs={0x08048350}, expr=0x08[8]}
@@ -434,9 +434,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xffffffeb<4294967275,-21>[32])} writer=0x08048355 value={defs={0x08048342}, expr=(extract[8] 0x00000018[32] 0x00000020[32] (add[32] esp_0[32] 0x00000004[32]))}
@@ -478,9 +478,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355,0x08048356}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xffffffe7<4294967271,-25>[32])} writer=0x08048356 value=(extract[8] 0x00000018[32] 0x00000020[32] v16750[32])
@@ -526,9 +526,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355,0x08048356,0x08048357}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xffffffe3<4294967267,-29>[32])} writer=0x08048357 value={defs={0x08048357}, expr=0x08[8]}
@@ -578,9 +578,9 @@ registers:
   pf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))))}
   sf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x08048345] = {defs={0x08048342,0x08048345}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]))}
-  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  of           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   af           [writer=0x08048345] = v16788[1]
-  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1]}
+  cf           [writer=0x08048345] = {defs={0x08048345}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355,0x08048356,0x08048357,0x0804835c}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0x00000004[32]) 0xfffffff0<4294967280>[32]) 0xffffffdf<4294967263,-33>[32])} writer=0x0804835c value={defs={0x0804835c}, expr=0x08[8]}
@@ -785,8 +785,8 @@ registers:
   sf           [writer=0x0804837b] = {defs={0x0804837b}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v17676[32] v17676[32]))}
   zf           [writer=0x0804837b] = {defs={0x0804837b}, expr=(zerop[1] (bv-and[32] v17676[32] v17676[32]))}
   af           [writer=0x0804837b] = v17713[1]
-  cf           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1]}
-  of           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1]}
+  cf           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1,false]}
+  of           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x0804836f,0x08048375}, expr=(add[32] v17623[32] 0x00001359<4953>[32])} value=(extract[8] 0x00000018[32] 0x00000020[32] v17676[32])
@@ -808,8 +808,8 @@ registers:
   sf           [writer=0x0804837b] = {defs={0x0804837b}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v17676[32] v17676[32]))}
   zf           [writer=0x0804837b] = {defs={0x0804837b}, expr=(zerop[1] (bv-and[32] v17676[32] v17676[32]))}
   af           [writer=0x0804837b] = v17713[1]
-  cf           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1]}
-  of           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1]}
+  cf           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1,false]}
+  of           [writer=0x0804837b] = {defs={0x0804837b}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x0804836f,0x08048375}, expr=(add[32] v17623[32] 0x00001359<4953>[32])} value=(extract[8] 0x00000018[32] 0x00000020[32] v17676[32])
@@ -1035,9 +1035,9 @@ registers:
   pf           [writer=0x080483a6] = {defs={0x080483a6}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] v18838[32] v18838[32]))))}
   sf           [writer=0x080483a6] = {defs={0x080483a6}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v18838[32] v18838[32]))}
   zf           [writer=0x080483a6] = {defs={0x080483a6}, expr=(zerop[1] (bv-and[32] v18838[32] v18838[32]))}
-  of           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1]}
+  of           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1,false]}
   af           [writer=0x080483a6] = v18875[1]
-  cf           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1]}
+  cf           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] v18821[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v18838[32])
@@ -1057,9 +1057,9 @@ registers:
   pf           [writer=0x080483a6] = {defs={0x080483a6}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] v18838[32] v18838[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] v18838[32] v18838[32]))))}
   sf           [writer=0x080483a6] = {defs={0x080483a6}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v18838[32] v18838[32]))}
   zf           [writer=0x080483a6] = {defs={0x080483a6}, expr=(zerop[1] (bv-and[32] v18838[32] v18838[32]))}
-  of           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1]}
+  of           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1,false]}
   af           [writer=0x080483a6] = v18875[1]
-  cf           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1]}
+  cf           [writer=0x080483a6] = {defs={0x080483a6}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] v18821[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v18838[32])
@@ -1170,9 +1170,9 @@ registers:
   pf           [writer=0x080483c1] = {defs={0x080483c1}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] v19416[32] v19416[32]))))}
   sf           [writer=0x080483c1] = {defs={0x080483c1}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v19416[32] v19416[32]))}
   zf           [writer=0x080483c1] = {defs={0x080483c1}, expr=(zerop[1] (bv-and[32] v19416[32] v19416[32]))}
-  of           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1]}
+  of           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1,false]}
   af           [writer=0x080483c1] = v19453[1]
-  cf           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1]}
+  cf           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] v19399[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v19416[32])
@@ -1192,9 +1192,9 @@ registers:
   pf           [writer=0x080483c1] = {defs={0x080483c1}, expr=(invert[1] (bv-xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000001[32] 0x00000002[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000002[32] 0x00000003[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000003[32] 0x00000004[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000004[32] 0x00000005[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000005[32] 0x00000006[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000006[32] 0x00000007[32] (bv-and[32] v19416[32] v19416[32])) (extract[1] 0x00000007[32] 0x00000008[32] (bv-and[32] v19416[32] v19416[32]))))}
   sf           [writer=0x080483c1] = {defs={0x080483c1}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v19416[32] v19416[32]))}
   zf           [writer=0x080483c1] = {defs={0x080483c1}, expr=(zerop[1] (bv-and[32] v19416[32] v19416[32]))}
-  of           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1]}
+  of           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1,false]}
   af           [writer=0x080483c1] = v19453[1]
-  cf           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1]}
+  cf           [writer=0x080483c1] = {defs={0x080483c1}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] v19399[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v19416[32])
@@ -1323,8 +1323,8 @@ registers:
   sf           [writer=0x080483db] = {defs={0x080483db}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v20011[32] v20011[32]))}
   zf           [writer=0x080483db] = {defs={0x080483db}, expr=(zerop[1] (bv-and[32] v20011[32] v20011[32]))}
   af           [writer=0x080483db] = v20048[1]
-  cf           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1]}
-  of           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1]}
+  cf           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1,false]}
+  of           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x080483d6}, expr=0x080495fb<134518267>[32]} value=(extract[8] 0x00000018[32] 0x00000020[32] v20011[32])
@@ -1346,8 +1346,8 @@ registers:
   sf           [writer=0x080483db] = {defs={0x080483db}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] v20011[32] v20011[32]))}
   zf           [writer=0x080483db] = {defs={0x080483db}, expr=(zerop[1] (bv-and[32] v20011[32] v20011[32]))}
   af           [writer=0x080483db] = v20048[1]
-  cf           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1]}
-  of           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1]}
+  cf           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1,false]}
+  of           [writer=0x080483db] = {defs={0x080483db}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x080483d6}, expr=0x080495fb<134518267>[32]} value=(extract[8] 0x00000018[32] 0x00000020[32] v20011[32])
@@ -1376,9 +1376,9 @@ registers:
   pf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
   zf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
-  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   af           [writer=0x080483e4] = v20296[1]
-  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -1389,9 +1389,9 @@ registers:
   pf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
   zf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
-  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   af           [writer=0x080483e4] = v20296[1]
-  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -1403,9 +1403,9 @@ registers:
   pf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
   zf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
-  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   af           [writer=0x080483e4] = v20296[1]
-  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -1418,9 +1418,9 @@ registers:
   pf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
   zf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
-  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   af           [writer=0x080483e4] = v20296[1]
-  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] ebp_0[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v20302[32])
@@ -1437,9 +1437,9 @@ registers:
   pf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1]}
   sf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x0[1]}
   zf           [writer=0x080483e4] = {defs={0x080483df,0x080483e4}, expr=0x1<-1>[1,true]}
-  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  of           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   af           [writer=0x080483e4] = v20296[1]
-  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1]}
+  cf           [writer=0x080483e4] = {defs={0x080483e4}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048402}, expr=(add[32] ebp_0[32] 0x00000007[32])} value=(extract[8] 0x00000018[32] 0x00000020[32] v20321[32])
@@ -1562,8 +1562,8 @@ registers:
   sf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   af           [writer=0x0804841b] = v21127[1]
-  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
-  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
+  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
+  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048410}, expr=(add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])} writer=0x08048410 value=(extract[8] 0x00000018[32] 0x00000020[32] ebp_0[32])
@@ -1581,8 +1581,8 @@ registers:
   sf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   af           [writer=0x0804841b] = v21127[1]
-  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
-  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
+  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
+  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048410,0x08048418,0x0804841b,0x0804841e}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]) 0x00000007[32])} writer=0x0804841e value={defs={0x08048411}, expr=0x08[8]}
@@ -1604,8 +1604,8 @@ registers:
   sf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   af           [writer=0x0804841b] = v21127[1]
-  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
-  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
+  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
+  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048410,0x08048418,0x0804841b}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]) 0x00000003[32])} writer=0x08048422 value={defs={0x08048422}, expr=0x00[8]}
@@ -1631,8 +1631,8 @@ registers:
   sf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   zf           [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(zerop[1] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]))}
   af           [writer=0x0804841b] = v21127[1]
-  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
-  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1]}
+  cf           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
+  of           [writer=0x0804841b] = {defs={0x0804841b}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048410,0x08048418,0x0804841b,0x08048429}, expr=(add[32] (bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32]) 0xffffffff<4294967295,-1>[32])} writer=0x08048429 value={defs={0x08048429}, expr=0x08[8]}
@@ -1670,9 +1670,9 @@ registers:
   pf           [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
   sf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
   zf           [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
+  of           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1,false]}
   af           [writer=0x08048430] = v21403[1]
-  cf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
+  cf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -1685,9 +1685,9 @@ registers:
   pf           [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
   sf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
   zf           [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
+  of           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1,false]}
   af           [writer=0x08048430] = v21403[1]
-  cf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
+  cf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr=(add[32] ebp_0[32] 0x00000003[32]) value=(extract[8] 0x00000018[32] 0x00000020[32] v21406[32])
@@ -1704,9 +1704,9 @@ registers:
   pf           [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1]}
   sf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
   zf           [writer=0x08048430] = {defs={0x08048430}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
+  of           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1,false]}
   af           [writer=0x08048430] = v21403[1]
-  cf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1]}
+  cf           [writer=0x08048430] = {defs={0x08048430}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x08048432}, expr=(add[32] ebp_0[32] 0x00000007[32])} value=(extract[8] 0x00000018[32] 0x00000020[32] v21425[32])
@@ -2947,9 +2947,9 @@ registers:
   pf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   zf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   af           [writer=0x08048552] = v25502[1]
-  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -2961,9 +2961,9 @@ registers:
   pf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   zf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   af           [writer=0x08048552] = v25502[1]
-  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -2975,9 +2975,9 @@ registers:
   pf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   zf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   af           [writer=0x08048552] = v25502[1]
-  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
 
@@ -2990,9 +2990,9 @@ registers:
   pf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1]}
   sf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
   zf           [writer=0x08048552] = {defs={0x08048552}, expr=0x1<-1>[1,true]}
-  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  of           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   af           [writer=0x08048552] = v25502[1]
-  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1]}
+  cf           [writer=0x08048552] = {defs={0x08048552}, expr=0x0[1,false]}
   fpstatus_top = 0x0[3]
 memory:
   addr={defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0x00000000[32] 0x00000020[32] (umul[64] eax_0[32] 0x00000004[32])) edx_0[32] 0x00000003[32])} value=(extract[8] 0x00000018[32] 0x00000020[32] v25518[32])
