@@ -3622,7 +3622,7 @@ struct M68k_movea: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = 2==extract<12, 13>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
-        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), fmt);
+        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), m68k_fmt_i32);
         return d->makeInstruction(m68k_movea, "movea."+formatLetter(fmt), src, dst);
     }
 };
