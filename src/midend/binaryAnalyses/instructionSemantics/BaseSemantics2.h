@@ -2492,7 +2492,8 @@ public:
 
     /** Returns a memory address by evaluating the address expression.  The address expression can be either a constant or an
      *  expression containing operators and constants.  If @p nbits is non-zero then the result is sign extended or truncated
-     *  to the specified width, otherwise the returned SValue is the natural width of the expression. */
+     *  to the specified width, otherwise the returned SValue is the natural width of the expression.  Registers that are
+     *  marked for pre-decrement or post-increment are adjusted. */
     virtual SValuePtr effectiveAddress(SgAsmExpression*, size_t nbits=0);
 
     /** Reads an R-value expression.  The expression can be a constant, register reference, or memory reference.  The width of

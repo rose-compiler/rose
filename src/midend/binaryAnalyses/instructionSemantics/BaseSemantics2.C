@@ -1283,7 +1283,24 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        retval = operators->readRegister(rre->get_descriptor());
+        const RegisterDescriptor &reg = rre->get_descriptor();
+        retval = operators->readRegister(reg);
+        if (rre->get_adjustment()) {
+            SValuePtr adj = operators->number_(64, (int64_t)rre->get_adjustment());
+            if (reg.get_nbits() <= 64) {
+                adj = operators->unsignedExtend(adj, reg.get_nbits());      // truncate
+            } else {
+                adj = operators->signExtend(adj, reg.get_nbits());          // extend
+            }
+            if (rre->get_adjustment() < 0) {
+                // pre-decrement
+                retval = operators->add(retval, adj);
+                operators->writeRegister(reg, retval);
+            } else {
+                // post-increment
+                operators->writeRegister(reg, operators->add(retval, adj));
+            }
+        }
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
