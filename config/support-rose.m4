@@ -2049,6 +2049,7 @@ projects/demos-dlx-mfb-mdcg/include/MFB/Makefile
 projects/demos-dlx-mfb-mdcg/include/MFB/Logger/Makefile
 projects/demos-dlx-mfb-mdcg/include/MDCG/Makefile
 projects/demos-dlx-mfb-mdcg/include/MDCG/Logger/Makefile
+projects/demos-dlx-mfb-mdcg/include/libLogger/Makefile
 projects/demos-dlx-mfb-mdcg/lib/Makefile
 projects/demos-dlx-mfb-mdcg/lib/dlx/Makefile
 projects/demos-dlx-mfb-mdcg/lib/dlx/logger/Makefile
@@ -2056,6 +2057,7 @@ projects/demos-dlx-mfb-mdcg/lib/mfb/Makefile
 projects/demos-dlx-mfb-mdcg/lib/mfb/logger/Makefile
 projects/demos-dlx-mfb-mdcg/lib/mdcg/Makefile
 projects/demos-dlx-mfb-mdcg/lib/mdcg/logger/Makefile
+projects/demos-dlx-mfb-mdcg/lib/liblogger/Makefile
 projects/demos-dlx-mfb-mdcg/src/Makefile
 projects/demos-dlx-mfb-mdcg/tests/Makefile
 tests/Makefile
