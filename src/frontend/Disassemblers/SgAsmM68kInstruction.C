@@ -471,6 +471,38 @@ SgAsmM68kInstruction::get_branch_target(rose_addr_t *target)
         case m68k_bvs:
         case m68k_bsr:
         case m68k_bra:
+        case m68k_fbeq:
+        case m68k_fbne:
+        case m68k_fbgt:
+        case m68k_fbngt:
+        case m68k_fbge:
+        case m68k_fbnge:
+        case m68k_fblt:
+        case m68k_fbnlt:
+        case m68k_fble:
+        case m68k_fbnle:
+        case m68k_fbgl:
+        case m68k_fbngl:
+        case m68k_fbgle:
+        case m68k_fbngle:
+        case m68k_fbogt:
+        case m68k_fbule:
+        case m68k_fboge:
+        case m68k_fbult:
+        case m68k_fbolt:
+        case m68k_fbuge:
+        case m68k_fbole:
+        case m68k_fbugt:
+        case m68k_fbogl:
+        case m68k_fbueq:
+        case m68k_fbor:
+        case m68k_fbun:
+        case m68k_fbf:
+        case m68k_fbt:
+        case m68k_fbsf:
+        case m68k_fbst:
+        case m68k_fbseq:
+        case m68k_fbsne:
         case m68k_jmp:
         case m68k_jsr:
             labelArg = 0;
@@ -518,38 +550,6 @@ SgAsmM68kInstruction::get_branch_target(rose_addr_t *target)
         case m68k_dblt:
         case m68k_dbgt:
         case m68k_dble:
-        case m68k_fbeq:
-        case m68k_fbne:
-        case m68k_fbgt:
-        case m68k_fbngt:
-        case m68k_fbge:
-        case m68k_fbnge:
-        case m68k_fblt:
-        case m68k_fbnlt:
-        case m68k_fble:
-        case m68k_fbnle:
-        case m68k_fbgl:
-        case m68k_fbngl:
-        case m68k_fbgle:
-        case m68k_fbngle:
-        case m68k_fbogt:
-        case m68k_fbule:
-        case m68k_fboge:
-        case m68k_fbult:
-        case m68k_fbolt:
-        case m68k_fbuge:
-        case m68k_fbole:
-        case m68k_fbugt:
-        case m68k_fbogl:
-        case m68k_fbueq:
-        case m68k_fbor:
-        case m68k_fbun:
-        case m68k_fbf:
-        case m68k_fbt:
-        case m68k_fbsf:
-        case m68k_fbst:
-        case m68k_fbseq:
-        case m68k_fbsne:
             labelArg = 1;
             break;
 
