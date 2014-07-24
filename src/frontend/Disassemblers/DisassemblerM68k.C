@@ -334,7 +334,9 @@ DisassemblerM68k::makeDataRegister(unsigned regnum, M68kDataFormat fmt, size_t b
     ASSERT_require2(0==bit_offset || 16==bit_offset, "register offset is " + plural(bit_offset, "bits"));
     ASSERT_require(bit_offset+nbits <= 32);
     RegisterDescriptor desc(m68k_regclass_data, regnum, bit_offset, nbits);
-    return new SgAsmDirectRegisterExpression(desc);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(fmt));
+    return expr;
 }
 
 SgAsmRegisterReferenceExpression *
@@ -347,7 +349,9 @@ DisassemblerM68k::makeAddressRegister(unsigned regnum, M68kDataFormat fmt, size_
     if (16!=nbits && 32!=nbits) // in particular, 8-bit access is not possible
         throw Exception("invalid address register size: " + numberToString(nbits));
     RegisterDescriptor desc(m68k_regclass_addr, regnum, bit_offset, nbits);
-    return new SgAsmDirectRegisterExpression(desc);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(fmt));
+    return expr;
 }
 
 SgAsmMemoryReferenceExpression *
@@ -392,6 +396,7 @@ DisassemblerM68k::makeRegistersFromMask(unsigned mask, M68kDataFormat fmt, bool 
         }
     }
     reglist->set_mask(mask);
+    reglist->set_type(makeType(fmt));
     return reglist;
 }
 
@@ -407,6 +412,7 @@ DisassemblerM68k::makeFPRegistersFromMask(unsigned mask, M68kDataFormat fmt, boo
         }
     }
     reglist->set_mask(mask);
+    reglist->set_type(makeType(fmt));
     return reglist;
 }
 
@@ -414,28 +420,36 @@ SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeStatusRegister()
 {
     RegisterDescriptor desc(m68k_regclass_spr, m68k_spr_sr, 0, 16);
-    return new SgAsmDirectRegisterExpression(desc);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(m68k_fmt_i16));
+    return expr;
 }
 
 SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeConditionCodeRegister()
 {
     RegisterDescriptor desc(m68k_regclass_spr, m68k_spr_sr, 0, 8); // CCR is the low byte of the status register
-    return new SgAsmDirectRegisterExpression(desc);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(m68k_fmt_i8));
+    return expr;
 }
 
 SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeProgramCounter()
 {
     RegisterDescriptor desc(m68k_regclass_spr, m68k_spr_pc, 0, 32);
-    return new SgAsmDirectRegisterExpression(desc);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(m68k_fmt_i32));
+    return expr;
 }
 
 SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeMacRegister(M68kMacRegister minor)
 {
     RegisterDescriptor desc(m68k_regclass_mac, minor, 0, 32);
-    return new SgAsmDirectRegisterExpression(desc);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(m68k_fmt_i32));
+    return expr;
 }
 
 SgAsmRegisterReferenceExpression *
@@ -454,21 +468,15 @@ DisassemblerM68k::makeFPRegister(unsigned regnum)
             ASSERT_not_reachable("invalid default floating-point format: " + stringifyM68kDataFormat(fmt));
     }
     RegisterDescriptor desc(m68k_regclass_fpr, regnum, 0, registerNBits);
-    return new SgAsmDirectRegisterExpression(desc);
-}
-
-SgAsmRegisterReferenceExpression *
-DisassemblerM68k::makeRegister(const RegisterDescriptor &reg)
-{
-    return new SgAsmDirectRegisterExpression(reg);
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
+    expr->set_type(makeType(fmt));
+    return expr;
 }
 
 SgAsmIntegerValueExpression *
 DisassemblerM68k::makeImmediateValue(M68kDataFormat fmt, unsigned value)
 {
-    SgAsmIntegerValueExpression *retval = new SgAsmIntegerValueExpression(value, formatNBits(fmt));
-    retval->set_type(makeType(fmt));
-    return retval;
+    return new SgAsmIntegerValueExpression(value, formatNBits(fmt), makeType(fmt));
 }
 
 SgAsmIntegerValueExpression *
@@ -494,9 +502,7 @@ DisassemblerM68k::makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_num
             ASSERT_not_reachable("word size " + plural(nbits, "bits") + " is not handled yet");
     }
 
-    SgAsmIntegerValueExpression *retval = new SgAsmIntegerValueExpression(value, nbits);
-    retval->set_type(makeType(fmt));
-    return retval;
+    return new SgAsmIntegerValueExpression(value, nbits, makeType(fmt));
 }
             
 // The modreg should be 6 bits: upper three bits are the mode, lower three bits are usually a register number.
@@ -538,8 +544,9 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
         // m68k_eam_dsp: address register indirect with displacement
         SgAsmRegisterReferenceExpression *rre = makeAddressRegister(reg, m68k_fmt_i32);
         uint64_t displacement_n = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
-        SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32);
+        SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32, makeType(m68k_fmt_i32));
         SgAsmExpression *address = SageBuilderAsm::buildAddExpression(rre, displacement);
+        address->set_type(makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (6==mode) {
         if (family & (m68k_generation_2 | m68k_generation_3)) {
@@ -556,34 +563,39 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
             } else {
                 SgAsmExpression *address = makeAddressRegister(reg, m68k_fmt_i32);
                 uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instructionWord(ext_offset+1)));
-                SgAsmIntegerValueExpression *dispExpr = new SgAsmIntegerValueExpression(disp, 32);
+                SgAsmIntegerValueExpression *dispExpr = new SgAsmIntegerValueExpression(disp, 32, makeType(m68k_fmt_i32));
+                dispExpr->set_type(makeType(m68k_fmt_i32));
                 address = SageBuilderAsm::buildAddExpression(address, dispExpr);
+                address->set_type(makeType(m68k_fmt_i32));
 
                 unsigned indexRegisterNumber = extract<12, 15>(instructionWord(ext_offset+1));
                 SgAsmRegisterReferenceExpression *indexRRE = makeDataAddressRegister(indexRegisterNumber, m68k_fmt_i32);
                 uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instructionWord(ext_offset+1)));
-                SgAsmIntegerValueExpression *scaleExpr = new SgAsmIntegerValueExpression(scale, 32);
+                SgAsmIntegerValueExpression *scaleExpr = new SgAsmIntegerValueExpression(scale, 32, makeType(m68k_fmt_i32));
+                scaleExpr->set_type(makeType(m68k_fmt_i32));
                 address = SageBuilderAsm::buildAddExpression(address,
                                                              SageBuilderAsm::buildMultiplyExpression(indexRRE, scaleExpr));
+                address->set_type(makeType(m68k_fmt_i32));
                 return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL /*segment*/, type);
             }
         }
     } else if (7==mode && 0==reg) {
         // m68k_eam_absw: absolute short addressing mode
         uint64_t val = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
-        SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32);
+        SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32, makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (7==mode && 1==reg) {
         // m68k_eam_absl: absolute long addressing mode
         uint64_t val = shiftLeft<32>((uint64_t)instructionWord(ext_offset+1), 16) | (uint64_t)instructionWord(ext_offset+2);
-        SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32);
+        SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32, makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (7==mode && 2==reg) {
         // m68k_eam_pcdsp: program counter indirect with displacement
         SgAsmRegisterReferenceExpression *rre = makeProgramCounter();
         uint64_t displacement_n = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
-        SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32);
+        SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32, makeType(m68k_fmt_i32));
         SgAsmExpression *address = SageBuilderAsm::buildAddExpression(rre, displacement);
+        address->set_type(makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (7==mode && 3==reg) {
         // m68k_eam_pcidx8: program counter indirect with index (8-bit displacement)
@@ -598,32 +610,6 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
         throw Exception(std::string("invalid effective address mode:") +
                         " mode=" + numberToString(mode) + " reg="  + numberToString(reg));
     }
-        
-//        case m68k_eam_idx8:
-//        case m68k_eam_pcidx8: {
-//            unsigned ext1 = instructionWord(ext_offset+1);
-//            SgAsmM68kRegisterReferenceExpression *areg = eam==m68k_eam_idx ? makeAddressRegister(reg, 32) : makeProgramCounter();
-//            uint64_t val = signExtend<8, 32>(extract<0, 7>(ext1));
-//            SgAsmIntegerValueExpression *dsp = new SgAsmIntegerValueExpression(val, 32);
-//            SgAsmExpression *addr = SageBuilderAsm::makeAdd(areg, dsp);
-//            bool da_bit = 0!=extract<15, 15>(ext1);
-//            bool wl_bit = 0!=extract<11, 11>(ext1);
-//            if (!wl_bit)
-//                throw Exception("16-bit index registers not supported by this architecture");
-//            SgAsmM68kRegisterReferenceExpression *ireg = da_bit ?
-//                                                         makeAddressRegister(extract<12, 14>(ext1), 32) :
-//                                                         makeDataRegister(extract<12, 14>(ext1), 32);
-//            switch (extract<9, 10>(ext1)) {
-//                case 0: val=1; break;
-//                case 1: val=2; break;
-//                case 2: val=4; break;
-//                case 3: val=8; break;
-//            }
-//            SgAsmIntegerValueExpression *scale = new SgAsmIntegerValueExpression(val, 32);
-//            SgAsmExpression *product = SageBuilderAsm::makeMul(ireg, scale);
-//            addr = SageBuilderAsm::makeAdd(addr, product);
-//            return SageBuilderAsm::makeMemoryReference(addr, NULL/*segment*/, type);
-//        }
 }
 
 SgAsmExpression *
