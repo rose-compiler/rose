@@ -302,6 +302,7 @@ Grammar::setUpBinaryInstructions()
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
                           AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames,
                           "AsmExpression", "AsmExpressionTag", false);
+    AsmExpression.setFunctionPrototype("HEADER_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",

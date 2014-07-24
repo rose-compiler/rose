@@ -204,6 +204,11 @@ HEADER_FLOAT_VALUE_EXPRESSION_END
 
 
 
+HEADER_EXPRESSION_START
+	public:
+		size_t get_nBits() const;
+HEADER_EXPRESSION_END
+
 
 
 // ************************************
