@@ -169,6 +169,43 @@ void Driver<Sage>::setCompiledFile(unsigned file_id) const {
   it_file->second->set_skipfinalCompileStep(false);
 }
 
+boost::filesystem::path resolve(
+    const boost::filesystem::path & p,
+    const boost::filesystem::path & base = boost::filesystem::current_path()
+) {
+//    boost::filesystem::path abs_p = boost::filesystem::absolute(p,base);
+    boost::filesystem::path abs_p = p;
+    boost::filesystem::path result;
+    for(boost::filesystem::path::iterator it=abs_p.begin();
+        it!=abs_p.end();
+        ++it)
+    {
+        if(*it == "..")
+        {
+            // /a/b/.. is not necessarily /a if b is a symbolic link
+            if(boost::filesystem::is_symlink(result) )
+                result /= *it;
+            // /a/b/../.. is not /a/b/.. under most circumstances
+            // We can end up with ..s in our result because of symbolic links
+            else if(result.filename() == "..")
+                result /= *it;
+            // Otherwise it should be safe to resolve the parent
+            else
+                result = result.parent_path();
+        }
+        else if(*it == ".")
+        {
+            // Ignore
+        }
+        else
+        {
+            // Just cat other path entries
+            result /= *it;
+        }
+    }
+    return result;
+}
+
 void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header_file_id) {
   std::string header_file_name;
 
@@ -187,7 +224,7 @@ void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header
   std::vector<std::string>::const_iterator it_arg;
   for (it_arg = arg_list.begin(); it_arg != arg_list.end(); it_arg++) {
     if ((*it_arg).find("-I") == 0) {
-      std::string inc_path = (*it_arg).substr(2);
+      std::string inc_path = resolve(boost::filesystem::path((*it_arg).substr(2))).string();
       if (header_file_name.find(inc_path) == 0) {
         header_file_name = header_file_name.substr(inc_path.length());
         while (header_file_name[0] == '/') header_file_name = header_file_name.substr(1);

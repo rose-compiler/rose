@@ -26,7 +26,7 @@ void language_t::init() {
 
   Directives::addClauseLabel<language_t>(e_logger_clause_where,   "where");
   Directives::addClauseLabel<language_t>(e_logger_clause_message, "message");
-  Directives::addClauseLabel<language_t>(e_logger_clause_cond,    "cond");
+  Directives::addClauseLabel<language_t>(e_logger_clause_conds,    "cond");
   Directives::addClauseLabel<language_t>(e_logger_clause_params,  "params");
 
 }

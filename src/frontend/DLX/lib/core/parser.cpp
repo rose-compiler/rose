@@ -120,12 +120,32 @@ bool Parser::parse<SgExpression *>(SgExpression * & expr) const {
 
 template <>
 bool Parser::parse<SgValueExp *>(SgValueExp * & expr) const {
-  return false;
+  skip_whitespace();
+  if (!AstFromString::afs_match_constant())
+     return false;
+  skip_whitespace();
+
+  expr = isSgValueExp(AstFromString::c_parsed_node);
+  return expr != NULL;
 }
 
 template <>
 bool Parser::parse<std::string>(std::string & str) const {
-  return false;
+  if (!consume('"')) return false;
+
+  const char * old_c_char = AstFromString::c_char;
+
+  while (AstFromString::c_char[0] != '\0' && !consume('"')) {
+    str += AstFromString::c_char[0];
+    AstFromString::c_char++;
+  }
+
+  if (AstFromString::c_char[0] == '\0') {
+    AstFromString::c_char = old_c_char;
+    return false;
+  }
+
+  return true;
 }
 
 template <>

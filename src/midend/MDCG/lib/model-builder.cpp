@@ -9,6 +9,8 @@
 #include "MFB/Sage/api.hpp"
 #include "MFB/Sage/driver.hpp"
 
+#include "sage3basic.h"
+
 #include <cassert>
 
 namespace MDCG {

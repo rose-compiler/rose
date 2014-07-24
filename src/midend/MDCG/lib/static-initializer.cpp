@@ -35,6 +35,103 @@ SgVariableSymbol * StaticInitializer::instantiateDeclaration(std::string decl_na
   return var_decl_res.symbol;
 }
 
+
+Model::class_t StaticInitializer::getBaseClassForPointerOnClass(Model::field_t field, std::string field_name, std::string class_name) {
+  /// match 'struct class_name * field_name;'
+
+  assert(field_name.empty() || field->node->symbol->get_name().getString() == field_name);
+
+  MDCG::Model::type_t type = field->node->type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+
+  Model::class_t res = type->node->base_class;
+
+  assert(class_name.empty() || res->node->symbol->get_name().getString() == class_name);
+
+  return res;
+}
+
+Model::class_t StaticInitializer::getBaseClassForArrayOnClass(Model::field_t field, std::string field_name, std::string class_name) {
+  /// match 'struct class_name field_name[size];'
+
+  assert(field_name.empty() || field->node->symbol->get_name().getString() == field_name);
+
+  MDCG::Model::type_t type = field->node->type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_array_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+
+  Model::class_t res = type->node->base_class;
+
+  assert(class_name.empty() || res->node->symbol->get_name().getString() == class_name);
+
+  return res;
+}
+
+Model::class_t StaticInitializer::getBaseClassForTypedefOnPointerOnClass(Model::field_t field, std::string field_name, std::string class_name) {
+  /// match 'typedef struct class_name * typedef_name; typedef_name field_name;'
+
+  assert(field_name.empty() || field->node->symbol->get_name().getString() == field_name);
+
+  MDCG::Model::type_t type = field->node->type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_typedef_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+
+  Model::class_t res = type->node->base_class;
+
+  assert(class_name.empty() || res->node->symbol->get_name().getString() == class_name);
+
+  return res;
+}
+
+
+Model::class_t StaticInitializer::getBaseClassForPointerOnTypedefOnPointerOnClass(Model::field_t field, std::string field_name, std::string class_name) {
+  /// match 'typedef struct class_name * typedef_name; typedef_name * field_name;'
+
+  assert(field_name.empty() || field->node->symbol->get_name().getString() == field_name);
+
+  MDCG::Model::type_t type = field->node->type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_typedef_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+
+  Model::class_t res = type->node->base_class;
+
+  assert(class_name.empty() || res->node->symbol->get_name().getString() == class_name);
+
+  return res;
+}
+
+Model::class_t StaticInitializer::getBaseClassForArrayOnTypedefOnPointerOnClass(Model::field_t field, std::string field_name, std::string class_name) {
+  /// match 'typedef struct class_name * typedef_name; typedef_name field_name[size];'
+
+  assert(field_name.empty() || field->node->symbol->get_name().getString() == field_name);
+
+  MDCG::Model::type_t type = field->node->type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_array_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_typedef_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
+  type = type->node->base_type;
+  assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+
+  Model::class_t res = type->node->base_class;
+
+  assert(class_name.empty() || res->node->symbol->get_name().getString() == class_name);
+
+  return res;
+}
+
 /** @} */
 
 }

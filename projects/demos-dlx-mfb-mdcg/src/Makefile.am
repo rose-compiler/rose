@@ -15,9 +15,13 @@ $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la:
 $(top_builddir)/src/backend/MDCG/lib/libMDCG.la:
 	$(MAKE) -C $(top_builddir)/src/backend/MDCG/lib libMDCG.la
 
+$(builddir)/../lib/mdcg/logger/libMDCG-logger.la:
+	make -C $(builddir)/../lib/mdcg/logger libMDCG-logger.la
+
 logger_SOURCES = \
   logger.cpp
 logger_CXXFLAGS = \
+  -DLIBLOGGER_INC_PATH=\"$(srcdir)/../include/\" \
   -I$(srcdir)/../include \
   -I$(top_srcdir)/src/frontend/DLX/include \
   -I$(top_srcdir)/src/midend/MFB/include \
@@ -29,5 +33,6 @@ logger_LDADD= \
   $(builddir)/../lib/dlx/logger/libDLX-logger.la \
   $(top_builddir)/src/midend/MFB/lib/sage/libMFB-sage.la \
   $(top_builddir)/src/midend/MDCG/lib/libMDCG.la \
+  $(builddir)/../lib/mdcg/logger/libMDCG-logger.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

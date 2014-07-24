@@ -12,12 +12,11 @@ bool Frontend<Logger::language_t>::findAssociatedNodes<Logger::language_t::e_log
   Directives::construct_t<Logger::language_t, Logger::language_t::e_logger_construct_log> * construct,
   const std::map<SgLocatedNode *, directive_t *> & translation_map
 ) {
-  SgPragmaDeclaration * pragma_decl = isSgPragmaDeclaration(directive_node);
-  assert(pragma_decl != NULL);
-
-  construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
+  construct->assoc_nodes.pragma_decl = isSgPragmaDeclaration(directive_node);
+  assert(construct->assoc_nodes.pragma_decl != NULL);
+  construct->assoc_nodes.parent_scope = isSgScopeStatement(construct->assoc_nodes.pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-  construct->assoc_nodes.logged_region = SageInterface::getNextStatement(pragma_decl);
+  construct->assoc_nodes.logged_region = SageInterface::getNextStatement(construct->assoc_nodes.pragma_decl);
   assert(construct->assoc_nodes.logged_region != NULL);
 
   return true;
@@ -33,6 +32,7 @@ bool Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_l
   DLX::Frontend::Parser parser(directive_str, directive_node);
 
   assert(parser.consume('('));
+  parser.skip_whitespace();
   if (parser.consume("before"))
     clause->parameters.position = Directives::generic_clause_t<Logger::language_t>::parameters_t<Logger::language_t::e_logger_clause_where>::e_before;
   else if (parser.consume("after"))
@@ -40,6 +40,7 @@ bool Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_l
   else if (parser.consume("both"))
     clause->parameters.position = Directives::generic_clause_t<Logger::language_t>::parameters_t<Logger::language_t::e_logger_clause_where>::e_both;
   else assert(false);
+  parser.skip_whitespace();
   assert(parser.consume(')'));
 
   directive_str = parser.getDirectiveString();
@@ -55,7 +56,11 @@ bool Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_l
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
 
+  assert(parser.consume('('));
+  parser.skip_whitespace();
   assert(parser.parse<std::string>(clause->parameters.message));
+  parser.skip_whitespace();
+  assert(parser.consume(')'));
 
   directive_str = parser.getDirectiveString();
   return true;
@@ -63,14 +68,22 @@ bool Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_l
 
 template <>
 template <>
-bool Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_logger_clause_cond>(
+bool Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_logger_clause_conds>(
   std::string & directive_str,
   SgLocatedNode * directive_node,
-  Directives::clause_t<Logger::language_t, Logger::language_t::e_logger_clause_cond> * clause
+  Directives::clause_t<Logger::language_t, Logger::language_t::e_logger_clause_conds> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
 
-  assert(parser.parse<SgExpression *>(clause->parameters.expr) && parser.parse<SgValueExp *>(clause->parameters.value));
+  assert(parser.consume('('));
+  parser.skip_whitespace();
+  assert(parser.parse<SgExpression *>(clause->parameters.expr));
+  parser.skip_whitespace();
+  assert(parser.consume(','));
+  parser.skip_whitespace();
+  assert(parser.parse<SgValueExp *>(clause->parameters.value));
+  parser.skip_whitespace();
+  assert(parser.consume(')'));
 
   directive_str = parser.getDirectiveString();
   return true;

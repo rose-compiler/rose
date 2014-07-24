@@ -12,8 +12,8 @@ generic_clause_t<Logger::language_t> * buildClause<Logger::language_t>(Logger::l
       return new clause_t<Logger::language_t, Logger::language_t::e_logger_clause_where>();
     case Logger::language_t::e_logger_clause_message:
       return new clause_t<Logger::language_t, Logger::language_t::e_logger_clause_message>();
-    case Logger::language_t::e_logger_clause_cond:
-      return new clause_t<Logger::language_t, Logger::language_t::e_logger_clause_cond>();
+    case Logger::language_t::e_logger_clause_conds:
+      return new clause_t<Logger::language_t, Logger::language_t::e_logger_clause_conds>();
     case Logger::language_t::e_logger_clause_params:
       return new clause_t<Logger::language_t, Logger::language_t::e_logger_clause_params>();
     case Logger::language_t::e_clause_last:
@@ -38,9 +38,9 @@ bool parseClauseParameters<Logger::language_t>(
       return Frontend::Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_logger_clause_message>(
         directive_str, directive_node, (clause_t<Logger::language_t, Logger::language_t::e_logger_clause_message> *)clause
       );
-    case Logger::language_t::e_logger_clause_cond:
-      return Frontend::Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_logger_clause_cond>(
-        directive_str, directive_node, (clause_t<Logger::language_t, Logger::language_t::e_logger_clause_cond> *)clause
+    case Logger::language_t::e_logger_clause_conds:
+      return Frontend::Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_logger_clause_conds>(
+        directive_str, directive_node, (clause_t<Logger::language_t, Logger::language_t::e_logger_clause_conds> *)clause
       );
     case Logger::language_t::e_logger_clause_params:
       return Frontend::Frontend<Logger::language_t>::parseClauseParameters<Logger::language_t::e_logger_clause_params>(

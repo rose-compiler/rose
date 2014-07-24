@@ -53,25 +53,27 @@ class api_t;
 template <>
 class Driver<Sage> {
   public:
+    typedef unsigned file_id_t;
+
     SgProject * project;
 
   private:
 
   // Files management
 
-    unsigned file_id_counter;
+    file_id_t file_id_counter;
     
-    std::map<boost::filesystem::path, unsigned> path_to_id_map;
+    std::map<boost::filesystem::path, file_id_t> path_to_id_map;
 
-    std::map<unsigned, SgSourceFile *> id_to_file_map;
+    std::map<file_id_t, SgSourceFile *> id_to_file_map;
 
-    std::map<SgSourceFile *, unsigned> file_to_id_map;
+    std::map<SgSourceFile *, file_id_t> file_to_id_map;
 
-    std::map<unsigned, std::set<unsigned> > file_id_to_accessible_file_id_map;
+    std::map<file_id_t, std::set<file_id_t> > file_id_to_accessible_file_id_map;
 
   // Symbols management
 
-    std::map<SgSymbol *, unsigned> p_symbol_to_file_id_map;
+    std::map<SgSymbol *, file_id_t> p_symbol_to_file_id_map;
 
     std::set<SgSymbol *> p_valid_symbols;
 
@@ -85,24 +87,24 @@ class Driver<Sage> {
 
   private:
     template <typename Object>
-    void loadSymbols(unsigned file_id, SgSourceFile * file);
+    void loadSymbols(file_id_t file_id, SgSourceFile * file);
  
-    void addIncludeDirectives(unsigned target_file_id, unsigned header_file_id);
+    void addIncludeDirectives(file_id_t target_file_id, file_id_t header_file_id);
 
     template <typename Object>
-    void createForwardDeclaration(typename Sage<Object>::symbol_t symbol, unsigned target_id);
+    void createForwardDeclaration(typename Sage<Object>::symbol_t symbol, file_id_t target_id);
 
     /// If a symbol is imported through include directive, we need to add a pointer to its outer most associated declaration scope (not global-scope).
-    void addPointerToTopParentDeclaration(SgSymbol * symbol, unsigned target_id);
+    void addPointerToTopParentDeclaration(SgSymbol * symbol, file_id_t target_id);
 
     template <typename Symbol>
     bool resolveValidParent(Symbol * symbol);
 
-    unsigned getFileID(const boost::filesystem::path & path) const;
-    unsigned getFileID(SgSourceFile * source_file) const;
-    unsigned getFileID(SgScopeStatement * scope) const;
+    file_id_t getFileID(const boost::filesystem::path & path) const;
+    file_id_t getFileID(SgSourceFile * source_file) const;
+    file_id_t getFileID(SgScopeStatement * scope) const;
 
-    unsigned add(SgSourceFile * file);
+    file_id_t add(SgSourceFile * file);
 
   protected:
     template <typename Object>
@@ -113,27 +115,27 @@ class Driver<Sage> {
     virtual ~Driver();
 
     /// Create or load a file
-    unsigned create(const boost::filesystem::path & path);
-    unsigned add(const boost::filesystem::path & path);
+    file_id_t create(const boost::filesystem::path & path);
+    file_id_t add(const boost::filesystem::path & path);
 
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
-    void setUnparsedFile(unsigned file_id) const;
+    void setUnparsedFile(file_id_t file_id) const;
 
     /// Set a file to be compiled with the project (by default file added to the driver are *NOT* compiled)
-    void setCompiledFile(unsigned file_id) const;
+    void setCompiledFile(file_id_t file_id) const;
 
     /// Build API of one file
-    api_t * getAPI(unsigned file_id) const;
+    api_t * getAPI(file_id_t file_id) const;
 
     /// Build API of a collection of files
-    api_t * getAPI(const std::set<unsigned> & file_ids) const;
+    api_t * getAPI(const std::set<file_id_t> & file_ids) const;
 
     /// Build API for all loaded files
     api_t * getAPI() const;
 
     /// Add needed include statement or forward definition to use a symbol in a file (from file ID)
     template <typename Object>
-    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, unsigned file_id, bool need_forward_only = false);
+    typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, file_id_t file_id, bool need_forward_only = false);
 
     /// Add needed include statement or forward definition to use a symbol in a file (from SgSourceFile pointer)
     template <typename Object>
@@ -152,10 +154,10 @@ class Driver<Sage> {
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
 
     /// Import external header for a given file
-    void addExternalHeader(unsigned file_id, std::string header_name, bool is_system_header = true);
+    void addExternalHeader(file_id_t file_id, std::string header_name, bool is_system_header = true);
 
     /// Add a pragma at the begining of the file
-    void addPragmaDecl(unsigned file_id, std::string str);
+    void addPragmaDecl(file_id_t file_id, std::string str);
 };
 
 // SgTemplateInstantiationMemberFunctionDecl
@@ -168,11 +170,47 @@ class Driver<Sage> {
 
 /** @} */
 
+template <typename Object>
+typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, file_id_t file_id, bool need_forward_only) {
+  std::map<file_id_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
+  assert(it_file != id_to_file_map.end());
+
+  std::map<SgSymbol *, file_id_t>::iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find(symbol);
+  assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+
+  file_id_t sym_decl_file_id = it_sym_decl_file_id->second;
+
+  bool need_include_directive = !need_forward_only;
+
+  // TODO find out wether we need a include directive or if we can do with a forward declaration
+
+  if (need_include_directive) {
+    std::map<file_id_t, std::set<file_id_t> >::iterator it_accessible_file_ids = file_id_to_accessible_file_id_map.find(file_id);
+    assert(it_accessible_file_ids != file_id_to_accessible_file_id_map.end());
+
+    std::set<file_id_t> & accessible_file_ids = it_accessible_file_ids->second;
+    std::set<file_id_t>::iterator accessible_file_id = accessible_file_ids.find(sym_decl_file_id);
+    if (accessible_file_id == accessible_file_ids.end()) {
+      addIncludeDirectives(file_id, sym_decl_file_id);
+      accessible_file_ids.insert(sym_decl_file_id);
+    }
+
+    addPointerToTopParentDeclaration(symbol, file_id);
+  }
+  else {
+    createForwardDeclaration<Object>(symbol, file_id);
+  }
+
+  // No change of symbol
+  return symbol;
 }
 
-//#ifndef NO_TEMPLATE_DEFINITION
-#include "MFB/Sage/driver.tpp"
-//#endif
+template <typename Object>
+void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, unsigned target_file_id) {
+  assert(false);
+}
+
+}
 
 #endif /* __MFB_SAGE_DRIVER_HPP__ */
 

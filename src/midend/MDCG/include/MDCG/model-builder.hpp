@@ -30,6 +30,9 @@ namespace MDCG {
 */
 
 class ModelBuilder {
+  public:
+    typedef unsigned model_id_t;
+
   private:
     MFB::Driver<MFB::Sage> & p_mfb_driver;
     std::vector<Model::model_t> p_models;
@@ -57,15 +60,15 @@ class ModelBuilder {
     unsigned create();
 
     void add(
-      unsigned model,
+      unsigned model_id_t,
       const std::string & name,
       const std::string & path,
       std::string suffix
     );
 
-    const Model::model_t & get(unsigned model) const;
+    const Model::model_t & get(model_id_t model) const;
 
-    void print(std::ostream & out, unsigned model) const;
+    void print(std::ostream & out, model_id_t model) const;
 };
 
 /** @} */

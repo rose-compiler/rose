@@ -8,10 +8,10 @@
 #ifndef __MDCG_CODE_GENERATOR_HPP__
 #define __MDCG_CODE_GENERATOR_HPP__
 
-#include "MDCG/model.hpp"
+#include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/class-declaration.hpp"
 
-#include "MFB/Sage/driver.hpp"
+#include "MDCG/model.hpp"
 
 #include <string>
 #include <sstream>
@@ -43,7 +43,7 @@ class StaticInitializer {
     SgInitializer * createInitializer(
       Model::class_t element,
       const typename ModelTraversal::input_t & input,
-      unsigned file_id
+      MFB::Driver<MFB::Sage>::file_id_t file_id
     ) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
@@ -68,7 +68,7 @@ class StaticInitializer {
     SgExpression * createPointer(
       Model::class_t element,
       const typename ModelTraversal::input_t & input,
-      unsigned file_id,
+      MFB::Driver<MFB::Sage>::file_id_t file_id,
       const std::string & decl_name
     ) const {
       SgInitializer * initializer = createInitializer<ModelTraversal>(element, input, file_id);
@@ -90,7 +90,7 @@ class StaticInitializer {
       Model::class_t element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id
+      MFB::Driver<MFB::Sage>::file_id_t file_id
     ) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
@@ -109,7 +109,7 @@ class StaticInitializer {
       Model::class_t element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id,
+      MFB::Driver<MFB::Sage>::file_id_t file_id,
       const std::string & decl_prefix
     ) const {
       SgExprListExp * expr_list = SageBuilder::buildExprListExp();
@@ -134,7 +134,7 @@ class StaticInitializer {
       unsigned num_element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id,
+      MFB::Driver<MFB::Sage>::file_id_t file_id,
       const std::string & decl_name
     ) const {
       SgAggregateInitializer * aggr_init = createArray<ModelTraversal, Iterator>(element, input_begin, input_end, file_id);
@@ -158,7 +158,7 @@ class StaticInitializer {
       unsigned num_element,
       Iterator input_begin,
       Iterator input_end,
-      unsigned file_id,
+      MFB::Driver<MFB::Sage>::file_id_t file_id,
       const std::string & decl_name,
       const std::string & sub_decl_prefix
     ) const {
@@ -189,7 +189,7 @@ class StaticInitializer {
     SgVariableSymbol * addDeclaration(
       Model::class_t element,
       typename ModelTraversal::input_t & input,
-      unsigned file_id,
+      MFB::Driver<MFB::Sage>::file_id_t file_id,
       std::string decl_name
     ) const {
       SgInitializer * initializer = createInitializer<ModelTraversal>(element, input, file_id);
@@ -203,6 +203,21 @@ class StaticInitializer {
       
       return symbol;
     }
+
+  /// match 'struct class_name * field_name;'
+  static Model::class_t getBaseClassForPointerOnClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
+
+  /// match 'struct class_name field_name[size];'
+  static Model::class_t getBaseClassForArrayOnClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
+
+  /// match 'typedef struct class_name * typedef_name; typedef_name field_name;'
+  static Model::class_t getBaseClassForTypedefOnPointerOnClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
+
+  /// match 'typedef struct class_name * typedef_name; typedef_name * field_name;'
+  static Model::class_t getBaseClassForPointerOnTypedefOnPointerOnClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
+
+  /// match 'typedef struct class_name * typedef_name; typedef_name field_name[size];'
+  static Model::class_t getBaseClassForArrayOnTypedefOnPointerOnClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
 };
 
 /** @} */

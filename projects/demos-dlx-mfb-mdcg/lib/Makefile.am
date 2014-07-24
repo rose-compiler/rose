@@ -1,3 +1,3 @@
 
-SUBDIRS=dlx mfb mdcg
+SUBDIRS=dlx mfb mdcg liblogger
 

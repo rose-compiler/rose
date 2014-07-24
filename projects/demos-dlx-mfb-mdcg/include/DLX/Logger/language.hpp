@@ -43,7 +43,7 @@ struct language_t {
   enum clause_kinds_e {
     e_logger_clause_where,
     e_logger_clause_message,
-    e_logger_clause_cond,
+    e_logger_clause_conds,
     e_logger_clause_params,
     e_clause_last
   };
@@ -71,6 +71,7 @@ namespace Directives {
 template <>
 template <>
 struct generic_construct_t<Logger::language_t>::assoc_nodes_t<Logger::language_t::e_logger_construct_log> {
+  SgPragmaDeclaration * pragma_decl;
   SgScopeStatement * parent_scope;
   SgStatement * logged_region;
 };
@@ -94,7 +95,7 @@ struct generic_clause_t<Logger::language_t>::parameters_t<Logger::language_t::e_
 /// The "cond" clause takes an expression and a constant value as arguments
 template <>
 template <>
-struct generic_clause_t<Logger::language_t>::parameters_t<Logger::language_t::e_logger_clause_cond> {
+struct generic_clause_t<Logger::language_t>::parameters_t<Logger::language_t::e_logger_clause_conds> {
   SgExpression * expr;
   SgValueExp * value;
 };
