@@ -3635,7 +3635,7 @@ struct M68k_movem_mr: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
-        SgAsmExpression *dst = d->makeRegistersFromMask(d->instructionWord(1), fmt);
+        SgAsmExpression *dst = d->makeRegistersFromMask(d->instructionWord(1), m68k_fmt_i32);
         return d->makeInstruction(m68k_movem, "movem."+formatLetter(fmt), src, dst);
     }
 };
@@ -3649,7 +3649,7 @@ struct M68k_movem_rm: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = extract<6, 6>(w0) ? m68k_fmt_i32 : m68k_fmt_i16;
         bool isPreDecrement = extract<3, 5>(w0) == 4;
-        SgAsmRegisterNames *src = d->makeRegistersFromMask(d->instructionWord(1), fmt, isPreDecrement);
+        SgAsmRegisterNames *src = d->makeRegistersFromMask(d->instructionWord(1), m68k_fmt_i32, isPreDecrement);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 1);
         return d->makeInstruction(m68k_movem, "movem."+formatLetter(fmt), src, dst);
     }
@@ -4165,12 +4165,27 @@ struct M68k_subi: M68k {
 // SUBQ.B #<data>, <ea>x
 // SUBQ.W #<data>, <ea>x
 // SUBQ.L #<data>, <ea>x
+//      Address register direct modes are handled by subq_a
 struct M68k_subq: M68k {
     M68k_subq(): M68k("subq", m68k_family,
                       OP(5) & BIT<8>(1) & (BITS<6, 7>(0) | BITS<6, 7>(1) | BITS<6, 7>(2)) &
-                      EAM(m68k_eam_alter & ~m68k_eam_pcmi)) {}
+                      EAM(m68k_eam_alter & ~m68k_eam_pcmi & ~m68k_eam_ard)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
+        unsigned n = extract<9, 11>(w0);
+        SgAsmExpression *src = d->makeImmediateValue(fmt, n?n:8);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
+        return d->makeInstruction(m68k_subq, "subq."+formatLetter(fmt), src, dst);
+    }
+};
+
+// SUBQ.W #<data>, Ax  (but treated as long)
+// SUBQ.L #<data>, Ax
+struct M68k_subq_a: M68k {
+    M68k_subq_a(): M68k("subq_a", m68k_family,
+                        OP(5) & BIT<8>(1) & (BITS<6, 7>(1) | BITS<6, 7>(2)) & EAM(m68k_eam_ard)) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        M68kDataFormat fmt = m68k_fmt_i32;              // word-mode is like long-mode when writing to an address register
         unsigned n = extract<9, 11>(w0);
         SgAsmExpression *src = d->makeImmediateValue(fmt, n?n:8);
         SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
@@ -4762,6 +4777,7 @@ DisassemblerM68k::init()
     M68k_DECODER(suba);
     M68k_DECODER(subi);
     M68k_DECODER(subq);
+    M68k_DECODER(subq_a);
     M68k_DECODER(subx);
     M68k_DECODER(swap);
     M68k_DECODER(tas);
