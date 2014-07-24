@@ -656,21 +656,29 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition) {
     size_t nbits = dflt->get_width();
+    assert(0 == nbits % 8);
     assert(1==condition->get_width()); // FIXME: condition is not used
-    assert(8==nbits || 16==nbits || 32==nbits || 64==nbits || 80==nbits);
 
     PartialDisableUsedef du(this);
 
-    // Read the bytes in little endian order and concatenate them together. InsnSemanticsExpr will simplify the expression
-    // so that reading after writing a multi-byte value will return the original value written rather than a concatenation
-    // of byte extractions.
+    // Read the bytes and concatenate them together. InsnSemanticsExpr will simplify the expression so that reading after
+    // writing a multi-byte value will return the original value written rather than a concatenation of byte extractions.
     SValuePtr retval;
     InsnSet defs;
+    size_t nbytes = nbits/8;
+    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
-        BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*bytenum, 8*bytenum+8);
+        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, this, this));
-        retval = 0==bytenum ? byte_value : SValue::promote(concat(retval, byte_value));
+        if (0==bytenum) {
+            retval = byte_value;
+        } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
+            retval = SValue::promote(concat(byte_value, retval));
+        } else {
+            retval = SValue::promote(concat(retval, byte_value));
+        }
         if (compute_usedef) {
             const InsnSet &definers = byte_value->get_defining_instructions();
             defs.insert(definers.begin(), definers.end());
@@ -691,17 +699,18 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     SValuePtr value = SValue::promote(value_->copy());
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
-    assert(8==nbits || 16==nbits || 32==nbits || 64==nbits || 80==nbits);
+    assert(0 == nbits % 8);
     assert(1==condition->get_width()); // FIXME: condition is not used
     size_t nbytes = nbits/8;
+    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
-        BaseSemantics::SValuePtr byte_value = extract(value, 8*bytenum, 8*bytenum+8);
+        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         state->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (SgAsmInstruction *insn = get_insn()) {
-            BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
             BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem);
             BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
             assert(cell!=NULL); // we just wrote to it!

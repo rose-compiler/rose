@@ -1269,18 +1269,19 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
+    ByteOrder::Endianness byteOrder_;                   /**< Memory byte order. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : addrProtoval_(addrProtoval), valProtoval_(valProtoval) {
+        : addrProtoval_(addrProtoval), valProtoval_(valProtoval), byteOrder_(ByteOrder::ORDER_UNSPECIFIED) {
         ASSERT_not_null(addrProtoval);
         ASSERT_not_null(valProtoval);
     }
 
     MemoryState(const MemoryStatePtr &other)
-        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_) {}
+        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_), byteOrder_(ByteOrder::ORDER_UNSPECIFIED) {}
 
 public:
     virtual ~MemoryState() {}
@@ -1323,6 +1324,12 @@ public:
 
     /** Clear memory. Removes all memory cells from this memory state. */
     virtual void clear() = 0;
+
+    /** Memory byte order.
+     *  @{ */
+    ByteOrder::Endianness get_byteOrder() const { return byteOrder_; }
+    void set_byteOrder(ByteOrder::Endianness bo) { byteOrder_ = bo; }
+    /** @} */
 
     /** Read a value from memory.
      *
