@@ -1399,9 +1399,14 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
         uint64_t val = SageInterface::getAsmSignedConstant(ve);
         retval = operators->number_(value_nbits, val);
+    } else if (SgAsmBinaryAdd *sum = isSgAsmBinaryAdd(e)) {
+        SgAsmExpression *lhs = sum->get_lhs();
+        SgAsmExpression *rhs = sum->get_rhs();
+        size_t nbits = std::max(lhs->get_nBits(), rhs->get_nBits());
+        retval = operators->add(operators->signExtend(read(lhs, lhs->get_nBits(), addr_nbits), nbits),
+                                operators->signExtend(read(rhs, rhs->get_nBits(), addr_nbits), nbits));
     } else {
-        assert(!"not implemented");
-        abort();
+        ASSERT_not_implemented(e->class_name());
     }
 
     // Make sure the return value is the requested width. The unsignedExtend() can expand or shrink values.
