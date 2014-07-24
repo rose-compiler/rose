@@ -3156,10 +3156,16 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // it can be put after the type and before the variable name.
                unp->u_sage->printAttributesForType(funcdecl_stmt,info);
 
-               curprint ( string(";"));
+               curprint(";");
+#if 0
+               printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): funcdecl_stmt->isExternBrace() = %s \n",funcdecl_stmt->isExternBrace() ? "true" : "false");
+#endif
                if (funcdecl_stmt->isExternBrace())
                   {
-                    curprint ( string(" }"));
+#if 0
+                    printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): output extern brace \n");
+#endif
+                    curprint(" }");
                   }
              }
 #if 0
