@@ -1,3 +1,0 @@
-
-SUBDIRS=DLX MFB MDCG libLogger
-
