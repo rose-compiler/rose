@@ -71,6 +71,10 @@ enum M68kMacRegister {
     m68k_mac_acc3,                                      /**< MAC 32-bit accumulator #3. */
     m68k_mac_ext01,                                     /**< Extensions for ACC0 and ACC1. */
     m68k_mac_ext23,                                     /**< Extensions for ACC2 and ACC3. */
+    m68k_mac_ext0,                                      /**< Extension for ACC0. */
+    m68k_mac_ext1,                                      /**< Extension for ACC1. */
+    m68k_mac_ext2,                                      /**< Extension for ACC2. */
+    m68k_mac_ext3,                                      /**< Extension for ACC3. */
     m68k_mac_mask,                                      /**< MAC mask register. */
 };
 

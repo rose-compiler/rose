@@ -1089,7 +1089,11 @@ RegisterDictionary::dictionary_coldfire_emac()
         regs->insert("acc3",       m68k_regclass_mac, m68k_mac_acc3,   0, 32);  // accumulator #3
 
         regs->insert("accext01",   m68k_regclass_mac, m68k_mac_ext01,  0, 32);  // extensions for acc0 and acc1
+        regs->insert("accext0",    m68k_regclass_mac, m68k_mac_ext0,   0, 16);
+        regs->insert("accext1",    m68k_regclass_mac, m68k_mac_ext1,  16, 16);
         regs->insert("accext23",   m68k_regclass_mac, m68k_mac_ext23,  0, 32);  // extensions for acc2 and acc3
+        regs->insert("accext2",    m68k_regclass_mac, m68k_mac_ext2,   0, 16);
+        regs->insert("accext3",    m68k_regclass_mac, m68k_mac_ext3,  16, 16);
     }
     return regs;
 }
