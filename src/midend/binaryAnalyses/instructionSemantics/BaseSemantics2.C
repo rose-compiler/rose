@@ -1254,7 +1254,7 @@ Dispatcher::iproc_get(int key)
 }
 
 const RegisterDescriptor &
-Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
+Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing)
 {
     const RegisterDictionary *regdict = get_register_dictionary();
     if (!regdict)
@@ -1262,8 +1262,12 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
 
     const RegisterDescriptor *reg = regdict->lookup(regname);
     if (!reg) {
+        if (allowMissing) {
+            static RegisterDescriptor invalidRegister;
+            return invalidRegister;
+        }
         std::ostringstream ss;
-        ss <<"Invalid register: \"" <<regname <<"\"";
+        ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->get_architecture_name() <<"\"";
         throw Exception(ss.str(), get_insn());
     }
 

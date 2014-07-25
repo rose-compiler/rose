@@ -2486,8 +2486,9 @@ public:
 
     /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
-     *  register cannot be found then an exception is thrown. */
-    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0);
+     *  register cannot be found then either an exception is thrown or an invalid register is returned depending on whether
+     *  @p allowMissing is false or true, respectively. */
+    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
