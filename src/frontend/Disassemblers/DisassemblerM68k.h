@@ -155,7 +155,8 @@ public:
     /** Build an instruction. */
     SgAsmM68kInstruction *makeInstruction(M68kInstructionKind, const std::string &mnemonic,
                                           SgAsmExpression *arg0=NULL, SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
-                                          SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL, SgAsmExpression *arg5=NULL);
+                                          SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL, SgAsmExpression *arg5=NULL,
+                                          SgAsmExpression *arg6=NULL);
 
     /** Return the address of the instruction we are disassembling. */
     rose_addr_t get_insn_va() const { return insn_va; }

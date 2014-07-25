@@ -665,7 +665,8 @@ DisassemblerM68k::make_unknown_instruction(const Disassembler::Exception &e)
 SgAsmM68kInstruction *
 DisassemblerM68k::makeInstruction(M68kInstructionKind kind, const std::string &mnemonic,
                                   SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3,
-                                  SgAsmExpression *op4, SgAsmExpression *op5, SgAsmExpression *op6)
+                                  SgAsmExpression *op4, SgAsmExpression *op5, SgAsmExpression *op6,
+                                  SgAsmExpression *op7)
 {
     ASSERT_forbid2(m68k_unknown_instruction==kind, "should have called make_unknown_instruction instead");
     SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(get_insn_va(), mnemonic, kind);
@@ -676,13 +677,14 @@ DisassemblerM68k::makeInstruction(M68kInstructionKind kind, const std::string &m
 
     /* If any operand is null, then the following operands must also be null because analysis assumes that the operand vector
      * indices correspond to argument positions and don't expect null-padding in the vector. */
-    ASSERT_require2((!op1 && !op2 && !op3 && !op4 && !op5 && !op6) ||
-                    ( op1 && !op2 && !op3 && !op4 && !op5 && !op6) ||
-                    ( op1 &&  op2 && !op3 && !op4 && !op5 && !op6) ||
-                    ( op1 &&  op2 &&  op3 && !op4 && !op5 && !op6) ||
-                    ( op1 &&  op2 &&  op3 &&  op4 && !op5 && !op6) ||
-                    ( op1 &&  op2 &&  op3 &&  op4 &&  op5 && !op6) ||
-                    ( op1 &&  op2 &&  op3 &&  op4 &&  op5 &&  op6),
+    ASSERT_require2((!op1 && !op2 && !op3 && !op4 && !op5 && !op6 && !op7) ||
+                    ( op1 && !op2 && !op3 && !op4 && !op5 && !op6 && !op7) ||
+                    ( op1 &&  op2 && !op3 && !op4 && !op5 && !op6 && !op7) ||
+                    ( op1 &&  op2 &&  op3 && !op4 && !op5 && !op6 && !op7) ||
+                    ( op1 &&  op2 &&  op3 &&  op4 && !op5 && !op6 && !op7) ||
+                    ( op1 &&  op2 &&  op3 &&  op4 &&  op5 && !op6 && !op7) ||
+                    ( op1 &&  op2 &&  op3 &&  op4 &&  op5 &&  op6 && !op7) ||
+                    ( op1 &&  op2 &&  op3 &&  op4 &&  op5 &&  op6 &&  op7),
                     "if any operand is null then all following operands must also be null");
 
     if (op1)
@@ -697,6 +699,8 @@ DisassemblerM68k::makeInstruction(M68kInstructionKind kind, const std::string &m
         SageBuilderAsm::appendOperand(insn, op5);
     if (op6)
         SageBuilderAsm::appendOperand(insn, op6);
+    if (op7)
+        SageBuilderAsm::appendOperand(insn, op7);
 
     return insn;
 }
@@ -3345,6 +3349,16 @@ struct M68k_mac_l2: M68k {
         // How to scale product: 0=>none; 1=>multiply by 2; 2=>reserved; 3=>divide by 2
         SgAsmExpression *scaleFactor = d->makeImmediateValue(m68k_fmt_i8, extract<9, 10>(d->instructionWord(1)));
 
+        // Accumulator register
+        SgAsmExpression *accRegister = NULL;
+        unsigned accNumber = (extract<4, 4>(d->instructionWord(1))<<1) | extract<7, 7>(w0);
+        switch (accNumber) {
+            case 0: accRegister = d->makeMacRegister(m68k_mac_acc1); break;
+            case 1: accRegister = d->makeMacRegister(m68k_mac_acc0); break;
+            case 2: accRegister = d->makeMacRegister(m68k_mac_acc3); break;
+            case 3: accRegister = d->makeMacRegister(m68k_mac_acc2); break;
+        }
+
         // Source loaded into Rw in parallel with ACC += product
         SgAsmExpression *source = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
 
@@ -3355,7 +3369,7 @@ struct M68k_mac_l2: M68k {
         unsigned rwRegisterNumber = (extract<6, 6>(w0)<<3) | extract<9, 11>(w0);
         SgAsmExpression *rw = d->makeDataAddressRegister(rwRegisterNumber, m68k_fmt_i32, 0);
 
-        return d->makeInstruction(m68k_mac, "mac.l", ry, rx, scaleFactor, source, useMask, rw);
+        return d->makeInstruction(m68k_mac, "mac.l", ry, rx, scaleFactor, accRegister, source, useMask, rw);
     }
 };
 
@@ -3379,6 +3393,16 @@ struct M68k_mac_w2: M68k {
         // How to scale product: 0=>none; 1=>multiply by 2; 2=>reserved; 3=>divide by 2
         SgAsmExpression *scaleFactor = d->makeImmediateValue(m68k_fmt_i8, extract<9, 10>(d->instructionWord(1)));
 
+        // Accumulator register
+        SgAsmExpression *accRegister = NULL;
+        unsigned accNumber = (extract<4, 4>(d->instructionWord(1))<<1) | extract<7, 7>(w0);
+        switch (accNumber) {
+            case 0: accRegister = d->makeMacRegister(m68k_mac_acc1); break;
+            case 1: accRegister = d->makeMacRegister(m68k_mac_acc0); break;
+            case 2: accRegister = d->makeMacRegister(m68k_mac_acc3); break;
+            case 3: accRegister = d->makeMacRegister(m68k_mac_acc2); break;
+        }
+
         // Source loaded into Rw in parallel with ACC += product
         SgAsmExpression *source = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
 
@@ -3389,7 +3413,7 @@ struct M68k_mac_w2: M68k {
         unsigned rwRegisterNumber = (extract<6, 6>(w0)<<3) | extract<9, 11>(w0);
         SgAsmExpression *rw = d->makeDataAddressRegister(rwRegisterNumber, m68k_fmt_i32, 0);
 
-        return d->makeInstruction(m68k_mac, "mac.w", ry, rx, scaleFactor, source, useMask, rw);
+        return d->makeInstruction(m68k_mac, "mac.w", ry, rx, scaleFactor, accRegister, source, useMask, rw);
     }
 };
 
