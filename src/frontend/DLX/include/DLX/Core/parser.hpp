@@ -9,15 +9,17 @@
 #ifndef __DLX_FRONTEND_PARSER_HPP__
 #define __DLX_FRONTEND_PARSER_HPP__
 
-#include <vector>
-#include <utility>
-#include <string>
-
 #include "DLX/Core/directives.hpp"
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/constructs.hpp"
 
 #include "sage3basic.h"
+
+#include <boost/filesystem.hpp>
+
+#include <vector>
+#include <utility>
+#include <string>
 
 namespace DLX {
 
@@ -103,6 +105,9 @@ bool Parser::parse<section_list_t>(section_list_t &) const;
 
 template <>
 bool Parser::parse<section_t>(section_t &) const;
+
+template <>
+bool Parser::parse<boost::filesystem::path>(boost::filesystem::path &) const;
 
 // Template for singleton parsing
 

@@ -149,6 +149,26 @@ bool Parser::parse<std::string>(std::string & str) const {
 }
 
 template <>
+bool Parser::parse<boost::filesystem::path>(boost::filesystem::path & file) const {
+
+  if (!consume('"')) return false;
+
+  const char * old_c_char = AstFromString::c_char;
+  while (AstFromString::c_char[0] != '\0' && !consume('"')) {
+    AstFromString::c_char++;
+  }
+
+  if (AstFromString::c_char[0] == '\0') {
+    AstFromString::c_char = old_c_char;
+    return false;
+  }
+
+  file = boost::filesystem::path(old_c_char, AstFromString::c_char);
+
+  return true;
+}
+
+template <>
 bool Parser::parse<std::pair<SgExpression *, SgExpression *> >(std::pair<SgExpression *, SgExpression *> & pair) const {
   skip_whitespace();
   if (!parse<SgExpression *>(pair.first)) return false;
