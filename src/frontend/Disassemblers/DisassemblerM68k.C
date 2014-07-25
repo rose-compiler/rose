@@ -1609,7 +1609,7 @@ struct M68k_cmpa: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = 3==extract<6, 8>(w0) ? m68k_fmt_i16 : m68k_fmt_i32;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
-        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), fmt);
+        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), m68k_fmt_i32);
         return d->makeInstruction(m68k_cmpa, "cmpa."+formatLetter(fmt), src, dst);
     }
 };
