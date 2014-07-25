@@ -1280,6 +1280,49 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
     return *reg;
 }
 
+void
+Dispatcher::decrementRegisters(SgAsmExpression *e)
+{
+    struct T1: AstSimpleProcessing {
+        RiscOperatorsPtr ops;
+        T1(const RiscOperatorsPtr &ops): ops(ops) {}
+        void visit(SgNode *node) {
+            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                const RegisterDescriptor &reg = rre->get_descriptor();
+                if (rre->get_adjustment() < 0) {
+                    SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
+                    if (reg.get_nbits() <= 64) {
+                        adj = ops->unsignedExtend(adj, reg.get_nbits());  // truncate
+                    } else {
+                        adj = ops->signExtend(adj, reg.get_nbits());      // extend
+                    }
+                    ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
+                }
+            }
+        }
+    } t1(operators);
+    t1.traverse(e, preorder);
+}
+
+void
+Dispatcher::incrementRegisters(SgAsmExpression *e)
+{
+    struct T1: AstSimpleProcessing {
+        RiscOperatorsPtr ops;
+        T1(const RiscOperatorsPtr &ops): ops(ops) {}
+        void visit(SgNode *node) {
+            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                const RegisterDescriptor &reg = rre->get_descriptor();
+                if (rre->get_adjustment() > 0) {
+                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.get_nbits());
+                    ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
+                }
+            }
+        }
+    } t1(operators);
+    t1.traverse(e, preorder);
+}
+
 SValuePtr
 Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
 {
@@ -1289,22 +1332,6 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
         const RegisterDescriptor &reg = rre->get_descriptor();
         retval = operators->readRegister(reg);
-        if (rre->get_adjustment()) {
-            SValuePtr adj = operators->number_(64, (int64_t)rre->get_adjustment());
-            if (reg.get_nbits() <= 64) {
-                adj = operators->unsignedExtend(adj, reg.get_nbits());      // truncate
-            } else {
-                adj = operators->signExtend(adj, reg.get_nbits());          // extend
-            }
-            if (rre->get_adjustment() < 0) {
-                // pre-decrement
-                retval = operators->add(retval, adj);
-                operators->writeRegister(reg, retval);
-            } else {
-                // post-increment
-                operators->writeRegister(reg, operators->add(retval, adj));
-            }
-        }
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);

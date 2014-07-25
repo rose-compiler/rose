@@ -2498,10 +2498,19 @@ public:
      *  method returns false. */
     virtual RegisterDescriptor segmentRegister(SgAsmMemoryReferenceExpression*);
 
+    /** Increment all auto-increment registers in the expression.  This method traverses the expression and increments each
+     *  the register of each register reference expression that has a positive adjustment value.  If the same register is
+     *  encountered multiple times then it is incremented multiple times. */
+    virtual void incrementRegisters(SgAsmExpression*);
+
+    /** Decrement all auto-decrement registers in the expression.  This method traverses the expression and increments each
+     *  the register of each register reference expression that has a negative adjustment value.  If the same register is
+     *  encountered multiple times then it is decremented multiple times. */
+    virtual void decrementRegisters(SgAsmExpression*);
+
     /** Returns a memory address by evaluating the address expression.  The address expression can be either a constant or an
      *  expression containing operators and constants.  If @p nbits is non-zero then the result is sign extended or truncated
-     *  to the specified width, otherwise the returned SValue is the natural width of the expression.  Registers that are
-     *  marked for pre-decrement or post-increment are adjusted. */
+     *  to the specified width, otherwise the returned SValue is the natural width of the expression. */
     virtual SValuePtr effectiveAddress(SgAsmExpression*, size_t nbits=0);
 
     /** Reads an R-value expression.  The expression can be a constant, register reference, or memory reference.  The width of
