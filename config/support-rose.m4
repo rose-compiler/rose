@@ -2056,6 +2056,15 @@ projects/demos-dlx-mdcg/lib/mdcg/logger/Makefile
 projects/demos-dlx-mdcg/lib/liblogger/Makefile
 projects/demos-dlx-mdcg/src/Makefile
 projects/demos-dlx-mdcg/tests/Makefile
+projects/rose-tooling/Makefile
+projects/rose-tooling/include/Makefile
+projects/rose-tooling/include/DLX/Makefile
+projects/rose-tooling/include/DLX/Tooling/Makefile
+projects/rose-tooling/lib/Makefile
+projects/rose-tooling/lib/dlx/Makefile
+projects/rose-tooling/lib/dlx/tooling/Makefile
+projects/rose-tooling/src/Makefile
+projects/rose-tooling/tests/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
