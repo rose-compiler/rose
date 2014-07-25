@@ -11,7 +11,7 @@ typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 protected:
     explicit DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        set_register_dictionary(RegisterDictionary::dictionary_coldfire());
+        set_register_dictionary(RegisterDictionary::dictionary_coldfire_emac());
         regcache_init();
         iproc_init();
     }
@@ -29,7 +29,9 @@ public:
      *  dictionary via set_register_dictionary() invalidates all entries of the cache.
      *
      * @{ */
-    RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC;
+    RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
+    RegisterDescriptor REG_MACSR_SU, REG_MACSR_FI, REG_MACSR_N, REG_MACSR_Z, REG_MACSR_V, REG_MACSR_C, REG_MAC_MASK;
+    RegisterDescriptor REG_MACEXT0, REG_MACEXT1, REG_MACEXT2, REG_MACEXT3;
     /** @} */
 
     /** Constructor. */
@@ -56,6 +58,9 @@ public:
         ASSERT_not_null(insn);
         return insn->get_kind();
     }
+
+    /** Determines if an instruction should branch. */
+    BaseSemantics::SValuePtr condition(M68kInstructionKind, BaseSemantics::RiscOperators*);
 };
 
 } // namespace
