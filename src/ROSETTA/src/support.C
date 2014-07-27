@@ -825,6 +825,11 @@ Grammar::setUpSupport ()
   // DQ (7/21/2012): Adding C11 support.
      File.setDataPrototype         ( "bool", "C11_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
+     File.setDataPrototype         ( "bool", "C11_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/21/2012): Adding C++0x support.
      File.setDataPrototype         ( "bool", "Cxx0x_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -833,6 +838,11 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (4/20/2014): Adding C14 support.
      File.setDataPrototype         ( "bool", "C14_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
+     File.setDataPrototype         ( "bool", "C14_gnu_only", "= false",
+
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (4/20/2014): Adding C++14 support.
      File.setDataPrototype         ( "bool", "Cxx14_only", "= false",

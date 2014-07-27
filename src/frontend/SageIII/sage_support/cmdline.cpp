@@ -3595,14 +3595,31 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_C89_gnu_only(false);
         }
 
+  // DQ (7/25/2014): We need to support -std=c11 explicitly.
+     set_C11_only(false);
+     ROSE_ASSERT (get_C11_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-std=","(c11)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C11 mode ON \n");
+          set_C11_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
   //
   // C11 only option (turns on EDG c11 options (using the edg --c11 option).
   //
-     set_C11_only(false);
-     ROSE_ASSERT (get_C11_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(C11|C11_only)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 0 )
+          if ( SgProject::get_verbose() >= 1 )
                printf ("C11 mode ON \n");
 #if 0
           printf ("Specification of C11 on command line not yet supported on the command line \n");
@@ -6202,6 +6219,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("   --- Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
      printf ("   --- get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("   --- get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
+     printf ("   --- get_C11_only()            = %s \n",(get_C11_only() == true) ? "true" : "false");
      printf ("   --- get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
      printf ("   --- get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
      printf ("   --- get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
@@ -6219,7 +6237,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // We need a better way of identifying the C compiler which might not be known
   // ideally it should be specified at configure time so that it can be known in
   // case the -rose:C_only option is used.
-     if (get_C_only() == true || get_C99_only() == true)
+  // if (get_C_only() == true || get_C99_only() == true)
+     if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
      {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -6244,23 +6263,59 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back("-std=c99");
                   }
              }
+            else
+             {
+            // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+               if (get_C11_only() == true)
+                  {
+                 // compilerNameString.push_back("-std=c11");
+                    if (get_C11_gnu_only() == true)
+                       {
+                         compilerNameString.push_back("-std=gnu11");
+                       }
+                      else
+                       {
+                         compilerNameString.push_back("-std=c11");
+                       }
+                  }
+                 else
+                  {
+                 // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+                    if (get_C14_only() == true)
+                       {
+                      // compilerNameString.push_back("-std=c14");
+                         if (get_C14_gnu_only() == true)
+                            {
+                              compilerNameString.push_back("-std=gnu14");
+                            }
+                           else
+                            {
+                              compilerNameString.push_back("-std=c14");
+                            }
+                       }
+                      else
+                       {
+                      // The default is to not specify anything using the "-std=" option.
+                       }
+                  }
+             }
      }
-    else if (get_Cxx_only())
-    {
-        compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
-    }
-    else if (get_binary_only())
-    {
-        if (SgProject::get_verbose() >= 3)
-        {
+     else if (get_Cxx_only())
+     {
+       compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+     }
+     else if (get_binary_only())
+     {
+       if (SgProject::get_verbose() >= 3)
+         {
             std::cout
                 << "[TRACE] Backend compiler for binary analysis is set as"
                 << "'" << compilerNameString[0] << "'"
                 << std::endl;
-        }
-    }
-    else if (get_Fortran_only() == true)
-    {
+         }
+     }
+     else if (get_Fortran_only() == true)
+     {
         // compilerNameString = "f77 ";
         compilerNameString[0] = ROSE_GFORTRAN_PATH;
 

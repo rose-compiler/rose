@@ -1503,6 +1503,15 @@ HEADER_JAVA_TYPE_EXPRESSION_START
 
 HEADER_JAVA_TYPE_EXPRESSION_END
 
+HEADER_TYPE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_TYPE_EXPRESSION_END
+
 
 // #########################################################
 // #########################################################
@@ -7340,3 +7349,6 @@ $CLASSNAME::get_type() const
 
 SOURCE_JAVA_TYPE_EXPRESSION_END
 
+
+SOURCE_TYPE_EXPRESSION_START
+SOURCE_TYPE_EXPRESSION_END

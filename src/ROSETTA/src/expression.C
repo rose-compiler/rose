@@ -56,6 +56,11 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (JavaTypeExpression, "JavaTypeExpression", "JAVA_TYPE_EXPRESSION");
 
+  // DQ (7/24/2014): C11 Generic macros requires additional IR support.  This IR node is likely to be
+  // similar to the SgJavaTypeExpression node and it might be that that IR node could be eliminated in 
+  // favor of this newer (more language independent) IR node.
+     NEW_TERMINAL_MACRO (TypeExpression, "TypeExpression", "TYPE_EXPRESSION");
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -337,10 +342,10 @@ Grammar::setUpExpressions ()
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
-          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
+          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-          TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation | JavaTypeExpression | ClassExp,
-          "Expression","ExpressionTag", false);
+          TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
+          ClassExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -483,6 +488,10 @@ Grammar::setUpExpressions ()
   // DQ (3/7/2014): We want to use the automatically generated access function instead (so I think I need to include this).
      JavaTypeExpression.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      JavaTypeExpression.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     TypeExpression.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
   // This is the easiest solution, then where any post_construction_initialization() function
   // was ment to call the base class post_construction_initialization() function, we just do 
@@ -769,6 +778,9 @@ Grammar::setUpExpressions ()
 
      JavaTypeExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
   // DQ (2/1/2009: Added comment.
   // ***********************************************************
   //    This whole mechanism is not used presently.  Someone
@@ -800,6 +812,9 @@ Grammar::setUpExpressions ()
      JavaNormalAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
 
      JavaTypeExpression.editSubstitute         ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.editSubstitute         ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -1599,6 +1614,11 @@ Grammar::setUpExpressions ()
      JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
   // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
      JavaTypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.setFunctionPrototype ( "HEADER_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+     TypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (1/13/2014): Added Java support for Java annotations.
@@ -2430,7 +2450,10 @@ Grammar::setUpExpressions ()
      JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION","../Grammar/Expression.code" );
      JavaNormalAnnotation.setFunctionSource       ( "SOURCE_JAVA_NORMAL_ANNOTATION","../Grammar/Expression.code" );
 
-     JavaTypeExpression.setFunctionSource             ( "SOURCE_JAVA_TYPE_EXPRESSION","../Grammar/Expression.code" );
+     JavaTypeExpression.setFunctionSource         ( "SOURCE_JAVA_TYPE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.setFunctionSource             ( "SOURCE_TYPE_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );

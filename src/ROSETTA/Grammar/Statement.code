@@ -1381,6 +1381,16 @@ HEADER_LIST_DECLARATIONS
 HEADER_CATCH_STATEMENT_SEQ_END
 
 
+HEADER_STATIC_ASSERTION_DECLARATION_START
+
+       // We need this to be defined to avoid calling the base class version (which is an error).
+          SgName get_mangled_name() const;
+
+          bool hasExplicitScope() const;
+
+HEADER_STATIC_ASSERTION_DECLARATION_END
+
+
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
 
       //! Support for C++ covariant return types (used in virtual function overloading).
@@ -7447,10 +7457,10 @@ SgDeclarationStatement::skipEmptyTemplateArgumentListTest ( SgFunctionDeclaratio
        // that were explicit in the source code.  Only meaningful for function 
        // and member function template arguments.
           bool templateArgumentWasExplicitlySpecified = (*i)->get_explicitlySpecified();
-          bool outputTemplateArgument = false;
+       // bool outputTemplateArgument = false;
           if ( templateArgumentWasExplicitlySpecified == true )
              {
-               outputTemplateArgument = true;
+            // outputTemplateArgument = true;
                skipEmptyTemplateArgumentList = false;
              }
           
@@ -9832,6 +9842,38 @@ SgUpcFenceStatement::post_construction_initialization()
 
 SOURCE_UPC_FENCE_STATEMENT_END
 
+
+SOURCE_STATIC_ASSERTION_DECLARATION_START
+
+void
+SgStaticAssertionDeclaration::post_construction_initialization()
+   {
+  // Not sure we have to do anything here!
+   }
+
+// We need this to be defined to avoid calling the base class version (which is an error).
+SgName
+SgStaticAssertionDeclaration::get_mangled_name() const
+   {
+  // Not sure we have to do anything here!
+
+#if 0
+     printf ("Exiting as a test! (SgStaticAssertionDeclaration::get_mangled_name() not implemented) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return "static_assertion";
+   }
+
+bool
+SgStaticAssertionDeclaration::hasExplicitScope() const
+   {
+  // This function reports that this IR node does NOT store its scope explicitly.
+     return false;
+   }
+
+
+SOURCE_STATIC_ASSERTION_DECLARATION_END
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START
