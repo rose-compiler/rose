@@ -503,7 +503,9 @@ Traversal::evaluateInheritedAttribute (
 #endif
                if (isSgExprListExp(expression) == NULL)
                   {
+#if 0
                     printf ("Warning: Expression returning SgTypeDefault, but not a SgExprListExp: expression = %p = %s \n",expression,expression->class_name().c_str());
+#endif
                  // ROSE_ASSERT(false);
                   }
 #if 0
@@ -1196,7 +1198,7 @@ fixupNodesWithTypes(SgProject* project,Traversal & traversal)
    }
 
 
-#define DEBUG_USING_DOT_GRAPHS 1
+#define DEBUG_USING_DOT_GRAPHS 0
 
 int main( int argc, char * argv[] )
    {
