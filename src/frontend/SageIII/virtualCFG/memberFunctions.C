@@ -301,7 +301,8 @@ std::vector<CFGEdge> SgGlobal::cfgInEdges(unsigned int idx) {
 
 unsigned int
 SgGlobal::cfgIndexForEnd() const {
-  return 0;
+//  return 0;
+  return this->get_declarations().size();
 }
 
 bool 
