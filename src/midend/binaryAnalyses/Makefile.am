@@ -52,7 +52,7 @@ libbinaryMidend_la_SOURCES +=					\
     libraryIdentification/functionIdentification.C 
 endif
 
-include_HEADERS =					\
+pkginclude_HEADERS =					\
     binary_analysis.h					\
     GraphAlgorithms.h					\
     RoseBin_CallGraphAnalysis.h				\

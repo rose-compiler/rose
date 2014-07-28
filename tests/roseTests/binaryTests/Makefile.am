@@ -902,7 +902,7 @@ parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 TEST_TARGETS += $(parse_Targets)
 
 $(parse_Targets): parse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --skip-disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_parse_container
 check_parse_container: $(parse_Targets)
@@ -914,7 +914,7 @@ disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemb
 TEST_TARGETS += $(disassemble_Targets)
 
 $(disassemble_Targets): disassemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble --quiet" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_disassemble
 check_disassemble: $(disassemble_Targets)
@@ -926,7 +926,7 @@ unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens
 TEST_TARGETS += $(unparse_Targets)
 
 $(unparse_Targets): unparse_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_unparse
 check_unparse: $(unparse_Targets)
@@ -938,7 +938,7 @@ assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specim
 TEST_TARGETS += $(assemble_Targets)
 
 $(assemble_Targets): assemble_%.passed: $(BINARY_SAMPLES)/% disassemble
-	@$(RTH_RUN) CMD="`pwd`/disassemble -rose:binary --quiet --reassemble --show-bad" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
+	@$(RTH_RUN) CMD="`pwd`/disassemble --quiet --reassemble --show-bad" SPECIMEN="$(abspath $<)" $(TEST_SPECIMEN) $@
 
 .PHONY: check_assemble
 check_assemble: $(assemble_Targets)

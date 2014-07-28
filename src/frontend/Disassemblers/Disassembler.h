@@ -2,6 +2,7 @@
 #define ROSE_DISASSEMBLER_H
 
 #include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
+#include "Diagnostics.h"                                // rose::Diagnostics
 #include "Registers.h"
 #include "MemoryMap.h"
 #include "integerOps.h"
@@ -220,14 +221,14 @@ public:
     typedef Map<rose_addr_t, Exception> BadMap;
 
     Disassembler()
-        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
+        : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
           p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
           p_protection(MemoryMap::MM_PROT_EXEC)
         {ctor();}
 
     Disassembler(const Disassembler& other)
         : p_registers(other.p_registers), p_partitioner(other.p_partitioner), p_search(other.p_search),
-          p_debug(other.p_debug), p_wordsize(other.p_wordsize), p_sex(other.p_sex), p_alignment(other.p_alignment),
+          p_wordsize(other.p_wordsize), p_sex(other.p_sex), p_alignment(other.p_alignment),
           p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection)
         {}
 
@@ -428,21 +429,6 @@ public:
         return p_sex;
     }
 
-    /** Sends disassembler diagnostics to the specified output stream. Null (the default) turns off debugging.
-     *
-     *  Thread safety: It is not safe to change the debugging stream while another thread is using this same Disassembler
-     *  object. */
-    void set_debug(FILE *f) {
-        p_debug = f;
-    }
-
-    /** Returns the file currently used for debugging; null implies no debugging.
-     *
-     *  Thread safety: This method is thread safe. */
-    FILE *get_debug() const {
-        return p_debug;
-    }
-
     /** Returns the number of instructions successfully disassembled. The counter is updated by disassembleBlock(), which is
      *  generally called by all disassembly methods except for disassembleOne().
      *
@@ -469,13 +455,15 @@ public:
     }
 
     /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
-     *  (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
-     *  a null pointer for the file.  Progress report properties are class variables. Changing their values will immediately
-     *  affect all disassemblers in all threads.
+     *  (default is 10) by sending a single line of ouput to the mlog[INFO] diagnostic stream.  Progress reporting can be
+     *  disabled by supplying a negative value.  Progress report properties are class variables. Changing their
+     *  values will immediately affect all disassemblers in all threads.
      *
      * Thread safety: This method is thread safe. */
-    void set_progress_reporting(FILE*, unsigned min_interval);
+    void set_progress_reporting(double min_interval);
 
+    /** Initializes and registers disassembler diagnostic streams. See Diagnostics::initialize(). */
+    static void initDiagnostics();
 
     /***************************************************************************************************************************
      *                                          Low-level disassembly functions
@@ -648,13 +636,6 @@ public:
      *  Thread safety: This method is thread safe. The optional supplied instruction is only used to obtain a virtual address. */
     void update_progress(SgAsmInstruction*);
 
-    /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
-     *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
-     *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf().
-     *
-     *  Thread safety: This method is thread safe. */
-    void progress(FILE*, const char *fmt, ...) const __attribute__((format(printf, 3, 4)));
-
     /** Makes an unknown instruction from an exception.
      *
      *  Thread safety: The safety of this method depends on its implementation in the subclass. */
@@ -692,21 +673,18 @@ private:
      *                                          Data members
      ***************************************************************************************************************************/
 protected:
+    static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
     class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
-    FILE *p_debug;                                      /**< Set to non-null to get debugging info. */
     size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
     ByteOrder::Endianness p_sex;                        /**< Byte order for SEARCH_WORDS. */
     size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
-
-    static time_t progress_interval;                    /**< Minimum interval between progress reports. */
-    static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
-    static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
-
+    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 };
 

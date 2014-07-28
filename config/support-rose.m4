@@ -850,6 +850,8 @@ fi
 # Call supporting macro for Haskell
 ROSE_SUPPORT_HASKELL
 
+ROSE_SUPPORT_CUDA
+
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 

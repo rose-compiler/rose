@@ -15,7 +15,7 @@ libroseClangFrontend_la_SOURCES      = \
 libroseClangFrontend_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libroseClangFrontend_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
-include_HEADERS = clang-frontend.hpp clang-frontend-private.hpp
+pkginclude_HEADERS = clang-frontend.hpp clang-frontend-private.hpp
 
 endif
 

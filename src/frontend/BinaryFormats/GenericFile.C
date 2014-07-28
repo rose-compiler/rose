@@ -176,10 +176,10 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
 
         if (get_tracking_references()) {
             assert(map->exists(va));
-            std::pair<Extent, MemoryMap::Segment> me = map->at(va);
-            if (me.second.get_buffer()->get_data_ptr()==&(get_data()[0])) {
+            const MemoryMap::Segments::Node &me = map->at(va);
+            if (me.value().get_buffer()->get_data_ptr()==&(get_data()[0])) {
                 /* We are tracking file reads and this segment does, indeed, point into the file. */
-                size_t file_offset = me.second.get_buffer_offset(me.first, va);
+                size_t file_offset = me.value().get_buffer_offset(me.key(), va);
                 mark_referenced_extent(file_offset, nread);
             }
         }

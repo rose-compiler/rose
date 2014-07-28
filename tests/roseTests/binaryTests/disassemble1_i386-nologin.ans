@@ -25,7 +25,6 @@ using this memory map for disassembly:
     va 0x08049793 + 0x00000001 = 0x08049794 rw-p at buffer aaj   + 0x00000793 i386-nologin(LOAD#3)
     va 0x08049794 + 0x000000c0 = 0x08049854 r--- at buffer acd   + 0x00000794 i386-nologin(.gnu.conflict)
     va 0x08049854 + 0x000007ac = 0x0804a000 rw-p at buffer aaj   + 0x00000854 i386-nologin(LOAD#3)
-disassembled 3392 instructions and 83 failures (use --show-bad to see errors)
 
 
 0x08048304: ================================== Function (function call) unknown name
@@ -2044,4 +2043,3 @@ disassembled 3392 instructions and 83 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

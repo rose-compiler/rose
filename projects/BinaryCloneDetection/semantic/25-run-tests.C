@@ -760,8 +760,9 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                     }
                     if (nchanges>0) {
                         MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->insert(Extent(base_va, nbytes), MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
-                                                                                   "analysis-mapped dynlink addresses"));
+                        ro_map->insert(AddressInterval::baseSize(base_va, nbytes),
+                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
+                                                          "analysis-mapped dynlink addresses"));
                     } else {
                         delete[] buf;
                     }

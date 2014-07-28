@@ -14,7 +14,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = CallGraph.h ClassHierarchyGraph.h
+pkginclude_HEADERS = CallGraph.h ClassHierarchyGraph.h
 
 
 

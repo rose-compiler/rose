@@ -20,7 +20,6 @@ using this memory map for disassembly:
     va 0x00010948 + 0x00000008 = 0x00010950 rw-p at anon aca     + 0x00000000 arm-ctrlaltdel(.bss)
     va 0x00010950 + 0x000004bc = 0x00010e0c rw-p at anon aal     + 0x00000008 arm-ctrlaltdel(LOAD#3)
     va 0x00010e0c + 0x000001f4 = 0x00011000 rw-p at anon aak     + 0x00000000 arm-ctrlaltdel(LOAD#3)
-disassembled 776 instructions and 2289 failures (use --show-bad to see errors)
 
 
 0x000083f0: ================================== Function (symbol) <perror>
@@ -1227,4 +1226,3 @@ disassembled 776 instructions and 2289 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...
