@@ -809,12 +809,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "int", "upc_threads", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // C89 options:
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
      File.setDataPrototype         ( "bool", "C89_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "C89_gnu_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // C99 options:
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "C99_gnu_only", "= false",
@@ -822,6 +824,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // C11 and C++11 options:
   // DQ (7/21/2012): Adding C11 support.
      File.setDataPrototype         ( "bool", "C11_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -836,16 +839,23 @@ Grammar::setUpSupport ()
   // DQ (7/21/2012): Adding C++11 support.
      File.setDataPrototype         ( "bool", "Cxx11_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (7/27/2014): Adding C++11 GNU support.
+     File.setDataPrototype         ( "bool", "Cxx11_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // C14 and C++14 options:
   // DQ (4/20/2014): Adding C14 support.
      File.setDataPrototype         ( "bool", "C14_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
      File.setDataPrototype         ( "bool", "C14_gnu_only", "= false",
 
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (4/20/2014): Adding C++14 support.
      File.setDataPrototype         ( "bool", "Cxx14_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/27/2014): Adding C++14 gnu support.
+     File.setDataPrototype         ( "bool", "Cxx14_gnu_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/11/2007): Support for Fortran (Fortran, f77, f90, f95, f03)
