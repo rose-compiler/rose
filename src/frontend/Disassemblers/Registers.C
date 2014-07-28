@@ -52,6 +52,9 @@ RegisterDescriptor::operator<(const RegisterDescriptor &other) const
 std::string
 RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDictionary *dict_/*=NULL*/) const
 {
+    if (!rdesc.is_valid())
+        return prefix + (prefix==""?"":"_") + "NONE";
+
     const RegisterDictionary *dict = dict_ ? dict_ : dflt_dict;
     if (dict) {
         std::string name = dict->lookup(rdesc);
