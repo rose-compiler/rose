@@ -564,7 +564,6 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
                 SgAsmExpression *address = makeAddressRegister(reg, m68k_fmt_i32);
                 uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instructionWord(ext_offset+1)));
                 SgAsmIntegerValueExpression *dispExpr = new SgAsmIntegerValueExpression(disp, 32, makeType(m68k_fmt_i32));
-                dispExpr->set_type(makeType(m68k_fmt_i32));
                 address = SageBuilderAsm::buildAddExpression(address, dispExpr);
                 address->set_type(makeType(m68k_fmt_i32));
 
@@ -572,9 +571,9 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
                 SgAsmRegisterReferenceExpression *indexRRE = makeDataAddressRegister(indexRegisterNumber, m68k_fmt_i32);
                 uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instructionWord(ext_offset+1)));
                 SgAsmIntegerValueExpression *scaleExpr = new SgAsmIntegerValueExpression(scale, 32, makeType(m68k_fmt_i32));
-                scaleExpr->set_type(makeType(m68k_fmt_i32));
-                address = SageBuilderAsm::buildAddExpression(address,
-                                                             SageBuilderAsm::buildMultiplyExpression(indexRRE, scaleExpr));
+                SgAsmExpression *product = SageBuilderAsm::buildMultiplyExpression(indexRRE, scaleExpr);
+                product->set_type(makeType(m68k_fmt_i32));
+                address = SageBuilderAsm::buildAddExpression(address, product);
                 address->set_type(makeType(m68k_fmt_i32));
                 return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL /*segment*/, type);
             }
