@@ -3711,9 +3711,10 @@ struct M68k_muls_w: M68k {
     M68k_muls_w(): M68k("muls_w", m68k_family,
                         OP(12) & BITS<6, 8>(7) & EAM(m68k_eam_data)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
+        SgAsmExpression *a0 = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
+        SgAsmExpression *a1 = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i16);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(m68k_muls, "muls.w", src, dst);
+        return d->makeInstruction(m68k_muls, "muls.w", a0, a1, dst);
     }
 };
 
@@ -3742,7 +3743,7 @@ struct M68k_multiply_64: M68k {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dh = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
         SgAsmExpression *dl = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
-        return d->makeInstruction(m68k_muls, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dh, dl);
+        return d->makeInstruction(m68k_muls, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dl, dh);
     }
 };
 
@@ -3751,9 +3752,10 @@ struct M68k_mulu_w: M68k {
     M68k_mulu_w(): M68k("mulu_w", m68k_family,
                         OP(12) & BITS<6, 8>(3) & EAM(m68k_eam_data)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
+        SgAsmExpression *a0 = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
+        SgAsmExpression *a1 = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i16);
         SgAsmExpression *dst = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i32);
-        return d->makeInstruction(m68k_mulu, "mulu.w", src, dst);
+        return d->makeInstruction(m68k_mulu, "mulu.w", a0, a1, dst);
     }
 };
 
