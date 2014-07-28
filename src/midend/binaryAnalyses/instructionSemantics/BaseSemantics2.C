@@ -1436,6 +1436,10 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
         size_t nbits = std::max(lhs->get_nBits(), rhs->get_nBits());
         retval = operators->add(operators->signExtend(read(lhs, lhs->get_nBits(), addr_nbits), nbits),
                                 operators->signExtend(read(rhs, rhs->get_nBits(), addr_nbits), nbits));
+    } else if (SgAsmBinaryMultiply *product = isSgAsmBinaryMultiply(e)) {
+        SgAsmExpression *lhs = product->get_lhs();
+        SgAsmExpression *rhs = product->get_rhs();
+        retval = operators->unsignedMultiply(read(lhs, lhs->get_nBits()), read(rhs, rhs->get_nBits()));
     } else {
         ASSERT_not_implemented(e->class_name());
     }
