@@ -5528,8 +5528,10 @@ Unparse_ExprStmt::unparseTypeAttributes ( SgDeclarationStatement* declaration )
 #if 0
           curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
 #endif
+       // DQ (7/27/2014): Fixed attribute to have correct spelling.
        // curprint(" __attribute__((align(N)))");
-          curprint(" __attribute__((align(");
+       // curprint(" __attribute__((align(");
+          curprint(" __attribute__((aligned(");
           curprint(StringUtility::numberToString((int)alignmentValue));
           curprint(")))");
         }

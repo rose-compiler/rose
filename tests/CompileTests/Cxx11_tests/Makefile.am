@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
 test2012_02.C \
+test2014_02.C \
 last.C
 
 
