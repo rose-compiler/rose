@@ -6859,7 +6859,8 @@ if (get_C_only() ||
        if (iter_last_inc != compilerNameString.end())
          iter_last_inc ++; // accommodate the insert-before-an-iterator semantics used in vector::insert() 
  
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // Liao 7/14/2014. Justin changed installation path of headers to install/rose, 
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, libxomp.h etc, which are installed under $ROSE_INS/include
        // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
 
        // Header should always be available 
@@ -6867,7 +6868,7 @@ if (get_C_only() ||
        // where only a minimum configuration options are used and not all macros are defined. 
 #ifdef ROSE_INSTALLATION_PATH 
        string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include"; 
+       include_path += "/include/rose"; 
        compilerNameString.insert(iter_last_inc, "-I"+include_path); 
 #endif
      }

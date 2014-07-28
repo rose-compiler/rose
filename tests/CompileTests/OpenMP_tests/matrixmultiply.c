@@ -7,9 +7,9 @@ By C. Liao
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#define N 1024 
-#define M 1024
-#define K 1024
+#define N 512
+#define M 512
+#define K 512
 
 #define REAL float 
 int i,j,k;
@@ -57,8 +57,7 @@ c d  x  g h  = c*e+ d*g,  c*f+ d*h
 
 int mmm()
 {
-#pragma omp target map(inout:c[0:N][0:M]), map(in:a[0:N][0:M],b[0:M][0:K])
-#pragma omp parallel for private(i,j,k)
+#pragma omp parallel for private(i,j,k) collapse(2)
   for (i = 0; i < N; i++)
     for (j = 0; j < M; j++)
       for (k = 0; k < K; k++)

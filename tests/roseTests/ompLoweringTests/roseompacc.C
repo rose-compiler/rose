@@ -29,7 +29,7 @@ int main(int argc, char * argv[])
   string orig_name = cur_file->get_file_info()->get_filenameString();
   string file_suffix = StringUtility::fileNameSuffix(orig_name);
   // We only allow C file to be compatible with nvcc CUDA compiler
-  ROSE_ASSERT (CommandlineProcessing::isCFileNameSuffix(file_suffix));
+  //ROSE_ASSERT (CommandlineProcessing::isCFileNameSuffix(file_suffix));
   orig_name = StringUtility::stripPathFromFileName(orig_name);
   string naked_name = StringUtility::stripFileSuffixFromFileName(orig_name);
   cur_file->set_unparse_output_filename("rose_"+naked_name+".cu");

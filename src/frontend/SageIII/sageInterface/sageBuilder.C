@@ -6439,6 +6439,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
        // two features: no scope and unknown type for initializedName
           SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
           name1->set_scope(scope);  // buildInitializedName() does not set scope for various reasons
+          name1->set_parent(scope);
           varSymbol = new SgVariableSymbol(name1);
           varSymbol->set_parent(scope);
 
