@@ -56,7 +56,34 @@ struct IP_abcd: P {
 struct IP_add: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr result = ops->add(a0, a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[0]);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
+        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isNegative = rm;
+        SValuePtr isZero = ops->equalToZero(result);
+        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(ops->invert(sm), ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, dm),
+                                     ops->or_(ops->and_(ops->invert(rm), dm),
+                                              ops->and_(sm, ops->invert(rm))));
+
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_X, isCarry);
     }
 };
 
@@ -76,7 +103,32 @@ struct IP_adda: P {
 struct IP_addi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr result = ops->add(a0, a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
+        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isNegative = rm;
+        SValuePtr isZero = ops->equalToZero(result);
+        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(ops->invert(sm), ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, dm),
+                                     ops->or_(ops->and_(ops->invert(rm), dm),
+                                              ops->and_(sm, ops->invert(rm))));
+
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_X, isCarry);
     }
 };
 
@@ -102,6 +154,7 @@ struct IP_addq: P {
         SValuePtr isCarry = ops->or_(ops->and_(sm, dm),
                                      ops->or_(ops->and_(ops->invert(rm), dm),
                                               ops->and_(sm, ops->invert(rm))));
+
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -113,7 +166,37 @@ struct IP_addq: P {
 struct IP_addx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr x = ops->readRegister(d->REG_CCR_X);
+        SValuePtr result = ops->add(a0, ops->add(a1, ops->unsignedExtend(x, nBits)));
+        d->write(args[1], result);
+        d->incrementRegisters(args[0]);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
+        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isNegative = rm;
+        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(ops->invert(sm), ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, dm),
+                                     ops->or_(ops->and_(ops->invert(rm), dm),
+                                              ops->and_(sm, ops->invert(rm))));
+
+        // Note that the Z bit behaves differently for this instruction than normal.  If the result is non-zero then the Z bit
+        // is cleared, otherwise it is unchanged.
+        SValuePtr isZero = ops->ite(ops->equalToZero(result), ops->readRegister(d->REG_CCR_Z), ops->boolean_(false));
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_X, isCarry);
     }
 };
 
@@ -139,13 +222,60 @@ struct IP_and: P {
 struct IP_andi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        assert_args(insn, args, 2);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        d->decrementRegisters(args[1]);
+        SValuePtr result = ops->and_(d->read(args[0], nBits), d->read(args[1], nBits));
+        d->write(args[1], result);
+        d->incrementRegisters(args[0]);
+        d->incrementRegisters(args[1]);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
 struct IP_asl: P {
     void p(D d, Ops ops, I insn, A args) {
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SgAsmExpression *dst = NULL;
+        SValuePtr count;
+        if (1==args.size()) {
+            assert_args(insn, args, 1);
+            ASSERT_require(args[0]->get_nBits()==16);
+            count = ops->number_(8, 1);
+            dst = args[0];
+        } else {
+            assert_args(insn, args, 2);
+            count = d->read(args[0], args[0]->get_nBits());
+            dst = args[1];
+        }
+
+        size_t nBits = dst->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr value = d->read(dst, nBits);
+        SValuePtr result = ops->shiftLeft(value, count);
+        d->write(dst, result);
+        d->incrementRegisters(args[0]);
+
+        // CCR_C bit is the final bit shifted off the left (or zero if the shift count is zero).
+        SValuePtr isCarry = ops->extract(ops->shiftLeft(ops->concat(value, ops->number_(1, 0)), count), nBits, nBits+1);
+
+        // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
+        SValuePtr xBit = ops->ite(ops->equalToZero(count), ops->readRegister(d->REG_CCR_X), isCarry);
+
+        // CCR_V bit is set if the if the most significant bit is changed at any time during the shift operation.
+        // The CCR_V bit is always clear for a coldfire processor
+        SValuePtr isOverflow = ops->undefined_(1);      // FIXME[Robb P. Matzke 2014-07-28]: not implemented
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
+        ops->writeRegister(d->REG_CCR_X, xBit);
     }
 };
 
@@ -167,12 +297,12 @@ struct IP_asr: P {
         size_t nBits = dst->get_nBits();
         d->decrementRegisters(args[0]);
         SValuePtr value = d->read(dst, nBits);
-        SValuePtr result = ops->shiftRight(value, count);
+        SValuePtr result = ops->shiftRightArithmetic(value, count);
         d->write(dst, result);
         d->incrementRegisters(args[0]);
 
         // CCR_C bit is the final bit shifted off the right (or zero if the shift count is zero).
-        SValuePtr isCarry = ops->extract(ops->shiftRight(ops->concat(ops->number_(1, 0), value), count), 0, 1);
+        SValuePtr isCarry = ops->extract(ops->shiftRightArithmetic(ops->concat(ops->number_(1, 0), value), count), 0, 1);
 
         // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
         SValuePtr xBit = ops->ite(ops->equalToZero(count), ops->readRegister(d->REG_CCR_X), isCarry);
@@ -196,7 +326,12 @@ struct IP_bra: P {
 struct IP_bsr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==32);
+        SValuePtr newSp = ops->add(ops->readRegister(d->REG_A[7]), ops->number_(32, -4));
+        ops->writeRegister(d->REG_A[7], newSp);
+        ops->writeRegister(d->REG_PC, d->read(args[0], 32));
+        SValuePtr dstAddr = ops->number_(32, insn->get_address() + insn->get_size());
+        ops->writeMemory(RegisterDescriptor(), newSp, dstAddr, ops->boolean_(true));
     }
 };
 
@@ -329,14 +464,40 @@ struct IP_ble: P {
 struct IP_bchg: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[1]->get_nBits()==8 || args[1]->get_nBits()==32);
+        size_t nBits = args[1]->get_nBits();
+        size_t logNBits = nBits==8 ? 3 : 5;
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValuePtr result = ops->xor_(mask, a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
     }
 };
 
 struct IP_bclr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[1]->get_nBits()==8 || args[1]->get_nBits()==32);
+        size_t nBits = args[1]->get_nBits();
+        size_t logNBits = nBits==8 ? 3 : 5;
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValuePtr result = ops->and_(ops->invert(mask), a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
     }
 };
 
@@ -399,14 +560,37 @@ struct IP_bkpt: P {
 struct IP_bset: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[1]->get_nBits()==8 || args[1]->get_nBits()==32);
+        size_t nBits = args[1]->get_nBits();
+        size_t logNBits = nBits==8 ? 3 : 5;
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValuePtr result = ops->or_(mask, a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
     }
 };
 
 struct IP_btst: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[1]->get_nBits()==8 || args[1]->get_nBits()==32);
+        size_t nBits = args[1]->get_nBits();
+        size_t logNBits = nBits==8 ? 3 : 5;
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
+        d->incrementRegisters(args[1]);
     }
 };
 
@@ -420,7 +604,34 @@ struct IP_callm: P {
 struct IP_cas: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        ASSERT_require(args[0]->get_nBits() == args[2]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[2]);
+        SValuePtr dc = d->read(args[0], nBits);         // "compare" operand
+        SValuePtr du = d->read(args[1], nBits);         // "update" operand
+        SValuePtr ea = d->read(args[2], nBits);         // "address" operand
+        SValuePtr isEqual = ops->equalToZero(ops->xor_(dc, ea));
+        dc = ops->ite(isEqual, dc, ea);
+        ea = ops->ite(isEqual, du, ea);
+        SValuePtr result = ops->ite(isEqual, du, ea);   // not sure if this is what is meant by "result" in the documentation
+        d->write(args[0], dc);
+        d->write(args[2], ea);
+        d->incrementRegisters(args[2]);
+
+        SValuePtr sm = ops->extract(du, nBits-1, nBits);// documentation is not clear which operand is the "source"
+        SValuePtr dm = ops->extract(ea, nBits-1, nBits);// documentation is not clear which operand is the "destination"
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)),
+                                     ops->or_(ops->and_(rm, ops->invert(dm)),
+                                              ops->and_(sm, rm)));
+        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(sm, ops->and_(ops->invert(dm), rm)));
+        
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
@@ -467,8 +678,8 @@ struct IP_cmp: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         SValuePtr a0 = d->read(args[0], nBits);
-        d->incrementRegisters(args[0]);
         SValuePtr a1 = d->read(args[1], nBits);
+        d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
         SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
@@ -498,8 +709,8 @@ struct IP_cmpa: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         SValuePtr a0 = ops->signExtend(d->read(args[0], nBits), 32);
-        d->incrementRegisters(args[0]);
         SValuePtr a1 = d->read(args[1], nBits);
+        d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
         SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
@@ -525,14 +736,60 @@ struct IP_cmpa: P {
 struct IP_cmpi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        d->incrementRegisters(args[0]);
+        SValuePtr diff = ops->add(a1, ops->negate(a0));
+
+        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
+        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
+        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+
+        SValuePtr isNegative = rm;
+        SValuePtr isZero = ops->equalToZero(diff);
+        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(sm, ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)),
+                                     ops->or_(ops->and_(rm, ops->invert(dm)),
+                                              ops->and_(sm, rm)));
+
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_C, isCarry);
     }
 };
 
 struct IP_cmpm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        d->incrementRegisters(args[0]);
+        SValuePtr diff = ops->add(a1, ops->negate(a0));
+
+        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
+        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
+        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+
+        SValuePtr isNegative = rm;
+        SValuePtr isZero = ops->equalToZero(diff);
+        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(sm, ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)),
+                                     ops->or_(ops->and_(rm, ops->invert(dm)),
+                                              ops->and_(sm, rm)));
+
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_C, isCarry);
     }
 };
 
@@ -678,41 +935,189 @@ struct IP_dble: P {
 
 struct IP_divs: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr quotient;
+        if (2==args.size()) {
+            assert_args(insn, args, 2);
+            if (args[0]->get_nBits() == 16) {
+                // (a1[16] / a0[16]) : (a1[16] % a0[16]) -> a1[32]
+                ASSERT_require(args[1]->get_nBits()==32);
+                d->decrementRegisters(args[0]);
+                SValuePtr divisor = d->read(args[0], 16);
+                SValuePtr dividend = ops->extract(d->read(args[1], 32), 0, 16);
+                quotient = ops->signedDivide(dividend, divisor);
+                SValuePtr remainder = ops->signedModulo(dividend, divisor);
+                d->write(args[1], ops->concat(quotient, remainder));
+                d->incrementRegisters(args[0]);
+            } else if (args[0]->get_nBits() == 32) {
+                // a1[32] / a0[32] -> a1[32]
+                ASSERT_require(args[1]->get_nBits()==32);
+                d->decrementRegisters(args[0]);
+                SValuePtr divisor = d->read(args[0], 32);
+                SValuePtr dividend = d->read(args[1], 32);
+                quotient = ops->signedDivide(dividend, divisor);
+                d->write(args[1], quotient);
+                d->incrementRegisters(args[0]);
+            }
+        } else {
+            // DIVS.L <ea>, Dr, Dq
+            // The dividend is 64-bits Dr:Dq and both a quotient and remainder are stored
+            assert_args(insn, args, 3);
+            ASSERT_require(args[0]->get_nBits()==32);
+            ASSERT_require(args[1]->get_nBits()==32);
+            ASSERT_require(args[2]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr divisor = d->read(args[0], 32);
+            SValuePtr dividend = ops->concat(d->read(args[2], 32), d->read(args[1], 32));
+            quotient = ops->signedDivide(dividend, divisor);
+            SValuePtr remainder = ops->signedModulo(dividend, divisor);
+            d->write(args[1], remainder);
+            d->write(args[2], quotient);
+            d->incrementRegisters(args[0]);
+        }
+
+        // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
+        SValuePtr isOverflow = ops->undefined_(1);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
     }
 };
 
-struct IP_divrem: P {
+struct IP_divsl: P {
     void p(D d, Ops ops, I insn, A args) {
-        if (args.size()==2) {
-            assert_args(insn, args, 2);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
-        } else {
-            assert_args(insn, args, 3);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
-        }
+        assert_args(insn, args, 3);
+        ASSERT_require(args[0]->get_nBits()==32);       // divisor (in)
+        ASSERT_require(args[1]->get_nBits()==32);       // remainder (out)
+        ASSERT_require(args[2]->get_nBits()==32);       // dividend (in); quotient (out)
+        d->decrementRegisters(args[0]);
+        SValuePtr divisor = d->read(args[0], 32);
+        SValuePtr dividend = d->read(args[2], 32);
+        SValuePtr quotient = ops->signedDivide(dividend, divisor);
+        SValuePtr remainder = ops->signedModulo(dividend, divisor);
+        d->write(args[2], quotient);
+        d->write(args[1], remainder);
+        d->incrementRegisters(args[0]);
+
+        // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
+        SValuePtr isOverflow = ops->undefined_(1);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
     }
 };
 
 struct IP_divu: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr quotient;
+        if (2==args.size()) {
+            assert_args(insn, args, 2);
+            if (args[0]->get_nBits() == 16) {
+                // (a1[16] / a0[16]) : (a1[16] % a0[16]) -> a1[32]
+                ASSERT_require(args[1]->get_nBits()==32);
+                d->decrementRegisters(args[0]);
+                SValuePtr divisor = d->read(args[0], 16);
+                SValuePtr dividend = ops->extract(d->read(args[1], 32), 0, 16);
+                quotient = ops->unsignedDivide(dividend, divisor);
+                SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
+                d->write(args[1], ops->concat(quotient, remainder));
+                d->incrementRegisters(args[0]);
+            } else if (args[0]->get_nBits() == 32) {
+                // a1[32] / a0[32] -> a1[32]
+                ASSERT_require(args[1]->get_nBits()==32);
+                d->decrementRegisters(args[0]);
+                SValuePtr divisor = d->read(args[0], 32);
+                SValuePtr dividend = d->read(args[1], 32);
+                quotient = ops->unsignedDivide(dividend, divisor);
+                d->write(args[1], quotient);
+                d->incrementRegisters(args[0]);
+            }
+        } else {
+            // DIVS.L <ea>, Dr, Dq
+            // The dividend is 64-bits Dr:Dq and both a quotient and remainder are stored
+            assert_args(insn, args, 3);
+            ASSERT_require(args[0]->get_nBits()==32);
+            ASSERT_require(args[1]->get_nBits()==32);
+            ASSERT_require(args[2]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr divisor = d->read(args[0], 32);
+            SValuePtr dividend = ops->concat(d->read(args[2], 32), d->read(args[1], 32));
+            quotient = ops->unsignedDivide(dividend, divisor);
+            SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
+            d->write(args[1], remainder);
+            d->write(args[2], quotient);
+            d->incrementRegisters(args[0]);
+        }
+
+        // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
+        SValuePtr isOverflow = ops->undefined_(1);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+    }
+};
+
+struct IP_divul: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        ASSERT_require(args[0]->get_nBits()==32);       // divisor (in)
+        ASSERT_require(args[1]->get_nBits()==32);       // remainder (out)
+        ASSERT_require(args[2]->get_nBits()==32);       // dividend (in); quotient (out)
+        d->decrementRegisters(args[0]);
+        SValuePtr divisor = d->read(args[0], 32);
+        SValuePtr dividend = d->read(args[2], 32);
+        SValuePtr quotient = ops->unsignedDivide(dividend, divisor);
+        SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
+        d->write(args[2], quotient);
+        d->write(args[1], remainder);
+        d->incrementRegisters(args[0]);
+
+        // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
+        SValuePtr isOverflow = ops->undefined_(1);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
     }
 };
 
 struct IP_eor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[1]);
+        SValuePtr result = ops->xor_(d->read(args[0], nBits), d->read(args[1], nBits));
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
 struct IP_eori: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[1]);
+        SValuePtr result = ops->xor_(d->read(args[0], nBits), d->read(args[1], nBits));
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
@@ -726,14 +1131,33 @@ struct IP_exg: P {
 struct IP_ext: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t dstNBits = args[0]->get_nBits();
+        size_t srcNBits = dstNBits / 2;
+        SValuePtr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
+        SValuePtr result = ops->signExtend(a0, dstNBits);
+        d->write(args[0], result);
+        
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(a0));         // result==0 iff a0==0
+        ops->writeRegister(d->REG_CCR_N, ops->extract(a0, 7, 8));       // result<0  iff a0<0
     }
 };
 
 struct IP_extb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() >= 8);
+        size_t dstNBits = args[0]->get_nBits();
+        size_t srcNBits = dstNBits / 2;
+        SValuePtr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
+        SValuePtr result = ops->signExtend(a0, dstNBits);
+        d->write(args[0], result);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(a0));         // result==0 iff a0==0
+        ops->writeRegister(d->REG_CCR_N, ops->extract(a0, 7, 8));       // result<0  iff a0<0
     }
 };
 
@@ -1228,15 +1652,73 @@ struct IP_link: P {
 
 struct IP_lsl: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SgAsmExpression *dst = NULL;
+        SValuePtr count;
+        if (1==args.size()) {
+            assert_args(insn, args, 1);
+            ASSERT_require(args[0]->get_nBits()==16);
+            count = ops->number_(8, 1);
+            dst = args[0];
+        } else {
+            assert_args(insn, args, 2);
+            count = d->read(args[0], args[0]->get_nBits());
+            dst = args[1];
+        }
+
+        size_t nBits = dst->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr value = d->read(dst, nBits);
+        SValuePtr result = ops->shiftLeft(value, count);
+        d->write(dst, result);
+        d->incrementRegisters(args[0]);
+
+        // CCR_C bit is the final bit shifted off the left (or zero if the shift count is zero).
+        SValuePtr isCarry = ops->extract(ops->shiftLeft(ops->concat(value, ops->number_(1, 0)), count), nBits, nBits+1);
+
+        // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
+        SValuePtr xBit = ops->ite(ops->equalToZero(count), ops->readRegister(d->REG_CCR_X), isCarry);
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
+        ops->writeRegister(d->REG_CCR_X, xBit);
     }
 };
 
 struct IP_lsr: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SgAsmExpression *dst = NULL;
+        SValuePtr count;
+        if (1==args.size()) {
+            assert_args(insn, args, 1);
+            ASSERT_require(args[0]->get_nBits()==16);
+            count = ops->number_(8, 1);
+            dst = args[0];
+        } else {
+            assert_args(insn, args, 2);
+            count = d->read(args[0], args[0]->get_nBits());
+            dst = args[1];
+        }
+
+        size_t nBits = dst->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr value = d->read(dst, nBits);
+        SValuePtr result = ops->shiftRight(value, count);
+        d->write(dst, result);
+        d->incrementRegisters(args[0]);
+
+        // CCR_C bit is the final bit shifted off the right (or zero if the shift count is zero).
+        SValuePtr isCarry = ops->extract(ops->shiftRight(ops->concat(ops->number_(1, 0), value), count), 0, 1);
+
+        // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
+        SValuePtr xBit = ops->ite(ops->equalToZero(count), ops->readRegister(d->REG_CCR_X), isCarry);
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
+        ops->writeRegister(d->REG_CCR_X, xBit);
     }
 };
 
@@ -1501,22 +1983,132 @@ struct IP_moveq: P {
 
 struct IP_muls: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr result;
+        SValuePtr isOverflow;
+        if (2==args.size()) {
+            // a0[32] x a1[32] -> a1[32]
+            assert_args(insn, args, 2);
+            ASSERT_require(args[0]->get_nBits()==32);
+            ASSERT_require(args[1]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr a0 = d->read(args[0], 32);
+            SValuePtr a1 = d->read(args[1], 32);
+            SValuePtr tmp = ops->signedMultiply(a0, a1);
+            result = ops->unsignedExtend(tmp, 32);
+            d->write(args[1], result);
+            d->incrementRegisters(args[0]);
+
+            // Overflow occurs when the high-order 32 bits of the 64-bit result are not equal to the high-order 32 bits of the
+            // sign-extended 32-bit result.
+            isOverflow = ops->invert(ops->equalToZero(ops->xor_(ops->extract(tmp, 32, 64),
+                                                                ops->extract(ops->signExtend(result, 64), 32, 64))));
+        } else if (3==args.size() && 16==args[0]->get_nBits()) {
+            // a0[16] x a1[16] -> a2[32]  (a1 and a2 are different parts of the same physical register)
+            assert_args(insn, args, 3);
+            ASSERT_require(args[0]->get_nBits()==16);
+            ASSERT_require(args[1]->get_nBits()==16);
+            ASSERT_require(args[2]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr a0 = d->read(args[0], 16);
+            SValuePtr a1 = d->read(args[1], 16);
+            result = ops->signedMultiply(a0, a1);
+            d->write(args[2], result);
+            d->incrementRegisters(args[0]);
+            isOverflow = ops->boolean_(false);
+        } else {
+            // a0[32] x a1[32] -> a2[32]:a1[32]  (a2 are the high-order 32 bits of the 64-bit result)
+            assert_args(insn, args, 3);
+            ASSERT_require(args[0]->get_nBits()==32);
+            ASSERT_require(args[1]->get_nBits()==32);
+            ASSERT_require(args[2]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr a0 = d->read(args[0], 32);
+            SValuePtr a1 = d->read(args[1], 32);
+            result = ops->signedMultiply(a0, a1);
+            d->write(args[1], ops->unsignedExtend(result, 32));
+            d->write(args[2], ops->extract(result, 32, 64));
+            d->incrementRegisters(args[0]);
+            isOverflow = ops->boolean_(false);
+        }
+
+        size_t resultNBits = result->get_width();
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, resultNBits-1, resultNBits));
     }
 };
 
 struct IP_mulu: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr result;
+        SValuePtr isOverflow;
+        if (2==args.size()) {
+            // a0[32] x a1[32] -> a1[32]
+            assert_args(insn, args, 2);
+            ASSERT_require(args[0]->get_nBits()==32);
+            ASSERT_require(args[1]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr a0 = d->read(args[0], 32);
+            SValuePtr a1 = d->read(args[1], 32);
+            SValuePtr tmp = ops->unsignedMultiply(a0, a1);
+            result = ops->unsignedExtend(tmp, 32);
+            d->write(args[1], result);
+            d->incrementRegisters(args[0]);
+            isOverflow = ops->invert(ops->equalToZero(ops->extract(tmp, 32, 64)));
+        } else if (3==args.size() && 16==args[0]->get_nBits()) {
+            // a0[16] x a1[16] -> a2[32]  (a1 and a2 are different parts of the same physical register)
+            assert_args(insn, args, 3);
+            ASSERT_require(args[0]->get_nBits()==16);
+            ASSERT_require(args[1]->get_nBits()==16);
+            ASSERT_require(args[2]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr a0 = d->read(args[0], 16);
+            SValuePtr a1 = d->read(args[1], 16);
+            result = ops->unsignedMultiply(a0, a1);
+            d->write(args[2], result);
+            d->incrementRegisters(args[0]);
+            isOverflow = ops->boolean_(false);
+        } else {
+            // a0[32] x a1[32] -> a2[32]:a1[32]  (a2 are the high-order 32 bits of the 64-bit result)
+            assert_args(insn, args, 3);
+            ASSERT_require(args[0]->get_nBits()==32);
+            ASSERT_require(args[1]->get_nBits()==32);
+            ASSERT_require(args[2]->get_nBits()==32);
+            d->decrementRegisters(args[0]);
+            SValuePtr a0 = d->read(args[0], 32);
+            SValuePtr a1 = d->read(args[1], 32);
+            result = ops->unsignedMultiply(a0, a1);
+            d->write(args[1], ops->unsignedExtend(result, 32));
+            d->write(args[2], ops->extract(result, 32, 64));
+            d->incrementRegisters(args[0]);
+            isOverflow = ops->boolean_(false);
+        }
+
+        size_t resultNBits = result->get_width();
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, resultNBits-1, resultNBits));
     }
 };
 
 struct IP_mvs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() <= 32);
+        ASSERT_require(args[1]->get_nBits() == 32);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        d->incrementRegisters(args[0]);
+        SValuePtr result = ops->signExtend(a0, 32);
+        d->write(args[1], result);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(a0)); // same as equalToZero(result), but probably simpler
+        ops->writeRegister(d->REG_CCR_N, ops->extract(a0, nBits-1, nBits)); // a0 sign bit is same as result sign bit
     }
 };
 
@@ -1572,7 +2164,29 @@ struct IP_neg: P {
 struct IP_negx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr x = ops->readRegister(d->REG_CCR_X);
+        SValuePtr result = ops->negate(ops->add(a0, ops->unsignedExtend(x, nBits)));
+        d->write(args[0], result);
+        d->incrementRegisters(args[0]);
+
+        SValuePtr dm = ops->extract(a0, nBits-1, nBits);
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isNegative = rm;
+        SValuePtr isOverflow = ops->and_(dm, rm);
+        SValuePtr isCarry = ops->or_(dm, rm);
+
+        // Note that the Z bit behaves differently for this instruction than normal.  If the result is non-zero then the Z bit
+        // is cleared, otherwise it is unchanged.
+        SValuePtr isZero = ops->ite(ops->equalToZero(result), ops->readRegister(d->REG_CCR_Z), ops->boolean_(false));
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_X, isCarry);
     }
 };
 
@@ -1585,21 +2199,55 @@ struct IP_nop: P {
 struct IP_not: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr result = ops->invert(a0);
+        d->write(args[0], result);
+        d->incrementRegisters(args[0]);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
 struct IP_or: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr result = ops->or_(a0, a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
 struct IP_ori: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr result = ops->or_(a0, a1);
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
     }
 };
 
@@ -1707,112 +2355,172 @@ struct IP_sbcd: P {
 struct IP_st: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        d->decrementRegisters(args[0]);
+        d->write(args[0], ops->invert(ops->number_(args[0]->get_nBits(), 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_sf: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        d->decrementRegisters(args[0]);
+        d->write(args[0], ops->number_(args[0]->get_nBits(), 0));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_shi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_sls: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_scc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_scs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_sne: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_seq: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_svc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_svs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_spl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_smi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_sge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_slt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_sgt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_sle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        SValuePtr cond = d->condition(insn->get_kind(), ops);
+        d->write(args[0], ops->ite(cond, ops->invert(ops->number_(nBits, 0)), ops->number_(nBits, 0)));
+        d->incrementRegisters(args[0]);
     }
 };
 
@@ -1851,14 +2559,44 @@ struct IP_sub: P {
 struct IP_suba: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits() <= 32);
+        ASSERT_require(args[1]->get_nBits() == 32);
+        d->decrementRegisters(args[0]);
+        SValuePtr subtrahend = ops->signExtend(d->read(args[0], args[0]->get_nBits()), 32);
+        SValuePtr minuend = d->read(args[1], 32);
+        SValuePtr difference = ops->add(minuend, ops->negate(subtrahend));
+        d->write(args[1], difference);
+        d->incrementRegisters(args[0]);
     }
 };
 
 struct IP_subi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr result = ops->add(a1, ops->negate(a0));
+        d->write(args[1], result);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
+        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isNegative = rm;
+        SValuePtr isZero = ops->equalToZero(result);
+        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(sm, ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)),
+                                     ops->or_(ops->and_(rm, ops->invert(dm)),
+                                              ops->and_(sm, rm)));
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_X, isCarry);
     }
 };
 
@@ -1895,14 +2633,52 @@ struct IP_subq: P {
 struct IP_subx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        d->decrementRegisters(args[1]);
+        SValuePtr a0 = d->read(args[0], nBits);
+        SValuePtr a1 = d->read(args[1], nBits);
+        SValuePtr x = ops->readRegister(d->REG_CCR_X);
+        SValuePtr result = ops->add(a1, ops->negate(ops->add(a0, ops->unsignedExtend(x, nBits))));
+        d->write(args[1], result);
+        d->incrementRegisters(args[0]);
+        d->incrementRegisters(args[1]);
+
+        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
+        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
+        SValuePtr rm = ops->extract(result, nBits-1, nBits);
+        SValuePtr isNegative = rm;
+        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), ops->and_(dm, ops->invert(rm))),
+                                        ops->and_(sm, ops->and_(ops->invert(dm), rm)));
+        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)),
+                                     ops->or_(ops->and_(rm, ops->invert(dm)),
+                                              ops->and_(sm, rm)));
+
+        // Note that the Z bit behaves differently for this instruction than normal.  If the result is non-zero then the Z bit
+        // is cleared, otherwise it is unchanged.
+        SValuePtr isZero = ops->ite(ops->equalToZero(result), ops->readRegister(d->REG_CCR_Z), ops->boolean_(false));
+
+        ops->writeRegister(d->REG_CCR_C, isCarry);
+        ops->writeRegister(d->REG_CCR_V, isOverflow);
+        ops->writeRegister(d->REG_CCR_Z, isZero);
+        ops->writeRegister(d->REG_CCR_N, isNegative);
+        ops->writeRegister(d->REG_CCR_X, isCarry);
     }
 };
 
 struct IP_swap: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(args[0]->get_nBits()==32);
+        SValuePtr a0 = d->read(args[0], 32);
+        SValuePtr result = ops->concat(ops->extract(a0, 16, 32), ops->unsignedExtend(a0, 16));
+        d->write(args[0], result);
+
+        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(a0)); // result is zero iff a0 is zero
+        ops->writeRegister(d->REG_CCR_N, ops->extract(a0, 15, 16)); // result is negative iff a0 bit 15 is set
     }
 };
 
@@ -1913,10 +2689,34 @@ struct IP_tas: P {
     }
 };
 
+// Note that these semantics are from the "ColdFire Family Programmer's Reference Manual, Rev 3" and differ slightly from the
+// semantics described in "M68000 Family Programmer's Reference Manual".
 struct IP_trap: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ops->writeRegister(d->REG_SR_S, ops->boolean_(true));
+        SValuePtr origSsp = ops->readRegister(d->REG_SSP);
+
+        SValuePtr ssp = ops->add(origSsp, ops->number_(32, -4));
+        SValuePtr nextInsnAddr = ops->number_(32, insn->get_address() + insn->get_size());
+        ops->writeMemory(RegisterDescriptor(), ssp, nextInsnAddr, ops->boolean_(true));
+
+        ssp = ops->add(origSsp, ops->number_(32, -6));
+        ops->writeMemory(RegisterDescriptor(), ssp, ops->readRegister(d->REG_SR), ops->boolean_(true));
+
+        ssp = ops->add(origSsp, ops->number_(32, -8));
+        SValuePtr formatOffset = ops->undefined_(16);   // FIXME[Robb P. Matzke 2014-07-28]: where is this documented?
+        ops->writeMemory(RegisterDescriptor(), ssp, formatOffset, ops->boolean_(true));
+
+        SValuePtr vectorNumber = d->read(args[0], args[0]->get_nBits());
+        SValuePtr vectorAddr = ops->add(ops->readRegister(d->REG_VBR),
+                                        ops->add(ops->number_(32, 0x80),
+                                                 ops->unsignedExtend(ops->unsignedMultiply(ops->number_(32, 4),
+                                                                                           vectorNumber),
+                                                                     32)));
+        ops->writeRegister(d->REG_PC, vectorAddr);
+
+        ops->writeRegister(d->REG_SSP, ops->add(origSsp, ops->number_(32, -8)));
     }
 };
 
@@ -1934,10 +2734,9 @@ struct IP_trapt: P {
 struct IP_trapf: P {
     void p(D d, Ops ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            assert_args(insn, args, 0);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
         }
     }
 };
@@ -2213,7 +3012,9 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_dbgt,        new M68k::IP_dbgt);
     iproc_set(m68k_dble,        new M68k::IP_dble);
     iproc_set(m68k_divs,        new M68k::IP_divs);
+    iproc_set(m68k_divsl,       new M68k::IP_divsl);
     iproc_set(m68k_divu,        new M68k::IP_divu);
+    iproc_set(m68k_divul,       new M68k::IP_divul);
     iproc_set(m68k_eor,         new M68k::IP_eor);
     iproc_set(m68k_eori,        new M68k::IP_eori);
     iproc_set(m68k_exg,         new M68k::IP_exg);
@@ -2309,8 +3110,6 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_ori,         new M68k::IP_ori);
     iproc_set(m68k_pack,        new M68k::IP_pack);
     iproc_set(m68k_pea,         new M68k::IP_pea);
-    iproc_set(m68k_rems,        new M68k::IP_rems);
-    iproc_set(m68k_remu,        new M68k::IP_remu);
     iproc_set(m68k_rol,         new M68k::IP_rol);
     iproc_set(m68k_ror,         new M68k::IP_ror);
     iproc_set(m68k_roxl,        new M68k::IP_roxl);
@@ -2381,6 +3180,10 @@ DispatcherM68k::regcache_init() {
         REG_CCR_Z = findRegister("ccr_z", 1);
         REG_CCR_N = findRegister("ccr_n", 1);
         REG_CCR_X = findRegister("ccr_x", 1);
+        REG_SR_S  = findRegister("sr_s",  1);
+        REG_SR    = findRegister("sr", 16);
+        REG_VBR   = findRegister("vbr", 32);
+        REG_SSP   = findRegister("ssp", 32);
 
         // Multiply-accumulated registers.  These are optional.
         static const bool OPTIONAL = true;
@@ -2408,51 +3211,65 @@ SValuePtr
 DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
     switch (kind) {
         case m68k_bhi:
+        case m68k_shi:
             return ops->and_(ops->invert(ops->readRegister(REG_CCR_C)),
                              ops->invert(ops->readRegister(REG_CCR_Z)));
         case m68k_bls:
+        case m68k_sls:
             return ops->or_(ops->readRegister(REG_CCR_C),
                             ops->readRegister(REG_CCR_Z));
         case m68k_bcc:
+        case m68k_scc:
             // "M680000 Family Programmer's Reference Manual" lacks the invert.
             return ops->invert(ops->readRegister(REG_CCR_C));
         case m68k_bcs:
+        case m68k_scs:
             return ops->readRegister(REG_CCR_C);
         case m68k_bne:
+        case m68k_sne:
             // "M680000 Family Programmer's Reference Manual" lacks the invert.
             return ops->invert(ops->readRegister(REG_CCR_Z));
         case m68k_beq:
+        case m68k_seq:
             return ops->readRegister(REG_CCR_Z);
         case m68k_bvc:
+        case m68k_svc:
             // "M680000 Family Programmer's Reference Manual" lacks the invert.
             return ops->invert(ops->readRegister(REG_CCR_V));
         case m68k_bvs:
+        case m68k_svs:
             return ops->readRegister(REG_CCR_V);
         case m68k_bpl:
+        case m68k_spl:
             // "M680000 Family Programmer's Reference Manual" lacks the invert.
             return ops->invert(ops->readRegister(REG_CCR_N));
         case m68k_bmi:
+        case m68k_smi:
             return ops->readRegister(REG_CCR_N);
-        case m68k_bge: {
+        case m68k_bge:
+        case m68k_sge: {
             SValuePtr n = ops->readRegister(REG_CCR_N);
             SValuePtr v = ops->readRegister(REG_CCR_V);
             return ops->or_(ops->and_(n, v),
                             ops->and_(ops->invert(n), ops->invert(v)));
         }
-        case m68k_blt: {
+        case m68k_blt:
+        case m68k_slt: {
             SValuePtr n = ops->readRegister(REG_CCR_N);
             SValuePtr v = ops->readRegister(REG_CCR_V);
             return ops->or_(ops->and_(n, ops->invert(v)),
                             ops->and_(ops->invert(n), v));
         }
-        case m68k_bgt: {
+        case m68k_bgt:
+        case m68k_sgt: {
             SValuePtr n = ops->readRegister(REG_CCR_N);
             SValuePtr v = ops->readRegister(REG_CCR_V);
             SValuePtr nz = ops->invert(ops->readRegister(REG_CCR_Z));
             return ops->or_(ops->and_(nz, ops->and_(n, v)),
                             ops->and_(nz, ops->and_(ops->invert(n), ops->invert(v))));
         }
-        case m68k_ble: {
+        case m68k_ble:
+        case m68k_sle: {
             SValuePtr n = ops->readRegister(REG_CCR_N);
             SValuePtr v = ops->readRegister(REG_CCR_V);
             SValuePtr z = ops->readRegister(REG_CCR_Z);
