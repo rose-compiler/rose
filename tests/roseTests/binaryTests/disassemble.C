@@ -1129,6 +1129,15 @@ main(int argc, char *argv[])
         }
     }
 
+    Disassembler *disassembler = NULL;
+    if (!isa.empty()) {
+        disassembler = get_disassembler(isa);
+        if (!disassembler) {
+            mlog[ERROR] <<"invalid isa specified on command line: " <<isa <<"\n";
+            exit(1);
+        }
+    }
+
     /*------------------------------------------------------------------------------------------------------------------------
      * Build the command-line for frontend().  Because librose doesn't describe its command-line with Sawyer::CommandLine,
      * we're somewhat restricted in how we operate.  All tool switches must appear before all frontend() switches, and we must
@@ -1299,13 +1308,8 @@ main(int argc, char *argv[])
      * Choose a disassembler
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    Disassembler *disassembler = NULL;
-    if (!isa.empty()) {
-        disassembler = get_disassembler(isa);
-        if (!disassembler) {
-            mlog[ERROR] <<"invalid isa specified on command line: " <<isa <<"\n";
-            exit(1);
-        }
+    if (disassembler) {
+        // already chosen above
     } else if (!raw_entries.empty() && !do_rose_help) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
         disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
