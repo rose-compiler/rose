@@ -693,6 +693,9 @@ SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
 //! This is part of Java specific operator support.
 SgJavaInstanceOfOp* buildJavaInstanceOfOp(SgExpression* exp = NULL, SgType* type = NULL);
 
+// DQ (7/24/2014): Adding support for c11 generic operands.
+ROSE_DLL_API SgTypeExpression *buildTypeExpression(SgType* type);
+
 
 //@}
 
@@ -1253,6 +1256,8 @@ ROSE_DLL_API SgAsmStmt* buildMultibyteNopStatement( int n );
 SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
 // SgAccessModifier buildAccessModifier ( unsigned int access );
 
+// DQ (7/25/2014): Adding support for C11 static assertions.
+ROSE_DLL_API SgStaticAssertionDeclaration* buildStaticAssertionDeclaration(SgExpression* condition, const SgName & string_literal);
 
 //@}
 
