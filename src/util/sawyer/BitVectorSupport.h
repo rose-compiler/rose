@@ -829,6 +829,82 @@ void rotateLeft(Word *words, const BitRange &range, size_t nShift) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Bit-wise Boolean logic
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<class Word>
+struct InvertBits {
+    bool operator()(Word &word, size_t nbits) {
+        word ^= bitMask<Word>(0, nbits);
+        return false;
+    }
+};
+
+/** Invert bits.
+ *
+ *  Inverts all bits in the specified range. */
+template<class Word>
+void invert(Word *words, const BitRange &range) {
+    InvertBits<Word> visitor;
+    traverse(visitor, words, range, LowToHigh());
+}
+
+template<class Word>
+struct AndBits {
+    bool operator()(const Word &w1, Word &w2, size_t nbits) {
+        w2 &= w1 | ~bitMask<Word>(0, nbits);
+        return false;
+    }
+};
+
+/** Bit-wise AND.
+ *
+ *  Computes the bitwise AND of equal-size sub-vectors @p vec1 and @p vec2 and stores the result in @p vec2.  The sub-vectors
+ *  may overlap. */
+template<class Word>
+void bitwiseAnd(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
+    AndBits<Word> visitor;
+    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
+}
+
+template<class Word>
+struct OrBits {
+    bool operator()(const Word &w1, Word &w2, size_t nbits) {
+        w2 |= w1 & bitMask<Word>(0, nbits);
+        return false;
+    }
+};
+
+/** Bit-wise OR.
+ *
+ *  Computes the bitwise OR of equal-size sub-vectors @p vec1 and @p vec2 and stores the result in @p vec2.  The sub-vectors
+ *  may overlap. */
+template<class Word>
+void bitwiseOr(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
+    OrBits<Word> visitor;
+    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
+}
+
+template<class Word>
+struct XorBits {
+    bool operator()(const Word &w1, Word &w2, size_t nbits) {
+        w2 ^= w1 & bitMask<Word>(0, nbits);
+        return false;
+    }
+};
+
+/** Bit-wise XOR.
+ *
+ *  Computes the bitwise exclusive-OR of equal-size sub-vectors @p vec1 and @p vec2 and stores the result in @p vec2.  The
+ *  sub-vectors may overlap. */
+template<class Word>
+void bitwiseXor(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
+    XorBits<Word> visitor;
+    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Arithmetic
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -878,15 +954,6 @@ boost::uint64_t toInteger(const Word *words, const BitRange &range) {
     for (size_t i=0; i<nTmpWords; ++i)
         result |= (boost::uint64_t)tmp[i] << (i * bitsPerWord<Word>::value);
     return result;
-}
-
-/** Negate bits as an integer.
- *
- *  Interprets @p range of @p vec1 as a two's complement integer and negates its value. */
-template<class Word>
-void negate(Word *vec1, const BitRange &range) {
-    invert(vec1, range);
-    increment(vec1, range);
 }
 
 template<class Word>
@@ -940,6 +1007,15 @@ bool decrement(Word *vec1, const BitRange &range1) {
     Decrement<Word> visitor;
     traverse(visitor, vec1, range1, LowToHigh());
     return visitor.borrowed;
+}
+
+/** Negate bits as an integer.
+ *
+ *  Interprets @p range of @p vec1 as a two's complement integer and negates its value. */
+template<class Word>
+void negate(Word *vec1, const BitRange &range) {
+    invert(vec1, range);
+    increment(vec1, range);
 }
 
 template<class Word>
@@ -1014,82 +1090,6 @@ bool signExtend(const Word *vec1, const BitRange &range1, Word *vec2, const BitR
         copy(vec1, copyFrom, vec2, range2);
         return get(vec2, range2.greatest());
     }
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Bit-wise Boolean logic
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-template<class Word>
-struct InvertBits {
-    bool operator()(Word &word, size_t nbits) {
-        word ^= bitMask<Word>(0, nbits);
-        return false;
-    }
-};
-
-/** Invert bits.
- *
- *  Inverts all bits in the specified range. */
-template<class Word>
-void invert(Word *words, const BitRange &range) {
-    InvertBits<Word> visitor;
-    traverse(visitor, words, range, LowToHigh());
-}
-
-template<class Word>
-struct AndBits {
-    bool operator()(const Word &w1, Word &w2, size_t nbits) {
-        w2 &= w1 | ~bitMask<Word>(0, nbits);
-        return false;
-    }
-};
-
-/** Bit-wise AND.
- *
- *  Computes the bitwise AND of equal-size sub-vectors @p vec1 and @p vec2 and stores the result in @p vec2.  The sub-vectors
- *  may overlap. */
-template<class Word>
-void bitwiseAnd(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
-    AndBits<Word> visitor;
-    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
-}
-
-template<class Word>
-struct OrBits {
-    bool operator()(const Word &w1, Word &w2, size_t nbits) {
-        w2 |= w1 & bitMask<Word>(0, nbits);
-        return false;
-    }
-};
-
-/** Bit-wise OR.
- *
- *  Computes the bitwise OR of equal-size sub-vectors @p vec1 and @p vec2 and stores the result in @p vec2.  The sub-vectors
- *  may overlap. */
-template<class Word>
-void bitwiseOr(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
-    OrBits<Word> visitor;
-    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
-}
-
-template<class Word>
-struct XorBits {
-    bool operator()(const Word &w1, Word &w2, size_t nbits) {
-        w2 ^= w1 & bitMask<Word>(0, nbits);
-        return false;
-    }
-};
-
-/** Bit-wise XOR.
- *
- *  Computes the bitwise exclusive-OR of equal-size sub-vectors @p vec1 and @p vec2 and stores the result in @p vec2.  The
- *  sub-vectors may overlap. */
-template<class Word>
-void bitwiseXor(const Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2) {
-    XorBits<Word> visitor;
-    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
 }
 
 

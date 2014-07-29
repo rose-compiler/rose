@@ -301,6 +301,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (9/4/2013): Added support for compound literals.
           virtual void unparseCompoundLiteral         (SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+          virtual void unparseTypeExpression          (SgExpression* expr, SgUnparse_Info& info);
+
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);
@@ -345,6 +348,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // virtual void unparseParForStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateDeclStmt (SgStatement* stmt, SgUnparse_Info& info);
+          
+       // DQ (7/25/2014): Adding support for C11 static assertions.
+          virtual void unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (12/26/2011): New unparse functions for new template declaration IR nodes (new design for template declarations).
           virtual void unparseTemplateClassDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
@@ -416,12 +422,12 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 #endif
 //#if UPC_EXTENSIONS_ALLOWED
 //#if USE_UPC_IR_NODES
-      // Liao, 6/13/2008, support UPC nodes
-          virtual void unparseUpcNotifyStatement (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseUpcWaitStatement (SgStatement* stmt, SgUnparse_Info& info);
+       // Liao, 6/13/2008, support UPC nodes
+          virtual void unparseUpcNotifyStatement  (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcWaitStatement    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseUpcBarrierStatement (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseUpcFenceStatement (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseUpcForAllStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcFenceStatement   (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcForAllStatement  (SgStatement* stmt, SgUnparse_Info& info);
 //#endif       
        // Liao 5/31/2009, OpenMP nodes
          virtual void unparseOmpPrefix                     (SgUnparse_Info& info); 

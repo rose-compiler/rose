@@ -199,11 +199,12 @@ Grammar::setUpBinaryInstructions()
 
     NEW_TERMINAL_MACRO(AsmIntegerValueExpression, "AsmIntegerValueExpression", "AsmIntegerValueExpressionTag");
     AsmIntegerValueExpression.setFunctionPrototype("HEADER_INTEGER_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmIntegerValueExpression.setDataPrototype("SgNode*", "base_node", "=NULL",
+    AsmIntegerValueExpression.setDataPrototype("SgNode*", "base_node", "= NULL",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmIntegerValueExpression.setDataPrototype("uint64_t", "relative_value", "=NULL",
+ // DQ (7/25/2014): Change initializer to "0" instead of "NULL" to avoid warning in GNU 4.8.
+    AsmIntegerValueExpression.setDataPrototype("uint64_t", "relative_value", "= 0",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmIntegerValueExpression.setDataPrototype("size_t", "significant_bits", "=0",
+    AsmIntegerValueExpression.setDataPrototype("size_t", "significant_bits", "= 0",
                                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
