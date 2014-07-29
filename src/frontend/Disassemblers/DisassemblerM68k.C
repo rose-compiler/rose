@@ -482,27 +482,14 @@ DisassemblerM68k::makeImmediateValue(M68kDataFormat fmt, unsigned value)
 SgAsmIntegerValueExpression *
 DisassemblerM68k::makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_number)
 {
-    size_t nbits = formatNBits(fmt);
-    uint64_t value = 0;
-    switch (nbits) {
-        case 8:
-            value = extract<0, 7>(instructionWord(ext_word_number+1));
-            break;
-        case 16:
-            value = instructionWord(ext_word_number+1);
-            break;
-        case 32: {
-            uint32_t hi_part = instructionWord(ext_word_number+1);
-            uint32_t lo_part = instructionWord(ext_word_number+2);
-            value = IntegerOps::shiftLeft<32>(hi_part, 16) | lo_part;
-            break;
-        }
-        default:
-            // FIXME[Robb P. Matzke 2013-10-08]
-            ASSERT_not_reachable("word size " + plural(nbits, "bits") + " is not handled yet");
-    }
-
-    return new SgAsmIntegerValueExpression(value, nbits, makeType(fmt));
+    size_t nBits = formatNBits(fmt);
+    ASSERT_require(nBits > 0);
+    ASSERT_require(nBits % 16 == 0);
+    size_t nWords = nBits / 16;
+    Sawyer::Container::BitVector bv(nBits);
+    for (size_t i=nWords; i>0; --i)                     // words are stored from high word to low word
+        bv.fromInteger(bv.baseSize((i-1)*16, 16), instructionWord(ext_word_number+i+1));
+    return SageBuilderAsm::buildValueInteger(bv, makeType(fmt));
 }
             
 // The modreg should be 6 bits: upper three bits are the mode, lower three bits are usually a register number.
