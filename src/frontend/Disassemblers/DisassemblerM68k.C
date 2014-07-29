@@ -313,12 +313,12 @@ SgAsmType *
 DisassemblerM68k::makeType(M68kDataFormat fmt)
 {
     switch (fmt) {
-        case m68k_fmt_i32: return SageBuilderAsm::buildTypeU32be();
-        case m68k_fmt_f32: return SageBuilderAsm::buildIeee754Binary32be();
+        case m68k_fmt_i32: return SageBuilderAsm::buildTypeU32();
+        case m68k_fmt_f32: return SageBuilderAsm::buildIeee754Binary32();
         case m68k_fmt_f96: return SageBuilderAsm::buildTypeM68kFloat96();
         case m68k_fmt_p96: ASSERT_not_implemented("96-bit binary coded decimal [Robb P. Matzke 2014-07-16]");
-        case m68k_fmt_i16: return SageBuilderAsm::buildTypeU16be();
-        case m68k_fmt_f64: return SageBuilderAsm::buildIeee754Binary64be();
+        case m68k_fmt_i16: return SageBuilderAsm::buildTypeU16();
+        case m68k_fmt_f64: return SageBuilderAsm::buildIeee754Binary64();
         case m68k_fmt_i8:  return SageBuilderAsm::buildTypeU8();
         case m68k_fmt_unknown: ASSERT_not_reachable("m68k_fmt_unknown is not a valid data format");
     }
@@ -476,7 +476,7 @@ DisassemblerM68k::makeFPRegister(unsigned regnum)
 SgAsmIntegerValueExpression *
 DisassemblerM68k::makeImmediateValue(M68kDataFormat fmt, unsigned value)
 {
-    return new SgAsmIntegerValueExpression(value, formatNBits(fmt), makeType(fmt));
+    return SageBuilderAsm::buildValueInteger(value, makeType(fmt));
 }
 
 SgAsmIntegerValueExpression *
@@ -544,7 +544,7 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
         // m68k_eam_dsp: address register indirect with displacement
         SgAsmRegisterReferenceExpression *rre = makeAddressRegister(reg, m68k_fmt_i32);
         uint64_t displacement_n = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
-        SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32, makeType(m68k_fmt_i32));
+        SgAsmIntegerValueExpression *displacement = SageBuilderAsm::buildValueInteger(displacement_n, makeType(m68k_fmt_i32));
         SgAsmExpression *address = SageBuilderAsm::buildAddExpression(rre, displacement);
         address->set_type(makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
@@ -563,14 +563,14 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
             } else {
                 SgAsmExpression *address = makeAddressRegister(reg, m68k_fmt_i32);
                 uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instructionWord(ext_offset+1)));
-                SgAsmIntegerValueExpression *dispExpr = new SgAsmIntegerValueExpression(disp, 32, makeType(m68k_fmt_i32));
+                SgAsmIntegerValueExpression *dispExpr = SageBuilderAsm::buildValueInteger(disp, makeType(m68k_fmt_i32));
                 address = SageBuilderAsm::buildAddExpression(address, dispExpr);
                 address->set_type(makeType(m68k_fmt_i32));
 
                 unsigned indexRegisterNumber = extract<12, 15>(instructionWord(ext_offset+1));
                 SgAsmRegisterReferenceExpression *indexRRE = makeDataAddressRegister(indexRegisterNumber, m68k_fmt_i32);
                 uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instructionWord(ext_offset+1)));
-                SgAsmIntegerValueExpression *scaleExpr = new SgAsmIntegerValueExpression(scale, 32, makeType(m68k_fmt_i32));
+                SgAsmIntegerValueExpression *scaleExpr = SageBuilderAsm::buildValueInteger(scale, makeType(m68k_fmt_i32));
                 SgAsmExpression *product = SageBuilderAsm::buildMultiplyExpression(indexRRE, scaleExpr);
                 product->set_type(makeType(m68k_fmt_i32));
                 address = SageBuilderAsm::buildAddExpression(address, product);
@@ -581,18 +581,18 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
     } else if (7==mode && 0==reg) {
         // m68k_eam_absw: absolute short addressing mode
         uint64_t val = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
-        SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32, makeType(m68k_fmt_i32));
+        SgAsmIntegerValueExpression *address = SageBuilderAsm::buildValueInteger(val, makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (7==mode && 1==reg) {
         // m68k_eam_absl: absolute long addressing mode
         uint64_t val = shiftLeft<32>((uint64_t)instructionWord(ext_offset+1), 16) | (uint64_t)instructionWord(ext_offset+2);
-        SgAsmIntegerValueExpression *address = new SgAsmIntegerValueExpression(val, 32, makeType(m68k_fmt_i32));
+        SgAsmIntegerValueExpression *address = SageBuilderAsm::buildValueInteger(val, makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (7==mode && 2==reg) {
         // m68k_eam_pcdsp: program counter indirect with displacement
         SgAsmRegisterReferenceExpression *rre = makeProgramCounter();
         uint64_t displacement_n = signExtend<16, 32>((uint64_t)instructionWord(ext_offset+1));
-        SgAsmIntegerValueExpression *displacement = new SgAsmIntegerValueExpression(displacement_n, 32, makeType(m68k_fmt_i32));
+        SgAsmIntegerValueExpression *displacement = SageBuilderAsm::buildValueInteger(displacement_n, makeType(m68k_fmt_i32));
         SgAsmExpression *address = SageBuilderAsm::buildAddExpression(rre, displacement);
         address->set_type(makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
@@ -627,7 +627,7 @@ DisassemblerM68k::makeAddress(SgAsmExpression *expr)
         SgAsmIntegerValueExpression *rhs = isSgAsmIntegerValueExpression(sum->get_rhs());
         if (lhs && rhs &&
             lhs->get_descriptor().get_major()==m68k_regclass_spr && lhs->get_descriptor().get_minor()==m68k_spr_pc) {
-            retval = new SgAsmIntegerValueExpression(get_insn_va() + 2 + rhs->get_absoluteValue(), 32, makeType(m68k_fmt_i32));
+            retval = SageBuilderAsm::buildValueInteger(get_insn_va() + 2 + rhs->get_absoluteValue(), makeType(m68k_fmt_i32));
         }
     }
 

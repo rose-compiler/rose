@@ -6,35 +6,27 @@ namespace SageBuilderAsm {
 // Generic data types
 SgAsmIntegerType* buildTypeU1();                        /**< 1-bit unsigned (Boolean) */
 SgAsmIntegerType* buildTypeU8();                        /**< 8-bit unsigned */
-SgAsmIntegerType* buildTypeU16le();                     /**< 16-bit unsigned little-endian */
-SgAsmIntegerType* buildTypeU16be();                     /**< 16-bit unsigned big-endian */
-SgAsmIntegerType* buildTypeU32le();                     /**< 32-bit unsigned little-endian */
-SgAsmIntegerType* buildTypeU32be();                     /**< 32-bit unsigned big-endian */
-SgAsmIntegerType* buildTypeU64le();                     /**< 64-bit unsigned little-endian */
-SgAsmIntegerType* buildTypeU64be();                     /**< 64-bit unsigned big-endian */
+SgAsmIntegerType* buildTypeU16();                       /**< 16-bit unsigned */
+SgAsmIntegerType* buildTypeU32();                       /**< 32-bit unsigned */
+SgAsmIntegerType* buildTypeU64();                       /**< 64-bit unsigned */
 SgAsmIntegerType* buildTypeI8();                        /**< 8-bit signed */
-SgAsmIntegerType* buildTypeI16le();                     /**< 16-bit signed little-endian */
-SgAsmIntegerType* buildTypeI16be();                     /**< 16-bit signed big-endian */
-SgAsmIntegerType* buildTypeI32le();                     /**< 32-bit signed little-endian */
-SgAsmIntegerType* buildTypeI32be();                     /**< 32-bit signed big-endian */
-SgAsmIntegerType* buildTypeI64le();                     /**< 64-bit signed little-endian */
-SgAsmIntegerType* buildTypeI64be();                     /**< 64-bit signed big-endian */
-SgAsmFloatType* buildIeee754Binary32le();               /**< 32-bit IEEE-754 little-endian floating-point */
-SgAsmFloatType* buildIeee754Binary32be();               /**< 32-bit IEEE-754 big-endian floating-point */
-SgAsmFloatType* buildIeee754Binary64le();               /**< 64-bit IEEE-754 little-endian floating-point */
-SgAsmFloatType* buildIeee754Binary64be();               /**< 64-bit IEEE-754 big-endian floating-point */
-SgAsmFloatType* buildIeee754Binary80le();               /**< 80-bit IEEE-754 little-endian floating-point (as in x86) */
+SgAsmIntegerType* buildTypeI16();                       /**< 16-bit signed */
+SgAsmIntegerType* buildTypeI32();                       /**< 32-bit signed */
+SgAsmIntegerType* buildTypeI64();                       /**< 64-bit signed */
+SgAsmFloatType* buildIeee754Binary32();                 /**< 32-bit IEEE-754 floating-point */
+SgAsmFloatType* buildIeee754Binary64();                 /**< 64-bit IEEE-754 floating-point */
+SgAsmFloatType* buildIeee754Binary80();                 /**< 80-bit IEEE-754 floating-point (as in x86) */
 SgAsmVectorType* buildTypeVector(size_t, SgAsmType*);   /**< Fixed-size, packed array */
 
 // Architecture-specific data types
-SgAsmIntegerType *buildTypeX86Byte();                   /**< 8-bit unsigned little-endian */
-SgAsmIntegerType *buildTypeX86Word();                   /**< 16-bit unsigned little-endian */
-SgAsmIntegerType *buildTypeX86DoubleWord();             /**< 32-bit unsigned little-endian */
-SgAsmIntegerType *buildTypeX86QuadWord();               /**< 64-bit unsigned little-endian */
-SgAsmFloatType *buildTypeX86Float32();                  /**< 32-bit IEEE-754 little-endian floating-point */
-SgAsmFloatType *buildTypeX86Float64();                  /**< 64-bit IEEE-754 little-endian floating-point */
-SgAsmFloatType *buildTypeX86Float80();                  /**< 80-bit IEEE-754 little-endian floating-point */
-SgAsmVectorType *buildTypeX86DoubleQuadWord();          /**< Vector of two 64-bit unsigned little-endian elements */
+SgAsmIntegerType *buildTypeX86Byte();                   /**< 8-bit unsigned */
+SgAsmIntegerType *buildTypeX86Word();                   /**< 16-bit unsigned */
+SgAsmIntegerType *buildTypeX86DoubleWord();             /**< 32-bit unsigned */
+SgAsmIntegerType *buildTypeX86QuadWord();               /**< 64-bit unsigned */
+SgAsmFloatType *buildTypeX86Float32();                  /**< 32-bit IEEE-754 floating-point */
+SgAsmFloatType *buildTypeX86Float64();                  /**< 64-bit IEEE-754 floating-point */
+SgAsmFloatType *buildTypeX86Float80();                  /**< 80-bit IEEE-754 floating-point */
+SgAsmVectorType *buildTypeX86DoubleQuadWord();          /**< Vector of two 64-bit unsigned integers */
 SgAsmFloatType *buildTypeM68kFloat96();                 /**< Motorola M68k 96-bit float (16-bits are always zero) */
 
 // x86-specific data types (deprecated [Robb P. Matzke 2014-07-21]; use the functions with X86 in their names)
@@ -65,27 +57,25 @@ SgAsmDirectRegisterExpression* buildSgAsmx86RegisterReferenceExpression(const Re
 SgAsmDirectRegisterExpression* buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor&) ROSE_DEPRECATED;
 SgAsmDirectRegisterExpression* buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor&) ROSE_DEPRECATED;
 SgAsmDirectRegisterExpression* buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor&) ROSE_DEPRECATED;
+
+// Generic value builders
+SgAsmIntegerValueExpression* buildValueInteger(uint64_t value, SgAsmType*);
+SgAsmIntegerValueExpression* buildValueInteger(const Sawyer::Container::BitVector&, SgAsmType*);
+SgAsmFloatValueExpression* buildValueFloat(double value, SgAsmType*);
+SgAsmFloatValueExpression* buildValueFloat(const Sawyer::Container::BitVector&, SgAsmType*);
    
 // Building integer values generically (one of these per buildType function above)
 SgAsmIntegerValueExpression* buildValueU1(bool);
 SgAsmIntegerValueExpression* buildValueU8(uint8_t);
-SgAsmIntegerValueExpression* buildValueU16le(uint16_t);
-SgAsmIntegerValueExpression* buildValueU16be(uint16_t);
-SgAsmIntegerValueExpression* buildValueU32le(uint32_t);
-SgAsmIntegerValueExpression* buildValueU32be(uint32_t);
-SgAsmIntegerValueExpression* buildValueU64le(uint64_t);
-SgAsmIntegerValueExpression* buildValueU64be(uint64_t);
+SgAsmIntegerValueExpression* buildValueU16(uint16_t);
+SgAsmIntegerValueExpression* buildValueU32(uint32_t);
+SgAsmIntegerValueExpression* buildValueU64(uint64_t);
 SgAsmIntegerValueExpression* buildValueI8(int8_t);
-SgAsmIntegerValueExpression* buildValueI16le(int16_t);
-SgAsmIntegerValueExpression* buildValueI16be(int16_t);
-SgAsmIntegerValueExpression* buildValueI32le(int32_t);
-SgAsmIntegerValueExpression* buildValueI32be(int32_t);
-SgAsmIntegerValueExpression* buildValueI64le(int64_t);
-SgAsmIntegerValueExpression* buildValueI64be(int64_t);
-SgAsmFloatValueExpression* buildValueIeee754Binary32le(double);
-SgAsmFloatValueExpression* buildValueIeee754Binary32be(double);
-SgAsmFloatValueExpression* buildValueIeee754Binary64le(double);
-SgAsmFloatValueExpression* buildValueIeee754Binary64be(double);
+SgAsmIntegerValueExpression* buildValueI16(int16_t);
+SgAsmIntegerValueExpression* buildValueI32(int32_t);
+SgAsmIntegerValueExpression* buildValueI64(int64_t);
+SgAsmFloatValueExpression* buildValueIeee754Binary32(double);
+SgAsmFloatValueExpression* buildValueIeee754Binary64(double);
 
 // Building integer values with x86-specific type names
 SgAsmIntegerValueExpression* buildValueX86Byte(uint8_t);

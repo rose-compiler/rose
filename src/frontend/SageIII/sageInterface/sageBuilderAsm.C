@@ -88,98 +88,81 @@ SageBuilderAsm::buildX86Instruction(X86InstructionKind kind, SgAsmExpression *lh
 }
 
 SgAsmIntegerValueExpression*
+SageBuilderAsm::buildValueInteger(uint64_t value, SgAsmType *type) {
+    return new SgAsmIntegerValueExpression(value, type);
+}
+
+SgAsmIntegerValueExpression*
+SageBuilderAsm::buildValueInteger(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+    return new SgAsmIntegerValueExpression(bv, type);
+}
+
+SgAsmIntegerValueExpression*
 SageBuilderAsm::buildValueU1(bool x) {
-    return new SgAsmIntegerValueExpression(x, 1, buildTypeU1());
+    return buildValueInteger(x ? 1 : 0, buildTypeU1());
 }
 
 SgAsmIntegerValueExpression*
 SageBuilderAsm::buildValueU8(uint8_t x) {
-    return new SgAsmIntegerValueExpression(x, 8, buildTypeU8());
+    return buildValueInteger(x, buildTypeU8());
 }
 
 SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueU16le(uint16_t x) {
-    return new SgAsmIntegerValueExpression(x, 16, buildTypeU16le());
+SageBuilderAsm::buildValueU16(uint16_t x) {
+    return buildValueInteger(x, buildTypeU16());
 }
 
 SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueU16be(uint16_t x) {
-    return new SgAsmIntegerValueExpression(x, 16, buildTypeU16be());
+SageBuilderAsm::buildValueU32(uint32_t x) {
+    return buildValueInteger(x, buildTypeU32());
 }
 
 SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueU32le(uint32_t x) {
-    return new SgAsmIntegerValueExpression(x, 32, buildTypeU32le());
-}
-
-SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueU32be(uint32_t x) {
-    return new SgAsmIntegerValueExpression(x, 32, buildTypeU32be());
-}
-
-SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueU64le(uint64_t x) {
-    return new SgAsmIntegerValueExpression(x, 64, buildTypeU64be());
-}
-
-SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueU64be(uint64_t x) {
-    return new SgAsmIntegerValueExpression(x, 64, buildTypeU64be());
+SageBuilderAsm::buildValueU64(uint64_t x) {
+    return buildValueInteger(x, buildTypeU64());
 }
 
 SgAsmIntegerValueExpression*
 SageBuilderAsm::buildValueI8(int8_t x) {
-    return new SgAsmIntegerValueExpression((int64_t)x, 8, buildTypeI8());
+    return buildValueInteger((int64_t)x, buildTypeI8());
 }
 
 SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueI16le(int16_t x) {
-    return new SgAsmIntegerValueExpression((int64_t)x, 16, buildTypeI16le());
+SageBuilderAsm::buildValueI16(int16_t x) {
+    return buildValueInteger((int64_t)x, buildTypeI16());
 }
 
 SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueI16be(int16_t x) {
-    return new SgAsmIntegerValueExpression((int64_t)x, 16, buildTypeI16be());
+SageBuilderAsm::buildValueI32(int32_t x) {
+    return buildValueInteger((int64_t)x, buildTypeI32());
 }
 
 SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueI32le(int32_t x) {
-    return new SgAsmIntegerValueExpression((int64_t)x, 32, buildTypeI32le());
-}
-
-SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueI32be(int32_t x) {
-    return new SgAsmIntegerValueExpression((int64_t)x, 32, buildTypeI32be());
-}
-
-SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueI64le(int64_t x) {
-    return new SgAsmIntegerValueExpression(x, 64, buildTypeI64be());
-}
-
-SgAsmIntegerValueExpression*
-SageBuilderAsm::buildValueI64be(int64_t x) {
-    return new SgAsmIntegerValueExpression(x, 64, buildTypeI64be());
+SageBuilderAsm::buildValueI64(int64_t x) {
+    return buildValueInteger(x, buildTypeI64());
 }
 
 SgAsmFloatValueExpression*
-SageBuilderAsm::buildValueIeee754Binary32le(double x) {
-    return new SgAsmFloatValueExpression(x, buildIeee754Binary32le());
+SageBuilderAsm::buildValueFloat(double x, SgAsmType *type) {
+    ASSERT_not_null(type);
+    return new SgAsmFloatValueExpression(x, type);
 }
 
 SgAsmFloatValueExpression*
-SageBuilderAsm::buildValueIeee754Binary32be(double x) {
-    return new SgAsmFloatValueExpression(x, buildIeee754Binary32be());
+SageBuilderAsm::buildValueFloat(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+    ASSERT_not_null(type);
+    ASSERT_require(bv.size() == type->get_nBits());
+    return new SgAsmFloatValueExpression(bv, type);
 }
 
 SgAsmFloatValueExpression*
-SageBuilderAsm::buildValueIeee754Binary64le(double x) {
-    return new SgAsmFloatValueExpression(x, buildIeee754Binary64le());
+SageBuilderAsm::buildValueIeee754Binary32(double x) {
+    return buildValueFloat(x, buildIeee754Binary32());
 }
 
 SgAsmFloatValueExpression*
-SageBuilderAsm::buildValueIeee754Binary64be(double x) {
-    return new SgAsmFloatValueExpression(x, buildIeee754Binary64be());
+SageBuilderAsm::buildValueIeee754Binary64(double x) {
+    return buildValueFloat(x, buildIeee754Binary64());
 }
 
 SgAsmIntegerValueExpression*
@@ -189,27 +172,27 @@ SageBuilderAsm::buildValueX86Byte(uint8_t x) {
 
 SgAsmIntegerValueExpression*
 SageBuilderAsm::buildValueX86Word(uint16_t x) {
-    return buildValueU16le(x);
+    return buildValueU16(x);
 }
 
 SgAsmIntegerValueExpression*
 SageBuilderAsm::buildValueX86DWord(uint32_t x) {
-    return buildValueU32le(x);
+    return buildValueU32(x);
 }
 
 SgAsmIntegerValueExpression*
 SageBuilderAsm::buildValueX86QWord(uint64_t x) {
-    return buildValueU64le(x);
+    return buildValueU64(x);
 }
 
 SgAsmFloatValueExpression*
 SageBuilderAsm::buildValueX86Float32(double x) {
-    return buildValueIeee754Binary32le(x);
+    return buildValueIeee754Binary32(x);
 }
 
 SgAsmFloatValueExpression*
 SageBuilderAsm::buildValueX86Float64(double x) {
-    return buildValueIeee754Binary64le(x);
+    return buildValueIeee754Binary64(x);
 }
 
 SgAsmFloatValueExpression*
@@ -252,7 +235,7 @@ SageBuilderAsm::buildTypeU8() {
 }
 
 SgAsmIntegerType*
-SageBuilderAsm::buildTypeU16le() {
+SageBuilderAsm::buildTypeU16() {
     static SgAsmIntegerType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 16, false /*unsigned*/));
@@ -260,15 +243,7 @@ SageBuilderAsm::buildTypeU16le() {
 }
 
 SgAsmIntegerType*
-SageBuilderAsm::buildTypeU16be() {
-    static SgAsmIntegerType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_MSB, 16, false /*unsigned*/));
-    return cached;
-}
-
-SgAsmIntegerType*
-SageBuilderAsm::buildTypeU32le() {
+SageBuilderAsm::buildTypeU32() {
     static SgAsmIntegerType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 32, false /*unsigned*/));
@@ -276,26 +251,10 @@ SageBuilderAsm::buildTypeU32le() {
 }
 
 SgAsmIntegerType*
-SageBuilderAsm::buildTypeU32be() {
-    static SgAsmIntegerType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_MSB, 32, false /*unsigned*/));
-    return cached;
-}
-
-SgAsmIntegerType*
-SageBuilderAsm::buildTypeU64le() {
+SageBuilderAsm::buildTypeU64() {
     static SgAsmIntegerType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 64, false /*unsigned*/));
-    return cached;
-}
-
-SgAsmIntegerType*
-SageBuilderAsm::buildTypeU64be() {
-    static SgAsmIntegerType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_MSB, 64, false /*unsigned*/));
     return cached;
 }
 
@@ -308,7 +267,7 @@ SageBuilderAsm::buildTypeI8() {
 }
 
 SgAsmIntegerType*
-SageBuilderAsm::buildTypeI16le() {
+SageBuilderAsm::buildTypeI16() {
     static SgAsmIntegerType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 16, true /*signed*/));
@@ -316,15 +275,7 @@ SageBuilderAsm::buildTypeI16le() {
 }
 
 SgAsmIntegerType*
-SageBuilderAsm::buildTypeI16be() {
-    static SgAsmIntegerType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_MSB, 16, true /*signed*/));
-    return cached;
-}
-
-SgAsmIntegerType*
-SageBuilderAsm::buildTypeI32le() {
+SageBuilderAsm::buildTypeI32() {
     static SgAsmIntegerType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 32, true /*signed*/));
@@ -332,31 +283,15 @@ SageBuilderAsm::buildTypeI32le() {
 }
 
 SgAsmIntegerType*
-SageBuilderAsm::buildTypeI32be() {
-    static SgAsmIntegerType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_MSB, 32, true /*signed*/));
-    return cached;
-}
-
-SgAsmIntegerType*
-SageBuilderAsm::buildTypeI64le() {
+SageBuilderAsm::buildTypeI64() {
     static SgAsmIntegerType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 64, true /*signed*/));
     return cached;
 }
 
-SgAsmIntegerType*
-SageBuilderAsm::buildTypeI64be() {
-    static SgAsmIntegerType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_MSB, 64, true /*signed*/));
-    return cached;
-}
-
 SgAsmFloatType*
-SageBuilderAsm::buildIeee754Binary32le() {
+SageBuilderAsm::buildIeee754Binary32() {
     static SgAsmFloatType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 32, 0, 23, 31, 23, 8, 127));
@@ -364,15 +299,7 @@ SageBuilderAsm::buildIeee754Binary32le() {
 }
 
 SgAsmFloatType*
-SageBuilderAsm::buildIeee754Binary32be() {
-    static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_MSB, 32, 0, 23, 31, 23, 8, 127));
-    return cached;
-}
-
-SgAsmFloatType*
-SageBuilderAsm::buildIeee754Binary64le() {
+SageBuilderAsm::buildIeee754Binary64() {
     static SgAsmFloatType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 64, 0, 52, 63, 52, 11, 1023));
@@ -380,15 +307,7 @@ SageBuilderAsm::buildIeee754Binary64le() {
 }
 
 SgAsmFloatType*
-SageBuilderAsm::buildIeee754Binary64be() {
-    static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_MSB, 64, 0, 52, 63, 52, 11, 1023));
-    return cached;
-}
-
-SgAsmFloatType*
-SageBuilderAsm::buildIeee754Binary80le() {
+SageBuilderAsm::buildIeee754Binary80() {
     static SgAsmFloatType *cached = NULL;
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 80, 0, 64, 79, 64, 15, 16383));
@@ -407,32 +326,32 @@ SageBuilderAsm::buildTypeX86Byte() {
 
 SgAsmIntegerType*
 SageBuilderAsm::buildTypeX86Word() {
-    return buildTypeU16le();
+    return buildTypeU16();
 }
 
 SgAsmIntegerType*
 SageBuilderAsm::buildTypeX86DoubleWord() {
-    return buildTypeU32le();
+    return buildTypeU32();
 }
 
 SgAsmIntegerType*
 SageBuilderAsm::buildTypeX86QuadWord() {
-    return buildTypeU64le();
+    return buildTypeU64();
 }
 
 SgAsmFloatType*
 SageBuilderAsm::buildTypeX86Float32() {
-    return buildIeee754Binary32le();
+    return buildIeee754Binary32();
 }
 
 SgAsmFloatType*
 SageBuilderAsm::buildTypeX86Float64() {
-    return buildIeee754Binary64le();
+    return buildIeee754Binary64();
 }
 
 SgAsmFloatType*
 SageBuilderAsm::buildTypeX86Float80() {
-    return buildIeee754Binary80le();
+    return buildIeee754Binary80();
 }
 
 // M68k 96-bit "extended-precision real format"

@@ -74,7 +74,7 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
             case 64: return "DOUBLE";
             case 80: return "LDOUBLE";
         }
-    } else if (ty == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64le())) {
+    } else if (ty == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64())) {
         return "DQWORD";
     } else if (SgAsmVectorType *vt = isSgAsmVectorType(ty)) {
         return "V" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());

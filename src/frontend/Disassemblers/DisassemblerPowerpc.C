@@ -22,11 +22,11 @@
 // These are macros to make them look like constants while they are really
 // function calls
 #define BYTET (SageBuilderAsm::buildTypeU8())
-#define WORDT (SageBuilderAsm::buildTypeU16be())
-#define DWORDT (SageBuilderAsm::buildTypeU32be())
-#define QWORDT (SageBuilderAsm::buildTypeU64be())
-#define FLOATT (SageBuilderAsm::buildIeee754Binary32be())
-#define DOUBLET (SageBuilderAsm::buildIeee754Binary64be())
+#define WORDT (SageBuilderAsm::buildTypeU16())
+#define DWORDT (SageBuilderAsm::buildTypeU32())
+#define QWORDT (SageBuilderAsm::buildTypeU64())
+#define FLOATT (SageBuilderAsm::buildIeee754Binary32())
+#define DOUBLET (SageBuilderAsm::buildIeee754Binary64())
 #define V2DWORDT (SageBuilderAsm::buildTypeVector(2, DWORDT))
 #define V2FLOATT (SageBuilderAsm::buildTypeVector(2, FLOATT))
 #define V2DOUBLET (SageBuilderAsm::buildTypeVector(2, DOUBLET))
@@ -115,7 +115,7 @@ DisassemblerPowerpc::fld() const {
 SgAsmIntegerValueExpression *
 DisassemblerPowerpc::makeBranchTarget ( uint64_t targetAddr ) const
 {
-    return SageBuilderAsm::buildValueU64be(targetAddr);
+    return SageBuilderAsm::buildValueU64(targetAddr);
 }
 
 SgAsmPowerpcInstruction *

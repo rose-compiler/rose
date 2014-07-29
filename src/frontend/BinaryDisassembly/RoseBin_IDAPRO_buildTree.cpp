@@ -189,7 +189,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
     else {
       cerr << "ERROR:: FIXME:: symbol not resolved " << expt->symbol << endl;
       // temp solution for arm. tps (09/17/07)
-      binNode = new SgAsmIntegerValueExpression('5', 8); // ascii for 5
+      binNode = SageBuilderAsm::buildValueU8('5'); // ascii for 5
 
       //      exit(0);
     }

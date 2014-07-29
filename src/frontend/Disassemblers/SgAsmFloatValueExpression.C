@@ -10,6 +10,15 @@ SgAsmFloatValueExpression::SgAsmFloatValueExpression(double value, SgAsmType *ty
     updateBitVector();
 }
 
+SgAsmFloatValueExpression::SgAsmFloatValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+    ASSERT_not_null(type);
+    ASSERT_require(bv.size() == type->get_nBits());
+    p_nativeValue = 0.0;
+    p_nativeValueIsValid = false;
+    p_bitVector = bv;
+    updateNativeValue();
+}
+
 double
 SgAsmFloatValueExpression::get_nativeValue() const {
     ASSERT_require2(p_nativeValueIsValid, "not implemented yet");

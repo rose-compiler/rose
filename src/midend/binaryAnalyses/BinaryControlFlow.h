@@ -609,7 +609,7 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
         for (boost::tie(ei, ei_end)=boost::out_edges(*vi, cfg); ei!=ei_end; ++ei) {
             SgAsmBlock *target_block = get_ast_node(cfg, boost::target(*ei, cfg));
             if (target_block && !is_edge_filtered(block, target_block)) {
-                SgAsmIntegerValueExpression *target = new SgAsmIntegerValueExpression(target_block->get_address());
+                SgAsmIntegerValueExpression *target = SageBuilderAsm::buildValueU64(target_block->get_address());
                 target->makeRelativeTo(target_block);
                 target->set_parent(block);
                 block->get_successors().push_back(target);

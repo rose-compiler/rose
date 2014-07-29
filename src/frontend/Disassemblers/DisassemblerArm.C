@@ -147,9 +147,9 @@ DisassemblerArm::makeRotatedImmediate() const
     uint8_t rotateCount = rsField * 2;
     uint32_t immRaw = insn & 0xFF;
     if (rotateCount == 0) {
-        return SageBuilderAsm::buildValueU32le(immRaw);
+        return SageBuilderAsm::buildValueU32(immRaw);
     } else {
-        return SageBuilderAsm::buildValueU32le((immRaw >> rotateCount) | (immRaw << (32 - rotateCount)));
+        return SageBuilderAsm::buildValueU32((immRaw >> rotateCount) | (immRaw << (32 - rotateCount)));
     }
 }
 
@@ -243,7 +243,7 @@ DisassemblerArm::makeSplit8bitOffset() const
     int32_t val = ((insn >> 4) & 0xF0) | (insn & 0xF);
     val <<= 24;
     val >>= 24; // Arithmetic shift to copy highest bit of immediate
-    return SageBuilderAsm::buildValueU32le((uint32_t)val);
+    return SageBuilderAsm::buildValueU32((uint32_t)val);
 }
 
 SgAsmIntegerValueExpression *
@@ -253,7 +253,7 @@ DisassemblerArm::makeBranchTarget() const
     val <<= 8;
     val >>= 6; // Arithmetic shift to copy highest bit of immediate
     uint32_t targetAddr = ip + 8 + val;
-    return SageBuilderAsm::buildValueU32le(targetAddr);
+    return SageBuilderAsm::buildValueU32(targetAddr);
 }
 
 SgAsmExpression *
@@ -263,7 +263,7 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
     bool p = (insn >> 24) & 1;
     bool u = (insn >> 23) & 1;
     bool w = (insn >> 21) & 1;
-    SgAsmExpression* offset = bit25 ? makeShifterField() : SageBuilderAsm::buildValueU32le(insn & 0xFFFU);
+    SgAsmExpression* offset = bit25 ? makeShifterField() : SageBuilderAsm::buildValueU32(insn & 0xFFFU);
     switch ((p ? 4 : 0) | (u ? 2 : 0) | (w ? 1 : 0)) {
       case 0: return SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset);
       case 1: return SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset); // T suffix
@@ -414,7 +414,7 @@ DisassemblerArm::decodeMiscInstruction() const
           uint16_t imm1 = (insn >> 8) & 0xFFF;
           uint16_t imm2 = insn & 0xF;
           uint16_t imm = (imm1 << 4) | imm2;
-          return MAKE_INSN1(bkpt, 4, SageBuilderAsm::buildValueU16le(imm));
+          return MAKE_INSN1(bkpt, 4, SageBuilderAsm::buildValueU16(imm));
         }
         default: ASSERT_not_reachable("invalid miscellaneous instruction");
       }
@@ -572,7 +572,7 @@ DisassemblerArm::disassemble()
           }
           case 3: {
             if ((insn & 0x0F000000U) == 0x0F000000U) {
-              return MAKE_INSN1(swi, 3, SageBuilderAsm::buildValueU32le(insn & 0x00FFFFFFU));
+              return MAKE_INSN1(swi, 3, SageBuilderAsm::buildValueU32(insn & 0x00FFFFFFU));
             } else {
                 mlog[DEBUG] << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << "\n";
                 throw ExceptionArm("coprocessor not supported", this, 26);

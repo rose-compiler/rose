@@ -153,11 +153,8 @@ HEADER_CONSTANT_EXPRESSION_END
 
 HEADER_INTEGER_VALUE_EXPRESSION_START
         public:
-                explicit SgAsmIntegerValueExpression(uint64_t n, size_t nbits=64, SgAsmType *type=NULL)
-                        : p_baseNode(NULL) {
-                        set_type(type);
-                        p_bitVector.resize(nbits).fromInteger(n);
-                }
+                SgAsmIntegerValueExpression(uint64_t n, SgAsmType *type);
+                SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type);
                 static uint64_t virtualAddress(SgNode*);
                 std::string get_label(bool quiet=false) const;
                 size_t get_significantBits() const;
@@ -185,28 +182,29 @@ HEADER_INTEGER_VALUE_EXPRESSION_END
 
 
 HEADER_FLOAT_VALUE_EXPRESSION_START
-	private:
-		// This node stores its primary representation of the value in the p_bitVector of a parent class.  However,
-		// since we often access the value as a native "double", and since converting to/from a bit vector is costly,
-		// we want to cache the native double value whenever we compute it.  ROSETTA does not need to be aware of the
-		// cached value since it can be recomputed from the bit vector, and in fact, ROSETTA can't handle cache data
-		// members because it doesn't understand "mutable".
-		mutable double p_nativeValue;
-		mutable bool p_nativeValueIsValid;
+        private:
+                // This node stores its primary representation of the value in the p_bitVector of a parent class.  However,
+                // since we often access the value as a native "double", and since converting to/from a bit vector is costly,
+                // we want to cache the native double value whenever we compute it.  ROSETTA does not need to be aware of the
+                // cached value since it can be recomputed from the bit vector, and in fact, ROSETTA can't handle cache data
+                // members because it doesn't understand "mutable".
+                mutable double p_nativeValue;
+                mutable bool p_nativeValueIsValid;
         public:
-		SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
-                SgAsmFloatValueExpression(double nativeValue, SgAsmType *type);
+                SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
+                SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
+		SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
                 void set_nativeValue(double);
                 double get_nativeValue() const;
-		void updateBitVector();
-		void updateNativeValue() const;
+                void updateBitVector();
+                void updateNativeValue() const;
 HEADER_FLOAT_VALUE_EXPRESSION_END
 
 
 
 HEADER_EXPRESSION_START
-	public:
-		size_t get_nBits() const;
+        public:
+                size_t get_nBits() const;
 HEADER_EXPRESSION_END
 
 
@@ -3951,8 +3949,8 @@ HEADER_TYPE_END
 HEADER_VECTOR_TYPE_START
         public:
                 SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
-		size_t get_nElmts() const;
-		SgAsmType* get_elmtType() const;
+                size_t get_nElmts() const;
+                SgAsmType* get_elmtType() const;
                 virtual void check() const /*override*/;
                 virtual std::string toString() const /*override*/;
                 virtual size_t get_nBits() const /*override*/;
@@ -3962,13 +3960,13 @@ HEADER_VECTOR_TYPE_END
 HEADER_SCALAR_TYPE_START
         protected:
                 SgAsmScalarType(ByteOrder::Endianness, size_t nBits);
-	public:
+        public:
                 virtual void check() const;
                 virtual std::string toString() const;
                 virtual size_t get_nBits() const /*override*/;
-		ByteOrder::Endianness get_minorOrder() const;
-		ByteOrder::Endianness get_majorOrder() const;
-		size_t get_majorNBytes() const;
+                ByteOrder::Endianness get_minorOrder() const;
+                ByteOrder::Endianness get_majorOrder() const;
+                size_t get_majorNBytes() const;
 HEADER_SCALAR_TYPE_END
 
 
@@ -3978,7 +3976,7 @@ HEADER_INTEGER_TYPE_START
                 SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
                 virtual void check() const;
                 virtual std::string toString() const;
-		bool get_isSigned() const;
+                bool get_isSigned() const;
 HEADER_INTEGER_TYPE_END
 
 
@@ -3990,12 +3988,12 @@ HEADER_FLOAT_TYPE_START
                                size_t exponentOffset, size_t exponentNBits, uint64_t exponentBias);
                 virtual void check() const;
                 virtual std::string toString() const;
-		size_t get_significandOffset() const;
-		size_t get_significandNBits() const;
-		size_t get_signBitOffset() const;
-		size_t get_exponentOffset() const;
-		size_t get_exponentNBits() const;
-		uint64_t get_exponentBias() const;
+                size_t get_significandOffset() const;
+                size_t get_significandNBits() const;
+                size_t get_signBitOffset() const;
+                size_t get_exponentOffset() const;
+                size_t get_exponentNBits() const;
+                uint64_t get_exponentBias() const;
 HEADER_FLOAT_TYPE_END
 
 

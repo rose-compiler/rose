@@ -84,10 +84,10 @@ private:
         return makeRegister(powerpc_regclass_cr, fld<6, 10>(), powerpc_condreggranularity_bit);
     }
     SgAsmValueExpression* D() const {
-        return SageBuilderAsm::buildValueU64be(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>()));
+        return SageBuilderAsm::buildValueU64(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>()));
     }
     SgAsmValueExpression* DS() const {
-        return SageBuilderAsm::buildValueU64be(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>() & 0xfffc));
+        return SageBuilderAsm::buildValueU64(IntegerOps::signExtend<16, 64>((uint64_t)fld<16, 31>() & 0xfffc));
     }
     SgAsmValueExpression* FLM() const {
         return SageBuilderAsm::buildValueU8(fld<7, 14>());
@@ -193,7 +193,7 @@ private:
         return SageBuilderAsm::buildValueU8(fld<16, 19>());
     }
     SgAsmValueExpression* UI() const {
-        return SageBuilderAsm::buildValueU64be(fld<16, 31>());
+        return SageBuilderAsm::buildValueU64(fld<16, 31>());
     }
 
     SgAsmMemoryReferenceExpression* memref(SgAsmType* t) const {

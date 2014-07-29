@@ -4367,7 +4367,7 @@ Partitioner::build_ast(BasicBlock* block)
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
     for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
-        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        SgAsmIntegerValueExpression *value = SageBuilderAsm::buildValueU64(*si);
         value->set_parent(retval);
         retval->get_successors().push_back(value);
     }

@@ -34,11 +34,22 @@ using namespace rose;
  *  set_baseNode().  If this is not the behavior that's needed, see the makeRelativeTo() method. */
 
 
+SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(uint64_t value, SgAsmType *type)
+    : p_baseNode(NULL) {
+    ASSERT_not_null(type);
+    ASSERT_require2(type->get_nBits() <= 8*sizeof(value), "ambiguous signed/unsigned interpretation");
+    set_type(type);
+    p_bitVector.resize(type->get_nBits()).fromInteger(value);
+}
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      SgAsmIntegerValueExpression
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+    ASSERT_not_null(type);
+    ASSERT_require2(bv.size()==type->get_nBits(),
+                    "value width (" + StringUtility::plural(bv.size(), "bits") + ") does not match type width (" +
+                    StringUtility::plural(type->get_nBits(), "bits") + ")");
+    set_type(type);
+    p_bitVector = bv;
+}
 
 /** Returns the base address of an addressable IR node. */
 uint64_t
