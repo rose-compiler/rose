@@ -971,6 +971,7 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("sr_i",  m68k_regclass_spr, m68k_spr_sr, 8,  3);           // interrupt priority mask
         regs->insert("sr_s",  m68k_regclass_spr, m68k_spr_sr, 13, 1);           // status register user mode bit
         regs->insert("sr_t",  m68k_regclass_spr, m68k_spr_sr, 14, 2);           // status register trace mode bits
+        regs->insert("vbr",   m68k_regclass_spr, m68k_spr_vbr, 0, 32);          // vector base register
 
         // Floating point data registers
         // These registers hold 96-bit extended-precision real format ("X") values. However, since the X format has

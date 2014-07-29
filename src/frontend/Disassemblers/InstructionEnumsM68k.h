@@ -61,6 +61,7 @@ enum M68kSpecialPurposeRegister {
     m68k_spr_fpcr,                                      /**< Floating-point control register. */
     m68k_spr_fpsr,                                      /**< Floating-point status register. */
     m68k_spr_fpiar,                                     /**< Floating-point instruction address register. */
+    m68k_spr_vbr,                                       /**< Interrupt vector base address. */
 };
 
 enum M68kMacRegister {
