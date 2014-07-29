@@ -1182,9 +1182,6 @@ struct M68k_branch: M68k {
             offset = signExtend<16, 32>((uint32_t)d->instructionWord(1));
             mnemonic += ".w";
         } else if (-1==offset) {
-            // FIXME: documentation is not clear about order of the two 16-bit words. I'm assuming that, like other cases
-            // of 32-bit values, the high 16 bits are in the first word following the instruction word, and the low-order
-            // 16 bits are in the second word after the instruction word. [Robb P. Matzke 2013-08-06]
             offset = shiftLeft<32>((uint32_t)d->instructionWord(1), 16) | (uint32_t)d->instructionWord(2);
             mnemonic += ".l";
         } else {
@@ -1804,7 +1801,7 @@ struct M68k_dbcc: M68k {
     }
 };
 
-// DIVS.W <ea>y, Dx
+// DIVS.W <ea>, Dx                      (Dx[16] / <ea>[16]) : (Dx[16] % <ea>[16]) -> Dq[32]
 struct M68k_divs_w: M68k {
     M68k_divs_w(): M68k("divs_w", m68k_family,
                         OP(8) & BITS<6, 8>(7) & EAM(m68k_eam_data)) {}
@@ -1815,32 +1812,6 @@ struct M68k_divs_w: M68k {
     }
 };
 
-// DIVS.L <ea>y, Dx
-// DIVU.L <ea>y, Dx
-// REMS.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
-// REMU.L <ea>y, Dw:Dx                  32-bit Dx/32-bit <ea>y  :> 32-bit remainder in Dw
-struct M68k_divrem_l: M68k {
-    M68k_divrem_l(): M68k("divrem_l", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
-                          OP(4) & BITS<6, 11>(0x31) & EAM(m68k_eam_data) &
-                          INSN_WORD<1>(BIT<15>(0) & BITS<3, 9>(0))) {}
-    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
-        if (extract<12, 14>(d->instructionWord(1)) == extract<0, 2>(d->instructionWord(1))) {
-            // division
-            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
-            SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-            SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
-            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dst);
-        } else {
-            // remainder
-            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_rems : m68k_remu;
-            SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
-            SgAsmExpression *dw = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
-            SgAsmExpression *dx  = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
-            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dw, dx);
-        }
-    }
-};
-        
 // DIVU.W
 struct M68k_divu_w: M68k {
     M68k_divu_w(): M68k("divu_w", m68k_family,
@@ -1852,6 +1823,38 @@ struct M68k_divu_w: M68k {
     }
 };
     
+// DIVS.L <ea>, Dq                      Dq[32] / <ea>[32] -> Dq
+// DIVU.L <ea>, Dq                      Dq[32] / <ea>[32] -> Dq
+// DIVS.L <ea>, Dr, Dq                  (Dr:Dq)[64] / <ea>[32] -> Dq[32] and (Dr:Dq)[64] % <ea>[32] -> Dr[32]
+// DIVU.L <ea>, Dr, Dq                  (Dr:Dq)[64] / <ea>[32] -> Dq[32] and (Dr:Dq)[64] % <ea>[32] -> Dr[32]
+// DIVSL.L <ea>, Dr, Dq                 Dq[32] / <ea>[32] -> Dq and Dq[32] % <ea>[32] -> Dr[32]
+// DIVUL.L <ea>, Dr, Dq                 Dq[32] / <ea>[32] -> Dq and Dq[32] % <ea>[32] -> Dr[32]
+struct M68k_divide: M68k {
+    M68k_divide(): M68k("divide", m68k_68020|m68k_68030|m68k_68040|m68k_freescale_cpu32,
+                        OP(4) & BITS<6, 11>(0x31) & EAM(m68k_eam_data) &
+                        INSN_WORD<1>(BIT<15>(0) & BITS<3, 9>(0))) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
+        SgAsmExpression *dq = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
+        if (extract<12, 14>(d->instructionWord(1)) == extract<0, 2>(d->instructionWord(1))) {
+            // first form, 32-bit dividend, storing only the quotient
+            ASSERT_require((0==extract<10, 10>(d->instructionWord(1))));
+            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
+            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dq);
+        } else if (extract<10, 10>(d->instructionWord(1))) {
+            // second form, 64-bit dividend, storing both quotient and remainder
+            SgAsmExpression *dr = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
+            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
+            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
+        } else {
+            // third form, 32-bit dividend, storing both quotient and remainder
+            SgAsmExpression *dr = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
+            M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divsl : m68k_divul;
+            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
+        }
+    }
+};
+
 // EOR.B Dy, <ea>x
 // EOR.W Dy, <ea>x
 // EOR.L Dy, <ea>x
@@ -4686,8 +4689,8 @@ DisassemblerM68k::init()
     M68k_DECODER(cptrapcc);
     M68k_DECODER(cpush);
     M68k_DECODER(dbcc);
+    M68k_DECODER(divide);
     M68k_DECODER(divs_w);
-    M68k_DECODER(divrem_l);
     M68k_DECODER(divu_w);
     M68k_DECODER(eor);
     M68k_DECODER(eori);

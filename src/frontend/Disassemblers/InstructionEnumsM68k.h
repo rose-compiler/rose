@@ -303,8 +303,10 @@ enum M68kInstructionKind {
     m68k_dblt,                                          /**< Decrement and branch if less than */
     m68k_dbgt,                                          /**< Decrement and branch if greater than */
     m68k_dble,                                          /**< Decrement and branch if less than or equal */
-    m68k_divs,                                          /**< Signed divide */
-    m68k_divu,                                          /**< Unsigned divide */
+    m68k_divs,                                          /**< Signed divide with optional remainder */
+    m68k_divsl,                                         /**< Signed divide 32-bit quotient with remainder */
+    m68k_divu,                                          /**< Unsigned divide with optional remainder */
+    m68k_divul,                                         /**< Unsigned divide 32-bit quotient with remainder */
     m68k_eor,                                           /**< Exclusive-OR logical */
     m68k_eori,                                          /**< Exclusive-OR immediate */
     m68k_exg,                                           /**< Exchange registers */
@@ -409,8 +411,8 @@ enum M68kInstructionKind {
     m68k_pack,                                          /**< Pack */
     m68k_pea,                                           /**< Push effective address */
 //    m68k_pulse,                         /**< Generate unique processor status */
-    m68k_rems,                                          /**< Signed divide remainder */
-    m68k_remu,                                          /**< Unsigned divide remainder */
+//    m68k_rems,                          /**< Signed divide remainder -- see divs instead */
+//    m68k_remu,                          /**< Unsigned divide remainder -- see divu instead */
     m68k_rol,                                           /**< Rotate left without extend */
     m68k_ror,                                           /**< Rotate right without extend */
     m68k_roxl,                                          /**< Rotate left with extend */
