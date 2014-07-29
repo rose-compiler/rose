@@ -129,6 +129,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_90.C \
    test2014_91.C \
    test2014_123.C \
+   test2014_128.C \
    lulesh.C \
    luleshTALC.C
 

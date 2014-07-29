@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
 test2012_02.C \
+test2014_02.C \
 last.C
 
 
@@ -138,7 +139,19 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
+if ROSE_USE_EDG_VERSION_4_9
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "C11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
+else
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "C11 tests using GNU version 4.9 backend compiler."
+	@$(MAKE) $(PASSING_TEST_Objects)
+endif
+endif
+else
+	@echo "C11 tests require GNU version 4.8 or 4.9 backend compilers."
+endif
 	@echo "*************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
 	@echo "*************************************************************************************************"

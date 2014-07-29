@@ -1395,6 +1395,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      if (functionDeclaration != NULL)
         {
+       // curprint("/* printSpecifier2 */ ");
+
+       // DQ (7/26/2014): Added support to output the C11 _Noreturn keyword.
+          if (functionDeclaration->get_using_C11_Noreturn_keyword() == true)
+             {
+               curprint("_Noreturn ");
+             }
+
        // DQ (2/4/2006): Template specialization declarations (forward declaration) can't have some modified output
           bool isDeclarationOfTemplateSpecialization = false;
           SgDeclarationStatement::template_specialization_enum specializationEnumValue = functionDeclaration->get_specialization();
@@ -1677,13 +1685,20 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
 
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      short alignmentValue = initializedName->get_gnu_attribute_alignment();
-     if (alignmentValue >= 0)
+
+  // DQ (7/26/2014): Adding support for _Alignas keyword.
+     bool using_Alignas_keyword = (initializedName->get_using_C11_Alignas_keyword() == true);
+
+  // if (alignmentValue >= 0)
+     if (alignmentValue >= 0 && using_Alignas_keyword == false)
         {
 #if 0
           curprint(" /* alignment attribute on SgInitializedName */ ");
 #endif
+       // DQ (7/26/2014): Fixed error in using "align" (mistake), changed to "aligned".
        // curprint( " __attribute__((align(N)))");
-          curprint( " __attribute__((align(");
+       // curprint( " __attribute__((align(");
+          curprint( " __attribute__((aligned(");
           curprint(StringUtility::numberToString((int)alignmentValue));
           curprint("))) ");
         }
@@ -1724,7 +1739,9 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
      if (functionDeclaration != NULL)
         {
-          if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true)
+       // DQ (7/26/2014): Fixed for better handling of C11 _Noreturn keyword.
+       // if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true)
+          if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true && functionDeclaration->get_using_C11_Noreturn_keyword() == false)
              {
                curprint(" __attribute__((noreturn))");
              }
@@ -1755,6 +1772,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
 #if 0
      printf ("In printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+     curprint("\n/* START printAttributes(SgDeclarationStatement*) */\n ");
 #endif
 
 #if 0
@@ -1773,14 +1791,20 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      short alignmentValue = decl_stmt->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
 
+#if 0
+     printf ("In printAttributes(SgDeclarationStatement*): alignmentValue = %d \n",(int)alignmentValue);
+#endif
+
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      if (alignmentValue >= 0)
         {
 #if 0
           curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
 #endif
+       // DQ (7/26/2014): Fixed error in using "align" (mistake), changed to "aligned".
        // curprint(" __attribute__((align(N)))");
-          curprint(" __attribute__((align(");
+       // curprint(" __attribute__((align(");
+          curprint(" __attribute__((aligned(");
           curprint(StringUtility::numberToString((int)alignmentValue));
           curprint(")))");
         }
@@ -1990,6 +2014,11 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
              }
 #endif
         }
+
+#if 0
+     printf ("Leaving printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+     curprint("\n/* END printAttributes(SgDeclarationStatement*) */\n ");
+#endif
    }
 
 
@@ -2009,7 +2038,7 @@ Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnp
           if (gnu_regparm_value > 0)
              {
                string s = StringUtility::numberToString(gnu_regparm_value);
-#if 1
+#if 0
                printf ("Output __attribute__((regparm(%s))) for function = %p = %s = %s \n",s.c_str(),functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif
                curprint(" __attribute__((regparm(");

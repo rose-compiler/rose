@@ -313,6 +313,30 @@ testSharedMemoryDSL_53: sharedMemoryDSL
 testSharedMemoryDSL_54: sharedMemoryDSL
 	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_54.c
 
+testSharedMemoryDSL_55: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_55.c
+
+testSharedMemoryDSL_56: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_56.c
+
+testSharedMemoryDSL_57: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_57.c
+
+testSharedMemoryDSL_58: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_58.c
+
+testSharedMemoryDSL_59: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_59.c
+
+testSharedMemoryDSL_60: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_60.c
+
+testSharedMemoryDSL_61: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_61.c
+
+testSharedMemoryDSL_62: sharedMemoryDSL
+	./sharedMemoryDSL -testCompile -c $(srcdir)/test2014_62.c
+
 
 # DQ (4/30/2014): List of test codes to test the shared memory DSL work.
 SharedMemoryDSL_testcodes = \
@@ -326,13 +350,84 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_36 testSharedMemoryDSL_37 testSharedMemoryDSL_38 testSharedMemoryDSL_39 testSharedMemoryDSL_40 \
    testSharedMemoryDSL_41 testSharedMemoryDSL_42 testSharedMemoryDSL_43 testSharedMemoryDSL_44 testSharedMemoryDSL_45 \
    testSharedMemoryDSL_46 testSharedMemoryDSL_47 testSharedMemoryDSL_48 testSharedMemoryDSL_49 testSharedMemoryDSL_50 \
-   testSharedMemoryDSL_51 testSharedMemoryDSL_52 testSharedMemoryDSL_53 testSharedMemoryDSL_54
+   testSharedMemoryDSL_51 testSharedMemoryDSL_52 testSharedMemoryDSL_53 testSharedMemoryDSL_54 testSharedMemoryDSL_55 \
+   testSharedMemoryDSL_56 testSharedMemoryDSL_57 testSharedMemoryDSL_58 testSharedMemoryDSL_59 testSharedMemoryDSL_60 \
+   testSharedMemoryDSL_61 testSharedMemoryDSL_62
 
 # DQ (7/15/2014): This requires a fix that is not on this branch (it is on another branch not yet merged).
 # testSharedMemoryDSL_35
 
 testSharedMemoryDSL: $(SharedMemoryDSL_testcodes)
 
+BROOKSTESTS_testcodes = \
+   test_in1 test_in2 test_in3 test_in4 test_in5 test_in6 test_in6 test_in8 test_in9 test_in10 \
+   test_in11 test_in12 test_in13 test_in14 test_in15 test_in16 
+
+test_in1:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in1.c
+	diff rose_in1.c $(srcdir)/BROOKSTESTS/fiducials/rose_in1.c
+
+test_in2:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in2.c
+	diff rose_in2.c $(srcdir)/BROOKSTESTS/fiducials/rose_in2.c
+
+test_in3:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in3.c
+	diff rose_in3.c $(srcdir)/BROOKSTESTS/fiducials/rose_in3.c
+
+test_in4:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in4.c
+	diff rose_in4.c $(srcdir)/BROOKSTESTS/fiducials/rose_in4.c
+
+test_in5:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in5.c
+	diff rose_in5.c $(srcdir)/BROOKSTESTS/fiducials/rose_in5.c
+
+test_in6:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in6.c
+	diff rose_in6.c $(srcdir)/BROOKSTESTS/fiducials/rose_in6.c
+
+test_in7:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in7.c
+	diff rose_in7.c $(srcdir)/BROOKSTESTS/fiducials/rose_in7.c
+
+test_in8:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in8.c
+	diff rose_in8.c $(srcdir)/BROOKSTESTS/fiducials/rose_in8.c
+
+test_in9:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in9.c
+	diff rose_in9.c $(srcdir)/BROOKSTESTS/fiducials/rose_in9.c
+
+test_in10:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in10.c
+	diff rose_in10.c $(srcdir)/BROOKSTESTS/fiducials/rose_in10.c
+
+test_in11:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in11.c
+	diff rose_in11.c $(srcdir)/BROOKSTESTS/fiducials/rose_in11.c
+
+test_in12:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in12.c
+	diff rose_in12.c $(srcdir)/BROOKSTESTS/fiducials/rose_in12.c
+
+test_in13:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in13.c
+	diff rose_in13.c $(srcdir)/BROOKSTESTS/fiducials/rose_in13.c
+
+test_in14:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in14.c
+	diff rose_in14.c $(srcdir)/BROOKSTESTS/fiducials/rose_in14.c
+
+test_in15:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in15.c
+	diff rose_in15.c $(srcdir)/BROOKSTESTS/fiducials/rose_in15.c
+
+test_in16:
+	./sharedMemoryDSL -testCompile -c $(srcdir)/BROOKSTESTS/in16.c
+	diff rose_in16.c $(srcdir)/BROOKSTESTS/fiducials/rose_in16.c
+
+testBROOKSTESTS: $(BROOKSTESTS_testcodes)
 
 QMTEST_Objects = ${ALL_TESTCODES:.upc=.qmt}
 
