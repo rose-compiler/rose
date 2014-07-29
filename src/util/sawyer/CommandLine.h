@@ -90,67 +90,62 @@ namespace Sawyer { // documented in Sawyer.h
  *
  * @section ex1 An example
  *
- *  Here's an example to give the basic flavor of the library.  This example doesn't include any documentation.
+ *  Here's an example to give the basic flavor of the library.  The description of the command-line and the parsing of the
+ *  command-line are combined in a single function, <code>parseCommandLine</code>:
  *
- * @todo We need an example that shows documentation.  We should probably be using actual code for things this big.
- *       FIXME[Robb Matzke 2014-03-02]
+ * @snippet commandLineEx1.C parseCommandLine decl
  *
- * @code
- *  int main(int argc, char *argv[]) {
- *      using namespace Sawyer::CommandLine;
+ *  We'll divide the command-line into two groups of switches: switches that are common to all our tools, and switches that are
+ *  specific to this particular tool.  In real life, the common switches would be returned from some other function defined in
+ *  a library that all the tools share.  Each switch group may have its own documentation, which causes its switches to be
+ *  grouped together in the manual page.  Documentation is free-flowing and automatically wrapped to the width of the terminal
+ *  window in which the command runs, so there is no need to have line feeds within the source code string literals, although
+ *  they are allowed.  A double line feed in the documentation string is a paragraph separator.
  *
- *      // Some fairly standard switches
- *      SwitchGroup standard;
- *      standard.insert(Switch("help",'h')             // --help and -h
- *                      .shortName('?')                // -? is another name
- *                      .action(showHelp()));          // display the man page
+ * @snippet commandLineEx1.C parseCommandLine standard
  *
- *      standard.insert(Switch("version", 'V')         // --version and -V
- *                      .action(showVersion("1.2.3")));
+ *  Now we can declare a couple switches inside our <code>standard</code> switch group.  We'll declare one that will show the
+ *  manual page, and another that shows the version number.  The man page is shown with <code>--help</code>, <code>-h</code>,
+ *  or <code>-?</code>, and the version is shown with <code>--version</code> or <code>-V</code>.  %Switch actions occur only
+ *  when switch parsing is all done (i.e., the man page won't be emitted unless the command-line is parsable).
  *
- *      bool verbosity = false;
- *      standard.insert(Switch("verbose", 'v')
- *                      .intrinsicValue("true", booleanParser(verbosity)));
- *      standard.insert(Switch("quiet", 'q')
- *                      .intrinsicValue(false, verbosity)); // a shortcut
+ * @snippet commandLineEx1.C parseCommandLine helpversion
  *
- *      short debugLevel = 0;
- *      standard.insert(Switch("debug", 'd')
- *                      .intrinsicValue("1", integerParser(debugLevel))
- *                      .valueAugmenter(sum<short>())  // increment the value each time
- *                      .whichValue(SAVE_AUGMENTED));  // save the incremented value
+ *  We place all the tool-specific switches in another switch group we call <code>tool</code>.  The <code>--isa</code> switch
+ *  will accept an argument that can be anything and is stored in <code>std::string settings.isaName</code>.  If the arguent is
+ *  the word "list" then the function that eventually parses it will generate a list (this function is part of the tool source
+ *  code and is not part of %Sawyer).
  *
- *      // A few other switches
- *      SwitchGroup tool;
- *      tool.insert(Switch("incdir", 'I')              // a list of strings
- *                  .argument("directories", listParser(anyParser()))
- *                  .explosiveLists(true)              // as separate values
- *                  .whichValue(SAVE_ALL));            // more than one occurrence
+ * @snippet commandLineEx1.C parseCommandLine isa
  *
- *      tool.insert(Switch("swap")                     // takes two arguments
- *                  .argument("a", realNumberParser())
- *                  .argument("b", realNumberParser()));
+ *  The next two switches are similar except they expect arguments that are non-negative integers.  The argument will be parsed
+ *  by %Sawyer, which accepts decimal, octal, and hexadecimal using C syntax, and eventually assigned to the specified
+ *  <code>settings</code> data member, both of which are of type <code>unsigned long</code>.  The parser function,
+ *  <code>nonNegativeIntegerParser</code>, is overloaded to accept a variety of integer types and a parsing exception will be
+ *  thrown if the argument string parses to a value which doesn't fit in the specified variable.
  *
- *      tool.insert(Switch("user")                     // one arg with default value
- *                  .argument("user", anyParser(), "root"));
+ * @snippet commandLineEx1.C parseCommandLine at
  *
- *      // Build the parser
- *      Parser parser;
- *      parser.with(standard).with(tool);
+ *  Now that the command-line switches are described, we can create a parser.  The parser also controls the non-switch aspects
+ *  of the manual page, such as the heading and footer, purpose, synopsis, and other sections.
  *
- *      // Parse the command line
- *      ParserResult cmdline = parser.parse(argc, argv);
+ * @snippet commandLineEx1.C parseCommandLine parser
  *
- *      // Push results to program variables
- *      cmdline.apply();
+ *  Finally we can do the actual parsing.  We could split this statement into multiple statements, but one of %Sawyer's idioms
+ *  is to chain things together in a functional programming style.  The <code>with</code> method inserts our switch
+ *  declarations from above into the parser; the <code>parse</code> method, of which there are multiple overloaded varieties,
+ *  does the real work; and the <code>apply</code> method applies the results of a successful parse by copying values into the
+ *  variabiables we specified, and running switch actions (e.g., "help" and "version") if necessary.
  *
- *      // Query the results
- *      if (cmdline.has("swap")) {
- *          std::string aStr = cmdline.parsed("swap", 0).string();
- *          double aVal = cmdline.parsed("swap", 0).asDouble();
- *          std::cerr <<"came from " <<cmdline.parsed("swap", 0).location() <<"\n";
- *      }
- * @endcode
+ * @snippet commandLineEx1.C parseCommandLine parse
+ *
+ *  Here's the whole example in one shot (the docs/examples/commandLineEx1.C file):
+ *
+ * @includelineno commandLineEx1.C
+ *
+ *  And here's the output from the <code>--help</code> switch:
+ *
+ * @verbinclude commandLineEx1.out
  */
 namespace CommandLine {
 

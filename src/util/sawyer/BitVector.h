@@ -122,6 +122,22 @@ public:
         return 0==size_ ? BitRange() : BitRange::hull(0, size_-1);
     }
 
+    /** Create a bit range from a starting offset and size.
+     *
+     *  This is just a convenience wrapper around BitRange::baseSize() so that name qualification can be avoided when "using
+     *  namespace" directives are not employed. */
+    static BitRange baseSize(size_t base, size_t size) {
+        return BitRange::baseSize(base, size);
+    }
+
+    /** Create a bit range from min and max positions.
+     *
+     *  This is just a convenience wrapper around BitRange::hull(size_t,size_t) so that name qualification can be avoided when
+     *  "using namespace" directives are not employed. */
+    static BitRange hull(size_t minOffset, size_t maxOffset) {
+        return BitRange::hull(minOffset, maxOffset);
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Value access
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
