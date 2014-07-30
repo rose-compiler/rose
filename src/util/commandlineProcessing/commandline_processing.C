@@ -490,15 +490,24 @@ CommandlineProcessing::isSourceFilename ( string name )
    {
      initSourceFileSuffixList();
 
-     std::string suffix = StringUtility::fileNameSuffix(name);
+     int length = name.size();
+     for ( Rose_STL_Container<string>::iterator j = validSourceFileSuffixes.begin(); j != validSourceFileSuffixes.end(); j++ )
+        {
+          int jlength = (*j).size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+             {
+               return true;
+             }
+        }
 
-     // TV (02/27/2014) : Replace hand coded search by a call to STL
-     if (find(validSourceFileSuffixes.begin(), validSourceFileSuffixes.end(), suffix) != validSourceFileSuffixes.end())
-         return true;
-
-     // TV (02/27/2014) : Added this to handle extra C++ extensions. Could change at runtime => cannot be added to initSourceFileSuffixList().
-     if (find(extraCppSourceFileSuffixes.begin(), extraCppSourceFileSuffixes.end(), suffix) != extraCppSourceFileSuffixes.end())
-        return true;
+     for ( Rose_STL_Container<string>::iterator j = extraCppSourceFileSuffixes.begin(); j != extraCppSourceFileSuffixes.end(); j++ )
+        {
+          int jlength = (*j).size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+             {
+               return true;
+             }
+        }
 
      return false;
    }
