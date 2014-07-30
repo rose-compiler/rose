@@ -44,6 +44,8 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
 
+SUBDIRS += DLX
+
 # Until we revisit this this, we want to include specific documentation that has been put into this directory.
 # Note that OpenFortranParser_SAGE_Connection has the newer work to support Fortran in ROSE.  This work
 # is part of a contract to add Fortran support to ROSE using the Open 64 compiler.  It supports a roughly

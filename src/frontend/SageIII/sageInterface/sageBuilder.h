@@ -78,7 +78,12 @@ ROSE_DLL_API void clearScopeStack();
 //! Support to retrive the SgGlobal from the internal scope stack (error if not present in a non-empty list, return null for empty list).
 SgScopeStatement* getGlobalScopeFromScopeStack();
 
+bool isInScopeStack(SgScopeStatement * scope);
+
 bool inSwitchScope();
+
+// TV: for debug purpose
+std::string stringFromScopeStack();
 
    
 //@} 
@@ -311,6 +316,7 @@ SgLongLongIntVal* buildLongLongIntValHex(long long value = 0);
 SgLongLongIntVal* buildLongLongIntVal_nfi(long long value, const std::string& str);
 
 SgEnumVal* buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgName name);
+SgEnumVal* buildEnumVal(SgEnumFieldSymbol * sym);
 
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
 SgLongDoubleVal* buildLongDoubleVal_nfi(long double value, const std::string& str);
