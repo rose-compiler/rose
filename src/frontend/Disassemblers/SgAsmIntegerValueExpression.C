@@ -42,7 +42,8 @@ SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(uint64_t value, SgAsmTy
     p_bitVector.resize(type->get_nBits()).fromInteger(value);
 }
 
-SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type)
+    : p_baseNode(NULL) {
     ASSERT_not_null(type);
     ASSERT_require2(bv.size()==type->get_nBits(),
                     "value width (" + StringUtility::plural(bv.size(), "bits") + ") does not match type width (" +
