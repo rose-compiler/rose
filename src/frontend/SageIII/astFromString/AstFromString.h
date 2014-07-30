@@ -88,12 +88,14 @@ namespace AstFromString
   //! Match and skip whitespace
   ROSE_DLL_API bool afs_skip_whitespace();
 
- 
   //! Match identifier, move to the next character if successful. The identifier could be a name of a type, function, variable, or label. The resolved identifier (type , variable name, function reference expression, or label name) is stored into c_parsed_node.
   ROSE_DLL_API bool afs_match_identifier();
 
   //! Match an integer constant, store it into result
   ROSE_DLL_API bool afs_match_integer_const(int * result);
+
+  //! Match an double constant, store it into result
+  ROSE_DLL_API bool afs_match_double_const(double * result);
 
   //! Match a translation unit. Not yet implemented.
   ROSE_DLL_API bool afs_match_translation_unit();
@@ -119,8 +121,11 @@ namespace AstFromString
   //! Match a storage class specifier. Not yet implemented.
   ROSE_DLL_API bool afs_match_storage_class_specifier();
 
-  //! Match a type specifier : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned' | struct_or_union_specifier | enum_specifier | type_id. The recognized type is stored in c_parsed_node.
-  ROSE_DLL_API bool afs_match_type_specifier();
+  /*! Match a type specifier : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned' | struct_or_union_specifier | enum_specifier | type_id. The recognized type is stored in c_parsed_node.
+   *  \param checkTrail if false it authorizes any character to follow the type. Used to parse fragments of C (as a comma separated list of types)
+   */
+  ROSE_DLL_API bool afs_match_type_specifier(bool checkTrail = true);
+
   // type_id in ANTLR grammar
   //struct_or_union_specifier
   //struct_or_union
@@ -246,3 +251,4 @@ namespace AstFromString
 }
 
 #endif /* __AST_FROM_STRING_H__ */
+
