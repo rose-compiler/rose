@@ -989,6 +989,11 @@ ROSE_DLL_API bool isUpcArrayWithThreads(SgArrayType* t);
 //! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
 ROSE_DLL_API SgType* lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope=NULL);
 
+// DQ (7/22/2014): Added support for comparing expression types in actual arguments with those expected from the formal function parameter types.
+//! Get the type of the associated argument expression from the function type.
+ROSE_DLL_API SgType* getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression);
+
+
 //@}
 
 //------------------------------------------------------------------------
