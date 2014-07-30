@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <stdarg.h>
+
 #include <assert.h>
 
 void logger_log_before(log_id_t log_id, ...) {

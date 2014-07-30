@@ -1012,6 +1012,12 @@ ROSE_DLL_API SgType* lookupNamedTypeInParentScopes(const std::string& type_name,
 //! Get the type of the associated argument expression from the function type.
 ROSE_DLL_API SgType* getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression);
 
+//! Verify that 2 SgTemplateArgument are equivalent (same type, same expression, or same template declaration)
+ROSE_DLL_API bool templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2);
+
+//! Verify that 2 SgTemplateArgumentPtrList are equivalent.
+ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2);
+
 //@}
 
 //------------------------------------------------------------------------
