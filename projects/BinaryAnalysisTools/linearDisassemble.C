@@ -6,6 +6,11 @@
 #include <DisassemblerX86.h>
 #include <DisassemblerM68k.h>
 
+#include <SymbolicSemantics2.h>
+#include <TraceSemantics2.h>
+#include <DispatcherM68k.h>
+using namespace BinaryAnalysis::InstructionSemantics2;
+
 #include <map>
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
@@ -25,8 +30,9 @@ getDisassembler(const std::string &name)
         std::cout <<"The following ISAs are supported:\n"
                   <<"  amd64\n"
                   <<"  arm\n"
+                  <<"  coldfire\n"
                   <<"  i386\n"
-                  <<"  m68k\n"
+                  <<"  m68040\n"
                   <<"  mips\n"
                   <<"  ppc\n";
         exit(0);
@@ -40,8 +46,10 @@ getDisassembler(const std::string &name)
         return new DisassemblerX86(4);
     } else if (0==name.compare("amd64")) {
         return new DisassemblerX86(8);
-    } else if (0==name.compare("m68k")) {
-        return new DisassemblerM68k(m68k_freescale_isab);
+    } else if (0==name.compare("m68040")) {
+        return new DisassemblerM68k(m68k_68040);
+    } else if (0==name.compare("coldfire")) {
+        return new DisassemblerM68k(m68k_freescale_emacb);
     } else {
         throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
     }
@@ -120,6 +128,13 @@ int main(int argc, char *argv[])
     AsmUnparser unparser;
     unparser.set_registers(disassembler->get_registers());
 
+#if 0 // [Robb P. Matzke 2014-07-29]
+    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
+    ops = TraceSemantics::RiscOperators::instance(ops);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherM68k::instance(ops);
+    dispatcher->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+#endif
+
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = 0;
     while (map.next(va).apply(va)) {
@@ -128,6 +143,62 @@ int main(int argc, char *argv[])
             SgAsmInstruction *insn = disassembler->disassembleOne(&map, va);
             ASSERT_not_null(insn);
             unparser.unparse(std::cout, insn);
+
+#if 0 // [Robb P. Matzke 2014-07-29]
+            if (SgAsmM68kInstruction *insnM68k = isSgAsmM68kInstruction(insn)) {
+                switch (insnM68k->get_kind()) {
+                    case m68k_cpusha:
+                    case m68k_cpushl:
+                    case m68k_cpushp:
+                        std::cout <<"    No semantics yet for privileged instructions\n";
+                        break;
+                        
+                    case m68k_fbeq:
+                    case m68k_fbne:
+                    case m68k_fboge:
+                    case m68k_fbogt:
+                    case m68k_fbule:
+                    case m68k_fbult:
+                    case m68k_fcmp:
+                    case m68k_fdabs:
+                    case m68k_fdadd:
+                    case m68k_fddiv:
+                    case m68k_fdiv:
+                    case m68k_fdmove:
+                    case m68k_fdmul:
+                    case m68k_fdneg:
+                    case m68k_fdsqrt:
+                    case m68k_fdsub:
+                    case m68k_fintrz:
+                    case m68k_fmove:
+                    case m68k_fmovem:
+                    case m68k_fsadd:
+                    case m68k_fsdiv:
+                    case m68k_fsmove:
+                    case m68k_fsmul:
+                    case m68k_fsneg:
+                    case m68k_fssub:
+                    case m68k_ftst:
+                        std::cout <<"    No semantics yet for floating-point instructions\n";
+                        break;
+
+                    case m68k_nbcd:
+                    case m68k_rtm:
+                    case m68k_movep:
+                        std::cout <<"    No semantics yet for this odd instruction\n";
+                        break;
+
+                    default:
+                        ops->get_state()->clear();
+                        dispatcher->processInstruction(insn);
+                        std::ostringstream ss;
+                        ss <<*dispatcher->get_state();
+                        std::cout <<StringUtility::prefixLines(ss.str(), "    ") <<"\n";
+                        break;
+                }
+            }
+#endif
+
             va += insn->get_size();
             if (0 != va % settings.alignment)
                 std::cerr <<StringUtility::addrToString(va) <<": invalid alignment\n";
