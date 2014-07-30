@@ -584,6 +584,7 @@ SgJavaParameterizedType
 SgJavaWildcardType
 SgSpecialFunctionModifier
 SgStatement
+SgStaticAssertionDeclaration
 SgStmtDeclarationStatement
 SgStatementExpression
 SgStatementFunctionStatement
@@ -635,6 +636,7 @@ SgTypeBool
 SgTypeChar
 SgTypeComplex
 SgTypeDefault
+SgTypeExpression
 SgTypeLabel
 SgTypeDouble
 SgTypeEllipse

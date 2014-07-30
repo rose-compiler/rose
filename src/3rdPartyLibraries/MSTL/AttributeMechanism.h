@@ -51,8 +51,12 @@ class AttributeMechanism : protected std::map<Key,Value>
    {
      public:
           typedef std::set<Key> AttributeIdentifiers; 
-          std::map<Key,Value>::end;
-          std::map<Key,Value>::begin;
+
+       // DQ (7/25/2014): Remove warning from GNU 4.8 compiler.
+       // std::map<Key,Value>::end;
+       // std::map<Key,Value>::begin;
+          using std::map<Key,Value>::end;
+          using std::map<Key,Value>::begin;
 
           AttributeMechanism();
          ~AttributeMechanism();

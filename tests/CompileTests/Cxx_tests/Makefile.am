@@ -104,8 +104,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_56.C \
    test2014_57.C \
    test2014_58.C \
+   test2014_62.C \
+   test2014_67.C \
+   test2014_68.C \
+   test2014_70.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (7/3/2014): This C++ language feature is only properly supported in EDG version 4.9
+if ROSE_USE_EDG_VERSION_4_9
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_65.C \
+   test2014_66.C \
+   test2014_69.C
+endif
 
 # DQ (5/19/2014): Failing tests
 #   test2014_51.C (Not clear what is wrong with this, if anything. EDG does not accept it as valid C++).
@@ -113,6 +125,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 #   test2014_59.C (This is a name qualification error, type hiding error needs name qualification to be properly resolved).
 #   test2014_60.C (failing test for function pointer casts (reported to rose user list).
 #   test2014_61.C (Isolated version of test2014_60.C).
+#   test2014_63.C Test from Robb one case fails for MSVC and the other for GNU g++.
+#   test2014_64.C example of new failing test code.
 
 # DQ (4/6/2014): Failing tests
 #   test2014_14.C 

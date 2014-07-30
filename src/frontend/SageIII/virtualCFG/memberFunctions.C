@@ -5562,5 +5562,31 @@ SgAssertStmt::cfgInEdges(unsigned int idx) {
         return result;
 }
 
+
+unsigned int
+SgTypeExpression::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgTypeExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgTypeExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+
 #endif
 
