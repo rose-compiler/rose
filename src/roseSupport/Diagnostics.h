@@ -221,8 +221,15 @@ using Sawyer::Message::FATAL;
 using Sawyer::Message::Stream;
 using Sawyer::Message::Facility;
 
-/** Default destination for ROSE diagnostics. */
+/** Default destination for ROSE diagnostics.  The user may set this explicitly before rose::Diagnostics::initialize is called,
+ *  otherwise that function will create a destination that points to standard error and uses the optional
+ *  rose::Diagnostics::mprefix. */
 extern Sawyer::Message::DestinationPtr destination;
+
+/** Default line prefix for message sinks created in ROSE. For instance, if the library needs to create a default destination
+ *  (rose::Diagnostics::destination) then this prefix is used, and if null at that time then a default prefix is created and
+ *  assigned to this variable.  The user may assign a prefix before calling rose::Diagnostics::initialize. */
+extern Sawyer::Message::PrefixPtr mprefix;
 
 /** Diagnostic facility for the ROSE library as a whole. */
 extern Sawyer::Message::Facility mlog;
@@ -237,6 +244,45 @@ void initialize();
 
 /** Returns true if diagnostics-related global variables have been initialized. */
 bool isInitialized();
+
+/** Intermediate class for printing to C++ ostreams with a printf-like API.
+ *
+ *  Users seldom declare objects of this type directly, but rather use the rose::Diagnostics::mfprintf function or the mprintf
+ *  macro.
+ *
+ *  @sa rose::Diagnostics::mfprintf */
+class StreamPrintf {
+    std::ostream &stream;
+public:
+    StreamPrintf(std::ostream &stream): stream(stream) {}
+#ifdef _MSC_VER
+    int operator()(const char *fmt, ...);
+#else
+    int operator()(const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+#endif
+};
+
+/** Print to a C++ stream using a printf-like API.
+ *
+ *  The mfprintf function is a partial function whose return value is the real function. It's argument can be any C++
+ *  <code>std::ostream</code> although it's intended mainly for Sawyer::Message::Stream streams.  It's used like this:
+ *
+ * @code
+ *  uint64_t va = ...;
+ *  // C++ way of emitting a message
+ *  mlog[DEBUG] <<"address is " <<StringUtility::addrToString(va) <<"\n";
+ *  // C way of emitting a message
+ *  mfprintf(mlog[DEBUG])("address is 0x"PRIx64"\n", va);
+ *  // Shortcut macro
+ *  mprintf("address is 0x"PRIx64"\n", va);
+ * @endcode
+ *
+ * The @c mprintf macro always uses <code>mlog[DEBUG]</code> without any name qualification in order to resolve to the most
+ * locally defined @c mlog.  Therefore, a "using namespace rose::Diagnostics" probably needs to be in effect. */
+StreamPrintf mfprintf(std::ostream &stream);
+
+// See mfprintf
+#define mprintf mfprintf(mlog[rose::Diagnostics::DEBUG]) /*"mlog" must be resolved at point where macro is expanded*/
 
 } // namespace
 } // namespace

@@ -6,6 +6,7 @@
 #include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
+#include "DisassemblerM68k.h"
 #include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
 #include "BinaryLoader.h"
@@ -42,6 +43,7 @@ void Disassembler::initDiagnostics() {
     
 /* Hook for construction */
 void Disassembler::ctor() {
+    memset(&progress_time, 0, sizeof progress_time);
 }
 
 void
@@ -152,6 +154,7 @@ Disassembler::initclass()
     RTS_INIT_RECURSIVE(class_mutex) {
         register_subclass(new DisassemblerArm());
         register_subclass(new DisassemblerPowerpc());
+        register_subclass(new DisassemblerM68k(m68k_freescale_isab));
         register_subclass(new DisassemblerMips());
         register_subclass(new DisassemblerX86(2)); /*16-bit*/
         register_subclass(new DisassemblerX86(4)); /*32-bit*/
@@ -534,7 +537,7 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
         for (size_t i=0; i<operands.size(); i++) {
             uint64_t constant=0;
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operands[i])) {
-                size_t nbits = ival->get_significant_bits();
+                size_t nbits = ival->get_significantBits();
                 if (nbits!=16 && nbits!=32 && nbits!=64)
                     continue; /* Not an appropriately-sized constant */
                 constant = ival->get_value();
@@ -883,3 +886,4 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
 
     return successors;
 }
+

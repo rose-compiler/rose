@@ -597,7 +597,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics:
 {
     before("shiftLeft", a, b);
     try {
-        return check_width(after(subdomain->rotateLeft(a, b)), a->get_width());
+        return check_width(after(subdomain->shiftLeft(a, b)), a->get_width());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

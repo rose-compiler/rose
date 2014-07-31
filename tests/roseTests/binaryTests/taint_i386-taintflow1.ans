@@ -18,12 +18,12 @@ found 1 binary interpretation
 Taint for each variable at 0x080483b1:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   tainted  pf
   tainted  sf
   tainted  zf
@@ -79,12 +79,12 @@ Taint for each variable at 0x080483b1:
 Taint for each variable at 0x080483de:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   top      pf
   top      sf
   top      zf
@@ -130,12 +130,12 @@ Taint for each variable at 0x080483de:
 Taint for each variable at 0x080483f5:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   bottom   pf
   bottom   sf
   bottom   zf
@@ -193,12 +193,12 @@ Taint for each variable at 0x080483f5:
 Taint for each variable at 0x08048411:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   tainted  pf
   tainted  sf
   tainted  zf
@@ -260,12 +260,12 @@ Taint for each variable at 0x08048411:
 Taint for each variable at 0x08048434:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   bottom   pf
   bottom   sf
   bottom   zf
@@ -315,12 +315,12 @@ Taint for each variable at 0x08048434:
 Taint for each variable at 0x0804844f:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   bottom   pf
   bottom   sf
   bottom   zf
@@ -372,12 +372,12 @@ Taint for each variable at 0x0804844f:
 Taint for each variable at 0x0804846a:
   no-taint NO_LOCATION
   bottom   eip
+  bottom   esp
   bottom   ebp
   bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
   bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
   bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
   bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   esp
   bottom   pf
   bottom   sf
   bottom   zf

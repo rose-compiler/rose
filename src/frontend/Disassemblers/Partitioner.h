@@ -3,6 +3,7 @@
 
 #include "callbacks.h"
 #include "Disassembler.h"
+#include <sawyer/Optional.h>
 
 #ifndef NAN
 #define INFINITY (DBL_MAX+DBL_MAX)
@@ -165,6 +166,8 @@ protected:
     static SgAsmInstruction *isSgAsmInstruction(SgNode*);
     static SgAsmx86Instruction *isSgAsmx86Instruction(const Instruction*);
     static SgAsmx86Instruction *isSgAsmx86Instruction(SgNode*);
+    static SgAsmM68kInstruction *isSgAsmM68kInstruction(const Instruction*);
+    static SgAsmM68kInstruction *isSgAsmM68kInstruction(SgNode*);
     /** @} */
 
     /** Analysis that can be cached in a block. Some analyses are expensive enough that they should be cached in a block.
@@ -598,6 +601,19 @@ public:
 
     /** Looks up a function by address.  Returns the function pointer if found, the null pointer if not found. */
     virtual Function* find_function(rose_addr_t entry_va);
+
+    /** Determines if address is used in a function.  An address is used if there is an instruction that is part of a basic
+     *  block, which is part of a function. */
+    virtual Function* find_function_containing_code(rose_addr_t va);
+
+    /** Determines if address is part of a function's data.  An address is part of a function's data if the address is part of
+     *  SgAsmStaticData node that belongs to a partitioner data block, that belongs to a function.  The pointer to the function
+     *  is returned for true, null for false. */
+    virtual Function* find_function_containing_data(rose_addr_t va);
+
+    /** Determines if address is part of a function.  Returns true if the address is the beginning of an instruction that
+     *  belongs to a function, or if it is any address inside data that belongs to a function. */
+    virtual Function* find_function_containing(rose_addr_t va);
 
     /** Builds the AST describing all the functions.
      *
@@ -1407,11 +1423,26 @@ protected:
     static InstructionMap::const_iterator pattern2(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 
-    /** Matches after stack frame destruction. Matches "leave;ret" followed by one or more "nop" followed by a non-nop
+    /** Matches after stack frame destruction. Matches x86 "leave;ret" followed by one or more "nop" followed by a non-nop
      *  instruction and if matching, returns the iterator for the non-nop instruction. */
     static InstructionMap::const_iterator pattern3(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 #endif
+
+    /** Matches an x86 "enter xxxx, 0" instruction and creates a function at that address. */
+    static InstructionMap::const_iterator pattern4(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+    /** Matches an M68k "link a6, xxxx" instruction where xxxx is zero or negative and creates a function at that address. */
+    static InstructionMap::const_iterator pattern5(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+    /** Matches M68k "rts; (trapf)?; lea.l [a7+X], a7". X is an arbitrarily small-magnitude, negative number. The function
+     *  begins at the LEA instruction. */
+    static InstructionMap::const_iterator pattern6(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions
@@ -1468,6 +1499,15 @@ public:
     /** Adds extents for all defined functions.  Scans across all known functions and adds their extents to the specified
      *  RangeMap argument. Returns the sum of the return values from the single-function function_extent() method. */
     virtual size_t function_extent(FunctionRangeMap *extents);
+
+    /** Returns addresses that are not part of any function.  This is the complement of the set returned by @ref
+     *  function_extent. */
+    virtual ExtentMap unused_addresses();
+
+    /** Determines whether an address is part of any function.  Returns true if the address is part of an instruction that
+     *  belongs to a function, or part of a static data block that belongs to a function.  This isn't a very efficient function
+     *  the way it's currently implemented. */
+    bool is_used_address(rose_addr_t);
 
     /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
      *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
@@ -1566,6 +1606,16 @@ public:
      *  map.  It is possible for the jump table to be discontiguous, but this is not usually the case.  If @p do_create is true
      *  then data blocks are created for the jump table and added to the basic block. */
     Disassembler::AddressSet discover_jump_table(BasicBlock *bb, bool do_create=true, ExtentMap *table_addresses=NULL);
+
+    /** Looks for functions that follow padding.  This method repeatedly looks for padding bytes and then tries to discover a
+     *  function immediately after those bytes by recursively disassembling and following the control flow graph.  Searching for
+     *  the padding and function discovery are interleaved: look for padding, discover function, repeat.  The supplied map is
+     *  used for searching, but the usual map is used for discovery. */
+    virtual void discover_post_padding_functions(const MemoryMap &map);
+
+    /** Return the next unused address.  Scans through the memory map starting at the specified address and returns the first
+     *  address found to be mapped but not belonging to any basic block or data block. Returns none on failure. */
+    virtual Sawyer::Optional<rose_addr_t> next_unused_address(const MemoryMap &map, rose_addr_t start_va);
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner

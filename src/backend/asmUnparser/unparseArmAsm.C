@@ -9,7 +9,7 @@ using namespace rose::Diagnostics;
 
 using namespace rose;
 
-static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
+static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();
     if (!registers)
         registers = RegisterDictionary::dictionary_arm7();
@@ -20,13 +20,15 @@ static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg, 
         name = AsmUnparser::invalid_register(insn, rdesc, registers);
     }
 
-    /* Add mask letters to program status registers */
-    if (rdesc.get_major()==arm_regclass_psr && reg->get_psr_mask()!=0) {
-        name += "_";
-        if (reg->get_psr_mask() & 1) name += "c";
-        if (reg->get_psr_mask() & 2) name += "x";
-        if (reg->get_psr_mask() & 4) name += "s";
-        if (reg->get_psr_mask() & 8) name += "f";
+    if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(reg)) {
+        /* Add mask letters to program status registers */
+        if (rdesc.get_major()==arm_regclass_psr && dre->get_psr_mask()!=0) {
+            name += "_";
+            if (dre->get_psr_mask() & 1) name += "c";
+            if (dre->get_psr_mask() & 2) name += "x";
+            if (dre->get_psr_mask() & 4) name += "s";
+            if (dre->get_psr_mask() & 8) name += "f";
+        }
     }
 
     return name;
@@ -178,7 +180,8 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             SgAsmExpression* addr = mr->get_address();
             switch (addr->variantT()) {
-                case V_SgAsmRegisterReferenceExpression:
+                case V_SgAsmDirectRegisterExpression:
+                case V_SgAsmIndirectRegisterExpression:
                 case V_SgAsmBinaryAdd:
                 case V_SgAsmBinarySubtract:
                 case V_SgAsmBinaryAddPreupdate:
@@ -195,13 +198,13 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
             break;
         }
 
-        case V_SgAsmArmRegisterReferenceExpression:
-            result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr), registers);
+        case V_SgAsmDirectRegisterExpression:
+            result += unparseArmRegister(isSgAsmDirectRegisterExpression(expr), registers);
             break;
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ve = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ve);
-            uint64_t v = ve->get_absolute_value();
+            uint64_t v = ve->get_absoluteValue();
             result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
             if (labels && v!=0) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
@@ -254,7 +257,7 @@ std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::Label
         ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
         SgAsmIntegerValueExpression* tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
-        return StringUtility::addrToString(tgt->get_value(), tgt->get_significant_bits());
+        return StringUtility::addrToString(tgt->get_value(), tgt->get_significantBits());
     } else {
         return unparseArmExpression(expr, labels, registers, arm_sign_none);
     }
