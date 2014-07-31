@@ -139,8 +139,9 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
     // outside the current function and the top of the stack holds an address of an instruction within the current function,
     // then this must be a function call.
     if (interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace rose::BinaryAnalysis;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
@@ -197,8 +198,9 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
     // address of the basic block. We depend on our caller to figure out if the instruction pointer is reasonably a function
     // entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace rose::BinaryAnalysis;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
@@ -397,7 +399,7 @@ SgAsmM68kInstruction::get_successors(bool *complete)
 Disassembler::AddressSet
 SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
-    using namespace BinaryAnalysis::InstructionSemantics2;
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
     Stream debug(mlog[DEBUG]);
 
     if (debug) {
@@ -412,8 +414,7 @@ SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns
     // successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
     // assumptions about function call instructions -- their only successor is the specified address operand. */
     if (!*complete || successors.size()>1) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics;
 
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
         RiscOperatorsPtr ops = RiscOperators::instance(regdict);

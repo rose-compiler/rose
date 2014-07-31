@@ -2,6 +2,7 @@
 #include "SymbolicSemantics2.h"
 #include "integerOps.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SymbolicSemantics {
@@ -719,6 +720,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

@@ -2,6 +2,7 @@
 #include "rosePublicConfig.h"
 #include "DwarfLineMapper.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 
 std::ostream &
@@ -166,4 +167,5 @@ DwarfLineMapper::visit(SgNode *node)
     }
 }
 
+} // namespace
 } // namespace

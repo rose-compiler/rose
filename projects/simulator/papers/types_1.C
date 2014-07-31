@@ -8,7 +8,7 @@
 #include "YicesSolver.h"
 #include "BinaryPointerDetection.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 // If this symbol is undefined then the simulator will not forward its own signals to the specimen, making it easier to kill
 // the specimen in some cases.  See its use in main().
@@ -40,8 +40,8 @@ public:
         : SymbolicSemantics::ValueType<nBits>(node) {}
     ValueType(const PartialSymbolicSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
-                       InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
-                       InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
+                       rose::BinaryAnalysis::InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
+                       rose::BinaryAnalysis::InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
     }
 };
 
@@ -50,7 +50,7 @@ public:
  ******************************************************************************************************************************/
 
 
-typedef BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process, ValueType> PointerDetector;
+typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process, ValueType> PointerDetector;
 
 /******************************************************************************************************************************
  *                                              Memory Oracle Analysis
@@ -263,16 +263,17 @@ public:
                 }
 
                 // Do one pointer analysis
-                SMTSolver *solver = NULL;
+                rose::BinaryAnalysis::SMTSolver *solver = NULL;
                 PointerDetector ptr_detector(args.thread->get_process(), solver);
                 ptr_detector.analyze(analysis_addr, addrspc);
                 const PointerDetector::Pointers &pointers = ptr_detector.get_pointers();
                 std::cout <<"Pointers discovered by PtrAnalysis:\n";
-                for (PointerDetector::Pointers::const_iterator pi=pointers.begin(); pi!=pointers.end(); ++pi) {
+                for (PointerDetector::Pointers::const_iterator pi=pointers.begin();
+                     pi!=pointers.end(); ++pi) {
                     const PointerDetector::Pointer &pointer = *pi;
-                    if (pointer.type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
+                    if (pointer.type & rose::BinaryAnalysis::PointerAnalysis::DATA_PTR)
                         std::cout <<"data ";
-                    if (pointer.type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
+                    if (pointer.type & rose::BinaryAnalysis::PointerAnalysis::CODE_PTR)
                         std::cout << "code ";
                     std::cout <<"pointer at " <<pointer.address <<"\n";
                 }

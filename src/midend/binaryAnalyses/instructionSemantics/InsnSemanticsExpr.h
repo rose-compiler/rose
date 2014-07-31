@@ -15,6 +15,9 @@
 #include <set>
 #include <vector>
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
  *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
  *  more expensive traversal of an expression tree. */
@@ -635,4 +638,7 @@ nnodesUnique(InputIterator begin, InputIterator end)
 }
 
 } // namespace
+} // namespace
+} // namespace
+
 #endif

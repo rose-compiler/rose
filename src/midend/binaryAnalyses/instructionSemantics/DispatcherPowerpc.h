@@ -11,6 +11,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -66,6 +67,8 @@ public:
     virtual void record(const BaseSemantics::SValuePtr &result);
 };
         
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+
 #endif

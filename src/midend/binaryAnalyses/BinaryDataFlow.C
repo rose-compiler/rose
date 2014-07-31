@@ -1,13 +1,13 @@
 #include "BinaryDataFlow.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
-
+namespace rose {
 namespace BinaryAnalysis {
 
-using namespace BinaryAnalysis::InstructionSemantics2;
+using namespace Diagnostics;
+using namespace InstructionSemantics2;
 
-Sawyer::Message::Facility DataFlow::mlog("BinaryAnalysis::DataFlow");
+Sawyer::Message::Facility DataFlow::mlog("rose::BinaryAnalysis::DataFlow");
 
 void
 DataFlow::initDiagnostics() {
@@ -102,4 +102,5 @@ DataFlow::getUniqueVariables(const VertexFlowGraphs &graphs) {
     return variables;
 }
 
+} // namespace
 } // namespace

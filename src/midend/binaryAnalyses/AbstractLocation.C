@@ -1,5 +1,6 @@
 #include "AbstractLocation.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 
 bool
@@ -47,4 +48,5 @@ operator<<(std::ostream &out, const AbstractLocation &aloc)
     return out;
 }
 
+} // namespace
 } // namespace

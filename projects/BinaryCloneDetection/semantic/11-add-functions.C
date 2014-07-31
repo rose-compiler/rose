@@ -5,6 +5,7 @@
 #include "DwarfLineMapper.h"
 #include "BinaryFunctionCall.h"
 
+using namespace rose;
 using namespace CloneDetection;
 std::string argv0;
 

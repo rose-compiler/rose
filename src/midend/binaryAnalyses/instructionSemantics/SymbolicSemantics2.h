@@ -13,6 +13,7 @@
 #include <map>
 #include <vector>
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -745,8 +746,9 @@ public:
                              const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

@@ -7,6 +7,10 @@
 #  include <yices_c.h>
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 /** Interface to the Yices Satisfiability Modulo Theory (SMT) Solver.  ROSE should be configured with --with-yices in order
  *  for the satisfiable() virtual method to work (otherwise, the YicesSolver class is still available but will fail an
  *  assertion when instantiated).
@@ -126,5 +130,8 @@ private:
 #endif
 
 };
+
+} // namespace
+} // namespace
 
 #endif

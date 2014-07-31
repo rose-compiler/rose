@@ -17,14 +17,14 @@ namespace CloneDetection {
 
 extern const char *schema; /**< Contents of Schema.sql file, initialized in CloneDetectionSchema.C */
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef std::map<int, SgAsmFunction*> IdFunctionMap;
 typedef std::map<rose_addr_t, int> AddressIdMap;
 typedef std::map<std::string, rose_addr_t> NameAddress;
-typedef BinaryAnalysis::FunctionCall::Graph CG;
+typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 enum FollowCalls { CALL_NONE, CALL_ALL, CALL_BUILTIN };
@@ -915,7 +915,7 @@ public:
     }
 };
 
-typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
+typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
 
 /*******************************************************************************************************************************
  *                                      Address hasher

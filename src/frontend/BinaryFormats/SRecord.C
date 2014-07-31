@@ -6,6 +6,7 @@
 
 using namespace rose::Diagnostics;
 
+namespace rose {
 namespace BinaryAnalysis {
 
 std::ostream&
@@ -247,4 +248,5 @@ SRecord::checksum() const {
     return ~sum & 0xff;
 }
 
+} // namespace
 } // namespace

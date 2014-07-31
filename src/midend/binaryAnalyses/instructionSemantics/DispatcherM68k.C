@@ -4,9 +4,10 @@
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
-using namespace rose;
-using namespace BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
+using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -3281,5 +3282,6 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
     }
 }
 
+} // namespace
 } // namespace
 } // namespace

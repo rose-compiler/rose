@@ -4,6 +4,7 @@
 #include "SymbolicSemantics2.h"
 #include "DispatcherX86.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -417,6 +418,7 @@ public:
     /** @} */
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

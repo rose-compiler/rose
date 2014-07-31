@@ -10,8 +10,8 @@
 #define xor ^
 #endif
 
-using namespace rose;
-
+namespace rose {
+namespace BinaryAnalysis {
 namespace InsnSemanticsExpr {
 
 uint64_t
@@ -22,7 +22,7 @@ const char *
 to_str(Operator o)
 {
     static char buf[64];
-    std::string s = stringifyInsnSemanticsExprOperator(o, "OP_");
+    std::string s = stringifyBinaryAnalysisInsnSemanticsExprOperator(o, "OP_");
     assert(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
     for (char *s=buf; *s; s++) {
@@ -1736,4 +1736,6 @@ operator<<(std::ostream &o, const TreeNode::WithFormatter &w)
 }
 
 
+} // namespace
+} // namespace
 } // namespace

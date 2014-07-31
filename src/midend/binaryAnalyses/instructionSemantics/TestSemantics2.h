@@ -4,6 +4,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -423,6 +424,7 @@ public:
     }
 };
         
+} // namespace
 } // namespace
 } // namespace
 

@@ -8,7 +8,9 @@
 #include <cerrno>
 #include <csignal>
 
+using namespace rose;
 using namespace CloneDetection;
+
 typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> ClonePolicy;
 typedef X86InstructionSemantics<ClonePolicy, PartialSymbolicSemantics::ValueType> CloneSemantics;
 typedef std::set<std::string> NameSet;
@@ -222,7 +224,7 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Sw
 
     // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
     // much faster) without an SMT solver.
-    SMTSolver *solver = NULL;
+    BinaryAnalysis::SMTSolver *solver = NULL;
 #if 0   // optional code
     if (YicesSolver::available_linkage())
         solver = new YicesSolver;
@@ -834,7 +836,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
         if (opt.verbosity>=EFFUSIVE)
             std::cerr <<"CloneDetection: analysis terminated by X86InstructionSemantics exception: " <<e.mesg <<"\n";
         fault = AnalysisFault::SEMANTICS;
-    } catch (const SMTSolver::Exception &e) {
+    } catch (const BinaryAnalysis::SMTSolver::Exception &e) {
         if (opt.verbosity>=EFFUSIVE)
             std::cerr <<"CloneDetection: analysis terminated by SMT solver exception: " <<e.mesg <<"\n";
         fault = AnalysisFault::SMTSOLVER;

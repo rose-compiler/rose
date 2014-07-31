@@ -1,11 +1,10 @@
 #include "BinaryTaintedFlow.h"
 #include "stringify.h"
 
-using namespace rose;
-
+namespace rose {
 namespace BinaryAnalysis {
 
-Sawyer::Message::Facility TaintedFlow::mlog("BinaryAnalysis::TaintedFlow");
+Sawyer::Message::Facility TaintedFlow::mlog("rose::BinaryAnalysis::TaintedFlow");
 
 void
 TaintedFlow::initDiagnostics() {
@@ -84,7 +83,7 @@ TaintedFlow::State::print(std::ostream &out) const {
 
 TaintedFlow::StatePtr
 TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) {
-    using namespace rose::Diagnostics;
+    using namespace Diagnostics;
 
     const DataFlow::Graph &dfg = index_[cfgVertex]; // data flow for this basic block
     StatePtr out = in->copy();
@@ -163,4 +162,5 @@ operator<<(std::ostream &out, const TaintedFlow::State &state) {
     return out;
 }
 
+} // namespace
 } // namespace

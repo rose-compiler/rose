@@ -9,12 +9,14 @@
 #include <SymbolicSemantics2.h>
 #include <TraceSemantics2.h>
 #include <DispatcherM68k.h>
-using namespace BinaryAnalysis::InstructionSemantics2;
 
 #include <map>
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <string>
+
+using namespace rose;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 // Round X up to the next multiple of ALIGNMENT
 static rose_addr_t

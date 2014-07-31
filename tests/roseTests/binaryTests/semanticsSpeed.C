@@ -16,10 +16,10 @@
 
 #if SEMANTIC_API == OLD_API
 #   include "x86InstructionSemantics.h"
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
 #else
 #   include "DispatcherX86.h"
-    using namespace BinaryAnalysis::InstructionSemantics2;
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
 #endif
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
@@ -29,9 +29,9 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #if SEMANTIC_API == OLD_API
 #   include "NullSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::NullSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
 #else
 #   include "NullSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
@@ -44,9 +44,9 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #if SEMANTIC_API == OLD_API
 #   include "PartialSymbolicSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
 #else
 #   include "PartialSymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
@@ -59,9 +59,9 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #if SEMANTIC_API == OLD_API
 #   include "SymbolicSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
 #else
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
@@ -74,9 +74,9 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #if SEMANTIC_API == OLD_API
 #   include "IntervalSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
 #else
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {

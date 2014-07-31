@@ -47,8 +47,9 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     // function and the top of the stack holds an address of an instruction within the current function, then this must be a
     // function call.  FIXME: The implementation here assumes a 32-bit machine. [Robb P. Matzke 2013-09-06]
     if (interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace rose::BinaryAnalysis;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
@@ -104,8 +105,9 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     // the Partitioner).  Returns true if, after executing the basic block, the top of the stack contains the fall-through
     // address of the basic block. We depend on our caller to figure out if EIP is reasonably a function entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace rose::BinaryAnalysis;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
@@ -291,7 +293,7 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
     Stream debug(mlog[DEBUG]);
 
     if (debug) {
@@ -532,7 +534,7 @@ bool
 SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                 bool relax_stack_semantics/*false*/)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
 
     if (insns.empty()) return false;
 
@@ -582,7 +584,7 @@ std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                             bool relax_stack_semantics/*false*/)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
 
     static const bool verbose = false;
 

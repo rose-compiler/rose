@@ -21,6 +21,7 @@
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -811,9 +812,9 @@ protected:
             }
 #endif
 
-        } /*namespace*/
-    } /*namespace*/
-} /*namespace*/
-
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif
