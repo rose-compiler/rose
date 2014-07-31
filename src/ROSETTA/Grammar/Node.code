@@ -131,6 +131,7 @@ struct HexdumpFormat {
     /* Settings for numeric output of bytes */
     bool show_numeric;		/**< Show numeric format of bytes (default true). */
     const char *numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
+    std::map<unsigned char,std::string> numeric_fmt_special; /**< Special formatting for certain values. */
     const char *numeric_sep;    /**< String to print between numeric values (default " "). */
     bool pad_numeric;           /**< Pad numeric part of output with spaces for partial final line (default true). */
 
@@ -633,6 +634,10 @@ typedef SgUntypedDeclarationStatementPtrList*              SgUntypedDeclarationS
 class SgUntypedFunctionDeclaration;
 typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
 typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
+
+class SgAsmRegisterReferenceExpression;
+typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
+typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
 
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
