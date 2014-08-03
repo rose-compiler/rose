@@ -1,5 +1,11 @@
 #include "Partitioner2.h"
 #include "SymbolicSemantics2.h"
+#include "DispatcherM68k.h"
+
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-02]
+#include "AsmUnparser_compat.h"
+#endif
+
 #include <boost/foreach.hpp>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
@@ -13,15 +19,11 @@ namespace Partitioner2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Partitioner::BasicBlock::append(SgAsmInstruction *insn) {
-    ASSERT_forbid2(isFrozen(), "basic block must be modifiable to append instruction");
-    ASSERT_not_null(insn);
-    ASSERT_require2(insns_.empty() || insn->get_address()==startVa_,
-                    "address of first instruction (" + StringUtility::addrToString(insn->get_address()) + ") "
-                    "must match block address (" + StringUtility::addrToString(startVa_) + ")");
-    ASSERT_require2(std::find(insns_.begin(), insns_.end(), insn) == insns_.end(),
-                    "instruction can only occur once in a basic block");
-    insns_.push_back(insn);
+Partitioner::BasicBlock::init(const Partitioner *partitioner) {
+    if (dispatcher_ = partitioner->newDispatcher()) {
+        finalState_ = dispatcher_->get_operators()->get_state(); // points into the dispatcher, so always up to date
+        initialState_ = finalState_->clone();                    // make a copy so it doesn't ever change
+    }
 }
 
 SgAsmInstruction*
@@ -29,6 +31,37 @@ Partitioner::BasicBlock::instructionExists(rose_addr_t startVa) const {
     BOOST_FOREACH (SgAsmInstruction *insn, insns_) {
         if (insn->get_address() == startVa)
             return insn;
+    }
+    return NULL;
+}
+
+Sawyer::Optional<size_t>
+Partitioner::BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
+    for (size_t i=0; i<insns_.size(); ++i) {
+        if (insns_[i]==toFind)
+            return i;
+    }
+    return Sawyer::Nothing();
+}
+
+void
+Partitioner::BasicBlock::append(SgAsmInstruction *insn) {
+    ASSERT_forbid2(isFrozen(), "basic block must be modifiable to append instruction");
+    ASSERT_not_null(insn);
+    ASSERT_require2(!insns_.empty() || insn->get_address()==startVa_,
+                    "address of first instruction (" + StringUtility::addrToString(insn->get_address()) + ") "
+                    "must match block address (" + StringUtility::addrToString(startVa_) + ")");
+    ASSERT_require2(std::find(insns_.begin(), insns_.end(), insn) == insns_.end(),
+                    "instruction can only occur once in a basic block");
+
+    // Process the instruction to create a new state
+    insns_.push_back(insn);
+    if (finalState_) {
+        try {
+            dispatcher_->processInstruction(insn);
+        } catch (...) {
+            finalState_ = BaseSemantics::StatePtr();    // turns off semantics for the remainder of this block
+        }
     }
 }
 
@@ -147,6 +180,7 @@ Partitioner::InsnBlockPairs::isConsistent() const {
                     return false;
                 }
             }
+            ++current;
         }
     }
     return true;
@@ -242,6 +276,16 @@ Partitioner::AddressUsageMap::overlapping(const AddressInterval &interval) const
 void
 Partitioner::init() {
     undiscoveredVertex_ = cfg_.insertVertex(CFGVertex(CFGVertex::VERTEX_UNDISCOVERED));
+    indeterminateVertex_ = cfg_.insertVertex(CFGVertex(CFGVertex::VERTEX_INDETERMINATE));
+}
+
+BaseSemantics::DispatcherPtr
+Partitioner::newDispatcher() const {
+    if (instructionProvider_.dispatcher() == NULL)
+        return BaseSemantics::DispatcherPtr();          // instruction semantics are not implemented for this architecture
+    const RegisterDictionary *registers = instructionProvider_.registerDictionary();
+    BaseSemantics::RiscOperatorsPtr ops = Semantics::RiscOperators::instance(registers, solver_);
+    return instructionProvider_.dispatcher()->create(ops);
 }
 
 void
@@ -281,11 +325,7 @@ Partitioner::BasicBlock::Ptr
 Partitioner::discoverBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder) {
     ASSERT_require2(placeholder != cfg_.vertices().end(), "invalid basic block placeholder");
     BasicBlock::Ptr bb = placeholder->value().bblock();
-    if (bb)
-        return bb;
-    bb = discoverBasicBlockInternal(placeholder->value().address());
-    placeholder->value().bblock(bb);
-    return bb;
+    return bb!=NULL ? bb : discoverBasicBlockInternal(placeholder->value().address());
 }
 
 Partitioner::BasicBlock::Ptr
@@ -296,79 +336,233 @@ Partitioner::discoverBasicBlock(rose_addr_t startVa) {
 
 Partitioner::BasicBlock::Ptr
 Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) {
-    // If the first instruction of this basic block already exists (in the middle of) some other basic block then this basic
-    // block is said to be "start-conflicting" with another block and we behave a little differently than normal (see rule 8
-    // below).
+    // If the first instruction of this basic block already exists (in the middle of) some other basic block then the other
+    // basic block is called a "conflicting block".  This only applies for the first instruction of this block, but is used in
+    // the termination conditions below.
     InsnBlockPair conflict;
     if (instructionExists(startVa).assignTo(conflict))
         ASSERT_forbid(conflict.insn()->get_address() == conflict.bblock()->address());// handled in discoverBasicBlock
 
-    // Add instructions to the basic block until one of the following conditions:
-    //   (1) We could not obtain an instructon.
-    //          The instruction provider should only return null if the address is not mapped or is not mapped with execute
-    //          permission.  The basic block's final instruction is the previous instruction, if any.  If the block is empty
-    //          then it is said to be non-existing and its successors are a special case when it's eventually added to the CFG.
-    //   (2) The instruction is an "unknown" instruction.
-    //          The instruction provider returns an unknown instruction if it isn't able to disassemble something but the
-    //          disassembly address is mapped with execute permission.  The partitioner treats this "unknown" instruction as a
-    //          valid instruction with indeterminate successors.
-    //   (3) The instruction doesn't have exactly one successor
-    //          Basic blocks cannot have a non-final instruction that branches, so we're done.
-    //   (4) The instruction successor is not a constant
-    //          If the successor is not a constant then we don't know what's next.  This can happen for things like
-    //          unconditional branches indirect through memory (e.g., return-from-function, jumps through a table, etc).
-    //   (5) The successor address is the starting address for the block on which we're working.
-    //          A basic block's instructions are unique by definition, so we're done.
-    //   (6) The successor address is an address of a (non-initial) instruction in this block.
-    //          Basic blocks cannot have a non-initial instruction with more than one incoming edge, therefore we've
-    //          added too many instructions to this block.  We could proceed two ways:
-    //             (A) We could toss the instruction with the back-edge and make the block terminate at the previous
-    //                 instruction. This causes the basic block to be as big as possible for as long as possible, which is a
-    //                 good thing if we determine later that the instruction with the back-edge is not reachable anyway.
-    //             (B) We could truncate the basic block at the back-edge target (i.e., the instruction at that address is not
-    //                 part of the basic block). This is good because it converges to a steady state faster.
-    //   (7) The successor address is the starting address of basic block already in the CFG
-    //          This is a common case and probably means that what we discovered earlier is correct.
-    //   (8) The successor address is an instruction already in the CFG other than in the conflict block.
-    //          If the first instruction of the block on which we're working is an instruction in the middle of some other
-    //          basic block in the CFG, then we allow this block to use some of the same instructions as in the conflicting
-    //          block and we do not terminate construction of this block at this time. Usually what happens is this new block
-    //          uses all the final instructions from the conflicting block; an exception is when an opaque predicate in the
-    //          conflicting block is no longer opaque in the new block.  Eventually when the new block is added to the CFG the
-    //          conflicting block will be truncated.  On the other hand, if this isn't the first instruction of this block,
-    //          then we're done -- we've reached a point where we would introduce an edge in the CFG from the end of this block
-    //          into the middle of some other block (the other block will need to be truncated, split into two parts).
-    BasicBlock::Ptr retval = BasicBlock::instance(startVa);
+    // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
+    // the doxygen documentation for this function. READ IT AND KEEP IT UP TO DATE!!!
+    BasicBlock::Ptr retval = BasicBlock::instance(startVa, this);
     rose_addr_t va = startVa;
     while (1) {
-        SgAsmInstruction *insn = (*instructionProvider_)[startVa];
-        if (insn==NULL)                                                 // case 1
+        SgAsmInstruction *insn = discoverInstruction(va);
+        if (insn==NULL)                                                 // case: no instruction available
             break;
         retval->append(insn);
-        if (insn->is_unknown())                                         // case 2
+        if (insn->is_unknown())                                         // case: "unknown" instruction
             break;
-        std::vector<SValuePtr> successors = retval->successors();
-        if (successors.size()!=1)                                       // case 3
+        if (isFunctionCall(retval))                                     // case: bb looks like a function call
+            break;
+        std::vector<SValuePtr> successors = successorExpressions(retval);
+        if (successors.size()!=1)                                       // case: not exactly one successor
             break;
         SValuePtr successorExpr = successors.front();
-        if (!successorExpr->is_number())                                // case 4
+        if (!successorExpr->is_number())                                // case: successor is indeterminate
             break;
         rose_addr_t successorVa = successorExpr->get_number();
-        if (successorVa == startVa)                                     // case 5
+        if (successorVa == startVa)                                     // case: successor is our own basic block
             break;
-        if (retval->instructionExists(successorVa))                     // case 6
-            break;                                                      // option A
-        if (placeholderExists(successorVa)!=cfg_.vertices().end())      // case 7
+        if (retval->instructionExists(successorVa))                     // case: successor is inside some other block
+            break;
+        if (placeholderExists(successorVa)!=cfg_.vertices().end())      // case: successor is an existing block
             break;
         InsnBlockPair ibpair;
-        if (instructionExists(successorVa).assignTo(ibpair)) {          // case 8
+        if (instructionExists(successorVa).assignTo(ibpair)) {          // case: successor is inside an existing block
             if (ibpair.bblock() != conflict.bblock())
                 break;
         }
         va = successorVa;
     }
 
+    retval->freeze();
     return retval;
+}
+
+Partitioner::ControlFlowGraph::VertexNodeIterator
+Partitioner::truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &basicBlock, SgAsmInstruction *insn) {
+    ASSERT_require(basicBlock != cfg_.vertices().end());
+    ASSERT_not_null(insn);
+    BasicBlock::Ptr bb = basicBlock->value().bblock();
+    ASSERT_not_null(bb);
+    ASSERT_require(bb->instructionExists(insn));
+    ASSERT_require2(bb->instructions().front() != insn, "instruction must not be the initial instruction");
+
+    // For now we do a niave approach; this could be faster [Robb P. Matzke 2014-08-02]
+    nullifyBasicBlock(basicBlock);                      // throw away the original block
+    ControlFlowGraph::VertexNodeIterator newPlaceholder = insertPlaceholder(insn->get_address());
+    BasicBlock::Ptr newBlock = discoverBasicBlock(basicBlock); // rediscover original block, but terminate at newPlaceholder
+    insertBasicBlock(basicBlock, newBlock);             // insert new block at original placeholder and insert successor edge
+    return newPlaceholder;
+}
+
+Partitioner::ControlFlowGraph::VertexNodeIterator
+Partitioner::insertPlaceholder(rose_addr_t startVa) {
+    ControlFlowGraph::VertexNodeIterator placeholder = placeholderExists(startVa);
+    if (placeholder == cfg_.vertices().end()) {
+        InsnBlockPair ibpair;
+        if (instructionExists(startVa).assignTo(ibpair)) {
+            ControlFlowGraph::VertexNodeIterator conflictBlock = placeholderExists(ibpair.bblock()->address());
+            placeholder = truncateBasicBlock(conflictBlock, ibpair.insn());
+            ASSERT_require(placeholder->value().address() == startVa);
+        } else {
+            placeholder = cfg_.insertVertex(CFGVertex(startVa));
+            vertexIndex_.insert(startVa, placeholder);
+            adjustPlaceholderEdges(placeholder);
+        }
+    }
+    return placeholder;
+}
+
+void
+Partitioner::insertBasicBlock(const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    ControlFlowGraph::VertexNodeIterator placeholder = insertPlaceholder(bb->address()); // insert or find existing
+    insertBasicBlock(placeholder, bb);
+}
+
+void
+Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr &bb) {
+    ASSERT_require(placeholder != cfg_.vertices().end());
+    ASSERT_not_null(bb);
+    ASSERT_require2(placeholder->value().address() == bb->address(), "wrong placeholder for basic block");
+    if (placeholder->value().bblock() == bb)
+        return;                                         // nothing to do since basic block is already in the CFG
+    nullifyBasicBlock(placeholder);                     // remove the old block if necessary to make room for the new
+
+    // Make sure placeholders exist for the concrete successors and make edges to them
+    cfg_.clearOutEdges(placeholder);
+    bool hadIndeterminate = false;
+    BOOST_FOREACH (const SValuePtr &successorExpr, successorExpressions(bb)) {
+        if (successorExpr->is_number()) {
+            ControlFlowGraph::VertexNodeIterator successor = insertPlaceholder(successorExpr->get_number());
+            cfg_.insertEdge(placeholder, successor, CFGEdge());
+        } else if (!hadIndeterminate) {
+            cfg_.insertEdge(placeholder, indeterminateVertex_);
+            hadIndeterminate = true;
+        }
+    }
+
+    // Insert the basicblock
+    placeholder->value().bblock(bb);
+    BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+        addrUsageMap_.insert(InsnBlockPair(insn, bb));
+    bblockInserted(placeholder);
+}
+
+std::vector<Semantics::SValuePtr>
+Partitioner::successorExpressions(const BasicBlock::Ptr &bb) const {
+    ASSERT_not_null(bb);
+    std::vector<Semantics::SValuePtr> successors;
+
+    if (bb->isEmpty())
+        return successors;                              // none
+
+    SgAsmInstruction *firstInsn = bb->instructions().front();
+    ASSERT_not_null(bb->dispatcher());
+    BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+    RegisterDescriptor REG_IP = instructionProvider_.instructionPointerRegister();
+
+    // Use our own semantics if we have them.
+    if (BaseSemantics::StatePtr state = bb->finalState()) {
+        std::vector<Semantics::SValuePtr> worklist(1, Semantics::SValue::promote(ops->readRegister(REG_IP)));
+        while (!worklist.empty()) {
+            Semantics::SValuePtr pc = worklist.back();
+            worklist.pop_back();
+
+            if (pc->is_number()) {
+                successors.push_back(pc);
+                continue;
+            }
+
+            if (InsnSemanticsExpr::InternalNodePtr ifNode = pc->get_expression()->isInternalNode()) {
+                if (ifNode->get_operator()==InsnSemanticsExpr::OP_ITE) {
+                    Semantics::SValuePtr expr = Semantics::SValue::promote(ops->undefined_(ifNode->get_nbits()));
+                    expr->set_expression(ifNode->child(1));
+                    worklist.push_back(expr);
+                    expr = Semantics::SValue::promote(ops->undefined_(ifNode->get_nbits()));
+                    expr->set_expression(ifNode->child(2));
+                    worklist.push_back(expr);
+                    continue;
+                }
+            }
+
+            successors.push_back(pc);
+        }
+        return successors;
+    }
+
+    // We don't have semantics, so delegate to the SgAsmInstruction subclass (which might try some other semantics).
+    bool complete = true;
+    Disassembler::AddressSet successorVas = firstInsn->get_successors(bb->instructions(), &complete, &memoryMap_);
+    BOOST_FOREACH (rose_addr_t va, successorVas)
+        successors.push_back(Semantics::SValue::promote(ops->number_(REG_IP.get_nbits(), va)));
+    if (!complete)
+        successors.push_back(Semantics::SValue::promote(ops->undefined_(REG_IP.get_nbits())));
+    return successors;
+}
+
+bool
+Partitioner::isFunctionCall(const BasicBlock::Ptr &bb) const {
+    ASSERT_not_null(bb);
+
+    if (bb->isEmpty())
+        return false;
+
+    SgAsmInstruction *lastInsn = bb->instructions().back();
+    ASSERT_not_null(bb->dispatcher());
+    BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+
+    // Use our own semantics if we have them.
+    if (BaseSemantics::StatePtr state = bb->finalState()) {
+        // Is the block fall-through address equal to the value on the top of the stack?
+        RegisterDescriptor REG_IP = instructionProvider_.instructionPointerRegister();
+        RegisterDescriptor REG_SP = instructionProvider_.stackPointerRegister();
+        RegisterDescriptor REG_SS = instructionProvider_.stackSegmentRegister();
+        rose_addr_t returnVa = lastInsn->get_address() + lastInsn->get_size();
+        BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
+        BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
+        BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
+        topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
+        BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
+        bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
+        if (!isRetAddrOnTopOfStack)
+            return false;
+        
+        // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
+        // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
+        // consecutive instruction addresses.
+        std::vector<Semantics::SValuePtr> successors = successorExpressions(bb);
+        if (1==successors.size() && successors[0]->is_number() && successors[0]->get_number()==returnVa)
+            return false;
+
+        // This appears to be a function call
+        return true;
+    }
+
+    // We don't have semantics, so delegate to the SgAsmInstruction subclass (which might try some other semantics).
+    return lastInsn->is_function_call(bb->instructions(), NULL, NULL);
+}
+
+SgAsmInstruction *
+Partitioner::discoverInstruction(rose_addr_t startVa) {
+    return instructionProvider_[startVa];
+}
+
+SgAsmBlock*
+Partitioner::toAst() {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
+        if (vertex.value().type() == CFGVertex::VERTEX_BASICBLOCK) {
+            std::cerr <<StringUtility::addrToString(vertex.value().address()) <<": basic block:\n";
+            if (BasicBlock::Ptr bb = vertex.value().bblock()) {
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    std::cerr <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+            }
+        }
+    }
+    return NULL;                                        // FIXME[Robb P. Matzke 2014-08-02]
 }
 
 } // namespace

@@ -11,6 +11,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Semantics = rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 
 /** Partitions instructions into basic blocks and functions.
@@ -33,11 +34,11 @@ namespace Semantics = rose::BinaryAnalysis::InstructionSemantics2::SymbolicSeman
  *      The CFG is highly fluid during partitioning, with basic blocks and control flow edges being added and removed.  Since
  *      basic blocks are composed of instructions, the CFG indirectly represents the instructions that will become the AST.
  *
- *  @li A mapping from every address represented in the CFG to the instruction(s) and their basic blocks.  A single address may
- *      have multiple overlapping instructions (although this isn't the usual case), and every instruction represented by the
- *      map belongs to exactly one basic block that belongs to the CFG.  This is different than the instruction provider's map
- *      because this represents only those instructions that are represented by the CFG, whereas the instruction providor
- *      represents all instructions which have ever been disassembled.
+ *  @li An address usage map (AUM), which is a mapping from every address represented in the CFG to the instruction(s) and
+ *      their basic blocks.  A single address may have multiple overlapping instructions (although this isn't the usual case),
+ *      and every instruction represented by the map belongs to exactly one basic block that belongs to the CFG.  This is
+ *      different than the instruction provider's map because this represents only those instructions that are represented by
+ *      the CFG, whereas the instruction providor represents all instructions which have ever been disassembled.
  *
  *  @li Various work lists.  Most work lists are represented by the control flow edges incoming to certain special CFG
  *      vertices.  For instance, the set of all basic block placeholders (vertices where a basic block starting address is all
@@ -174,20 +175,32 @@ public:
         bool isFrozen_;                                 // True when the object becomes read-only
         rose_addr_t startVa_;                           // Starting address, perhaps redundant with insns_[0]->p_address
         std::vector<SgAsmInstruction*> insns_;          // Instructions in the order they're executed
+        BaseSemantics::DispatcherPtr dispatcher_;       // How instructions are dispatched (null if no instructions)
+        BaseSemantics::StatePtr initialState_;          // Initial state for semantics (null if no instructions)
+        BaseSemantics::StatePtr finalState_;            // Semantic state after the final instruction (null if invalid)
 
     protected:
         // use instance() instead
-        explicit BasicBlock(rose_addr_t startVa): isFrozen_(false), startVa_(startVa) {}
+        BasicBlock(rose_addr_t startVa, const Partitioner *partitioner)
+            : isFrozen_(false), startVa_(startVa) { init(partitioner); }
 
     public:
-        /** Static allocating constructor. */
-        static Ptr instance(rose_addr_t startVa) {
-            return Ptr(new BasicBlock(startVa));
+        /** Static allocating constructor.
+         *
+         *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
+         *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
+         *  certain data members of the block (such as its instruction dispatcher). */
+        static Ptr instance(rose_addr_t startVa, const Partitioner *partitioner) {
+            return Ptr(new BasicBlock(startVa, partitioner));
         }
 
-        /** Virtual constructor. */
-        virtual Ptr create(rose_addr_t startVa) const {
-            return instance(startVa);
+        /** Virtual constructor.
+         *
+         *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
+         *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
+         *  certain data members of the block (such as its instruction dispatcher). */
+        virtual Ptr create(rose_addr_t startVa, const Partitioner *partitioner) const {
+            return instance(startVa, partitioner);
         }
 
         /** Mark as read-only. */
@@ -205,6 +218,9 @@ public:
 
         /** Get the number of instructions in this block. */
         size_t nInsns() const { return insns_.size(); }
+
+        /** Return true if this block has no instructions. */
+        bool isEmpty() const { return insns_.empty(); }
 
         /** Append an instruction to a basic block.
          *
@@ -235,10 +251,33 @@ public:
          *  address, returns null otherwise. */
         SgAsmInstruction* instructionExists(rose_addr_t startVa) const;
 
-        /** Compute control flow successors.
+        /** Determines if the basic block contains the specified instruction.
          *
-         *  Returns a vector of control flow successor addresses.  An empty basic block has no successors. */
-        std::vector<Semantics::SValuePtr> successors() const;
+         *  If the basic block contains the instruction then this function returns the index of this instruction within the
+         *  block, otherwise it returns nothing. */
+        Sawyer::Optional<size_t> instructionExists(SgAsmInstruction*) const;
+
+        /** Return the initial semantic state.
+         *
+         *  A null pointer is returned if this basic block has no instructions. */
+        const BaseSemantics::StatePtr& initialState() const { return initialState_; }
+
+        /** Return the final semantic state.
+         *
+         *  The returned state is equivalent to starting with the initial state and processing each instruction.  If a semantic
+         *  error occurs during processing then the null pointer is returned.  The null pointer is also returned if this basic
+         *  block is empty. */
+        const BaseSemantics::StatePtr& finalState() const { return finalState_; }
+
+        /** Return the dispatcher that was used for the semantics.
+         *
+         *  Dispatchers are specific to the instruction architecture, and also contain a pointer to the register dictionary
+         *  that was used.  The register dictionary can be employed to obtain names for the registers in the semantic
+         *  states. A null dispatcher is returned if this basic block is empty. */
+        const BaseSemantics::DispatcherPtr& dispatcher() const { return dispatcher_; }
+
+    private:
+        void init(const Partitioner*);
     };
 
 
@@ -259,11 +298,10 @@ public:
         InsnBlockPair(): insn_(NULL) {}                 // needed by std::vector<InsnBlockPair>, but otherwise unused
 
         /** Constructs new pair with instruction and basic block. The instruction must not be the null pointer, but the basic
-         * block may. A null basic block is generally only useful when searching for a particular instruction in an
-         * InsnBlockPairs object. */
+         *  block may. A null basic block is generally only useful when searching for a particular instruction in an
+         *  InsnBlockPairs object. */
         InsnBlockPair(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock): insn_(insn), bblock_(bblock) {
             ASSERT_not_null(insn_);
-            ASSERT_not_null(bblock_);
         }
 
         /** Return the non-null pointer to the instruction. */
@@ -454,6 +492,7 @@ public:
         enum Type {
             VERTEX_BASICBLOCK,                          /**< A basic block or placeholder for a basic block. */
             VERTEX_UNDISCOVERED,                        /**< The special "undiscovered" vertex. */
+            VERTEX_INDETERMINATE,                       /**< Special vertex serving as destination for indeterminate edges. */
         };
 
     private:
@@ -518,26 +557,23 @@ public:
     //                                  Partitioner data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    InstructionProvider *instructionProvider_;          // cache for all disassembled instructions
+    InstructionProvider instructionProvider_;           // cache for all disassembled instructions
     const MemoryMap &memoryMap_;                        // description of memory, especially insns and non-writable
     AddressUsageMap addrUsageMap_;                      // maps addresses to insn/block pairs
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     VertexIndex vertexIndex_;                           // vertex-by-address index for the CFG
+    SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
 
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
-
+    ControlFlowGraph::VertexNodeIterator indeterminateVertex_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    Partitioner(InstructionProvider *insns, const MemoryMap &map)
-        : instructionProvider_(insns), memoryMap_(map) { init(); }
-        
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : instructionProvider_(new DisassemblerProvider(disassembler, map)), memoryMap_(map) { init(); }
-
+        : instructionProvider_(InstructionProvider(disassembler, map)), memoryMap_(map), solver_(NULL) { init(); }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner CFG queries
@@ -585,12 +621,28 @@ public:
      *
      *  The incoming edges for this vertex originate from the basic block placeholder vertices.
      *
-     *  @{ */
+     * @{ */
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex() {
         return undiscoveredVertex_;
     }
     ControlFlowGraph::ConstVertexNodeIterator undiscoveredVertex() const {
         return undiscoveredVertex_;
+    }
+    /** @} */
+
+    /** Returns the special "indeterminate" vertex.
+     *
+     *  The incoming edges for this vertex originate from basic blocks whose successors are not all concrete values.  Each such
+     *  basic block has only one edge from that block to this vertex.
+     *
+     *  Indeterminate successors result from, among other things, indirect jump instructions, like x86 "JMP [EAX]".
+     *
+     * @{ */
+    ControlFlowGraph::VertexNodeIterator indeterminateVertex() {
+        return indeterminateVertex_;
+    }
+    ControlFlowGraph::ConstVertexNodeIterator indeterminateVertex() const {
+        return indeterminateVertex_;
     }
     /** @} */
 
@@ -620,9 +672,9 @@ public:
 
     /** Erase all trace of a basic block from the CFG.
      *
-     *  The basic block (specified by its starting address or CFG vertex) is entirely removed from the CFG.  If the CFG does
-     *  not have a vertex for the specified address then this method is a no-op.  It is an error to specify a basic block that
-     *  has incoming edges.
+     *  The basic block (specified by its starting address or CFG vertex) is entirely removed from the CFG, including its
+     *  placeholder.  If the CFG does not have a vertex for the specified address then this method is a no-op.  It is an error
+     *  to specify a basic block that has incoming edges.
      *
      *  @{ */
     void eraseBasicBlock(const ControlFlowGraph::VertexNodeIterator&);
@@ -633,37 +685,16 @@ public:
 
     /** Truncate an existing basic-block.
      *
-     *  The specified address, which must be a valid starting address for a non-initial instruction in some basic block in the
-     *  CFG, indicates the affected basic block and the instruction at which it is terminated.  The original basic block is
-     *  replaced by a shorter basic block whose final instruction is the predecessor of the indicated instruction.  The
-     *  original basic block's outgoing edges are replaced by a new outgoing edge which points to a basic block placeholder at
-     *  the specified address.
+     *  The specified block is modified so that its final instruction is the instruction immediately prior to the specified
+     *  instruction, a new placeholder vertex is created with the address of the specified instruction, and an edge is created
+     *  from the truncated block to the new placeholder.  All other outgoing edges of the truncated block are erased.
      *
-     *  The same effect can be accomplished with a combination of @ref nullifyBasicBlock, @ref discoverBasicBlock, and @ref
-     *  insertBasicBlock, but this method might be faster. */
-    ControlFlowGraph::VertexNodeIterator truncateBasicBlock(rose_addr_t insnVa);
-
-    /** Discover instructions for a basic block.
+     *  The specified block must exist and must have the specified instruction as a member.  The instruction must not be the
+     *  first instruction of the block.
      *
-     *  Obtain a basic block and its instructions.  The if the basic block already exists in the CFG then that block is
-     *  returned, otherwise a new block is created.  If the new block has a placeholder in the CFG then the new basic block is
-     *  inserted into the CFG as if @ref insertBasicBlock was called.  If the specified address is in the middle of an existing
-     *  basic block in the CFG then the original basic block is truncated in the CFG as if @ref truncateBasicBlock was
-     *  called. This most likely creates a placeholder at the specified address, and thus ultimately inserts the new basic
-     *  block into that placeholder.
-     *
-     *  When creating a new basic block, the first instruction is added to the block (if possible, otherwise a non-existing
-     *  basic block is created).  Subsequent instructions are appended to the basic block by following the control flow until
-     *  one of the following conditions is met: the instruction does not have exactly one successor, or the next instruction
-     *  would be the same as an instruction already in this basic block, or the next instruction is represented in the control
-     *  flow graph.
-     *
-     *  After a basic block is created, various analysis algorithms are run on the block to characterize it.
-     *
-     *  @{ */
-    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa);
-    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder);
-    /** @} */
+     *  The return value is the vertex for the new placeholder. */
+    ControlFlowGraph::VertexNodeIterator truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &basicBlock,
+                                                            SgAsmInstruction *insn);
 
     /** Insert a basic-block placeholder.
      *
@@ -686,6 +717,91 @@ public:
     void insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr&);
     /** @} */
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner instruction operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Discover an instruction.
+     *
+     *  Returns (and caches) the instruction at the specified address by invoking an InstructionProvider. */
+    SgAsmInstruction* discoverInstruction(rose_addr_t startVa);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner basic block operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Discover instructions for a basic block.
+     *
+     *  Obtain a basic block and its instructions without modifying the control flow graph.  If the basic block already exists
+     *  in the CFG then that block is returned, otherwise a new block is created but not added to the CFG. A basic block is
+     *  created by adding one instruction at a time until one of the following conditions is met (tested in this order):
+     *
+     *  @li An instruction could not be obtained from the instruction provider. The instruction provider should only return
+     *      null if the address is not mapped or is not mapped with execute permission.  The basic block's final instruction is
+     *      the previous instruction, if any.  If the block is empty then it is said to be non-existing, and will have a
+     *      special successor when added to the CFG.
+     *
+     *  @li The instruction is an "unknown" instruction. The instruction provider returns an unknown instruction if it isn't
+     *      able to disassemble an instruction at the specified address but the address is mapped with execute permission.  The
+     *      partitioner treats this "unknown" instruction as a valid instruction with indeterminate successors.
+     *
+     *  @li The instruction causes this basic block to look like a function call.  This instruction becomes the final
+     *      instruction of the basic block and when the block is inserted into the CFG the edge will be marked as a function
+     *      call edge.
+     *
+     *  @li The instruction doesn't have exactly one successor. Basic blocks cannot have a non-final instruction that branches,
+     *      so this instruction becomes the final instruction.  An additional return-point successor is added.
+     *
+     *  @li The instruction successor is not a constant. If the successor cannot be resolved to a constant then this
+     *      instruction becomes the final instruction.  When this basic block is added to the CFG an edge to the special
+     *      "indeterminate" vertex will be created.
+     *
+     *  @li The successor address is the starting address for the block on which we're working. A basic block's instructions
+     *      are unique by definition, so this instruction becomes the final instruction for the block.
+     *
+     *  @li The successor address is an address of a (non-initial) instruction in this block. Basic blocks cannot have a
+     *      non-initial instruction with more than one incoming edge, therefore we've already added too many instructions to
+     *      this block.  We could proceed two ways: (A) We could throw away this instruction with the back-edge successor and
+     *      make the block terminate at the previous instruction. This causes the basic block to be as big as possible for as
+     *      long as possible, which is a good thing if it is determined later that the instruction with the back-edge is not
+     *      reachable anyway. (B) We could truncate the basic block at the back-edge target so that the instruction prior to
+     *      that is the final instruction. This is good because it converges to a steady state faster, but could result in
+     *      basic blocks that are smaller than optimal. (The current algorithm uses method A.)
+     *
+     *  @li The successor address is the starting address of a basic block already in the CFG. This is a common case and
+     *      probably means that what we discovered earlier is correct.
+     *
+     *  @li The successor address is an instruction already in the CFG other than in the conflict block.  A "conflict block" is
+     *      the basic block, if any, that contains as a non-first instruction the first instruction of this block. If the first
+     *      instruction of the block being discovered is an instruction in the middle of some other basic block in the CFG,
+     *      then we allow this block to use some of the same instructions as in the conflict block and we do not terminate
+     *      construction of this block at this time. Usually what happens is the block being discovered uses all the final
+     *      instructions from the conflict block; an exception is when an opaque predicate in the conflicting block is no
+     *      longer opaque in the new block.  Eventually when the new block is added to the CFG the conflict block will be
+     *      truncated.  When there is no conflict block then this instruction becomes the final instruction of the basic
+     *      block.
+     *
+     *  When a basic block is created, various analysis algorithms are run on the block to characterize it.
+     *
+     *  @{ */
+    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa);
+    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder);
+    /** @} */
+
+    /** Determine successors for a basic block.
+     *
+     *  Basic block successors are returned as a vector of symbolic expressions in no particular order. The basic block need
+     *  not be complete (this is used during basic block discovery). A basic block that has no instructions has no successors. */
+    std::vector<Semantics::SValuePtr> successorExpressions(const BasicBlock::Ptr&) const;
+
+    /** Determine if a basic block looks like a function call.
+     *
+     *  If the basic block appears to be a function call by some analysis then this function returns true.  The analysis may
+     *  use instruction semantics to look at the stack, it may look at the kind of instructions in the block, it may look for
+     *  patterns at the callee address if known, etc. */
+    bool isFunctionCall(const BasicBlock::Ptr&) const;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner worklist adjusters
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -704,11 +820,21 @@ public:
      *  or not a basic block placeholder is left in the graph. */
     virtual void bblockErased(const BasicBlock::Ptr &removedBlock) {}
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner conversion to AST
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmBlock* toAst();
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();
+
+    // Obtain a new instruction semantics dispatcher initialized with the partitioner's semantic domain and a fresh state.
+    BaseSemantics::DispatcherPtr newDispatcher() const;
 
     // Adjusts edges for a placeholder vertex. This method erases all outgoing edges for the specified placeholder vertex and
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */

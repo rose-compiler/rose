@@ -121,9 +121,11 @@ int main(int argc, char *argv[])
     P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
     while (worklist->nInEdges() > 0) {
         P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
+        std::cerr <<StringUtility::addrToString(placeholder->value().address()) <<"\n";
         P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
         partitioner.insertBasicBlock(placeholder, bb);
     }
+    partitioner.toAst();
 
     exit(0);
 }
