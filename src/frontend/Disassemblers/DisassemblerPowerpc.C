@@ -48,6 +48,7 @@ DisassemblerPowerpc::init()
     set_alignment(4);
     set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
+    REG_IP = *get_registers()->lookup("iar");
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */

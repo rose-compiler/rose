@@ -27,17 +27,6 @@ public:
         init(wordsize);
     }
 
-    DisassemblerX86(const DisassemblerX86 &other)
-        : Disassembler(other), insnSize(other.insnSize), ip(other.ip), insnbufat(other.insnbufat),
-          segOverride(other.segOverride), branchPrediction(other.branchPrediction),
-          branchPredictionEnabled(other.branchPredictionEnabled), rexPresent(other.rexPresent), rexW(other.rexW), 
-          rexR(other.rexR), rexX(other.rexX), rexB(other.rexB), sizeMustBe64Bit(other.sizeMustBe64Bit),
-          operandSizeOverride(other.operandSizeOverride), addressSizeOverride(other.addressSizeOverride),
-          lock(other.lock), repeatPrefix(other.repeatPrefix), modregrmByteSet(other.modregrmByteSet),
-          modregrmByte(other.modregrmByte), modeField(other.modeField), rmField(other.rmField), modrm(other.modrm),
-          reg(other.reg), isUnconditionalJump(other.isUnconditionalJump) {
-    }
-    
     virtual ~DisassemblerX86() {}
 
     virtual DisassemblerX86 *clone() const /*override*/ { return new DisassemblerX86(*this); }

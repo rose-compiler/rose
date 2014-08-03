@@ -3594,6 +3594,9 @@ void
 DisassemblerMips::init()
 {
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
+    REG_IP = *get_registers()->lookup("pc");
+    REG_SP = *get_registers()->lookup("sp");
+
     set_wordsize(4);
     set_alignment(4);
     set_sex(ByteOrder::ORDER_MSB);

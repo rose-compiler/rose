@@ -4,6 +4,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "sageBuilderAsm.h"
+#include "DispatcherM68k.h"
 
 #include <sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
@@ -4606,6 +4607,10 @@ DisassemblerM68k::init()
     } else {
         set_registers(RegisterDictionary::dictionary_m68000());
     }
+    REG_IP = *get_registers()->lookup("pc");
+    REG_SP = *get_registers()->lookup("a7");
+
+    p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
 
     set_wordsize(2);
     set_alignment(2);
