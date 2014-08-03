@@ -1407,7 +1407,7 @@ public:
     Tracer &tracer;                                     // Responsible for emitting rows for semantic_fio_trace
     bool uses_stdcall;                                  // True if this executable uses the stdcall calling convention
     StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
-    Disassembler::AddressSet whitelist_exports;         // Dynamic functions that can be called when follow_calls==CALL_BUILTIN
+    rose::BinaryAnalysis::Disassembler::AddressSet whitelist_exports; // Dynamic funcs that can be called for CALL_BUILTIN
     FuncAnalyses &funcinfo;                             // Partial results of various kinds of function analyses
     InsnCoverage &insn_coverage;                        // Information about which instructions were executed
     DynamicCallGraph &dynamic_cg;                       // Information about function calls
@@ -1464,7 +1464,8 @@ public:
     
     // Sets up the machine state to start the analysis of one function.
     void reset(SgAsmInterpretation *interp, SgAsmFunction *func, InputGroup *inputs, const InstructionProvidor *insns,
-               const PointerDetector *pointers/*=NULL*/, const Disassembler::AddressSet &whitelist_exports) {
+               const PointerDetector *pointers/*=NULL*/,
+               const rose::BinaryAnalysis::Disassembler::AddressSet &whitelist_exports) {
         inputs->reset();
         this->inputs = inputs;
         this->insns = insns;

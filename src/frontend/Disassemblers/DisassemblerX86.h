@@ -6,6 +6,9 @@
 #include "Disassembler.h"
 #include "InstructionEnumsX86.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
@@ -419,5 +422,8 @@ private:
     SgAsmExpression *reg;                       /**< Register reference expression built from modregrmByte; see getModRegRM() */
     bool isUnconditionalJump;                   /**< True for jmp, farjmp, ret, retf, iret, and hlt */
 };
+
+} // namespace
+} // namespace
 
 #endif

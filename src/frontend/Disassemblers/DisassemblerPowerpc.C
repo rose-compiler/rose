@@ -6,6 +6,9 @@
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /* See header file for full documentation. */
 
 /* References:
@@ -1063,3 +1066,6 @@ DisassemblerPowerpc::decode_MDS_formInstruction()
 {
     throw ExceptionPowerpc("MDS-Form instructions not implemented yet", this);
 }
+
+} // namespace
+} // namespace

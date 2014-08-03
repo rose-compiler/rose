@@ -8,6 +8,7 @@
 #include "YicesSolver.h"
 #include "BinaryPointerDetection.h"
 
+using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 // If this symbol is undefined then the simulator will not forward its own signals to the specimen, making it easier to kill

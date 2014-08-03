@@ -21,8 +21,10 @@
 #include <sawyer/ProgressBar.h>
 #include <stdarg.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
 using namespace StringUtility;
 
 /* See header file for full documentation. */
@@ -4580,3 +4582,6 @@ Partitioner::detectFunctions(SgAsmInterpretation*, const Disassembler::Instructi
         retval.insert(std::make_pair(fi->first, FunctionStart(fi->second->reason, fi->second->name)));
     return retval;
 }
+
+} // namespace
+} // namespace

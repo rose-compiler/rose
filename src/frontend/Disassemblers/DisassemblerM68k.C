@@ -7,11 +7,12 @@
 
 #include <sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
-using namespace rose;
-
 #if 1 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
 #include "AsmUnparser_compat.h"
 #endif
+
+namespace rose {
+namespace BinaryAnalysis {
 
 using namespace IntegerOps;
 using namespace StringUtility;
@@ -4803,3 +4804,6 @@ DisassemblerM68k::init()
     M68k_DECODER(unlk);
     M68k_DECODER(unpk);
 }
+
+} // namespace
+} // namespace

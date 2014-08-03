@@ -13942,7 +13942,7 @@ X aggressive
      p_skip_unparse_asm_commands = false;
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
+     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
 
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;

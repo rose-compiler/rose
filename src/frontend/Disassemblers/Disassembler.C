@@ -14,8 +14,11 @@
 #include "stringify.h"
 
 #include <stdarg.h>
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
-using namespace rose::Diagnostics;
+
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
 using namespace StringUtility;
 
 /* See header file for full documentation of all methods in this file. */
@@ -887,3 +890,5 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     return successors;
 }
 
+} // namespace
+} // namespace

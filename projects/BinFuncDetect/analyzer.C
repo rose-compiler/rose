@@ -22,6 +22,7 @@ int main()
 #include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
 using namespace rose;
+using namespace rose::BinaryAnalysis;
 
 class IdaFile {
 public:

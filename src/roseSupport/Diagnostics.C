@@ -42,9 +42,9 @@ void initialize() {
         // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
         // rose::Diagnostics::destination that we set above.
         BinaryLoader::initDiagnostics();
-        Disassembler::initDiagnostics();
-        Partitioner::initDiagnostics();
-        AsmUnparser::initDiagnostics();
+        BinaryAnalysis::Disassembler::initDiagnostics();
+        BinaryAnalysis::Partitioner::initDiagnostics();
+        BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
 

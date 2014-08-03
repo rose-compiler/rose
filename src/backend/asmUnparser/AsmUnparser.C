@@ -2,8 +2,10 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
-using namespace rose;                                   // temporary until this API lives inside the "rose" name space
-using namespace rose::Diagnostics;
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
 
 Sawyer::Message::Facility AsmUnparser::mlog("AsmUnparser");
 
@@ -1208,3 +1210,6 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
     }
     return enabled;
 }
+
+} // namespace
+} // namespace

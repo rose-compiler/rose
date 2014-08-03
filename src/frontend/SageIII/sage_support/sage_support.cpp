@@ -4695,7 +4695,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Partitioner::disassembleInterpretation(interps[i]);
+            rose::BinaryAnalysis::Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 

@@ -6,6 +6,8 @@
 #include <cstring>
 #include <iostream>
 
+using namespace rose::BinaryAnalysis;
+
 int
 main(int argc, char *argv[])
 {

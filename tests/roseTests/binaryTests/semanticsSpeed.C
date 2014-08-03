@@ -118,6 +118,8 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #error "Invalid semantic domain"
 #endif
 
+using namespace rose::BinaryAnalysis;
+
 static const unsigned timeout = 60;      // approximate maximum time for test to run.
 static volatile int had_alarm = 0;
 

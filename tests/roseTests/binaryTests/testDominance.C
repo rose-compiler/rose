@@ -5,6 +5,8 @@
 
 #include <boost/graph/graphviz.hpp>
 
+using namespace rose::BinaryAnalysis;
+
 /* Label the graphviz vertices with basic block addresses rather than vertex numbers. */
 template<class DominanceGraph>
 struct GraphvizVertexWriter {

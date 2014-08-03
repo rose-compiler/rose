@@ -17,6 +17,7 @@
 
 using namespace rose;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace rose::BinaryAnalysis;
 
 // Round X up to the next multiple of ALIGNMENT
 static rose_addr_t

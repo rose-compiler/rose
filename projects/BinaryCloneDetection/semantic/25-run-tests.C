@@ -9,6 +9,7 @@
 #include <csignal>
 
 using namespace rose;
+using namespace rose::BinaryAnalysis;
 using namespace CloneDetection;
 
 typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> ClonePolicy;

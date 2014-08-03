@@ -10,6 +10,7 @@
 #include "Disassembler.h"
 #include "Diagnostics.h"
 
+using namespace rose;                                   // temporary until this lives in "rose"
 using namespace rose::Diagnostics;
 
 // see base class
@@ -159,9 +160,9 @@ SgAsmx86Instruction::is_unknown() const
 }
 
 /** Return control flow successors. See base class for full documentation. */
-Disassembler::AddressSet
+BinaryAnalysis::Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(bool *complete) {
-    Disassembler::AddressSet retval;
+    BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true; /*assume true and prove otherwise*/
 
     switch (get_kind()) {
@@ -290,8 +291,8 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
 }
 
 /** Return control flow successors. See base class for full documentation. */
-Disassembler::AddressSet
-SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
+BinaryAnalysis::Disassembler::AddressSet
+SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
     Stream debug(mlog[DEBUG]);
@@ -301,7 +302,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
@@ -363,7 +364,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 
     if (debug) {
         debug <<"  successors:";
-        for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+        for (BinaryAnalysis::Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
             debug <<" " <<StringUtility::addrToString(*si);
         debug <<(*complete?"":"...") <<"\n";
     }

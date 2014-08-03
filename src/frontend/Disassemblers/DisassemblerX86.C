@@ -16,7 +16,9 @@
 
 #include <sstream>
 
-using namespace rose;
+namespace rose {
+namespace BinaryAnalysis {
+
 
 /* See header file for full documentation. */
 
@@ -5891,3 +5893,6 @@ DisassemblerX86::decodeGroupP()
         default: return makeInstruction(x86_prefetch, "prefetch", modrm);
     }
 }
+
+} // namespace
+} // namespace

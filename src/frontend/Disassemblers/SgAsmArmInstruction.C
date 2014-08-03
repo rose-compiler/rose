@@ -4,6 +4,8 @@
 #include "sage3basic.h"
 #include "Disassembler.h"
 
+using namespace rose;                                   // temporary until this lives in "rose"
+
 /* Returns true if the instruction modifies the instruction pointer (r15). */
 static bool modifies_ip(SgAsmArmInstruction *insn) 
 {
@@ -72,9 +74,9 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
 }
 
 /** Return control flow successors. See base class for full documentation. */
-Disassembler::AddressSet
+BinaryAnalysis::Disassembler::AddressSet
 SgAsmArmInstruction::get_successors(bool *complete) {
-    Disassembler::AddressSet retval;
+    BinaryAnalysis::Disassembler::AddressSet retval;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
     *complete = true; /*assume retval is the complete set of successors for now*/
 

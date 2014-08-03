@@ -6,6 +6,9 @@
 #include "InstructionEnumsM68k.h"
 #include "BitPattern.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for Motorola M68k-based instruction set architectures. */
 class DisassemblerM68k: public Disassembler {
 public:
@@ -175,5 +178,8 @@ private:
     typedef std::list<M68k*> IdisTable;
     IdisTable idis_table;                       /**< Instruction specific disassemblers. */
 };
+
+} // namespace
+} // namespace
 
 #endif

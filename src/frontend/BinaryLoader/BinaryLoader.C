@@ -13,6 +13,7 @@
 
 using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 Sawyer::Message::Facility BinaryLoader::mlog("BinaryLoader");
 std::vector<BinaryLoader*> BinaryLoader::loaders;

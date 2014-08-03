@@ -13,6 +13,8 @@ class SgAsmBlock;
 class SgAsmFunction;
 class SgAsmInterpretation;
 
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Unparses binary AST into text.
  *
@@ -1013,5 +1015,8 @@ protected:
         rose_addr_t address;            /**< Address to use when generating a prefix string. */
     } lineprefix;
 };
+
+} // namespace
+} // namespace
 
 #endif

@@ -4459,9 +4459,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
              set_disassemblerSearchHeuristics(heuristics);
-         } catch(const Disassembler::Exception &e) {
+         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
              fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
@@ -4476,7 +4476,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
              set_partitionerSearchHeuristics(heuristics);
          } catch(const std::string &e) {
              fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());

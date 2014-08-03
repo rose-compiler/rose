@@ -4,6 +4,8 @@
 #include "Debugger.h"
 #include "x86InstructionSemantics.h"
 
+using namespace rose::BinaryAnalysis;
+
 static const char *trace_prefix = "    ";
 
 /* Registers names, etc. for x86 32-bit */

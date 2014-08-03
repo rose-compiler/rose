@@ -7,6 +7,11 @@
 #include "MemoryMap.h"
 #include "integerOps.h"
 #include "Map.h"
+#include "BaseSemantics2.h"
+
+namespace rose {
+namespace BinaryAnalysis {
+
 
 /** Virtual base class for instruction disassemblers.
  *
@@ -688,5 +693,8 @@ protected:
     static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 };
+
+} // namespace
+} // namespace
 
 #endif

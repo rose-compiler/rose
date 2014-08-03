@@ -8,6 +8,7 @@
 #include "PartialSymbolicSemantics2.h"
 #include "SymbolicSemantics2.h"
 
+using namespace rose;                                   // temporary until this lives in "rose"
 using namespace rose::Diagnostics;
 
 // see base class
@@ -250,10 +251,10 @@ SgAsmM68kInstruction::is_unknown() const
     return m68k_unknown_instruction == get_kind();
 }
 
-Disassembler::AddressSet
+BinaryAnalysis::Disassembler::AddressSet
 SgAsmM68kInstruction::get_successors(bool *complete)
 {
-    Disassembler::AddressSet retval;
+    BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true;
 
     switch (get_kind()) {
@@ -396,8 +397,8 @@ SgAsmM68kInstruction::get_successors(bool *complete)
     return retval;
 }
 
-Disassembler::AddressSet
-SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
+BinaryAnalysis::Disassembler::AddressSet
+SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
     Stream debug(mlog[DEBUG]);
@@ -407,7 +408,7 @@ SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
     // If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
     // we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
