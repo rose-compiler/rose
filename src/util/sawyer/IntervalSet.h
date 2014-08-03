@@ -175,6 +175,13 @@ public:
         return ConstNodeIterator(map_.lowerBound(scalar));
     }
 
+    /** Find the first node whose interval begins above the specified scalar key.
+     *
+     *  Returns an iterator to the node, or the end iterator if no such node exists. */
+    ConstNodeIterator upperBound(const typename Interval::Value &scalar) const {
+        return ConstNodeIterator(map_.upperBound(scalar));
+    }
+
     /** Find the last node whose interval starts at or below the specified scalar key.
      *
      *  Returns an iterator to the node, or the end iterator if no such node exists. */

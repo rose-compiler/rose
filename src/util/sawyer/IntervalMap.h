@@ -238,6 +238,25 @@ public:
     }
     /** @} */
 
+    /** Find the first node whose interval begins above the specified scalar key.
+     *
+     *  Returns an iterator to the node, or the end iterator if no such node exists.
+     *
+     *  @{ */
+    NodeIterator upperBound(const typename Interval::Value &scalar) {
+        NodeIterator ub = map_.upperBound(Interval(scalar)); // first node that ENDS after scalar
+        while (ub!=map_.nodes().end() && ub->key().least() <= scalar)
+            ++ub;
+        return ub;
+    }
+    ConstNodeIterator upperBound(const typename Interval::Value &scalar) const {
+        ConstNodeIterator ub = map_.upperBound(Interval(scalar)); // first node that ENDS after scalar
+        while (ub!=map_.nodes().end() && ub->key().least() <= scalar)
+            ++ub;
+        return ub;
+    }
+    /** @} */
+
     /** Find the last node whose interval starts at or below the specified scalar key.
      *
      *  Returns an iterator to the node, or the end iterator if no such node exists.
@@ -288,6 +307,25 @@ public:
     }
     /** @} */
 
+    /** Finds all nodes overlapping the specified interval.
+     *
+     *  Returns an iterator range that enumerates the nodes that overlap with the specified interval.
+     *
+     *  @{ */
+    boost::iterator_range<NodeIterator> findAll(const Interval &interval) {
+        NodeIterator begin = lowerBound(interval.least());
+        if (begin==nodes().end() || begin->key().least() > interval.greatest())
+            return boost::iterator_range<NodeIterator>(nodes().end(), nodes().end());
+        return boost::iterator_range<NodeIterator>(begin, upperBound(interval.greatest()));
+    }
+    boost::iterator_range<ConstNodeIterator> findAll(const Interval &interval) const {
+        ConstNodeIterator begin = lowerBound(interval.least());
+        if (begin==nodes().end() || begin->key().least() > interval.greatest())
+            return boost::iterator_range<ConstNodeIterator>(nodes().end(), nodes().end());
+        return boost::iterator_range<ConstNodeIterator>(begin, upperBound(interval.greatest()));
+    }
+    /** @} */
+    
     /** Find first interval that overlaps with the specified interval.
      *
      *  Returns an iterator to the matching node, or the end iterator if no such node exists.
@@ -652,7 +690,7 @@ public:
      *  Every interval in @p other is erased from this container. */
     template<typename T2, class Policy2>
     void eraseMultiple(const IntervalMap<Interval, T2, Policy2> &other) {
-        ASSERT_forbid2((const void*)&other != (const void*)this, "use clear() instead");
+        ASSERT_forbid2((const void*)&other == (const void*)this, "use clear() instead");
         typedef typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator OtherIter;
         for (OtherIter oi=other.nodes().begin(); oi!=other.nodes().end(); ++oi)
             erase(oi->key());
@@ -705,7 +743,7 @@ public:
      *  type. */
     template<typename T2, class Policy2>
     void insertMultiple(const IntervalMap<Interval, T2, Policy2> &other, bool makeHole=true) {
-        ASSERT_forbid2((const void*)&other != (const void*)this, "cannot insert a container into itself");
+        ASSERT_forbid2((const void*)&other == (const void*)this, "cannot insert a container into itself");
         typedef typename IntervalMap<Interval, T2, Policy>::ConstNodeIterator OtherIter;
         for (OtherIter oi=other.nodes().begin(); oi!=other.nodes().end(); ++oi)
             insert(oi->key(), Value(oi->value()), makeHole);
