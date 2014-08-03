@@ -4,6 +4,8 @@
 #include "BinaryControlFlow.h"
 #include "Diagnostics.h"
 
+using namespace rose::BinaryAnalysis;
+
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
     /* Mnemonic */

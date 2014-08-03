@@ -4,10 +4,12 @@
 #include "sage3basic.h"
 #include "Disassembler.h"
 
+using namespace rose;                                   // temporary until this lives in "rose"
+
 // Return control flow successors. See base class for full documentation.
-Disassembler::AddressSet
+BinaryAnalysis::Disassembler::AddressSet
 SgAsmPowerpcInstruction::get_successors(bool *complete) {
-    Disassembler::AddressSet retval;
+    BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true; /*assume retval is the complete set of successors for now*/
 
     switch (get_kind()) {
