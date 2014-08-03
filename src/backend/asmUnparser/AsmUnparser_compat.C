@@ -28,7 +28,7 @@ std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelM
 std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
                                           const RegisterDictionary *registers) {
     if (!insn) return "BOGUS:NULL";
-    return StringUtility::intToHex(insn->get_address()) + ":" + unparseInstruction(insn, labels, registers);
+    return StringUtility::addrToString(insn->get_address()) + ": " + unparseInstruction(insn, labels, registers);
 }
 
 /* FIXME: This should be a SgAsmInstruction class method. */
