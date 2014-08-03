@@ -11,6 +11,9 @@ typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 protected:
+    // prototypical constructor
+    DispatcherM68k() {}
+
     explicit DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
         set_register_dictionary(RegisterDictionary::dictionary_coldfire_emac());
         regcache_init();
@@ -34,6 +37,12 @@ public:
     RegisterDescriptor REG_MACSR_SU, REG_MACSR_FI, REG_MACSR_N, REG_MACSR_Z, REG_MACSR_V, REG_MACSR_C, REG_MAC_MASK;
     RegisterDescriptor REG_MACEXT0, REG_MACEXT1, REG_MACEXT2, REG_MACEXT3, REG_SSP, REG_SR_S, REG_SR, REG_VBR;
     /** @} */
+
+    /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
+     *  with the virtual @ref create method. */
+    static DispatcherM68kPtr instance() {
+        return DispatcherM68kPtr(new DispatcherM68k);
+    }
 
     /** Constructor. */
     static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {

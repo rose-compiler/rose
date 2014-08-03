@@ -2389,6 +2389,9 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    // Prototypical constructor
+    Dispatcher(): regdict(NULL) {}
+
     explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
         assert(operators!=NULL);
     }
