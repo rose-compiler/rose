@@ -3652,7 +3652,7 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
 
         // get the next mapped address, but it might not be unused
         rose_addr_t mapped_unused_va;
-        if (!map.next(unused_va).apply(mapped_unused_va))
+        if (!map.next(unused_va).assignTo(mapped_unused_va))
             return NOT_FOUND;                           // no higher mapped address
         if (unused.contains(Extent(mapped_unused_va)))
             return mapped_unused_va;                    // found
@@ -3684,14 +3684,14 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
 
         // Find an address that is mapped but not part of any function.
         rose_addr_t unused_va;
-        if (!next_unused_address(map, next_va).apply(unused_va))
+        if (!next_unused_address(map, next_va).assignTo(unused_va))
             break;
         debug <<"  next unused address is " <<addrToString(unused_va) <<"\n";
 
         // Find the next occurrence of padding bytes.
         Extent search_limits = Extent::inin(unused_va, map.hull().greatest());
         rose_addr_t padding_va;
-        if (!map.find_any(search_limits, padding_bytes).apply(padding_va))
+        if (!map.find_any(search_limits, padding_bytes).assignTo(padding_va))
             break;
 
         // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).

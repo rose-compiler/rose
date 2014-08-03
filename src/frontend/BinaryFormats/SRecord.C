@@ -183,7 +183,7 @@ SRecord::dump(const MemoryMap &map, std::ostream &out, size_t addrSize) {
     rose_addr_t va = 0;
     static const size_t maxBytesPerRecord = 28;         // common value so each S-Record fits on an 80-character screen
     uint8_t buffer[maxBytesPerRecord];
-    while (map.next(va).apply(va)) {
+    while (map.next(va).assignTo(va)) {
         size_t nread = map.read(buffer, va, maxBytesPerRecord, MemoryMap::MM_PROT_NONE);
         ASSERT_require(nread>0);                        // since map.next() returned true
         SRecord srec(type, va, buffer, nread);

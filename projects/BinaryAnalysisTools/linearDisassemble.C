@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = 0;
-    while (map.next(va).apply(va)) {
+    while (map.next(va).assignTo(va)) {
         va = alignUp(va, settings.alignment);
         try {
             SgAsmInstruction *insn = disassembler->disassembleOne(&map, va);
