@@ -12,7 +12,7 @@ TaintedFlow::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog.initStreams(rose::Diagnostics::destination);
-        rose::Diagnostics::facilities.insert(mlog);
+        rose::Diagnostics::mfacilities.insert(mlog);
     }
 }
 

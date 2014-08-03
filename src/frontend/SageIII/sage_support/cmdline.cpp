@@ -3266,7 +3266,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              SwitchGroup switches;
              switches.insert(Switch("rose:log")
                              .resetLongPrefixes("-")    // ROSE switches only support single hyphens
-                             .action(configureDiagnostics("rose:log", Diagnostics::facilities))
+                             .action(configureDiagnostics("rose:log", Diagnostics::mfacilities))
                              .argument("config"));
              std::vector<std::string> args;
              args.push_back("-rose:log");

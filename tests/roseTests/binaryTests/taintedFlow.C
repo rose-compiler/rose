@@ -225,8 +225,8 @@ int main(int argc, char *argv[])
     // Configure diagnostic output
     rose::Diagnostics::initialize();
     mlog.initStreams(rose::Diagnostics::destination);
-    rose::Diagnostics::facilities.insertAndAdjust(mlog);
-    rose::Diagnostics::facilities.control("taintedFlow(>=where)"); // the default
+    rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+    rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
     // Describe the command-line
     using namespace Sawyer::CommandLine;
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
                     .intrinsicValue(false, useInstructions)
                     .hidden(true));
     switches.insert(Switch("log", 'L')
-                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::facilities))
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::mfacilities))
                     .argument("logspec")
                     .whichValue(Sawyer::CommandLine::SAVE_ALL)
                     .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));

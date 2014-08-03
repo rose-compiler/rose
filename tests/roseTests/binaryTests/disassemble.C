@@ -723,7 +723,7 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
     rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
     mlog.initStreams(rose::Diagnostics::destination);
-    rose::Diagnostics::facilities.insertAndAdjust(mlog);
+    rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Declare command-line switches.
@@ -825,7 +825,7 @@ main(int argc, char *argv[])
                          "from one another by colons."));
                     
     switches.insert(Switch("log", 'L')
-                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::facilities))
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::mfacilities))
                     .argument("logspec")
                     .whichValue(Sawyer::CommandLine::SAVE_ALL)
                     .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));

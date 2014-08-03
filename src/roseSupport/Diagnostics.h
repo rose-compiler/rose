@@ -19,14 +19,14 @@ namespace rose {
  *  object for each of a number of message importance levels.  ROSE defines one global library-wide facility,
  *  <code>Diagnostics::mlog</code> whose string name (used in output) is simply "rose".  Software layers within ROSE may define
  *  their own facilities and give them names indicative of the software layer.  All these facilities are then grouped together
- *  into a single Sawyer::Message::Facilities object, Diagnostics::facilities, so they can be controlled collectively or
+ *  into a single Sawyer::Message::Facilities object, Diagnostics::mfacilities, so they can be controlled collectively or
  *  individually from the ROSE command-line (e.g., the frontend() call) via "-rose:log" switch.
  *
  * @section usage Command-line usage
  *
  *  ROSE looks for the command-line switch "-rose:log <em>WHAT</em>".  If <em>WHAT</em> is the word "help" then usage
  *  information is displayed; if <em>WHAT</em> is the word "list" then log settings are displayed.  Otherwise, <em>WHAT</em> is
- *  expected to be a string to pass to the Diagnostics::facilities.control() function.  In short, the string is a
+ *  expected to be a string to pass to the Diagnostics::mfacilities.control() function.  In short, the string is a
  *  comma-separated list of importance levels to enable (or disable when preceded by "!").  Importance levels can also be
  *  enclosed in parentheses and preceded by a facility name to restrict the settings to the specified facility.  For instance,
  *  if one wanted to turn off INFO messages for all facilities, and then turn on TRACE and DEBUG messages for the BinaryLoader,
@@ -80,7 +80,7 @@ namespace rose {
  *      if (!initialized) {
  *          initialized = true;
  *          mlog.initStreams(Diagnostics::destination);
- *          Diagnostics::facilities.insert(mlog);
+ *          Diagnostics::mfacilities.insert(mlog);
  *      }
  *  }
  * @endcode
@@ -189,7 +189,7 @@ namespace rose {
  * @code
  *  rose::Diagnostics::initialize();
  *  mlog.initStreams(rose::Diagnostics::destination);
- *  rose::Diagnostics::facilities.insertAndAdjust(mlog);
+ *  rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
  * @endcode
  *
  *  The first line ensures that the global variables in rose::Diagnostics are properly initialized. You don't need to do this
@@ -204,7 +204,7 @@ namespace rose {
  *
  *  The tool can parse arguments in it's normal way.  It can forward the "-rose:log" arguments to the ROSE library so that the
  *  library can control the tools' message streams, or it can process its own arguments can call
- *  rose::Diagnostics::facilities.control() itself.
+ *  rose::Diagnostics::mfacilities.control() itself.
  */
 namespace Diagnostics {
 
@@ -236,7 +236,7 @@ extern Sawyer::Message::Facility mlog;
 
 /** Collection of all registered ROSE logging facilities. This collection allows the facilities to be controlled collectively
  *  such as from the -rose:log command-line switch. */
-extern Sawyer::Message::Facilities facilities;
+using Sawyer::Message::mfacilities;
     
 /** Initialize diagnostics-related global variables. This should be called before any of the global variables in the
  *  rose::Diagnostics name space are used.  It doesn't hurt to call this more than once. */

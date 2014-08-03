@@ -43,7 +43,7 @@ void Partitioner::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(mlog);
+        Diagnostics::mfacilities.insert(mlog);
     }
 }
 

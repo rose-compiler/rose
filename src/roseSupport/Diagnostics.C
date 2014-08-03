@@ -17,7 +17,6 @@ namespace Diagnostics {
 Sawyer::Message::DestinationPtr destination;
 Sawyer::Message::PrefixPtr mprefix;
 Sawyer::Message::Facility mlog("rose");
-Sawyer::Message::Facilities facilities;
 
 void initialize() {
     if (!isInitialized()) {
@@ -32,7 +31,7 @@ void initialize() {
             destination = Sawyer::Message::FileSink::instance(stderr)->prefix(mprefix);
         }
         mlog.initStreams(destination);
-        facilities.insert(mlog);
+        mfacilities.insert(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
@@ -49,7 +48,7 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
 
         // By default, only messages of informational importance and above are dispalyed.
-        facilities.control("none, >=info");
+        mfacilities.control("none, >=info");
     }
 }
 
