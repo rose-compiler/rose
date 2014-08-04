@@ -486,6 +486,9 @@ DisassemblerM68k::makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_num
 {
     size_t nBits = formatNBits(fmt);
     ASSERT_require(nBits > 0);
+    if (8==nBits)
+        return SageBuilderAsm::buildValueInteger(instructionWord(ext_word_number+1) & 0xff, makeType(fmt));
+        
     ASSERT_require(nBits % 16 == 0);
     size_t nWords = nBits / 16;
     Sawyer::Container::BitVector bv(nBits);
@@ -509,7 +512,6 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
 {
     ASSERT_require(mode < 8);
     ASSERT_require(reg < 8);
-    ASSERT_require(ext_offset <= 2);
 
     SgAsmType *type = makeType(fmt);
 
