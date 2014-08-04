@@ -555,8 +555,8 @@ public:
     /** Returns the next valid address.
      *
      *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions.  If no
-     *  permissions are specified then the address need only be mapped.  Returns nothing if there is no valid address greater than or
-     *  equal to @p va. */
+     *  permissions are specified then the address need only be mapped.  Returns nothing if there is no valid address greater
+     *  than or equal to @p va. */
     Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
