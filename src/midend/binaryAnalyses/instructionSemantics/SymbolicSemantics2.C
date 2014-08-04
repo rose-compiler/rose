@@ -125,6 +125,8 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
  *                                      Memory state
  *******************************************************************************************************************************/
 
+MemoryState::CellCompressorChoice MemoryState::cc_choice;
+
 SValuePtr
 MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
