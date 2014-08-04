@@ -346,7 +346,7 @@ public:
     /** Returns the register that points to the stack. */
     virtual RegisterDescriptor stackPointerRegister() const {
         ASSERT_require(REG_SP.is_valid());
-        return REG_IP;
+        return REG_SP;
     }
 
     /** Returns the segment register for accessing the stack.  Not all architectures have this register, in which case the
