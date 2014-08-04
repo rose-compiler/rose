@@ -15,7 +15,9 @@
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
+using namespace rose::Diagnostics;
 
+namespace P2 = Partitioner2;
 
 static Disassembler *
 getDisassembler(const std::string &name)
@@ -53,7 +55,8 @@ getDisassembler(const std::string &name)
 struct Settings {
     std::string isaName;
     rose_addr_t startVa;
-    Settings(): startVa(0) {}
+    rose_addr_t disassembleVa;
+    Settings(): startVa(0), disassembleVa(0) {}
 };
 
 // Describe and parse the command-line
@@ -72,9 +75,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     .argument("virtual-address", nonNegativeIntegerParser(settings.startVa))
                     .doc("The first byte of the file is mapped at the specified @v{virtual-address}, which defaults "
                          "to " + StringUtility::addrToString(settings.startVa) + "."));
+    switches.insert(Switch("log")
+                    .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
+                    .argument("config")
+                    .whichValue(SAVE_ALL)
+                    .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
     switches.insert(Switch("version", 'V')
                     .action(showVersionAndExit(version_message(), 0))
                     .doc("Shows version information for various ROSE components and then exits."));
+    switches.insert(Switch("disassemble")
+                    .argument("virtual-address", nonNegativeIntegerParser(settings.disassembleVa))
+                    .doc("Address where disassembly starts.  The default is to use the first address of the file."));
 
     Parser parser;
     parser
@@ -87,8 +98,28 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     return parser.with(switches).parse(argc, argv).apply();
 }
 
+// Callback demonstration for partitioner.  Show each basic block that is inserted into or erased from the CFG.
+class ShowBasicBlockAdjustments: public P2::Partitioner::CfgAdjustmentCallback {
+public:
+    virtual bool operator()(bool chained, const InsertionArgs &args) /*override*/ {
+        Stream out(args.partitioner->mlog[INFO]);
+        out <<"inserted basic block " <<StringUtility::addrToString(args.insertedVertex->value().address()) <<"\n";
+        return chained;
+    }
+
+    virtual bool operator()(bool chained, const ErasureArgs &args) /*override*/ {
+        Stream out(args.partitioner->mlog[INFO]);
+        out <<"erased basic block " <<StringUtility::addrToString(args.erasedBlock->address()) <<"\n";
+        return chained;
+    }
+};
+
 int main(int argc, char *argv[])
 {
+    // Do this explicitly since the partitioner is not yet part of librose
+    Diagnostics::initialize();
+    P2::Partitioner::initDiagnostics();
+
     // Parse the command-line
     Settings settings;
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
@@ -113,19 +144,23 @@ int main(int argc, char *argv[])
 
 
     // Create the partitioner
-    namespace P2 = Partitioner2;
     P2::Partitioner partitioner(disassembler, map);
+    partitioner.cfgAdjustmentCallbacks().append(P2::Partitioner::CfgAdjustmentCallback::Ptr(new ShowBasicBlockAdjustments));
 
-    // Recursive disassembly
-    partitioner.insertPlaceholder(settings.startVa);    // disassembly starts here
+    // Where to start disassembling?
+    partitioner.insertPlaceholder(settings.disassembleVa ? settings.disassembleVa : settings.startVa);
+
+    // Recursive disassembly.
     P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
     while (worklist->nInEdges() > 0) {
         P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-        std::cerr <<StringUtility::addrToString(placeholder->value().address()) <<"\n";
+        std::cerr <<"Processing at " <<StringUtility::addrToString(placeholder->value().address()) <<"\n";
         P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
         partitioner.insertBasicBlock(placeholder, bb);
     }
-    partitioner.toAst();
+
+    std::cout <<"Final control flow graph:\n";
+    partitioner.dumpCFG(std::cout, "  ");
 
     exit(0);
 }

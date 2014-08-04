@@ -5,7 +5,10 @@
 #include "InstructionProvider.h"
 #include "SymbolicSemantics2.h"
 
+#include <sawyer/Callbacks.h>
 #include <sawyer/Graph.h>
+#include <sawyer/IntervalMap.h>
+#include <sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -16,17 +19,19 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
 
 /** Partitions instructions into basic blocks and functions.
  *
- *  The instruction partitioner uses the following objects as input:
+ *  A partitioner is responsible for driving a disassembler to obtain instructions, grouping those instructions into basic
+ *  blocks, grouping the basic blocks into functions, and building an abstract syntax tree.
  *
- * @li An instruction provider (InstructionProvider) that associates a single instruction (or lack of instruction) per
- *     instruction starting address.  The instruction provider can either be pre-populated with all known instructions or it
- *     can disassemble one instruction at a time each time a new starting address is queried.  In either case, the same
- *     instruction pointer must be returned each time its starting address is queried (that is, the provider caches
- *     instructions).
+ *  The following objects are needed as input:
  *
- * @li A memory map whose non-writable segments are used as initial memory values during semantic analysis.  The memory map
- *     includes the data that was used to disassemble instructions, and which must be marked as executable (the partitioner
- *     assumes that non-executable memory does not contain instructions).
+ * @li A memory map containing the memory for the specimen being analyzed.  Parts of memory that contain instructions must be
+ *     mapped with execute permission.  Parts of memory that are readable and non-writable will be considered constant for the
+ *     purpose of disassembly and partitioning and can contain things like dynamic linking tables that have been initialized
+ *     prior to calling the partitioner.
+ *
+ * @li A disassembler which is canonical for the specimen architecture and which will return an instruction (possibly an
+ *     "unknown" instruction) whenever it is asked to disassemble an address that is mapped with execute permission.  The
+ *     partitioner wraps the disassembler and memory map into an InstructionProvider that caches disassembled instructions.
  *
  *  The following data structures are maintained consistently by the partitioner (described in detail later):
  *
@@ -36,15 +41,12 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  @li An address usage map (AUM), which is a mapping from every address represented in the CFG to the instruction(s) and
  *      their basic blocks.  A single address may have multiple overlapping instructions (although this isn't the usual case),
- *      and every instruction represented by the map belongs to exactly one basic block that belongs to the CFG.  This is
- *      different than the instruction provider's map because this represents only those instructions that are represented by
- *      the CFG, whereas the instruction providor represents all instructions which have ever been disassembled.
+ *      and every instruction represented by the map belongs to exactly one basic block that belongs to the CFG.
  *
- *  @li Various work lists.  Most work lists are represented by the control flow edges incoming to certain special CFG
- *      vertices.  For instance, the set of all basic block placeholders (vertices where a basic block starting address is all
- *      that's known) can be found by looking at the incoming edges for the special "undiscovered" vertex.   Worklists
- *      implemented this way are unordered, but vertices can be added and removed from them in constant time with no memory
- *      allocation or deallocation.
+ *  @li Various work lists.  Most built-in work lists are represented by special vertices in the CFG.  For instance, the
+ *      "nonexisting" vertex has incoming edges from all basic blocks whose first instruction is not in executable-mapped
+ *      memory.  The built-in worklists are unordered, but users can maintain their own worklists that are notified whenever
+ *      instructions are added to or erased from the CFG.
  *
  * @section basic_block Basic Blocks
  *
@@ -103,6 +105,15 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *  labeled as calls and returns.  CFG vertices representing a function return have a single outgoing edge to the "function
  *  return" CFG vertex. Other vertices with an outgoing inter-function branch are not special (e.g., thunks).
  *
+ *  @section fix FIXME[Robb P. Matzke 2014-08-03] 
+ *
+ *  The partitioner operates in three major phases: CFG-discovery, where basic blocks are discovered and added to the CFG;
+ *  function-discovery, where the CFG is partitioned into functions; and AST-building, where the final ROSE abstract syntax
+ *  tree is constructed.  The paritioner exposes a low-level API for users that need fine-grained control, and a high-level API
+ *  where more things are automated.
+ *
+ *  During the CFG-discovery phase
+ *
  * @section recursion Recursive Disassembly
  *
  *  Recursive disassembly is implemented by processing the "undiscovered" worklist (the vertices with edges to the special
@@ -153,9 +164,21 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *  neither inserted nor removed. [FIXME[Robb P. Matzke 2014-07-30]: to be written later] */
 class Partitioner {
 
+    enum VertexType {
+        V_BASICBLOCK,                                   /**< A basic block or placeholder for a basic block. */
+        V_UNDISCOVERED,                                 /**< The special "undiscovered" vertex. */
+        V_INDETERMINATE,                                /**< Special vertex destination for indeterminate edges. */
+        V_NONEXISTING,                                  /**< Special vertex destination for non-existing basic blocks. */
+    };
+
+    enum EdgeType {
+        E_NORMAL,                                       /**< Normal control flow edge, nothing special. */
+        E_FCALL,                                        /**< Edge is a function call. */
+        E_FRET,                                         /**< Edge is a function return from the call site. */
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Basic blocks
+    //                                  Basic blocks (BB)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Basic block information.
@@ -171,6 +194,21 @@ public:
         /** Shared pointer to a basic block. */
         typedef Sawyer::SharedPointer<BasicBlock> Ptr;
 
+        /** Basic block successor. */
+        class Successor {
+        private:
+            Semantics::SValuePtr expr_;
+            EdgeType type_;
+        public:
+            explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL)
+                : expr_(expr), type_(type) {}
+            const Semantics::SValuePtr& expr() const { return expr_; }
+            EdgeType type() const { return type_; }
+        };
+
+        /** All successors in no particular order. */
+        typedef std::vector<Successor> Successors;
+
     private:
         bool isFrozen_;                                 // True when the object becomes read-only
         rose_addr_t startVa_;                           // Starting address, perhaps redundant with insns_[0]->p_address
@@ -178,6 +216,10 @@ public:
         BaseSemantics::DispatcherPtr dispatcher_;       // How instructions are dispatched (null if no instructions)
         BaseSemantics::StatePtr initialState_;          // Initial state for semantics (null if no instructions)
         BaseSemantics::StatePtr finalState_;            // Semantic state after the final instruction (null if invalid)
+
+        // The following members are caches. Make sure clearCache() resets these to initial values.
+        mutable Sawyer::Optional<Successors> cachedSuccessors_;
+        mutable Sawyer::Optional<bool> cachedIsFunctionCall_;
 
     protected:
         // use instance() instead
@@ -212,9 +254,12 @@ public:
          *
          *  Returns true if read-only, false otherwise. */
         bool isFrozen() const { return isFrozen_; }
-        
+
         /** Get the address for a basic block. */
-        virtual rose_addr_t address() const { return startVa_; }
+        rose_addr_t address() const { return startVa_; }
+
+        /** Get the address after the end of the last instruction. */
+        rose_addr_t fallthroughVa() const;
 
         /** Get the number of instructions in this block. */
         size_t nInsns() const { return insns_.size(); }
@@ -276,13 +321,34 @@ public:
          *  states. A null dispatcher is returned if this basic block is empty. */
         const BaseSemantics::DispatcherPtr& dispatcher() const { return dispatcher_; }
 
+        /** Clear analysis cache.
+         *
+         *  The cache is cleared automatically whenever a new instruction is inserted. */
+        void clearCache();
+
+        /** Accessor for the successor cache.
+         *  @{ */
+        const Sawyer::Optional<Successors>& cachedSuccessors() const { return cachedSuccessors_; }
+        const Successors& cacheSuccessors(const Successors &x) const { cachedSuccessors_ = x; return x; }
+        void uncacheSuccessors() const { cachedSuccessors_ = Sawyer::Nothing(); }
+        bool isCachedSuccessors() const { return bool(cachedSuccessors_); }
+        /** @} */
+
+        /** Accessor for isFunctionCall cache.
+         *  @{ */
+        const Sawyer::Optional<bool>& cachedIsFunctionCall() const { return cachedIsFunctionCall_; }
+        bool cacheIsFunctionCall(bool x) const { cachedIsFunctionCall_ = x; return x; }
+        void uncacheIsFunctionCall() const { cachedIsFunctionCall_ = Sawyer::Nothing(); }
+        bool isCachedIsFunctionCall() const { return bool(cachedIsFunctionCall_); }
+        /** @} */
+        
     private:
         void init(const Partitioner*);
     };
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Address usage map
+    //                                  Address usage map (AUM)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Instruction/Block pair.
@@ -482,57 +548,50 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Control flow graph
+    //                                  Control flow graph (CFG)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Control flow graph vertex. */
-    class CFGVertex {
+    class CfgVertex {
         friend class Partitioner;
-    public:
-        enum Type {
-            VERTEX_BASICBLOCK,                          /**< A basic block or placeholder for a basic block. */
-            VERTEX_UNDISCOVERED,                        /**< The special "undiscovered" vertex. */
-            VERTEX_INDETERMINATE,                       /**< Special vertex serving as destination for indeterminate edges. */
-        };
-
     private:
-        Type type_;                                     // type of vertex, special or not
+        VertexType type_;                               // type of vertex, special or not
         rose_addr_t startVa_;                           // address of start of basic block
         BasicBlock::Ptr bblock_;                        // basic block, or null if only a place holder
 
     public:
         /** Construct a basic block placeholder vertex. */
-        explicit CFGVertex(rose_addr_t startVa): type_(VERTEX_BASICBLOCK), startVa_(startVa) {}
+        explicit CfgVertex(rose_addr_t startVa): type_(V_BASICBLOCK), startVa_(startVa) {}
 
         /** Construct a basic block vertex. */
-        explicit CFGVertex(const BasicBlock::Ptr &bb): type_(VERTEX_BASICBLOCK), bblock_(bb) {
+        explicit CfgVertex(const BasicBlock::Ptr &bb): type_(V_BASICBLOCK), bblock_(bb) {
             ASSERT_not_null(bb);
             startVa_ = bb->address();
         }
 
         /** Construct a special vertex. */
-        explicit CFGVertex(Type type): type_(type), startVa_(0) {
-            ASSERT_forbid2(type==VERTEX_BASICBLOCK, "this constructor does not create basic block or placeholder vertices");
+        explicit CfgVertex(VertexType type): type_(type), startVa_(0) {
+            ASSERT_forbid2(type==V_BASICBLOCK, "this constructor does not create basic block or placeholder vertices");
         }
 
         /** Returns the vertex type. */
-        Type type() const { return type_; }
+        VertexType type() const { return type_; }
 
         /** Return the starting address of a placeholder or basic block. */
         rose_addr_t address() const {
-            ASSERT_require(VERTEX_BASICBLOCK==type_);
+            ASSERT_require(V_BASICBLOCK==type_);
             return startVa_;
         }
 
         /** Return the basic block pointer.  A null pointer is returned when the vertex is only a basic block placeholder. */
         const BasicBlock::Ptr& bblock() const {
-            ASSERT_require(VERTEX_BASICBLOCK==type_);
+            ASSERT_require(V_BASICBLOCK==type_);
             return bblock_;
         }
 
         /** Turns a basic block vertex into a placeholder.  The basic block pointer is reset to null. */
         void nullify() {
-            ASSERT_require(VERTEX_BASICBLOCK==type_);
+            ASSERT_require(V_BASICBLOCK==type_);
             bblock_ = BasicBlock::Ptr();
         }
 
@@ -544,15 +603,22 @@ public:
     };
 
     /** Control flow graph edge. */
-    struct CFGEdge {};
+    class CfgEdge {
+    private:
+        EdgeType type_;
+    public:
+        CfgEdge(): type_(E_NORMAL) {}
+        explicit CfgEdge(EdgeType type): type_(type) {}
+        EdgeType type() const { return type_; }
+    };
 
     /** Control flow graph. */
-    typedef Sawyer::Container::Graph<CFGVertex, CFGEdge> ControlFlowGraph;
+    typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
     /** Mapping from basic block starting address to CFG vertex. */
     typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexNodeIterator> VertexIndex;
 
-
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -567,6 +633,10 @@ private:
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
     ControlFlowGraph::VertexNodeIterator indeterminateVertex_;
+    ControlFlowGraph::VertexNodeIterator nonexistingVertex_;
+
+public:
+    static Sawyer::Message::Facility mlog;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner constructors
@@ -574,6 +644,8 @@ private:
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : instructionProvider_(InstructionProvider(disassembler, map)), memoryMap_(map), solver_(NULL) { init(); }
+
+    static void initDiagnostics();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner CFG queries
@@ -643,6 +715,21 @@ public:
     }
     ControlFlowGraph::ConstVertexNodeIterator indeterminateVertex() const {
         return indeterminateVertex_;
+    }
+    /** @} */
+
+    /** Returns the special "non-existing" vertex.
+     *
+     *  The incoming edges for this vertex originate from basic blocks that have no instructions but which aren't merely
+     *  placeholders.  Such basic blocks exist when an attempt is made to discover a basic block but its starting address is
+     *  memory which is not mapped or memory which is mapped without execute permission.
+     *
+     *  @{ */
+    ControlFlowGraph::VertexNodeIterator nonexistingVertex() {
+        return nonexistingVertex_;
+    }
+    ControlFlowGraph::ConstVertexNodeIterator nonexistingVertex() const {
+        return nonexistingVertex_;
     }
     /** @} */
 
@@ -791,41 +878,98 @@ public:
 
     /** Determine successors for a basic block.
      *
-     *  Basic block successors are returned as a vector of symbolic expressions in no particular order. The basic block need
-     *  not be complete (this is used during basic block discovery). A basic block that has no instructions has no successors. */
-    std::vector<Semantics::SValuePtr> successorExpressions(const BasicBlock::Ptr&) const;
+     *  Basic block successors are returned as a vector in no particular order.  This method returns the most basic successors;
+     *  for instance, function call instructions will have an edge for the called function but no edge for the return.  The
+     *  basic block holds a successor cache which is consulted/updated by this method.
+     *
+     *  The basic block need not be complete (this is used during basic block discovery). A basic block that has no
+     *  instructions has no successors. */
+    BasicBlock::Successors bblockSuccessors(const BasicBlock::Ptr&) const;
 
     /** Determine if a basic block looks like a function call.
      *
      *  If the basic block appears to be a function call by some analysis then this function returns true.  The analysis may
      *  use instruction semantics to look at the stack, it may look at the kind of instructions in the block, it may look for
-     *  patterns at the callee address if known, etc. */
-    bool isFunctionCall(const BasicBlock::Ptr&) const;
+     *  patterns at the callee address if known, etc. The basic block caches the result of this analysis. */
+    bool bblockIsFunctionCall(const BasicBlock::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner worklist adjusters
+    //                                  Partitioner callbacks
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** CFG insertion notifier.
+    /** Base class for CFG-adjustment callbacks.
      *
-     *  This method is called whenever a new basic block is inserted into the control flow graph. The call happens immediately
-     *  after the partitioner internal data structures are updated to reflect the insertion.  This call occurs whether a basic
-     *  block or only a placeholder was inserted. */
-    virtual void bblockInserted(const ControlFlowGraph::VertexNodeIterator &newVertex) {}
+     *  Users may create subclass objects from this class and pass their shared-ownership pointers to the partitioner, in which
+     *  case the partitioner will invoke one of the callback's virtual function operators every time the control flow graph
+     *  changes (the call occurs after the CFG has been adjusted).  Multiple callbacks are allowed; the list is obtained with
+     *  the @ref cfgAdjustmentCallbacks method. */
+    class CfgAdjustmentCallback: public Sawyer::SharedObject {
+    public:
+        typedef Sawyer::SharedPointer<CfgAdjustmentCallback> Ptr;
 
-    /** CFG erasure notifier.
+        /** Arguments for inserting a new basic block. */
+        struct InsertionArgs {
+            Partitioner *partitioner;                                   /**< This partitioner. */
+            ControlFlowGraph::VertexNodeIterator insertedVertex;        /**< Vertex that was recently inserted. */
+            InsertionArgs(Partitioner *partitioner, const ControlFlowGraph::VertexNodeIterator &insertedVertex)
+                : partitioner(partitioner), insertedVertex(insertedVertex) {}
+        };
+
+        /** Arguments for erasing a basic block. */
+        struct ErasureArgs {
+            Partitioner *partitioner;                                   /**< This partitioner. */
+            BasicBlock::Ptr erasedBlock;                                /**< Basic block that was recently erased. */
+            ErasureArgs(Partitioner *partitioner, const BasicBlock::Ptr &erasedBlock)
+                : partitioner(partitioner), erasedBlock(erasedBlock) {}
+        };
+
+        virtual ~CfgAdjustmentCallback() {}
+
+        /** Insertion callback. This method is invoked after each CFG vertex is inserted (except for special vertices). */
+        virtual bool operator()(bool enabled, const InsertionArgs&) = 0;
+
+        /** Erasure callback. This method is invoked after each basic block is removed from the CFG. */
+        virtual bool operator()(bool enabled, const ErasureArgs&) = 0;
+    };
+
+    /** List of all callbacks invoked when the CFG is adjusted.
      *
-     *  This method is called whenever a non-placeholder basic block is erased from the control flow graph.  The call happens
-     *  immediately after the partitioner internal data structures are updated to reflect the erasure. The call occurs whether
-     *  or not a basic block placeholder is left in the graph. */
-    virtual void bblockErased(const BasicBlock::Ptr &removedBlock) {}
+     *  @{ */
+    typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks;
+    CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() { return cfgAdjustmentCallbacks_; }
+    const CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() const { return cfgAdjustmentCallbacks_; }
+    /** @} */
 
+private:
+    CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner conversion to AST
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmBlock* toAst();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner miscellaneous
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Output the control flow graph.
+     *
+     *  Emits the control flow graph, basic blocks, and their instructions to the specified stream.  The addresses are starting
+     *  addresses, and the suffix "[P]" means the address is a basic block placeholder, and the suffix "[X]" means the basic
+     *  block was discovered to be non-existing (i.e., no executable memory for the first instruction).
+     *
+     *  A @p prefix can be specified to be added to the beginning of each line of output. */
+    void dumpCFG(std::ostream&, const std::string &prefix="") const;
+
+    /** Name of a vertex. */
+    std::string vertexName(const ControlFlowGraph::VertexNode&) const;
+
+    /** Name of an incoming edge. */
+    std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&) const;
+
+    /** Name of an outgoing edge. */
+    std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities
@@ -840,8 +984,25 @@ private:
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */
     ControlFlowGraph::EdgeNodeIterator adjustPlaceholderEdges(const ControlFlowGraph::VertexNodeIterator &placeholder);
 
+    // Adjusts edges for a non-existing basic block.  This method erases all outgoing edges for the specified vertex and
+    // then inserts a single edge from the vertex to the special "non-existing" vertex. */
+    ControlFlowGraph::EdgeNodeIterator adjustNonexistingEdges(const ControlFlowGraph::VertexNodeIterator &vertex);
+
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
     BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa);
+
+    // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
+    void checkConsistency() const;
+
+    // This method is called whenever a new basic block is inserted into the control flow graph. The call happens immediately
+    // after the partitioner internal data structures are updated to reflect the insertion.  This call occurs whether a basic
+    // block or only a placeholder was inserted.
+    virtual void bblockInserted(const ControlFlowGraph::VertexNodeIterator &newVertex);
+
+    // This method is called whenever a non-placeholder basic block is erased from the control flow graph.  The call happens
+    // immediately after the partitioner internal data structures are updated to reflect the erasure. The call occurs whether
+    // or not a basic block placeholder is left in the graph. */
+    virtual void bblockErased(const BasicBlock::Ptr &removedBlock);
 };
 
 
