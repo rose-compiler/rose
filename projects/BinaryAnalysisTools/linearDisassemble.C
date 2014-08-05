@@ -61,9 +61,10 @@ getDisassembler(const std::string &name)
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;
+    rose_addr_t mapVa;
     rose_addr_t startVa;
     rose_addr_t alignment;
-    Settings(): startVa(0), alignment(1) {}
+    Settings(): mapVa(0), startVa(0), alignment(1) {}
 };
 
 // Describe and parse the command-line
@@ -78,10 +79,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     switches.insert(Switch("isa")
                     .argument("architecture", anyParser(settings.isaName))
                     .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-    switches.insert(Switch("at")
-                    .argument("virtual-address", nonNegativeIntegerParser(settings.startVa))
+    switches.insert(Switch("map")
+                    .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
                     .doc("The first byte of the file is mapped at the specified @v{virtual-address}, which defaults "
-                         "to " + StringUtility::addrToString(settings.startVa) + "."));
+                         "to " + StringUtility::addrToString(settings.mapVa) + "."));
+    switches.insert(Switch("start")
+                    .argument("virtual-address", nonNegativeIntegerParser(settings.startVa))
+                    .doc("Address at which disassembly will start.  The default is to start at the beginning."));
     switches.insert(Switch("alignment")
                     .argument("align", nonNegativeIntegerParser(settings.alignment))
                     .doc("Alignment for instructions.  The default is 1 (no alignment).  Values larger than one will "
@@ -123,7 +127,7 @@ int main(int argc, char *argv[])
         throw std::runtime_error("too many files specified; see --help");
     std::string specimenName = positionalArgs[0];
     MemoryMap map;
-    if (!map.insert_file(specimenName, settings.startVa))
+    if (!map.insert_file(specimenName, settings.mapVa))
         throw std::runtime_error("problem reading file: " + specimenName);
     map.dump(std::cerr);                                // debugging so the user can see the map
 
@@ -139,7 +143,7 @@ int main(int argc, char *argv[])
 #endif
 
     // Disassemble at each valid address, and show disassembly errors
-    rose_addr_t va = 0;
+    rose_addr_t va = settings.startVa;
     while (map.next(va).assignTo(va)) {
         va = alignUp(va, settings.alignment);
         try {
@@ -155,7 +159,7 @@ int main(int argc, char *argv[])
                     case m68k_cpushp:
                         std::cout <<"    No semantics yet for privileged instructions\n";
                         break;
-                        
+
                     case m68k_fbeq:
                     case m68k_fbne:
                     case m68k_fboge:
@@ -192,7 +196,7 @@ int main(int argc, char *argv[])
                         break;
 
                     default:
-                        ops->get_state()->clear();
+                        //ops->get_state()->clear();
                         dispatcher->processInstruction(insn);
                         std::ostringstream ss;
                         ss <<*dispatcher->get_state();
