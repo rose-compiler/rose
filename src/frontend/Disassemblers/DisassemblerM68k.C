@@ -649,7 +649,19 @@ DisassemblerM68k::makeOffsetWidthPair(unsigned w1)
 SgAsmInstruction *
 DisassemblerM68k::make_unknown_instruction(const Disassembler::Exception &e)
 {
-    return makeInstruction(m68k_unknown_instruction, "unknown");
+    SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(get_insn_va(), "unknown", m68k_unknown_instruction);
+    SgAsmOperandList *operands = new SgAsmOperandList;
+    insn->set_operandList(operands);
+    operands->set_parent(insn);
+
+    if (e.bytes.empty()) {
+        SgUnsignedCharList raw_bytes(1, '\0');          // we don't know what, but an instruction is never zero bytes wide
+        insn->set_raw_bytes(raw_bytes);
+    } else {
+        insn->set_raw_bytes(e.bytes);
+    }
+
+    return insn;
 }
 
 SgAsmM68kInstruction *
@@ -922,7 +934,7 @@ struct M68k_adda: M68k {
             case 7: fmt = m68k_fmt_i32; break;
         }
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
-        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), fmt);
+        SgAsmExpression *dst = d->makeAddressRegister(extract<9, 11>(w0), m68k_fmt_i32);
         return d->makeInstruction(m68k_adda, "adda."+formatLetter(fmt), src, dst);
     }
 };
