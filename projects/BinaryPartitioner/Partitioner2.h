@@ -164,6 +164,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *  neither inserted nor removed. [FIXME[Robb P. Matzke 2014-07-30]: to be written later] */
 class Partitioner {
 
+public:
     enum VertexType {
         V_BASICBLOCK,                                   /**< A basic block or placeholder for a basic block. */
         V_UNDISCOVERED,                                 /**< The special "undiscovered" vertex. */
@@ -215,7 +216,7 @@ public:
         std::vector<SgAsmInstruction*> insns_;          // Instructions in the order they're executed
         BaseSemantics::DispatcherPtr dispatcher_;       // How instructions are dispatched (null if no instructions)
         BaseSemantics::StatePtr initialState_;          // Initial state for semantics (null if no instructions)
-        BaseSemantics::StatePtr finalState_;            // Semantic state after the final instruction (null if invalid)
+        bool usingDispatcher_;                          // True if dispatcher's state is up-to-date for the final instruction
         Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
 
         // The following members are caches. Make sure clearCache() resets these to initial values.
@@ -225,7 +226,7 @@ public:
     protected:
         // use instance() instead
         BasicBlock(rose_addr_t startVa, const Partitioner *partitioner)
-            : isFrozen_(false), startVa_(startVa) { init(partitioner); }
+            : isFrozen_(false), startVa_(startVa), usingDispatcher_(true) { init(partitioner); }
 
     public:
         /** Static allocating constructor.
@@ -319,7 +320,7 @@ public:
          *  The returned state is equivalent to starting with the initial state and processing each instruction.  If a semantic
          *  error occurs during processing then the null pointer is returned.  The null pointer is also returned if this basic
          *  block is empty. */
-        const BaseSemantics::StatePtr& finalState() const { return finalState_; }
+        BaseSemantics::StatePtr finalState();
 
         /** Return the dispatcher that was used for the semantics.
          *

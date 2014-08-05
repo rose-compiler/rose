@@ -43,11 +43,21 @@ std::ostream& operator<<(std::ostream &out, const Partitioner::AddressUsageMap &
 void
 Partitioner::BasicBlock::init(const Partitioner *partitioner) {
     initDiagnostics();
-    if (dispatcher_ = partitioner->newDispatcher()) {
-        finalState_ = dispatcher_->get_operators()->get_state(); // points into the dispatcher, so always up to date
-        initialState_ = finalState_->clone();                    // make a copy so it doesn't ever change
-        optionalPenultimateState_ = initialState_->clone();      // one level of undo information
+#if 1
+    // Try to use our own semantics
+    if (usingDispatcher_) {
+        if (dispatcher_ = partitioner->newDispatcher()) {
+            usingDispatcher_ = true;
+            initialState_ = dispatcher_->get_operators()->get_state()->clone(); // make a copy so it doesn't ever change
+            optionalPenultimateState_ = initialState_->clone(); // one level of undo information
+        } else {
+            usingDispatcher_ = false;
+        }
     }
+#else
+    // Rely on other methods to get basic block characteristics
+    usingDispatcher_ = false;
+#endif
 }
 
 void
@@ -74,6 +84,13 @@ Partitioner::BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
     return Sawyer::Nothing();
 }
 
+BaseSemantics::StatePtr
+Partitioner::BasicBlock::finalState() {
+    if (usingDispatcher_ && dispatcher_!=NULL)
+        return dispatcher_->get_operators()->get_state();
+    return BaseSemantics::StatePtr();
+}
+
 void
 Partitioner::BasicBlock::append(SgAsmInstruction *insn) {
     ASSERT_forbid2(isFrozen(), "basic block must be modifiable to append instruction");
@@ -85,15 +102,16 @@ Partitioner::BasicBlock::append(SgAsmInstruction *insn) {
                     "instruction can only occur once in a basic block");
 
     // Process the instruction to create a new state
-    optionalPenultimateState_ = finalState_ ? finalState_->clone() : BaseSemantics::StatePtr();
+    optionalPenultimateState_ = usingDispatcher_ ?
+                                dispatcher_->get_operators()->get_state()->clone() :
+                                BaseSemantics::StatePtr();
     clearCache();
     insns_.push_back(insn);
-    if (finalState_) {
-        ASSERT_require(finalState_ == dispatcher_->get_operators()->get_state());// pointer comparison
+    if (usingDispatcher_) {
         try {
             dispatcher_->processInstruction(insn);
         } catch (...) {
-            finalState_ = BaseSemantics::StatePtr();    // turns off semantics for the remainder of this block
+            usingDispatcher_ = false;                   // an error turns off semantics for the remainder of the basic block
         }
     }
 }
@@ -109,11 +127,9 @@ Partitioner::BasicBlock::pop() {
     if (BaseSemantics::StatePtr ps = *optionalPenultimateState_) {
         // If we didn't save a previous state it means that we didn't call processInstruction during the append, and therefore
         // we don't need to update the dispatcher (it's already out of date anyway).  Otherwise the dispatcher state needs to
-        // be re-initialized by transferring ownership of the previous state into the partitioner.  Once we do that we need to
-        // also update the finalState_ pointer since it should always be pointing into the dispatcher.
+        // be re-initialized by transferring ownership of the previous state into the partitioner.
         dispatcher_->get_operators()->set_state(ps);
         optionalPenultimateState_ = Sawyer::Nothing();
-        finalState_ = dispatcher_->get_state();
     }
 }
 
@@ -535,10 +551,6 @@ void
 Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr &bb) {
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_not_null(bb);
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-    bool debug = false;
-    if (debug) dumpCfg(std::cerr, "before: ");
-#endif
     ASSERT_require2(placeholder->value().address() == bb->address(), "wrong placeholder for basic block");
     if (placeholder->value().bblock() == bb)
         return;                                         // nothing to do since basic block is already in the CFG
@@ -552,14 +564,8 @@ Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     BOOST_FOREACH (const BasicBlock::Successor &successor, bblockSuccessors(bb)) {
         CfgEdge edge(isFunctionCall ? E_FCALL : E_NORMAL);
         if (successor.expr()->is_number()) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-            if (debug) std::cerr <<"adding placeholder for " <<*successor.expr() <<"\n";
-#endif
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
         } else if (!hadIndeterminate) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-            if (debug) std::cerr <<"indeterminate placeholder " <<*successor.expr() <<"\n";
-#endif
             successors.push_back(VertexEdgePair(indeterminateVertex_, edge));
             hadIndeterminate = true;
         }
@@ -567,9 +573,6 @@ Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
 
     // Function calls get an additional return edge because we assume they return to the fall-through address
     if (isFunctionCall) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-        if (debug) std::cerr <<"adding function return placholder for " <<bb->fallthroughVa() <<"\n";
-#endif
         successors.push_back(VertexEdgePair(insertPlaceholder(bb->fallthroughVa()), CfgEdge(E_FRET)));
     }
 
@@ -577,26 +580,10 @@ Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     cfg_.clearOutEdges(placeholder);
     BOOST_FOREACH (const VertexEdgePair &pair, successors)
         cfg_.insertEdge(placeholder, pair.first, pair.second);
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-    if (debug) dumpCfg(std::cerr, "after: ");
-#endif
 
     // Insert the basicblock
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-    if (debug) {
-        std::cerr <<"usage map:\n";
-        addrUsageMap_.print(std::cerr, "after cfg: ");
-    }
-#endif
     placeholder->value().bblock(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
-        if (debug) {
-            std::cerr <<"adding to usage map: " <<unparseInstructionWithAddress(insn)
-                      <<"[" <<StringUtility::addrToString(insn->get_address()) <<","
-                      <<StringUtility::addrToString(insn->get_address()+insn->get_size()-1) <<"]\n";
-        }
-#endif
         addrUsageMap_.insert(InsnBlockPair(insn, bb));
     }
     if (bb->isEmpty())
@@ -614,13 +601,13 @@ Partitioner::bblockSuccessors(const BasicBlock::Ptr &bb) const {
         return successors;
 
     SgAsmInstruction *firstInsn = bb->instructions().front();
-    ASSERT_not_null(bb->dispatcher());
-    BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
     RegisterDescriptor REG_IP = instructionProvider_.instructionPointerRegister();
 
     // Use our own semantics if we have them.
     std::set<rose_addr_t> seenConcreteVa;
     if (BaseSemantics::StatePtr state = bb->finalState()) {
+        ASSERT_not_null(bb->dispatcher());
+        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
         std::vector<Semantics::SValuePtr> worklist(1, Semantics::SValue::promote(ops->readRegister(REG_IP)));
         while (!worklist.empty()) {
             Semantics::SValuePtr pc = worklist.back();
@@ -654,9 +641,9 @@ Partitioner::bblockSuccessors(const BasicBlock::Ptr &bb) const {
     bool complete = true;
     Disassembler::AddressSet successorVas = firstInsn->get_successors(bb->instructions(), &complete, &memoryMap_);
     BOOST_FOREACH (rose_addr_t va, successorVas)
-        successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.get_nbits(), va))));
+        successors.push_back(BasicBlock::Successor(Semantics::SValue::instance(REG_IP.get_nbits(), va)));
     if (!complete)
-        successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.get_nbits()))));
+        successors.push_back(BasicBlock::Successor(Semantics::SValue::instance(REG_IP.get_nbits())));
     return bb->cacheSuccessors(successors);
 }
 
@@ -679,12 +666,12 @@ Partitioner::bblockIsFunctionCall(const BasicBlock::Ptr &bb) const {
         return retval;
 
     SgAsmInstruction *lastInsn = bb->instructions().back();
-    ASSERT_not_null(bb->dispatcher());
-    BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
 
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
         // Is the block fall-through address equal to the value on the top of the stack?
+        ASSERT_not_null(bb->dispatcher());
+        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
         RegisterDescriptor REG_IP = instructionProvider_.instructionPointerRegister();
         RegisterDescriptor REG_SP = instructionProvider_.stackPointerRegister();
         RegisterDescriptor REG_SS = instructionProvider_.stackSegmentRegister();
@@ -902,8 +889,24 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) const {
 
 static bool
 sortVerticesByAddress(const Partitioner::ControlFlowGraph::ConstVertexNodeIterator &a,
-                    const Partitioner::ControlFlowGraph::ConstVertexNodeIterator &b) {
-    return a->value().address() < b->value().address();
+                      const Partitioner::ControlFlowGraph::ConstVertexNodeIterator &b) {
+    const Partitioner::CfgVertex &av = a->value();
+    const Partitioner::CfgVertex &bv = b->value();
+    if (av.type() != bv.type() || av.type() != Partitioner::V_BASICBLOCK)
+        return av.type() < bv.type();
+    return av.address() < bv.address();
+}
+
+static bool
+sortEdgesBySrc(const Partitioner::ControlFlowGraph::ConstEdgeNodeIterator &a,
+               const Partitioner::ControlFlowGraph::ConstEdgeNodeIterator &b) {
+    return sortVerticesByAddress(a->source(), b->source());
+}
+
+static bool
+sortEdgesByDst(const Partitioner::ControlFlowGraph::ConstEdgeNodeIterator &a,
+               const Partitioner::ControlFlowGraph::ConstEdgeNodeIterator &b) {
+    return sortVerticesByAddress(a->target(), b->target());
 }
 
 void
@@ -915,20 +918,33 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix) const {
             sortedVertices.push_back(vi);
     }
     std::sort(sortedVertices.begin(), sortedVertices.end(), sortVerticesByAddress);
-    
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexNodeIterator &vertex, sortedVertices) {
         out <<prefix <<"basic block " <<vertexName(*vertex) <<"\n";
+
+        // Sort incoming edges according to source (makes comparisons easier)
+        std::vector<ControlFlowGraph::ConstEdgeNodeIterator> sortedInEdges;
+        for (ControlFlowGraph::ConstEdgeNodeIterator ei=vertex->inEdges().begin(); ei!=vertex->inEdges().end(); ++ei)
+            sortedInEdges.push_back(ei);
+        std::sort(sortedInEdges.begin(), sortedInEdges.end(), sortEdgesBySrc);
         out <<prefix <<"  predecessors:";
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex->inEdges())
-            out <<" " <<edgeNameSrc(edge);
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedInEdges)
+            out <<" " <<edgeNameSrc(*edge);
         out <<"\n";
+
+        // Show instructions in execution order
         if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
                 out <<prefix <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
         }
+
+        // Sort outgoing edges according to destination (makes comparisons easier)
+        std::vector<ControlFlowGraph::ConstEdgeNodeIterator> sortedOutEdges;
+        for (ControlFlowGraph::ConstEdgeNodeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
+            sortedOutEdges.push_back(ei);
+        std::sort(sortedOutEdges.begin(), sortedOutEdges.end(), sortEdgesByDst);
         out <<prefix <<"  successors:";
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex->outEdges()) {
-            out <<" " <<edgeNameDst(edge);
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedOutEdges) {
+            out <<" " <<edgeNameDst(*edge);
         }
         out <<"\n";
     }
