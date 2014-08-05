@@ -216,6 +216,7 @@ public:
         BaseSemantics::DispatcherPtr dispatcher_;       // How instructions are dispatched (null if no instructions)
         BaseSemantics::StatePtr initialState_;          // Initial state for semantics (null if no instructions)
         BaseSemantics::StatePtr finalState_;            // Semantic state after the final instruction (null if invalid)
+        Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
 
         // The following members are caches. Make sure clearCache() resets these to initial values.
         mutable Sawyer::Optional<Successors> cachedSuccessors_;
@@ -282,6 +283,12 @@ public:
          *      ->freeze();
          * @endcode */
         void append(SgAsmInstruction*);
+
+        /** Undo the latest append.
+         *
+         *  An append can be undone so that instructions can be appended, the result checked, and then undone.  Only one level
+         *  of undo is available. */
+        void pop();
 
         /** Get the instructions for this block.
          *
@@ -410,6 +417,9 @@ public:
             ASSERT_require(insn_!=other.insn_ || bblock_==NULL || other.bblock_==NULL || bblock_==other.bblock_);
             return insn_->get_address() < other.insn_->get_address();
         }
+
+        /** Print the pair on one line. */
+        void print(std::ostream&) const;
     };
 
     /** List of instruction/block pairs.
@@ -472,6 +482,9 @@ public:
         bool operator==(const InsnBlockPairs &other) const {
             return pairs_.size()==other.pairs_.size() && std::equal(pairs_.begin(), pairs_.end(), other.pairs_.begin());
         }
+
+        /** Prints pairs space separated on a single line. */
+        void print(std::ostream&) const;
 
     protected:
         /** Checks whether the list satisfies all invariants.  This is used in pre- and post-conditions. */
@@ -544,6 +557,19 @@ public:
          *  otherwise the null pointer is returned.  A basic block exists only when it has at least one instruction; this is
          *  contrary to the CFG, where a basic block can be represented by a placeholder with no instructions. */
         BasicBlock::Ptr bblockExists(rose_addr_t startOfBlock) const;
+
+        /** Returns the least unmapped address with specified lower limit.
+         *
+         *  Returns the smallest unmapped address that is greater than or equal to @p startVa.  If no such address exists then
+         *  nothing is returned. */
+        Sawyer::Optional<rose_addr_t> leastUnmapped(rose_addr_t startVa) const {
+            return map_.leastUnmapped(startVa);
+        }
+
+        /** Dump the contents of this AUM to a stream.
+         *
+         *  The output contains one entry per line and the last line is terminated with a linefeed. */
+        void print(std::ostream&, const std::string &prefix="") const;
     };
 
 
@@ -833,6 +859,16 @@ public:
      *      able to disassemble an instruction at the specified address but the address is mapped with execute permission.  The
      *      partitioner treats this "unknown" instruction as a valid instruction with indeterminate successors.
      *
+     *  @li The instruction has a concrete successor address that is an address of a non-initial instruction in this
+     *      block. Basic blocks cannot have a non-initial instruction with more than one incoming edge, therefore we've already
+     *      added too many instructions to this block.  We could proceed two ways: (A) We could throw away this instruction
+     *      with the back-edge successor and make the block terminate at the previous instruction. This causes the basic block
+     *      to be as big as possible for as long as possible, which is a good thing if it is determined later that the
+     *      instruction with the back-edge is not reachable anyway. (B) We could truncate the basic block at the back-edge
+     *      target so that the instruction prior to that is the final instruction. This is good because it converges to a
+     *      steady state faster, but could result in basic blocks that are smaller than optimal. (The current algorithm uses
+     *      method A.)
+     *
      *  @li The instruction causes this basic block to look like a function call.  This instruction becomes the final
      *      instruction of the basic block and when the block is inserted into the CFG the edge will be marked as a function
      *      call edge.
@@ -844,30 +880,20 @@ public:
      *      instruction becomes the final instruction.  When this basic block is added to the CFG an edge to the special
      *      "indeterminate" vertex will be created.
      *
-     *  @li The successor address is the starting address for the block on which we're working. A basic block's instructions
-     *      are unique by definition, so this instruction becomes the final instruction for the block.
+     *  @li The instruction successor is the starting address for the block on which we're working. A basic block's
+     *      instructions are unique by definition, so this instruction becomes the final instruction for the block.
      *
-     *  @li The successor address is an address of a (non-initial) instruction in this block. Basic blocks cannot have a
-     *      non-initial instruction with more than one incoming edge, therefore we've already added too many instructions to
-     *      this block.  We could proceed two ways: (A) We could throw away this instruction with the back-edge successor and
-     *      make the block terminate at the previous instruction. This causes the basic block to be as big as possible for as
-     *      long as possible, which is a good thing if it is determined later that the instruction with the back-edge is not
-     *      reachable anyway. (B) We could truncate the basic block at the back-edge target so that the instruction prior to
-     *      that is the final instruction. This is good because it converges to a steady state faster, but could result in
-     *      basic blocks that are smaller than optimal. (The current algorithm uses method A.)
-     *
-     *  @li The successor address is the starting address of a basic block already in the CFG. This is a common case and
+     *  @li The instruction successor is the starting address of a basic block already in the CFG. This is a common case and
      *      probably means that what we discovered earlier is correct.
      *
-     *  @li The successor address is an instruction already in the CFG other than in the conflict block.  A "conflict block" is
-     *      the basic block, if any, that contains as a non-first instruction the first instruction of this block. If the first
-     *      instruction of the block being discovered is an instruction in the middle of some other basic block in the CFG,
-     *      then we allow this block to use some of the same instructions as in the conflict block and we do not terminate
-     *      construction of this block at this time. Usually what happens is the block being discovered uses all the final
-     *      instructions from the conflict block; an exception is when an opaque predicate in the conflicting block is no
+     *  @li The instruction successor is an instruction already in the CFG other than in the conflict block.  A "conflict
+     *      block" is the basic block, if any, that contains as a non-first instruction the first instruction of this block. If
+     *      the first instruction of the block being discovered is an instruction in the middle of some other basic block in
+     *      the CFG, then we allow this block to use some of the same instructions as in the conflict block and we do not
+     *      terminate construction of this block at this time. Usually what happens is the block being discovered uses all the
+     *      final instructions from the conflict block; an exception is when an opaque predicate in the conflicting block is no
      *      longer opaque in the new block.  Eventually when the new block is added to the CFG the conflict block will be
-     *      truncated.  When there is no conflict block then this instruction becomes the final instruction of the basic
-     *      block.
+     *      truncated.  When there is no conflict block then this instruction becomes the final instruction of the basic block.
      *
      *  When a basic block is created, various analysis algorithms are run on the block to characterize it.
      *
@@ -886,6 +912,12 @@ public:
      *  instructions has no successors. */
     BasicBlock::Successors bblockSuccessors(const BasicBlock::Ptr&) const;
 
+    /** Determines concrete successors for a basic block.
+     *
+     *  Returns a vector of distinct, concrete successor addresses.  Semantics is identical to @ref bblockSuccessors except
+     *  non-concrete values are removed from the list. */
+    std::vector<rose_addr_t> bblockConcreteSuccessors(const BasicBlock::Ptr &bb) const;
+
     /** Determine if a basic block looks like a function call.
      *
      *  If the basic block appears to be a function call by some analysis then this function returns true.  The analysis may
@@ -894,7 +926,7 @@ public:
     bool bblockIsFunctionCall(const BasicBlock::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner callbacks
+    //                                  CFG change callbacks
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Base class for CFG-adjustment callbacks.
@@ -923,8 +955,6 @@ public:
                 : partitioner(partitioner), erasedBlock(erasedBlock) {}
         };
 
-        virtual ~CfgAdjustmentCallback() {}
-
         /** Insertion callback. This method is invoked after each CFG vertex is inserted (except for special vertices). */
         virtual bool operator()(bool enabled, const InsertionArgs&) = 0;
 
@@ -944,6 +974,88 @@ private:
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Instruction/byte pattern matching
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+
+    /** Base class for matching an instruction pattern.
+     *
+     *  Instruction matchers are generally reference from the partitioner via shared-ownership pointers.  Subclasses must
+     *  implement a @ref match method that performs the actual matching. */
+    class InstructionMatcher: public Sawyer::SharedObject {
+    public:
+        /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
+         *  partitioners are copied. */
+        typedef Sawyer::SharedPointer<InstructionMatcher> Ptr;
+
+        /** Attempt to match an instruction pattern.
+         *
+         *  If the subclass implementation is able to match instructions, bytes, etc. anchored at the @p anchor address then it
+         *  should return true, otherwise false.  The anchor address will always be valid for the situation (e.g., if the
+         *  partitioner is trying to match something anchored at an address that is not in the CFG, then the @p anchor will be
+         *  such an address; if it is trying to match something that is definitely an instruction then the address will be
+         *  mapped with execute permission; etc.).  This precondition makes writing matchers that match against a single
+         *  address easier to write, but matchers that match at additional locations must explicitly check those other
+         *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
+         *  argument). */
+        virtual bool match(Partitioner*, rose_addr_t anchor) = 0;
+    };
+
+    /** Base class for matching function prologues.
+     *
+     *  A function prologue is a pattern of bytes or instructions that typically mark the beginning of a function.  For
+     *  instance, many x86-based functions start with "PUSH EBX; MOV EBX, ESP" while many M68k functions begin with a single
+     *  LINK instruction affecting the A6 register.  A subclass must implement the @ref match method that does the actual
+     *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref functionVa method to
+     *  obtain the starting address of the function (which may be different than the match anchor address).
+     *
+     *  The matcher will be called only with anchor addresses that are mapped with execute permission and which are not a
+     *  starting address of any instruction in the CFG.  The matcher should ensure similar conditions are met for any
+     *  additional addresses, especially the address returned by @ref functionVa. */
+    class FunctionPrologueMatcher: public InstructionMatcher {
+    public:
+        /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
+         *  partitioners are copied. */
+        typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
+
+        /** Returns the function address for the previous successful match.  If the previous call to @ref match returned true
+         *  then this function should return the starting address for the matched function prologue.  Although the function
+         *  address returned by this method is often the same as the anchor address for the match, it need not be.  For
+         *  instance, a matcher could match against some number of no-op instructions followed by an instruction(s) for setting
+         *  up the stack frame, in which case it might choose to return the address of the instruction that sets up the stack
+         *  frame instead of the first no-op instruction.  The partitioner will never call @ref functionVa without first having
+         *  called @ref match. */
+        virtual rose_addr_t functionVa() const = 0;
+    };
+
+    /** Ordered list of function prologue matchers.
+     *
+     *  @{ */
+    typedef std::vector<FunctionPrologueMatcher::Ptr> FunctionPrologueMatchers;
+    FunctionPrologueMatchers& functionPrologueMatchers() { return functionPrologueMatchers_; }
+    const FunctionPrologueMatchers& functionPrologueMatchers() const { return functionPrologueMatchers_; }
+    /** @} */
+
+    /** Returns the address of the next function prologue.
+     *
+     *  Scans executable memory starting at @p startVa and tries to match a function prologue pattern.  The patterns are
+     *  represented by matchers that have been inserted into the vector reference returned by @ref functionPrologueMatchers.
+     *  The first matcher that finds an instruction anchored at a supplied starting address wins.  The starting address is
+     *  incremented at each step so that it is always an address that is mapped with execute permission and is not an address
+     *  that is the start of an instruction that's in the CFG.
+     *
+     *  If a matcher matches a function prologue then the starting address of the function is returned. The starting address
+     *  need not be the same as the anchor address for the match.  For instance, a matcher might match one or more no-op
+     *  instructions followed by the function prologue, in which case the address after the no-ops is the one returned as the
+     *  start of the function.
+     *
+     *  If no match is found then nothing is returned. */
+    Sawyer::Optional<rose_addr_t> nextFunctionPrologue(rose_addr_t startVa);
+
+private:
+    FunctionPrologueMatchers functionPrologueMatchers_;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner conversion to AST
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
@@ -960,7 +1072,7 @@ public:
      *  block was discovered to be non-existing (i.e., no executable memory for the first instruction).
      *
      *  A @p prefix can be specified to be added to the beginning of each line of output. */
-    void dumpCFG(std::ostream&, const std::string &prefix="") const;
+    void dumpCfg(std::ostream&, const std::string &prefix="") const;
 
     /** Name of a vertex. */
     std::string vertexName(const ControlFlowGraph::VertexNode&) const;
@@ -1005,6 +1117,9 @@ private:
     virtual void bblockErased(const BasicBlock::Ptr &removedBlock);
 };
 
+std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPair&);
+std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPairs&);
+std::ostream& operator<<(std::ostream&, const Partitioner::AddressUsageMap&);
 
 } // namespace
 } // namespace

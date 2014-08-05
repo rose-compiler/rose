@@ -9,6 +9,10 @@
 
 #include <boost/foreach.hpp>
 
+// Defining this will cause the partitioner to continuously very that the CFG and AUM are consistent.  Doing so will impose a
+// substantial slow-down.  Defining this has little effect if NDEBUG or SAWYER_NDEBUG is also defined.
+#undef ROSE_PARTITIONER_EXPENSIVE_CHECKS
+
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
 
@@ -28,6 +32,10 @@ void Partitioner::initDiagnostics() {
     }
 }
 
+std::ostream& operator<<(std::ostream &out, const Partitioner::InsnBlockPair &x) { x.print(out); return out; }
+std::ostream& operator<<(std::ostream &out, const Partitioner::InsnBlockPairs &x) { x.print(out); return out; }
+std::ostream& operator<<(std::ostream &out, const Partitioner::AddressUsageMap &x) { x.print(out); return out; }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      BasicBlock
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +46,7 @@ Partitioner::BasicBlock::init(const Partitioner *partitioner) {
     if (dispatcher_ = partitioner->newDispatcher()) {
         finalState_ = dispatcher_->get_operators()->get_state(); // points into the dispatcher, so always up to date
         initialState_ = finalState_->clone();                    // make a copy so it doesn't ever change
+        optionalPenultimateState_ = initialState_->clone();      // one level of undo information
     }
 }
 
@@ -76,9 +85,11 @@ Partitioner::BasicBlock::append(SgAsmInstruction *insn) {
                     "instruction can only occur once in a basic block");
 
     // Process the instruction to create a new state
+    optionalPenultimateState_ = finalState_ ? finalState_->clone() : BaseSemantics::StatePtr();
     clearCache();
     insns_.push_back(insn);
     if (finalState_) {
+        ASSERT_require(finalState_ == dispatcher_->get_operators()->get_state());// pointer comparison
         try {
             dispatcher_->processInstruction(insn);
         } catch (...) {
@@ -87,10 +98,43 @@ Partitioner::BasicBlock::append(SgAsmInstruction *insn) {
     }
 }
 
+void
+Partitioner::BasicBlock::pop() {
+    ASSERT_forbid2(isFrozen(), "basic block must be modifiable to pop an instruction");
+    ASSERT_forbid2(insns_.empty(), "basic block must have at least one instruction to pop");
+    ASSERT_require2(optionalPenultimateState_, "only one level of undo is possible");
+    clearCache();
+    insns_.pop_back();
+
+    if (BaseSemantics::StatePtr ps = *optionalPenultimateState_) {
+        // If we didn't save a previous state it means that we didn't call processInstruction during the append, and therefore
+        // we don't need to update the dispatcher (it's already out of date anyway).  Otherwise the dispatcher state needs to
+        // be re-initialized by transferring ownership of the previous state into the partitioner.  Once we do that we need to
+        // also update the finalState_ pointer since it should always be pointing into the dispatcher.
+        dispatcher_->get_operators()->set_state(ps);
+        optionalPenultimateState_ = Sawyer::Nothing();
+        finalState_ = dispatcher_->get_state();
+    }
+}
+
 rose_addr_t
 Partitioner::BasicBlock::fallthroughVa() const {
     ASSERT_require(!insns_.empty());
     return insns_.back()->get_address() + insns_.back()->get_size();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      InsnBlockPair
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Partitioner::InsnBlockPair::print(std::ostream &out) const {
+    ASSERT_not_null(insn_);
+    if (bblock_ != NULL) {
+        out <<"{" <<unparseInstructionWithAddress(insn_) <<" in " <<StringUtility::addrToString(bblock_->address()) <<"}";
+    } else {
+        out <<unparseInstructionWithAddress(insn_);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,6 +258,11 @@ Partitioner::InsnBlockPairs::isConsistent() const {
     return true;
 }
 
+void
+Partitioner::InsnBlockPairs::print(std::ostream &out) const {
+    BOOST_FOREACH (const InsnBlockPair &ibpair, pairs_)
+        out <<" " <<ibpair;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AddressUsageMap
@@ -294,6 +343,14 @@ Partitioner::AddressUsageMap::overlapping(const AddressInterval &interval) const
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval))
         retval = retval.union_(node.value());
     return retval;
+}
+
+void
+Partitioner::AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
+    using namespace StringUtility;
+    BOOST_FOREACH (const Map::Node &node, map_.nodes())
+        out <<prefix <<"[" <<addrToString(node.key().least()) <<"," <<addrToString(node.key().greatest())
+            <<"] =" <<node.value() <<"\n";
 }
 
 
@@ -388,33 +445,45 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) {
     while (1) {
         SgAsmInstruction *insn = discoverInstruction(va);
         if (insn==NULL)                                                 // case: no instruction available
-            break;
+            goto done;
         retval->append(insn);
         if (insn->is_unknown())                                         // case: "unknown" instruction
-            break;
+            goto done;
+
+        BOOST_FOREACH (rose_addr_t successorVa, bblockConcreteSuccessors(retval)) {
+            if (successorVa!=startVa && retval->instructionExists(successorVa)) { // case: successor is inside our own block
+                retval->pop();
+                goto done;
+            }
+        }
+        
         if (bblockIsFunctionCall(retval))                               // case: bb looks like a function call
             break;
         BasicBlock::Successors successors = bblockSuccessors(retval);
+
         if (successors.size()!=1)                                       // case: not exactly one successor
             break;
         SValuePtr successorExpr = successors.front().expr();
+
         if (!successorExpr->is_number())                                // case: successor is indeterminate
             break;
         rose_addr_t successorVa = successorExpr->get_number();
+
         if (successorVa == startVa)                                     // case: successor is our own basic block
-            break;
-        if (retval->instructionExists(successorVa))                     // case: successor is inside some other block
-            break;
+            goto done;
+
         if (placeholderExists(successorVa)!=cfg_.vertices().end())      // case: successor is an existing block
-            break;
+            goto done;
+
         InsnBlockPair ibpair;
         if (instructionExists(successorVa).assignTo(ibpair)) {          // case: successor is inside an existing block
             if (ibpair.bblock() != conflict.bblock())
-                break;
+                goto done;
         }
+
         va = successorVa;
     }
-
+done:
     retval->freeze();
     return retval;
 }
@@ -449,6 +518,7 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
             placeholder = cfg_.insertVertex(CfgVertex(startVa));
             vertexIndex_.insert(startVa, placeholder);
             adjustPlaceholderEdges(placeholder);
+            bblockInserted(placeholder);
         }
     }
     return placeholder;
@@ -465,6 +535,10 @@ void
 Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr &bb) {
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_not_null(bb);
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+    bool debug = false;
+    if (debug) dumpCfg(std::cerr, "before: ");
+#endif
     ASSERT_require2(placeholder->value().address() == bb->address(), "wrong placeholder for basic block");
     if (placeholder->value().bblock() == bb)
         return;                                         // nothing to do since basic block is already in the CFG
@@ -478,26 +552,53 @@ Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     BOOST_FOREACH (const BasicBlock::Successor &successor, bblockSuccessors(bb)) {
         CfgEdge edge(isFunctionCall ? E_FCALL : E_NORMAL);
         if (successor.expr()->is_number()) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+            if (debug) std::cerr <<"adding placeholder for " <<*successor.expr() <<"\n";
+#endif
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
         } else if (!hadIndeterminate) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+            if (debug) std::cerr <<"indeterminate placeholder " <<*successor.expr() <<"\n";
+#endif
             successors.push_back(VertexEdgePair(indeterminateVertex_, edge));
             hadIndeterminate = true;
         }
     }
 
     // Function calls get an additional return edge because we assume they return to the fall-through address
-    if (isFunctionCall)
+    if (isFunctionCall) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+        if (debug) std::cerr <<"adding function return placholder for " <<bb->fallthroughVa() <<"\n";
+#endif
         successors.push_back(VertexEdgePair(insertPlaceholder(bb->fallthroughVa()), CfgEdge(E_FRET)));
+    }
 
     // Make CFG edges
     cfg_.clearOutEdges(placeholder);
     BOOST_FOREACH (const VertexEdgePair &pair, successors)
         cfg_.insertEdge(placeholder, pair.first, pair.second);
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+    if (debug) dumpCfg(std::cerr, "after: ");
+#endif
 
     // Insert the basicblock
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+    if (debug) {
+        std::cerr <<"usage map:\n";
+        addrUsageMap_.print(std::cerr, "after cfg: ");
+    }
+#endif
     placeholder->value().bblock(bb);
-    BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+    BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-05]
+        if (debug) {
+            std::cerr <<"adding to usage map: " <<unparseInstructionWithAddress(insn)
+                      <<"[" <<StringUtility::addrToString(insn->get_address()) <<","
+                      <<StringUtility::addrToString(insn->get_address()+insn->get_size()-1) <<"]\n";
+        }
+#endif
         addrUsageMap_.insert(InsnBlockPair(insn, bb));
+    }
     if (bb->isEmpty())
         adjustNonexistingEdges(placeholder);
 
@@ -518,6 +619,7 @@ Partitioner::bblockSuccessors(const BasicBlock::Ptr &bb) const {
     RegisterDescriptor REG_IP = instructionProvider_.instructionPointerRegister();
 
     // Use our own semantics if we have them.
+    std::set<rose_addr_t> seenConcreteVa;
     if (BaseSemantics::StatePtr state = bb->finalState()) {
         std::vector<Semantics::SValuePtr> worklist(1, Semantics::SValue::promote(ops->readRegister(REG_IP)));
         while (!worklist.empty()) {
@@ -525,7 +627,9 @@ Partitioner::bblockSuccessors(const BasicBlock::Ptr &bb) const {
             worklist.pop_back();
 
             if (pc->is_number()) {
-                successors.push_back(BasicBlock::Successor(pc));
+                // avoid duplicate concrete successor addresses
+                if (seenConcreteVa.insert(pc->get_number()).second)
+                    successors.push_back(BasicBlock::Successor(pc));
                 continue;
             }
 
@@ -554,6 +658,16 @@ Partitioner::bblockSuccessors(const BasicBlock::Ptr &bb) const {
     if (!complete)
         successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.get_nbits()))));
     return bb->cacheSuccessors(successors);
+}
+
+std::vector<rose_addr_t>
+Partitioner::bblockConcreteSuccessors(const BasicBlock::Ptr &bb) const {
+    std::vector<rose_addr_t> retval;
+    BOOST_FOREACH (const BasicBlock::Successor &successor, bblockSuccessors(bb)) {
+        if (successor.expr()->is_number())
+            retval.push_back(successor.expr()->get_number());
+    }
+    return retval;
 }
 
 bool
@@ -618,9 +732,13 @@ Partitioner::bblockInserted(const ControlFlowGraph::VertexNodeIterator &newVerte
         }
     }
 
+#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
     checkConsistency();
+#endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::InsertionArgs(this, newVertex));
+#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
     checkConsistency();
+#endif
 }
 
 void
@@ -634,17 +752,21 @@ Partitioner::bblockErased(const BasicBlock::Ptr &removedBlock) {
             debug <<"  - " <<unparseInstructionWithAddress(insn) <<"\n";
     }
 
+#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
     checkConsistency();
+#endif
     cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::ErasureArgs(this, removedBlock));
+#if !defined(NDEBUG) && defined(ROSE_PARTITIONER_EXPENSIVE_CHECKS)
     checkConsistency();
+#endif
 }
 
 void
 Partitioner::checkConsistency() const {
+#ifndef NDEBUG
     static const bool extraDebuggingOutput = false;
     using namespace StringUtility;
     Stream debug(mlog[DEBUG]);
-#ifndef NDEBUG
     if (extraDebuggingOutput)
         debug <<"checking partitioner consistency...\n";
     BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
@@ -707,6 +829,10 @@ Partitioner::checkConsistency() const {
                 ASSERT_require2(edge->target() == undiscoveredVertex_,
                                 "placeholder " + addrToString(vertex.value().address()) + " edge must go to a special vertex");
             }
+
+            ASSERT_require2(vertexIndex_.exists(vertex.value().address()),
+                            "bb/placeholder " + addrToString(vertex.value().address()) + " must exist in the vertex index");
+
         } else {
             // Special vertices
             ASSERT_require2(vertex.nOutEdges()==0,
@@ -781,7 +907,7 @@ sortVerticesByAddress(const Partitioner::ControlFlowGraph::ConstVertexNodeIterat
 }
 
 void
-Partitioner::dumpCFG(std::ostream &out, const std::string &prefix) const {
+Partitioner::dumpCfg(std::ostream &out, const std::string &prefix) const {
     // Sort the vertices according to basic block starting address.
     std::vector<ControlFlowGraph::ConstVertexNodeIterator> sortedVertices;
     for (ControlFlowGraph::ConstVertexNodeIterator vi=cfg_.vertices().begin(); vi!=cfg_.vertices().end(); ++vi) {
@@ -806,6 +932,25 @@ Partitioner::dumpCFG(std::ostream &out, const std::string &prefix) const {
         }
         out <<"\n";
     }
+}
+
+Sawyer::Optional<rose_addr_t>
+Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
+    while (memoryMap_.next(startVa, MemoryMap::MM_PROT_EXEC).assignTo(startVa)) {
+        Sawyer::Optional<rose_addr_t> unmappedVa = addrUsageMap_.leastUnmapped(startVa);
+        if (!unmappedVa)
+            return Sawyer::Nothing();                   // no higher unused address
+        if (startVa == *unmappedVa) {
+            BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
+                if (matcher->match(this, startVa))
+                    return matcher->functionVa();
+            }
+            ++startVa;
+        } else {
+            startVa = *unmappedVa;
+        }
+    }
+    return Sawyer::Nothing();
 }
 
 SgAsmBlock*

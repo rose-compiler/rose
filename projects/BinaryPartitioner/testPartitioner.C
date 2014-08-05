@@ -98,19 +98,124 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     return parser.with(switches).parse(argc, argv).apply();
 }
 
-// Callback demonstration for partitioner.  Show each basic block that is inserted into or erased from the CFG.
-class ShowBasicBlockAdjustments: public P2::Partitioner::CfgAdjustmentCallback {
+// Example of watching CFG changes
+class CfgChangeWatcher: public P2::Partitioner::CfgAdjustmentCallback {
 public:
-    virtual bool operator()(bool chained, const InsertionArgs &args) /*override*/ {
-        Stream out(args.partitioner->mlog[INFO]);
-        out <<"inserted basic block " <<StringUtility::addrToString(args.insertedVertex->value().address()) <<"\n";
-        return chained;
+    static Ptr instance() { return Ptr(new CfgChangeWatcher); }
+    virtual bool operator()(bool enabled, const InsertionArgs &args) {
+        std::cerr <<"+";
+        if (P2::Partitioner::BasicBlock::Ptr bb = args.insertedVertex->value().bblock())
+            std::cerr <<std::string(bb->nInsns(), '.');
+        return enabled;
+    }
+    virtual bool operator()(bool enabled, const ErasureArgs &args) {
+        std::cerr <<"-" <<std::string(args.erasedBlock->nInsns(), '.');
+        return enabled;
+    }
+};
+
+// Looks for m68k instruction prologues containing a LINK.W instruction whose first argument is A6
+class MatchM68kLink: public P2::Partitioner::FunctionPrologueMatcher {
+protected:
+    rose_addr_t functionVa_;
+public:
+    MatchM68kLink(): functionVa_(0) {}
+    static Ptr instance() { return Ptr(new MatchM68kLink); }
+    virtual rose_addr_t functionVa() const {
+        return functionVa_;
     }
 
-    virtual bool operator()(bool chained, const ErasureArgs &args) /*override*/ {
-        Stream out(args.partitioner->mlog[INFO]);
-        out <<"erased basic block " <<StringUtility::addrToString(args.erasedBlock->address()) <<"\n";
-        return chained;
+    virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
+        static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
+        if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
+            const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+            if (insn->get_kind()==m68k_link && args.size()==2) {
+                if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
+                    if (rre->get_descriptor()==REG_A6) {
+                        functionVa_ = anchor;
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+};
+
+class MatchX86Prologue: public P2::Partitioner::FunctionPrologueMatcher {
+protected:
+    rose_addr_t functionVa_;
+public:
+    MatchX86Prologue(): functionVa_(0) {}
+    static Ptr instance() { return Ptr(new MatchX86Prologue); }
+    virtual rose_addr_t functionVa() const {
+        return functionVa_;
+    }
+
+    virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
+        // Look for optional MOV RDI, RDI; if found, advance the anchor
+        do {
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(anchor));
+            if (!insn || insn->get_kind()!=x86_mov)
+                break;
+            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+            if (opands.size()!=2)
+                break;
+            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
+            if (!rre ||
+                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+                rre->get_descriptor().get_minor()!=x86_gpr_di)
+                break;
+            rre = isSgAsmRegisterReferenceExpression(opands[1]);
+            if (!rre ||
+                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+                rre->get_descriptor().get_minor()!=x86_gpr_di)
+                break;
+            anchor += insn->get_size();
+        } while (0);
+
+        // Look for PUSH RBP at the (adjusted) anchor address. It must not already be in the CFG
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(anchor));
+        {
+            if (partitioner->instructionExists(anchor))
+                return false;
+            if (!insn || insn->get_kind()!=x86_push)
+                return false;
+            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+            if (opands.size()!=1)
+                return false;
+            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
+            if (!rre ||
+                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+                rre->get_descriptor().get_minor()!=x86_gpr_bp)
+                return false;
+        }
+
+        // Look for MOV RBP,RSP following the PUSH. It must not already be in the CFG
+        {
+            rose_addr_t moveVa = insn->get_address() + insn->get_size();
+            if (partitioner->instructionExists(moveVa))
+                return false;
+            insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
+            if (!insn || insn->get_kind()!=x86_mov)
+                return false;
+            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+            if (opands.size()!=2)
+                return false;
+            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
+            if (!rre ||
+                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+                rre->get_descriptor().get_minor()!=x86_gpr_bp)
+                return false;
+            rre = isSgAsmRegisterReferenceExpression(opands[1]);
+            if (!rre ||
+                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+                rre->get_descriptor().get_minor()!=x86_gpr_sp)
+                return false;
+        }
+
+        functionVa_ = anchor;                               // address of the PUSH
+        return true;
     }
 };
 
@@ -145,22 +250,33 @@ int main(int argc, char *argv[])
 
     // Create the partitioner
     P2::Partitioner partitioner(disassembler, map);
-    partitioner.cfgAdjustmentCallbacks().append(P2::Partitioner::CfgAdjustmentCallback::Ptr(new ShowBasicBlockAdjustments));
+    partitioner.functionPrologueMatchers().push_back(MatchM68kLink::instance());
+    partitioner.functionPrologueMatchers().push_back(MatchX86Prologue::instance());
+    partitioner.cfgAdjustmentCallbacks().append(CfgChangeWatcher::instance());
 
-    // Where to start disassembling?
-    partitioner.insertPlaceholder(settings.disassembleVa ? settings.disassembleVa : settings.startVa);
-
-    // Recursive disassembly.
+    // A simple disassembler
+    rose_addr_t prologueVa = std::max(settings.disassembleVa, settings.startVa);
+    partitioner.insertPlaceholder(prologueVa);
     P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
-    while (worklist->nInEdges() > 0) {
-        P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-        std::cerr <<"Processing at " <<StringUtility::addrToString(placeholder->value().address()) <<"\n";
-        P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
-        partitioner.insertBasicBlock(placeholder, bb);
+    while (1) {
+        if (worklist->nInEdges() > 0) {
+            // Disassemble recursively by following undiscovered basic blocks in the CFG
+            P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
+            std::cerr <<"\n  processing " <<StringUtility::addrToString(placeholder->value().address());
+            P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
+            partitioner.insertBasicBlock(placeholder, bb);
+        } else if (partitioner.nextFunctionPrologue(prologueVa).assignTo(prologueVa)) {
+            // We found another function prologue, so disassemble recursively at that location
+            std::cerr <<"\nFound function prologue at " <<StringUtility::addrToString(prologueVa);
+            partitioner.insertPlaceholder(prologueVa++);
+        } else {
+            break;                                      // all done
+        }
     }
+    std::cerr <<"\n";
 
     std::cout <<"Final control flow graph:\n";
-    partitioner.dumpCFG(std::cout, "  ");
+    partitioner.dumpCfg(std::cout, "  ");
 
     exit(0);
 }
