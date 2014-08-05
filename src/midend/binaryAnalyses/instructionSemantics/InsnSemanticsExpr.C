@@ -423,14 +423,18 @@ InternalNode::additive_nesting() const
 TreeNodePtr
 InternalNode::identity(uint64_t ident) const
 {
-    Sawyer::Container::BitVector identBv = Sawyer::Container::BitVector(64).fromInteger(ident);
     TreeNodes args;
     bool modified = false;
     for (TreeNodes::const_iterator ci=children.begin(); ci!=children.end(); ++ci) {
         LeafNodePtr leaf = (*ci)->isLeafNode();
-        if (leaf && leaf->is_known() && 0==leaf->get_bits().compare(identBv)) {
-            // skip this arg
-            modified = true;
+        if (leaf && leaf->is_known()) {
+            Sawyer::Container::BitVector identBv = Sawyer::Container::BitVector(leaf->get_nbits()).fromInteger(ident);
+            if (0==leaf->get_bits().compare(identBv)) {
+                // skip this arg
+                modified = true;
+            } else {
+                args.push_back(*ci);
+            }
         } else {
             args.push_back(*ci);
         }
@@ -585,8 +589,8 @@ AddSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 AndSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    Sawyer::Container::BitVector accumulator((*begin)->get_nbits());
-    for (++begin; begin!=end; ++begin)
+    Sawyer::Container::BitVector accumulator((*begin)->get_nbits(), true);
+    for (/*void*/; begin!=end; ++begin)
         accumulator.bitwiseAnd((*begin)->isLeafNode()->get_bits());
     return LeafNode::create_constant(accumulator);
 }
