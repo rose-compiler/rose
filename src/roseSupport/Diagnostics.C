@@ -1,6 +1,7 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
 #include "sawyer/Assert.h"
+#include "sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::AsmUnparser
 #include "BinaryDataFlow.h"                             // BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // rose::BinaryLoader
@@ -35,6 +36,10 @@ void initialize() {
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
+
+        // Turn down the progress bar rates
+        Sawyer::ProgressBarSettings::initialDelay(12.0);
+        Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
 
         // Register logging facilities from other software layers.  These facilities should already be in a usable, but
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
