@@ -160,6 +160,7 @@ public:
 private:
     Map map_;
     Policy policy_;
+    typename Interval::Value size_;                     // number of values (map_.size is number of intervals)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -168,7 +169,7 @@ public:
     /** Default constructor.
      *
      *  Creates an empty container. */
-    IntervalMap() {}
+    IntervalMap(): size_(0) {}
 
     /** Copy constructor.
      *
@@ -544,12 +545,10 @@ public:
 
     /** Returns the number of values represented by this container.
      *
-     *  The number of values in a container is the sum of the widths of all the nodes. */
+     *  The number of values in a container is the sum of the widths of all the nodes. This can be calculated in constant
+     *  time. */
     typename Interval::Value size() const {
-        typename Interval::Value sum = 0;
-        for (ConstKeyIterator iter=keys().begin(); iter!=keys().end(); ++iter)
-            sum += iter->size();
-        return sum;
+        return size_;
     }
 
     /** Returns the minimum scalar key. */
@@ -633,6 +632,7 @@ public:
     /** Empties the container. */
     void clear() {
         map_.clear();
+        size_ = 0;
     }
 
     /** Erase the specified interval. */
@@ -652,7 +652,8 @@ public:
                 // erase entire found interval
                 if (eraseBegin==nodes().end())
                     eraseBegin = iter;
-            } else if (erasure.least()>foundInterval.least()&& erasure.greatest()<foundInterval.greatest()) {
+                size_ -= foundInterval.size();
+            } else if (erasure.least()>foundInterval.least() && erasure.greatest()<foundInterval.greatest()) {
                 // erase the middle of the node, leaving a left and a right portion
                 ASSERT_require(eraseBegin==nodes().end());
                 eraseBegin = iter;
@@ -662,6 +663,7 @@ public:
                 IntervalPair lt = splitInterval(rt.first, erasure.least());
                 policy_.truncate(rt.first, v /*in,out*/, erasure.least());
                 insertions.insert(lt.first, v);
+                size_ -= erasure.size();
             } else if (erasure.least() > foundInterval.least()) {
                 // erase the right part of the node
                 ASSERT_require(eraseBegin==nodes().end());
@@ -669,6 +671,7 @@ public:
                 IntervalPair halves = splitInterval(foundInterval, erasure.least());
                 policy_.truncate(foundInterval, v /*in,out*/, erasure.least());
                 insertions.insert(halves.first, v);
+                size_ -= halves.second.size();
             } else if (erasure.greatest() < foundInterval.greatest()) {
                 // erase the left part of the node
                 if (eraseBegin==nodes().end())
@@ -676,6 +679,7 @@ public:
                 IntervalPair halves = splitInterval(foundInterval, erasure.greatest()+1);
                 Value rightValue = policy_.split(foundInterval, v /*in,out*/, halves.second.least());
                 insertions.insert(halves.second, rightValue);
+                size_ -= halves.first.size();
             }
         }
 
@@ -719,6 +723,7 @@ public:
                 policy_.merge(left->key(), left->value(), key, value)) {
                 key = Interval::hull(left->key().least(), key.greatest());
                 std::swap(value, left->value());
+                size_ -= left->key().size();
                 map_.eraseAt(left);
             }
         }
@@ -730,11 +735,13 @@ public:
                 key.greatest()+1==right->key().least() &&
                 policy_.merge(key, value, right->key(), right->value())) {
                 key = Interval::hull(key.least(), right->key().greatest());
+                size_ -= right->key().size();
                 map_.eraseAt(right);
             }
         }
 
         map_.insert(key, value);
+        size_ += key.size();
     }
 
     /** Insert values from another container.

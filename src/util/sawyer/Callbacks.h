@@ -56,17 +56,22 @@ public:
         }
     }
 
-    template<typename CB, typename Args>
+    template<class CB, class Args>
     bool applyCallback(CB *callback, bool chained, const Args &args) const {
         return (*callback)(chained, args);
     }
 
-    template<typename CB, typename Args>
+    template<class CB, class Args>
+    bool applyCallback(const SharedPointer<CB> &callback, bool chained, const Args &args) const {
+        return (*callback)(chained, args);
+    }
+
+    template<class CB, class Args>
     bool applyCallback(CB &callback, bool chained, const Args &args) const {
         return callback(chained, args);
     }
 
-    template<typename Arguments>
+    template<class Arguments>
     bool apply(bool chained, const Arguments &arguments) const {
         for (typename CbList::const_iterator iter=callbacks_.begin(); iter!=callbacks_.end(); ++iter)
             chained = applyCallback(*iter, chained, arguments);
