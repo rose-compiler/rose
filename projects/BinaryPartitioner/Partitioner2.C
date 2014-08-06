@@ -8,6 +8,7 @@
 #endif
 
 #include <boost/foreach.hpp>
+#include <sawyer/ProgressBar.h>
 
 // Defining this will cause the partitioner to continuously very that the CFG and AUM are consistent.  Doing so will impose a
 // substantial slow-down.  Defining this has little effect if NDEBUG or SAWYER_NDEBUG is also defined.
@@ -381,6 +382,50 @@ Partitioner::init() {
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
 }
 
+class ProgressBarSuffix {
+    const Partitioner *partitioner_;
+public:
+    ProgressBarSuffix(): partitioner_(NULL) {}
+    explicit ProgressBarSuffix(const Partitioner *p): partitioner_(p) {}
+    void print(std::ostream &out) const {
+        ASSERT_not_null(partitioner_);
+        out <<" bytes";
+    }
+};
+
+static std::ostream&
+operator<<(std::ostream &out, const ProgressBarSuffix &x) {
+    x.print(out);
+    return out;
+};
+
+
+void
+Partitioner::reportProgress() const {
+    // All partitioners share a single progress bar.
+    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+    if (!bar) {
+        if (0==progressTotal_) {
+            BOOST_FOREACH (const MemoryMap::Segments::Node &node, memoryMap_.segments().nodes()) {
+                if (0 != (node.value().get_mapperms() & MemoryMap::MM_PROT_EXEC))
+                    progressTotal_ += node.key().size();
+            }
+        }
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "");
+    }
+    if (progressTotal_) {
+        // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
+        // appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also immediately
+        // updates the progress bar (we don't want that, so update only if necessary).
+        bar->suffix(ProgressBarSuffix(this));
+        if (bar->domain().first!=0 || bar->domain().second!=progressTotal_) {
+            bar->value(0, addrUsageMap_.size(), progressTotal_);
+        } else {
+            bar->value(addrUsageMap_.size());
+        }
+    }
+}
+
 BaseSemantics::DispatcherPtr
 Partitioner::newDispatcher() const {
     if (instructionProvider_.dispatcher() == NULL)
@@ -708,6 +753,9 @@ Partitioner::discoverInstruction(rose_addr_t startVa) {
 void
 Partitioner::bblockInserted(const ControlFlowGraph::VertexNodeIterator &newVertex) {
     using namespace StringUtility;
+    if (isReportingProgress_)
+        reportProgress();
+
     Stream debug(mlog[DEBUG]);
     if (debug) {
         rose_addr_t va = newVertex->value().address();

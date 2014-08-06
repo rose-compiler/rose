@@ -510,6 +510,11 @@ public:
          *  way to determine if the map is empty is by calling @ref hull and asking if the hull is empty. */
         bool isEmpty() const { return map_.isEmpty(); }
 
+        /** Number of addresses represented by the map.
+         *
+         *  Returns the number of addresses that have at least one function.  This is a constant-time operation. */
+        size_t size() const { return map_.size(); }
+
         /** Minimum and maximum instruction addresses.
          *
          *  Returns minimum and maximum addresses that have instructions.  If the map is empty then the returned interval is
@@ -656,6 +661,8 @@ private:
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     VertexIndex vertexIndex_;                           // vertex-by-address index for the CFG
     SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
+    mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
+    bool isReportingProgress_;                          // Emit automatic progress reports?
 
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
@@ -670,7 +677,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : instructionProvider_(InstructionProvider(disassembler, map)), memoryMap_(map), solver_(NULL) { init(); }
+        : instructionProvider_(InstructionProvider(disassembler, map)), memoryMap_(map), solver_(NULL),
+          progressTotal_(0), isReportingProgress_(true) {
+        init();
+    }
 
     static void initDiagnostics();
 
@@ -1084,11 +1094,23 @@ public:
     /** Name of an outgoing edge. */
     std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) const;
 
+    /** Enable or disable progress reports.
+     *
+     *  This controls the automatic progress reports, but the @ref reportProgress method can still be invoked explicitly by the
+     *  user to create a report nonetheless.
+     *
+     *  @{ */
+    void enableProgressReports(bool b=true) { isReportingProgress_ = b; }
+    void disableProgressReports() { isReportingProgress_ = false; }
+    bool isReportingProgress() const { return isReportingProgress_; }
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();
+    void reportProgress() const;
 
     // Obtain a new instruction semantics dispatcher initialized with the partitioner's semantic domain and a fresh state.
     BaseSemantics::DispatcherPtr newDispatcher() const;

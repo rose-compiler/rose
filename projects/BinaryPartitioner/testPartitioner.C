@@ -103,13 +103,17 @@ class CfgChangeWatcher: public P2::Partitioner::CfgAdjustmentCallback {
 public:
     static Ptr instance() { return Ptr(new CfgChangeWatcher); }
     virtual bool operator()(bool enabled, const InsertionArgs &args) {
+#if 0 // [Robb P. Matzke 2014-08-05]
         std::cerr <<"+";
         if (P2::Partitioner::BasicBlock::Ptr bb = args.insertedVertex->value().bblock())
             std::cerr <<std::string(bb->nInsns(), '.');
+#endif
         return enabled;
     }
     virtual bool operator()(bool enabled, const ErasureArgs &args) {
+#if 0 // [Robb P. Matzke 2014-08-05]
         std::cerr <<"-" <<std::string(args.erasedBlock->nInsns(), '.');
+#endif
         return enabled;
     }
 };
@@ -262,18 +266,17 @@ int main(int argc, char *argv[])
         if (worklist->nInEdges() > 0) {
             // Disassemble recursively by following undiscovered basic blocks in the CFG
             P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-            std::cerr <<"\n  processing " <<StringUtility::addrToString(placeholder->value().address());
+            partitioner.mlog[WHERE] <<"\n  processing " <<StringUtility::addrToString(placeholder->value().address()) <<"\n";
             P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
             partitioner.insertBasicBlock(placeholder, bb);
         } else if (partitioner.nextFunctionPrologue(prologueVa).assignTo(prologueVa)) {
             // We found another function prologue, so disassemble recursively at that location
-            std::cerr <<"\nFound function prologue at " <<StringUtility::addrToString(prologueVa);
+            partitioner.mlog[WHERE] <<"\nFound function prologue at " <<StringUtility::addrToString(prologueVa) <<"\n";
             partitioner.insertPlaceholder(prologueVa++);
         } else {
             break;                                      // all done
         }
     }
-    std::cerr <<"\n";
 
     std::cout <<"Final control flow graph:\n";
     partitioner.dumpCfg(std::cout, "  ");
