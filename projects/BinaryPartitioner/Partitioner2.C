@@ -9,6 +9,7 @@
 
 #include <boost/foreach.hpp>
 #include <sawyer/ProgressBar.h>
+#include <sawyer/Stack.h>
 
 // Defining this will cause the partitioner to continuously very that the CFG and AUM are consistent.  Doing so will impose a
 // substantial slow-down.  Defining this has little effect if NDEBUG or SAWYER_NDEBUG is also defined.
@@ -29,7 +30,7 @@ void Partitioner::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog.initStreams(Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -310,6 +311,14 @@ Partitioner::AddressUsageMap::bblockExists(rose_addr_t startVa) const {
     return BasicBlock::Ptr();
 }
 
+Sawyer::Container::IntervalSet<AddressInterval>
+Partitioner::AddressUsageMap::extent() const {
+    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    BOOST_FOREACH (const Map::Interval &interval, map_.keys())
+        retval.insert(interval);
+    return retval;
+}
+
 void
 Partitioner::AddressUsageMap::insert(const InsnBlockPair &pair) {
     ASSERT_not_null(pair.insn());
@@ -382,6 +391,8 @@ Partitioner::init() {
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
 }
 
+// Label the progress report and also show some other statistics.  It is okay for this to be slightly expensive since its only
+// called when a progress report is actually emitted.
 class ProgressBarSuffix {
     const Partitioner *partitioner_;
 public:
@@ -389,7 +400,9 @@ public:
     explicit ProgressBarSuffix(const Partitioner *p): partitioner_(p) {}
     void print(std::ostream &out) const {
         ASSERT_not_null(partitioner_);
-        out <<" bytes";
+        out <<" bytes"                                  // units for progress report
+            <<" " <<StringUtility::plural(partitioner_->nBasicBlocks(), "blks")
+            <<" " <<StringUtility::plural(partitioner_->nFunctions(), "funcs");
     }
 };
 
@@ -411,7 +424,7 @@ Partitioner::reportProgress() const {
                     progressTotal_ += node.key().size();
             }
         }
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "");
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "cfg");
     }
     if (progressTotal_) {
         // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
@@ -419,9 +432,9 @@ Partitioner::reportProgress() const {
         // updates the progress bar (we don't want that, so update only if necessary).
         bar->suffix(ProgressBarSuffix(this));
         if (bar->domain().first!=0 || bar->domain().second!=progressTotal_) {
-            bar->value(0, addrUsageMap_.size(), progressTotal_);
+            bar->value(0, nBytes(), progressTotal_);
         } else {
-            bar->value(addrUsageMap_.size());
+            bar->value(nBytes());
         }
     }
 }
@@ -442,7 +455,7 @@ Partitioner::nullifyBasicBlock(const ControlFlowGraph::VertexNodeIterator &verte
         vertex->value().nullify();
         adjustPlaceholderEdges(vertex);
         BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-            addrUsageMap_.erase(insn);
+            aum_.erase(insn);
         bblockErased(bb);
     }
 }
@@ -596,6 +609,7 @@ void
 Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr &bb) {
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_not_null(bb);
+    ASSERT_require2(bb->isFrozen(), "basic block must be frozen before inserting into CFG");
     ASSERT_require2(placeholder->value().address() == bb->address(), "wrong placeholder for basic block");
     if (placeholder->value().bblock() == bb)
         return;                                         // nothing to do since basic block is already in the CFG
@@ -629,7 +643,7 @@ Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     // Insert the basicblock
     placeholder->value().bblock(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-        addrUsageMap_.insert(InsnBlockPair(insn, bb));
+        aum_.insert(InsnBlockPair(insn, bb));
     }
     if (bb->isEmpty())
         adjustNonexistingEdges(placeholder);
@@ -831,6 +845,7 @@ Partitioner::checkConsistency() const {
             }
 
             if (BasicBlock::Ptr bb = vertex.value().bblock()) {
+                ASSERT_require(bb->isFrozen());
                 ASSERT_require(bb->address() == vertex.value().address());
                 if (bb->isEmpty()) {
                     // Non-existing basic block
@@ -842,7 +857,7 @@ Partitioner::checkConsistency() const {
                 } else {
                     // Existing basic block
                     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                        BasicBlock::Ptr bb2 = addrUsageMap_.instructionExists(insn);
+                        BasicBlock::Ptr bb2 = aum_.instructionExists(insn);
                         ASSERT_not_null2(bb2,
                                          "instruction " + addrToString(insn->get_address()) + " in block " +
                                          addrToString(bb->address()) + " must be present in the AUM");
@@ -850,7 +865,7 @@ Partitioner::checkConsistency() const {
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
                                         addrToString(bb->address()) + " must belong to correct basic block");
                         AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
-                        InsnBlockPairs ibpairs = addrUsageMap_.spanning(insnInterval);
+                        InsnBlockPairs ibpairs = aum_.spanning(insnInterval);
                         ASSERT_require2(ibpairs.instructionExists(insn),
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
                                         addrToString(bb->address()) + " must span its own address interval in the AUM");
@@ -881,22 +896,35 @@ std::string
 Partitioner::vertexName(const ControlFlowGraph::VertexNode &vertex) const {
     switch (vertex.value().type()) {
         case V_BASICBLOCK: {
-            std::string retval = StringUtility::addrToString(vertex.value().address());
+            std::string retval = StringUtility::addrToString(vertex.value().address()) +
+                                 "[" + StringUtility::numberToString(vertex.id());
             if (BasicBlock::Ptr bb = vertex.value().bblock()) {
                 if (bb->isEmpty())
-                    retval += "[X]";                    // non-existing
+                    retval += ",X";                     // non-existing
             } else {
-                retval += "[P]";                        // placeholder
+                retval += ",P";                         // placeholder
             }
-            return retval;
+            return retval + "]";
         }
         case V_INDETERMINATE:
-            return "indeterminate";
+            return "indeterminate[" + StringUtility::numberToString(vertex.id()) + "]";
         case V_NONEXISTING:
-            return "non-existing";
+            return "non-existing[" + StringUtility::numberToString(vertex.id()) + "]";
         case V_UNDISCOVERED:
-            return "undiscovered";
+            return "undiscovered[" + StringUtility::numberToString(vertex.id()) + "]";
     }
+}
+
+std::string
+Partitioner::vertexNameEnd(const ControlFlowGraph::VertexNode &vertex) const {
+    if (vertex.value().type() == V_BASICBLOCK) {
+        if (BasicBlock::Ptr bb = vertex.value().bblock()) {
+            if (!bb->isEmpty()) {
+                return vertexName(vertex) + ":" + StringUtility::addrToString(bb->instructions().back()->get_address());
+            }
+        }
+    }
+    return vertexName(vertex);
 }
 
 std::string
@@ -918,10 +946,7 @@ Partitioner::edgeNameDst(const ControlFlowGraph::EdgeNode &edge) const {
 std::string
 Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) const {
     const ControlFlowGraph::VertexNode &source = *edge.source();
-    ASSERT_require(source.value().type()==V_BASICBLOCK);
-    ASSERT_not_null(source.value().bblock());
-    ASSERT_forbid(source.value().bblock()->isEmpty());
-    std::string retval = StringUtility::addrToString(source.value().bblock()->instructions().back()->get_address());
+    std::string retval = vertexNameEnd(source);
     switch (edge.value().type()) {
         case E_NORMAL:
             break;
@@ -933,6 +958,22 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) const {
             break;
     }
     return retval;
+}
+
+std::string
+Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) const {
+    std::string retval = vertexNameEnd(*edge.source()) + " ";
+    switch (edge.value().type()) {
+        case E_NORMAL:
+            break;
+        case E_FCALL:
+            retval += "[fcall]";
+            break;
+        case E_FRET:
+            retval += "[fret]";
+            break;
+    }
+    return retval + "-> " + vertexName(*edge.target());
 }
 
 static bool
@@ -958,7 +999,7 @@ sortEdgesByDst(const Partitioner::ControlFlowGraph::ConstEdgeNodeIterator &a,
 }
 
 void
-Partitioner::dumpCfg(std::ostream &out, const std::string &prefix) const {
+Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBlocks) const {
     // Sort the vertices according to basic block starting address.
     std::vector<ControlFlowGraph::ConstVertexNodeIterator> sortedVertices;
     for (ControlFlowGraph::ConstVertexNodeIterator vi=cfg_.vertices().begin(); vi!=cfg_.vertices().end(); ++vi) {
@@ -967,7 +1008,15 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix) const {
     }
     std::sort(sortedVertices.begin(), sortedVertices.end(), sortVerticesByAddress);
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexNodeIterator &vertex, sortedVertices) {
-        out <<prefix <<"basic block " <<vertexName(*vertex) <<"\n";
+        out <<prefix <<"basic block " <<vertexName(*vertex);
+        if (vertex->value().function()) {
+            if (vertex->value().function()->address() == vertex->value().address()) {
+                out <<" is a function entry block";
+            } else {
+                out <<" owned by function " <<StringUtility::addrToString(vertex->value().function()->address());
+            }
+        }
+        out <<"\n";
 
         // Sort incoming edges according to source (makes comparisons easier)
         std::vector<ControlFlowGraph::ConstEdgeNodeIterator> sortedInEdges;
@@ -980,9 +1029,11 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix) const {
         out <<"\n";
 
         // Show instructions in execution order
-        if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                out <<prefix <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+        if (showBlocks) {
+            if (BasicBlock::Ptr bb = vertex->value().bblock()) {
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    out <<prefix <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+            }
         }
 
         // Sort outgoing edges according to destination (makes comparisons easier)
@@ -1001,7 +1052,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix) const {
 Sawyer::Optional<rose_addr_t>
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
     while (memoryMap_.next(startVa, MemoryMap::MM_PROT_EXEC).assignTo(startVa)) {
-        Sawyer::Optional<rose_addr_t> unmappedVa = addrUsageMap_.leastUnmapped(startVa);
+        Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
         if (!unmappedVa)
             return Sawyer::Nothing();                   // no higher unused address
         if (startVa == *unmappedVa) {
@@ -1017,18 +1068,413 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
     return Sawyer::Nothing();
 }
 
-SgAsmBlock*
-Partitioner::toAst() {
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
-        if (vertex.value().type() == V_BASICBLOCK) {
-            std::cerr <<StringUtility::addrToString(vertex.value().address()) <<": basic block:\n";
-            if (BasicBlock::Ptr bb = vertex.value().bblock()) {
+size_t
+Partitioner::insertFunctions(const Functions &functions) {
+    size_t nNewBlocks = 0;
+    BOOST_FOREACH (const Function::Ptr function, functions.values())
+        nNewBlocks += insertFunction(function);
+    return nNewBlocks;
+}
+
+size_t
+Partitioner::insertFunction(const Function::Ptr &function) {
+    ASSERT_not_null(function);
+
+    size_t nNewBlocks = 0;
+    Function::Ptr exists;
+    if (functions_.getOptional(function->address()).assignTo(exists)) {
+        ASSERT_require2(&exists==&function,
+                        "a different function already exists at " + StringUtility::addrToString(function->address()));
+        ASSERT_require(function->isFrozen());
+    } else {
+        // Insert function into the table, and make sure all its blocks see that they're owned by the function.
+        functions_.insert(function->address(), function);
+        nNewBlocks = insertFunctionBlocks(function);
+
+        // Prevent the function connectivity from changing while the function is in the CFG.  Non-frozen functions
+        // can have basic blocks added and erased willy nilly because the basic blocks don't need to know that they're owned by
+        // a function.  But we can't have that when the function is one that's part of the CFG.
+        function->freeze();
+    }
+    return nNewBlocks;
+}
+
+size_t
+Partitioner::insertFunctionBlocks(const Functions &functions) {
+    size_t nNewBlocks = 0;
+    BOOST_FOREACH (const Function::Ptr function, functions.values())
+        nNewBlocks += insertFunctionBlocks(function);
+    return nNewBlocks;
+}
+
+size_t
+Partitioner::insertFunctionBlocks(const Function::Ptr &function) {
+    ASSERT_not_null(function);
+    size_t nNewBlocks = 0;
+    bool functionExists = functions_.exists(function->address());
+    BOOST_FOREACH (rose_addr_t blockVa, function->bblockAddresses()) {
+        ControlFlowGraph::VertexNodeIterator placeholder = placeholderExists(blockVa);
+        if (placeholder == cfg_.vertices().end()) {
+            placeholder = insertPlaceholder(blockVa);
+            ++nNewBlocks;
+        }
+        if (functionExists) {
+            ASSERT_require2(NULL==placeholder->value().function() || placeholder->value().function()==function,
+                            "basic block " + StringUtility::addrToString(placeholder->value().address()) +
+                            " is already owned by function " +
+                            StringUtility::addrToString(placeholder->value().function()->address()));
+            placeholder->value().function(function);
+        }
+    }
+    return nNewBlocks;
+}
+
+void
+Partitioner::eraseFunction(const Function::Ptr &function) {
+    ASSERT_not_null(function);
+    ASSERT_require(functionExists(function->address()));
+    ASSERT_require(functionExists(function->address()) == function);
+    static const Function::Ptr NO_FUNCTION;
+    BOOST_FOREACH (rose_addr_t blockVa, function->bblockAddresses()) {
+        ControlFlowGraph::VertexNodeIterator placeholder = placeholderExists(blockVa);
+        ASSERT_require(placeholder != cfg_.vertices().end());
+        ASSERT_require(placeholder->value().type() == V_BASICBLOCK);
+        ASSERT_require(placeholder->value().function() == function);
+        placeholder->value().function(NO_FUNCTION);
+    }
+    functions_.erase(function->address());
+    function->thaw();
+}
+
+Partitioner::AddressUsageMap
+Partitioner::aum(const Function::Ptr &function) const {
+    AddressUsageMap retval;
+    BOOST_FOREACH (rose_addr_t blockVa, function->bblockAddresses()) {
+        ControlFlowGraph::ConstVertexNodeIterator placeholder = placeholderExists(blockVa);
+        if (placeholder != cfg_.vertices().end()) {
+            ASSERT_require(placeholder->value().type() == V_BASICBLOCK);
+            if (BasicBlock::Ptr bb = placeholder->value().bblock()) {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                    std::cerr <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+                    retval.insert(InsnBlockPair(insn, bb));
             }
         }
     }
-    return NULL;                                        // FIXME[Robb P. Matzke 2014-08-02]
+    return retval;
+}
+
+Partitioner::Functions
+Partitioner::discoverFunctionEntryVertices() const {
+    Functions functions = functions_;                   // entry points we already know about
+
+    // There are probably fewer vertices than edges, so iterate over them instead. This also allows us to check for duplicates
+    // against "functions_", which is smaller (or at worst, equal in size) than the local "functions".
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
+        if (vertex.value().type() == V_BASICBLOCK && !functions_.exists(vertex.value().address())) {
+            rose_addr_t entryVa = vertex.value().address();
+            BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex.inEdges()) {
+                if (edge.value().type() == E_FCALL) {
+                    functions.insert(entryVa, Function::instance(entryVa));
+                    break;
+                }
+            }
+        }
+    }
+    return functions;
+}
+
+void
+Partitioner::discoverFunctionBlocks(const Function::Ptr &function,
+                                    NodeIds &inwardInterFunctionEdges, NodeIds &outwardInterFunctionEdges) {
+    ASSERT_not_null(function);
+    ASSERT_forbid(function->isFrozen());
+    Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"discoverFunctionBlocks(function=" <<StringUtility::addrToString(function->address()) <<")\n";
+
+    typedef Sawyer::Container::Map<size_t /*vertexId*/, Function::Ownership> VertexOwnership;
+    VertexOwnership ownership;                          // contains only OWN_EXPLICIT and OWN_PROVISIONAL entries
+
+    // Find the vertices that this function already owns
+    BOOST_FOREACH (rose_addr_t startVa, function->bblockAddresses()) {
+        ControlFlowGraph::ConstVertexNodeIterator placeholder = placeholderExists(startVa);
+        ASSERT_require2(placeholder != cfg_.vertices().end(),
+                        "block " + StringUtility::addrToString(startVa) + " of function " +
+                        StringUtility::addrToString(function->address()) + " must exist in the CFG");
+        ownership.insert(placeholder->id(), Function::OWN_EXPLICIT);
+        SAWYER_MESG(debug) <<"  explicitly owns vertex " <<placeholder->id() <<"\n";
+    }
+
+    // Find all the unowned vertices we can reach from the previously owned vertices following non-function-call edges and
+    // excluding special target vertices.  The loop is guaranteed to never visit the same vertex more than once because, we
+    // only add a vertex to the worklist if it is not in the ownership set, adding it to the worklist and ownership set at the
+    // same time.  The loop is also therefore guaranteed to not visit an edge more than once.
+    Sawyer::Container::Stack<size_t> worklist(ownership.keys());
+    while (!worklist.isEmpty()) {
+        const ControlFlowGraph::VertexNode &source = *cfg_.findVertex(worklist.pop());
+        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, source.outEdges()) {
+            if (edge.value().type()!=E_FCALL && !edge.isSelfEdge()) {
+                const ControlFlowGraph::VertexNode &target = *edge.target();
+                if (target.value().type()==V_BASICBLOCK && !ownership.exists(target.id())) {
+                    SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
+                    if (target.value().function()) {
+                        // Some other function already owns this vertex.  The edge is therefore an inter-function edge which
+                        // was not labeled as a function call.  We'll have to let the user decide what to do.
+                        outwardInterFunctionEdges.push_back(edge.id());
+                    } else {
+                        ownership.insert(target.id(), Function::OWN_PROVISIONAL);
+                        worklist.push(target.id());
+                        SAWYER_MESG(debug) <<"    provisionally owns vertex " <<target.id() <<"\n";
+                    }
+                }
+            }
+        }
+    }
+
+    // For all the provisionally-owned vertices other than this function's entry vertex, check that they have incoming edges
+    // only from this same function.  We explicitly do not check the vertices that were previously owned.
+    BOOST_FOREACH (const VertexOwnership::Node &node, ownership.nodes()) {
+        if (node.value() == Function::OWN_PROVISIONAL) {
+            const ControlFlowGraph::VertexNode &target = *cfg_.findVertex(node.key());
+            SAWYER_MESG(debug) <<"  testing provisional vertex " <<vertexName(target) <<"\n";
+            if (target.value().address() != function->address()) {
+                BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, target.inEdges()) {
+                    const ControlFlowGraph::VertexNode &source = *edge.source();
+                    SAWYER_MESG(debug) <<"    testing edge " <<edgeName(edge);
+                    if (!ownership.exists(source.id())) {
+                        // This edge crosses a function boundary yet is not labeled as a function call.
+                        inwardInterFunctionEdges.push_back(edge.id());
+                        if (debug) {
+                            if (source.value().function()) {
+                                debug <<"; edge source is owned by function "
+                                      <<StringUtility::addrToString(source.value().function()->address()) <<"\n";
+                            } else {
+                                debug <<"; edge is not owned by any function\n";
+                            }
+                        }
+                    } else {
+                        SAWYER_MESG(debug) <<"; ok\n";
+                    }
+                }
+            }
+        }
+    }
+
+    // Add all the provisional vertices to this function. This does not modify the CFG.
+    BOOST_FOREACH (const VertexOwnership::Node &node, ownership.nodes()) {
+        if (node.value() == Function::OWN_PROVISIONAL)
+            function->insert(cfg_.findVertex(node.key())->value().address());
+    }
+}
+
+SgAsmBlock*
+Partitioner::buildBasicBlockAst(const BasicBlock::Ptr &bb, bool relaxed) const {
+    ASSERT_not_null(bb);
+    if (bb->isEmpty()) {
+        if (relaxed) {
+            mlog[WARN] <<"creating an empty basic block AST node at " <<StringUtility::addrToString(bb->address()) <<"\n";
+        } else {
+            return NULL;
+        }
+    }
+
+    ControlFlowGraph::ConstVertexNodeIterator bblockVertex = placeholderExists(bb->address());
+    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
+    unsigned reasons = 0;
+
+    // Is this block an entry point for a function?
+    if (Function::Ptr function = functionExists(bb->address())) {
+        if (function->address() == bb->address())
+            reasons |= SgAsmBlock::BLK_ENTRY_POINT;
+    }
+
+    // Does this block have any predecessors?
+    if (bblockVertex != cfg_.vertices().end() && bblockVertex->nInEdges()==0)
+        reasons |= SgAsmBlock::BLK_CFGHEAD;
+
+    ast->set_reason(reasons);
+    ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
+
+    // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
+    // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
+    // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not
+    // pointers to SgAsmBlock IR nodes since we don't have all the blocks yet; the SgAsmBlock pointers will be initialized
+    // higher up on the AST-building stack.
+    if (bblockVertex != cfg_.vertices().end()) {
+        bool isComplete = true;
+        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, bblockVertex->outEdges()) {
+            const ControlFlowGraph::VertexNode &target = *edge.target();
+            if (target.value().type() == V_INDETERMINATE || target.value().type() == V_NONEXISTING) {
+                isComplete = false;
+            } else {
+                ASSERT_require(target.value().type() == V_BASICBLOCK);
+                SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(target.value().address());
+                succ->set_parent(ast);
+                ast->get_successors().push_back(succ);
+            }
+        }
+        ast->set_successors_complete(isComplete);
+    } else {
+        bool isComplete = true;
+        BOOST_FOREACH (const BasicBlock::Successor &successor, bblockSuccessors(bb)) {
+            if (successor.expr()->is_number()) {
+                SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successor.expr()->get_number());
+                succ->set_parent(ast);
+                ast->get_successors().push_back(succ);
+            } else {
+                isComplete = false;
+            }
+        }
+        ast->set_successors_complete(isComplete);
+    }
+    return ast;
+}
+
+SgAsmFunction*
+Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const {
+    // Build the child basic block IR nodes
+    std::vector<SgAsmBlock*> children;
+    BOOST_FOREACH (rose_addr_t blockVa, function->bblockAddresses()) {
+        ControlFlowGraph::ConstVertexNodeIterator vertex = placeholderExists(blockVa);
+        if (vertex == cfg_.vertices().end()) {
+            mlog[WARN] <<"function " <<StringUtility::addrToString(function->address()) <<" bblock "
+                       <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
+        } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
+            if (SgAsmBlock *child = buildBasicBlockAst(bb, relaxed))
+                children.push_back(child);
+        } else {
+            mlog[WARN] <<"function " <<StringUtility::addrToString(function->address()) <<" bblock "
+                       <<StringUtility::addrToString(blockVa) <<" is undiscovered in the CFG; no AST node created\n";
+        }
+    }
+    if (children.empty()) {
+        if (relaxed) {
+            mlog[WARN] <<"creating an empty function AST node at " <<StringUtility::addrToString(function->address()) <<"\n";
+        } else {
+            return NULL;
+        }
+    }
+
+    unsigned reasons = 0;
+
+    // Is the function part of the CFG?
+    ControlFlowGraph::ConstVertexNodeIterator entryVertex = placeholderExists(function->address());
+    if (entryVertex != cfg_.vertices().end())
+        reasons |= SgAsmFunction::FUNC_GRAPH;
+    
+    // Is the function discontiguous?
+    if (aum(function).extent().nIntervals() > 1)
+        reasons |= SgAsmFunction::FUNC_DISCONT;
+
+    // Is the function the target of a function call?
+    if (entryVertex != cfg_.vertices().end()) {
+        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, entryVertex->inEdges()) {
+            if (edge.value().type() == E_FCALL) {
+                reasons |= SgAsmFunction::FUNC_CALL_TARGET;
+                break;
+            }
+        }
+    }
+    
+    // Build the AST
+    SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
+    ast->set_reason(reasons);
+    ast->set_name("");                                  // FIXME[Robb P. Matzke 2014-08-07]
+    ast->set_may_return(SgAsmFunction::RET_UNKNOWN);    // FIXME[Robb P. Matzke 2014-08-07]
+    return ast;
+}
+
+SgAsmBlock*
+Partitioner::buildGlobalBlockAst(bool relaxed) const {
+    // Create the children first
+    std::vector<SgAsmFunction*> children;
+    BOOST_FOREACH (const Function::Ptr &function, functions_.values()) {
+        if (SgAsmFunction *func = buildFunctionAst(function, relaxed)) {
+            children.push_back(func);
+        }
+    }
+    if (children.empty()) {
+        if (relaxed) {
+            mlog[WARN] <<"building an empty global block\n";
+        } else {
+            return NULL;
+        }
+    }
+
+    // Build the global block
+    SgAsmBlock *global = new SgAsmBlock;
+    BOOST_FOREACH (SgAsmFunction *function, children) {
+        global->get_statementList().push_back(function);
+        function->set_parent(global);
+    }
+    return global;
+}
+
+SgAsmBlock*
+Partitioner::buildAst(SgAsmInterpretation *interp/*=NULL*/, bool relaxed) const {
+    if (SgAsmBlock *global = buildGlobalBlockAst(relaxed)) {
+        fixupAstPointers(global, interp);
+        return global;
+    }
+    return NULL;
+}
+
+void
+Partitioner::fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) const {
+    typedef Sawyer::Container::Map<rose_addr_t, SgAsmNode*> Index;
+
+    // Build various indexes since ASTs have inherently linear search time.  We store just the starting address for all these
+    // things because that's all we ever want to point to.
+    struct Indexer: AstSimpleProcessing {
+        Index insnIndex, bblockIndex, funcIndex;
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
+                insnIndex.insert(insn->get_address(), insn);
+            } else if (SgAsmBlock *block = isSgAsmBlock(node)) {
+                if (!block->get_statementList().empty() && isSgAsmInstruction(block->get_statementList().front()))
+                    bblockIndex.insert(block->get_address(), block);
+            } else if (SgAsmFunction *func = isSgAsmFunction(node)) {
+                funcIndex.insert(func->get_entry_va(), func);
+            }
+        }
+    } indexer;
+    indexer.traverse(ast, preorder);
+
+    // Build a list of memory-mapped sections in the interpretation.  We'll use this list to select the best-matching section
+    // for a particular address via SgAsmGenericFile::best_section_by_va()
+    SgAsmGenericSectionPtrList mappedSections;
+    Index sectionIndex;
+    if (interp) {
+        BOOST_FOREACH (SgAsmGenericHeader *header, interp->get_headers()->get_headers()) {
+            if (header->is_mapped())
+                mappedSections.push_back(header);
+            BOOST_FOREACH (SgAsmGenericSection *section, header->get_mapped_sections()) {
+                if (!section->get_mapped_xperm())
+                    mappedSections.push_back(section);
+            }
+        }
+    }
+
+    struct FixerUpper: AstSimpleProcessing {
+        const Index &insnIndex, &bblockIndex, &funcIndex;
+        const SgAsmGenericSectionPtrList &mappedSections;
+        FixerUpper(const Index &insnIndex, const Index &bblockIndex, const Index &funcIndex,
+                   const SgAsmGenericSectionPtrList &mappedSections)
+            : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                if (ival->get_baseNode()==NULL) {
+                    rose_addr_t va = ival->get_absoluteValue();
+                    SgAsmNode *base = NULL;
+                    if (funcIndex.getOptional(va).assignTo(base) || bblockIndex.getOptional(va).assignTo(base) ||
+                        insnIndex.getOptional(va).assignTo(base)) {
+                        ival->makeRelativeTo(base);
+                    } else if (SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mappedSections, va)) {
+                        ival->makeRelativeTo(section);
+                    }
+                }
+            }
+        }
+    } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
+    fixerUpper.traverse(ast, preorder);
 }
 
 } // namespace

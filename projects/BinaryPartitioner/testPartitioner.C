@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
+#include <AsmUnparser.h>
 #include <DisassemblerArm.h>
 #include <DisassemblerPowerpc.h>
 #include <DisassemblerMips.h>
@@ -54,9 +55,10 @@ getDisassembler(const std::string &name)
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;
-    rose_addr_t startVa;
-    rose_addr_t disassembleVa;
-    Settings(): startVa(0), disassembleVa(0) {}
+    rose_addr_t mapVa;
+    bool doListCfg;
+    bool doListAsm;
+    Settings(): mapVa(0), doListCfg(false), doListAsm(true) {}
 };
 
 // Describe and parse the command-line
@@ -71,21 +73,28 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     switches.insert(Switch("isa")
                     .argument("architecture", anyParser(settings.isaName))
                     .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-    switches.insert(Switch("at")
-                    .argument("virtual-address", nonNegativeIntegerParser(settings.startVa))
-                    .doc("The first byte of the file is mapped at the specified @v{virtual-address}, which defaults "
-                         "to " + StringUtility::addrToString(settings.startVa) + "."));
+    switches.insert(Switch("list-cfg")
+                    .intrinsicValue(true, settings.doListCfg)
+                    .doc("Emit a listing of the CFG after it is discovered."));
+    switches.insert(Switch("list-asm")
+                    .intrinsicValue(true, settings.doListAsm)
+                    .doc("Produce an assembly listing.  This is the default; it can be turned off with @s{no-list-asm}."));
+    switches.insert(Switch("no-list-asm")
+                    .key("list-asm")
+                    .intrinsicValue(false, settings.doListAsm)
+                    .hidden(true));
     switches.insert(Switch("log")
                     .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
                     .argument("config")
                     .whichValue(SAVE_ALL)
                     .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
+    switches.insert(Switch("map")
+                    .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
+                    .doc("The first byte of the file is mapped at the specified @v{virtual-address}, which defaults "
+                         "to " + StringUtility::addrToString(settings.mapVa) + "."));
     switches.insert(Switch("version", 'V')
                     .action(showVersionAndExit(version_message(), 0))
                     .doc("Shows version information for various ROSE components and then exits."));
-    switches.insert(Switch("disassemble")
-                    .argument("virtual-address", nonNegativeIntegerParser(settings.disassembleVa))
-                    .doc("Address where disassembly starts.  The default is to use the first address of the file."));
 
     Parser parser;
     parser
@@ -237,6 +246,7 @@ int main(int argc, char *argv[])
     // Obtain a disassembler (do this before opening the specimen so "--isa=list" has a chance to run)
     Disassembler *disassembler = getDisassembler(settings.isaName);
     ASSERT_not_null(disassembler);
+    disassembler->set_progress_reporting(-1.0);         // turn it off
 
     // Open the file that needs to be disassembled and map it with read and execute permission
     if (positionalArgs.empty())
@@ -245,10 +255,10 @@ int main(int argc, char *argv[])
         throw std::runtime_error("too many files specified; see --help");
     std::string specimenName = positionalArgs[0];
     MemoryMap map;
-    size_t nBytesMapped = map.insert_file(specimenName, settings.startVa);
+    size_t nBytesMapped = map.insert_file(specimenName, settings.mapVa);
     if (0==nBytesMapped)
         throw std::runtime_error("problem reading file: " + specimenName);
-    map.mprotect(AddressInterval::baseSize(settings.startVa, nBytesMapped), MemoryMap::MM_PROT_RX);
+    map.mprotect(AddressInterval::baseSize(settings.mapVa, nBytesMapped), MemoryMap::MM_PROT_RX);
     map.dump(std::cerr);                                // debugging so the user can see the map
 
 
@@ -259,27 +269,68 @@ int main(int argc, char *argv[])
     partitioner.cfgAdjustmentCallbacks().append(CfgChangeWatcher::instance());
 
     // A simple disassembler
-    rose_addr_t prologueVa = std::max(settings.disassembleVa, settings.startVa);
-    partitioner.insertPlaceholder(prologueVa);
+    rose_addr_t prologueVa = 0;
     P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
     while (1) {
         if (worklist->nInEdges() > 0) {
             // Disassemble recursively by following undiscovered basic blocks in the CFG
             P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-            partitioner.mlog[WHERE] <<"\n  processing " <<StringUtility::addrToString(placeholder->value().address()) <<"\n";
+            partitioner.mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
             P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
             partitioner.insertBasicBlock(placeholder, bb);
         } else if (partitioner.nextFunctionPrologue(prologueVa).assignTo(prologueVa)) {
             // We found another function prologue, so disassemble recursively at that location
             partitioner.mlog[WHERE] <<"\nFound function prologue at " <<StringUtility::addrToString(prologueVa) <<"\n";
-            partitioner.insertPlaceholder(prologueVa++);
+            partitioner.insertFunction(P2::Partitioner::Function::instance(prologueVa));
         } else {
             break;                                      // all done
         }
     }
+    if (settings.doListCfg) {
+        std::cout <<"Final control flow graph:\n";
+        partitioner.dumpCfg(std::cout, "  ", false);
+    }
 
-    std::cout <<"Final control flow graph:\n";
-    partitioner.dumpCfg(std::cout, "  ");
+    // Find all the function entry points. The entry points are the function prologues we found above, and any basic block
+    // which is a target of a function call edge.
+    P2::Partitioner::Functions functions = partitioner.discoverFunctionEntryVertices();
+    std::cout <<"found " + StringUtility::plural(functions.size(), "function entry points") <<"\n";
+#if 0 // [Robb P. Matzke 2014-08-06]
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values())
+        std::cout <<"  " <<partitioner.vertexName(*partitioner.placeholderExists(function->address())) <<"\n";
+#endif
+
+    // Discover blocks for functions, and then insert each function into the CFG.
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
+        partitioner.mlog[WHERE] <<"Discovering blocks for function " <<StringUtility::addrToString(function->address()) <<"\n";
+        if (function->isFrozen()) {
+            // If the function is is the CFG then it is frozen and we can't adjust its connectivity to blocks.  Therefore we
+            // first have to remove the function from the CFG, operate on it while it is thawed, then insert it again when
+            // we're done.
+            partitioner.eraseFunction(function);
+        }
+        P2::Partitioner::NodeIds inwardConflictEdges, outwardConflictEdges;
+        partitioner.discoverFunctionBlocks(function, inwardConflictEdges, outwardConflictEdges);
+        if (!inwardConflictEdges.empty() || !outwardConflictEdges.empty()) {
+            partitioner.mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
+                                   <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
+                                   <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts")
+                                   <<"; function was discarded\n";
+        } else {
+#if 0 // [Robb P. Matzke 2014-08-07]
+            std::cout <<"Function " <<StringUtility::addrToString(function->address())
+                      <<" has " <<StringUtility::plural(function->size(), "basic blocks") <<"\n";
+#endif
+            partitioner.insertFunction(function);
+        }
+    }
+
+    // Build the AST and unparse it.
+    std::cout <<"Found " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
+    if (settings.doListAsm) {
+        SgAsmBlock *globalBlock = partitioner.buildAst();
+        AsmUnparser().unparse(std::cout, globalBlock);
+    }
 
     exit(0);
 }

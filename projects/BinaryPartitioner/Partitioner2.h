@@ -8,6 +8,7 @@
 #include <sawyer/Callbacks.h>
 #include <sawyer/Graph.h>
 #include <sawyer/IntervalMap.h>
+#include <sawyer/IntervalSet.h>
 #include <sawyer/Optional.h>
 
 namespace rose {
@@ -165,6 +166,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
 class Partitioner {
 
 public:
+    /** Type of CFG vertex. */
     enum VertexType {
         V_BASICBLOCK,                                   /**< A basic block or placeholder for a basic block. */
         V_UNDISCOVERED,                                 /**< The special "undiscovered" vertex. */
@@ -172,12 +174,59 @@ public:
         V_NONEXISTING,                                  /**< Special vertex destination for non-existing basic blocks. */
     };
 
+    /** Type of CFG edge. */
     enum EdgeType {
         E_NORMAL,                                       /**< Normal control flow edge, nothing special. */
         E_FCALL,                                        /**< Edge is a function call. */
         E_FRET,                                         /**< Edge is a function return from the call site. */
     };
 
+    /** List of CFG vertex or edge ID numbers. */
+    typedef std::vector<size_t> NodeIds;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Function descriptors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    class Function: public Sawyer::SharedObject {
+    public:
+        /** Manner in which a function owns a block. */
+        enum Ownership { OWN_UNOWNED=0,                 /**< Function does not own the block. */
+                         OWN_EXPLICIT,                  /**< Function owns the block explicitly, the normal ownership. */
+                         OWN_PROVISIONAL,               /**< Function might own the block in the future. */
+        };
+        typedef Sawyer::SharedPointer<Function> Ptr;
+    private:
+        rose_addr_t entryVa_;
+        std::set<rose_addr_t> bblockVas_;
+        bool isFrozen_;
+    protected:
+        Function(rose_addr_t entryVa): entryVa_(entryVa), isFrozen_(false) {
+            bblockVas_.insert(entryVa);
+        }
+    public:
+        static Ptr instance(rose_addr_t entryVa) { return Ptr(new Function(entryVa)); }
+        rose_addr_t address() const { return entryVa_; }
+        const std::set<rose_addr_t>& bblockAddresses() const { return bblockVas_; }
+        void insert(rose_addr_t bblockVa) { // no-op if exists
+            ASSERT_forbid(isFrozen_);
+            bblockVas_.insert(bblockVa);
+        }
+        void erase(rose_addr_t bblockVa) {              // no-op if not existing
+            ASSERT_forbid(isFrozen_);
+            ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
+            bblockVas_.erase(bblockVa);
+        }
+        void freeze() { isFrozen_ = true; }
+        bool isFrozen() const { return isFrozen_; }
+        size_t size() const { return bblockVas_.size(); }
+    private:
+        friend class Partitioner;
+        void thaw() { isFrozen_ = false; }
+    };
+
+    typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Basic blocks (BB)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -400,6 +449,11 @@ public:
             bblock_ = bblock;
         }
 
+        /** Determines if this pair is the first instruction of a basic block. */
+        bool isBlockEntry() const {
+            return insn_ && bblock_ && insn_->get_address() == bblock_->address();
+        }
+
         /** Compare two pairs for equality.  Two pairs are equal if and only if they point to the same instruction and the same
          * basic block. */
         bool operator==(const InsnBlockPair &other) const {
@@ -521,6 +575,11 @@ public:
          *  empty, containing neither a minimum nor maximum address. */
         AddressInterval hull() const { return map_.hull(); }
 
+        /** Addresses represented.
+         *
+         *  Returns the set of addresses that are represented. */
+        Sawyer::Container::IntervalSet<AddressInterval> extent() const;
+
         /** Insert an instruction/block pair into the map.
          *
          *  The specified instruction/block pair is added to the map. The instruction must not already be present in the map. */
@@ -590,6 +649,7 @@ public:
         VertexType type_;                               // type of vertex, special or not
         rose_addr_t startVa_;                           // address of start of basic block
         BasicBlock::Ptr bblock_;                        // basic block, or null if only a place holder
+        Function::Ptr function_;                        // function to which vertex belongs, if any
 
     public:
         /** Construct a basic block placeholder vertex. */
@@ -621,6 +681,13 @@ public:
             return bblock_;
         }
 
+        /** Return the function pointer.  A basic block may belong to a function, in which case the function pointer is
+         * returned. Otherwise the null pointer is returned. */
+        const Function::Ptr& function() const {
+            ASSERT_require(V_BASICBLOCK==type_);
+            return function_;
+        }
+
         /** Turns a basic block vertex into a placeholder.  The basic block pointer is reset to null. */
         void nullify() {
             ASSERT_require(V_BASICBLOCK==type_);
@@ -631,6 +698,11 @@ public:
         // Change the basic block pointer.  Users are not allowed to do this directly; they must go through the Partitioner API.
         void bblock(const BasicBlock::Ptr &bb) {
             bblock_ = bb;
+        }
+
+        // Change the function pointer.  Users are not allowed to do this directly; they must go through the Partitioner API.
+        void function(const Function::Ptr &f) {
+            function_ = f;
         }
     };
 
@@ -650,19 +722,20 @@ public:
     /** Mapping from basic block starting address to CFG vertex. */
     typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexNodeIterator> VertexIndex;
 
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     InstructionProvider instructionProvider_;           // cache for all disassembled instructions
     const MemoryMap &memoryMap_;                        // description of memory, especially insns and non-writable
-    AddressUsageMap addrUsageMap_;                      // maps addresses to insn/block pairs
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
-    VertexIndex vertexIndex_;                           // vertex-by-address index for the CFG
+    VertexIndex vertexIndex_;                           // Vertex-by-address index for the CFG
+    AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
     SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
+    Functions functions_;                               // List of all known functions by entry address
 
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
@@ -688,13 +761,28 @@ public:
     //                                  Partitioner CFG queries
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Returns the instruction provider.
+     *  @{ */
+    InstructionProvider& instructionProvider() { return instructionProvider_; }
+    const InstructionProvider& instructionProvider() const { return instructionProvider_; }
+    /** @} */
+
+    /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
+    size_t nBytes() const { return aum_.size(); }
+
+    /** Returns the number of basic blocks in the CFG. This is a constant-time operation. */
+    size_t nBasicBlocks() const { return cfg_.nVertices(); }
+
+    /** Returns the number of functions in the CFG.  This is a constant-time operation. */
+    size_t nFunctions() const { return functions_.size(); }
+
     /** Determines whether an instruction is represented in the CFG.
      *
      *  If the CFG represents an instruction that starts at the specified address, then this method returns the
      *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
      *  basic block is only represented by a placeholder in the CFG. */
     Sawyer::Optional<InsnBlockPair> instructionExists(rose_addr_t startVa) const {
-        return addrUsageMap_.instructionExists(startVa);
+        return aum_.instructionExists(startVa);
     }
 
     /** Determines whether a basic block or basic block placeholder exists in the CFG.
@@ -724,6 +812,14 @@ public:
         ControlFlowGraph::ConstVertexNodeIterator vertex = placeholderExists(startVa);
         if (vertex!=cfg_.vertices().end())
             return vertex->value().bblock();
+    }
+
+    /** Determines whether a function exists in the function table.
+     *
+     *  The function table holds the entry addresses of all known functions.  If the table contains a function for the
+     *  specified address then a pointer to the function is returned, otherwise the null function pointer is returned. */
+    Function::Ptr functionExists(rose_addr_t startVa) const {
+        return functions_.getOptional(startVa).orDefault();
     }
 
     /** Returns the special "undiscovered" vertex.
@@ -769,6 +865,21 @@ public:
         return nonexistingVertex_;
     }
     /** @} */
+
+    /** Returns the control flow graph.
+     *
+     *  Returns the global control flow graph. The CFG should not be modified by the caller except through the partitioner's
+     *  own API. */
+    const ControlFlowGraph& cfg() const { return cfg_; }
+
+    /** Returns the address usage map.
+     *
+     *  Returns the global address usage map.  The AUM should not be modified by the caller except through the paritioner's own
+     *  API. */
+    const AddressUsageMap& aum() const { return aum_; }
+
+    /** Returns the address usage map for a single function. */
+    AddressUsageMap aum(const Function::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner CFG operations
@@ -937,6 +1048,79 @@ public:
     bool bblockIsFunctionCall(const BasicBlock::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner function operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Inserts functions into the CFG.
+     *
+     *  The indicated function(s) is inserted into the control flow graph.  Basic blocks (or at least placeholders) are
+     *  inserted into the CFG for the function entry address and any basic block addresses the function might already contain.
+     *  Returns the number of new basic block placeholders that were created.
+     *
+     *  It is permissible to insert the same function multiple times at the same address (subsequent insertions are no-ops),
+     *  but it is an error to insert a different function at the same address as an existing function.
+     *
+     *  All functions that exist in the function table are marked as frozen. The connectivity of frozen functions can only be
+     *  changed by using the partitioner's API, not the function's API.  This allows the partitioner to keep the CFG in a
+     *  consistent state.
+     *
+     *  @{ */
+    size_t insertFunction(const Function::Ptr&);
+    size_t insertFunctions(const Functions&);
+    /** @} */
+
+    /** Create CFG placeholders for functions.
+     *
+     *  Ensures that a CFG placeholder (or basic block) exists for each function entry address and each function basic block
+     *  address.  If a placeholder is absent then one is created by calling @ref insertPlaceholder.  The return value is the
+     *  number of new placeholders created.
+     *
+     *  If the function exists in the CFG (i.e., it is a function that we think is real versus a function that we're
+     *  only investigating), then additional actions occur:  any placeholders (or basic blocks) owned by this function are
+     *  verified to not be owned by some other function, and they are marked as owned by this function.
+     *
+     *  @{ */
+    size_t insertFunctionBlocks(const Functions&);
+    size_t insertFunctionBlocks(const Function::Ptr&);
+    /** @} */
+
+    /** Removes a function from the CFG.
+     *
+     *  The indicated function is removed from the control flow graph and all its basic blocks are reset so they no longer
+     *  point to the function.  The return value is a vector of affected CFG vertices.  The function itself is not affected; it
+     *  still contains the its original blocks. The function is thawed so that its connectivity is modifiable again with the
+     *  function's API. */
+    void eraseFunction(const Function::Ptr&);
+
+    /** Scans the CFG to find function entry basic blocks.
+     *
+     *  Scans the CFG to find placeholders (or basic blocks) that are the entry points of functions.  A placeholder is a
+     *  function entry if it has an incoming edge that is a function call or if it is the entry block of a known function.
+     *  This method does not modify the CFG.  It returns the functions in a map indexed by function entry address. */
+    Functions discoverFunctionEntryVertices() const;
+
+    /** Adds basic blocks to a function.
+     *
+     *  Attempts to discover the basic blocks that should belong to the specified function.  This is done as follows:
+     *
+     *  @li An initial CFG traversal follows the non-function-call edges starting at the function's already-owned basic
+     *      blocks.  It makes note of any newly encountered blocks, and considers them to be "provisionally owned" by the
+     *      function.  If it encounters a vertex already owned by some other function then the ID number for the edge leading
+     *      to that vertex is appended to the @p outwardInterFunctionEdges list, that vertex is not marked as provisionally
+     *      owned by this function, and that vertex's outgoing edges are not traversed.
+     *
+     *  @li A second traversal of the new provisionally-owned vertices (excluding the entry vertex) verifies that all
+     *      incoming edges originate from this same function.  If an edge is detected coming from a vertex that is not owned by
+     *      this function (explicitly or provisionally) then that edge is appended to the @ref inwardInterFunctionEdges list.
+     *
+     *  @li A final traversal of the provisionally-owned vertices adds them to the specified function.
+     *
+     *  The CFG is not modified by this method, and therefore the function must not exist in the CFG; the function must be in a
+     *  thawed state. */
+    void discoverFunctionBlocks(const Function::Ptr&,
+                                NodeIds &inwardInterFunctionEdges /*out*/, NodeIds &outwardInterFunctionEdges);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  CFG change callbacks
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
@@ -1070,7 +1254,52 @@ private:
     //                                  Partitioner conversion to AST
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmBlock* toAst();
+    /** Build AST for basic block.
+     *
+     *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be
+     *  in the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is
+     *  returned instead; however, if @p relaxed is true then an IR node is returned anyway. */
+    SgAsmBlock* buildBasicBlockAst(const BasicBlock::Ptr&, bool relaxed=false) const;
+
+    /** Build AST for function.
+     *
+     *  Builds and returns an AST for the specified function.  The function must not be a null pointer, but it need not be in
+     *  the CFG.  The function will have children created only for its basic blocks that exist in the CFG (otherwise the
+     *  partitioner doesn't know about them).  If no children were created then the returned function IR node violates
+     *  ROSE's invariants, so a null pointer is returned instead; however, if @p relaxed is true then an IR node is returned
+     *  anyway. */
+    SgAsmFunction* buildFunctionAst(const Function::Ptr&, bool relaxed=false) const;
+
+    /** Builds the global block AST.
+     *
+     *  A global block's children are all the functions contained in the AST, which in turn contain SgAsmBlock IR nodes for the
+     *  basic blocks, which in turn contain instructions.  If no functions exist in the CFG then the returned node would
+     *  violate ROSE's invariants, so a null pointer is returned instead; however, if @p relaxed is true then the IR node is
+     *  returned anyway. */
+    SgAsmBlock* buildGlobalBlockAst(bool relaxed=false) const;
+
+    /** Builds an AST from the CFG.
+     *
+     *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
+     *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If
+     *  @p relaxed is true then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense
+     *  of not including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible
+     *  but may violate some invariants.
+     *
+     *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
+     *  interpretation allows more fixups to occur. */
+    SgAsmBlock* buildAst(SgAsmInterpretation *interp=NULL, bool relaxed=false) const;
+
+    /** Fixes pointers in the AST.
+     *
+     *  Traverses the AST to find SgAsmIntegerValueExpressions and changes absolute values to relative values.  If such an
+     *  expression is the starting address of a function then the expression will point to that function; else if the
+     *  expression is the starting address of a basic block then the expression will point to that basic block; else if the
+     *  expression is the starting address of an instruction then the expression will point to that instruction; else if the
+     *  expression evaluates to an address inside a mapped section, then the expression will become relative to the start of
+     *  the best section. Pointers into sections are only created if an interpretation is specified. */
+    void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL) const;
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner miscellaneous
@@ -1083,16 +1312,22 @@ public:
      *  block was discovered to be non-existing (i.e., no executable memory for the first instruction).
      *
      *  A @p prefix can be specified to be added to the beginning of each line of output. */
-    void dumpCfg(std::ostream&, const std::string &prefix="") const;
+    void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true) const;
 
     /** Name of a vertex. */
     std::string vertexName(const ControlFlowGraph::VertexNode&) const;
+
+    /** Name of last instruction in vertex. */
+    std::string vertexNameEnd(const ControlFlowGraph::VertexNode&) const;
 
     /** Name of an incoming edge. */
     std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&) const;
 
     /** Name of an outgoing edge. */
     std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) const;
+
+    /** Name of an edge. */
+    std::string edgeName(const ControlFlowGraph::EdgeNode&) const;
 
     /** Enable or disable progress reports.
      *
@@ -1138,6 +1373,7 @@ private:
     // immediately after the partitioner internal data structures are updated to reflect the erasure. The call occurs whether
     // or not a basic block placeholder is left in the graph. */
     virtual void bblockErased(const BasicBlock::Ptr &removedBlock);
+    
 };
 
 std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPair&);

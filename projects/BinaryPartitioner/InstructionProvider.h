@@ -74,6 +74,14 @@ public:
      *  provider, but must not be freed until after the instruction provider is destroyed. */
     Disassembler* disassembler() const { return disassembler_; }
 
+    /** Returns number of cached starting addresses.
+     *
+     *  The number of cached starting addresses includes those addresses where an instruction exists, and those addresses where
+     *  an instruction is known to not exist.
+     *
+     *  This is a constant-time operation. */
+    size_t nCached() const { return insnMap_.size(); }
+
     /** Returns the register dictionary. */
     const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
 
