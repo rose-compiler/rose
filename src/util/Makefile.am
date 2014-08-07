@@ -94,6 +94,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/ProgressBar.h			\
 	sawyer/Sawyer.h				\
 	sawyer/SharedPointer.h			\
+	sawyer/Stack.h				\
 	sawyer/WarningsOff.h			\
 	sawyer/WarningsRestore.h
 EXTRA_DIST += sawyer/CMakeLists.txt
