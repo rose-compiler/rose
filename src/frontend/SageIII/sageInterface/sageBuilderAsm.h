@@ -40,17 +40,6 @@ SgAsmFloatType*   buildAsmType128bitFloat() ROSE_DEPRECATED;
 SgAsmFloatType*   buildAsmType80bitFloat() ROSE_DEPRECATED;
 SgAsmVectorType*  buildAsmTypeDoubleQuadWord() ROSE_DEPRECATED;
 
-// Build instruction; some deprecated because of incorrect capitalization [Robb P. Matzke 2014-07-21]
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind) ROSE_DEPRECATED;
-SgAsmx86Instruction* buildX86Instruction(X86InstructionKind);
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *operand) ROSE_DEPRECATED;
-SgAsmx86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *operand);
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs) ROSE_DEPRECATED;
-SgAsmx86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmOperandList *operands) ROSE_DEPRECATED;
-SgAsmInstruction* buildMultibyteNopInstruction(int n) ROSE_DEPRECATED;
-SgAsmx86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
-
 // Build registers. Deprecated because ROSE doesn't have architecture-specific registers anymore. [Robb P. Matzke 2014-07-21]
 // Use the SgAsmDirectRegisterExpression constructor instead.
 SgAsmDirectRegisterExpression* buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor&) ROSE_DEPRECATED;
@@ -143,6 +132,22 @@ inline Insn* appendOperand(Insn* insn, SgAsmExpression* op) {
     op->set_parent(operands);
     return insn; // For chaining this operation
 }
+
+// Build instruction; some deprecated because of incorrect capitalization [Robb P. Matzke 2014-07-21]
+SgAsmx86Instruction* buildx86Instruction(X86InstructionKind) ROSE_DEPRECATED;
+SgAsmx86Instruction* buildX86Instruction(X86InstructionKind);
+SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *operand) ROSE_DEPRECATED;
+SgAsmx86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *operand);
+SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs) ROSE_DEPRECATED;
+SgAsmx86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
+SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmOperandList *operands) ROSE_DEPRECATED;
+SgAsmInstruction* buildMultibyteNopInstruction(int n) ROSE_DEPRECATED;
+SgAsmx86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
+
+// Build basic blocks
+SgAsmBlock* buildBasicBlock(const std::vector<SgAsmInstruction*>&);
+SgAsmFunction* buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*>&);
+
 
 } // namespace
 
