@@ -21,7 +21,7 @@ fi
 for f in \
     Assert BitVector BitVectorSupport CommandLine Callbacks DefaultAllocator Graph GraphBoost IndexedList \
     Interval IntervalMap IntervalSet Map Markup MarkupPod Message Optional PoolAllocator ProgressBar \
-    Sawyer SharedPointer WarningsOff WarningsRestore
+    Sawyer SharedPointer Stack WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/sawyer/$f";
     cp "$srcbase.h" .

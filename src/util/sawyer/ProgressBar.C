@@ -9,7 +9,7 @@
 namespace Sawyer {
 
 SAWYER_EXPORT double ProgressBarImpl::initialDelay_ = 5.0;
-SAWYER_EXPORT double ProgressBarImpl::minUpdateInterval_ = 1.0;
+SAWYER_EXPORT double ProgressBarImpl::minUpdateInterval_ = 0.1;
 
 
 SAWYER_EXPORT double

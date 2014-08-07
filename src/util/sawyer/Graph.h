@@ -707,6 +707,14 @@ public:
         EdgeValue& value() { return value_; }
         const EdgeValue& value() const { return value_; }
         /** @} */
+
+        /** Determines if edge is a self-edge.
+         *
+         *  Returns true if this edge is a self edge.  A self edge is an edge whose source and target vertices are the same
+         *  vertex. */
+        bool isSelfEdge() const {
+            return source_ == target_;
+        }
     };
 
     /** Vertex node.
