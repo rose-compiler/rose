@@ -2295,7 +2295,22 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                          outputFilename = alternative_filename;
                        }
+                 // Pei-Hung (8/6/2014) appending PID as alternative name to avoid collision
+                    else
+                       {
+                         if (project->get_appendPID() == true)
+                            {
+                              ostringstream os;
+                              os << getpid();  
+                              unsigned dot = outputFilename.find_last_of(".");
+                              outputFilename = outputFilename.substr(0,dot) + "_" + os.str() + outputFilename.substr(dot);
+                              if ( SgProject::get_verbose() > 0 )
+                                   printf ("Generate test output name with PID = %s \n",outputFilename.c_str());
+
+                            }
+                       }
                   }
+               file->set_unparse_output_filename(outputFilename);
              }
 
           fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
