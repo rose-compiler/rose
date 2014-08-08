@@ -300,30 +300,43 @@ int main(int argc, char *argv[])
         std::cout <<"  " <<partitioner.vertexName(*partitioner.placeholderExists(function->address())) <<"\n";
 #endif
 
-    // Discover blocks for functions, and then insert each function into the CFG.
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
-        partitioner.mlog[WHERE] <<"Discovering blocks for function " <<StringUtility::addrToString(function->address()) <<"\n";
-        if (function->isFrozen()) {
-            // If the function is is the CFG then it is frozen and we can't adjust its connectivity to blocks.  Therefore we
-            // first have to remove the function from the CFG, operate on it while it is thawed, then insert it again when
-            // we're done.
-            partitioner.eraseFunction(function);
+    // Discover blocks for functions, and then insert each function into the CFG.  The discoverFunctionBlocks can encounter
+    // conflicts because it might be overly agressive in following what it things are intra-function edges. Some of these
+    // conflicts disappear when we know more about the other functions, so run this until nothing changes (it normally
+    // converges very quickly).
+    for (size_t pass=0; pass<100 && !functions.isEmpty(); ++pass) {
+        std::cerr <<"Function discovery pass " <<pass <<"\n";
+        P2::Partitioner::Functions badFunctions;
+        BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
+            partitioner.mlog[WHERE] <<"Discovering blocks for function "
+                                    <<StringUtility::addrToString(function->address()) <<"\n";
+            if (function->isFrozen()) {
+                // If the function is is the CFG then it is frozen and we can't adjust its connectivity to blocks.  Therefore we
+                // first have to remove the function from the CFG, operate on it while it is thawed, then insert it again when
+                // we're done.
+                partitioner.eraseFunction(function);
+            }
+            P2::Partitioner::NodeIds inwardConflictEdges, outwardConflictEdges;
+            partitioner.discoverFunctionBlocks(function, inwardConflictEdges, outwardConflictEdges);
+            if (!inwardConflictEdges.empty() || !outwardConflictEdges.empty()) {
+                partitioner.mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
+                                       <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
+                                       <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts")
+                                       <<"; function was discarded\n";
+                badFunctions.insert(function->address(), function);
+            } else {
+    #if 0 // [Robb P. Matzke 2014-08-07]
+                std::cout <<"Function " <<StringUtility::addrToString(function->address())
+                          <<" has " <<StringUtility::plural(function->size(), "basic blocks") <<"\n";
+    #endif
+                partitioner.insertFunction(function);
+            }
         }
-        P2::Partitioner::NodeIds inwardConflictEdges, outwardConflictEdges;
-        partitioner.discoverFunctionBlocks(function, inwardConflictEdges, outwardConflictEdges);
-        if (!inwardConflictEdges.empty() || !outwardConflictEdges.empty()) {
-            partitioner.mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
-                                   <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
-                                   <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts")
-                                   <<"; function was discarded\n";
-        } else {
-#if 0 // [Robb P. Matzke 2014-08-07]
-            std::cout <<"Function " <<StringUtility::addrToString(function->address())
-                      <<" has " <<StringUtility::plural(function->size(), "basic blocks") <<"\n";
-#endif
-            partitioner.insertFunction(function);
-        }
+        if (functions.size()==badFunctions.size())
+            break;                                      // no change
+        functions = badFunctions;
     }
+    
 
     // Build the AST and unparse it.
     std::cout <<"Found " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";

@@ -412,7 +412,6 @@ operator<<(std::ostream &out, const ProgressBarSuffix &x) {
     return out;
 };
 
-
 void
 Partitioner::reportProgress() const {
     // All partitioners share a single progress bar.
@@ -1217,8 +1216,11 @@ Partitioner::discoverFunctionBlocks(const Function::Ptr &function,
                     SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
                     if (target.value().function()) {
                         // Some other function already owns this vertex.  The edge is therefore an inter-function edge which
-                        // was not labeled as a function call.  We'll have to let the user decide what to do.
-                        outwardInterFunctionEdges.push_back(edge.id());
+                        // was not labeled as a function call.  If the edge is to a known function entry block then we'll
+                        // assume this should have been a function call edge and not traverse it, otherwise we'll have to let
+                        // the user decide what to do.
+                        if (!functionExists(target.value().address()))
+                            outwardInterFunctionEdges.push_back(edge.id());
                     } else {
                         ownership.insert(target.id(), Function::OWN_PROVISIONAL);
                         worklist.push(target.id());

@@ -3,7 +3,7 @@
 
 #include "sage3basic.h"
 #include "InstructionProvider.h"
-#include "SymbolicSemantics2.h"
+#include "PartitionerSemantics.h"
 
 #include <sawyer/Callbacks.h>
 #include <sawyer/Graph.h>
@@ -14,7 +14,6 @@
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
-namespace Semantics = rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 
@@ -1087,9 +1086,8 @@ public:
     /** Removes a function from the CFG.
      *
      *  The indicated function is removed from the control flow graph and all its basic blocks are reset so they no longer
-     *  point to the function.  The return value is a vector of affected CFG vertices.  The function itself is not affected; it
-     *  still contains the its original blocks. The function is thawed so that its connectivity is modifiable again with the
-     *  function's API. */
+     *  point to the function.  The function itself is not affected; it still contains the its original blocks. The function is
+     *  thawed so that its connectivity is modifiable again with the function's API. */
     void eraseFunction(const Function::Ptr&);
 
     /** Scans the CFG to find function entry basic blocks.
