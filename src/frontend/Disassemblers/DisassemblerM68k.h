@@ -175,8 +175,15 @@ private:
     uint16_t    iwords[11];                     /**< Instruction words. */
     size_t      niwords;                        /**< Number of instruction words read. */
     size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
-    typedef std::list<M68k*> IdisTable;
-    IdisTable idis_table;                       /**< Instruction specific disassemblers. */
+
+    // The instruction disassembly table is an array indexed by the high-order nybble of the first 16-bit word of the
+    // instruction's pattern, the so-called "operator" bits. Since most instruction disassembler have invariant operator
+    // bits, we can divide the table into 16 entries for these invariant bits, and another entry (index 16) for the cases
+    // with a variable operator byte.  Each of these 17 buckets is an unordered list of instruction disassemblers whose
+    // patterns we attempt to match one at a time (the insertion function checks that there are no ambiguities).
+    typedef std::list<M68k*> IdisList;
+    typedef std::vector<IdisList> IdisTable;
+    IdisTable idis_table;
 };
 
 } // namespace

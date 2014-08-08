@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 
+#include "Diagnostics.h"
 #include "DisassemblerM68k.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -15,6 +16,7 @@
 namespace rose {
 namespace BinaryAnalysis {
 
+using namespace Diagnostics;
 using namespace IntegerOps;
 using namespace StringUtility;
 
@@ -823,9 +825,16 @@ DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
 void
 DisassemblerM68k::insert_idis(M68k *idis)
 {
-    // Check whether this instruction disassembler's bit pattern is ambiguous with an existing pattern
     ASSERT_not_null(idis);
-    for (IdisTable::iterator ti=idis_table.begin(); ti!=idis_table.end(); ++ti) {
+
+    // Figure out which idis list to use based on the most significant nybble of the pattern for the first 16-bit opword (these
+    // bits are usually invariant for a given instruction).  Entries 0-15 inclusive are for the cases when the high order
+    // nybble is invariant, and entry 16 is the catch-all.
+    std::pair<uint16_t, uint16_t> invariantValMask = idis->pattern.invariants(0xf000, 0);
+    size_t idisIdx = 0xf000==invariantValMask.second ? (invariantValMask.first>>12) & 0xf : 16;
+    
+    // Check whether this instruction disassembler's bit pattern is ambiguous with an existing pattern
+    for (IdisList::iterator ti=idis_table[idisIdx].begin(); ti!=idis_table[idisIdx].end(); ++ti) {
         std::pair<size_t, size_t> alternatives;
         if (idis->pattern.any_same((*ti)->pattern, &alternatives)) {
             // Inserting this instruction-specific disassembler would cause an ambiguity in the table
@@ -839,18 +848,31 @@ DisassemblerM68k::insert_idis(M68k *idis)
     }
 
     // Insert the new pattern in the list which is sorted by descending number of significant bits.
-    IdisTable::iterator ti = idis_table.begin();
-    while (ti!=idis_table.end() && (*ti)->pattern.nsignificant()>=idis->pattern.nsignificant()) ++ti;
-    idis_table.insert(ti, idis);
+    IdisList::iterator ti = idis_table[idisIdx].begin();
+    while (ti!=idis_table[idisIdx].end() && (*ti)->pattern.nsignificant()>=idis->pattern.nsignificant()) ++ti;
+    idis_table[idisIdx].insert(ti, idis);
 }
 
 DisassemblerM68k::M68k *
 DisassemblerM68k::find_idis(uint16_t *insn_bytes, size_t nbytes) const
 {
-    for (IdisTable::const_iterator ti=idis_table.begin(); ti!=idis_table.end(); ++ti) {
+    if (nbytes==0)
+        return NULL;
+
+    // First search the table based on the operator bits (high order nybble of the first opword)
+    size_t idisIdx = (insn_bytes[0] >> 12) & 0xf;
+    for (IdisList::const_iterator ti=idis_table[idisIdx].begin(); ti!=idis_table[idisIdx].end(); ++ti) {
         if ((*ti)->pattern.matches(insn_bytes, nbytes))
             return *ti;
     }
+
+    // If we didn't find it, search table entry 16, the catch-all slot for instructions whose operator byte is not invariant.
+    idisIdx = 16;
+    for (IdisList::const_iterator ti=idis_table[idisIdx].begin(); ti!=idis_table[idisIdx].end(); ++ti) {
+        if ((*ti)->pattern.matches(insn_bytes, nbytes))
+            return *ti;
+    }
+
     return NULL;
 }
 
@@ -4630,6 +4652,8 @@ DisassemblerM68k::init()
     set_alignment(2);
     set_sex(ByteOrder::ORDER_MSB);
 
+    idis_table.resize(17);
+
 #define M68k_DECODER(NAME)                                                                                                     \
     static M68k_##NAME *v_##NAME=NULL;                                                                                         \
     if (NULL==v_##NAME)                                                                                                        \
@@ -4822,6 +4846,17 @@ DisassemblerM68k::init()
     M68k_DECODER(tst);
     M68k_DECODER(unlk);
     M68k_DECODER(unpk);
+
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"M68k instruction disassembly table indexed by high-order nybble of first 16-bit word:\n";
+        for (size_t i=0; i<idis_table.size(); ++i) {
+            mlog[DEBUG] <<"  bucket " <<StringUtility::addrToString(i, 8) <<" has "
+                        <<StringUtility::plural(idis_table[i].size(), "entries") <<":";
+            for (IdisList::iterator li=idis_table[i].begin(); li!=idis_table[i].end(); ++li)
+                mlog[DEBUG] <<" " <<(*li)->name;
+            mlog[DEBUG] <<"\n";
+        }
+    }
 }
 
 } // namespace
