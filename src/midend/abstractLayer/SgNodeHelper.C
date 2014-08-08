@@ -1259,3 +1259,8 @@ void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mo
     SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
   }
 }
+
+void SgNodeHelper::replaceAstWithString(SgNode* node, string s) {
+  AstUnparseAttribute* substituteNameAttribute=new AstUnparseAttribute(s,AstUnparseAttribute::e_replace);
+  node->setAttribute("AstUnparseAttribute",substituteNameAttribute);
+}

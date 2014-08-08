@@ -277,11 +277,19 @@ namespace SgNodeHelper {
   */
   bool isArrayElementAssignment(SgNode* node);
   bool isFloatingPointAssignment(SgNode* exp);
+
+  // checks for float, double, long double
   bool isFloatingPointType(SgType* type);
 
-  // this function replaces expressions e1 by expression e2. Currently is uses the SageInterface::rewriteExpression function
-  // but wraps around some addtional checks that significantly improve performance of the replace operation.
+  /* replaces expression e1 by expression e2. Currently it uses the SageInterface::rewriteExpression function
+     but wraps around some addtional checks that significantly improve performance of the replace operation.
+  */
   void replaceExpression(SgExpression* e1, SgExpression* e2, bool mode=false);
+
+  /* replaces the ast with root 'node' with the string 's'. The string is attached to the AST and the unparser uses
+     string s instead of unparsing this substree. This function can be used to generate C++ extensions.
+  */
+  void replaceAstWithString(SgNode* node, string s);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
