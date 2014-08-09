@@ -156,6 +156,11 @@ public:
      *  operation, have the same number of children, and those children are all pairwise equivalent. */
     virtual bool equivalent_to(const TreeNodePtr& other) const = 0;
 
+    /** Compare two expressions structurally for sorting. Returns -1 if @p this is less than @p other, 0 if they are
+     *  structurally equal, and 1 if @p this is greater than @p other.  This function returns zero when an only when @ref
+     *  equivalent_to returns zero, but @ref equivalent_to can be much faster since it uses hashing. */
+    virtual int structural_compare(const TreeNodePtr& other) const = 0;
+
     /** Substitute one value for another. Finds all occurrances of @p from in this expression and replace them with @p to. If a
      * substitution occurs, then a new expression is returned. The matching of @p from to sub-parts of this expression uses
      * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
@@ -466,6 +471,7 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual int structural_compare(const TreeNodePtr& other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
@@ -574,6 +580,7 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual int structural_compare(const TreeNodePtr& other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return 1; }

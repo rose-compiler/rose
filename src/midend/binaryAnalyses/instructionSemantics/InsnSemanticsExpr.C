@@ -212,6 +212,31 @@ InternalNode::may_equal(const TreeNodePtr &other, SMTSolver *solver/*NULL*/) con
     return retval;
 }
 
+int
+InternalNode::structural_compare(const TreeNodePtr &other_) const
+{
+    InternalNodePtr other = other_->isInternalNode();
+    if (this==other.get()) {
+        return 0;
+    } else if (other==NULL) {
+        return 1;                                       // leaf nodes < internal nodes
+    } else if (op != other->op) {
+        return op < other->op ? -1 : 1;
+    } else if (get_nbits() != other->get_nbits()) {
+        return get_nbits() < other->get_nbits() ? -1 : 1;
+    } else if (children.size() != other->children.size()) {
+        return children.size() < other->children.size() ? -1 : 1;
+    } else {
+        // compare children
+        ASSERT_require(children.size()==other->children.size());
+        for (size_t i=0; i<children.size(); ++i) {
+            if (int cmp = children[i]->structural_compare(other->children[i]))
+                return cmp;
+        }
+    }
+    return 0;
+}
+
 bool
 InternalNode::equivalent_to(const TreeNodePtr &other_) const
 {
@@ -1687,6 +1712,24 @@ LeafNode::may_equal(const TreeNodePtr &other_, SMTSolver *solver) const
         retval = true;
     }
     return retval;
+}
+
+int
+LeafNode::structural_compare(const TreeNodePtr &other_) const
+{
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==other.get()) {
+        return 0;
+    } else if (other==NULL) {
+        return -1;                                      // leaf nodes < internal nodes
+    } else if (get_nbits() != other->get_nbits()) {
+        return get_nbits() < other->get_nbits() ? -1 : 1;
+    } else if (is_known() != other->is_known()) {
+        return is_known() ? -1 : 1;                     // concrete values < non-concrete
+    } else if (name != other->name) {
+        return name < other->name ? -1 : 1;
+    }
+    return 0;
 }
 
 bool
