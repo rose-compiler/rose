@@ -1,8 +1,9 @@
 #include "runtime.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <pthread.h>
+#include <iostream>
+
+using namespace std;
 
 Backstroke::RunTimeSystem::RunTimeSystem():currentEventRecord(0) {
 }
@@ -121,9 +122,9 @@ void Backstroke::RunTimeSystem::init_stack_info() {
 }
 
 void Backstroke::RunTimeSystem::print_stack_info() {
-  printf("STACKTOP     : %x\n",prog_stack_max);
-  printf("STACKLOCALTOP: %x\n",prog_stack_local);
-  printf("STACKEND     : %x\n",prog_stack_bottom);
+  cout<<"STACKTOP     : "<<prog_stack_max<<endl;
+  cout<<"STACKLOCALTOP: "<<prog_stack_local<<endl;
+  cout<<"STACKEND     : "<<prog_stack_bottom<<endl;
 }
 
 bool Backstroke::RunTimeSystem::is_stack_ptr(void *ptr) {

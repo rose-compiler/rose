@@ -29,5 +29,5 @@ void func() {
     z=z+x+y;
   }
   (*a)=z;
-  delete a;
+  //delete a;
 }
