@@ -361,7 +361,7 @@ $CLASSNAME::variant() const
    }
 #endif
 
-const char*
+ROSE_DLL_API const char*
 $CLASSNAME::sage_class_name() const
    {
      ROSE_ASSERT(this != NULL);
@@ -401,15 +401,7 @@ $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
           addNewAttribute(prefixCode + s,a);
         }
 
-  /* Return "this" so that it can be used with the build function interface to add regex attributes.
-     Example is:
-     SgAsmInstruction* target = buildx86Instruction(x86_mov,
-                   buildAsmMemoryReferenceExpression(
-                        buildAsmDWordValue(0x8049c8c)->addRegExpAttribute("*"),
-                        buildAsmx86RegisterReferenceExpression(x86_regclass_segment,segmentRegister),
-                        buildAsmTypeDoubleWord() ),
-                   buildAsmDWordValue(0x8048858)->addRegExpAttribute("*"));
-   */
+  /* Return "this" so that it can be used with the build function interface to add regex attributes. */
      return this;
    }
 

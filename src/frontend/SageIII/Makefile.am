@@ -299,7 +299,7 @@ test_roseh: roseh
 
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
-include_HEADERS = \
+pkginclude_HEADERS = \
    sage3.h sage3basic.h rose_attributes_list.h \
    attachPreprocessingInfo.h \
    attachPreprocessingInfoTraversal.h \
@@ -311,7 +311,7 @@ include_HEADERS = \
    $(fSageSupport_includeHeaders)
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
-nodist_include_HEADERS = \
+nodist_pkginclude_HEADERS = \
    Cxx_Grammar.h \
    Cxx_GrammarMemoryPoolSupport.h \
    Cxx_GrammarTreeTraversalAccessEnums.h \

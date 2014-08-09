@@ -73,7 +73,7 @@ namespace VirtualCFG {
       } else {
         // nodeText = node->unparseToString(); -- Fortran CFG nodes can't always be unparsed
         ostringstream nt;
-        nt << "@line=" << node->get_startOfConstruct()->get_line();
+        nt << "@line=" << node->get_startOfConstruct()->get_line()<<", col=" <<node->get_startOfConstruct()->get_col();
         nodeText += nt.str();
       }
       if (nodeText.length() > 20) {nodeText.resize(20); nodeText += "...";}
@@ -646,7 +646,11 @@ namespace VirtualCFG {
 
   vector<CFGEdge> CFGNode::inEdges() const {
     ROSE_ASSERT (node);
-    
+
+#if 0
+    printf ("In CFGNode::inEdges(): node = %p = %s parent = %p = %s \n",node,node->class_name().c_str(),node->get_parent(),node->get_parent()->class_name().c_str());
+#endif
+
     vector<CFGEdge> result = node->cfgInEdges(index);
    for ( vector<CFGEdge>::const_iterator i = result.begin(); i!= result.end(); i++)
    {

@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-roseQtWidgetsHeaderInstallPath = $(includedir)/qtWidgets
+roseQtWidgetsHeaderInstallPath = $(pkgincludedir)/qtWidgets
 
 ROSE_QT_WIDGETS_ROOT = $(top_srcdir)/src/roseExtensions/qtWidgets
 intern_codeEdit = $(ROSE_QT_WIDGETS_ROOT)/QCodeEditWidget/QCodeEdit

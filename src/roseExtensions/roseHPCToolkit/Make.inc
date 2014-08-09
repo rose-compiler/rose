@@ -7,7 +7,7 @@ ROSEHPCT_SRC_ROOT = $(top_srcdir)/src/roseExtensions/roseHPCToolkit
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 
 # Root of ROSE-HPCT header file installation tree
-rosehpctincdir = $(includedir)/rosehpct
+rosehpctincdir = $(pkgincludedir)/rosehpct
 
 # Default header file search path
 INCLUDES = -I$(top_srcdir) -I$(top_builddir) \

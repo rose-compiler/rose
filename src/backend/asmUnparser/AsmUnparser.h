@@ -923,6 +923,15 @@ public:
     virtual std::string blank_prefix() const { return std::string(line_prefix().size(), ' '); }
     /** @} */
 
+    /** Called when an invalid register is encountered.  This function is called when a RegisterDescriptor is found that isn't
+     *  a member of the RegisterDictionary.  It should construct a string to describe the invalid register in the assembly
+     *  code, and may also optionally emit a diagnostic message. */
+    static std::string invalid_register(SgAsmInstruction*, const RegisterDescriptor&, const RegisterDictionary*);
+
+public:
+    static void initDiagnostics();                      /**< Initialize diagnostic messages subsystem. */
+    static Sawyer::Message::Facility mlog;              /**< Diagnostic messages. */
+
 protected:
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */

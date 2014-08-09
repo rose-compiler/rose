@@ -131,7 +131,7 @@ SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va)
         const InstructionMap &imap = interp->get_instruction_map();
         const SgAsmIntegerValuePtrList &successors = get_successors();
         for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
-            rose_addr_t successor_va = (*si)->get_absolute_value();
+            rose_addr_t successor_va = (*si)->get_absoluteValue();
             if (SgAsmInstruction *target_insn = imap.get_value_or(successor_va, NULL)) {
                 SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn);
                 if (successor_va==target_func->get_entry_va()) {
