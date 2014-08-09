@@ -119,6 +119,16 @@ int main(int argc, char** argv)
   // Run the front end
   SgProject* project = frontend(argc, argv);
   //generatePDF(*project);
+
+#if 0
+  // DQ (6/1/2014): Added generation of graphs to support debugging.
+     generateDOTforMultipleFile(*project);
+
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+#endif
+
   printf("Frontend done\n");fflush(stdout);
   
   string fuseCmd = "";

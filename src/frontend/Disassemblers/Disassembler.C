@@ -2,15 +2,21 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
+#include "Diagnostics.h"
 #include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
+#include "DisassemblerM68k.h"
 #include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
 #include "BinaryLoader.h"
 #include "Partitioner.h"
+#include "stringify.h"
 
 #include <stdarg.h>
+using namespace rose;                                   // temporary until this API lives in the "rose" name space
+using namespace rose::Diagnostics;
+using namespace StringUtility;
 
 /* See header file for full documentation of all methods in this file. */
 
@@ -21,22 +27,34 @@ RTS_mutex_t Disassembler::class_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_DISASSEM
 /* List of disassembler subclasses (protect with class_mutex) */
 std::vector<Disassembler*> Disassembler::disassemblers;
 
+/* Diagnostics */
+Sawyer::Message::Facility Disassembler::mlog("Disassembler");
+double Disassembler::progress_interval = 10.0;
+double Disassembler::progress_time = 0.0;
+
+void Disassembler::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog.initStreams(Diagnostics::destination);
+        Diagnostics::facilities.insert(mlog);
+    }
+}
+    
 /* Hook for construction */
 void Disassembler::ctor() {
-#if 0
-    p_debug = stderr;
-#endif
+    memset(&progress_time, 0, sizeof progress_time);
 }
 
 void
 Disassembler::Exception::print(std::ostream &o) const
 {
     if (insn) {
-        o <<"disassembly failed at " <<StringUtility::addrToString(ip)
+        o <<"disassembly failed at " <<addrToString(ip)
           <<" [" <<unparseInstruction(insn) <<"]"
           <<": " <<what();
     } else if (ip>0) {
-        o <<"disassembly failed at " <<StringUtility::addrToString(ip);
+        o <<"disassembly failed at " <<addrToString(ip);
         if (!bytes.empty()) {
             for (size_t i=0; i<bytes.size(); i++) {
                 o <<(i>0?", ":"[")
@@ -136,6 +154,7 @@ Disassembler::initclass()
     RTS_INIT_RECURSIVE(class_mutex) {
         register_subclass(new DisassemblerArm());
         register_subclass(new DisassemblerPowerpc());
+        register_subclass(new DisassemblerM68k(m68k_freescale_isab));
         register_subclass(new DisassemblerMips());
         register_subclass(new DisassemblerX86(2)); /*16-bit*/
         register_subclass(new DisassemblerX86(4)); /*32-bit*/
@@ -149,7 +168,7 @@ Disassembler::register_subclass(Disassembler *factory)
 {
     initclass();
     RTS_MUTEX(class_mutex) {
-        ROSE_ASSERT(factory!=NULL);
+        ASSERT_not_null(factory);
         disassemblers.push_back(factory);
     } RTS_MUTEX_END;
 }
@@ -194,8 +213,6 @@ Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, B
 {
     InstructionMap insns = disassembleInterp(interp, successors, bad);
     Partitioner *p = p_partitioner ? p_partitioner : new Partitioner;
-    if (p_debug && !p_partitioner)
-        p->set_debug(get_debug());
     SgAsmBlock *top = p->partition(interp, insns, interp->get_map());
     interp->set_global_block(top);
     top->set_parent(interp);
@@ -210,14 +227,14 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 {
     /* Create a new disassembler so we can modify its behavior locally. */
     Disassembler *disassembler = Disassembler::lookup(interp);
-    assert(disassembler);
+    ASSERT_not_null(disassembler);
     disassembler = disassembler->clone();
-    assert(disassembler);
+    ASSERT_not_null(disassembler);
 
     /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
      * defaults built into the Disassembler class. */
     SgNode *file = SageInterface::getEnclosingNode<SgFile>(interp);
-    ROSE_ASSERT(file);
+    ASSERT_not_null(file);
     disassembler->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 
     /* Partitioning methods are specified with "-rose:partitioner_search" and are stored in SgFile also. Use them rather than
@@ -240,8 +257,8 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 void
 Disassembler::set_wordsize(size_t n)
 {
-    ROSE_ASSERT(n>0);
-    ROSE_ASSERT(n<=sizeof(rose_addr_t));
+    ASSERT_require(n>0);
+    ASSERT_require(n<=sizeof(rose_addr_t));
     p_wordsize = n;
 }
 
@@ -253,60 +270,39 @@ Disassembler::set_alignment(size_t n)
     int nbits=0;
     for (size_t i=0; i<8*sizeof(n); i++)
         nbits += (((size_t)1<<i) & n) ? 1 : 0;
-    ROSE_ASSERT(1==nbits);
+    ASSERT_require(1==nbits);
 #endif
     p_alignment = n;
 }
 
-/* Progress report class variables, all protected by class_mutex */
-time_t Disassembler::progress_interval = 10;
-time_t Disassembler::progress_time = 0;
-FILE *Disassembler::progress_file = stderr;
-
 /* Set progress reporting values. */
 void
-Disassembler::set_progress_reporting(FILE *output, unsigned min_interval)
+Disassembler::set_progress_reporting(double min_interval)
 {
     RTS_MUTEX(class_mutex) {
-        progress_file = output;
         progress_interval = min_interval;
     } RTS_MUTEX_END;
-}
-
-/* Produce a progress report if enabled. */
-void
-Disassembler::progress(FILE *debug, const char *fmt, ...) const
-{
-    va_list ap;
-    va_start(ap, fmt);
-
-    time_t now = time(NULL);
-
-    RTS_MUTEX(class_mutex) {
-        if (0==progress_time)
-            progress_time = now;
-    
-        if (progress_file!=NULL && now-progress_time >= progress_interval) {
-            progress_time = now;
-            vfprintf(progress_file, fmt, ap);
-        }
-
-        if (debug!=NULL)
-            vfprintf(debug, fmt, ap);
-    } RTS_MUTEX_END;
-
-    va_end(ap);
 }
 
 /* Update progress, keeping track of the number of instructions disassembled. */
 void
 Disassembler::update_progress(SgAsmInstruction *insn)
 {
-    if (insn)
-        p_ndisassembled++;
-
-    progress(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n",
-             insn?insn->get_address():(uint64_t)0, p_ndisassembled);
+    RTS_MUTEX(class_mutex) {
+        if (insn) {
+            ++p_ndisassembled;
+            if (progress_interval>=0 && mlog[INFO]) {
+                double curtime = Sawyer::Message::now();
+                if (curtime - progress_time >= progress_interval) {
+                    if (p_ndisassembled > 1) { // skip first message per disassembler object, but count the time
+                        mlog[INFO] <<"at va " <<addrToString(insn->get_address())
+                                   <<", disassembled " <<plural(p_ndisassembled, "instructions") <<"\n";
+                    }
+                    progress_time = curtime;
+                }
+            }
+        }
+    } RTS_MUTEX_END;
 }
 
 /* Disassemble one instruction. */
@@ -317,7 +313,7 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
     MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, buf_size);
     MemoryMap::Segment segment(buffer, 0, MemoryMap::MM_PROT_RX, "disassembleOne temp");
     MemoryMap map;
-    map.insert(Extent(buf_va, buf_size), segment);
+    map.insert(AddressInterval::baseSize(buf_va, buf_size), segment);
     return disassembleOne(&map, start_va, successors);
 }
 
@@ -325,12 +321,12 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 Disassembler::InstructionMap
 Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors, InstructionMap *cache)
 {
+    Stream trace(mlog[TRACE]);
     InstructionMap insns;
     SgAsmInstruction *insn;
     rose_addr_t va=0, next_va=start_va;
 
-    if (p_debug)
-        fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembling basic block\n", start_va);
+    trace <<"disassembling basic block at " <<addrToString(start_va) <<"\n";
 
     do { /*tail recursion*/
 
@@ -358,10 +354,8 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                     if (cache)
                         cache->insert(std::make_pair(va, (SgAsmInstruction*)0));
                     if (insns.size()==0 || !(p_search & SEARCH_DEADEND)) {
-                        if (p_debug)
-                            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: "
-                                    "disassembly failed in basic block 0x%08"PRIx64": %s\n",
-                                    e.ip, start_va, e.what());
+                        trace <<"  disassembly failed at " <<addrToString(e.ip)
+                              <<" in block " <<addrToString(start_va) <<": " <<e.what()<<"\n";
                         if (!cache) {
                             for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
                                 SageInterface::deleteAST(ii->second);
@@ -374,16 +368,15 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                     break;
                 }
             }
-            assert(insn!=NULL);
+            ASSERT_not_null(insn);
             next_va = va + insn->get_size();
             insns.insert(std::make_pair(va, insn));
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
              * A more thorough analysis can be performed below in the get_block_successors() call. */          
             if (insn->terminates_basic_block()) {
-                if (p_debug)
-                    fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: \"%s\" at 0x%08"PRIx64" naively terminates block\n",
-                            start_va, unparseMnemonic(insn).c_str(), va);
+                trace <<"  block " <<addrToString(start_va) <<" naively terminated at " <<addrToString(va)
+                      <<" by " <<unparseMnemonic(insn) <<"\n";
                 break;
             }
         }
@@ -393,11 +386,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
         bool complete=false;
         AddressSet suc = get_block_successors(insns, &complete);
         if (insn && complete && suc.size()==1 && *(suc.begin())==next_va) {
-            if (p_debug) {
-                fprintf(p_debug,
-                        "Disassembler[va 0x%08"PRIx64"]: semantic analysis proves basic block continues after 0x%08"PRIx64"\n",
-                        start_va, va);
-            }
+            trace <<"  semantic analysis proves block " <<addrToString(start_va) <<" continues after " <<addrToString(va) <<"\n";
         } else {
             insn = NULL; /*terminate recursion*/
         }
@@ -405,11 +394,11 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
         /* Save block successors in return value before we exit scope */
         if (!insn && successors) {
             successors->insert(suc.begin(), suc.end());
-            if (p_debug) {
-                fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: basic block successors:", start_va);
+            if (trace) {
+                trace <<"  block " <<addrToString(start_va) <<" successors:";
                 for (AddressSet::iterator si=suc.begin(); si!=suc.end(); si++)
-                    fprintf(p_debug, " 0x%08"PRIx64, *si);
-                fprintf(p_debug, "\n");
+                    trace <<" " <<addrToString(*si);
+                trace <<"\n";
             }
         }
     } while (insn);
@@ -424,7 +413,7 @@ Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, siz
     MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, buf_size);
     MemoryMap::Segment segment(buffer, 0, MemoryMap::MM_PROT_RX, "disassembleBlock temp");
     MemoryMap map;
-    map.insert(Extent(buf_va, buf_size), segment);
+    map.insert(AddressInterval::baseSize(buf_va, buf_size), segment);
     return disassembleBlock(&map, start_va, successors, cache);
 }
 
@@ -491,7 +480,7 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
             try {
                 bb = disassembleBlock(map, va, &worklist, &icache);
                 insns.insert(bb.begin(), bb.end()); /*not inserted if already existing*/
-                assert(icache.exists(va));
+                ASSERT_require(icache.exists(va));
             } catch(const Exception &e) {
                 if (bad)
                     bad->insert(std::make_pair(va, e));
@@ -533,10 +522,8 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, r
     }
 
     if (map->exists(following_va) && !tried.exists(following_va)) {
-        if (p_debug && worklist->find(following_va)==worklist->end()) {
-            rose_addr_t va = bb.begin()->first;
-            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_FOLLOWING added 0x%08"PRIx64"\n", va, following_va);
-        }
+        if (mlog[TRACE] && worklist->find(following_va)==worklist->end())
+            mlog[TRACE] <<"at " <<addrToString(bb_va) <<": SEARCH_FOLLOWING added " <<addrToString(following_va) <<"\n";
         worklist->insert(following_va);
     }
 }
@@ -550,15 +537,14 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
         for (size_t i=0; i<operands.size(); i++) {
             uint64_t constant=0;
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operands[i])) {
-                size_t nbits = ival->get_significant_bits();
+                size_t nbits = ival->get_significantBits();
                 if (nbits!=16 && nbits!=32 && nbits!=64)
                     continue; /* Not an appropriately-sized constant */
                 constant = ival->get_value();
             }
             if (map->exists(constant) && !tried.exists(constant)) {
-                if (p_debug && worklist->find(constant)==worklist->end())
-                    fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_IMMEDIATE added 0x%08"PRIx64"\n",
-                            bbi->first, constant);
+                if (mlog[TRACE] && worklist->find(constant)==worklist->end())
+                    mlog[TRACE] <<"at " <<addrToString(bbi->first) <<": SEARCH_IMMEDIATE added " <<addrToString(constant) <<"\n";
                 worklist->insert(constant);
             }
         }
@@ -575,15 +561,15 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
         AddressSet *worklist;
         const InstructionMap &tried;
         Visitor(Disassembler *d, AddressSet *worklist, const InstructionMap &tried): d(d), worklist(worklist), tried(tried) {}
-        virtual bool operator()(const MemoryMap *map, const Extent &range, const MemoryMap::Segment &segment) {
-            rose_addr_t va = range.first();
+        virtual bool operator()(const MemoryMap *map, const AddressInterval &range, const MemoryMap::Segment &segment) {
+            rose_addr_t va = range.least();
             va = ALIGN_UP(va, d->get_alignment());
 
             /* Scan through this segment */
-            while (va+d->get_wordsize() <= range.last()) {
+            while (va+d->get_wordsize() <= range.greatest()) {
                 rose_addr_t constant = 0; /*virtual address*/
                 unsigned char buf[sizeof constant];
-                assert(d->get_wordsize()<=sizeof constant);
+                ASSERT_require(d->get_wordsize()<=sizeof constant);
                 if (map->read1(buf, va, d->get_wordsize())<d->get_wordsize())
                     break; /*shouldn't happen since we checked sizes above*/
 
@@ -596,12 +582,12 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
                             constant |= buf[i] << (8*(d->get_wordsize()-(i+1)));
                             break;
                         default:
-                            ROSE_ASSERT(!"not implemented");
+                            ASSERT_not_implemented("byte order " + stringifyByteOrderEndianness(d->get_sex()));
                     }
                 }
                 if (map->exists(constant) && !tried.exists(constant)) {
-                    if (d->get_debug() && worklist->find(constant)==worklist->end())
-                        fprintf(d->get_debug(), "Disassembler[va 0x%08"PRIx64"]: SEARCH_WORD added 0x%08"PRIx64"\n", va, constant);
+                    if (d->mlog[TRACE] && worklist->find(constant)==worklist->end())
+                        d->mlog[TRACE] <<"at " <<addrToString(va) <<": SEARCH_WORD added " <<addrToString(constant) <<"\n";
                     worklist->insert(constant);
                 }
                 va += d->get_alignment();
@@ -626,19 +612,19 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
 
         /* Advance to the next valid mapped address if necessary by scanning for the first map element that has a higher
          * virtual address and is executable. */
-        MemoryMap::Segments::const_iterator si = map->segments().lower_bound(next_va);
-        if (si==map->segments().end())
+        MemoryMap::Segments::ConstNodeIterator si = map->segments().lowerBound(next_va);
+        if (si==map->segments().nodes().end())
             return; // no subsequent valid mapped address
-        const Extent &range = si->first;
-        const MemoryMap::Segment &segment = si->second;
-        assert(range.last()>=next_va);
+        const AddressInterval &range = si->key();
+        const MemoryMap::Segment &segment = si->value();
+        ASSERT_require(range.greatest()>=next_va);
 
         if (0==(segment.get_mapperms() & MemoryMap::MM_PROT_EXEC)) {
-            next_va = range.last() + 1;
+            next_va = range.greatest() + 1;
             continue;
         }
 
-        next_va = std::max(next_va, range.first());
+        next_va = std::max(next_va, range.least());
 
         /* If we tried to disassemble at this address and failed, then try the next address. */
         if (tried.exists(next_va)) {
@@ -659,9 +645,9 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
             continue; /*tail recursion*/
         }
 
-        if (p_debug)
-            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_%s added 0x%08"PRIx64"\n",
-                    start_va, avoid_overlap?"UNUSED":"ALLBYTES", next_va);
+        mlog[TRACE] <<"at " <<addrToString(start_va)
+                    <<": SEARCH_" <<(avoid_overlap?"UNUSED":"ALLBYTES")
+                    <<" added " <<addrToString(next_va) <<"\n";
 
         worklist->insert(next_va);
         return;
@@ -672,8 +658,10 @@ void
 Disassembler::search_function_symbols(AddressSet *worklist, const MemoryMap *map, SgAsmGenericHeader *header)
 {
     struct T: public AstSimpleProcessing {
-        T(AddressSet *wl, const MemoryMap *map, FILE *f)
-            : worklist(wl), map(map), p_debug(f) {}
+        Disassembler *d;
+        AddressSet *worklist;
+        const MemoryMap *map;
+        T(Disassembler *d, AddressSet *worklist, const MemoryMap *map): d(d), worklist(worklist), map(map) {}
         void visit(SgNode *node) {
             SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node);
             if (symbol && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
@@ -681,18 +669,14 @@ Disassembler::search_function_symbols(AddressSet *worklist, const MemoryMap *map
                 if (section && (section->is_mapped() || section->get_contains_code())) {
                     rose_addr_t va = section->get_mapped_actual_va();
                     if (map->exists(va)) {
-                        if (p_debug)
-                            fprintf(p_debug, "Disassembler: SEARCH_FUNCSYMS added 0x%08"PRIx64" for \"%s\"\n",
-                                    va, symbol->get_name()->get_string(true).c_str());
+                        d->mlog[TRACE] <<"SEARCH_FUNCSYMS added " <<addrToString(va)
+                                       <<" for \"" <<symbol->get_name()->get_string(true) <<"\"\n";
                         worklist->insert(va);
                     }
                 }
             }
         }
-        AddressSet *worklist;
-        const MemoryMap *map;
-        FILE *p_debug;
-    } t(worklist, map, p_debug);
+    } t(this, worklist, map);
     t.traverse(header, preorder);
 }
 
@@ -705,7 +689,7 @@ Disassembler::find_instruction_containing(const InstructionMap &insns, rose_addr
         return NULL;
     while (1) {
         --ii;
-        ROSE_ASSERT(ii->first <= va);
+        ASSERT_require(ii->first <= va);
         if (ii->first + max_insns_size < va)
             return NULL;
         if (ii->first + ii->second->get_size() > va)
@@ -721,7 +705,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, si
                                 AddressSet *successors, BadMap *bad)
 {
     MemoryMap map;
-    map.insert(Extent(buf_va, buf_size),
+    map.insert(AddressInterval::baseSize(buf_va, buf_size),
                MemoryMap::Segment(MemoryMap::ExternBuffer::create(buf, buf_size), 0,
                                   MemoryMap::MM_PROT_RX, "disassembleBuffer temp"));
     return disassembleBuffer(&map, start_va, successors, bad);
@@ -733,13 +717,13 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
                                  AddressSet *successors, BadMap *bad)
 {
     SgAsmGenericFile *file = section->get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     const void *file_buf = &(file->get_data()[0]);
 
     MemoryMap::Segment sgmt(MemoryMap::ExternBuffer::create(file_buf, section->get_size()), 0,
                             MemoryMap::MM_PROT_RX, section->get_name()->get_string());
     MemoryMap map;
-    map.insert(Extent(section_va, section->get_size()), sgmt);
+    map.insert(AddressInterval::baseSize(section_va, section->get_size()), sgmt);
     return disassembleBuffer(&map, section_va+start_offset, successors, bad);
 }
 
@@ -747,6 +731,7 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
 Disassembler::InstructionMap
 Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *successors, BadMap *bad)
 {
+    Stream trace(mlog[DEBUG]);
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
 
@@ -757,22 +742,21 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     /* Use the memory map attached to the interpretation, or build a new one and attach it. */
     MemoryMap *map = interp->get_map();
     if (!map) {
-        if (p_debug)
-            fprintf(p_debug, "Disassembler: no memory map; remapping all sections\n");
+        trace <<"no memory map; remapping all sections\n";
         BinaryLoader *loader = BinaryLoader::lookup(interp);
-        assert(loader);
+        ASSERT_not_null(loader);
         loader = loader->clone();
-        assert(loader);
+        ASSERT_not_null(loader);
         loader->set_perform_dynamic_linking(false);
         loader->set_perform_remap(true);
         loader->set_perform_relocations(false);
         loader->load(interp);
         map = interp->get_map();
     }
-    ROSE_ASSERT(map);
-    if (p_debug) {
-        fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
-        map->dump(p_debug, "    ");
+    ASSERT_not_null(map);
+    if (trace) {
+        trace <<"MemoryMap for disassembly:\n";
+        map->dump(trace, "    ");
     }
 
     /* Seed disassembly with entry points and function symbols from each header. */
@@ -781,8 +765,7 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
         for (size_t j=0; j<entry_rvalist.size(); j++) {
             rose_addr_t entry_va = entry_rvalist[j].get_rva() + headers[i]->get_base_va();
             worklist.insert(entry_va);
-            if (p_debug)
-                fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: entry point\n", entry_va);
+            trace <<"at " <<addrToString(entry_va) <<": entry point\n";
         }
         if (p_search & SEARCH_FUNCSYMS)
             search_function_symbols(&worklist, map, headers[i]);
@@ -828,25 +811,25 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     SgAsmGenericFile *file = NULL;
     const SgAsmGenericFilePtrList &files = interp->get_files();
     bool was_tracking = false; // only valid when file!=NULL  (value here is to shut of used-before-defined warnings from GCC)
-    MemoryMap::Segments::const_iterator si = map->segments().end();
+    MemoryMap::Segments::ConstNodeIterator si = map->segments().nodes().end();
 
     /* Re-read each instruction so the file has a chance to track the reference. */
     try {
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
-            ROSE_ASSERT(insn->get_size()<=sizeof buf);
+            ASSERT_require(insn->get_size()<=sizeof buf);
             rose_addr_t va = insn->get_address();
             size_t nbytes = insn->get_size();
 
             while (nbytes>0) {
                 /* Find the memory map segment and the file that goes with that segment (if any) */
-                if (si==map->segments().end() || !si->first.contains(Extent(va))) {
+                if (si==map->segments().nodes().end() || !si->key().isContaining(va)) {
                     if (file) {
                         file->set_tracking_references(was_tracking);
                         file = NULL;
                     }
                     si = map->segments().find(va);
-                    if (si==map->segments().end()) {
+                    if (si==map->segments().nodes().end()) {
                         /* This byte of the instruction is not mapped. Perhaps the next one is. */
                         ++va;
                         --nbytes;
@@ -855,21 +838,20 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
 
                     /* Find the file that goes with this segment. */
                     for (size_t i=0; i<files.size(); i++) {
-                        if (&(files[i]->get_data()[0]) == si->second.get_buffer()->get_data_ptr()) {
+                        if (&(files[i]->get_data()[0]) == si->value().get_buffer()->get_data_ptr()) {
                             file = files[i];
                             was_tracking = file->get_tracking_references();
                             file->set_tracking_references(true);
                             break;
                         }
                     }
-
                 }
 
                 /* Read the file for its reference tracking side effect. */
-                size_t sgmt_offset = va - si->first.first();
-                size_t n = std::min(nbytes, (size_t)si->first.size()-sgmt_offset);
+                size_t sgmt_offset = va - si->key().least();
+                size_t n = std::min(nbytes, (size_t)si->key().size()-sgmt_offset);
                 if (file) {
-                    size_t file_offset = si->second.get_buffer_offset() + sgmt_offset;
+                    size_t file_offset = si->value().get_buffer_offset() + sgmt_offset;
                     file->read_content(file_offset, buf, n, false);
                 }
                 nbytes -= n;
@@ -904,3 +886,4 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
 
     return successors;
 }
+

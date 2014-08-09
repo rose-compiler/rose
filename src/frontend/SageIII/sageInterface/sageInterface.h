@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <utility>
 
+#include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 #else
@@ -451,7 +453,7 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-    /** Generate a name that is unique in the current scope and any parent and children scopes.
+    /** Generate a name like __temp#__ that is unique in the current scope and any parent and children scopes. # is a unique integer counter.
     * @param baseName the word to be included in the variable names. */
     std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
 
@@ -986,6 +988,11 @@ ROSE_DLL_API bool isUpcArrayWithThreads(SgArrayType* t);
 
 //! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
 ROSE_DLL_API SgType* lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope=NULL);
+
+// DQ (7/22/2014): Added support for comparing expression types in actual arguments with those expected from the formal function parameter types.
+//! Get the type of the associated argument expression from the function type.
+ROSE_DLL_API SgType* getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression);
+
 
 //@}
 
@@ -2304,21 +2311,21 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
 //--------------------------------Java interface functions ---------------------
-//#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-      std::string getTempDirectory(SgProject *project);
-      void destroyTempDirectory(std::string);
-      SgFile *processFile(SgProject *, std::string, bool unparse = false);
-      std::string preprocessPackage(SgProject *, std::string);
-      std::string preprocessImport(SgProject *, std::string);
-      SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
-      SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
-      SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
-      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
-      SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
-      SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
-      SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
-      SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
-//#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+      ROSE_DLL_API std::string getTempDirectory(SgProject *project);
+      ROSE_DLL_API void destroyTempDirectory(std::string);
+      ROSE_DLL_API SgFile *processFile(SgProject *, std::string, bool unparse = false);
+      ROSE_DLL_API std::string preprocessPackage(SgProject *, std::string);
+      ROSE_DLL_API std::string preprocessImport(SgProject *, std::string);
+      ROSE_DLL_API SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
+      ROSE_DLL_API SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
+      ROSE_DLL_API SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
+      ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
+      ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
 }// end of namespace
 

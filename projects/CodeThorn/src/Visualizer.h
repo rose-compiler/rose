@@ -14,8 +14,6 @@
 #include "CommandLineOptions.h"
 
 using CodeThorn::Analyzer;
-using CodeThorn::Labeler;
-using CodeThorn::VariableIdMapping;
 using CodeThorn::PStateSet;
 using CodeThorn::EStateSet;
 
@@ -30,8 +28,8 @@ class AssertionExtractor {
   void setEStateSet(EStateSet* x);
 
  private:
-  CodeThorn::Labeler* labeler;
-  CodeThorn::VariableIdMapping* variableIdMapping;
+  Labeler* labeler;
+  VariableIdMapping* variableIdMapping;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;
   vector<string> assertions;
@@ -41,10 +39,10 @@ class Visualizer {
  public:
   Visualizer();
   Visualizer(CodeThorn::Analyzer* analyzer);
-  Visualizer(CodeThorn::Labeler* l, CodeThorn::VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
+  Visualizer(IOLabeler* l, VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setOptionTransitionGraphDotHtmlNode(bool);
-  void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
-  void setLabeler(CodeThorn::Labeler* x);
+  void setVariableIdMapping(VariableIdMapping* x);
+  void setLabeler(IOLabeler* x);
   void setFlow(CodeThorn::Flow* x);
   void setPStateSet(CodeThorn::PStateSet* x);
   void setEStateSet(CodeThorn::EStateSet* x);
@@ -54,14 +52,14 @@ class Visualizer {
   string pstateToDotString(const CodeThorn::PState* pstate);
   string estateToString(const CodeThorn::EState* estate);
   string estateToDotString(const CodeThorn::EState* estate);
-  string transitionGraphDotHtmlNode(CodeThorn::Label lab);
+  string transitionGraphDotHtmlNode(Label lab);
   string transitionGraphToDot();
   string transitionGraphWithIOToDot();
   string foldedTransitionGraphToDot();
   string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
  private:
-  CodeThorn::Labeler* labeler;
-  CodeThorn::VariableIdMapping* variableIdMapping;
+  IOLabeler* labeler;
+  VariableIdMapping* variableIdMapping;
   CodeThorn::Flow* flow;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;

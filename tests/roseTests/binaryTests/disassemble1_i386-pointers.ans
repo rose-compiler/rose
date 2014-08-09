@@ -19,7 +19,6 @@ using this memory map for disassembly:
     va 0x080497c8 + 0x00000038 = 0x08049800 rw-- at buffer ace   + 0x000007c8 i386-pointers(.data+.got+.got.plt)
     va 0x08049800 + 0x00000030 = 0x08049830 rw-p at anon acg     + 0x00000000 i386-pointers(.bss)
     va 0x08049830 + 0x000007d0 = 0x0804a000 rw-p at anon aaj     + 0x00000030 i386-pointers(LOAD#3)
-disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 
 
 0x08048278: ================================== Function (function call, symbol) <_init>
@@ -2389,4 +2388,3 @@ disassembled 3052 instructions and 24 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

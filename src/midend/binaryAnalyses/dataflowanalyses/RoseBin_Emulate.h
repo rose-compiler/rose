@@ -45,13 +45,6 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
                       uint64_t &qw_val);
 
 
-  /*
-  int64_t trackValueForRegister(SgGraphNode* node,
-                                std::pair<X86RegisterClass, int>  codeSearch,
-                                bool& cantTrack,
-                                SgAsmRegisterReferenceExpression* refExpr_rightHand);
-  */
-
   void clearRegisters();
   uint64_t getRegister(std::pair<X86RegisterClass, int>  code);
 

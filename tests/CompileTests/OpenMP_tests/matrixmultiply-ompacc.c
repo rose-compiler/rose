@@ -3,6 +3,7 @@ Naive matrix-matrix multiplication(mmm)
 By C. Liao
 */
 #include <stdio.h>
+#include <assert.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -88,6 +89,7 @@ int verify()
     }
   printf("sum of c[i][j] is %f\n",sum);
   printf("sum of c2[i][j] is %f\n",sum2);
+  assert (sum == sum2);
   return 0;
 }
 
