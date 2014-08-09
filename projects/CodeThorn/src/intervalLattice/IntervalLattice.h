@@ -2,16 +2,20 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cassert>
 
 // Author: Markus Schordan, 2014.
 
-// represents one interval
-// Requirements: Type must support algorithms: min, max; operators: '<','>'; values: -1, +1.
+/* represents one interval
+  Requirements: Type must support algorithms: min, max; operators: '<','=='; values: -1, +1.
+  Binary operations on bot remain bot (this should be used for error checking)
+*/
+
 template<typename Type>
 class IntervalLattice {
   // creates an interval with a known left and right boundary
  public:
- IntervalLattice():_isLowInf(true),_isHighInf(true) {}
+ IntervalLattice() { setTop();}
  IntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {} 
   static IntervalLattice highInfInterval(Type left) {
     IntervalLattice t;
@@ -29,7 +33,10 @@ class IntervalLattice {
     return isLowInf() && isHighInf();
   }
   void setTop() {
-    return setIsLowInf(true) && isHighInf(true);
+    setIsLowInf(true);
+    setIsHighInf(true);
+    _low=-1;
+    _high=+1;
   }
   bool isBot() {
     return isEmpty();
@@ -38,7 +45,10 @@ class IntervalLattice {
     setEmpty();
   }
   bool isEmpty() {
-    return !isLowInf()&&!isHighInf()&&_low>_high;
+    bool empty=!isLowInf()&&!isHighInf()&&_low>_high;
+    if(empty) {
+      assert(_low==+1 && _high==-1);
+    }
   }
   void setEmpty() {
     // unified empty interval [+1,-1] (also to ensure proper operation of default operator==)
@@ -181,7 +191,21 @@ class IntervalLattice {
     return "["+ss.str()+"]";
   }
 
+  bool operationOnBot() {
+    return isBot();
+  }
+  bool binaryOperationOnBot(IntervalLattice other) {
+    if(isBot()||other.isBot()) {
+      setBot();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   void arithAdd(Type val) {
+    if(operationOnBot())
+      return;
     if(!isLowInf())
       _low+=val;
     if(!isHighInf())
@@ -189,6 +213,8 @@ class IntervalLattice {
   }
 
   void arithSub(Type val) {
+    if(operationOnBot())
+      return;
     if(!isLowInf())
       _low-=val;
     if(!isHighInf())
@@ -196,6 +222,8 @@ class IntervalLattice {
   }
 
   void arithMul(Type val) {
+    if(operationOnBot())
+      return;
     if(!isLowInf())
       _low*=val;
     if(!isHighInf())
@@ -203,6 +231,8 @@ class IntervalLattice {
   }
 
   void arithDiv(Type val) {
+    if(operationOnBot())
+      return;
     if(!isLowInf())
       _low/=val;
     if(!isHighInf())
@@ -210,6 +240,8 @@ class IntervalLattice {
   }
 
   void arithMod(Type val) {
+    if(operationOnBot())
+      return;
     if(!isLowInf())
       _low%=val;
     if(!isHighInf())
@@ -218,6 +250,8 @@ class IntervalLattice {
 
   // [a,b]+[c,d]=[a+c,b+d]
   void arithAdd(IntervalLattice other) {
+    if(binaryOperationOnBot(other))
+      return;
     if(!isLowInf() && !other.isLowInf())
       _low+=other._low;
     if(!isHighInf() && !other.isHighInf())
@@ -230,6 +264,8 @@ class IntervalLattice {
 
   // [a,b]-[c,d]=[a-d,b-c]
   void arithSub(IntervalLattice other) {
+    if(binaryOperationOnBot(other))
+      return;
     if(!isLowInf() && !other.isHighInf())
       _low-=other._high;
     if(!isHighInf() && !other.isLowInf())
@@ -242,6 +278,8 @@ class IntervalLattice {
 
   // [a,b]*[c,d]=[a*c,b*d]
   void arithMul(IntervalLattice other) {
+    if(binaryOperationOnBot(other))
+      return;
     if(!isLowInf() && !other.isLowInf())
       _low*=other._low;
     if(!isHighInf() && !other.isHighInf())
@@ -254,6 +292,8 @@ class IntervalLattice {
 
   // [a,b]/[c,d]=[a/d,b/c]
   void arithDiv(IntervalLattice other) {
+    if(binaryOperationOnBot(other))
+      return;
     if(!isLowInf() && !other.isHighInf())
       _low/=other._high;
     if(!isHighInf() && !other.isLowInf())
@@ -266,6 +306,8 @@ class IntervalLattice {
 
   // [a,b]%[c,d]=[a%d,b%c]
   void arithMod(IntervalLattice other) {
+    if(binaryOperationOnBot(other))
+      return;
     if(!isLowInf() && !other.isHighInf())
       _low%=other._high;
     if(!isHighInf() && !other.isLowInf())
