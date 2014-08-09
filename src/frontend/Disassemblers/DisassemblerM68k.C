@@ -494,8 +494,11 @@ DisassemblerM68k::makeImmediateExtension(M68kDataFormat fmt, size_t ext_word_num
     ASSERT_require(nBits % 16 == 0);
     size_t nWords = nBits / 16;
     Sawyer::Container::BitVector bv(nBits);
-    for (size_t i=nWords; i>0; --i)                     // words are stored from high word to low word
-        bv.fromInteger(bv.baseSize((i-1)*16, 16), instructionWord(ext_word_number+i+1));
+    for (size_t i=0; i<nWords; ++i) {                   // values are stored from high to low word; each word big endian
+        uint16_t word = instructionWord(ext_word_number+i+1);// +1 for the opcode word itself
+        size_t bitOffset = (nWords-(i+1))*16;
+        bv.fromInteger(bv.baseSize(bitOffset, 16), word);
+    }
     return SageBuilderAsm::buildValueInteger(bv, makeType(fmt));
 }
             
