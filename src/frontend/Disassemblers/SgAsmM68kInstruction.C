@@ -294,7 +294,6 @@ SgAsmM68kInstruction::get_successors(bool *complete)
         case m68k_bpl:
         case m68k_bvc:
         case m68k_bvs:
-        case m68k_bsr:
         case m68k_bkpt:
         case m68k_chk:
         case m68k_chk2:
@@ -373,6 +372,7 @@ SgAsmM68kInstruction::get_successors(bool *complete)
         }
             
         case m68k_bra:
+        case m68k_bsr:
         case m68k_callm:
         case m68k_jmp:
         case m68k_jsr: {
