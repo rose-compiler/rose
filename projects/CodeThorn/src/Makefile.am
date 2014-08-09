@@ -8,23 +8,23 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
 if ROSE_APPROVED_PYTHON_VERSION
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib
 
 noinst_PROGRAMS = addressTakenAnalysis 
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
 
 # in V1.2 there are no KNOBS
 KNOBS = 
 
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_LDADD = -lfl -lrose
+codethorn_LDADD = -lfl -lrose -lspot -lbdd
 codethorn_SOURCES = \
   AType.C                          \
   AType.h                          \
@@ -68,6 +68,7 @@ codethorn_SOURCES = \
   Visualizer.h                     \
   RDLattice.h                      \
   RDLattice.C                      \
+  Evaluator.h                      \
   codethorn.C                      \
   codethorn.h                      \
   WorkListSeq.h                    \
@@ -79,8 +80,8 @@ codethorn_SOURCES = \
   RERS_empty_specialization.C      \
   Flow.h \
   Flow.C \
-  ReachabilityResults.h \
-  ReachabilityResults.C \
+  PropertyValueTable.h \
+  PropertyValueTable.C \
   defUseQuery.C \
   defUseQuery.h \
   VariableIdUtils.C \
@@ -88,7 +89,15 @@ codethorn_SOURCES = \
   addressTakenAnalysis.C \
   addressTakenAnalysis.h \
   RewriteSystem.C \
-  RewriteSystem.h 
+  RewriteSystem.h \
+  SpotConnection.C \
+  SpotConnection.h \
+  SpotTgba.C \
+  SpotTgba.h \
+  SpotState.C \
+  SpotState.h \
+  SpotSuccIter.C \
+  SpotSuccIter.h
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
@@ -222,8 +231,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
   VariableIdUtils.h \
   addressTakenAnalysis.C \
   addressTakenAnalysis.h \
-  ReachabilityResults.h \
-  ReachabilityResults.C \
+  PropertyValueTable.h \
+  PropertyValueTable.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
   DeadCodeElimination.C                \
@@ -273,9 +282,53 @@ analyterix_SOURCES = \
   VariableIdUtils.h \
   addressTakenAnalysis.C \
   addressTakenAnalysis.h \
-  ReachabilityResults.h \
-  ReachabilityResults.C \
+  PropertyValueTable.h \
+  PropertyValueTable.C \
   analyterix.C
+
+reverser_LDADD = -lrose
+reverser_SOURCES = \
+  CommandLineOptions.h CommandLineOptions.C \
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
+  AnalysisAbstractionLayer.h       \
+  AnalysisAbstractionLayer.C       \
+  CFAnalyzer.h \
+  CFAnalyzer.C \
+  RDLattice.h \
+  RDLattice.C \
+  RDAnalyzer.h \
+  RDAnalyzer.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  LanguageRestrictor.h \
+  LanguageRestrictor.C \
+  LanguageRestrictorCollection.h \
+  LanguageRestrictorCollection.C \
+  DataDependenceVisualizer.h \
+  DataDependenceVisualizer.C \
+  AType.h \
+  AType.C \
+  RDAstAttribute.h \
+  RDAstAttribute.C \
+  UDAstAttribute.h \
+  UDAstAttribute.C \
+  CPAstAttribute.h CPAstAttribute.C \
+  AstTerm.h \
+  AstTerm.C \
+  Miscellaneous.C \
+  Miscellaneous.h \
+  ProgramStats.h \
+  ProgramStats.C \
+  Flow.h \
+  Flow.C \
+  defUseQuery.C \
+  defUseQuery.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
+  addressTakenAnalysis.C \
+  addressTakenAnalysis.h \
+  PropertyValueTable.h \
+  PropertyValueTable.C \
+  reverser.C
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -304,6 +357,7 @@ check-local:
 	./codethorn --rersmode=yes --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 	rm -f *.consistent
 	$(MAKE) $(CONSISTENCY_CHECKS)
+	$(srcdir)/scripts/runLtlRegressionTests $(srcdir)  . #run RERS examples in several versions and compare to previous results
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat

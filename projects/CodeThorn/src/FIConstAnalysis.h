@@ -102,6 +102,11 @@ class FIConstAnalysis {
   LabelSet getFalseConditions();
   LabelSet getNonConstConditions();
 
+  void setDetailedOutput(bool);
+
+  // removes all variables that are NOT in this provided set
+  void filterVariables(VariableIdSet& variableIdSet);
+
  private:
   // Expression evaluation functions
   EvalValueType eval(SgExpression* node);

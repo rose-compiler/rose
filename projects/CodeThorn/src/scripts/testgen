@@ -1,0 +1,49 @@
+
+
+codethorn tests/rers/Problem28_mod.c --reduce-cfg=no --stderr-like-failed-assert=yes  --input-sequence="[2,1]" --viz=yes --tg1-estate-properties=yes --tg2-estate-properties=no --tg-trace=Problem28_mod_trace.txt --iseq-file=Problem28_21_iseq.csv --iseq-length=1
+cp transitiongraph1.dot Problem28_mod_tg1.dot
+cp transitiongraph2.dot Problem28_mod_tg2.dot
+cp cfg.dot Problem28_mod_cfg.dot
+
+codethorn --input-values="{1,2,3,4,5,6}" tests/rers/Problem28.c --stderr-like-failed-assert=yes --iseq-file=Problem28_iseq.csv --iseq-length=4
+
+codethorn --input-values="{1,2,3,4,5,6}" tests/rers/Problem28_mod.c --stderr-like-failed-assert=yes --iseq-file=Problem28_mod_iseq.csv --iseq-length=4
+
+codethorn --input-values="{1,2,3,4,5,6}" tests/rers/Problem28.c --stderr-like-failed-assert=no --iseq-file=Problem28_stderr_iseq.csv --iseq-length=4
+
+codethorn --input-values="{1,2,3,4,5,6}" tests/rers/Problem28_mod.c --stderr-like-failed-assert=no --iseq-file=Problem28_mod_stderr_iseq.csv --iseq-length=4
+
+g++ tests/rers/Problem28.c -oProblem28
+g++ tests/rers/Problem28_mod.c -oProblem28_mod
+
+########################################################################
+# correct program
+codethorn tests/rers/Problem28_inlined.c --reduce-cfg=no --stderr-like-failed-assert=yes --input-sequence="[2,1]" --viz=yes --tg1-estate-properties=yes --tg2-estate-properties=no --tg-trace=Problem28_inlined_trace.txt --iseq-file=Problem28_21_inlined_iseq.csv --iseq-length=1
+cp transitiongraph1.dot Problem28_inlined_tg1.dot
+cp transitiongraph2.dot Problem28_inlined_tg2.dot
+cp cfg.dot Problem28_inlined_cfg.dot
+
+codethorn tests/rers/Problem28_inlined.c --input-values="{1,2,3,4,5,6}" --stderr-like-failed-assert=yes --iseq-file=Problem28_inlined_iseq.csv --iseq-length=4
+
+codethorn tests/rers/Problem28_opt.C --input-values="{1,2,3,4,5,6}" --stderr-like-failed-assert=yes --iseq-file=Problem28_opt_iseq.csv --iseq-length=4
+
+codethorn tests/rers/Problem28_inlined.c --input-values="{1,2,3,4,5,6}" --stderr-like-failed-assert=no --iseq-file=Problem28_inlined_stderr_iseq.csv --iseq-length=4
+
+codethorn tests/rers/Problem28_opt.C --input-values="{1,2,3,4,5,6}" --stderr-like-failed-assert=no --iseq-file=Problem28_opt_stderr_iseq.csv --iseq-length=4
+
+
+g++ tests/rers/Problem28_inlined.c -oProblem28_inlined
+g++ tests/rers/Problem28_opt.C -oProblem28_opt
+
+wc -l Problem28_stderr_iseq.csv
+wc -l Problem28_mod_stderr_iseq.csv
+wc -l Problem28_inlined_stderr_iseq.csv
+wc -l Problem28_opt_stderr_iseq.csv
+
+wc -l Problem28_iseq.csv
+wc -l Problem28_mod_iseq.csv
+wc -l Problem28_inlined_iseq.csv
+wc -l Problem28_opt_iseq.csv
+
+wc -l Problem28_21_iseq.csv
+wc -l Problem28_21_inlined_iseq.csv

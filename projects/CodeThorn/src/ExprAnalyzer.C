@@ -67,6 +67,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
 
+  // guard: for floating-point expression: return immediately with most general result
+  // TODO: refine to walk the tree, when assignments are allowed in sub-expressions
+  // MS: 2014-06-27: this cannot run in parallel because exp->get_type() seg-faults 
+#if 0
+  if(SgExpression* exp=isSgExpression(node)) {
+    bool isFloatingPointType;
+    // ROSE workaround. get_type cannot be run in parallel
+    #pragma omp critical
+    {
+      isFloatingPointType=SgNodeHelper::isFloatingPointType(exp->get_type());
+    }
+    if(isFloatingPointType) {
+      res.estate=estate;
+      res.result=AType::ConstIntLattice(AType::Top());
+      return listify(res);
+    }
+  }
+#endif
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
@@ -81,6 +99,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     if(condResultList.size()==0) {
       cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
       exit(1);
+    }
+    if(condResultList.size()==2) {
+      list<SingleEvalResultConstInt>::iterator i=condResultList.begin();
+      SingleEvalResultConstInt singleResult1=*i;
+      ++i;
+      SingleEvalResultConstInt singleResult2=*i;
+      if((singleResult1.value()==singleResult2.value()).isTrue()) {
+        cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
+      }
     }
     if(condResultList.size()>1) {
       cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;

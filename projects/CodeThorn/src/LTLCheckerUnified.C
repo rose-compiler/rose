@@ -842,45 +842,52 @@ public:
             const VariableIdMapping::VariableIdSet& input_vars,
             char c, BoolLattice succ_val) {
       if (input_vars.empty())
-    return Bot();
-
+        return Bot();
+      
       BoolLattice r = Bot();
       assert(estate);
+     
+#if 0
       assert(estate->constraints());
       ConstraintSet constraints = *estate->constraints();
+#else
+      // MS 2014: adapted code to use new function which represents all information as constraints
+      //          this allows to also use explicit values with option --input-values={...}
+      ConstraintSet constraints = estate->allInfoAsConstraints();
+#endif
       for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
-    ivar != input_vars.end();
-    ++ivar) {
-    // main input variable
-    BoolLattice r1 = is_eq(constraints, *ivar, c);
-    assert(consistent(r, r1));
-    r = r1;
+           ivar != input_vars.end();
+           ++ivar) {
+        // main input variable
+        BoolLattice r1 = is_eq(constraints, *ivar, c);
+        assert(consistent(r, r1));
+        r = r1;
       }
-
+      
       if (r.isBot())
-    return succ_val;
+        return succ_val;
       else
-    return r;
+        return r;
     }
-
+    
     static BoolLattice is_eq(const ConstraintSet& constraints,
-           const VariableId& v,
-           char c) {
+                             const VariableId& v,
+                             char c) {
       // var == c
       ListOfAValue l = constraints.getEqVarConst(v);
       for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-    if (lval->isConstInt()) {
-      // A=1, B=2
-      return c == rersChar(lval->getIntValue());
-    }
+        if (lval->isConstInt()) {
+          // A=1, B=2
+          return c == rersChar(lval->getIntValue());
+        }
       }
       // var != c
       l = constraints.getNeqVarConst(v);
       for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-    if (lval->isConstInt()) {
-      if (c == rersChar(lval->getIntValue()))
-        return false;
-    }
+        if (lval->isConstInt()) {
+          if (c == rersChar(lval->getIntValue()))
+            return false;
+        }
       }
 
       // In ConstIntLattice, Top means ALL values
@@ -913,18 +920,18 @@ public:
       for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
         ivar != input_vars.end();
         ++ivar) {
-    // This will really only work with one input variable (that one may be aliased, though)
-    BoolLattice r1 = !is_eq(constraints, *ivar, c);
-    //cerr<<"r = "<<r<<endl;
-    //cerr<<"r1 = "<<r1<<endl;
-    assert(consistent(r, r1));
-    r = r1;
+        // This will really only work with one input variable (that one may be aliased, though)
+        BoolLattice r1 = !is_eq(constraints, *ivar, c);
+        //cerr<<"r = "<<r<<endl;
+        //cerr<<"r1 = "<<r1<<endl;
+        assert(consistent(r, r1));
+        r = r1;
       }
 
       if (r.isBot())
-     return succ_val;
+        return succ_val;
       else
-    return r;
+        return r;
     }
 
     // NOTE: This is extremely taylored to the RERS challenge benchmarks.
@@ -939,47 +946,46 @@ public:
 
     /// return True iff that state is an Oc operation
     static BoolLattice isOutputState(const EState* estate, char c, bool endpoint,
-             BoolLattice succ_val) {
+                                     BoolLattice succ_val) {
       //cerr<<estate->io.toString()<<endl;
       switch (estate->io.op) {
       case InputOutput::STDOUT_CONST: {
-    const AType::ConstIntLattice& lval = estate->io.val;
-    //cerr<<lval.toString()<<endl;
-    assert(lval.isConstInt());
-    // U=21, Z=26
-    return c == rersChar(lval.getIntValue());
+        const AType::ConstIntLattice& lval = estate->io.val;
+        //cerr<<lval.toString()<<endl;
+        assert(lval.isConstInt());
+        // U=21, Z=26
+        return c == rersChar(lval.getIntValue());
       }
       case InputOutput::STDOUT_VAR: {
-    // output == c constraint?
-    const PState& prop_state = *estate->pstate();
-    //cerr<<estate->toString()<<endl;
-    //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
-    if (prop_state.varIsConst(estate->io.var)) {
-      AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
-      //cerr<<aval<<endl;
-      return c == rersChar(aval.getIntValue());
-    }
-
-    // Is there an output != c constraint?
-    // var != c
-    ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
-    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-      if (lval->isConstInt())
-        if (c == rersChar(lval->getIntValue()))
-          return false;
-    }
-
+        // output == c constraint?
+        const PState& prop_state = *estate->pstate();
+        //cerr<<estate->toString()<<endl;
+        //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
+        if (prop_state.varIsConst(estate->io.var)) {
+          AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
+          //cerr<<aval<<endl;
+          return c == rersChar(aval.getIntValue());
+        }
+        
+        // Is there an output != c constraint?
+        // var != c
+        ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
+        for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+          if (lval->isConstInt())
+            if (c == rersChar(lval->getIntValue()))
+              return false;
+        }
+        
       }
       default:
-    return false;
-    // Make sure that dead ends with no I/O show up as false
-    if (endpoint)
-      return false;
-
-    return succ_val;
+        return false;
+        // Make sure that dead ends with no I/O show up as false
+        if (endpoint)
+          return false;
+        return succ_val;
       }
     }
-
+    
     /**
      */
     void visit(const OutputSymbol* expr) {
@@ -1196,7 +1202,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   int i = 0;
   boost::unordered_map<const EState*, Label> estate_label;
   FOR_EACH_ESTATE(state, l1) {
-    estate_label[&(*state)] = i++;
+    estate_label[*state] = i++;
   }
   //cerr<<" finished labeling "<<flush;
 
@@ -1205,12 +1211,12 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 
   BoostTransitionGraph full_graph(ess.size());
   FOR_EACH_TRANSITION(t) {
-    Label src = estate_label[((*t).source)];
-    Label tgt = estate_label[((*t).target)];
-    if ((*t).source != start)
+    Label src = estate_label[((*t)->source)];
+    Label tgt = estate_label[((*t)->target)];
+    if ((*t)->source != start)
       add_edge(src, tgt, full_graph);
-    full_graph[src] = (*t).source;
-    full_graph[tgt] = (*t).target;
+    full_graph[src] = (*t)->source;
+    full_graph[tgt] = (*t)->target;
     //cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
     assert(full_graph[src]);
     assert(full_graph[tgt]);
@@ -1219,7 +1225,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 
   // Optimization
   if(option_debug_mode==200) {
-    cout << "DEBUG: START"<<(*transitionGraph.begin()).source
+    cout << "DEBUG: START"<<(*transitionGraph.begin())->source
      <<", news: "<<transitionGraph.getStartTransition().source
      <<", newt: "<<transitionGraph.getStartTransition().target
      <<endl;
