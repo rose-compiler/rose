@@ -7,7 +7,7 @@
 // Author: Markus Schordan, 2014.
 
 /* represents one interval
-  Requirements: Type must support algorithms: min, max; operators: '<','=='; values: -1, +1.
+  Requirements: Type must support algorithms: min, max; operators: '<','==', binary +,-,*,/,%, ; values: -1, +1.
   Binary operations on bot remain bot (this should be used for error checking)
 */
 
@@ -49,6 +49,7 @@ class IntervalLattice {
     if(empty) {
       assert(_low==+1 && _high==-1);
     }
+    return empty;
   }
   void setEmpty() {
     // unified empty interval [+1,-1] (also to ensure proper operation of default operator==)
@@ -57,6 +58,14 @@ class IntervalLattice {
     _low=+1;
     _high=-1;
   }
+  bool isInfLength() {
+    return isLowInf()||isHighInf();
+  }
+  Type length() {
+    assert(!isInfLength());
+    return _high-_low;
+  }
+
   bool isConst() {
     return !isLowInf()&&!isHighInf()&&_low==_high;
   }
@@ -84,9 +93,25 @@ class IntervalLattice {
     setIsHighInf(true);
     _high=+1;
   }
-  Type getLow() { assert(!isLowInf); return _low; }
-  Type getHigh() { assert(!isHighInf); return _high; }
-   
+  Type getLow() { assert(!isLowInf()); return _low; }
+  Type getHigh() { assert(!isHighInf()); return _high; }
+
+  // checks whether interval l1 is a subinterval of l2
+  static bool isSubIntervalOf(IntervalLattice l1, IntervalLattice l2) {
+    if(l1.isEmpty())
+      return true;
+    else if(l2.isEmpty())
+      return false;
+    else if(l2.isTop())
+      return true;
+    else {
+      bool lowOk=(l2.isLowInf() || (!l1.isLowInf() && l1.getLow()>=l2.getLow()) );
+      bool highOk=(l2.isHighInf() || (!l1.isHighInf() && l1.getHigh()<=l2.getHigh()) );
+      return lowOk && highOk;
+    }
+    assert(0);
+  }
+
   static IntervalLattice top() {
     IntervalLattice t;
     t.setTop();

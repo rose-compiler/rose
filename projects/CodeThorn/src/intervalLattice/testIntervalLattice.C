@@ -34,15 +34,31 @@ int main() {
   i10.arithMod(2);
   cout<<i10.toString()<<endl;
   cout<<"---------------------- ARITH TEST -----------------"<<endl;
-  i10=IntervalLattice<int>(1,3);
-  cout<<i10.toString()<<endl;
-  IntervalLattice<int> i11=IntervalLattice<int>(2,5);
-  cout<<i11.toString()<<endl;
-  i10.arithAdd(i11);
-  cout<<i10.toString()<<endl;
-  i10.arithMul(i11);
-  cout<<i10.toString()<<endl;
-  i10.arithDiv(i11);
-  cout<<i10.toString()<<endl;
+  {
+    i10=IntervalLattice<int>(1,3);
+    cout<<i10.toString()<<endl;
+    IntervalLattice<int> i11=IntervalLattice<int>(2,5);
+    cout<<i11.toString()<<endl;
+    i10.arithAdd(i11);
+    cout<<i10.toString()<<endl;
+    i10.arithMul(i11);
+    cout<<i10.toString()<<endl;
+    i10.arithDiv(i11);
+    cout<<i10.toString()<<endl;
+  }
+  cout<<"---------------------- SUBINTERVAL TEST -----------------"<<endl;
+  {
+    IntervalLattice<int> i30(1,3);
+    IntervalLattice<int> i31(-1,4);
+    IntervalLattice<int> i32(1,4);
+    IntervalLattice<int> i33();
+    cout<<"Test1:(1):"<<IntervalLattice<int>::isSubIntervalOf(i30,i32)<<endl;
+    cout<<"Test2:(0):"<<IntervalLattice<int>::isSubIntervalOf(i32,i30)<<endl;
+    cout<<"Test3:(1):"<<IntervalLattice<int>::isSubIntervalOf(i32,i31)<<endl;
+    cout<<"Test3:(1):"<<IntervalLattice<int>::isSubIntervalOf(i32,i32)<<endl;
+    cout<<"Length:"<<i30.length()<<endl;
+    cout<<"Length:"<<i31.length()<<endl;
+    cout<<"Length:"<<i32.length()<<endl;
+  }  
   return 0;
 }
