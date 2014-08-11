@@ -3185,19 +3185,21 @@ DispatcherM68k::regcache_init() {
         REG_VBR   = findRegister("vbr", 32);
         REG_SSP   = findRegister("ssp", 32);
 
+        // TOO1 (8/11/2014): Renamed variable from "OPTIONAL" to "IS_OPTIONAL".
+        //                   "OPTIONAL" is a predefined macro in Windows.
         // Multiply-accumulated registers.  These are optional.
-        static const bool OPTIONAL = true;
-        REG_MACSR_SU = findRegister("macsr_su", 1, OPTIONAL);
-        REG_MACSR_FI = findRegister("macsr_fi", 1, OPTIONAL);
-        REG_MACSR_N  = findRegister("macsr_n",  1, OPTIONAL);
-        REG_MACSR_Z  = findRegister("macsr_z",  1, OPTIONAL);
-        REG_MACSR_V  = findRegister("macsr_v",  1, OPTIONAL);
-        REG_MACSR_C  = findRegister("macsr_c",  1, OPTIONAL);
-        REG_MAC_MASK = findRegister("mask",    32, OPTIONAL);
-        REG_MACEXT0  = findRegister("accext0", 16, OPTIONAL);
-        REG_MACEXT1  = findRegister("accext1", 16, OPTIONAL);
-        REG_MACEXT2  = findRegister("accext2", 16, OPTIONAL);
-        REG_MACEXT3  = findRegister("accext3", 16, OPTIONAL);
+        static const bool IS_OPTIONAL = true;
+        REG_MACSR_SU = findRegister("macsr_su", 1, IS_OPTIONAL);
+        REG_MACSR_FI = findRegister("macsr_fi", 1, IS_OPTIONAL);
+        REG_MACSR_N  = findRegister("macsr_n",  1, IS_OPTIONAL);
+        REG_MACSR_Z  = findRegister("macsr_z",  1, IS_OPTIONAL);
+        REG_MACSR_V  = findRegister("macsr_v",  1, IS_OPTIONAL);
+        REG_MACSR_C  = findRegister("macsr_c",  1, IS_OPTIONAL);
+        REG_MAC_MASK = findRegister("mask",    32, IS_OPTIONAL);
+        REG_MACEXT0  = findRegister("accext0", 16, IS_OPTIONAL);
+        REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
+        REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
+        REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
     }
 }
 
