@@ -1031,8 +1031,7 @@ $CLASSNAME::get_mangled (void) const
      string mangled_name (base_str);
      const string ptr_begin_tag ("__Pb__");
      string::size_type pos_begin = mangled_name.find (ptr_begin_tag);
-     mangled_name.replace (pos_begin, ptr_begin_tag.size (),
-                           "__PMb__" + cls_name);
+     mangled_name.replace (pos_begin, ptr_begin_tag.size (), "__PMb__" + cls_name);
 
      return SgName (mangled_name.c_str ());
    }
@@ -3122,7 +3121,7 @@ SgJavaUnionType::SgJavaUnionType ( const SgJavaUnionType & X )
 SgName
 SgJavaUnionType::get_name() const {
     string name = "";
-    for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+    for (size_t i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
       if (i > 0) { // != p_type_list.begin())
             name += " | ";
         }
@@ -3141,7 +3140,7 @@ $CLASSNAME::get_mangled(void) const
 
      SgName mangled_name;
 
-     for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+     for (size_t i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
          if (i > 0) { // != p_type_list.begin())
              mangled_name += "_|_";
          }
@@ -3190,7 +3189,7 @@ $CLASSNAME::get_mangled(void) const
      ROSE_ASSERT(class_declaration);
      SgName mangled_name = class_declaration -> get_mangled_name();
      SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
-     for (int i = 0; i < bases.size(); i++) {
+     for (size_t i = 0; i < bases.size(); i++) {
          mangled_name += "_";
          SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
          mangled_name += super_type -> get_mangled_name();
@@ -3492,21 +3491,21 @@ SgModifierType::get_mangled (void) const
      if (type_mod.isRestrict())    mangled_name << "RST";
   // if (upc_mod.isUPC_Shared())  mangled_name << "SHD";
 
-     // \pp make mangled name depend on blocksize
+  // \pp make mangled name depend on blocksize
      if (upc_mod.get_isShared())
-     {
-       mangled_name << "SHD";
+        {
+          mangled_name << "SHD";
 
-       std::stringstream sstr;
-       long              blocksize = upc_mod.get_layout();
-       ROSE_ASSERT(blocksize >= -2);
+          std::stringstream sstr;
+          long              blocksize = upc_mod.get_layout();
+          ROSE_ASSERT(blocksize >= -2);
 
        // \pp just add the blocksize as string to the mangled name.
        //     The TypeTable implementation needs to differentiate types
        //     with different shared blocksize.
-       sstr << blocksize;
-       mangled_name << sstr.str();
-     }
+          sstr << blocksize;
+          mangled_name << sstr.str();
+        }
 
      if (upc_mod.isUPC_Strict())  mangled_name << "STR";
      if (upc_mod.isUPC_Relaxed()) mangled_name << "RLX";
