@@ -32,6 +32,14 @@ fileToSRecords_CPPFLAGS = $(ROSE_INCLUDES)
 fileToSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# maximize bijection of two sets
+
+bin_PROGRAMS += maxBijection
+maxBijection_SOURCES = maxBijection.C
+maxBijection_CPPFLAGS = $(ROSE_INCLUDES)
+maxBijection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets
 
 bin_PROGRAMS += x86-call-targets

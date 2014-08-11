@@ -180,9 +180,6 @@ public:
         E_FRET,                                         /**< Edge is a function return from the call site. */
     };
 
-    /** List of CFG vertex or edge ID numbers. */
-    typedef std::vector<size_t> NodeIds;
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Function descriptors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,6 +267,7 @@ public:
         // The following members are caches. Make sure clearCache() resets these to initial values.
         mutable Sawyer::Optional<Successors> cachedSuccessors_;
         mutable Sawyer::Optional<bool> cachedIsFunctionCall_;
+        mutable BaseSemantics::SValuePtr stackDelta_;   // change in stack pointer if known
 
     protected:
         // use instance() instead
@@ -396,6 +394,14 @@ public:
         bool cacheIsFunctionCall(bool x) const { cachedIsFunctionCall_ = x; return x; }
         void uncacheIsFunctionCall() const { cachedIsFunctionCall_ = Sawyer::Nothing(); }
         bool isCachedIsFunctionCall() const { return bool(cachedIsFunctionCall_); }
+        /** @} */
+
+        /** Accessor for the stack delta cache.
+         *  @{ */
+        const BaseSemantics::SValuePtr cachedStackDelta() const { return stackDelta_; }
+        const BaseSemantics::SValuePtr& cacheStackDelta(const BaseSemantics::SValuePtr &d) const { stackDelta_ = d; return d; }
+        void uncacheStackDelta() const { stackDelta_ = BaseSemantics::SValuePtr(); }
+        bool isCachedStackDelta() const { return stackDelta_ != NULL; }
         /** @} */
         
     private:
@@ -721,6 +727,19 @@ public:
     /** Mapping from basic block starting address to CFG vertex. */
     typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexNodeIterator> VertexIndex;
 
+    /** List of CFG vertex pointers.
+     *
+     * @{ */
+    typedef std::list<ControlFlowGraph::VertexNodeIterator> VertexList;
+    typedef std::list<ControlFlowGraph::ConstVertexNodeIterator> ConstVertexList;
+    /** @} */
+
+    /** List of CFG edge pointers.
+     *
+     * @{ */
+    typedef std::list<ControlFlowGraph::EdgeNodeIterator> EdgeList;
+    typedef std::list<ControlFlowGraph::ConstEdgeNodeIterator> ConstEdgeList;
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner data members
@@ -775,6 +794,10 @@ public:
     /** Returns the number of functions in the CFG.  This is a constant-time operation. */
     size_t nFunctions() const { return functions_.size(); }
 
+    /** Returns number of instructions in the CFG.  This statistic is computed in time linearly proportional to the number of
+     *  basic blocks in the control flow graph. */
+    size_t nInstructions() const;
+
     /** Determines whether an instruction is represented in the CFG.
      *
      *  If the CFG represents an instruction that starts at the specified address, then this method returns the
@@ -811,6 +834,7 @@ public:
         ControlFlowGraph::ConstVertexNodeIterator vertex = placeholderExists(startVa);
         if (vertex!=cfg_.vertices().end())
             return vertex->value().bblock();
+        return BasicBlock::Ptr();
     }
 
     /** Determines whether a function exists in the function table.
@@ -879,6 +903,10 @@ public:
 
     /** Returns the address usage map for a single function. */
     AddressUsageMap aum(const Function::Ptr&) const;
+
+    /** Returns the list of all known functions.  Returns a map which maps function entry address to function pointer for the
+     *  functions that are part of the control flow graph. */
+    const Functions& functions() const { return functions_; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner CFG operations
@@ -1046,6 +1074,12 @@ public:
      *  patterns at the callee address if known, etc. The basic block caches the result of this analysis. */
     bool bblockIsFunctionCall(const BasicBlock::Ptr&) const;
 
+    /** Return the stack delta expression.
+     *
+     *  The stack delta is the difference between the stack pointer register at the end of the block and the stack pointer
+     *  register at the beginning of the block.  Returns a null pointer if the information is not available. */
+    BaseSemantics::SValuePtr bblockStackDelta(const BasicBlock::Ptr&) const;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner function operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1104,19 +1138,37 @@ public:
      *  @li An initial CFG traversal follows the non-function-call edges starting at the function's already-owned basic
      *      blocks.  It makes note of any newly encountered blocks, and considers them to be "provisionally owned" by the
      *      function.  If it encounters a vertex already owned by some other function then the ID number for the edge leading
-     *      to that vertex is appended to the @p outwardInterFunctionEdges list, that vertex is not marked as provisionally
-     *      owned by this function, and that vertex's outgoing edges are not traversed.
+     *      to that vertex is appended to the @p outwardInterFunctionEdges list (if not null), that vertex is not marked as
+     *      provisionally owned by this function, and that vertex's outgoing edges are not traversed.
      *
      *  @li A second traversal of the new provisionally-owned vertices (excluding the entry vertex) verifies that all
      *      incoming edges originate from this same function.  If an edge is detected coming from a vertex that is not owned by
-     *      this function (explicitly or provisionally) then that edge is appended to the @ref inwardInterFunctionEdges list.
+     *      this function (explicitly or provisionally) then that edge is appended to the @ref inwardInterFunctionEdges list
+     *      (if not null).
      *
-     *  @li A final traversal of the provisionally-owned vertices adds them to the specified function.
+     *  @li If there were no conflicts (nothing appended to @p outwardInterFunctionEdges or @p inwardInterFunctionEdges) then a
+     *      final traversal of the provisionally-owned vertices adds them to the specified function.
      *
      *  The CFG is not modified by this method, and therefore the function must not exist in the CFG; the function must be in a
-     *  thawed state. */
-    void discoverFunctionBlocks(const Function::Ptr&,
-                                NodeIds &inwardInterFunctionEdges /*out*/, NodeIds &outwardInterFunctionEdges);
+     *  thawed state.
+     *
+     *  The return value is the number of edges inserted (or that would have been inerted) into the two edge list arguments. A
+     *  return value other than zero means that conflicts were encountered and the function was not modified.  If a conflict
+     *  occurs, the user is permitted to insert the vertices explicitly since this algorithm does not check consistency for
+     *  vertices already owned by the function.
+     *
+     *  @{ */
+    size_t discoverFunctionBlocks(const Function::Ptr&,
+                                  EdgeList *inwardInterFunctionEdges /*out*/,
+                                  EdgeList *outwardInterFunctionEdges /*out*/);
+    size_t discoverFunctionBlocks(const Function::Ptr&,
+                                  ConstEdgeList *inwardInterFunctionEdges /*out*/,
+                                  ConstEdgeList *outwardInterFunctionEdges /*out*/) const;
+    size_t discoverFunctionBlocks(const Function::Ptr &function,
+                                  std::vector<size_t> &inwardInterFunctionEdges /*out*/,
+                                  std::vector<size_t> &outwardInterFunctionEdges /*out*/) const;
+    /** @} */
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  CFG change callbacks
@@ -1313,19 +1365,22 @@ public:
     void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true) const;
 
     /** Name of a vertex. */
-    std::string vertexName(const ControlFlowGraph::VertexNode&) const;
+    static std::string vertexName(const ControlFlowGraph::VertexNode&);
 
     /** Name of last instruction in vertex. */
-    std::string vertexNameEnd(const ControlFlowGraph::VertexNode&) const;
+    static std::string vertexNameEnd(const ControlFlowGraph::VertexNode&);
 
     /** Name of an incoming edge. */
-    std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&) const;
+    static std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&);
 
     /** Name of an outgoing edge. */
-    std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) const;
+    static std::string edgeNameDst(const ControlFlowGraph::EdgeNode&);
 
     /** Name of an edge. */
-    std::string edgeName(const ControlFlowGraph::EdgeNode&) const;
+    static std::string edgeName(const ControlFlowGraph::EdgeNode&);
+
+    /** Name of a function */
+    static std::string functionName(const Function::Ptr&);
 
     /** Enable or disable progress reports.
      *
@@ -1377,6 +1432,8 @@ private:
 std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPair&);
 std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPairs&);
 std::ostream& operator<<(std::ostream&, const Partitioner::AddressUsageMap&);
+std::ostream& operator<<(std::ostream&, const Partitioner::ControlFlowGraph::VertexNode&);
+std::ostream& operator<<(std::ostream&, const Partitioner::ControlFlowGraph::EdgeNode&);
 
 } // namespace
 } // namespace
