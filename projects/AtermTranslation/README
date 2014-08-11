@@ -36,3 +36,11 @@ To avoid the bug in the rebuilding we can edit the test/Makefile.in
 Note that editing the Makefile.am file has no effect since it
 in not possible to rerun automake (strange version error with 
 aclocal.m4).
+
+
+Installation directions for Aterm use with ROSE:
+   1) Location of Aterm work in ROSE: ROSE/projects/AtermTranslation
+
+   2) Example of configure line:
+/home/dquinlan/ROSE/git-dq-edg49-rc/configure --with-C_OPTIMIZE=no --with-CXX_OPTIMIZE=no --with-ROSE_LONG_MAKE_CHECK_RULE=yes --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/git_LINUX-64bit-4.4.7-dq-edg49-using-edg47-rc_install --with-boost=/nfs/casc/overture/ROSE/opt/rhel6/x86_64/boost/1_45_0/gcc/4.4.7 --with-aterm=/home/dquinlan/bin/aterm-2.5-install-64bit
+

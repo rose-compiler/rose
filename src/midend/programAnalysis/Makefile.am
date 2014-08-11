@@ -110,7 +110,7 @@ libprogramAnalysis_la_LIBADD = \
 	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la \
 	systemDependenceGraph/libSDG.la
 
-include_HEADERS=\
+pkginclude_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
 	$(mpaBitvectorDataflow_includeHeaders) \

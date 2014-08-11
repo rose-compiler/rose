@@ -136,6 +136,16 @@ class EasyStorage<std::string>
      std::string rebuildDataStoredInEasyStorageClass() const;
    };
 
+// EasyStorage for Sawyer bit vectors
+template<>
+class EasyStorage<Sawyer::Container::BitVector>: public StorageClassMemoryManagement<Sawyer::Container::BitVector::Word> {
+    typedef StorageClassMemoryManagement<Sawyer::Container::BitVector::Word> Base;
+public:
+    EasyStorage() {}
+    void storeDataInEasyStorageClass(const Sawyer::Container::BitVector &data_);
+    Sawyer::Container::BitVector rebuildDataStoredInEasyStorageClass() const;
+};
+
 // EasyStorage concerning STL vectors and lists of plain data, not sets ! 
 template <class BASIC_TYPE, template <class A> class CONTAINER >
 class EasyStorage <CONTAINER<BASIC_TYPE> > 

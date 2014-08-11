@@ -9,9 +9,13 @@
  *---------------------------------------------------------------------------*/
 #include "cmdline.h"
 #include "keep_going.h"
+#include "Diagnostics.h"                                // rose::Diagnostics
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <sawyer/CommandLine.h>
+
+using namespace rose;                                   // temporary, until this file lives in namespace rose
 
 /*-----------------------------------------------------------------------------
  *  Variable Definitions
@@ -29,7 +33,7 @@ void
 Rose::Cmdline::
 makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result)
    {
-     string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include/edg");
      for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           ROSE_ASSERT (!i->empty());
@@ -260,6 +264,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
           argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
+          argument == "-rose:log" ||                        // Used to conntrol rose::Diagnostics
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
           argument == "-rose:outputFormat" ||
@@ -1949,6 +1954,7 @@ void
 Rose::Cmdline::Java::
 ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
 {
+  project->set_Java_only(false);
   bool is_java_only =
       CommandlineProcessing::isOption(
           argv,
@@ -2976,6 +2982,9 @@ SgFile::usage ( int status )
 "                               Higher values generate more output (can be\n"
 "                               applied to individual files and to the project\n"
 "                               separately).\n"
+"     -rose:log WHAT\n"
+"                             Control diagnostic output. See '-rose:log help' for\n"
+"                             more information.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
 "     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
@@ -3237,6 +3246,37 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
 
+  //
+  // Diagnostic logging.  We need all of the '-rose:log WHAT' command-line switches in the order they appear, which seems to
+  // mean that we need to parse the argv vector ourselves. CommandlineParsing doesn't have a suitable function, and the sla
+  // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
+  // specifically the part about being able to return an array of values.
+  //
+     Diagnostics::initialize();                         // this maybe should go somewhere else?
+     static const std::string removalString = "-rose:log (REMOVE_ME)";
+     for (size_t i=0; i<argv.size(); ++i) {
+         if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
+             argv[i] = removalString;
+             std::string switchValue = argv[++i];
+             argv[i] = removalString;
+
+             // This is a bit of a roundabout way to do this, but it supports "help", "list", etc and keeps ROSE's capabilities
+             // up to date with the latest documentation in Sawyer.
+             using namespace Sawyer::CommandLine;
+             SwitchGroup switches;
+             switches.insert(Switch("rose:log")
+                             .resetLongPrefixes("-")    // ROSE switches only support single hyphens
+                             .action(configureDiagnostics("rose:log", Diagnostics::facilities))
+                             .argument("config"));
+             std::vector<std::string> args;
+             args.push_back("-rose:log");
+             args.push_back(switchValue);
+             Parser parser;
+             parser.with(switches).parse(args).apply(); // causes configureDiagnostics to be called
+         }
+     }
+     argv.erase(std::remove(argv.begin(), argv.end(), removalString), argv.end());
+     
   //
   // markGeneratedFiles option
   //
@@ -3531,20 +3571,60 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_C89_gnu_only(false);
         }
 
+  // DQ (7/25/2014): We need to support -std=c11 explicitly.
+     set_C11_only(false);
+     ROSE_ASSERT (get_C11_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-std=","(c11)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C11 mode ON \n");
+          set_C11_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
+  // DQ (7/27/2014): We need to support -std=gnu11 explicitly.
+     set_C11_gnu_only(false);
+     ROSE_ASSERT (get_C11_gnu_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-std=","(gnu11)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C11 mode ON \n");
+          set_C11_only(true);
+          set_C11_gnu_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
   //
   // C11 only option (turns on EDG c11 options (using the edg --c11 option).
   //
-     set_C11_only(false);
-     ROSE_ASSERT (get_C11_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(C11|C11_only)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 0 )
+          if ( SgProject::get_verbose() >= 1 )
                printf ("C11 mode ON \n");
 #if 0
           printf ("Specification of C11 on command line not yet supported on the command line \n");
           ROSE_ASSERT(false);
 #endif
           set_C11_only(true);
+
+       // DQ (7/27/2014): The default should match that of the GNU backend.
+          set_C11_gnu_only(true);
 
        // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
           set_C89_only(false);
@@ -3566,7 +3646,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           ROSE_ASSERT(false);
 #endif
           set_C14_only(true);
+          set_C14_gnu_only(true);
+
+       // DQ (7/27/2014): Turn off C11 mode if we are turning on C14 mode.
           set_C11_only(false);
+          set_C11_gnu_only(false);
 
        // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
           set_C89_only(false);
@@ -3587,6 +3671,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // DQ (7/2/2013): Turn on the C++11 version of the option now that we have moved to EDG 4.7.
        // set_C11_only(true);
           set_Cxx11_only(true);
+
+       // DQ (7/27/2014): Adding gnu version C++11 as better default for GNU backend.
+          set_Cxx11_gnu_only(true);
         }
 
   //
@@ -3604,6 +3691,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // DQ (7/2/2013): Turn on the C++14 version of the option now that we have moved to EDG 4.9.
        // set_C11_only(true);
           set_Cxx14_only(true);
+
+       // DQ (7/27/2014): Adding gnu version C++14 as better default for GNU backend.
+          set_Cxx14_gnu_only(true);
         }
 
   //
@@ -3617,6 +3707,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
+#if 0
+     printf ("***** hasRoseUpcEnabled = %s \n",hasRoseUpcEnabled ? "true" : "false");
+#endif
+
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled)
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -3627,6 +3721,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
           CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
         }
+
+#if 0
+     printf ("***** get_UPC_only() = %s \n",get_UPC_only() ? "true" : "false");
+#endif
 
   // DQ (9/19/2010): Added support for UPC++.  This uses the UPC mode and internally processes the code as C++ instead of C.
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
@@ -4693,6 +4791,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(h|help)",1);
      optionCount = sla(argv, "-rose:", "($)", "(V|version)", 1);
   // optionCount = sla(argv, "-rose:", "($)", "(v|verbose)",1);
+     char *loggingSpec = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(log)", loggingSpec, 1);
      optionCount = sla(argv, "-rose:", "($)", "(keep_going)",1);
      int integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(v|verbose)", &integerOption, 1);
@@ -5202,7 +5302,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
      int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
-  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+
+  // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
+  // emulate_gnu_version_number = 4*10000 + 8*100 + 1;
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("In SgFile::build_EDG_CommandLine(): emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+        }
+
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
 #endif
@@ -6122,12 +6230,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("   --- Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
      printf ("   --- get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("   --- get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
+     printf ("   --- get_C11_only()            = %s \n",(get_C11_only() == true) ? "true" : "false");
+     printf ("   --- get_C14_only()            = %s \n",(get_C14_only() == true) ? "true" : "false");
      printf ("   --- get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
+     printf ("   --- get_Cxx11_only()          = %s \n",(get_Cxx11_only() == true) ? "true" : "false");
+     printf ("   --- get_Cxx14_only()          = %s \n",(get_Cxx14_only() == true) ? "true" : "false");
      printf ("   --- get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
      printf ("   --- get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
      printf ("   --- get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
      printf ("   --- get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
      printf ("   --- get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
+     printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
      printf ("   --- get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
      printf ("   --- get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
      printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
@@ -6139,7 +6252,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // We need a better way of identifying the C compiler which might not be known
   // ideally it should be specified at configure time so that it can be known in
   // case the -rose:C_only option is used.
-     if (get_C_only() == true || get_C99_only() == true)
+  // if (get_C_only() == true || get_C99_only() == true)
+     if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
      {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -6164,23 +6278,98 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back("-std=c99");
                   }
              }
+            else
+             {
+            // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+               if (get_C11_only() == true)
+                  {
+                 // compilerNameString.push_back("-std=c11");
+                    if (get_C11_gnu_only() == true)
+                       {
+                         compilerNameString.push_back("-std=gnu11");
+                       }
+                      else
+                       {
+                         compilerNameString.push_back("-std=c11");
+                       }
+                  }
+                 else
+                  {
+                 // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+                    if (get_C14_only() == true)
+                       {
+                      // compilerNameString.push_back("-std=c14");
+                         if (get_C14_gnu_only() == true)
+                            {
+                              compilerNameString.push_back("-std=gnu14");
+                            }
+                           else
+                            {
+                              compilerNameString.push_back("-std=c14");
+                            }
+                       }
+                      else
+                       {
+                      // The default is to not specify anything using the "-std=" option.
+                       }
+                  }
+             }
      }
-    else if (get_Cxx_only())
-    {
-        compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
-    }
-    else if (get_binary_only())
-    {
-        if (SgProject::get_verbose() >= 3)
-        {
+     else if (get_Cxx_only())
+     {
+       compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+
+    // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+       if (get_Cxx11_only() == true)
+          {
+         // compilerNameString.push_back("-std=c++11");
+            if (get_Cxx11_gnu_only() == true)
+               {
+                 compilerNameString.push_back("-std=gnu++11");
+               }
+              else
+               {
+                 compilerNameString.push_back("-std=c++11");
+               }
+          }
+         else
+          {
+         // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+            if (get_Cxx14_only() == true)
+               {
+              // DQ (7/27/2014): These options are not available in GNU g++ yet.
+#if 1
+                 compilerNameString.push_back("-std=c++14");
+#else
+              // DQ (7/27/2014): This function (get_Cxx14_gnu_only()) is not available in ROSE yet.
+                 if (get_Cxx14_gnu_only() == true)
+                    {
+                      compilerNameString.push_back("-std=gnu++14");
+                    }
+                   else
+                    {
+                      compilerNameString.push_back("-std=c++14");
+                    }
+#endif
+               }
+              else
+               {
+              // The default is to not specify anything using the "-std=" option.
+               }
+          }
+     }
+     else if (get_binary_only())
+     {
+       if (SgProject::get_verbose() >= 3)
+         {
             std::cout
                 << "[TRACE] Backend compiler for binary analysis is set as"
                 << "'" << compilerNameString[0] << "'"
                 << std::endl;
-        }
-    }
-    else if (get_Fortran_only() == true)
-    {
+         }
+     }
+     else if (get_Fortran_only() == true)
+     {
         // compilerNameString = "f77 ";
         compilerNameString[0] = ROSE_GFORTRAN_PATH;
 
@@ -6648,7 +6837,8 @@ if (get_C_only() ||
        if (iter_last_inc != compilerNameString.end())
          iter_last_inc ++; // accommodate the insert-before-an-iterator semantics used in vector::insert() 
  
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // Liao 7/14/2014. Justin changed installation path of headers to install/rose, 
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, libxomp.h etc, which are installed under $ROSE_INS/include
        // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
 
        // Header should always be available 
@@ -6656,7 +6846,7 @@ if (get_C_only() ||
        // where only a minimum configuration options are used and not all macros are defined. 
 #ifdef ROSE_INSTALLATION_PATH 
        string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include"; 
+       include_path += "/include/rose"; 
        compilerNameString.insert(iter_last_inc, "-I"+include_path); 
 #endif
      }

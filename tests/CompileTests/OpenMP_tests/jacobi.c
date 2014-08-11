@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
+#include <stdlib.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -48,11 +50,12 @@ void error_check(void);
 *       : f(n,m) - Right hand side function 
 *************************************************************/
 
- #define MSIZE 500
+ #define MSIZE 512
  int n,m,mits; 
  double tol,relax=1.0,alpha=0.0543; 
  double u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
  double dx,dy;
+ double error_ref= 9.213041E-04, resid_ref = 2.355794E-08; // depending on MSIZE and precision (double vs. float) !!
 
 int main (void) 
 {
@@ -217,7 +220,9 @@ void jacobi( )
 
   printf("Total Number of Iterations:%d\n",k); 
   printf("Residual:%E\n", error); 
-
+  printf("Residual_ref :%E\n", resid_ref);
+  printf ("Diff ref=%E\n", fabs(error-resid_ref));
+  assert (fabs(error-resid_ref)/resid_ref < 1E-5);
 }
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
       implicit none 
@@ -245,5 +250,8 @@ void error_check ( )
     }
   error = sqrt(error)/(n*m);
   printf("Solution Error :%E \n",error);
+  printf("Solution Error Ref :%E \n",error_ref);
+  printf ("Diff ref=%E\n", fabs(error-error_ref));
+  assert (fabs(error-error_ref)/error_ref < 1E-5);
 }
 

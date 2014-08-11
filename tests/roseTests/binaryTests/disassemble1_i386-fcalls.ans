@@ -5,7 +5,6 @@ using this memory map for disassembly:
     va 0x080480a0 + 0x0000007a = 0x0804811a r-x- at buffer aag   + 0x000000a0 i386-fcalls(.text)
     va 0x0804811a + 0x000002c5 = 0x080483df r-xp at buffer aac   + 0x0000011a i386-fcalls(LOAD#0)
     va 0x080483df + 0x00000c21 = 0x08049000 r-xp at anon aab     + 0x00000000 i386-fcalls(LOAD#0)
-disassembled 3973 instructions and 2 failures (use --show-bad to see errors)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -2539,4 +2538,3 @@ disassembled 3973 instructions and 2 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

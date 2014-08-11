@@ -173,7 +173,8 @@ AttachPreprocessingInfoTreeTrav::display(const std::string & label) const
 // DQ (8/6/2012): New copy constructor.
 AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfoTreeTraversalInheritedAttrribute(const AttachPreprocessingInfoTreeTraversalInheritedAttrribute & X)
    {
-     isPartOfTemplateDeclaration = X.isPartOfTemplateDeclaration;
+     isPartOfTemplateDeclaration              = X.isPartOfTemplateDeclaration;
+     isPartOfTemplateInstantiationDeclaration = X.isPartOfTemplateInstantiationDeclaration;
    }
 
 
@@ -997,7 +998,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      ROSE_ASSERT(n != NULL);
   // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
   // SgTemplateFunctionDeclaration* templateDeclaration = isSgTemplateFunctionDeclaration(n);
-     SgDeclarationStatement* templateDeclaration = isSgTemplateFunctionDeclaration(n);
+     SgDeclarationStatement* templateDeclaration              = isSgTemplateFunctionDeclaration(n);
+     SgDeclarationStatement* templateInstantiationDeclaration = isSgTemplateInstantiationFunctionDecl(n);
+
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateMemberFunctionDeclaration(n);
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateClassDeclaration(n);
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateVariableDeclaration(n);
@@ -1009,6 +1012,15 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
         }
        else
         {
+       // DQ (7/1/2014): Added support for detecting when we are in a template instantation.
+          if (templateInstantiationDeclaration == NULL) templateInstantiationDeclaration = isSgTemplateInstantiationMemberFunctionDecl(n);
+          if (templateInstantiationDeclaration == NULL) templateInstantiationDeclaration = isSgTemplateInstantiationDecl(n);
+       // if (templateInstantiationDeclaration == NULL) templateInstantiationDeclaration = isSgTemplateInstantiationVariableDecl(n);
+          if (templateInstantiationDeclaration != NULL)
+             {
+               inheritedAttribute.isPartOfTemplateInstantiationDeclaration = true;
+             }
+#if 0     
           if (inheritedAttribute.isPartOfTemplateDeclaration == true)
              {
             // printf ("This is a part of a template declaration (suppress attachment of comments and CPP directves to template declarations, since they are unparsed as strings for the moment) n = %p = %s \n",n,n->class_name().c_str());
@@ -1017,13 +1029,26 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              {
             // printf ("This is not part of a template declaration n = %p = %s \n",n,n->class_name().c_str());
              }
+#endif
+#if 0
+          if (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true)
+             {
+               printf ("This is a part of a template Instantiation declaration (suppress attachment of comments and CPP directves to template declarations, since they might not be unparsed) n = %p = %s \n",n,n->class_name().c_str());
+             }
+            else
+             {
+            // printf ("This is not part of a template Instantiation declaration n = %p = %s \n",n,n->class_name().c_str());
+             }
+#endif
         }
 
-  // DQ (8/6/2012): Allow those associated with the declaration and non inside of the template declaration.
-     if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
+  // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
+  // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
+     if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
+          (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true && templateInstantiationDeclaration == NULL) )
         {
 #if DEBUG_ATTACH_PREPROCESSING_INFO
-          printf ("Returning without further processing if we are a part of a template declaration \n");
+          printf ("Returning without further processing if we are a part of a template declaration or template instantiation declaration \n");
 #endif
           return inheritedAttribute;
         }
@@ -1279,12 +1304,21 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      ROSE_ASSERT(n != NULL);
   // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
      SgDeclarationStatement* templateDeclaration = isSgTemplateFunctionDeclaration(n);
+
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateMemberFunctionDeclaration(n);
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateClassDeclaration(n);
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateVariableDeclaration(n);
 
-     if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
+     SgDeclarationStatement* templateInstantiationDeclaration = isSgTemplateInstantiationFunctionDecl(n);
+     if (templateInstantiationDeclaration == NULL) templateInstantiationDeclaration = isSgTemplateInstantiationMemberFunctionDecl(n);
+     if (templateInstantiationDeclaration == NULL) templateInstantiationDeclaration = isSgTemplateInstantiationDecl(n);
+  // if (templateInstantiationDeclaration == NULL) templateInstantiationDeclaration = isSgTemplateInstantiationVariableDecl(n);
+
+  // DQ (7/1/2014): Modify to avoid use of CPP directives in both template declarations and template instantiations (which might not be unparsed).
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true )
+  // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
+     if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
+          (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true && templateInstantiationDeclaration == NULL) )
         {
 #if DEBUG_ATTACH_PREPROCESSING_INFO
           printf ("Returning without further processing if we are a part of a template declaration n = %p = %s \n",n,n->class_name().c_str());

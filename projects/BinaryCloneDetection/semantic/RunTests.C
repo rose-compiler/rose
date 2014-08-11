@@ -908,10 +908,10 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
                 }
                 if (SgAsmIntegerValueExpression *val = isSgAsmIntegerValueExpression(mre->get_address())) {
                     // Thunk is of the form:  jmp [ADDRESS]
-                    gotplt_addr[f] = val->get_absolute_value();
+                    gotplt_addr[f] = val->get_absoluteValue();
                     if (opt.verbosity>=EFFUSIVE) {
                         std::cerr <<" form 1 through mem["
-                                  <<StringUtility::addrToString(val->get_absolute_value()) <<"]\n";
+                                  <<StringUtility::addrToString(val->get_absoluteValue()) <<"]\n";
                     }
                 } else if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address())) {
                     SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(add->get_lhs());
@@ -923,7 +923,7 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
                     SgAsmGenericSection *gotplt = hdr ? hdr->get_section_by_name(".got.plt") : NULL;
                     if (!gotplt || !gotplt->is_mapped())
                         return;
-                    rose_addr_t va = gotplt->get_mapped_actual_va() + offset->get_absolute_value();
+                    rose_addr_t va = gotplt->get_mapped_actual_va() + offset->get_absoluteValue();
                     gotplt_addr[f] = va;
                     if (opt.verbosity>=EFFUSIVE)
                         std::cerr <<" form 2 through mem[" <<StringUtility::addrToString(va) <<"]\n";
@@ -1024,8 +1024,8 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                                       <<" at " <<StringUtility::addrToString(base_va) <<"\n";
                         }
                         MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->erase(Extent(base_va, nbytes));
-                        ro_map->insert(Extent(base_va, nbytes),
+                        ro_map->erase(AddressInterval::baseSize(base_va, nbytes));
+                        ro_map->insert(AddressInterval::baseSize(base_va, nbytes),
                                        MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
                                                           "analysis-mapped dynlink addresses"));
                     } else {

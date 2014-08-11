@@ -170,11 +170,14 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // This can be demonstrated on test2012_133.C (any maybe many other places too).
           case TEMPLATE_PARAMETER_VAL:  { unparseTemplateParameterValue(expr, info); break; }
 
-       // DQ (7/12/2013): Added support for unparsing teyp trait builtin expressions (operators).
+       // DQ (7/12/2013): Added support for unparsing type trait builtin expressions (operators).
           case TYPE_TRAIT_BUILTIN_OPERATOR: { unparseTypeTraitBuiltinOperator(expr, info); break; }
 
        // DQ (9/4/2013): Added support for compund literals.
           case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
+
+       // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+          case TYPE_EXPRESSION:  { unparseTypeExpression(expr, info); break; }
 
        // DQ (4/27/2014): This case appears in a snippet test code (testJava3a) as a result 
        // of something added to support the new shared memory DSL.  Not clear what this is,
@@ -195,6 +198,20 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         }
    }
 
+
+// DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+void
+Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(expr != NULL);
+
+     printf ("In unparseTypeExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
+
+#if 1
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 // DQ (7/21/2012): Added support for new template IR nodes (only used in C++11 code so far, see test2012_133.C).
 void
@@ -259,6 +276,10 @@ void
 Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info)
    {
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
+
+#if 0
+     printf ("In unparseTemplateName(): templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+#endif
 
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
 
@@ -489,11 +510,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
           unp->u_exprStmt->curprint(" > ");
         }
+       else
+        {
+       // DQ (5/26/2014): In the case of a template instantiation with empty template argument list, output
+       // a " " to be consistant with the behavior when there is a non-empty template argument list.
+       // This is a better fix for the template issue that Robb pointed out and that was fixed last week.
+          unp->u_exprStmt->curprint(" ");
+        }
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
@@ -1161,7 +1190,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
             // DQ (7/3/2013): Added initial support for varadic template arguments.
             // Using an expression for now, but we might need something else.
                ROSE_ASSERT (templateArgument->get_expression() != NULL);
-#if 1
+#if 0
                printf ("In unparseTemplateArgument(): Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
@@ -3183,7 +3212,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
      string functionNameString = operatorExp->get_name();
      curprint(functionNameString);
 
-#if 0
+#if 1
      printf ("In unparseTypeTraitBuiltinExp(): functionNameString = %s expr = %p = %s \n",functionNameString.c_str(),expr,expr->class_name().c_str());
 #endif
 
@@ -3194,6 +3223,9 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
      curprint("(");
      while (operand != list.end())
         {
+#if 1
+          printf ("   --- TOP operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
+#endif
 #if 0
           (*operand)->get_file_info()->display("opertor argument");
 #endif
@@ -3205,7 +3237,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 
           SgType*       type       = isSgType(*operand);
           SgExpression* expression = isSgExpression(*operand);
-#if 0
+#if 1
           printf ("   --- operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
 #endif
        // DQ (7/13/2013): Build a new SgUnparse_Info so that we can skip passing on any existing referenceNode for name qualification.
@@ -4451,7 +4483,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                   }
 #endif
 #if 0
-               printf ("cast_op->get_startOfConstruct()->isCompilerGenerated() = %s \n",cast_op->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false");
+               printf ("case SgCastExp::e_C_style_cast: cast_op->get_startOfConstruct()->isCompilerGenerated() = %s \n",cast_op->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false");
 #endif
             // DQ (2/28/2005): Only output the cast if it is NOT compiler generated (implicit in the source code)
             // this avoids redundant casts in the output code and avoid errors in the generated code caused by an 
@@ -4487,18 +4519,12 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
 #endif
                       // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
                          newinfo.unset_SkipSemiColon();
-#if 1
+
                       // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
                          newinfo.set_isTypeFirstPart();
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
                          newinfo.set_isTypeSecondPart();
                          unp->u_type->unparseType(cast_op->get_type(), newinfo);
-#else
-                      // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-#error "DEAD CODE!"
-                      // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-                         unp->u_type->unparseType(cast_op->get_type(), newinfo);
-#endif
                          curprint(")");
                        }
                  // cast_op->get_operand_i()->variant() == STRING_VAL
@@ -4527,7 +4553,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  else
                   {
 #if 0
-                    curprint("/* compiler generated cast not output */");
+                    curprint("/* case SgCastExp::e_C_style_cast: compiler generated cast not output */");
 #endif
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
                     ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == true);
@@ -4545,6 +4571,8 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
         }
 
 #if 0
+     printf ("In unparseCastOp(): case SgCastExp::e_C_style_cast: addParens = %s \n",addParens ? "true" : "false");
+
      curprint (string("/* unparse the cast's operand: get_operand() = ") + cast_op->get_operand()->class_name() + " */");
      curprint (string("/* unparse the cast's operand: get_need_paren() = ") + (cast_op->get_operand()->get_need_paren() ? "true" : "false") + " */");
      curprint (string("/* unparse the cast's operand: addParens = ") + (addParens ? "true" : "false") + " */");
@@ -4568,6 +4596,10 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+#if 0
+     printf("In unparseCastOp(): case SgCastExp::e_C_style_cast: cast_op->get_operand() = %p = %s \n",cast_op->get_operand(),cast_op->get_operand()->class_name().c_str());
+#endif
+
      unparseExpression(cast_op->get_operand(), info); 
 
      if (addParens == true)
@@ -4577,6 +4609,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving unparseCastOp(): expr = %p \n",expr);
+     curprint("/* Leaving unparseCastOp() */ \n ");
 #endif
    }
 

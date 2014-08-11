@@ -913,18 +913,22 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
     // generated--because the randomly generated address will be a low number. When the test tries to read from that low
     // address it will read an instruction rather than a value from an input queue. The way we avoid this is to pre-map the low
     // addresses to force BinaryLoader::remap() to move the specimen to a higher address. [Robb P. Matzke 2013-11-26]
-    Extent exclusion_area(0, 0x03000000); // size is arbitrary, but something recognizable
+    AddressInterval exclusion_area = AddressInterval::baseSize(0, 0x03000000); // size is arbitrary, but something recognizable
     SgAsmGenericSection *text = spec_header->get_section_by_name(".text");
     bool added_exclusion_area = false;
-    if (text!=NULL && text->is_mapped() && text->get_mapped_preferred_extent().overlaps(exclusion_area)) {
-        std::cerr <<argv0 <<": specimen is a shared object; remapping it to a higher virtual address\n";
-        MemoryMap *map = interp->get_map();
-        if (!map)
-            interp->set_map(map = new MemoryMap);
-        map->insert(exclusion_area,
-                    MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(exclusion_area.size()),
-                                       0, MemoryMap::MM_PROT_NONE, "temporary exclusion area"));
-        added_exclusion_area = true;
+    if (text!=NULL && text->is_mapped()) {
+        Extent textExtent = text->get_mapped_preferred_extent();
+        AddressInterval textInterval = AddressInterval::hull(textExtent.first(), textExtent.last());
+        if (textInterval.isOverlapping(exclusion_area)) {
+            std::cerr <<argv0 <<": specimen is a shared object; remapping it to a higher virtual address\n";
+            MemoryMap *map = interp->get_map();
+            if (!map)
+                interp->set_map(map = new MemoryMap);
+            map->insert(exclusion_area,
+                        MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(exclusion_area.size()),
+                                           0, MemoryMap::MM_PROT_NONE, "temporary exclusion area"));
+            added_exclusion_area = true;
+        }
     }
 
     // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
@@ -1004,7 +1008,8 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             sections.insert(sections.end(), s3.begin(), s3.end());
             for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
                 if ((*si)->is_mapped()) {
-                    Extent mapped_va((*si)->get_mapped_actual_va(), (*si)->get_mapped_size());
+                    AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
+                                                                          (*si)->get_mapped_size());
                     map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
                 }
             }

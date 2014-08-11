@@ -911,6 +911,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
             // unparseForStmt(stmt, info);
                break;
 
+       // DQ (7/25/2014): Adding support for C11 static assertions.
+          case V_SgStaticAssertionDeclaration:          unparseStaticAssertionDeclaration (stmt, info);          break;
+
           default:
              {
                printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
@@ -3968,6 +3971,25 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isMutable() = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isMutable() ? "true" : "false");
 #endif
 
+  // DQ (7/25/2014): We can assume that if this is g++ then we are using gcc for the backend C compiler.
+     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+#ifndef _MSC_VER
+     if (backEndCompiler == "g++")
+        {
+       // Now check the version of the identified GNU g++ compiler.
+          if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 9) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+             {
+            // DQ (7/25/2014): Adding C11 thread local support.
+               if (vardecl_stmt->get_is_thread_local() == true)
+                  {
+                    curprint("_Thread_local ");
+                  }
+             }
+        }
+#else
+  // Not sure what the status is of MSVC C11 support for thread local storage.
+#endif
+
 #if 0
      vardecl_stmt->get_declarationModifier().display("Called from unparseVarDeclStmt()");
 #endif
@@ -4090,7 +4112,36 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
      ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
 
-  // printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+#if 0
+     printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+     printf ("(*p)->get_using_C11_Alignas_keyword() = %s \n",(*p)->get_using_C11_Alignas_keyword() ? "true" : "false");
+#endif
+
+  // DQ (7/26/2014): Adding support for C11 _Alignas keyword.
+     if ((*p)->get_using_C11_Alignas_keyword() == true)
+        {
+          curprint("_Alignas(");
+          SgNode* constant_or_type = (*p)->get_constant_or_type_argument_for_Alignas_keyword();
+          SgType*       type_operand     = isSgType(constant_or_type);
+          SgExpression* constant_operand = isSgExpression(constant_or_type);
+          if (type_operand != NULL)
+             {
+               unp->u_type->unparseType(type_operand,info);
+             }
+            else
+             {
+               if (constant_operand != NULL)
+                  {
+                    unparseExpression(constant_operand,info);
+                  }
+                 else
+                  {
+                    printf ("Error: C11 _Alignas operand is not a type or constant \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+          curprint(")");
+        }
 
      while (p != vardecl_stmt->get_variables().end())
         {
@@ -4161,7 +4212,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 #endif
 
-          bool first = true;
+       // DQ (7/26/2014): comment out to avoid compiler warning.
+       // bool first = true;
 
        // DQ (11/28/2004): I hate it when "while(true)" is used!
        // while(true)
@@ -4421,6 +4473,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
 #if 1
+#if 0
+                    printf ("Using ninfo_for_type.set_PrintName(); to support unparsing of type \n");
+#endif
                  // This is an alternative to permit the unparsing of the type to control the name output for types.
                  // But it would have to be uniform that all the pieces of the first part of the type would have to 
                  // be output.  E.g. "*" in "*X".
@@ -4474,6 +4529,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ROSE_ASSERT(ninfo_for_type.isTypeSecondPart() == false);
 #if 0
                     printf ("##### This works for test2013_156.C and not quite for test2013_158.C, but it should be using ninfo_for_type so that the name qualification info is passed properly! \n");
+                    printf ("   --- tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
                  // DQ (5/7/2013): This is an attempt to fix test2013_156.C.
                  // DQ (7/28/2012): Output the type if this is not associated with a declaration list from a previous declaration.
@@ -4495,6 +4551,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 #if 0
                curprint("\n/* END: output using unp->u_type->unparseType (1st part) */ \n");
+#endif
+#if 0
+               curprint("/* END: output using unp->u_type->unparseType (1st part) */");
 #endif
 #if 0
             // DQ (12/31/2013): review this in light of change to support type attributres directly.
@@ -4600,6 +4659,14 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // curprint(tmp_name.str());
                     if (isAnonymousName == false)
                        {
+#if 0
+                      // DQ (5/26/2014): The fix to output a space in unparseTemplateArgumentList() when we have an empty template argument list means
+                      // that we no longer require this space to be output here (which was a problem for more general non template test codes that
+                      // were using diff against a gold standard for there tests (in the ROSE regression tests).
+                      // DQ (5/17/2014): With fixes to the determination of template declarations and template instantiation declarations, test2005_163.C
+                      // now requires  whitespace between the variable's type and the variable's name.
+                         curprint(" ");
+#endif
                          curprint(tmp_name.str());
                        }
 
@@ -4660,9 +4727,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (8/31/2013): Added support for missing attributes.
                unp->u_sage->printAttributes(decl_item,info);
 
+            // DQ (7/26/2014): comment out to avoid compiler warning.
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
-               first = false;
+            // first = false;
 
             // DQ (5/6/2013): Associated end of block for alternative handling of type in variable declaration.
             //    }
@@ -4797,7 +4865,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
             else
              {
-            // DQ (7/16/2012): Added new support for maultiple variables in the same declaration, output the name of the variable...
+            // DQ (7/16/2012): Added new support for multiple variables in the same declaration, output the name of the variable...
                tmp_name = decl_item->get_name();
                curprint ( tmp_name.str());
              }
@@ -5447,6 +5515,26 @@ Unparse_ExprStmt::unparseTypeAttributes ( SgDeclarationStatement* declaration )
 #endif
         }
 
+  // DQ (7/24/2014): Added support to unparse the alignment attribute.
+     short alignmentValue = declaration->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
+
+#if 0
+     printf ("In unparseTypeAttributes(SgDeclarationStatement*): alignmentValue = %d \n",(int)alignmentValue);
+#endif
+
+  // DQ (7/24/2014): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
+     if (alignmentValue >= 0)
+        {
+#if 0
+          curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
+#endif
+       // DQ (7/27/2014): Fixed attribute to have correct spelling.
+       // curprint(" __attribute__((align(N)))");
+       // curprint(" __attribute__((align(");
+          curprint(" __attribute__((aligned(");
+          curprint(StringUtility::numberToString((int)alignmentValue));
+          curprint(")))");
+        }
    }
 
 
@@ -6876,6 +6964,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->u_type->unparseType(btype, ninfo_for_type);
              }
 #else
+
+#error "DEAD CODE!"
+
           unp->u_type->unparseType(btype, ninfo_for_type);
 #endif
 
@@ -6892,6 +6983,15 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (10/7/2004): Moved the output of the name to before the output of the second part of the type
        // to handle the case of "typedef A* A_Type[10];" (see test2004_104.C).
+
+#if 0
+       // DQ (5/26/2014): The fix to output a space in unparseTemplateArgumentList() when we have an empty template argument list means
+       // that we no longer require this space to be output here (which was a problem for more general non template test codes that
+       // were using diff against a gold standard for there tests (in the ROSE regression tests).
+       // DQ (5/17/2014): With fixes to the determination of template declarations and template instantiation declarations, test2004_145.C
+       // (and associated test code test2014_58.C) now require  whitespace between the typedef's base type and the typedef's name.
+          curprint(" ");
+#endif
 
        // The name of the type (X, in the following example) has to appear after the 
        // declaration. Example: struct { int a; } X;
@@ -7412,6 +7512,30 @@ Unparse_ExprStmt::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnpa
     }
   }
 }
+
+
+void
+Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // DQ (7/25/2014): Adding support for C11 static assertions.
+
+  // For C11 this whould be unparsed as "_Static_assert", but for C++ it should be unparsed as "static_assert".
+     SgStaticAssertionDeclaration* staticAssertionDeclaration = isSgStaticAssertionDeclaration(stmt);
+     ROSE_ASSERT(staticAssertionDeclaration != NULL);
+
+     curprint("_Static_assert(");
+     unparseExpression(staticAssertionDeclaration->get_condition(), info);
+     curprint(",\"");
+  // unparseExpression(staticAssertionDeclaration->get_string_literal(), info);
+     curprint(staticAssertionDeclaration->get_string_literal());
+     curprint("\");");
+
+#if 0
+      printf ("Exiting as a test! (unparseStaticAssertionDeclaration not implemented) \n");
+      ROSE_ASSERT(false);
+#endif
+   }
+
 
  // EOF
 

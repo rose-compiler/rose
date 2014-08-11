@@ -25,7 +25,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  VariableRenaming.h
+pkginclude_HEADERS =  VariableRenaming.h
 
 
 EXTRA_DIST = CMakeLists.txt

@@ -110,6 +110,8 @@ class GrammarString
   const std::string& getTypeNameString() const;
   const std::string& getVariableNameString() const;
   const std::string& getDefaultInitializerString() const;
+  // MS 2014: 
+  std::string infoFieldsToString() const;
 
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;

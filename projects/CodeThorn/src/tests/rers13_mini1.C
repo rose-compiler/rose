@@ -27,7 +27,7 @@ void calculate_output(int input) {
     }
   }
   if(f==2) {
-	// intentionally empty block to be reduce
+    // intentionally empty block to be reduce
   }
   printf("%d",-1);
 }
