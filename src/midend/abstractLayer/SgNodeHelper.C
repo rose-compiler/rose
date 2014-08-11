@@ -964,7 +964,7 @@ SgNode* SgNodeHelper::getCond(SgNode* node) {
 }
 
 string SgNodeHelper::unparseCond(SgNode* cond) {
-  if(SgNodeHelper::isCond()) {
+  if(SgNodeHelper::isCond(cond)) {
     string condString;
     condString=cond->unparseToString();
     if(condString[condString.size()-1]==';')
