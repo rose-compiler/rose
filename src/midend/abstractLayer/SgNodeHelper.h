@@ -81,6 +81,9 @@ namespace SgNodeHelper {
   //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator (does not handle switch).
   SgNode* getCond(SgNode* node);
 
+  //! returns the string representing the condition (removes trailing ';')
+  string unparseCond(SgNode* node);
+
   //! returns the root node representing the AST of the true branch of If, CondOperator.
   SgNode* getTrueBranch(SgNode* node);
 
