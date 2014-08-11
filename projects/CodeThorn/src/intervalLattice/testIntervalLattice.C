@@ -60,5 +60,23 @@ int main() {
     cout<<"Length:"<<i31.length()<<endl;
     cout<<"Length:"<<i32.length()<<endl;
   }  
+  cout<<"---------------------- SUBINTERVAL TEST -----------------"<<endl;
+  {
+    IntervalLattice<int> i30(1,3);
+    IntervalLattice<int> i31(4,7);
+    IntervalLattice<int> i32(1,4);
+    IntervalLattice<int> i33(-1,1);
+    IntervalLattice<int> i34(3,3);
+    IntervalLattice<int> i35(3,3);
+    IntervalLattice<int> i36(4,4);
+    cout<<"Test1:(true):"<<IntervalLattice<int>::isSmaller(i30,i31).toString()<<endl;
+    cout<<"Test2:(top):"<<IntervalLattice<int>::isSmaller(i32,i31)<<endl;
+    cout<<"Test3:(top):"<<IntervalLattice<int>::isSmaller(i32,i30)<<endl;
+    cout<<"Test4:(top):"<<IntervalLattice<int>::isSmaller(i33,i30)<<endl;
+    cout<<"Test5:(false):"<<IntervalLattice<int>::isSmaller(i34,i35)<<endl;
+    cout<<"Test6:(false):"<<IntervalLattice<int>::isSmaller(i34,i34)<<endl;
+    cout<<"Test6:(true):"<<IntervalLattice<int>::isSmaller(i35,i36)<<endl;
+
+  }
   return 0;
 }

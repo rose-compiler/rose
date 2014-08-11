@@ -38,8 +38,10 @@ string CodeThorn::int_to_string(int x) {
 }
 
 string CodeThorn::color(string name) {
+#ifndef CT_IGNORE_COLORS_BOOLOPTIONS
   if(!boolOptions["colors"]) 
     return "";
+#endif
   string c="\33[";
   if(name=="normal") return c+"0m";
   if(name=="bold") return c+"1m";

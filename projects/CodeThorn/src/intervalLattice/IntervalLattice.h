@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
+#include "../AType.h"
 
 // Author: Markus Schordan, 2014.
 
@@ -10,6 +11,9 @@
   Requirements: Type must support algorithms: min, max; operators: '<','==', binary +,-,*,/,%, ; values: -1, +1.
   Binary operations on bot remain bot (this should be used for error checking)
 */
+
+// we may want to make this type a template parameter of IntervalLattice for handling relational operators
+typedef CodeThorn::AType::BoolLattice BoolLatticeType;
 
 template<typename Type>
 class IntervalLattice {
@@ -69,6 +73,10 @@ class IntervalLattice {
   bool isConst() {
     return !isLowInf()&&!isHighInf()&&_low==_high;
   }
+  Type getConst() {
+    assert(isConst());
+    return _low;
+  }
   bool isLowInf() {
     return _isLowInf;
   }
@@ -95,6 +103,12 @@ class IntervalLattice {
   }
   Type getLow() { assert(!isLowInf()); return _low; }
   Type getHigh() { assert(!isHighInf()); return _high; }
+
+
+  static bool haveOverlap(IntervalLattice l1, IntervalLattice l2) {
+    return !meet(l1,l2).isEmpty();
+  }
+  
 
   // checks whether interval l1 is a subinterval of l2
   static bool isSubIntervalOf(IntervalLattice l1, IntervalLattice l2) {
@@ -159,6 +173,7 @@ class IntervalLattice {
   }
 
   void meet(IntervalLattice other) {
+    // 1. handle lower bounds
     if(isLowInf() && other.isLowInf()) {
       // OK
     } else if(isLowInf() && !other.isLowInf()) {
@@ -169,6 +184,7 @@ class IntervalLattice {
     } else {
       _low=std::max(_low,other._low);
     }
+    // 2. handle upper bounds
     if(isHighInf() && other.isHighInf()) {
       // OK
     } else if(isHighInf() && !other.isHighInf()) {
@@ -179,6 +195,7 @@ class IntervalLattice {
     } else {
       _high=std::min(_high,other._high);
     }
+    // 3. finalize special cases
     unifyEmptyInterval();
   }
 
@@ -342,6 +359,37 @@ class IntervalLattice {
     if(isHighInf()||other.isLowInf())
       setIsHighInf(true);
   }
+  static BoolLatticeType isEqual(IntervalLattice l1, IntervalLattice l2) {
+    if(l1.isConst()&&l2.isConst()) {
+      return BoolLatticeType(l1.getConst()==l2.getConst());
+    }
+    if(haveOverlap(l1,l2)) {
+      // overlap with more than one value we do not know
+      return BoolLatticeType(BoolLatticeType(CodeThorn::AType::Top()));
+    } else {
+      // no overlap mean they cannot be equal
+      return BoolLatticeType(BoolLatticeType(false));
+    }
+  }
+  static BoolLatticeType isSmaller(IntervalLattice l1, IntervalLattice l2) {
+    // 0. handle special case when both intervals are of length 1
+    // 1. check for overlap (if yes, we do not know)
+    // 2. if no overlap check bounds    
+    if(l1.isConst()&&l2.isConst()) {
+      return BoolLatticeType(l1.getConst()<l2.getConst());
+    }
+    if(haveOverlap(l1,l2)) {
+      return BoolLatticeType(CodeThorn::AType::Top());
+    } else {
+      if(l1.getHigh()<l2.getLow())
+	return BoolLatticeType(true);
+      else
+	return BoolLatticeType(false);
+    }
+  }
+  BoolLatticeType isSmallerOrEqual(IntervalLattice l1, IntervalLattice l2) {
+    return isSmaller(l1,l2)||isEqual(l1,l2);
+  }
  private:
   void setIsLowInf(bool val) {
     _isLowInf=val;
@@ -350,7 +398,7 @@ class IntervalLattice {
     _isHighInf=val;
   }
   void unifyEmptyInterval() {
-    if(_low>_high)
+    if(!isLowInf()&&!isHighInf()&&_low>_high)
       setEmpty();
   }
  private:
