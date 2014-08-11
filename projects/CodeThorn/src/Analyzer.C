@@ -259,7 +259,11 @@ void Analyzer::addToWorkList(const EState* estate) {
 bool Analyzer::isActiveGlobalTopify() {
   if(_maxTransitionsForcedTop==0)
     return false;
-  return transitionGraph.size()>_maxTransitionsForcedTop;
+  bool isActive=transitionGraph.size()>_maxTransitionsForcedTop;
+  if(isActive) {
+    boolOptions.registerOption("rers-binary",false);
+  }
+  return false;
 }
 
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {

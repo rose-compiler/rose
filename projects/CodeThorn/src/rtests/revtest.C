@@ -1,8 +1,5 @@
 #include "runtime.h"
 
-void func_forward();
-void func_reverse();
-
 using namespace Backstroke;
 
 RunTimeSystem rts;
@@ -16,17 +13,17 @@ using namespace std;
 int main() {
   rts.init_stack_info();
   rts.initializeForwardEvent();
-  __forward_func();
+  func();
   cout<<"Event length: "<<rts.currentEventLength()<<endl;
   rts.finalizeForwardEvent();
   rts.initializeForwardEvent();
-  __forward_func();
+  func();
   cout<<"Event length: "<<rts.currentEventLength()<<endl;
   rts.finalizeForwardEvent();
   cout<<"X1"<<endl;
-  __reverse_func();
+  rts.reverseEvent();
   cout<<"X2"<<endl;
-  __reverse_func();
+  rts.reverseEvent();
   cout<<"X3"<<endl;
   return 0;
 }
