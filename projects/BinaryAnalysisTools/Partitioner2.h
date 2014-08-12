@@ -60,17 +60,48 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *  there is no requirement that the instructions be contiguous in memory.  Basic blocks also store the results of various
  *  analyses that are run when the block is created.
  *
- *  If the first instruction of a basic block is unmapped or mapped without execute permission then the basic block is said to
- *  be non-existing and will have no instructions.  Such blocks always point to the special "nonexisting" CFG vertex (see
- *  below).  If a non-initial instruction of a basic block is unmapped or not executable then the prior instruction becomes the
- *  final instruction of the block and the block's successor will be a vertex for a non-existing basic block which in turn
- *  points to the special "nonexisting" CFG vertex.  In other words, a basic block will either entirely exist or entirely not
- *  exist (there are no basic blocks containing instructions that just run off the end of memory).
+ *  Basic blocks can either be represented in a partitioner's CFG/AUM, or they can exist in a detached state.  Basic blocks in
+ *  a detached state can be modified directly via BasicBlock methods, but blocks that are attached to the CFG/AUM are
+ *  frozen. Frozen blocks can still be modified in certain ways, but usually only by going through the Partitioner API that
+ *  ensures that the CFG/AUM are kept up-to-date.  The CFG/AUM will contain at most one basic block per basic block starting
+ *  address.
  *
- *  If a basic block encounters an address which is mapped with execute permission but the instruction provider is unable to
- *  disassemble an instruction at that address, then the instruction provider must provide an "unknown" instruction. Since an
- *  "unknown" instruction always has indeterminate edges it becomes the final instruction of the basic block.  The CFG will
- *  contain an edge to the special "indeterminate" vertex.
+ *  If the first instruction of a basic block is unmapped or mapped without execute permission then the basic block is said to
+ *  be non-existing and will have no instructions.  Such blocks point to the special "nonexisting" CFG vertex when they are
+ *  attached to the control flow graph. If a non-initial instruction of a basic block is unmapped or not executable then the
+ *  prior instruction becomes the final instruction of the block and the block's successor will be a vertex for a non-existing
+ *  basic block which in turn points to the special "nonexisting" CFG vertex.  In other words, a basic block will either
+ *  entirely exist or entirely not exist (there are no basic blocks containing instructions that just run off the end of
+ *  memory).
+ *
+ *  If a basic block encounters an address which is mapped with execute permission and properly aligned but the instruction
+ *  provider is unable to disassemble an instruction at that address, then the instruction provider must provide an "unknown"
+ *  instruction. Since an "unknown" instruction always has indeterminate edges it becomes the final instruction of the basic
+ *  block, and the CFG will contain an edge to the special "indeterminate" vertex.  Blocks that have improper alignment are
+ *  treated as if they started at an unmapped or non-executable address.
+ *
+ * @section data_block Data Blocks
+ *
+ *  A data block is an address and data type anywhere in memory.  A data block can be attached to a CFG/AUM, or exist in a
+ *  detached state. The CFG/AUM will contain at most one data block per starting address.  A data block that is attached to the
+ *  CFG/AUM is frozen and its address and size cannot be modified directly, although it may still be possible to do so through
+ *  the Partitioner API.  A data block is attached to the CFG/AUM by virtue of being owned by a function which is attached to
+ *  the CFG/AUM.  A data block may be owned by any number of attached or detached functions. When owned by multiple attached
+ *  functions, the resulting ROSE AST will contain multiple SgAsmStaticData IR nodes each having a copy of the same data and
+ *  being a child of one of the functions.
+ *
+ * @section functions Functions
+ *
+ *  A function is a collection of one or more basic blocks related by control flow edges.  One basic block is special in that
+ *  it serves as the only entry point to this function for inter-function edges (usually function calls).  Any edge that leaves
+ *  the function must enter a different function's entry block.  These two rules can be relaxed, but result in a control flow
+ *  graph that is not proper for a function--most of ROSE's analyses work only on proper control flow graphs.
+ *
+ *  Functions can either be represented in a partitioner's CFG/AUM, or they can exist in a detached state.  Functions in a
+ *  detached state can have their basic block and data block ownership adjusted, otherwise the function exists in a frozen
+ *  state to prevent the CFG/AUM from becoming out of date with respect to the function.  Frozen functions can only be modified
+ *  through the Partitioner API so that the CFG/AUM can be updated.  When a function becomes detached from the CFG it thaws out
+ *  again and can be modified.  The CFG/AUM will contain at most one function per function starting address.
  *
  * @section cfg Control Flow Graph
  *
@@ -179,49 +210,6 @@ public:
         E_FCALL,                                        /**< Edge is a function call. */
         E_FRET,                                         /**< Edge is a function return from the call site. */
     };
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Function descriptors
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    class Function: public Sawyer::SharedObject {
-    public:
-        /** Manner in which a function owns a block. */
-        enum Ownership { OWN_UNOWNED=0,                 /**< Function does not own the block. */
-                         OWN_EXPLICIT,                  /**< Function owns the block explicitly, the normal ownership. */
-                         OWN_PROVISIONAL,               /**< Function might own the block in the future. */
-        };
-        typedef Sawyer::SharedPointer<Function> Ptr;
-    private:
-        rose_addr_t entryVa_;
-        std::set<rose_addr_t> bblockVas_;
-        bool isFrozen_;
-    protected:
-        Function(rose_addr_t entryVa): entryVa_(entryVa), isFrozen_(false) {
-            bblockVas_.insert(entryVa);
-        }
-    public:
-        static Ptr instance(rose_addr_t entryVa) { return Ptr(new Function(entryVa)); }
-        rose_addr_t address() const { return entryVa_; }
-        const std::set<rose_addr_t>& bblockAddresses() const { return bblockVas_; }
-        void insert(rose_addr_t bblockVa) { // no-op if exists
-            ASSERT_forbid(isFrozen_);
-            bblockVas_.insert(bblockVa);
-        }
-        void erase(rose_addr_t bblockVa) {              // no-op if not existing
-            ASSERT_forbid(isFrozen_);
-            ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
-            bblockVas_.erase(bblockVa);
-        }
-        void freeze() { isFrozen_ = true; }
-        bool isFrozen() const { return isFrozen_; }
-        size_t size() const { return bblockVas_.size(); }
-    private:
-        friend class Partitioner;
-        void thaw() { isFrozen_ = false; }
-    };
-
-    typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Basic blocks (BB)
@@ -447,9 +435,6 @@ public:
             return instance(startVa, size);
         }
 
-        /** Mark as read-only. */
-        void freeze() { isFrozen_ = true; }
-
         /** Determine if data block is read-only.
          *
          *  Returns true if read-only, false otherwise. */
@@ -470,8 +455,158 @@ public:
             ASSERT_require(nBytes > 0);
             size_ = nBytes;
         }
+
+    private:
+        friend class Partitioner;
+        void freeze() { isFrozen_ = true; }
+        void thaw() { isFrozen_ = false; }
     };
-    
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Function descriptors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Describes one function.
+     *
+     *  A function consists of one or more basic blocks.  Exactly one block is special in that it serves as the entry point
+     *  when this function is invoked from elsewhere; the only incoming inter-function edges are to this entry block.  This
+     *  function may have outgoing inter-function edges that represent invocations of other functions, and the targets of all
+     *  such edges will be the entry block of another function.  A function may also own zero or more data blocks consisting of
+     *  a base address and size (type).
+     *
+     *  A function may exist as part of the partitioner's control flow graph, or in a detached state.  When a function is
+     *  represented by the control flow graph then it is in a frozen state, meaning that its basic blocks and data blocks
+     *  cannot be adjusted adjusted; one must use the partitioner interface to do so. */
+    class Function: public Sawyer::SharedObject {
+    public:
+        /** Manner in which a function owns a block. */
+        enum Ownership { OWN_UNOWNED=0,                 /**< Function does not own the block. */
+                         OWN_EXPLICIT,                  /**< Function owns the block explicitly, the normal ownership. */
+                         OWN_PROVISIONAL,               /**< Function might own the block in the future. */
+        };
+        typedef Sawyer::SharedPointer<Function> Ptr;
+    private:
+        rose_addr_t entryVa_;                           // entry address; destination for calls to this function
+        std::set<rose_addr_t> bblockVas_;               // addresses of basic blocks
+        std::vector<DataBlock::Ptr> dblocks_;           // data blocks owned by this function, sorted by starting address
+        bool isFrozen_;                                 // true if function is represented by the CFG
+    protected:
+        // Use instance() instead
+        Function(rose_addr_t entryVa): entryVa_(entryVa), isFrozen_(false) {
+            bblockVas_.insert(entryVa);
+        }
+    public:
+        /** Static allocating constructor.  Creates a new function having the specified entry address. */
+        static Ptr instance(rose_addr_t entryVa) { return Ptr(new Function(entryVa)); }
+
+        /** Return the entry address.  The entry address also serves as an identifier for the function since the CFG can only
+         *  hold one function per entry address.  Detached functions need not have unique entry addresses. */
+        rose_addr_t address() const { return entryVa_; }
+
+        /** Returns basic block addresses.  Because functions can exist in a detatched state, a function stores basic block
+         *  addresses rather than basic blocks.  This allows a function to indicate which blocks will be ultimately part of its
+         *  definition without requiring that the blocks actually exist.  When a detached function is inserted into the CFG
+         *  then basic block placeholders will be created for any basic blocks that don't exist in the CFG (see @ref
+         *  Partitioner::insertFunction). */
+        const std::set<rose_addr_t>& basicBlockAddresses() const { return bblockVas_; }
+
+        /** Add a basic block to this function.  This method does not adjust the partitioner CFG. Basic blocks cannot be added
+         *  by this method when this function is attached to the CFG since it would cause the CFG to become outdated with
+         *  respect to this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.
+         *  If the specified address is already part of the function then it is not added a second time. */
+        void insertBasicBlock(rose_addr_t bblockVa) { // no-op if exists
+            ASSERT_forbid(isFrozen_);
+            bblockVas_.insert(bblockVa);
+        }
+
+        /** Remove a basic block from this function.  This method does not adjust the partitioner CFG.  Basic blocks cannot be
+         * removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated
+         * with respect to this function, but as long as the function is detached blocks can be inserted and removed
+         * arbitrarily.  If the specified address is not a basic block address for this function then this is a no-op.
+         * Removing the function's entry address is never permitted. */
+        void eraseBasicBlock(rose_addr_t bblockVa) {              // no-op if not existing
+            ASSERT_forbid(isFrozen_);
+            ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
+            bblockVas_.erase(bblockVa);
+        }
+
+        /** Returns data blocks owned by this function.  Returns the data blocks that are owned by this function in order of
+         *  their starting address. */
+        const std::vector<DataBlock::Ptr>& dataBlocks() const { return dblocks_; }
+
+        /** Add a data block to this function.  This method does not adjust the partitioner CFG.  Data blocks cannot be added
+         *  by this method when this function is attached to the CFG since it would cause the CFG to become outdated with
+         *  respect to this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.
+         *  The specified data block cannot be a null pointer.  If a data block is already present at the same address then the
+         *  specified data block replaces it. */
+        void insertDataBlock(const DataBlock::Ptr&);
+
+        /** Remove a data block from this function.  This method does not adjust the partitioner CFG.  Data blocks cannot be
+         *  removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated
+         *  with respect to this function, but as long as the function is detached blocks can be inserted and removed
+         *  arbitrarily.  If the specified pointer is null or the data block does not exist in this function then this method
+         *  is a no-op. */
+        void eraseDataBlock(const DataBlock::Ptr&);
+
+        /** Determines whether a function is frozen.  The ownership relations (instructions, basic blocks, and data blocks)
+         *  cannot be adjusted while a function is in a frozen state.  All functions that are represented in the control flow
+         *  graph are in a frozen state; detaching a function from the CFG thaws it. */
+        bool isFrozen() const { return isFrozen_; }
+
+        /** Number of basic blocks in the function. */
+        size_t nBasicBlocks() const { return bblockVas_.size(); }
+    private:
+        friend class Partitioner;
+        void freeze() { isFrozen_ = true; }
+        void thaw() { isFrozen_ = false; }
+    };
+
+    typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
+
+    /** Shared reference to data block.  Data blocks can be owned by multiple functions, which is handled by using the @ref
+     *  DataBlock::Ptr shared ownership pointers.  However, data blocks can also be owned by multiple functions that are
+     *  attached to a CFG, in which case we need to keep track of the number of such owners so that the data block can be
+     *  removed from the partitioner's bookkeeping when its last function is detached from the CFG.  The DataBlockReference
+     *  objects associate a data block pointer with its owning, CFG-attached functions */
+    class OwnedDataBlock {
+        DataBlock::Ptr dblock_;                         // the data block, non-null
+        std::vector<Function::Ptr> owners_;             // CFG-attached functions that own this block, sorted by address
+    public:
+        /** Construct a new data block ownership record.  The data block is not owned by any function, so the @ref insert
+         *  method must be called soon. The data block must not be null. */
+        explicit OwnedDataBlock(const DataBlock::Ptr &dblock): dblock_(dblock) {
+            ASSERT_not_null(dblock);
+        }
+
+        /** Construct a new data block ownership record.  The data block is marked so that it is owned by this one function.
+         *  The data block and owning function must neither be null pointers. */
+        OwnedDataBlock(const DataBlock::Ptr &dblock, const Function::Ptr &owner)
+            : dblock_(dblock), owners_(1, owner) {
+            ASSERT_not_null(dblock);
+            ASSERT_not_null(owner);
+        }
+
+        /** Add a function owner for this data block.  The specified function must not be null. If the function is already a
+         *  member of the block owner list then this method does nothing. Returns the number of owners after adding the
+         *  specified function. */
+        size_t insert(const Function::Ptr&);
+
+        /** Remove a function owner for this data block.  If the function is a null pointer or the function is not an owner of
+         *  the data block then this method does nothing. Returns the number of owners after removing the specified function. */
+        size_t erase(const Function::Ptr&);
+
+        /** Returns the list of functions that own this data block. */
+        const std::vector<Function::Ptr>& owningFunctions() const { return owners_; }
+
+        /** Returns the number of functions that own this data block. */
+        size_t nOwners() const { return owners_.size(); }
+
+        /** Returns the data block for this ownership record. */
+        DataBlock::Ptr dblock() const { return dblock_; }
+    };
+
+    /** Data blocks by starting address. */
+    typedef Sawyer::Container::Map<rose_addr_t, OwnedDataBlock> DataBlocks;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Address usage map (AUM)
@@ -896,7 +1031,8 @@ private:
     SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
-    Functions functions_;                               // List of all known functions by entry address
+    Functions functions_;                               // List of all attached functions by entry address
+    DataBlocks dblocks_;                                // List of all attached data blocks by starting address
 
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
@@ -934,11 +1070,16 @@ public:
     /** Returns the number of basic blocks in the CFG. This is a constant-time operation. */
     size_t nBasicBlocks() const { return cfg_.nVertices(); }
 
+    /** Returns the number of data blocks in the CFG.  Data blocks don't belong directly to the CFG in that they're not
+     *  vertices or edges, but rather they belong to one or more functions whose basic blocks are CFG vertices.  Regardless of
+     *  the indirection, this function returns in constant time. */
+    size_t nDataBlocks() const { return dblocks_.size(); }
+
     /** Returns the number of functions in the CFG.  This is a constant-time operation. */
     size_t nFunctions() const { return functions_.size(); }
 
-    /** Returns number of instructions in the CFG.  This statistic is computed in time linearly proportional to the number of
-     *  basic blocks in the control flow graph. */
+    /** Returns the number of instructions in the CFG.  This statistic is computed in time linearly proportional to the number
+     *  of basic blocks in the control flow graph. */
     size_t nInstructions() const;
 
     /** Determines whether an instruction is represented in the CFG.
@@ -973,7 +1114,7 @@ public:
      *  If the CFG contains a basic block that starts at the specified address then a pointer to the basic block is returned,
      *  otherwise a null pointer is returned.  A null pointer is returned if the CFG contains only a placeholder vertex for a
      *  basic block at the specified address. */
-    BasicBlock::Ptr bblockExists(rose_addr_t startVa) const {
+    BasicBlock::Ptr basicBlockExists(rose_addr_t startVa) const {
         ControlFlowGraph::ConstVertexNodeIterator vertex = placeholderExists(startVa);
         if (vertex!=cfg_.vertices().end())
             return vertex->value().bblock();
@@ -986,6 +1127,15 @@ public:
      *  specified address then a pointer to the function is returned, otherwise the null function pointer is returned. */
     Function::Ptr functionExists(rose_addr_t startVa) const {
         return functions_.getOptional(startVa).orDefault();
+    }
+
+    /** Determines whether a data block exists in the partitioner.  Data blocks are either attached to the CFG (indirectly via
+     *  functions), or detached; this method returns only those data blocks that are attached.  If a data block starts at the
+     *  specified address then a data block ownership record is returned. The ownership record has a non-null pointer to the
+     *  data block along with a list of functions that own the block.  If no attached data block starts at the specified
+     *  address then nothing is returned. */
+    Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t startVa) const {
+        return dblocks_.getOptional(startVa);
     }
 
     /** Returns the special "undiscovered" vertex.
@@ -1047,12 +1197,17 @@ public:
     /** Returns the address usage map for a single function. */
     AddressUsageMap aum(const Function::Ptr&) const;
 
-    /** Returns the list of all known functions.  Returns a map which maps function entry address to function pointer for the
-     *  functions that are part of the control flow graph. */
+    /** Returns the list of all attached functions.  Returns a map which maps function entry address to function pointer for
+     *  the functions that are part of the control flow graph. */
     const Functions& functions() const { return functions_; }
 
+    /** Returns the list of all attached data blocks.  Returns a map from data block starting address to data block ownership
+     *  information for each data block that is represented in the control flow graph.  The ownership information associates
+     *  each block with a list of functions that own the block since more than one function can own the same data. */
+    const DataBlocks& dataBlocks() const { return dblocks_; }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner CFG operations
+    //                                  Partitioner attached basic block operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
@@ -1133,7 +1288,7 @@ public:
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner basic block operations
+    //                                  Partitioner detached basic block operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Discover instructions for a basic block.
@@ -1224,14 +1379,15 @@ public:
     BaseSemantics::SValuePtr bblockStackDelta(const BasicBlock::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner function operations
+    //                                  Partitioner attached function operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Inserts functions into the CFG.
      *
      *  The indicated function(s) is inserted into the control flow graph.  Basic blocks (or at least placeholders) are
      *  inserted into the CFG for the function entry address and any basic block addresses the function might already contain.
-     *  Returns the number of new basic block placeholders that were created.
+     *  Returns the number of new basic block placeholders that were created.  If any data blocks are associated with the
+     *  function then they are inserted into the AUM.
      *
      *  It is permissible to insert the same function multiple times at the same address (subsequent insertions are no-ops),
      *  but it is an error to insert a different function at the same address as an existing function.
@@ -1256,15 +1412,15 @@ public:
      *  verified to not be owned by some other function, and they are marked as owned by this function.
      *
      *  @{ */
-    size_t insertFunctionBlocks(const Functions&);
-    size_t insertFunctionBlocks(const Function::Ptr&);
+    size_t insertFunctionBasicBlocks(const Functions&);
+    size_t insertFunctionBasicBlocks(const Function::Ptr&);
     /** @} */
 
     /** Removes a function from the CFG.
      *
-     *  The indicated function is removed from the control flow graph and all its basic blocks are reset so they no longer
-     *  point to the function.  The function itself is not affected; it still contains the its original blocks. The function is
-     *  thawed so that its connectivity is modifiable again with the function's API. */
+     *  The indicated function is removed from the control flow graph and all its basic blocks and data blocks are reset so
+     *  they no longer point back to this function.  The function itself is not affected; it still contains the its original
+     *  blocks. The function is thawed so that its connectivity is modifiable again with the function's API. */
     void eraseFunction(const Function::Ptr&);
 
     /** Scans the CFG to find function entry basic blocks.
@@ -1301,15 +1457,15 @@ public:
      *  vertices already owned by the function.
      *
      *  @{ */
-    size_t discoverFunctionBlocks(const Function::Ptr&,
-                                  EdgeList *inwardInterFunctionEdges /*out*/,
-                                  EdgeList *outwardInterFunctionEdges /*out*/);
-    size_t discoverFunctionBlocks(const Function::Ptr&,
-                                  ConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                  ConstEdgeList *outwardInterFunctionEdges /*out*/) const;
-    size_t discoverFunctionBlocks(const Function::Ptr &function,
-                                  std::vector<size_t> &inwardInterFunctionEdges /*out*/,
-                                  std::vector<size_t> &outwardInterFunctionEdges /*out*/) const;
+    size_t discoverFunctionBasicBlocks(const Function::Ptr&,
+                                       EdgeList *inwardInterFunctionEdges /*out*/,
+                                       EdgeList *outwardInterFunctionEdges /*out*/);
+    size_t discoverFunctionBasicBlocks(const Function::Ptr&,
+                                       ConstEdgeList *inwardInterFunctionEdges /*out*/,
+                                       ConstEdgeList *outwardInterFunctionEdges /*out*/) const;
+    size_t discoverFunctionBasicBlocks(const Function::Ptr &function,
+                                       std::vector<size_t> &inwardInterFunctionEdges /*out*/,
+                                       std::vector<size_t> &outwardInterFunctionEdges /*out*/) const;
     /** @} */
 
 
@@ -1453,6 +1609,13 @@ public:
      *  in the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is
      *  returned instead; however, if @p relaxed is true then an IR node is returned anyway. */
     SgAsmBlock* buildBasicBlockAst(const BasicBlock::Ptr&, bool relaxed=false) const;
+
+    /** Build AST for data block.
+     *
+     *  Builds and returns an AST for the specified data block.  The data block must not be a null pointer, but it need not be
+     *  in the CFG.  If @p relaxed is true then IR nodes are created even if they would violate some ROSE invariant, otherwise
+     *  invalid data blocks are ignored and a null pointer is returned for them. */
+    SgAsmBlock* buildDataBlockAst(const DataBlock::Ptr&, bool relaxed=false) const;
 
     /** Build AST for function.
      *

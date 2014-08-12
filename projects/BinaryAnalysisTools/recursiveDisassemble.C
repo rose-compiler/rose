@@ -57,12 +57,14 @@ struct Settings {
     std::string isaName;                                // instruction set architecture name
     rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
     bool doListCfg;                                     // list the control flow graph
+    bool doListAum;                                     // list the address usage map
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
     bool doListFunctionAddresses;                       // list function entry addresses
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(0), doListCfg(false), doListAsm(true), doListFunctionAddresses(false), doShowStats(false), doListUnused(false) {}
+        : mapVa(0), doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
+          doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -100,20 +102,29 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     // Switches for output
     SwitchGroup out;
     out.doc("Switches that affect output:");
-    out.insert(Switch("list-cfg")
-               .intrinsicValue(true, settings.doListCfg)
-               .doc("Emit a listing of the CFG after it is discovered."));
-    out.insert(Switch("no-list-cfg")
-               .key("list-cfg")
-               .intrinsicValue(false, settings.doListCfg)
-               .hidden(true));
-
     out.insert(Switch("list-asm")
                .intrinsicValue(true, settings.doListAsm)
                .doc("Produce an assembly listing.  This is the default; it can be turned off with @s{no-list-asm}."));
     out.insert(Switch("no-list-asm")
                .key("list-asm")
                .intrinsicValue(false, settings.doListAsm)
+               .hidden(true));
+
+    out.insert(Switch("list-aum")
+               .intrinsicValue(true, settings.doListAum)
+               .doc("Emit a listing of the address usage map after the CFG is discovered.  The @s{no-list-aum} switch is "
+                    "the inverse."));
+    out.insert(Switch("no-list-aum")
+               .key("list-aum")
+               .intrinsicValue(false, settings.doListAum)
+               .hidden(true));
+
+    out.insert(Switch("list-cfg")
+               .intrinsicValue(true, settings.doListCfg)
+               .doc("Emit a listing of the CFG after it is discovered."));
+    out.insert(Switch("no-list-cfg")
+               .key("list-cfg")
+               .intrinsicValue(false, settings.doListCfg)
                .hidden(true));
 
     out.insert(Switch("list-function-entries")
@@ -352,7 +363,7 @@ int main(int argc, char *argv[])
             // we're done.
             partitioner.eraseFunction(function);
         }
-        if (partitioner.discoverFunctionBlocks(function, NULL, NULL)) {
+        if (partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
             badFunctions.push_back(function);
         } else {
             partitioner.insertFunction(function);
@@ -362,7 +373,7 @@ int main(int argc, char *argv[])
     // Try each failed function again, but this time report the errors, and maybe insert them into the CFG anyway
     BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, badFunctions) {
         P2::Partitioner::EdgeList inwardConflictEdges, outwardConflictEdges;
-        if (partitioner.discoverFunctionBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
+        if (partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
             partitioner.mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
                                    <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                                    <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
@@ -382,8 +393,8 @@ int main(int argc, char *argv[])
 
             // Forcibly insert the target vertex for inward-conflicting edges and try again.
             BOOST_FOREACH (P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
-                function->insert(edge->target()->value().address());
-            if (0==partitioner.discoverFunctionBlocks(function, NULL, NULL)) {
+                function->insertBasicBlock(edge->target()->value().address());
+            if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
                 partitioner.mlog[WARN] <<"  conflicts have been overridden\n";
                 partitioner.insertFunction(function);
             }
@@ -408,6 +419,11 @@ int main(int argc, char *argv[])
         partitioner.dumpCfg(std::cout, "  ", true);
     }
 
+    if (settings.doListAum) {
+        std::cout <<"Final address usage map:\n";
+        partitioner.aum().print(std::cout, "  ");
+    }
+    
     if (settings.doListUnused) {
         AddressInterval addressSpace = AddressInterval::baseSize(settings.mapVa, nBytesMapped);
         Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(addressSpace);
@@ -419,7 +435,7 @@ int main(int argc, char *argv[])
 
     if (settings.doListFunctionAddresses) {
         BOOST_FOREACH (rose_addr_t functionVa, partitioner.functions().keys()) {
-            P2::Partitioner::BasicBlock::Ptr bb = partitioner.bblockExists(functionVa);
+            P2::Partitioner::BasicBlock::Ptr bb = partitioner.basicBlockExists(functionVa);
             std::cout <<StringUtility::addrToString(functionVa) <<": "
                       <<(bb && !bb->isEmpty() ? "exists" : "missing") <<"\n";
         }
