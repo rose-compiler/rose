@@ -54,13 +54,15 @@ getDisassembler(const std::string &name)
 
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
-    std::string isaName;
-    rose_addr_t mapVa;
-    bool doListCfg;
-    bool doListAsm;
-    bool doListFunctionAddresses;
-    bool doShowStats;
-    Settings(): mapVa(0), doListCfg(false), doListAsm(true), doListFunctionAddresses(false), doShowStats(false) {}
+    std::string isaName;                                // instruction set architecture name
+    rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
+    bool doListCfg;                                     // list the control flow graph
+    bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
+    bool doListFunctionAddresses;                       // list function entry addresses
+    bool doShowStats;                                   // show some statistics
+    bool doListUnused;                                  // list unused addresses
+    Settings()
+        : mapVa(0), doListCfg(false), doListAsm(true), doListFunctionAddresses(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -122,6 +124,15 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     out.insert(Switch("no-list-function-entries")
                .key("list-function-entries")
                .intrinsicValue(false, settings.doListFunctionAddresses)
+               .hidden(true));
+
+    out.insert(Switch("list-unused")
+               .intrinsicValue(true, settings.doListUnused)
+               .doc("Produce a listing of all specimen addresses that are not represented in the control flow graph. This "
+                    "listing can be disabled with @s{no-list-unused}."));
+    out.insert(Switch("no-list-unused")
+               .key("list-unused")
+               .intrinsicValue(false, settings.doListUnused)
                .hidden(true));
 
     out.insert(Switch("show-stats")
@@ -368,14 +379,14 @@ int main(int argc, char *argv[])
                                        <<" to " <<partitioner.functionName(edge->target()->value().function())
                                        <<"\n";
             }
-        }
 
-        // Forcibly insert the target vertex for inward-conflicting edges and try again.
-        BOOST_FOREACH (P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
-            function->insert(edge->target()->value().address());
-        if (0==partitioner.discoverFunctionBlocks(function, NULL, NULL)) {
-            partitioner.mlog[WARN] <<"  conflicts have been overridden\n";
-            partitioner.insertFunction(function);
+            // Forcibly insert the target vertex for inward-conflicting edges and try again.
+            BOOST_FOREACH (P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
+                function->insert(edge->target()->value().address());
+            if (0==partitioner.discoverFunctionBlocks(function, NULL, NULL)) {
+                partitioner.mlog[WARN] <<"  conflicts have been overridden\n";
+                partitioner.insertFunction(function);
+            }
         }
     }
 
@@ -397,6 +408,15 @@ int main(int argc, char *argv[])
         partitioner.dumpCfg(std::cout, "  ", true);
     }
 
+    if (settings.doListUnused) {
+        AddressInterval addressSpace = AddressInterval::baseSize(settings.mapVa, nBytesMapped);
+        Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(addressSpace);
+        BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.nodes()) {
+            std::cout <<unused;
+            std::cout <<"\t" <<StringUtility::plural(unused.size(), "bytes") <<"\n";
+        }
+    }
+
     if (settings.doListFunctionAddresses) {
         BOOST_FOREACH (rose_addr_t functionVa, partitioner.functions().keys()) {
             P2::Partitioner::BasicBlock::Ptr bb = partitioner.bblockExists(functionVa);
@@ -410,6 +430,6 @@ int main(int argc, char *argv[])
         SgAsmBlock *globalBlock = partitioner.buildAst();
         AsmUnparser().unparse(std::cout, globalBlock);
     }
-
+    
     exit(0);
 }

@@ -328,6 +328,20 @@ Partitioner::AddressUsageMap::extent() const {
     return retval;
 }
 
+Sawyer::Container::IntervalSet<AddressInterval>
+Partitioner::AddressUsageMap::unusedExtent(size_t nBits) const {
+    ASSERT_require(nBits>0 && nBits<=8*sizeof(rose_addr_t));
+    AddressInterval vaSpace = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(nBits));
+    return unusedExtent(vaSpace);
+}
+
+Sawyer::Container::IntervalSet<AddressInterval>
+Partitioner::AddressUsageMap::unusedExtent(const AddressInterval &vaSpace) const {
+    Sawyer::Container::IntervalSet<AddressInterval> retval = extent();
+    retval.invert(vaSpace);
+    return retval;
+}
+
 void
 Partitioner::AddressUsageMap::insert(const InsnBlockPair &pair) {
     ASSERT_not_null(pair.insn());
@@ -1059,6 +1073,10 @@ sortEdgesByDst(const Partitioner::ControlFlowGraph::ConstEdgeNodeIterator &a,
 
 void
 Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBlocks) const {
+    AsmUnparser unparser;
+    const std::string insnPrefix = prefix + "    ";
+    unparser.insnRawBytes.fmt.prefix = insnPrefix.c_str();
+
     // Sort the vertices according to basic block starting address.
     std::vector<ControlFlowGraph::ConstVertexNodeIterator> sortedVertices;
     for (ControlFlowGraph::ConstVertexNodeIterator vi=cfg_.vertices().begin(); vi!=cfg_.vertices().end(); ++vi) {
@@ -1083,15 +1101,21 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             sortedInEdges.push_back(ei);
         std::sort(sortedInEdges.begin(), sortedInEdges.end(), sortEdgesBySrc);
         out <<prefix <<"  predecessors:";
-        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedInEdges)
-            out <<" " <<edgeNameSrc(*edge);
-        out <<"\n";
+        if (sortedInEdges.empty()) {
+            out <<" none\n";
+        } else {
+            BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedInEdges)
+                out <<" " <<edgeNameSrc(*edge);
+            out <<"\n";
+        }
 
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                    out <<prefix <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+                    out <<insnPrefix;                   // hexdump does not prefix the first line
+                    unparser.unparse(out, insn);
+                }
             }
         }
 
@@ -1117,10 +1141,13 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             sortedOutEdges.push_back(ei);
         std::sort(sortedOutEdges.begin(), sortedOutEdges.end(), sortEdgesByDst);
         out <<prefix <<"  successors:";
-        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedOutEdges) {
-            out <<" " <<edgeNameDst(*edge);
+        if (sortedOutEdges.empty()) {
+            out <<" none\n";
+        } else {
+            BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedOutEdges)
+                out <<" " <<edgeNameDst(*edge);
+            out <<"\n";
         }
-        out <<"\n";
     }
 }
 

@@ -585,6 +585,16 @@ public:
          *  Returns the set of addresses that are represented. */
         Sawyer::Container::IntervalSet<AddressInterval> extent() const;
 
+        /** Addresses not represented.
+         *
+         *  Returns the set of addresses that are not represented.  The nBits argument is the number of bits in the virtual
+         *  address space, usually 32 or 64, and must be between 1 and 64, inclusive; or an interval can be supplied.
+         *
+         *  @{ */
+        Sawyer::Container::IntervalSet<AddressInterval> unusedExtent(size_t nBits) const;
+        Sawyer::Container::IntervalSet<AddressInterval> unusedExtent(const AddressInterval&) const;
+        /** @} */
+
         /** Insert an instruction/block pair into the map.
          *
          *  The specified instruction/block pair is added to the map. The instruction must not already be present in the map. */
