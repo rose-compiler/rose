@@ -46,6 +46,7 @@ class RunTimeSystem {
   };
   deque<EventRecord*> eventRecordDeque;
  public:
+  void registerForCommit(ptr p);
   void restore(BuiltInType bitype);
 
   // headers with private data members for all built-in types

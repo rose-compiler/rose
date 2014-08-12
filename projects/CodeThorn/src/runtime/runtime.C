@@ -12,6 +12,7 @@ size_t Backstroke::RunTimeSystem::numberOfUncommittedEvents() {
   return eventRecordDeque.size();
 }
 
+// allocates EventRecord
 void Backstroke::RunTimeSystem::initializeForwardEvent() {
   currentEventRecord=new EventRecord();
 }
@@ -20,6 +21,7 @@ void Backstroke::RunTimeSystem::finalizeForwardEvent() {
  eventRecordDeque.push_back(currentEventRecord);
 }
 
+// deallocates EventRecord
 void Backstroke::RunTimeSystem::reverseEvent() {
   EventRecord* restorationEventRecord=eventRecordDeque.back();
   eventRecordDeque.pop_back();
@@ -32,8 +34,24 @@ void Backstroke::RunTimeSystem::reverseEvent() {
   restorationEventRecord=0;
 }
 
+void Backstroke::RunTimeSystem::registerForCommit(ptr p) {
+  currentEventRecord->registered_heapalloc_queue.push(p);
+}
+
+// deallocates EventRecord
 void Backstroke::RunTimeSystem::commitEvent() {
-  // TODO: traverse commit-queue for event record forward and delete memory objects
+  EventRecord* commitEventRecord=eventRecordDeque.front();
+  eventRecordDeque.pop_front();
+  // traverse commit-queue for event record forward and delete memory objects
+  while(!commitEventRecord->registered_heapalloc_queue.empty()) {
+    ptr toDeallocPtr=commitEventRecord->registered_heapalloc_queue.front();
+    commitEventRecord->registered_heapalloc_queue.pop();
+    // we only need to call delete(x) because ~X() has already been called in the forward method
+    operator delete(toDeallocPtr);
+  }
+  // TODO:clean up of forward stack data
+  // should be implicit when the EventRecord is deleted (TODO: check)
+  delete commitEventRecord;
 }
 
 void Backstroke::RunTimeSystem::restore(BuiltInType bitype) {
