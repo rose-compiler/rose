@@ -677,6 +677,25 @@ SageBuilderAsm::buildBasicBlock(const std::vector<SgAsmInstruction*> &insns) {
     return bb;
 }
 
+SgAsmStaticData*
+SageBuilderAsm::buildStaticData(rose_addr_t startVa, const SgUnsignedCharList &rawData) {
+    SgAsmStaticData *sd = new SgAsmStaticData;
+    sd->set_address(startVa);
+    sd->set_raw_bytes(rawData);
+    return sd;
+}
+
+SgAsmBlock*
+SageBuilderAsm::buildDataBlock(SgAsmStaticData *staticData) {
+    ASSERT_not_null(staticData);
+    SgAsmBlock *db = new SgAsmBlock;
+    db->set_id(staticData->get_address());
+    db->set_address(staticData->get_address());
+    db->get_statementList().push_back(staticData);
+    staticData->set_parent(db);
+    return db;
+}
+
 SgAsmFunction*
 SageBuilderAsm::buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*> &blocks) {
     SgAsmFunction *func = new SgAsmFunction;

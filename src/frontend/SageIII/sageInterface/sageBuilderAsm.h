@@ -148,6 +148,10 @@ SgAsmx86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
 SgAsmBlock* buildBasicBlock(const std::vector<SgAsmInstruction*>&);
 SgAsmFunction* buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*>&);
 
+// Build data blocks
+SgAsmStaticData* buildStaticData(rose_addr_t startVa, const SgUnsignedCharList &rawData);
+SgAsmBlock* buildDataBlock(SgAsmStaticData*);
+
 
 } // namespace
 
