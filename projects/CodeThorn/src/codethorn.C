@@ -1455,12 +1455,16 @@ int main( int argc, char * argv[] ) {
 #endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
+    analyzer.reachabilityResults.writeFile(filename.c_str());
+    cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
+#if 0  //result tables of different sizes are now handled by the PropertyValueTable object itself
     switch(resultsFormat) {
     case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
     case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
     default: analyzer.reachabilityResults.writeFile(filename.c_str());break;
     }
     //    OLD VERSION:  generateAssertsCsvFile(analyzer,sageProject,filename);
+#endif
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
