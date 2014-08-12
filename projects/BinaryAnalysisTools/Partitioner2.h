@@ -222,7 +222,7 @@ public:
     };
 
     typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Basic blocks (BB)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -410,25 +410,60 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Data blocks (DB)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Data block information.
+     *
+     *  A data block represents data with a type. */
+    class DataBlock: public Sawyer::SharedObject {
+    public:
+        /** Shared pointer to a data block. */
+        typedef Sawyer::SharedPointer<DataBlock> Ptr;
+
+    private:
+        rose_addr_t startVa_;                           // starting address
+
+    protected:
+        // use instance() instead
+        DataBlock(rose_addr_t startVa): startVa_(startVa) {}
+
+    public:
+        /** Static allocating constructor.
+         *
+         *  The @p startVa is the starting address of the data block. */
+        static Ptr instance(rose_addr_t startVa) {
+            return Ptr(new DataBlock(startVa));
+        }
+
+        /** Virtual constructor.
+         *
+         *  The @p startVa is the starting address for this data block. */
+        virtual Ptr create(rose_addr_t startVa) const {
+            return instance(startVa);
+        }
+    };
+    
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Address usage map (AUM)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Instruction/Block pair.
+    /** Address usage item.
      *
-     *  A pointer to an instruction and the basic block to which the instruction belongs.  When an instruction is represented by
-     *  the control flow graph, the instruction belongs to exactly one basic block.
-     *
-     *  Instruction/block pairs are generally sorted by the starting address of the instruction. */
-    class InsnBlockPair {
+     *  This struct represents one user for an address interval.  The user can be either an instruction with a valid basic
+     *  block (since every instruction in the CFG belongs to exactly one basic block in the CFG), or a data block.  Address
+     *  usage items are usually ordered by their starting address. */
+    class AddressUser {
         SgAsmInstruction *insn_;
         BasicBlock::Ptr bblock_;
     public:
-        InsnBlockPair(): insn_(NULL) {}                 // needed by std::vector<InsnBlockPair>, but otherwise unused
+        AddressUser(): insn_(NULL) {}                 // needed by std::vector<AddressUser>, but otherwise unused
 
         /** Constructs new pair with instruction and basic block. The instruction must not be the null pointer, but the basic
          *  block may. A null basic block is generally only useful when searching for a particular instruction in an
-         *  InsnBlockPairs object. */
-        InsnBlockPair(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock): insn_(insn), bblock_(bblock) {
+         *  AddressUsers object. */
+        AddressUser(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock): insn_(insn), bblock_(bblock) {
             ASSERT_not_null(insn_);
         }
 
@@ -454,14 +489,14 @@ public:
             bblock_ = bblock;
         }
 
-        /** Determines if this pair is the first instruction of a basic block. */
+        /** Determines if this user is a first instruction of a basic block. */
         bool isBlockEntry() const {
             return insn_ && bblock_ && insn_->get_address() == bblock_->address();
         }
 
         /** Compare two pairs for equality.  Two pairs are equal if and only if they point to the same instruction and the same
-         * basic block. */
-        bool operator==(const InsnBlockPair &other) const {
+         *  basic block. */
+        bool operator==(const AddressUser &other) const {
             return insn_==other.insn_ && bblock_==other.bblock_;
         }
 
@@ -470,7 +505,7 @@ public:
          *  pointers are equal), and they necessarily belong to the same basic block (basic block pointers are equal).
          *  However, one or both of the basic block pointers may be null, which happens when performing a binary search for an
          *  instruction when its basic block is unknown. */
-        bool operator<(const InsnBlockPair &other) const { // hot
+        bool operator<(const AddressUser &other) const { // hot
             ASSERT_not_null(insn_);
             ASSERT_not_null(other.insn_);
             ASSERT_require((insn_!=other.insn_) ^ (insn_->get_address()==other.insn_->get_address()));
@@ -482,19 +517,19 @@ public:
         void print(std::ostream&) const;
     };
 
-    /** List of instruction/block pairs.
+    /** List of virtual address users.
      *
-     *  This is a list of instruction/block pairs which is maintained in a sorted order (by increasing instruction starting
-     *  address).  The class ensures that all pairs in the list have a valid instruction and basic block pointer and that the
-     *  list contains no duplicate instructions. */
-    class InsnBlockPairs {
-        std::vector<InsnBlockPair> pairs_;
+     *  This is a list of users of virtual addresses.  A user is either an instruction/block pair or a data block pointer. The
+     *  list is maintained in a sorted order by increasing instruction and/or data block starting address.  The class ensures
+     *  that all users in the list have valid pointers and that the list contains no duplicates. */
+    class AddressUsers {
+        std::vector<AddressUser> users_;
     public:
         /** Constructs an empty list. */
-        InsnBlockPairs() {}
+        AddressUsers() {}
 
-        /** Constructs a list having one pair. */
-        explicit InsnBlockPairs(const InsnBlockPair &pair) { insert(pair); }
+        /** Constructs a list having one instruction user. */
+        explicit AddressUsers(SgAsmInstruction *insn, const BasicBlock::Ptr &bb) { insertInstruction(insn, bb); }
 
         /** Determines if an instruction exists in the list.
          *
@@ -503,44 +538,44 @@ public:
 
         /** Determines if an instruction exists in the list.
          *
-         *  If an instruction with the specified address exists in the list then the instruction/block pair is returned,
+         *  If an instruction with the specified address exists in the list then the address user information is returned,
          *  otherwise nothing is returned. */
-        Sawyer::Optional<InsnBlockPair> instructionExists(rose_addr_t insnStart) const;
+        Sawyer::Optional<AddressUser> instructionExists(rose_addr_t insnStart) const;
 
-        /** Insert an instruction/block pair.
+        /** Insert an instruction/basic block pair.
          *
-         *  The pair must have a valid instruction and a valid block.  The instruction must not already exist in the list.
-         *  Returns a reference to this so that the method call can be chained. */
-        InsnBlockPairs& insert(const InsnBlockPair&);
+         *  The pair must have a valid instruction and a valid basic block.  The instruction must not already exist in the
+         *  list.  Returns a reference to this so that the method call can be chained. */
+        AddressUsers& insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
-        /** Erase an instruction/block pair.
+        /** Erase an instruction user.
          *
          *  Erases the indicated instruction from the list.  If the instruction is null or the list does not contain the
          *  instruction then this is a no-op. */
-        InsnBlockPairs& erase(SgAsmInstruction*);
+        AddressUsers& eraseInstruction(SgAsmInstruction*);
 
-        /** Return all instruction/block pairs.
+        /** Return all address users.
          *
-         *  Returns all instruction/block pairs as a vector sorted by instruction starting address. */
-        const std::vector<InsnBlockPair>& pairs() const { return pairs_; }
+         *  Returns all address users as a vector sorted by starting address. */
+        const std::vector<AddressUser>& addressUsers() const { return users_; }
 
-        /** Number of instruction/block pairs. */
-        size_t size() const { return pairs_.size(); }
+        /** Number of address users. */
+        size_t size() const { return users_.size(); }
 
-        /** Determines whether the instruction/block list is empty.
+        /** Determines whether this address user list is empty.
          *
          *  Returns true if empty, false otherwise. */
-        bool isEmpty() const { return pairs_.empty(); }
+        bool isEmpty() const { return users_.empty(); }
 
         /** Computes the intersection of this list with another. */
-        InsnBlockPairs intersection(const InsnBlockPairs&) const;
+        AddressUsers intersection(const AddressUsers&) const;
 
         /** Computes the union of this list with another. */
-        InsnBlockPairs union_(const InsnBlockPairs&) const;
+        AddressUsers union_(const AddressUsers&) const;
 
         /** True if two lists are equal. */
-        bool operator==(const InsnBlockPairs &other) const {
-            return pairs_.size()==other.pairs_.size() && std::equal(pairs_.begin(), pairs_.end(), other.pairs_.begin());
+        bool operator==(const AddressUsers &other) const {
+            return users_.size()==other.users_.size() && std::equal(users_.begin(), users_.end(), other.users_.begin());
         }
 
         /** Prints pairs space separated on a single line. */
@@ -553,31 +588,26 @@ public:
 
     /** Address usage map.
      *
-     *  Keeps track of which instructions span each virtual address.  This is similar to an @ref InstructionProvider, except
-     *  the InstructionProvider keeps track only of instruction starting addresses (there is only one instruction per starting
-     *  address). This class on the other hand keeps track of all instructions that cover a particular address regardless of
-     *  where the instruction started.  This is especially useful on variable-width instruction architectures since finding the
-     *  instructions that overlap a particular address would otherwise entail scanning backward through memory to find all
-     *  instructions that are large enough to cover the address in question. */
+     *  Keeps track of which instructions and data span each virtual address and are represented by the control flow graph. */
     class AddressUsageMap {
-        typedef Sawyer::Container::IntervalMap<AddressInterval, InsnBlockPairs> Map;
+        typedef Sawyer::Container::IntervalMap<AddressInterval, AddressUsers> Map;
         Map map_;
     public:
         /** Determines whether a map is empty.
          *
-         *  Returns true if the map contains no instructions, false if it contains at least one instruction.  An alternative
-         *  way to determine if the map is empty is by calling @ref hull and asking if the hull is empty. */
+         *  Returns true if the map contains no instructions or data, false if it contains at least one instruction or at least
+         *  one data block. */
         bool isEmpty() const { return map_.isEmpty(); }
 
         /** Number of addresses represented by the map.
          *
-         *  Returns the number of addresses that have at least one function.  This is a constant-time operation. */
+         *  Returns the number of addresses that have at least one user.  This is a constant-time operation. */
         size_t size() const { return map_.size(); }
 
-        /** Minimum and maximum instruction addresses.
+        /** Minimum and maximum used addresses.
          *
-         *  Returns minimum and maximum addresses that have instructions.  If the map is empty then the returned interval is
-         *  empty, containing neither a minimum nor maximum address. */
+         *  Returns minimum and maximum addresses that exist in this address usage map.  If the map is empty then the returned
+         *  interval is empty, containing neither a minimum nor maximum address. */
         AddressInterval hull() const { return map_.hull(); }
 
         /** Addresses represented.
@@ -598,26 +628,26 @@ public:
         /** Insert an instruction/block pair into the map.
          *
          *  The specified instruction/block pair is added to the map. The instruction must not already be present in the map. */
-        void insert(const InsnBlockPair&);
+        void insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
         /** Remove an instruction from the map.
          *
          *  The specified instruction is removed from the map.  If the pointer is null or the instruction does not exist in the
          *  map, then this is a no-op. */
-        void erase(SgAsmInstruction*);
+        void eraseInstruction(SgAsmInstruction*);
 
-        /** Instructions/blocks that span the entire interval.
+        /** Users that span the entire interval.
          *
-         *  The return value is a vector of instruction/block pairs sorted by instruction starting address where each instruction
-         *  starts at or before the beginning of the interval and ends at or after the end of the interval. */
-        InsnBlockPairs spanning(const AddressInterval&) const;
+         *  The return value is a vector of address users (instructions and/or data blocks) sorted by starting address where
+         *  each user starts at or before the beginning of the interval and ends at or after the end of the interval. */
+        AddressUsers spanning(const AddressInterval&) const;
 
-        /** Instructions/blocks that overlap the interval.
+        /** Users that overlap the interval.
          *
-         *  The return value is a vector of instruction/block pairs sorted by instruction starting address where each
-         *  instruction overlaps with the interval.  That is, at least one byte of the instruction (most instructions are
-         *  multiple bytes) came from the specified interval of byte addresses. */
-        InsnBlockPairs overlapping(const AddressInterval&) const;
+         *  The return value is a vector of address users (instructions and/or data blocks) sorted by starting address where
+         *  each user overlaps with the interval.  That is, at least one byte of the instruction or data block came from the
+         *  specified interval of byte addresses. */
+        AddressUsers overlapping(const AddressInterval&) const;
 
         /** Determines whether an instruction exists in the map.
          *
@@ -627,9 +657,9 @@ public:
 
         /** Determines if an address is the start of an instruction.
          *
-         *  If the specified address is the starting address of an instruction then the instruction/block pair is returned,
+         *  If the specified address is the starting address of an instruction then the address user information is returned,
          *  otherwise nothing is returned. */
-        Sawyer::Optional<InsnBlockPair> instructionExists(rose_addr_t startOfInsn) const;
+        Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startOfInsn) const;
 
         /** Determines if an address is the start of a basic block.
          *
@@ -813,7 +843,7 @@ public:
      *  If the CFG represents an instruction that starts at the specified address, then this method returns the
      *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
      *  basic block is only represented by a placeholder in the CFG. */
-    Sawyer::Optional<InsnBlockPair> instructionExists(rose_addr_t startVa) const {
+    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const {
         return aum_.instructionExists(startVa);
     }
 
@@ -1439,8 +1469,8 @@ private:
     
 };
 
-std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPair&);
-std::ostream& operator<<(std::ostream&, const Partitioner::InsnBlockPairs&);
+std::ostream& operator<<(std::ostream&, const Partitioner::AddressUser&);
+std::ostream& operator<<(std::ostream&, const Partitioner::AddressUsers&);
 std::ostream& operator<<(std::ostream&, const Partitioner::AddressUsageMap&);
 std::ostream& operator<<(std::ostream&, const Partitioner::ControlFlowGraph::VertexNode&);
 std::ostream& operator<<(std::ostream&, const Partitioner::ControlFlowGraph::EdgeNode&);

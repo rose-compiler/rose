@@ -151,11 +151,11 @@ Partitioner::BasicBlock::fallthroughVa() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      InsnBlockPair
+//                                      AddressUser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Partitioner::InsnBlockPair::print(std::ostream &out) const {
+Partitioner::AddressUser::print(std::ostream &out) const {
     ASSERT_not_null(insn_);
     if (bblock_ != NULL) {
         out <<"{" <<unparseInstructionWithAddress(insn_) <<" in " <<StringUtility::addrToString(bblock_->address()) <<"}";
@@ -165,68 +165,69 @@ Partitioner::InsnBlockPair::print(std::ostream &out) const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      InsnBlockPairs
+//                                      AddressUsers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Partitioner::BasicBlock::Ptr
-Partitioner::InsnBlockPairs::instructionExists(SgAsmInstruction *insn) const {
+Partitioner::AddressUsers::instructionExists(SgAsmInstruction *insn) const {
     if (!insn)
         return BasicBlock::Ptr();
-    InsnBlockPair needle(insn, BasicBlock::Ptr());      // basic block is not used for binary search
+    AddressUser needle(insn, BasicBlock::Ptr());      // basic block is not used for binary search
     ASSERT_require(isConsistent());
-    std::vector<InsnBlockPair>::const_iterator lb = std::lower_bound(pairs_.begin(), pairs_.end(), needle);
-    if (lb==pairs_.end() || lb->insn()!=insn)
+    std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
+    if (lb==users_.end() || lb->insn()!=insn)
         return BasicBlock::Ptr();
     ASSERT_not_null(lb->bblock());
     return lb->bblock();
 }
 
-Sawyer::Optional<Partitioner::InsnBlockPair>
-Partitioner::InsnBlockPairs::instructionExists(rose_addr_t startVa) const {
+Sawyer::Optional<Partitioner::AddressUser>
+Partitioner::AddressUsers::instructionExists(rose_addr_t startVa) const {
     // This could be a binary search, but since instructions seldom overlap much, linear is almost certainly ok.
-    BOOST_FOREACH (const InsnBlockPair &pair, pairs_) {
-        if (pair.insn()->get_address() == startVa)
-            return pair;
+    BOOST_FOREACH (const AddressUser &user, users_) {
+        if (user.insn()->get_address() == startVa)
+            return user;
     }
     return Sawyer::Nothing();
 }
 
-Partitioner::InsnBlockPairs&
-Partitioner::InsnBlockPairs::insert(const InsnBlockPair &pair) {
-    ASSERT_not_null(pair.insn());
-    ASSERT_not_null(pair.bblock());
-    ASSERT_forbid(instructionExists(pair.insn()));
+Partitioner::AddressUsers&
+Partitioner::AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(insn);
+    ASSERT_not_null(bblock);
+    ASSERT_forbid(instructionExists(insn));
     ASSERT_require(isConsistent());
-    std::vector<InsnBlockPair>::iterator lb = std::lower_bound(pairs_.begin(), pairs_.end(), pair);
-    ASSERT_require2(lb==pairs_.end() || lb->insn()!=pair.insn(), "instruction/block pair already exists in the list");
-    pairs_.insert(lb, pair);
+    AddressUser user(insn, bblock);
+    std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
+    ASSERT_require2(lb==users_.end() || lb->insn()!=user.insn(), "address user already exists in the list");
+    users_.insert(lb, user);
     ASSERT_require(isConsistent());
     return *this;
 }
 
-Partitioner::InsnBlockPairs&
-Partitioner::InsnBlockPairs::erase(SgAsmInstruction *insn) {
+Partitioner::AddressUsers&
+Partitioner::AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
     if (insn!=NULL) {
         ASSERT_require(isConsistent());
-        InsnBlockPair needle(insn, BasicBlock::Ptr());
-        std::vector<InsnBlockPair>::iterator lb = std::lower_bound(pairs_.begin(), pairs_.end(), needle);
-        if (lb!=pairs_.end() && lb->insn()==insn)
-            pairs_.erase(lb);
+        AddressUser needle(insn, BasicBlock::Ptr());
+        std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
+        if (lb!=users_.end() && lb->insn()==insn)
+            users_.erase(lb);
     }
     return *this;
 }
 
-Partitioner::InsnBlockPairs
-Partitioner::InsnBlockPairs::intersection(const InsnBlockPairs &other) const {
-    InsnBlockPairs retval;
+Partitioner::AddressUsers
+Partitioner::AddressUsers::intersection(const AddressUsers &other) const {
+    AddressUsers retval;
     size_t i=0, j=0;
     while (i<size() && j<other.size()) {
-        while (i<size() && pairs_[i] < other.pairs_[j])
+        while (i<size() && users_[i] < other.users_[j])
             ++i;
-        while (j<other.size() && other.pairs_[j] < pairs_[i])
+        while (j<other.size() && other.users_[j] < users_[i])
             ++j;
-        if (i<size() && j<other.size() && pairs_[i]==other.pairs_[j]) {
-            retval.pairs_.push_back(pairs_[i]);
+        if (i<size() && j<other.size() && users_[i]==other.users_[j]) {
+            retval.users_.push_back(users_[i]);
             ++i;
             ++j;
         }
@@ -235,35 +236,35 @@ Partitioner::InsnBlockPairs::intersection(const InsnBlockPairs &other) const {
     return retval;
 }
 
-Partitioner::InsnBlockPairs
-Partitioner::InsnBlockPairs::union_(const InsnBlockPairs &other) const {
-    InsnBlockPairs retval;
+Partitioner::AddressUsers
+Partitioner::AddressUsers::union_(const AddressUsers &other) const {
+    AddressUsers retval;
     size_t i=0, j=0;
     while (i<size() && j<other.size()) {
-        if (pairs_[i] < other.pairs_[j]) {
-            retval.pairs_.push_back(pairs_[i++]);
-        } else if (pairs_[i] == other.pairs_[j]) {
-            retval.pairs_.push_back(pairs_[i++]);
+        if (users_[i] < other.users_[j]) {
+            retval.users_.push_back(users_[i++]);
+        } else if (users_[i] == other.users_[j]) {
+            retval.users_.push_back(users_[i++]);
             ++j;
         } else {
-            retval.pairs_.push_back(other.pairs_[j++]);
+            retval.users_.push_back(other.users_[j++]);
         }
     }
     ASSERT_require(i>=size() || j>=other.size());
     while (i<size())
-        retval.pairs_.push_back(pairs_[i++]);
+        retval.users_.push_back(users_[i++]);
     while (j<other.size())
-        retval.pairs_.push_back(other.pairs_[j++]);
+        retval.users_.push_back(other.users_[j++]);
     ASSERT_require(retval.isConsistent());
     return retval;
 }
 
 bool
-Partitioner::InsnBlockPairs::isConsistent() const {
-    if (!pairs_.empty()) {
-        std::vector<InsnBlockPair>::const_iterator current = pairs_.begin();
-        std::vector<InsnBlockPair>::const_iterator next = current;
-        while (current != pairs_.end()) {
+Partitioner::AddressUsers::isConsistent() const {
+    if (!users_.empty()) {
+        std::vector<AddressUser>::const_iterator current = users_.begin();
+        std::vector<AddressUser>::const_iterator next = current;
+        while (current != users_.end()) {
             if (NULL==current->insn()) {
                 ASSERT_not_null(current->insn());
                 return false;
@@ -272,7 +273,7 @@ Partitioner::InsnBlockPairs::isConsistent() const {
                 ASSERT_not_null(current->bblock());
                 return false;
             }
-            if (++next != pairs_.end()) {
+            if (++next != users_.end()) {
                 if (!(*current < *next)) {
                     ASSERT_forbid2(*next < *current, "list is not sorted");
                     ASSERT_require2(*current < *next, "list contains a duplicate");
@@ -286,9 +287,9 @@ Partitioner::InsnBlockPairs::isConsistent() const {
 }
 
 void
-Partitioner::InsnBlockPairs::print(std::ostream &out) const {
-    BOOST_FOREACH (const InsnBlockPair &ibpair, pairs_)
-        out <<" " <<ibpair;
+Partitioner::AddressUsers::print(std::ostream &out) const {
+    BOOST_FOREACH (const AddressUser &addressUser, users_)
+        out <<" " <<addressUser;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,14 +298,14 @@ Partitioner::InsnBlockPairs::print(std::ostream &out) const {
 
 Partitioner::BasicBlock::Ptr
 Partitioner::AddressUsageMap::instructionExists(SgAsmInstruction *insn) const {
-    const InsnBlockPairs noPairs;
-    return insn ? map_.getOptional(insn->get_address()).orElse(noPairs).instructionExists(insn) : BasicBlock::Ptr();
+    const AddressUsers noUsers;
+    return insn ? map_.getOptional(insn->get_address()).orElse(noUsers).instructionExists(insn) : BasicBlock::Ptr();
 }
 
-Sawyer::Optional<Partitioner::InsnBlockPair>
+Sawyer::Optional<Partitioner::AddressUser>
 Partitioner::AddressUsageMap::instructionExists(rose_addr_t startVa) const {
-    const InsnBlockPairs noPairs;
-    if (Sawyer::Optional<InsnBlockPair> found = map_.getOptional(startVa).orElse(noPairs).instructionExists(startVa)) {
+    const AddressUsers noUsers;
+    if (Sawyer::Optional<AddressUser> found = map_.getOptional(startVa).orElse(noUsers).instructionExists(startVa)) {
         if (found->insn()->get_address() == startVa)
             return found;
     }
@@ -313,7 +314,7 @@ Partitioner::AddressUsageMap::instructionExists(rose_addr_t startVa) const {
 
 Partitioner::BasicBlock::Ptr
 Partitioner::AddressUsageMap::bblockExists(rose_addr_t startVa) const {
-    if (Sawyer::Optional<InsnBlockPair> found = instructionExists(startVa)) {
+    if (Sawyer::Optional<AddressUser> found = instructionExists(startVa)) {
         if (found->bblock()->address() == startVa)
             return found->bblock();
     }
@@ -343,40 +344,40 @@ Partitioner::AddressUsageMap::unusedExtent(const AddressInterval &vaSpace) const
 }
 
 void
-Partitioner::AddressUsageMap::insert(const InsnBlockPair &pair) {
-    ASSERT_not_null(pair.insn());
-    ASSERT_not_null(pair.bblock());
-    ASSERT_forbid(instructionExists(pair.insn()));
-    AddressInterval insnInterval = AddressInterval::baseSize(pair.insn()->get_address(), pair.insn()->get_size());
+Partitioner::AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(insn);
+    ASSERT_not_null(bblock);
+    ASSERT_forbid(instructionExists(insn));
+    AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
     Map adjustment;
-    adjustment.insert(insnInterval, InsnBlockPairs(pair));
+    adjustment.insert(insnInterval, AddressUsers(insn, bblock));
     BOOST_FOREACH (const Map::Node &node, map_.findAll(insnInterval)) {
-        InsnBlockPairs newPairs = node.value();
-        newPairs.insert(pair);
-        adjustment.insert(insnInterval.intersection(node.key()), newPairs);
+        AddressUsers newUsers = node.value();
+        newUsers.insertInstruction(insn, bblock);
+        adjustment.insert(insnInterval.intersection(node.key()), newUsers);
     }
     map_.insertMultiple(adjustment);
 }
 
 void
-Partitioner::AddressUsageMap::erase(SgAsmInstruction *insn) {
+Partitioner::AddressUsageMap::eraseInstruction(SgAsmInstruction *insn) {
     if (insn) {
         AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
         Map adjustment;
         BOOST_FOREACH (const Map::Node &node, map_.findAll(insnInterval)) {
-            InsnBlockPairs newPairs = node.value();
-            newPairs.erase(insn);
-            if (!newPairs.isEmpty())
-                adjustment.insert(insnInterval.intersection(node.key()), newPairs);
+            AddressUsers newUsers = node.value();
+            newUsers.eraseInstruction(insn);
+            if (!newUsers.isEmpty())
+                adjustment.insert(insnInterval.intersection(node.key()), newUsers);
         }
         map_.erase(insnInterval);
         map_.insertMultiple(adjustment);
     }
 }
 
-Partitioner::InsnBlockPairs
+Partitioner::AddressUsers
 Partitioner::AddressUsageMap::spanning(const AddressInterval &interval) const {
-    InsnBlockPairs retval;
+    AddressUsers retval;
     size_t nIters = 0;
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
         retval = 0==nIters++ ? node.value() : retval.intersection(node.value());
@@ -386,9 +387,9 @@ Partitioner::AddressUsageMap::spanning(const AddressInterval &interval) const {
     return retval;
 }
 
-Partitioner::InsnBlockPairs
+Partitioner::AddressUsers
 Partitioner::AddressUsageMap::overlapping(const AddressInterval &interval) const {
-    InsnBlockPairs retval;
+    AddressUsers retval;
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval))
         retval = retval.union_(node.value());
     return retval;
@@ -489,7 +490,7 @@ Partitioner::nullifyBasicBlock(const ControlFlowGraph::VertexNodeIterator &verte
         vertex->value().nullify();
         adjustPlaceholderEdges(vertex);
         BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-            aum_.erase(insn);
+            aum_.eraseInstruction(insn);
         bblockErased(bb);
     }
 }
@@ -542,7 +543,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) {
     // If the first instruction of this basic block already exists (in the middle of) some other basic block then the other
     // basic block is called a "conflicting block".  This only applies for the first instruction of this block, but is used in
     // the termination conditions below.
-    InsnBlockPair conflict;
+    AddressUser conflict;
     if (instructionExists(startVa).assignTo(conflict))
         ASSERT_forbid(conflict.insn()->get_address() == conflict.bblock()->address());// handled in discoverBasicBlock
 
@@ -583,9 +584,9 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) {
         if (placeholderExists(successorVa)!=cfg_.vertices().end())      // case: successor is an existing block
             goto done;
 
-        InsnBlockPair ibpair;
-        if (instructionExists(successorVa).assignTo(ibpair)) {          // case: successor is inside an existing block
-            if (ibpair.bblock() != conflict.bblock())
+        AddressUser addressUser;
+        if (instructionExists(successorVa).assignTo(addressUser)) {     // case: successor is inside an existing block
+            if (addressUser.bblock() != conflict.bblock())
                 goto done;
         }
 
@@ -617,10 +618,10 @@ Partitioner::ControlFlowGraph::VertexNodeIterator
 Partitioner::insertPlaceholder(rose_addr_t startVa) {
     ControlFlowGraph::VertexNodeIterator placeholder = placeholderExists(startVa);
     if (placeholder == cfg_.vertices().end()) {
-        InsnBlockPair ibpair;
-        if (instructionExists(startVa).assignTo(ibpair)) {
-            ControlFlowGraph::VertexNodeIterator conflictBlock = placeholderExists(ibpair.bblock()->address());
-            placeholder = truncateBasicBlock(conflictBlock, ibpair.insn());
+        AddressUser addressUser;
+        if (instructionExists(startVa).assignTo(addressUser)) {
+            ControlFlowGraph::VertexNodeIterator conflictBlock = placeholderExists(addressUser.bblock()->address());
+            placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
             ASSERT_require(placeholder->value().address() == startVa);
         } else {
             placeholder = cfg_.insertVertex(CfgVertex(startVa));
@@ -677,7 +678,7 @@ Partitioner::insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     // Insert the basicblock
     placeholder->value().bblock(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-        aum_.insert(InsnBlockPair(insn, bb));
+        aum_.insertInstruction(insn, bb);
     }
     if (bb->isEmpty())
         adjustNonexistingEdges(placeholder);
@@ -925,8 +926,8 @@ Partitioner::checkConsistency() const {
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
                                         addrToString(bb->address()) + " must belong to correct basic block");
                         AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
-                        InsnBlockPairs ibpairs = aum_.spanning(insnInterval);
-                        ASSERT_require2(ibpairs.instructionExists(insn),
+                        AddressUsers addressUsers = aum_.spanning(insnInterval);
+                        ASSERT_require2(addressUsers.instructionExists(insn),
                                         "instruction " + addrToString(insn->get_address()) + " in block " +
                                         addrToString(bb->address()) + " must span its own address interval in the AUM");
                     }
@@ -1256,7 +1257,7 @@ Partitioner::aum(const Function::Ptr &function) const {
             ASSERT_require(placeholder->value().type() == V_BASICBLOCK);
             if (BasicBlock::Ptr bb = placeholder->value().bblock()) {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                    retval.insert(InsnBlockPair(insn, bb));
+                    retval.insertInstruction(insn, bb);
             }
         }
     }
@@ -1622,13 +1623,13 @@ Partitioner::fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
 }
 
 std::ostream&
-operator<<(std::ostream &out, const Partitioner::InsnBlockPair &x) {
+operator<<(std::ostream &out, const Partitioner::AddressUser &x) {
     x.print(out);
     return out;
 }
 
 std::ostream&
-operator<<(std::ostream &out, const Partitioner::InsnBlockPairs &x) {
+operator<<(std::ostream &out, const Partitioner::AddressUsers &x) {
     x.print(out);
     return out;
 }
