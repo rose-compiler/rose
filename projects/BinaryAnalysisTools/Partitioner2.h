@@ -1071,6 +1071,9 @@ public:
     const InstructionProvider& instructionProvider() const { return instructionProvider_; }
     /** @} */
 
+    /** Returns the memory map. */
+    const MemoryMap& memoryMap() const { return memoryMap_; }
+
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const { return aum_.size(); }
 

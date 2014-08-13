@@ -202,13 +202,16 @@ public:
             return false;                               // m68k instructions must be 16-bit aligned
         static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
 
-        // Optional TRAPF instruction for alignment
+        // m68k functions are sometimes aligned on a 4-byte boundary by using two zero bytes or one TRAPF instruction.
         P2::Partitioner::DataBlock::Ptr padding;
-        if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
-            if (insn->get_kind()==m68k_trapf) {
-                padding = P2::Partitioner::DataBlock::instance(anchor, insn->get_size());
-                anchor += insn->get_size();
-            }
+        SgAsmM68kInstruction *insn = NULL;
+        uint8_t buf[2];
+        if (2==partitioner->memoryMap().read(buf, anchor, 2, MemoryMap::MM_PROT_EXEC) && 0==buf[0] && 0==buf[1]) {
+            padding = P2::Partitioner::DataBlock::instance(anchor, 2);
+            anchor += 2;
+        } else if ((insn=isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) && insn->get_kind()==m68k_trapf) {
+            padding = P2::Partitioner::DataBlock::instance(anchor, insn->get_size());
+            anchor += insn->get_size();
         }
         
         // Look for a LINK.W whose first argument is A6
@@ -442,6 +445,8 @@ int main(int argc, char *argv[]) {
     if (settings.doListUnused) {
         AddressInterval addressSpace = AddressInterval::baseSize(settings.mapVa, nBytesMapped);
         Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(addressSpace);
+        std::cout <<"Unused addresses: " <<StringUtility::plural(unusedAddresses.size(), "bytes")
+                  <<" in " <<StringUtility::plural(unusedAddresses.nIntervals(), "intervals") <<"\n";
         BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.nodes()) {
             std::cout <<unused;
             std::cout <<"\t" <<StringUtility::plural(unused.size(), "bytes") <<"\n";
