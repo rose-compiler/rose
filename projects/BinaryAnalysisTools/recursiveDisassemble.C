@@ -186,27 +186,40 @@ public:
     }
 };
 
-// Looks for m68k instruction prologues containing a LINK.W instruction whose first argument is A6
+// Looks for m68k instruction prologues
 class MatchM68kLink: public P2::Partitioner::FunctionPrologueMatcher {
 protected:
-    rose_addr_t functionVa_;
+    P2::Partitioner::Function::Ptr function_;
 public:
-    MatchM68kLink(): functionVa_(0) {}
     static Ptr instance() { return Ptr(new MatchM68kLink); }
-    virtual rose_addr_t functionVa() const {
-        return functionVa_;
+
+    virtual P2::Partitioner::Function::Ptr function() const {
+        return function_;
     }
 
     virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
         if (anchor & 1)
             return false;                               // m68k instructions must be 16-bit aligned
         static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
+
+        // Optional TRAPF instruction for alignment
+        P2::Partitioner::DataBlock::Ptr padding;
+        if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
+            if (insn->get_kind()==m68k_trapf) {
+                padding = P2::Partitioner::DataBlock::instance(anchor, insn->get_size());
+                anchor += insn->get_size();
+            }
+        }
+        
+        // Look for a LINK.W whose first argument is A6
         if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
             const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
             if (insn->get_kind()==m68k_link && args.size()==2) {
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
                     if (rre->get_descriptor()==REG_A6) {
-                        functionVa_ = anchor;
+                        function_ = P2::Partitioner::Function::instance(anchor);
+                        if (padding!=NULL)
+                            function_->insertDataBlock(padding);
                         return true;
                     }
                 }
@@ -218,18 +231,19 @@ public:
 
 class MatchX86Prologue: public P2::Partitioner::FunctionPrologueMatcher {
 protected:
-    rose_addr_t functionVa_;
+    P2::Partitioner::Function::Ptr function_;
 public:
-    MatchX86Prologue(): functionVa_(0) {}
     static Ptr instance() { return Ptr(new MatchX86Prologue); }
-    virtual rose_addr_t functionVa() const {
-        return functionVa_;
+
+    virtual P2::Partitioner::Function::Ptr function() const {
+        return function_;
     }
 
     virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
-        // Look for optional MOV RDI, RDI; if found, advance the anchor
+        // Look for optional MOV RDI, RDI
+        rose_addr_t va = anchor;
         do {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(anchor));
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(va));
             if (!insn || insn->get_kind()!=x86_mov)
                 break;
             const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -245,13 +259,13 @@ public:
                 rre->get_descriptor().get_major()!=x86_regclass_gpr ||
                 rre->get_descriptor().get_minor()!=x86_gpr_di)
                 break;
-            anchor += insn->get_size();
+            va += insn->get_size();
         } while (0);
 
         // Look for PUSH RBP at the (adjusted) anchor address. It must not already be in the CFG
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(anchor));
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(va));
         {
-            if (partitioner->instructionExists(anchor))
+            if (partitioner->instructionExists(va))
                 return false;
             if (!insn || insn->get_kind()!=x86_push)
                 return false;
@@ -288,13 +302,12 @@ public:
                 return false;
         }
 
-        functionVa_ = anchor;                               // address of the PUSH
+        function_ = P2::Partitioner::Function::instance(anchor);
         return true;
     }
 };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // Do this explicitly since the partitioner is not yet part of librose
     Diagnostics::initialize();
     P2::Partitioner::initDiagnostics();
@@ -339,10 +352,11 @@ int main(int argc, char *argv[])
             partitioner.mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
             P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
             partitioner.insertBasicBlock(placeholder, bb);
-        } else if (partitioner.nextFunctionPrologue(prologueVa).assignTo(prologueVa)) {
+        } else if (P2::Partitioner::Function::Ptr function = partitioner.nextFunctionPrologue(prologueVa)) {
             // We found another function prologue, so disassemble recursively at that location
-            partitioner.mlog[WHERE] <<"\nFound function prologue at " <<StringUtility::addrToString(prologueVa) <<"\n";
-            partitioner.insertFunction(P2::Partitioner::Function::instance(prologueVa));
+            prologueVa = function->address() + 1;       // advance the search point past the start of the function
+            partitioner.insertFunction(function);       // adds the function entry address to our work list
+            partitioner.mlog[WHERE] <<"\nFound prologue for " <<partitioner.functionName(function) <<"\n";
         } else {
             break;                                      // all done
         }
@@ -382,7 +396,7 @@ int main(int argc, char *argv[])
                 using namespace P2;                     // to pick up operator<< for *edge
                 partitioner.mlog[WARN] <<"  inward conflict " <<*edge
                                        <<" from " <<partitioner.functionName(edge->source()->value().function())
-                                       <<"\n";
+                                        <<"\n";
             }
             BOOST_FOREACH (const P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, outwardConflictEdges) {
                 using namespace P2;                     // to pick up operator<< for *edge
@@ -400,6 +414,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+
 
     // Show the results as requested
     if (settings.doShowStats) {

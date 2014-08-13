@@ -906,6 +906,13 @@ public:
          *  specified interval of byte addresses. */
         AddressUsers overlapping(const AddressInterval&) const;
 
+        /** Users that are fully contained in the interval.
+         *
+         *  The return value is a vector of address users (instructions and/or data blocks) sorted by starting address where
+         *  each user is fully contained within the specified interval.  That is, each user starts at or after the beginning of
+         *  the interval and ends at or before the end of the interval. */
+        AddressUsers containedIn(const AddressInterval&) const;
+
         /** Returns the least unmapped address with specified lower limit.
          *
          *  Returns the smallest unmapped address that is greater than or equal to @p startVa.  If no such address exists then
@@ -1123,11 +1130,17 @@ public:
 
     /** Determines whether a function exists in the function table.
      *
-     *  The function table holds the entry addresses of all known functions.  If the table contains a function for the
-     *  specified address then a pointer to the function is returned, otherwise the null function pointer is returned. */
+     *  The function table holds the entry addresses of all known functions.  If the table contains a function for 
+     *  specified address then a pointer to the function is returned, otherwise the null function pointer is returned.
+     *
+     *  @{ */
     Function::Ptr functionExists(rose_addr_t startVa) const {
         return functions_.getOptional(startVa).orDefault();
     }
+    Function::Ptr functionExists(const Function::Ptr &function) const {
+        return function!=NULL && functions_.exists(function->address()) ? function : Function::Ptr();
+    }
+    /** @} */
 
     /** Determines whether a data block exists in the partitioner.  Data blocks are either attached to the CFG (indirectly via
      *  functions), or detached; this method returns only those data blocks that are attached.  If a data block starts at the
@@ -1379,7 +1392,13 @@ public:
     BaseSemantics::SValuePtr bblockStackDelta(const BasicBlock::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner attached function operations
+    //                                  Partitioner data block methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void insertDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner attached function methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Inserts functions into the CFG.
@@ -1429,6 +1448,11 @@ public:
      *  function entry if it has an incoming edge that is a function call or if it is the entry block of a known function.
      *  This method does not modify the CFG.  It returns the functions in a map indexed by function entry address. */
     Functions discoverFunctionEntryVertices() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner detached function methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 
     /** Adds basic blocks to a function.
      *
@@ -1550,8 +1574,8 @@ public:
      *  A function prologue is a pattern of bytes or instructions that typically mark the beginning of a function.  For
      *  instance, many x86-based functions start with "PUSH EBX; MOV EBX, ESP" while many M68k functions begin with a single
      *  LINK instruction affecting the A6 register.  A subclass must implement the @ref match method that does the actual
-     *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref functionVa method to
-     *  obtain the starting address of the function (which may be different than the match anchor address).
+     *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref function method to
+     *  obtain a function object.
      *
      *  The matcher will be called only with anchor addresses that are mapped with execute permission and which are not a
      *  starting address of any instruction in the CFG.  The matcher should ensure similar conditions are met for any
@@ -1562,14 +1586,13 @@ public:
          *  partitioners are copied. */
         typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
 
-        /** Returns the function address for the previous successful match.  If the previous call to @ref match returned true
-         *  then this function should return the starting address for the matched function prologue.  Although the function
-         *  address returned by this method is often the same as the anchor address for the match, it need not be.  For
-         *  instance, a matcher could match against some number of no-op instructions followed by an instruction(s) for setting
-         *  up the stack frame, in which case it might choose to return the address of the instruction that sets up the stack
-         *  frame instead of the first no-op instruction.  The partitioner will never call @ref functionVa without first having
-         *  called @ref match. */
-        virtual rose_addr_t functionVa() const = 0;
+        /** Returns the function for the previous successful match.  If the previous call to @ref match returned true then this
+         *  method should return a function for the matched function prologue.  Although the function returned by this method
+         *  is often at the same address as the anchor for the match, it need not be.  For instance, a matcher could match
+         *  against some amount of padding followed the instructions for setting up the stack frame, in which case it might
+         *  choose to return a function that starts at the stack frame setup instructions and includes the padding as static
+         *  data. The partitioner will never call @ref function without first having called @ref match. */
+        virtual Function::Ptr function() const = 0;
     };
 
     /** Ordered list of function prologue matchers.
@@ -1580,7 +1603,7 @@ public:
     const FunctionPrologueMatchers& functionPrologueMatchers() const { return functionPrologueMatchers_; }
     /** @} */
 
-    /** Returns the address of the next function prologue.
+    /** Finds the next function by search for a function prologue.
      *
      *  Scans executable memory starting at @p startVa and tries to match a function prologue pattern.  The patterns are
      *  represented by matchers that have been inserted into the vector reference returned by @ref functionPrologueMatchers.
@@ -1588,13 +1611,13 @@ public:
      *  incremented at each step so that it is always an address that is mapped with execute permission and is not an address
      *  that is the start of an instruction that's in the CFG.
      *
-     *  If a matcher matches a function prologue then the starting address of the function is returned. The starting address
+     *  If a matcher matches a function prologue then a detached function is created and returned. The starting address
      *  need not be the same as the anchor address for the match.  For instance, a matcher might match one or more no-op
-     *  instructions followed by the function prologue, in which case the address after the no-ops is the one returned as the
-     *  start of the function.
+     *  instructions followed by the function prologue, in which case the address after the no-ops is the one used as the
+     *  entry point of the returned function.
      *
-     *  If no match is found then nothing is returned. */
-    Sawyer::Optional<rose_addr_t> nextFunctionPrologue(rose_addr_t startVa);
+     *  If no match is found then a null pointer is returned. */
+    Function::Ptr nextFunctionPrologue(rose_addr_t startVa);
 
 private:
     FunctionPrologueMatchers functionPrologueMatchers_;

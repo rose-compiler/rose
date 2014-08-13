@@ -1071,6 +1071,48 @@ Partitioner::discoverInstruction(rose_addr_t startVa) {
     return instructionProvider_[startVa];
 }
 
+// FIXME[Robb P. Matzke 2014-08-12]: nBytes to be replaced by a data type
+void
+Partitioner::insertDataBlock(const Function::Ptr &function, rose_addr_t startVa, size_t nBytes) {
+    ASSERT_not_null(function);
+    ASSERT_require(nBytes>0);
+
+    if (functionExists(function)) {
+        DataBlocks::NodeIterator dbi = dblocks_.find(startVa);
+        if (dbi==dblocks_.nodes().end()) {
+            // No data block starts at this address, so create a new one
+            DataBlock::Ptr dblock = DataBlock::instance(startVa, nBytes);
+            dblocks_.insert(startVa, OwnedDataBlock(dblock, function));
+            aum_.insertDataBlock(dblock);
+            function->thaw();
+            function->insertDataBlock(dblock);
+            function->freeze();
+        } else {
+            DataBlock::Ptr dblock = dbi->value().dblock();
+            if (dblock->size() < nBytes) {
+                // An existing data block, but it's too small. We can make it larger.
+                aum_.eraseDataBlock(dblock);            // remove the small version from the AUM
+                dblock->thaw();
+                dblock->size(nBytes);
+                dblock->freeze();
+                aum_.insertDataBlock(dblock);           // insert the larger version into the AUM
+                dbi->value().insert(function);          // ensure this function is an owner
+                function->thaw();
+                function->insertDataBlock(dblock);
+                function->freeze();
+            } else {
+                // An existing data block that is large enough
+                dbi->value().insert(function);          // ensure this function is an owner
+                function->thaw();
+                function->insertDataBlock(dblock);
+                function->freeze();
+            }
+        }
+    } else {
+        ASSERT_not_implemented("[Robb P. Matzke 2014-08-12]");
+    }
+}
+
 void
 Partitioner::bblockInserted(const ControlFlowGraph::VertexNodeIterator &newVertex) {
     using namespace StringUtility;
@@ -1376,23 +1418,25 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Partitioner::Function::Ptr
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
     while (memoryMap_.next(startVa, MemoryMap::MM_PROT_EXEC).assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
         if (!unmappedVa)
-            return Sawyer::Nothing();                   // no higher unused address
+            return Function::Ptr();                   // no higher unused address
         if (startVa == *unmappedVa) {
             BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
-                if (matcher->match(this, startVa))
-                    return matcher->functionVa();
+                if (matcher->match(this, startVa)) {
+                    if (Function::Ptr function = matcher->function())
+                        return function;
+                }
             }
             ++startVa;
         } else {
             startVa = *unmappedVa;
         }
     }
-    return Sawyer::Nothing();
+    return Function::Ptr();
 }
 
 size_t
