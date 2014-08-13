@@ -398,10 +398,19 @@ void Constraint::swapVars() {
   _rhsVar=tmp;
 }
 
-ConstraintSet ConstraintSet::constraintsOfVariable(VariableId varId) {
+ConstraintSet ConstraintSet::constraintsOfVariable(VariableId varId) const {
   ConstraintSet cset;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
-    
+    Constraint c=*i;
+    VariableId lhsVar=c.lhsVar();
+    if(lhsVar==varId) {
+      cset.insert(*i);
+    }
+    if(c.isVarVarOp()) {
+      if(varId==c.rhsVar()) {
+        cset.insert(*i);
+      }
+    }
   }
   return cset;
 }
@@ -946,14 +955,21 @@ string ConstraintSet::toString() const {
   * \author Markus Schordan
   * \date 2012.
  */
-string ConstraintSet::toString(VariableIdMapping* vim) const {
+
+string ConstraintSet::toStringWithoutBraces(VariableIdMapping* vim) const {
   stringstream ss;
-  ss<<"{";
   for(set<Constraint>::iterator i=begin();i!=end();++i) {
     if(i!=begin()) 
       ss<<",";
     ss<<(*i).toString(vim);
   }
+  return ss.str();
+}
+
+string ConstraintSet::toString(VariableIdMapping* vim) const {
+  stringstream ss;
+  ss<<"{";
+  ss<<toStringWithoutBraces(vim);
   ss<<"}";
   return ss.str();
 }
@@ -1025,3 +1041,13 @@ bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2) {
   return !(s1==s2);
 }
 #endif
+
+string ConstraintSetMaintainer::toString() {
+  stringstream ss;
+  for(ConstraintSetMaintainer::iterator i=this->begin();
+      i!=this->end();
+      ++i) {
+    ss<<"CS@:"<<*i<<":"<<(*i)->toString()<<endl;
+  }
+  return ss.str();
+}

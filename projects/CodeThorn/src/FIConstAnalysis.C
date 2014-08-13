@@ -102,12 +102,12 @@ VariableValuePair FIConstAnalysis::analyzeVariableDeclaration(SgVariableDeclarat
       SgInitializer* initializer=initName->get_initializer();
       SgAssignInitializer* assignInitializer=0;
       if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        //cout << "initializer found:"<<endl;
+        if(detailedOutput) cout << "initializer found:"<<endl;
         SgExpression* rhs=assignInitializer->get_operand_i();
         assert(rhs);
         return VariableValuePair(initDeclVarId,analyzeAssignRhs(rhs));
       } else {
-        //cout << "no initializer (OK)."<<endl;
+        if(detailedOutput) cout << "no initializer (OK)."<<endl;
         return VariableValuePair(initDeclVarId,AType::Top());
       }
     } else {
@@ -129,6 +129,7 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
       VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
       if(detailedOutput) cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
       //update map
+      map[res.varId].insert(res.varValue);
     }
     if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
       VariableValuePair res;
@@ -549,6 +550,19 @@ void FIConstAnalysis::attachAstAttributes(Labeler* labeler, string attributeName
   }
 }
 
+void FIConstAnalysis::filterVariables(VariableIdSet& variableIdSet) {
+  VariableIdSet toBeRemoved;
+  for(VarConstSetMap::iterator i=_varConstSetMap.begin();i!=_varConstSetMap.end();++i) {
+    VariableId varId=(*i).first;
+    if(variableIdSet.find(varId)==variableIdSet.end()) {
+      toBeRemoved.insert(varId);
+    }
+  }
+  for(VariableIdSet::iterator i=toBeRemoved.begin();i!=toBeRemoved.end();++i) {
+    _varConstSetMap.erase(*i);
+  }
+}
+
 /* format: varname, isAny, isUniqueconst, isMultiConst, width(>=1 or 0 or -1 (for any)), min, max, numBits, "{...}"
 */
 void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename) {
@@ -676,4 +690,8 @@ LabelSet FIConstAnalysis::getFalseConditions() {
 }
 LabelSet FIConstAnalysis::getNonConstConditions() {
   return nonConstConditions;
+}
+
+void FIConstAnalysis::setDetailedOutput(bool flag) {
+  detailedOutput=flag;
 }

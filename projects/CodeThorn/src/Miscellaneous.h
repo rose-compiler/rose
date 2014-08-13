@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <list>
 
 using namespace std;
 
@@ -20,6 +21,7 @@ namespace CodeThorn {
   void write_file(std::string filename, std::string data);
   string int_to_string(int x);
   string color(string name);
+  string replace_string(string toModify, string toReplace, string with);
 
  namespace Parse {
    bool checkWord(string w,istream& is);
@@ -28,6 +30,7 @@ namespace CodeThorn {
    int spaces(istream& is);
    int whitespaces(istream& is);
    set<int> integerSet(string intSet);
+   list<int> integerList(string intList);
  }
 
 } // end of namespace CodeThorn

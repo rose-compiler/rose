@@ -47,7 +47,7 @@ using namespace AType;
 using namespace DFAstAttributeConversion;
 using namespace AnalysisAbstractionLayer;
 
-#include "ReachabilityResults.h"
+#include "PropertyValueTable.h"
 
 string option_prefix;
 bool option_stats=false;

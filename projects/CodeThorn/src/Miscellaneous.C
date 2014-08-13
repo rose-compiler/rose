@@ -15,6 +15,22 @@ void CodeThorn::write_file(std::string filename, std::string data) {
   myfile.close();
 }
 
+string CodeThorn::replace_string(string toModify, string toReplace, string with) {
+  size_t index = 0;
+  while (true) {
+    /* Locate the substring to replace. */
+    index = toModify.find(toReplace, index);
+    if (index == string::npos) 
+      break;
+    /* Make the replacement. */
+    toModify.replace(index, toReplace.size(), with);
+    
+    /* Advance index forward so the next iteration doesn't pick it up as well. */
+    index += toReplace.size();
+  }
+  return toModify;
+}
+
 string CodeThorn::int_to_string(int x) {
   stringstream ss;
   ss << x;
@@ -22,8 +38,10 @@ string CodeThorn::int_to_string(int x) {
 }
 
 string CodeThorn::color(string name) {
+#ifndef CT_IGNORE_COLORS_BOOLOPTIONS
   if(!boolOptions["colors"]) 
     return "";
+#endif
   string c="\33[";
   if(name=="normal") return c+"0m";
   if(name=="bold") return c+"1m";
@@ -144,6 +162,30 @@ CodeThorn::Parse::whitespaces(istream& is) {
   return num;
 }
 
+list<int>
+CodeThorn::Parse::integerList(string liststring) {
+  list<int> intList;
+      stringstream ss(liststring);
+    if(ss.peek()=='[')
+      ss.ignore();
+    else
+      throw "Error: parse integer-values: wrong input format (at start).";
+    int i;
+    while(ss>>i) {
+      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
+      intList.push_back(i);
+      if(ss.peek()==','||ss.peek()==' ')
+        ss.ignore();
+    }
+#if 0
+    if(ss.peek()==']')
+      ss.ignore();
+    else
+      throw "Error: parse integer-values: wrong input format (at end).";
+#endif
+    return intList;
+}
+
 set<int>
 CodeThorn::Parse::integerSet(string setstring) {
   set<int> intSet;
@@ -167,3 +209,4 @@ CodeThorn::Parse::integerSet(string setstring) {
 #endif
     return intSet;
 }
+

@@ -221,6 +221,48 @@ long EState::memorySize() const {
   return sizeof(*this);
 }
 
+string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
+  string separator=",";
+  string pred;
+  const PState* ps=pstate();
+  const ConstraintSet* cset=constraints(); 
+  PState::const_iterator i=ps->begin();
+  VariableIdSet varIdSet=ps->getVariableIds();
+  string s;
+  if(cset->disequalityExists()) {
+    return "false";
+  }
+  bool firstPred=true;
+  for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
+    VariableId varId=*i;
+    string variableName=variableIdMapping->variableName(varId);
+    // ignore this variable
+    if(variableName=="__PRETTY_FUNCTION__")
+      continue;
+    //cout<<"V:"<<variableName<<":"<<endl;
+    if(ps->varIsConst(varId)) {
+      if(!firstPred)
+        s+=separator;
+      s+=variableName+"=="+ps->varValueToString(varId);
+      firstPred=false;
+    } else {
+      ConstraintSet vcset=cset->constraintsOfVariable(varId);
+      stringstream ss;
+      if(vcset.size()>=0) {
+        if(!firstPred)
+          s+=separator;
+        if(vcset.size()==0)
+          s+="true"; // TODO: make this optional to not have explicit true
+        else
+          s+=vcset.toStringWithoutBraces(variableIdMapping);
+        firstPred=false;
+      }
+    }
+  }
+  return s;
+}
+
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -304,9 +346,27 @@ void PState::setAllVariablesToTop() {
 void PState::setAllVariablesToValue(CodeThorn::CppCapsuleAValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     VariableId varId=(*i).first;
-    operator[](varId)=val;
+    //operator[](varId)=val;
+    setVariableToValue(varId,val);
   }
 }
+
+void PState::setVariableToTop(VariableId varId) {
+  setVariableToValue(varId, CodeThorn::CppCapsuleAValue(AType::Top()));
+}
+
+void PState::setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val) {
+  operator[](varId)=val;
+}
+VariableIdSet PState::getVariableIds() const {
+  VariableIdSet varIdSet;
+  for(PState::const_iterator i=begin();i!=end();++i) {
+    VariableId varId=(*i).first;
+    varIdSet.insert(varId);
+  }
+  return varIdSet;
+}
+
 
 /*! 
   * \author Markus Schordan
@@ -324,7 +384,7 @@ PStateId PStateSet::pstateId(const PState pstate) {
   PStateId xid=0;
   // MS: TODO: we may want to use the new function id(pstate) here
   for(PStateSet::iterator i=begin();i!=end();++i) {
-    if(pstate==*i) {
+    if(pstate==**i) {
       return xid;
     }
     xid++;
@@ -352,7 +412,7 @@ string PStateSet::toString() {
   for(PStateSet::iterator i=begin();i!=end();++i) {
     if(i!=begin())
       ss<<", ";
-    ss << "S"<<si++<<": "<<(*i).toString();
+    ss << "S"<<si++<<": "<<(*i)->toString();
   }
   ss << "}";
   return ss.str();
@@ -406,11 +466,27 @@ EStateId EStateSet::estateId(const EState estate) const {
   EStateId id=0;
   // MS: TODO: we may want to use the new function id(estate) here
   for(EStateSet::iterator i=begin();i!=end();++i) {
-    if(estate==*i)
+    if(estate==**i)
       return id;
     id++;
   }
   return NO_ESTATE;
+}
+
+void TransitionGraph::setIsPrecise(bool v) {
+  _preciseSTG=v;
+}
+
+void TransitionGraph::setIsComplete(bool v) {
+  _completeSTG=v;
+}
+
+bool TransitionGraph::isPrecise() {
+  return _preciseSTG;
+}
+
+bool TransitionGraph::isComplete() {
+  return _completeSTG;
 }
 
 /*! 
@@ -419,8 +495,8 @@ EStateId EStateSet::estateId(const EState estate) const {
  */
 const EState* TransitionGraph::getStartEState() {
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-    if((*i).source->label()==getStartLabel()) {
-      return (*i).source;
+    if((*i)->source->label()==getStartLabel()) {
+      return (*i)->source;
     }
   }
   return 0;
@@ -430,7 +506,7 @@ Transition TransitionGraph::getStartTransition() {
   // we ensure that all start transitions share the same start label
   TransitionGraph::iterator foundElementIter=end();
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-    if((*i).source->label()==getStartLabel()) {
+    if((*i)->source->label()==getStartLabel()) {
       if(foundElementIter!=end()) {
         cerr<< "Error: TransitionGraph: non-unique start transition."<<endl;
         exit(1);
@@ -439,7 +515,7 @@ Transition TransitionGraph::getStartTransition() {
     }
   }
   if(foundElementIter!=end())
-    return *foundElementIter;
+    return **foundElementIter;
   else {
     throw "TransitionGraph: no start transition found.";
   }
@@ -459,15 +535,26 @@ string EStateSet::estateIdString(const EState* estate) const {
   * \author Markus Schordan
   * \date 2012.
  */
-CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
+CodeThorn::InputOutput::OpType EState::ioOp() const {
   return io.op;
-#if 0
-  Label lab=label();
-  if(labeler->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
-  if(labeler->isStdOutLabel(lab)) return InputOutput::STDOUT_VAR;
-  if(labeler->isStdErrLabel(lab)) return InputOutput::STDERR_VAR;
-  return InputOutput::NONE;
-#endif
+}
+
+ConstraintSet EState::allInfoAsConstraints() const {
+  ConstraintSet cset=*constraints();
+  /* we use the property that state is always consistant with constraintSet
+     if a variable is state(var)=top then it may have a constraint
+     if a variable is state(var)=const then it cannot have a constraint
+     hence, we only need to add state(var)=const as var==const to the existing constraint set
+  */
+  const PState* pstate=this->pstate();
+  for(PState::const_iterator j=pstate->begin();j!=pstate->end();++j) {
+    VariableId varId=(*j).first;
+    AValue val=pstate->varValue(varId);
+    if(!val.isTop()&&!val.isBot()) {
+      cset.insert(Constraint(Constraint::EQ_VAR_CONST,varId,val));
+    }
+  }
+  return cset;
 }
 
 CodeThorn::AType::ConstIntLattice EState::determineUniqueIOValue() const {
@@ -500,7 +587,7 @@ CodeThorn::AType::ConstIntLattice EState::determineUniqueIOValue() const {
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
-    if((*i).io.op==op)
+    if((*i)->io.op==op)
       counter++;
   }
   return counter;
@@ -513,7 +600,7 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
 int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
-    if((*i).isConst(vid))
+    if((*i)->isConst(vid))
       counter++;
   }
   return counter;
@@ -538,8 +625,8 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   LabelSet lset;
   // the target node records the effect of the edge-operation on the source node.
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
-    if((*i).target->io.op==op) {
-      lset.insert((*i).source->label());
+    if((*i)->target->io.op==op) {
+      lset.insert((*i)->source->label());
     }
   }
   return lset;
@@ -585,7 +672,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate)
   TransitionGraph::TransitionPtrSet in;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
     if(estate==(*i).target)
-      in.insert(&(*i));
+      in.insert(&(*i)); // TODO: CHECK
   }
   TransitionGraph::TransitionPtrSet in2;
   if(!(in==_inEdges[estate])) {
@@ -710,11 +797,10 @@ bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   * \date 2012.
  */
 void TransitionGraph::add(Transition trans) {
-  #pragma omp critical
+  const Transition* transp=processNewOrExisting(trans);
+  assert(transp!=0);
+#pragma omp critical(TRANSGRAPH)
   {
-    insert(trans);
-    const Transition* transp=determine(trans);
-    assert(transp!=0);
     _outEdges[trans.source].insert(transp);
     _inEdges[trans.target].insert(transp);
   }
@@ -725,11 +811,11 @@ void TransitionGraph::add(Transition trans) {
   * \date 2012.
  */
 void TransitionGraph::erase(TransitionGraph::iterator transiter) {
-  const Transition* transp=determine(*transiter);
+  const Transition* transp=determine(**transiter);
   assert(transp!=0);
-  _outEdges[(*transiter).source].erase(transp);
-  _inEdges[(*transiter).target].erase(transp);
-  HSetMaintainer<Transition,TransitionHashFun>::erase(transiter);
+  _outEdges[(*transiter)->source].erase(transp);
+  _inEdges[(*transiter)->target].erase(transp);
+  HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred>::erase(transiter);
 }
 
 /*! 
@@ -741,7 +827,7 @@ void TransitionGraph::erase(const Transition trans) {
   assert(transp!=0);
   _outEdges[trans.source].erase(transp);
   _inEdges[trans.target].erase(transp);
-  size_t num=HSetMaintainer<Transition,TransitionHashFun>::erase(trans);
+  size_t num=HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred>::erase(const_cast<Transition*>(transp));
   assert(num==1);
 }
 
@@ -759,20 +845,24 @@ void TransitionGraph::eliminateEState(const EState* estate) {
   * \author Markus Schordan
   * \date 2012.
  */
+#if 0
 long TransitionGraph::removeDuplicates() {
   long cnt=0;
   set<Transition> s;
   for(TransitionGraph::iterator i=begin();i!=end();) {
-    if(s.find(*i)==s.end()) { 
-      s.insert(*i); 
+    const Transition* ii=const_cast<Transition*>(*i);
+    if(s.find(ii)==s.end()) { 
+      s.insert(ii); 
       ++i;
     } else {
-      erase(i++);
+      erase(ii);
+      ++i;
       cnt++;
     }
   }
   return cnt;
 }
+#endif
 
 /*! 
   * \author Markus Schordan
@@ -787,7 +877,7 @@ string TransitionGraph::toString() const {
     ss<<cnt;
     s+="Transition["+ss.str()+"]=";
 #endif
-    s+=(*i).toString()+"\n";
+    s+=(*i)->toString()+"\n";
     cnt++;
   }
   assert(cnt==size());
@@ -801,8 +891,8 @@ string TransitionGraph::toString() const {
 set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
-    if((*j).source->label()==lab)
-      estateSet.insert((*j).source);
+    if((*j)->source->label()==lab)
+      estateSet.insert((*j)->source);
   }
   return estateSet;
 }
@@ -814,10 +904,10 @@ set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) 
 set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
-    if((*j).source->label()==lab)
-      estateSet.insert((*j).source);
-    if((*j).target->label()==lab)
-      estateSet.insert((*j).target);
+    if((*j)->source->label()==lab)
+      estateSet.insert((*j)->source);
+    if((*j)->target->label()==lab)
+      estateSet.insert((*j)->target);
   }
   return estateSet;
 }
@@ -901,6 +991,13 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 
     // 2. add new transitions
     for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
+      //check if a single transition to the target already exists, delete this shorter path
+      TransitionPtrSet outEdgesTransSource = outEdges((*k).source);
+      for (TransitionPtrSet::iterator iter = outEdgesTransSource.begin(); iter != outEdgesTransSource.end(); ++iter) {
+        if ((*iter)->target == (*k).target) {
+          erase(**iter);
+        }
+      }
       this->add(*k);
       //assert(find(*k)!=end());
     }
@@ -920,8 +1017,8 @@ void TransitionGraph::reduceEState2(const EState* estate) {
 set<const EState*> TransitionGraph::estateSet() {
   _recomputedestateSet.clear();
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
-      _recomputedestateSet.insert((*j).source);
-      _recomputedestateSet.insert((*j).target);
+      _recomputedestateSet.insert((*j)->source);
+      _recomputedestateSet.insert((*j)->target);
   }
   return _recomputedestateSet;
 }
@@ -1046,13 +1143,17 @@ string EStateList::toString() {
   * \author Markus Schordan
   * \date 2012.
  */
-string EStateSet::toString() const {
+string EStateSet::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   ss<<"EStateSet={";
   for(EStateSet::iterator i=begin();
       i!=end();
       ++i) {
-    ss<<(*i).toString()<<",\n";
+    if(variableIdMapping)
+      ss<<(*i)->toString(variableIdMapping);
+    else
+      ss<<(*i)->toString();
+    ss<<",\n";
   }
   ss<<"}";
   return ss.str();

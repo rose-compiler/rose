@@ -322,6 +322,8 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   * \date 2013.
  */
 int CFAnalyzer::inlineTrivialFunctions(Flow& flow) {
+  //cerr<<"Error: inlineTrivialFunctions is deactivated."<<endl;
+  //exit(1);
   // 1) compute all functions that are called exactly once (i.e. number of pred in ICFG is 1)
   //    AND have the number of formal parameters is 0 AND have void return type.
   // 2) inline function
@@ -618,6 +620,14 @@ Flow CFAnalyzer::flow(SgNode* node) {
       Edge explicitEdge=Edge(*i,EDGE_FORWARD,labeler->functionExitLabel(node));
       if(SgNodeHelper::isLoopCond(labeler->getNode(*i))) {
         explicitEdge.addType(EDGE_FALSE);
+      }
+      if(SgNodeHelper::isCond(labeler->getNode(*i))) {
+        if(SgIfStmt* ifStmt=isSgIfStmt(labeler->getNode(*i)->get_parent())) {
+          if(!SgNodeHelper::getFalseBranch(ifStmt)) {
+            // MS: 07/02/2014: in case of empty if-false branch (at end of function), FALSE must be added to explicit node (only if-false can be empty)
+            explicitEdge.addType(EDGE_FALSE);
+          }
+        }
       }
       edgeSet.insert(explicitEdge);
     }

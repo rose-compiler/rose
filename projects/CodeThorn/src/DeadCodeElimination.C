@@ -192,7 +192,7 @@ int DeadCodeElimination::eliminateDeadCodePhase1(SgNode* root,
       ++i) {
     elimVarUses++;
     if(detailedOutput) cout<<"Replacing use of variable with constant: "<<(*i).first->unparseToString()<<" replaced by "<<(*i).second->unparseToString()<<endl;
-    SageInterface::replaceExpression((*i).first, (*i).second);
+    SgNodeHelper::replaceExpression((*i).first, (*i).second);
   }
   return elimVar+elimAssignment+elimVarUses;
 }

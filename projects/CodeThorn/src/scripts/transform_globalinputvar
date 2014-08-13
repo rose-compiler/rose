@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# $1: inputfile
+# $2: outputfile
+
+# rewrite local variable input to a global input variables
+echo "int input;" > $2.tmp
+sed 's/(int input)/()/g' $1 | sed 's/(input)/()/g' | sed 's/int input;//g' >> $2.tmp
+mv $2.tmp $2
+

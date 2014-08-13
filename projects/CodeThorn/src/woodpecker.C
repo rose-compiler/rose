@@ -37,7 +37,7 @@ using namespace std;
 using namespace CodeThorn;
 using namespace AType;
 
-#include "ReachabilityResults.h"
+#include "PropertyValueTable.h"
 #include "DeadCodeElimination.h"
 #include "ReachabilityAnalysis.h"
 
@@ -251,9 +251,6 @@ int main(int argc, char* argv[]) {
     cout<<"INFO: Inlining: turned off."<<endl;
   }
 
-  if(boolOptions["inline"]) {
-  }
-  
   if(boolOptions["eliminate-empty-if"]) {
     DeadCodeElimination dce;
     cout<<"STATUS: Eliminating empty if-statements."<<endl;
@@ -275,6 +272,7 @@ int main(int argc, char* argv[]) {
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
   fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
+  fiConstAnalysis.setDetailedOutput(true);
   fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
   variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
   cout<<"INFO: variables of interest: "<<variablesOfInterest.size()<<endl;
@@ -282,6 +280,8 @@ int main(int argc, char* argv[]) {
     printResult(variableIdMapping,varConstSetMap);
 
   if(csvConstResultFileName) {
+    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
+    fiConstAnalysis.filterVariables(setOfUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
 
@@ -310,9 +310,9 @@ int main(int argc, char* argv[]) {
     cout<<"INFO: Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
     cout<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
     ReachabilityAnalysis ra;
-    ReachabilityResults reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
+    PropertyValueTable reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
     cout<<"STATUS: generating file "<<csvAssertFileName<<endl;
-    reachabilityResults.write2013File(csvAssertFileName,true);
+    reachabilityResults.writeFile(csvAssertFileName,true);
   }
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);

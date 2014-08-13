@@ -1,0 +1,2 @@
+sed 's/__anonymous_0x[a-f0-9][a-f0-9]*//g' rose_rev_rtest4.cpppure.C > rose_rev_rtest4.cpppure2.C
+
