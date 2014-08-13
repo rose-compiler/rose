@@ -1295,7 +1295,7 @@ struct M68k_bclr_3: M68k {
                         OP(0) & BITS<6, 8>(6) & EAM(m68k_eam_drd)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i32);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(20), m68k_fmt_i32, 0);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 0);
         return d->makeInstruction(m68k_bclr, "bclr.l", src, dst);
     }
 };
@@ -1306,7 +1306,7 @@ struct M68k_bclr_4: M68k {
                         OP(0) & BITS<6, 8>(6) & EAM(m68k_eam_data & m68k_eam_alter & ~m68k_eam_drd & ~m68k_eam_pcmi)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *src = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i32);
-        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(20), m68k_fmt_i8, 0);
+        SgAsmExpression *dst = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i8, 0);
         return d->makeInstruction(m68k_bclr, "bclr.b", src, dst);
     }
 };
