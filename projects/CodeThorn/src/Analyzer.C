@@ -262,6 +262,7 @@ bool Analyzer::isActiveGlobalTopify() {
   bool isActive=transitionGraph.size()>_maxTransitionsForcedTop;
   if(isActive) {
     boolOptions.registerOption("rers-binary",false);
+    return true;
   }
   return false;
 }

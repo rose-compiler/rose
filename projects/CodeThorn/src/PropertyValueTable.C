@@ -116,8 +116,6 @@ void PropertyValueTable::finishedReachability(bool isPrecise, bool isComplete) {
     return;
   }
   if(!isPrecise&&isComplete) {
-    cout<<"CONVERSION 2"<<endl;
-    printResults();
     convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_NO);
     convertValue(PROPERTY_VALUE_YES, PROPERTY_VALUE_UNKNOWN);
     return;
