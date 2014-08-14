@@ -198,7 +198,8 @@ protected:
         assert(registers!=NULL);
         (void) SValue::promote(registers->get_protoval());
         assert(memory!=NULL);
-        (void) SValue::promote(memory->get_protoval());
+        (void) SValue::promote(memory->get_addr_protoval());
+        (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
         BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
@@ -290,8 +291,14 @@ public:
      * PartialSymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
+#if defined(__GNUC__)
+#if __GNUC__==4 && __GNUC_MINOR__==2
+        // This is needed to work around a bug in GCC-4.2.4 optimization. [Robb P. Matzke 2014-07-16]
+        volatile int x = protoval.get()->nrefs__;
+#endif
+#endif
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
         memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         SMTSolver *solver = NULL;
@@ -396,8 +403,8 @@ public:
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond,
-                                                size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,

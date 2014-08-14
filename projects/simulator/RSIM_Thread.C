@@ -677,7 +677,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s", func->get_name().c_str());
             } else if (process->get_memory().exists(ip)) {
-                const MemoryMap::Segment &sgmt = process->get_memory().at(ip).second;
+                const MemoryMap::Segment &sgmt = process->get_memory().at(ip).value();
                 if (!sgmt.get_name().empty())
                     mesg->more(" in memory region %s", sgmt.get_name().c_str());
             }

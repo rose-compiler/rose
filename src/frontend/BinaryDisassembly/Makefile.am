@@ -78,7 +78,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseObj.h
 endif
 
-include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
+pkginclude_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
 EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 dummyBinaryFrontend.C
 

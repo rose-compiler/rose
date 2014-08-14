@@ -1683,35 +1683,50 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
 #if 1
           SgModifierType* mod_type = isSgModifierType(node);
-          if (mod_type != NULL && mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+          if (mod_type != NULL)
              {
-               long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+               if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                  {
+                    long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
-               labelWithSourceCode += string("UPC: ");
+                    labelWithSourceCode += string("UPC: ");
 
-               if (block_size == 0) // block size empty
-                  {
-                 // curprint ("shared[] ") ;
-                    labelWithSourceCode += string("shared[] ");
+                    if (block_size == 0) // block size empty
+                       {
+                      // curprint ("shared[] ") ;
+                         labelWithSourceCode += string("shared[] ");
+                       }
+                    else if (block_size == -1) // block size omitted
+                       {
+                      // curprint ("shared ") ;
+                         labelWithSourceCode += string("shared ");
+                       }
+                    else if (block_size == -2) // block size is *
+                       {
+                      // curprint ("shared[*] ") ;
+                         labelWithSourceCode += string("shared[*] ");
+                       }
+                    else
+                       {
+                         ROSE_ASSERT(block_size > 0);
+                         stringstream ss;
+                         ss << block_size;
+
+                      // curprint ("shared["+ss.str()+"] ") ;
+                         labelWithSourceCode += string("shared["+ss.str()+"] ");
+                       }
                   }
-               else if (block_size == -1) // block size omitted
+
+               if (mod_type->get_typeModifier().get_constVolatileModifier().isConst() == true)
                   {
-                 // curprint ("shared ") ;
-                    labelWithSourceCode += string("shared ");
+                    labelWithSourceCode += string("\\n const ");
                   }
-               else if (block_size == -2) // block size is *
+
+               if (mod_type->get_typeModifier().get_elaboratedTypeModifier().get_modifier() != SgElaboratedTypeModifier::e_default)
                   {
-                 // curprint ("shared[*] ") ;
-                    labelWithSourceCode += string("shared[*] ");
-                  }
-               else
-                  {
-                    ROSE_ASSERT(block_size > 0);
                     stringstream ss;
-                    ss << block_size;
-
-                 // curprint ("shared["+ss.str()+"] ") ;
-                    labelWithSourceCode += string("shared["+ss.str()+"] ");
+                    ss << mod_type->get_typeModifier().get_elaboratedTypeModifier().get_modifier();
+                    labelWithSourceCode += string("\\n type modifier enum value = "+ss.str()+" ");
                   }
              }
 

@@ -41,6 +41,7 @@
 
 #include "string_functions.h"
 
+#include <boost/foreach.hpp>
 // DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
 // #ifndef USE_ROSE
 #include <boost/lexical_cast.hpp>
@@ -494,6 +495,58 @@ StringUtility::numberToString ( unsigned __int128 x )
    }
    #endif
 #endif
+
+std::string
+StringUtility::cEscape(const std::string &s) {
+    std::string result;
+    BOOST_FOREACH (char ch, s) {
+        switch (ch) {
+            case '\a':
+                result += "\\a";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\v':
+                result += "\\v";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            default:
+                if (isprint(ch)) {
+                    result += ch;
+                } else {
+                    char buf[8];
+                    sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                    result += buf;
+                }
+                break;
+        }
+    }
+    return result;
+}
+
+unsigned
+StringUtility::hexadecimalToInt(char ch) {
+    if (isxdigit(ch)) {
+        if (isdigit(ch))
+            return ch-'0';
+        if (isupper(ch))
+            return ch-'A'+10;
+        return ch-'a'+10;
+    }
+    return 0;
+}
 
 // DQ (2/23/2014): Fixed conflict in commit for 128 bit integer support.
 // string StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)

@@ -923,7 +923,8 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             sections.insert(sections.end(), s3.begin(), s3.end());
             for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
                 if ((*si)->is_mapped()) {
-                    Extent mapped_va((*si)->get_mapped_actual_va(), (*si)->get_mapped_size());
+                    AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
+                                                                          (*si)->get_mapped_size());
                     map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
                 }
             }

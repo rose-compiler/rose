@@ -3,6 +3,35 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2014_01.c \
+test2014_02.c \
+test2014_03.c \
+test2014_04.c \
+test2014_05.c \
+test2014_06.c \
+test2014_07.c \
+test2014_08.c \
+test2014_09.c \
+test2014_10.c \
+test2014_11.c \
+test2014_12.c \
+test2014_13.c \
+test2014_14.c \
+test2014_15.c \
+test2014_16.c \
+test2014_17.c \
+test2014_18.c \
+test2014_19.c \
+test2014_20.c \
+test2014_21.c \
+test2014_22.c \
+test2014_23.c \
+test2014_24.c \
+test2014_25.c \
+test2014_26.c \
+test2014_27.c \
+test2014_28.c \
+test2014_29.c \
+test2014_30.c \
 last.c
 
 
@@ -11,9 +40,7 @@ test2012_03.c \
 test2012_04.c \
 test2012_05.c \
 test2012_06.c \
-test2012_07.c \
-test2014_02.c \
-last.c
+test2012_07.c 
 
 # Note: last.C just simplifies the Makefile.am it
 # avoids common makefle errors in adding new files.
@@ -78,8 +105,8 @@ $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
 #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 # DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
-$(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
-	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.c) && touch $@
+# $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
+#	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.c) && touch $@
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -94,8 +121,8 @@ $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
-$(QMTEST_Objects): ../../testTranslator
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+# $(QMTEST_Objects): ../../testTranslator
+#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
@@ -107,7 +134,19 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
+if ROSE_USE_EDG_VERSION_4_9
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "C11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
+else
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "C11 tests using GNU version 4.9 backend compiler."
+	@$(MAKE) $(PASSING_TEST_Objects)
+endif
+endif
+else
+	@echo "C11 tests require GNU version 4.8 or 4.9 backend compilers."
+endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C11_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

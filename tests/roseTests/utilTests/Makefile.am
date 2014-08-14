@@ -64,6 +64,21 @@ EXTRA_DIST += testSort.conf
 testSort.passed: testSort.conf testSort
 	@$(RTH_RUN) TITLE="various parallel sorting [$@]" CMD="$$(pwd)/testSort"  $< $@
 
+# Tests performance of various graph implementations
+noinst_PROGRAMS += graphPerformance
+graphPerformance_SOURCES = graphPerformance.C
+graphPerformance_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += graphPerformance.passed
+graphPerformance.passed: graphPerformance
+	@$(RTH_RUN) TITLE="graph performance [$@]" CMD="$(abspath $<)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Tests and demonstrates one way to serialize and deserialize a graph
+noinst_PROGRAMS += graphIO
+graphIO_SOURCES = graphIO.C
+graphIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += graphIO.passed
+graphIO.passed: graphIO
+	@$(RTH_RUN) TITLE="graph I/O [$@]" CMD="$(abspath $<)" $(top_srcdir)/scripts/test_exit_status $@
 
 check-local: $(TEST_TARGETS)
 

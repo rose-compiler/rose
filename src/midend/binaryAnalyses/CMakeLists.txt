@@ -2,13 +2,16 @@
 
 install(
   FILES
+    AbstractLocation.h
     binary_analysis.h
     BinaryAnalysisUtils.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
+    BinaryDataFlow.h
     BinaryDominance.h
     BinaryFunctionCall.h
     BinaryPointerDetection.h
+    BinaryTaintedFlow.h
     dataflowanalyses/InterruptAnalysis.h
     dataflowanalyses/RoseBin_DataFlowAbstract.h
     dataflowanalyses/RoseBin_DefUseAnalysis.h
@@ -19,6 +22,8 @@ install(
     GraphAlgorithms.h
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/BaseSemantics.h
+    instructionSemantics/DataFlowSemantics2.h
+    instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
     instructionSemantics/findConstants.h
@@ -34,7 +39,6 @@ install(
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
-    instructionSemantics/semanticsModule.h
     instructionSemantics/SMTSolver.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h

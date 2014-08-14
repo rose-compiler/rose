@@ -362,6 +362,9 @@ Grammar::setUpStatements ()
   // DQ (4/16/2005): Added specific support in the IR for explicit template instantiation directives (to fix linking issues)
      NEW_TERMINAL_MACRO (TemplateInstantiationDirectiveStatement, "TemplateInstantiationDirectiveStatement", "TEMPLATE_INST_DIRECTIVE_STMT" );
 
+  // DQ (7/25/2014): Adding support for C11 static assertions (as declarations).
+     NEW_TERMINAL_MACRO (StaticAssertionDeclaration,   "StaticAssertionDeclaration",   "STATIC_ASSERTION_DECLARATION"   );
+
   // DQ (6/10/2011): Added template specific definitions.
      NEW_TERMINAL_MACRO (TemplateClassDefinition,          "TemplateClassDefinition",    "TEMPLATE_CLASS_DEF_STMT" );
      NEW_TERMINAL_MACRO (TemplateFunctionDefinition,       "TemplateFunctionDefinition", "TEMPLATE_FUNCTION_DEF_STMT" );
@@ -470,19 +473,19 @@ Grammar::setUpStatements ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
-          FunctionParameterList                   | VariableDeclaration       | VariableDefinition   | 
-          ClinkageDeclarationStatement            | EnumDeclaration           | AsmStmt              |
-          AttributeSpecificationStatement         | FormatStatement           | TemplateDeclaration  | 
-          TemplateInstantiationDirectiveStatement | UseStatement              | ParameterStatement   |
-          NamespaceDeclarationStatement           | EquivalenceStatement      | InterfaceStatement   |
-          NamespaceAliasDeclarationStatement      | CommonBlock               | TypedefDeclaration   |
-          StatementFunctionStatement              | CtorInitializerList       | PragmaDeclaration    |
-          UsingDirectiveStatement                 | ClassDeclaration          | ImplicitStatement    | 
-          UsingDeclarationStatement               | NamelistStatement         | ImportStatement      |
-          FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement    |
-          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine   | 
-          JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement,
-          "DeclarationStatement","DECL_STMT", false);
+          FunctionParameterList                   | VariableDeclaration       | VariableDefinition       | 
+          ClinkageDeclarationStatement            | EnumDeclaration           | AsmStmt                  |
+          AttributeSpecificationStatement         | FormatStatement           | TemplateDeclaration      | 
+          TemplateInstantiationDirectiveStatement | UseStatement              | ParameterStatement       |
+          NamespaceDeclarationStatement           | EquivalenceStatement      | InterfaceStatement       |
+          NamespaceAliasDeclarationStatement      | CommonBlock               | TypedefDeclaration       |
+          StatementFunctionStatement              | CtorInitializerList       | PragmaDeclaration        |
+          UsingDirectiveStatement                 | ClassDeclaration          | ImplicitStatement        | 
+          UsingDeclarationStatement               | NamelistStatement         | ImportStatement          |
+          FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement        |
+          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine       | 
+          JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement |
+          StaticAssertionDeclaration, "DeclarationStatement", "DECL_STMT", false);
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -843,6 +846,12 @@ Grammar::setUpStatements ()
      UpcForAllStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/25/2014): Adding support for C11 static assertions.
+     StaticAssertionDeclaration.setFunctionPrototype ( "HEADER_STATIC_ASSERTION_DECLARATION", "../Grammar/Statement.code" );
+     StaticAssertionDeclaration.setDataPrototype ( "SgExpression*", "condition", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StaticAssertionDeclaration.setDataPrototype ( "SgName", "string_literal", "= \"\"",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionDeclaration.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
@@ -1041,6 +1050,10 @@ Grammar::setUpStatements ()
   // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
      FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Added support for C11 "_Noreturn" keyword (alternative noreturn specification).
+     FunctionDeclaration.setDataPrototype("bool","using_C11_Noreturn_keyword","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -1307,7 +1320,17 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // DQ (7/25/2015): Added support for C11 thread local marking.
+     VariableDeclaration.setDataPrototype("bool","is_thread_local","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+  // Moved to SgInitializedName IR node.
+  // DQ (7/26/2015): Added support for C11 "_Alignas" keyword (alternative alignment specification).
+     VariableDeclaration.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     VariableDeclaration.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -3429,6 +3452,9 @@ Grammar::setUpStatements ()
      UpcForAllStatement.setFunctionSource   ( "SOURCE_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
      UpcForAllStatement.editSubstitute       ( "get_body", "get_loop_body" );
 #endif
+
+  // DQ (7/25/2014): Adding support for C11 static assertions.
+     StaticAssertionDeclaration.setFunctionSource  ( "SOURCE_STATIC_ASSERTION_DECLARATION", "../Grammar/Statement.code" );
 
      FunctionDeclaration.setFunctionSource  ( "SOURCE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionSource  ( "SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );

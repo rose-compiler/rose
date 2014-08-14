@@ -19,7 +19,7 @@ libastMerge_la_SOURCES      = \
 libastMerge_la_LIBADD       = 
 libastMerge_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      buildMangledNameMap.h  buildReplacementMap.h  collectAssociateNodes.h  deleteOrphanNodes.h \
      fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h astMergeAPI.h AstFixParentTraversal.h
 

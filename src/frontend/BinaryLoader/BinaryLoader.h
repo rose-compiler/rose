@@ -1,6 +1,8 @@
 #ifndef ROSE_BINARYLOADER_H
 #define ROSE_BINARYLOADER_H
 
+#include "sawyer/Message.h"
+
 /** Base class for loading a static or dynamic object.
  *
  *  The BinaryLoader class is the base class that defines the public interface and provides generic implementations for
@@ -84,17 +86,20 @@ public:
      *======================================================================================================================== */
 public:
     BinaryLoader()
-        : debug(NULL), p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
+        : p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
         { init(); }
 
     BinaryLoader(const BinaryLoader &other)
-        : debug(other.debug), p_perform_dynamic_linking(other.p_perform_dynamic_linking),
+        : p_perform_dynamic_linking(other.p_perform_dynamic_linking),
           p_perform_remap(other.p_perform_remap), p_perform_relocations(other.p_perform_relocations) {
         preloads = other.preloads;
         directories = other.directories;
     }
 
     virtual ~BinaryLoader(){}
+
+    /** Initialize diagnostic streams for binary loaders. */
+    static void initDiagnostics();
 
 private:
     /** Initialize the class. Register built-in loaders. */
@@ -166,12 +171,6 @@ public:
     /** Returns whether this loader will perform the relocation step. See also, set_perform_relocations(). */
     bool get_perform_relocations() const { return p_perform_relocations; }
 
-    /** Set whether this loader will emit diagnostics for debugging. If the specified file is non-null then diagnostic output
-     *  is sent to that file; otherwise diagnostic output is disabled. */
-    void set_debug(FILE *f) { debug = f; }
-
-    /** Returns whether this loader will emit diagnostics for debugging. See also, set_debug(). */
-    FILE *get_debug() const { return debug; }
 
 
     
@@ -404,15 +403,17 @@ public:
 
 
     /*========================================================================================================================
-     * Private stuff
+     * Data members
      *======================================================================================================================== */
+public:
+    static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
+
 private: 
     void init();                                        /**< Further initializations in a *.C file. */
 
     static std::vector<BinaryLoader*> loaders;          /**< List of loader subclasses. */
     std::vector<std::string> preloads;                  /**< Libraries that should be pre-loaded. */
     std::vector<std::string> directories;               /**< Directories to search for libraries with relative names. */
-    FILE *debug;                                        /**< Stream where diagnostics are sent; null to disable them. */
 
     bool p_perform_dynamic_linking;
     bool p_perform_remap;
