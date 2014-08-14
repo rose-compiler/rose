@@ -9,9 +9,11 @@
 // However, constant expressions have always ended whenever a function call or object constructor was 
 // encountered. So a piece of code as simple as this is illegal:
 
+#if 0
 int get_five() {return 5;}
  
 int some_value[get_five() + 7]; // Create an array of 12 integers. Ill-formed C++
+#endif
 
 // This was not legal in C++03, because get_five() + 7 is not a constant expression. A C++03 compiler 
 // has no way of knowing if get_five() actually is constant at runtime. In theory, this function could 

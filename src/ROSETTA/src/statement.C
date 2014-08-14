@@ -1052,9 +1052,18 @@ Grammar::setUpStatements ()
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/26/2014): Added support for C11 "_Noreturn" keyword (alternative noreturn specification).
+  // This could maybe be moved to the SgFunctionModifier.
      FunctionDeclaration.setDataPrototype("bool","using_C11_Noreturn_keyword","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/1/2014): Added support for C++11 "constexpr" keyword.
+  // This could maybe be moved to the SgFunctionModifier.
+     FunctionDeclaration.setDataPrototype("bool","is_constexpr","= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/3/2014): Added support for C++11 new function return type syntax.
+     FunctionDeclaration.setDataPrototype("bool","using_new_function_return_type_syntax","= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1331,6 +1340,12 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (8/1/2014): Added support for C++11 "constexpr" keyword.
+  // This could maybe be moved to the SgInitializedName.
+     VariableDeclaration.setDataPrototype("bool","is_constexpr","= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1855,6 +1870,12 @@ Grammar::setUpStatements ()
      TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/2/2014): Added to support C++11 "extern template class vector<float>;" used to specify 
+  // that a template should not be instantiated (see Cxx11_tests/test2014_18.C).
+     TemplateInstantiationDirectiveStatement.setDataPrototype("bool","do_not_instantiate","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      TemplateInstantiationDecl.setFunctionPrototype ( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
   // This might have to be made to be type == "int" but it makes more sense as a template_type_enum
   // TemplateInstantiationDecl.setDataPrototype ( "template_type_enum" , "template_kind", "= e_template_none");
@@ -2087,6 +2108,13 @@ Grammar::setUpStatements ()
      EnumDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/12/2014): Adding support for enum field type specifier.
+     EnumDeclaration.setDataPrototype ( "SgType*", "field_type", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+
+  // DQ (8/12/2014): Adding support for C++11 scoped enum declarations.
+     EnumDeclaration.setDataPrototype("bool","isScopedEnum","= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ExprStatement.setFunctionPrototype ( "HEADER_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2551,6 +2579,9 @@ Grammar::setUpStatements ()
      NamespaceDeclarationStatement.setDataPrototype ( "bool", "isUnnamedNamespace", "= false",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/12/2014): Adding support for C++11 inlined namespaces.
+     NamespaceDeclarationStatement.setDataPrototype ( "bool", "isInlinedNamespace", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (2/19/2006): Added to handle case destribed in the header file.
      NamespaceDeclarationStatement.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",

@@ -992,13 +992,15 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
        */
           enum special_function_modifier_enum
              {
-               e_unknown     = 0,         /*!< error value */
-               e_default     = 1,         /*!< Not a special function (default) */
-               e_none        = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
-               e_constructor = 2,         /*!< A constructor */
-               e_destructor  = 3,         /*!< A destructor */
-               e_conversion  = 4,         /*!< A conversion operator function */
-               e_operator    = 5,         /*!< Any other operator function */
+               e_unknown            = 0,         /*!< error value */
+               e_default            = 1,         /*!< Not a special function (default) */
+               e_none               = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
+               e_constructor        = 2,         /*!< A constructor */
+               e_destructor         = 3,         /*!< A destructor */
+               e_conversion         = 4,         /*!< A conversion operator function */
+               e_operator           = 5,         /*!< Any other operator function */
+               e_uld_operator       = 6,         /*!< ULD operator function (operators on literals) */
+               e_lambda_entry_point = 7,   /*!< C++11 lambda support */
                e_last_modifier            /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -1038,6 +1040,14 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
           void setOperator();
           void unsetOperator();
 
+          bool isUldOperator() const;
+          void setUldOperator();
+          void unsetUldOperator();
+
+          bool isLambdaEntryPoint() const;
+          void setLambdaEntryPoint();
+          void unsetLambdaEntryPoint();
+
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m );
@@ -1068,10 +1078,11 @@ HEADER_DECLARATION_MODIFIER_START
                e_export        = 4,  /*!< Export qualifier */
                e_throw         = 5,  /*!< Exception handling support (throw) */
                e_bind          = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
-               e_final         = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+               e_final         = 7,  /*!< PHP, Java, and C++11 support for specification to not be extended */
+               e_override      = 8,  /*!< C++11 support for specification to not be extended */
 
             // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
-               e_java_abstract = 8,  /*!< abstract keyword for Java functions, classes and interfaces */
+               e_java_abstract = 9,  /*!< abstract keyword for Java functions, classes and interfaces */
 
                e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
@@ -1139,10 +1150,15 @@ HEADER_DECLARATION_MODIFIER_START
           void setBind();
           void unsetBind();
 
-       // PHP and Java specific attribute
+       // PHP, Java, and C++11 specific attribute
           bool isFinal() const;
           void setFinal();
           void unsetFinal();
+
+       // C++11 specific attribute
+          bool isOverride() const;
+          void setOverride();
+          void unsetOverride();
 
        // DQ (8/11/2011): Added Java specific "abstract" attribute.
           bool isJavaAbstract() const;
@@ -2779,6 +2795,14 @@ bool $CLASSNAME::isOperator() const    { return checkBit(e_operator,p_modifierVe
 void $CLASSNAME::setOperator()         { setBit(e_operator,p_modifierVector); }
 void $CLASSNAME::unsetOperator()       { unsetBit(e_operator,p_modifierVector); }
 
+bool $CLASSNAME::isUldOperator() const    { return checkBit(e_uld_operator,p_modifierVector); }
+void $CLASSNAME::setUldOperator()         { setBit(e_uld_operator,p_modifierVector); }
+void $CLASSNAME::unsetUldOperator()       { unsetBit(e_uld_operator,p_modifierVector); }
+
+bool $CLASSNAME::isLambdaEntryPoint() const    { return checkBit(e_lambda_entry_point,p_modifierVector); }
+void $CLASSNAME::setLambdaEntryPoint()         { setBit(e_lambda_entry_point,p_modifierVector); }
+void $CLASSNAME::unsetLambdaEntryPoint()       { unsetBit(e_lambda_entry_point,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -2895,6 +2919,11 @@ void SgDeclarationModifier::unsetBind()    { unsetBit(e_bind,p_modifierVector); 
 bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
+
+// DQ (8/11/2014): C++11 specific attribute
+bool SgDeclarationModifier::isOverride() const { return checkBit(e_override,p_modifierVector); }
+void SgDeclarationModifier::setOverride()      { setBit(e_override,p_modifierVector); }
+void SgDeclarationModifier::unsetOverride()    { unsetBit(e_override,p_modifierVector); }
 
 // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
 bool SgDeclarationModifier::isJavaAbstract() const { return checkBit(e_java_abstract,p_modifierVector); }
@@ -10635,6 +10664,9 @@ SgInitializedName::post_construction_initialization()
      p_using_C11_Alignas_keyword                     = false;
      p_constant_or_type_argument_for_Alignas_keyword = NULL;
 
+  // DQ (8/2/2014): Adding support for C++11 auto keyword.
+     p_using_auto_keyword = false;
+
   // DQ (6/10/2012): Testing for test2012_102.C.
   // printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
    }
@@ -10784,11 +10816,15 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 
 
   // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-     p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
+     p_hasArrayTypeWithEmptyBracketSyntax     = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
 
   // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
      p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
      p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+
+  // DQ (8/2/2014): Adding support for C++11 auto keyword.
+     p_using_auto_keyword                     = ptr.p_using_auto_keyword;
+
    }
 
 SgInitializedName&
@@ -10886,6 +10922,9 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
        // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
           p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
           p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+
+       // DQ (8/2/2014): Adding support for C++11 auto keyword.
+          p_using_auto_keyword                     = ptr.p_using_auto_keyword;
         }
        else
         {

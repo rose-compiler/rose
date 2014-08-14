@@ -304,6 +304,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
           virtual void unparseTypeExpression          (SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (8/11/2014): Added more general support for function parameter expressions (required for C++11 support).
+          virtual void unparseFunctionParameterRefExpression (SgExpression* expr, SgUnparse_Info& info);
+
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);

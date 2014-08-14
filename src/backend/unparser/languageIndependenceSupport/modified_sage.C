@@ -1403,6 +1403,12 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                curprint("_Noreturn ");
              }
 
+       // DQ (8/1/2014): Added support to output the constexpr keyword.
+          if (functionDeclaration->get_is_constexpr() == true)
+             {
+               curprint("constexpr ");
+             }
+
        // DQ (2/4/2006): Template specialization declarations (forward declaration) can't have some modified output
           bool isDeclarationOfTemplateSpecialization = false;
           SgDeclarationStatement::template_specialization_enum specializationEnumValue = functionDeclaration->get_specialization();
@@ -1506,6 +1512,17 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
             // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
+             }
+        }
+
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (8/1/2014): Added support to output the constexpr keyword.
+          if (variableDeclaration->get_is_constexpr() == true)
+             {
+               curprint("constexpr ");
              }
         }
 
