@@ -930,10 +930,9 @@ public:
 
 public:
     static void initDiagnostics();                      /**< Initialize diagnostic messages subsystem. */
+    static Sawyer::Message::Facility mlog;              /**< Diagnostic messages. */
 
 protected:
-    static Sawyer::Message::Facility mlog;              /**< Diagnostic messages. */
-    
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
         ROSE_Callbacks::List<UnparserCallback> pre;                     /**< Callbacks invoked before 'unparse' callbacks. */

@@ -317,7 +317,9 @@ AsmUnparser::invalid_register(SgAsmInstruction *insn, const RegisterDescriptor &
              <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
              <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
              <<"  register, and \"d\" is the number of significant bits.\n";
-            wasDescribed = true;
+        if (regdict!=NULL)
+            warn <<"  Dictionary in use at time of warning: " <<regdict->get_architecture_name() <<"\n";
+        wasDescribed = true;
     }
     return "BAD_REGISTER(" + regstr + ")";
 }
@@ -770,11 +772,11 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
             // get_label() in the previous disassembled instruction.
             const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
             for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
-                args.output <<(0==nsucs++?"":", ") <<StringUtility::addrToString((*si)->get_absolute_value());
-                SgAsmBlock *suc_blk = isSgAsmBlock((*si)->get_base_node());
-                SgAsmFunction *suc_func = suc_blk ? suc_blk->get_enclosing_function() : isSgAsmFunction((*si)->get_base_node());
+                args.output <<(0==nsucs++?"":", ") <<StringUtility::addrToString((*si)->get_absoluteValue());
+                SgAsmBlock *suc_blk = isSgAsmBlock((*si)->get_baseNode());
+                SgAsmFunction *suc_func = suc_blk ? suc_blk->get_enclosing_function() : isSgAsmFunction((*si)->get_baseNode());
                 if (suc_func && my_func && suc_func!=my_func) {
-                    if (suc_func->get_entry_va() != (*si)->get_absolute_value())
+                    if (suc_func->get_entry_va() != (*si)->get_absoluteValue())
                         args.output <<" in ";
                     if (suc_func->get_name().empty()) {
                         args.output <<"<<Func>>";

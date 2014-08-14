@@ -15049,6 +15049,7 @@ SgProject::initialization()
      p_Cxx_only              = false;
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
+     p_Java_only             = false;
 
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
      p_frontendConstantFolding = false;

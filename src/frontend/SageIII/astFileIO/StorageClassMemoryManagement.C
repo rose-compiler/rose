@@ -502,6 +502,87 @@ std::string EasyStorage<std::string> :: rebuildDataStoredInEasyStorageClass() co
 
 /*
    ****************************************************************************************
+   **       Implementations for EasyStorage <Sawyer::Container::BitVector>               **
+   ****************************************************************************************
+*/
+
+void
+EasyStorage<Sawyer::Container::BitVector>::storeDataInEasyStorageClass(const Sawyer::Container::BitVector& data_) {
+    typedef Sawyer::Container::BitVector::Word BVWord;
+    const BVWord *words = data_.data();                 // the raw words of the bit vector or null
+    size_t nWords = data_.dataSize();                   // number of words to save
+    BVWord excess = data_.size() % (8*sizeof(BVWord));  // number of bits in final word; zero means full word, or empty vector
+    size_t idx = 0;                                     // index into the destination words
+    long offset = Base::setPositionAndSizeAndReturnOffset(1+nWords);
+    if (offset > 0) {
+        // there is still space in the actual block
+        if (offset < Base::getSizeOfData() && Base::actual != NULL) {
+            while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(idx <= nWords);
+                *Base::actual++ = 0==idx ? excess : words[idx-1];
+                ++idx;
+            }
+        }
+        // the data might not fit in one block
+        while (Base::blockSize < (unsigned long)offset) {
+            Base::actual = Base::getNewMemoryBlock();
+            while ((unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize) {
+                assert(idx <= nWords);
+                *Base::actual++ = 0==idx ? excess : words[idx-1];
+                ++idx;
+            }
+            offset -= Base::blockSize;
+        }
+        Base::actual = Base::getNewMemoryBlock();
+    }
+    // put (the rest of) the data in a new memory block
+    while (idx <= nWords) {
+        assert(idx <= nWords);
+        *Base::actual++ = 0==idx ? excess : words[idx-1];
+        ++idx;
+    }
+}
+
+Sawyer::Container::BitVector
+EasyStorage<Sawyer::Container::BitVector>::rebuildDataStoredInEasyStorageClass() const {
+    assert(Base::actualBlock <= 1);
+    assert((0 < Base::getSizeOfData() && Base::actual != NULL) || Base::getSizeOfData() == 0);
+    typedef Sawyer::Container::BitVector::Word BVWord;
+    Sawyer::Container::BitVector retval;
+    // if there is data in the memory pool at all
+    if (Base::actual != NULL  && 0 < Base::getSizeOfData()) {
+        BVWord *words = Base::getBeginningOfDataBlock();
+
+        // The first stored word is the number of bits that are stored in the last word (zero means the last word is full if it
+        // exists). This is our opportunity to allocate space for the vector.
+        assert(Base::getSizeOfData() >= 1);
+        size_t excess = *words++;
+        assert(excess < 8*sizeof(BVWord));
+        size_t nBits = 0;
+        if (Base::getSizeOfData() == 1) {
+            // bit vector is empty
+            assert(excess==0);
+        } else if (0==excess) {
+            // final word is full
+            nBits = (Base::getSizeOfData()-1) * 8 * sizeof(BVWord);
+        } else {
+            // final word is partial
+            assert(Base::getSizeOfData() >= 2);
+            nBits = (Base::getSizeOfData()-2) * 8 * sizeof(BVWord) + excess;
+        }
+        retval.resize(nBits);
+
+        // Now read the data and load it into the bit vector
+        BVWord *dst = retval.data();
+        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i)
+            *dst++ = *words++;
+    }
+    return retval;
+}
+
+
+/*
+   ****************************************************************************************
    **       Implementations for EasyStorage <CONTAINER<TYPE> >                           **
    ****************************************************************************************
 */
