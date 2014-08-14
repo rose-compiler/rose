@@ -914,6 +914,10 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/2/2014): Using C++11 auto keyword.
+     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");

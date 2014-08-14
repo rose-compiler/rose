@@ -322,6 +322,7 @@ SgDeadIfDirectiveStatement
 SgDeallocateStatement
 SgDeclarationModifier
 SgDeclarationStatement
+SgDeclType
 SgDefaultOptionStmt
 SgDefaultSymbol
 SgDefineDirectiveStatement
@@ -384,6 +385,7 @@ SgFunctionDeclaration
 SgFunctionDefinition
 SgFunctionModifier
 SgFunctionParameterList
+SgFunctionParameterRefExp
 SgFunctionParameterTypeList
 SgFunctionRefExp
 SgFunctionSymbol
@@ -487,6 +489,7 @@ SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
 SgNullExpression
+SgNullptrValExp
 SgNullStatement
 SgNullifyStatement
 SgOmpAtomicStatement
@@ -570,6 +573,7 @@ SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
 SgRshiftOp
+SgRvalueReferenceType
 SgJavaUnsignedRshiftAssignOp
 SgJavaUnsignedRshiftOp
 SgScopeOp
@@ -654,6 +658,7 @@ SgTypeLong
 SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
+SgTypeNullptr
 SgTypeShort
 SgTypeSigned128bitInteger
 SgTypeSignedChar
