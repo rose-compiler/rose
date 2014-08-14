@@ -40,6 +40,10 @@ PropertyValueTable* SpotConnection::getLtlResults() {
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
 						std::set<int> inVals, std::set<int> outVals, bool withCounterExample) {
+  if (stg.size() == 0) {
+    cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
+    return;
+  }
   if (!stg.isPrecise() && !stg.isComplete()) {
     return;  //neither falsification nor verification works
   } else {  //prepare the analysis

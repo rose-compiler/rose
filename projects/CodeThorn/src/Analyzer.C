@@ -13,6 +13,9 @@
 #include "Miscellaneous.h"
 #include "AnalysisAbstractionLayer.h"
 
+#include <boost/bind.hpp>
+#include "Timer.h"
+
 using namespace CodeThorn;
 
 #include "CollectionOperators.h"
@@ -1708,13 +1711,32 @@ void Analyzer::pruneLeavesRec() {
   }
 }
 
+bool Analyzer::indegreeTimesOutdegreeLessThan(const EState* a, const EState* b) {
+  return ( (transitionGraph.inEdges(a).size() * transitionGraph.outEdges(a).size()) <
+             (transitionGraph.inEdges(b).size() * transitionGraph.outEdges(b).size()) );
+}
+
 void Analyzer::removeNonIOStates() {
   EStatePtrSet states=transitionGraph.estateSet();
-  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+  // sort EStates so that those with minimal (indegree * outdegree) come first
+  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
+  worklist->sort(boost::bind(&CodeThorn::Analyzer::indegreeTimesOutdegreeLessThan,this,_1,_2));
+  int totalStates=states.size();
+  int statesVisited =0;
+  // iterate over all states, reduce those that are neither the start state nor standard input / output
+  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
     if(! ((*i) == transitionGraph.getStartEState()) ) {
       if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO()) ) {
 	transitionGraph.reduceEState2(*i);
       }
+    }
+    statesVisited++;
+    //display current progress
+    if (statesVisited % 2500 == 0) {
+      double progress = ((double) statesVisited / (double) totalStates) * 100;
+      cout << setiosflags(ios_base::fixed) << setiosflags(ios_base::showpoint);
+      cout << "STATUS: "<<statesVisited<<" out of "<<totalStates<<" states visited for reduction to I/O. ("<<setprecision(2)<<progress<<setprecision(6)<<"%)"<<endl;
+      cout << resetiosflags(ios_base::fixed) << resetiosflags(ios_base::showpoint);
     }
   }
 }

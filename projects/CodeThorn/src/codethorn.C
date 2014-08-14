@@ -1711,10 +1711,10 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(arrayUpdateExtractionRunTime)<<", "
         <<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
         <<readableruntime(sortingAndIORunTime)<<", "
+        <<readableruntime(totalRunTime)<<", "
         <<readableruntime(infPathsOnlyTime)<<", "
         <<readableruntime(stdIoOnlyTime)<<", "
-        <<readableruntime(spotLtlAnalysisTime)<<", "
-        <<readableruntime(totalRunTime)<<endl;
+        <<readableruntime(spotLtlAnalysisTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
@@ -1723,7 +1723,10 @@ int main( int argc, char * argv[] ) {
         <<arrayUpdateExtractionRunTime<<", "
         <<arrayUpdateSsaNumberingRunTime<<", "
         <<sortingAndIORunTime<<", "
-        <<totalRunTime<<endl;
+        <<totalRunTime<<", "
+        <<infPathsOnlyTime<<", "
+        <<stdIoOnlyTime<<", "
+        <<spotLtlAnalysisTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
         <<eStateSetMaxCollisions<<", "
