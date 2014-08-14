@@ -75,8 +75,13 @@ namespace OmpSupport
   //! Translate omp for or omp do loops
   void transOmpLoop(SgNode* node);
 
-  //! Translate omp for or omp do loops affected by the "omp target" directive, Liao 1/28/2013
+  //! Translate omp for or omp do loops affected by the "omp target" directive, using naive 1-to-1 mapping Liao 1/28/2013
+  // The loop iteration count may exceed the max number of threads within a CUDA thread block. 
+  // A loop scheduler is needed for real application.
   void transOmpTargetLoop(SgNode* node);
+
+  //! Translate omp for or omp do loops affected by the "omp target" directive, using a round robin-scheduler Liao 7/10/2014
+  void transOmpTargetLoop_RoundRobin(SgNode* node);
 
   //! Translate Fortran omp do
   //void transOmpDo(SgNode* node);
@@ -150,6 +155,9 @@ namespace OmpSupport
   //! Build a non-reduction variable clause for a given OpenMP directive. It directly returns the clause if the clause already exists
   ROSE_DLL_API SgOmpVariablesClause* buildOmpVariableClause(SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
 
+  //! Remove one or more clauses of type vt 
+  ROSE_DLL_API int removeClause (SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
+
   //! Check if an OpenMP statement has a clause of type vt
   ROSE_DLL_API bool hasClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt);
 
@@ -174,8 +182,11 @@ namespace OmpSupport
   //! Convert a schedule kind enum value to a small case string
   ROSE_DLL_API std::string toString(SgOmpClause::omp_schedule_kind_enum s_kind);
 
-  //! Patch up private variables for omp for. The reason is that loop indices should be private by default and this function will make this explicit
+  //! Patch up private variables for omp for of entire file. The reason is that loop indices should be private by default and this function will make this explicit
   ROSE_DLL_API int patchUpPrivateVariables(SgFile*);
+
+  //! Patch up private variables for omp for. The reason is that loop indices should be private by default and this function will make this explicit
+  ROSE_DLL_API int patchUpPrivateVariables(SgStatement* omp_loop);
 
   //! Patch up firstprivate variables for omp task. The reason is that the specification 3.0 defines rules for implicitly determined data-sharing attributes and this function will make the firstprivate variable of omp task explicit.
   ROSE_DLL_API int patchUpFirstprivateVariables(SgFile*);

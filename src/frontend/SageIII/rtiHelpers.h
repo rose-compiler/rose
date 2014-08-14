@@ -31,6 +31,10 @@ static std::string toStringForRTI(const T& x) {
   return ss.str();
 }
 
+static std::string toStringForRTI(const Sawyer::Container::BitVector &x) {
+    return "0x" + x.toHex();
+}
+
 template <typename T>
 static std::string toStringForRTI(const std::vector<T>& x) {
   std::ostringstream ss;

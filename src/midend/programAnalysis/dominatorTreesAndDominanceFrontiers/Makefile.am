@@ -15,6 +15,6 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = ControlFlowGraph.h  SimpleDirectedGraph.h  DominanceFrontier.h  DominatorTree.h
+pkginclude_HEADERS = ControlFlowGraph.h  SimpleDirectedGraph.h  DominanceFrontier.h  DominatorTree.h
 
 EXTRA_DIST = CMakeLists.txt

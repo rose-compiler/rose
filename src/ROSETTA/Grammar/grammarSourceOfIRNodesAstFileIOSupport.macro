@@ -278,7 +278,10 @@ void
 $CLASSNAME_extendMemoryPoolForFileIO( )
   {
     $CLASSNAME* pointer = NULL;
-    bool firstEntry = true;
+
+ // DQ (7/25/2014): Commented out to avoid compiler warning with GNU 4.8.
+ // bool firstEntry = true;
+
     int blockIndex = $CLASSNAME_Memory_Block_List.size();
     unsigned long newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
                                 AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
@@ -314,7 +317,7 @@ $CLASSNAME_extendMemoryPoolForFileIO( )
                // being read in from disk and was a block to the expanded use of AST merge.
                   (($CLASSNAME*)($CLASSNAME_Memory_Block_List[blockIndex-1]))[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1 ].set_freepointer(pointer);
                 }
-             firstEntry = false;
+          // firstEntry = false;
            }
 
         if ( $CLASSNAME_Current_Link == NULL )

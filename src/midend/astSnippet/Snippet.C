@@ -101,7 +101,7 @@ static std::string extractFirstStatement(const std::string &source)
 {
     std::string firstStmt;
     std::string inComment;                              // comment state: "", "/", "//", "/*", or "/**"
-    char inString;                                      // string state: '\0', '"' or '\''
+    char inString='\0';                                 // string state: '\0', '"' or '\''
     bool escaped=false;                                 // true if previous character was a backslash not in a comment
     BOOST_FOREACH (char ch, source) {
         if (inComment=="" && !inString && '/'==ch) {

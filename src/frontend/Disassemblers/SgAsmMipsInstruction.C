@@ -185,7 +185,7 @@ SgAsmMipsInstruction::get_branch_target(rose_addr_t *target)
             if (target) {
                 SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[0]);
                 assert(ival!=NULL);
-                *target = ival->get_absolute_value();
+                *target = ival->get_absoluteValue();
             }
             return true;
         }
@@ -207,7 +207,7 @@ SgAsmMipsInstruction::get_branch_target(rose_addr_t *target)
             if (target) {
                 SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[1]);
                 assert(ival!=NULL);
-                *target = ival->get_absolute_value();
+                *target = ival->get_absoluteValue();
             }
             return true;
         }
@@ -221,7 +221,7 @@ SgAsmMipsInstruction::get_branch_target(rose_addr_t *target)
             if (target) {
                 SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[2]);
                 assert(ival!=NULL);
-                *target = ival->get_absolute_value();
+                *target = ival->get_absoluteValue();
             }
             return true;
         }

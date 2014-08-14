@@ -19,7 +19,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = \
+pkginclude_HEADERS = \
    BaseGraphCreate.h  GraphScope.h     VirtualGraphCreate.h \
    TransAnalysis.h    GraphGroup.h   MultiGraphCreate.h \
    TypedFusion.h DGBaseGraphImpl.h  GraphAccess.h GraphUtils.h\
