@@ -1725,7 +1725,17 @@ struct IP_lsr: P {
 
 struct IP_mac: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 7);
+        // The 7-argument version is "multiply accumulate with load" and the 4-argument version is just "multiply accumulate".
+        // The first 4 arguments are the same in both versions, namely the two registers (args[0] and args[1]) whose product is
+        // shifted according to the scale factor (args[2]) and added to the accumulator (args[3]).  The 7-argument version has
+        // the additional parallel operation of moving the source operand (args[4]) to the destination (args[6]) after
+        // optionally (args[5]) masking it by the MAC MASK register.
+        if (7==args.size()) {
+            assert_args(insn, args, 7);
+        } else {
+            assert_args(insn, args, 4);
+        }
+
         ASSERT_require(args[0]->get_nBits()==16 || args[0]->get_nBits()==32);
         ASSERT_require(args[1]->get_nBits()==16 || args[1]->get_nBits()==32);
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
@@ -1746,6 +1756,7 @@ struct IP_mac: P {
         SValuePtr product = ops->unsignedMultiply(ry, rx);
 
         // Shift the product left or right if necessary
+        // FIXME[Robb P. Matzke 2014-08-14]: this could be simplified since args[2] is always a constant
         size_t sfNBits = args[2]->get_nBits();
         SValuePtr sf = d->read(args[2], sfNBits);
         SValuePtr isSf1 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -1)));
@@ -1807,29 +1818,29 @@ struct IP_mac: P {
                                        ops->concat(ops->unsignedExtend(newAccFrac, 8), ops->extract(newAccFrac, 40, 48)),
                                        ops->extract(newAccInt, 32, 48));
 
-        // In parallel with multiply-accumulate above, load the <ea> argument (args[4]), optionally mask it with the
-        // MASK register depending on whether args[5] is true or false.  Only the low-order 16 bits of the MASK register are
-        // used and the upper 16 are assumed to be all set.
-        ASSERT_require(args[4]->get_nBits()==32);
-        ASSERT_require(args[6]->get_nBits()==32);
-        d->decrementRegisters(args[4]);
-        SValuePtr toMove = d->read(args[4], 32);
-        d->incrementRegisters(args[4]);
-        toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
-                          toMove,                       // don't use the mask
-                          ops->and_(toMove,
-                                    ops->concat(ops->unsignedExtend(ops->readRegister(d->REG_MAC_MASK), 16),
-                                                ops->number_(16, 0xffff))));
-        ASSERT_require(toMove->get_width()==32);
-
-        // Write results
+        if (7==args.size()) {
+            // In parallel with multiply-accumulate above, load the <ea> argument (args[4]), optionally mask it with the MASK
+            // register depending on whether args[5] is true or false.  Only the low-order 16 bits of the MASK register are
+            // used and the upper 16 are assumed to be all set.
+            ASSERT_require(args[4]->get_nBits()==32);
+            ASSERT_require(args[6]->get_nBits()==32);
+            d->decrementRegisters(args[4]);
+            SValuePtr toMove = d->read(args[4], 32);
+            d->incrementRegisters(args[4]);
+            toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
+                              toMove,                       // don't use the mask
+                              ops->and_(toMove,
+                                        ops->concat(ops->unsignedExtend(ops->readRegister(d->REG_MAC_MASK), 16),
+                                                    ops->number_(16, 0xffff))));
+            ASSERT_require(toMove->get_width()==32);
+            d->write(args[6], toMove);
+        }
+        
+        // Write MAC results (load result was written above)
         ops->writeRegister(macAccReg, newMacAcc);
         ops->writeRegister(macExtReg, newMacExt);
-        d->write(args[6], toMove);
 
-        // Update MACSR indicator flags.  The documentation is not clear whether these flags are updated according to the
-        // 32-bit accumulator result (newMacAcc), the 48-bit accumulator (newMacInt or newMacFrac), or the value that was moved
-        // to the args[6] effective address.  I'm assuming its the 48-bit accumulator. [Robb P. Matzke 2014-07-25]
+        // Update MACSR indicator flags based on the accumulator's new value.
         SValuePtr acc48 = ops->ite(isFrac, newAccFrac, newAccInt);
         ops->writeRegister(d->REG_MACSR_N, ops->extract(acc48, 47, 48));
         ops->writeRegister(d->REG_MACSR_Z, ops->equalToZero(acc48));
