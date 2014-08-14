@@ -122,6 +122,9 @@ public:
     /** Create a MAC register reference expression. */
     SgAsmRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
 
+    /** Create a MAC accumulator register. These are ACC0 through ACC3, 32-bit integers. */
+    SgAsmRegisterReferenceExpression *makeMacAccumulatorRegister(unsigned accumIndex);
+
     /** Create a floating point register.  Floating point registers are different sizes on different platforms. For example,
      * the M68040 has 80-bit registers that can store 96-bit extended-precision real values (16-bits of which are zero), but
      * the follow on FreeScale ColdFire processors have only 64-bit registers that hold double-precision real values. */

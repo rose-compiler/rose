@@ -1858,11 +1858,11 @@ struct IP_mov3q: P {
 struct IP_move: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr result = d->read(args[0], args[0]->get_nBits());
+        SValuePtr result = d->read(args[0], nBits);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
@@ -1871,6 +1871,71 @@ struct IP_move: P {
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
         ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
+    }
+};
+
+struct IP_move_acc: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+struct IP_move_accext: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+struct IP_move_ccr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t srcNBits = args[0]->get_nBits();
+        size_t dstNBits = args[1]->get_nBits();
+        if (8==srcNBits && 16==dstNBits) {
+            // MOVE.W CCR, <ea>
+            d->decrementRegisters(args[1]);
+            SValuePtr src = ops->unsignedExtend(d->read(args[0], 8), 16);
+            d->write(args[1], src);
+            d->incrementRegisters(args[1]);
+        } else {
+            // MOVE.B <ea>, CCR  (truncates <ea> to eight bits)
+            ASSERT_require(8==dstNBits);
+            d->decrementRegisters(args[0]);
+            SValuePtr src = ops->unsignedExtend(d->read(args[0], srcNBits), 8);
+            d->write(args[1], src);
+            d->incrementRegisters(args[0]);
+        }
+    }
+};
+
+struct IP_move_macsr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+struct IP_move_mask: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+// same as IP_move, but does not update CCR
+struct IP_move_sr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        d->decrementRegisters(args[1]);
+        SValuePtr result = d->read(args[0], nBits);
+        d->write(args[1], result);
+        d->incrementRegisters(args[0]);
+        d->incrementRegisters(args[1]);
     }
 };
 
@@ -1979,6 +2044,13 @@ struct IP_moveq: P {
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
         ops->writeRegister(d->REG_CCR_N, ops->extract(result, 31, 32));
+    }
+};
+
+struct IP_msac: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 4);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
     }
 };
 
@@ -3098,6 +3170,13 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_movem,       new M68k::IP_movem);
     iproc_set(m68k_movep,       new M68k::IP_movep);
     iproc_set(m68k_moveq,       new M68k::IP_moveq);
+    iproc_set(m68k_move_acc,    new M68k::IP_move_acc);
+    iproc_set(m68k_move_accext, new M68k::IP_move_accext);
+    iproc_set(m68k_move_ccr,    new M68k::IP_move_ccr);
+    iproc_set(m68k_move_macsr,  new M68k::IP_move_macsr);
+    iproc_set(m68k_move_mask,   new M68k::IP_move_mask);
+    iproc_set(m68k_move_sr,     new M68k::IP_move_sr);
+    iproc_set(m68k_msac,        new M68k::IP_msac);
     iproc_set(m68k_muls,        new M68k::IP_muls);
     iproc_set(m68k_mulu,        new M68k::IP_mulu);
     iproc_set(m68k_mvs,         new M68k::IP_mvs);
