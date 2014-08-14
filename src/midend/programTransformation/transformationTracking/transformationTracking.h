@@ -36,7 +36,7 @@ namespace TransformationTracking
   // store begin and end file info for a node
   void storeFileInfo(AST_NODE_ID id, Sg_File_Info* start, Sg_File_Info* end);
 
-  // retrieve stored file info
+  // retrieve stored file info: both begin and end info.
   std::pair <Sg_File_Info*, Sg_File_Info*> getFileInfo (AST_NODE_ID id);
 
 } // end namespace TransformationTracking
