@@ -563,10 +563,8 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
             // Uses the brief extension word format (1 word having D/A, Register, W/L, Scale, and 8-bit displacement)
             if (0!=extract<8, 8>(instructionWord(ext_offset+1)))
                 throw Exception("m68k_eam_idx8 mode requires that bit 8 of the extension word is clear");
-            bool wl = 0 != extract<11, 11>(instructionWord(ext_offset+1));
-            if (0==wl) {
-                throw Exception("FIXME[Robb P. Matzke 2014-07-14]: word index register not implemented yet");
-            } else {
+            if (extract<11, 11>(instructionWord(ext_offset+1))) {
+                // 32-bit index
                 SgAsmExpression *address = makeAddressRegister(reg, m68k_fmt_i32);
                 uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instructionWord(ext_offset+1)));
                 SgAsmIntegerValueExpression *dispExpr = SageBuilderAsm::buildValueInteger(disp, makeType(m68k_fmt_i32));
@@ -582,6 +580,8 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
                 address = SageBuilderAsm::buildAddExpression(address, product);
                 address->set_type(makeType(m68k_fmt_i32));
                 return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL /*segment*/, type);
+            } else {
+                throw Exception("FIXME[Robb P. Matzke 2014-07-14]: word index register not implemented yet");
             }
         }
     } else if (7==mode && 0==reg) {
@@ -603,11 +603,31 @@ DisassemblerM68k::makeEffectiveAddress(unsigned mode, unsigned reg, M68kDataForm
         address->set_type(makeType(m68k_fmt_i32));
         return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL/*segment*/, type);
     } else if (7==mode && 3==reg) {
-        // m68k_eam_pcidx8: program counter indirect with index (8-bit displacement)
-        // m68k_eam_pcidxbd: program counter indirect with index (base displacement)
-        // m68k_eam_pcmpost: program counter memory indirect postindexed
-        // m68k_eam_pcmpre: program counter memory indirect preindexed
-        throw Exception("FIXME[Robb P. Matzke 2014-06-19]: cannot distinguish between m68k_eam_{pcidx8,pcidxbd,pcmpost,pcmpre}");
+        if (0==extract<8, 8>(instructionWord(ext_offset+1))) { // brief extension word format (8-bit displacement)
+            unsigned indexRegisterNumber = extract<12, 15>(instructionWord(ext_offset+1));
+            SgAsmRegisterReferenceExpression *indexRRE = extract<11, 11>(instructionWord(ext_offset+1)) ?
+                                                         makeDataAddressRegister(indexRegisterNumber, m68k_fmt_i32, 0) :
+                                                         makeDataAddressRegister(indexRegisterNumber, m68k_fmt_i16, 0);
+            uint32_t scale = IntegerOps::shl1<uint32_t>(extract<9, 10>(instructionWord(ext_offset+1)));
+            SgAsmIntegerValueExpression *scaleExpr = SageBuilderAsm::buildValueInteger(scale, makeType(m68k_fmt_i32));
+            SgAsmExpression *product = SageBuilderAsm::buildMultiplyExpression(indexRRE, scaleExpr);
+            product->set_type(makeType(m68k_fmt_i32));
+
+            uint32_t disp = signExtend<8, 32>((uint32_t)extract<0, 7>(instructionWord(ext_offset+1)));
+            SgAsmIntegerValueExpression *dispExpr = SageBuilderAsm::buildValueInteger(disp, makeType(m68k_fmt_i32));
+
+            SgAsmExpression *address = makeProgramCounter();
+            address = SageBuilderAsm::buildAddExpression(address, dispExpr);
+            address->set_type(makeType(m68k_fmt_i32));
+            address = SageBuilderAsm::buildAddExpression(address, product);
+            address->set_type(makeType(m68k_fmt_i32));
+            return SageBuilderAsm::buildMemoryReferenceExpression(address, NULL /*segment*/, type);
+        } else {
+            // m68k_eam_pcidxbd: program counter indirect with index (base displacement)
+            // m68k_eam_pcmpost: program counter memory indirect postindexed
+            // m68k_eam_pcmpre: program counter memory indirect preindexed
+            throw Exception("FIXME[Robb P. Matzke 2014-06-19]: cannot distinguish between m68k_eam_{pcidxbd,pcmpost,pcmpre}");
+        }
     } else if (7==mode && 4==reg) {
         // m68k_eam_imm: immediate data (1, 2, 4, or 6 extension words)
         return makeImmediateExtension(fmt, ext_offset);
