@@ -428,6 +428,7 @@ InternalNode::involutary() const
 
 // simplifies things like:
 //   (shift a (shift b x)) ==> (shift (add a b) x)
+// making sure a and b are extended to the same width
 TreeNodePtr
 InternalNode::additive_nesting() const
 {
@@ -436,9 +437,19 @@ InternalNode::additive_nesting() const
         assert(nested->nchildren()==nchildren());
         assert(nested->get_nbits()==get_nbits());
         size_t additive_nbits = std::max(child(0)->get_nbits(), nested->child(0)->get_nbits());
+
+        // The two addends must be the same width, so zero-extend them if necessary (or should we sign extend?)
+        // Note that the first argument (new width) of the UEXTEND operator is not actually used.
+        TreeNodePtr a = child(0)->get_nbits()==additive_nbits ? child(0) :
+                        InternalNode::create(additive_nbits, OP_UEXTEND, LeafNode::create_integer(8, additive_nbits),
+                                             child(0));
+        TreeNodePtr b = nested->child(0)->get_nbits()==additive_nbits ? nested->child(0) :
+                        InternalNode::create(additive_nbits, OP_UEXTEND, LeafNode::create_integer(8, additive_nbits),
+                                             nested->child(0));
+        
         // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
         InternalNode *inode = new InternalNode(get_nbits(), get_operator(),
-                                               InternalNode::create(additive_nbits, OP_ADD, child(0), nested->child(0)),
+                                               InternalNode::create(additive_nbits, OP_ADD, a, b),
                                                nested->child(1), get_comment());
         return InternalNodePtr(inode);
     }
