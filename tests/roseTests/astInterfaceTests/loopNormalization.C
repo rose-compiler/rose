@@ -14,6 +14,7 @@ int main(int argc, char * argv[])
   AstDOTGeneration astdotgen;
 
   // register IDs and file info
+  cout<<"Turning on transformation tracking ... "<<endl;
   TransformationTracking::registerAstSubtreeIds (project);
   astdotgen.generate(project,AstDOTGeneration::TOPDOWNBOTTOMUP, "v1");
 
@@ -28,7 +29,7 @@ int main(int argc, char * argv[])
     SgForStatement * cloop = isSgForStatement(loops[i]);
     ROSE_ASSERT(cloop != NULL);
     bool result=false;
-    result = SageInterface::forLoopNormalization(cloop);
+    result = SageInterface::forLoopNormalization(cloop, false);
     if (i == loops.size() -1) // test File info retrieval: erase file info here first
       SageInterface::setSourcePositionForTransformation(cloop);
     ROSE_ASSERT(result != false);

@@ -1053,7 +1053,7 @@ ROSE_DLL_API void setLoopStride(SgNode* loop, SgExpression* stride);
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
-//! Normalize a for loop, return true if successful
+//! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
 //!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)
@@ -1064,7 +1064,7 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i++ is normalized to i+=1 and
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
-ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop);
+ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
 
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);

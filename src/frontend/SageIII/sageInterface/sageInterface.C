@@ -8238,7 +8238,7 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
 //! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
 // Her loop translation does not pass AST consistency tests so we rewrite some of them here
 // NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
-bool SageInterface::forLoopNormalization(SgForStatement* loop)
+bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant /*= true*/)
 {
   ROSE_ASSERT(loop != NULL);
   // Normalize initialization statement of the for loop
@@ -8337,10 +8337,12 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
    // Liao, 9/22/2009
    // folding entire loop may cause decreased accuracy for floating point operations
    // we only want to fold the loop controlling expressions
-  //constantFolding(loop->get_parent());
-  constantFolding(loop->get_test());
-  constantFolding(loop->get_increment());
-
+  if (foldConstant)
+  {
+    //constantFolding(loop->get_parent());
+    constantFolding(loop->get_test());
+    constantFolding(loop->get_increment());
+  }
 
   return true;
 }
