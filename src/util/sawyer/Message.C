@@ -1364,7 +1364,7 @@ SAWYER_EXPORT void
 Facilities::print(std::ostream &log) const {
     for (int i=0; i<N_IMPORTANCE; ++i) {
         Importance mi = (Importance)i;
-        log <<(impset_.find(mi)==impset_.end() ? '-' : stringifyImportance(mi)[0]);
+        log <<(impset_.find(mi)==impset_.end() ? '-' : (mi==WHERE?'H':stringifyImportance(mi)[0]));
     }
     log <<" default enabled levels\n";
 
@@ -1378,7 +1378,7 @@ Facilities::print(std::ostream &log) const {
             // Sort of like the format 'ls -l' uses to show permissions.
             for (int i=0; i<N_IMPORTANCE; ++i) {
                 Importance mi = (Importance)i;
-                log <<(facility->get(mi) ? stringifyImportance(mi)[0] : '-');
+                log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
             }
             log <<" " <<fnode.key() <<"\n";
         }

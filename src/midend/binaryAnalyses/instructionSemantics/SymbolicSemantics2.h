@@ -172,6 +172,11 @@ public:
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
         return instance(nbits, value);
     }
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const /*override*/ {
+        SValuePtr result = SValue::promote(number_(1, value?1:0));
+        result->get_expression()->set_comment(value?"true":"false");
+        return result;
+    }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->get_width())

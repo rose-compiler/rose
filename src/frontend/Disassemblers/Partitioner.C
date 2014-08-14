@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <sawyer/Optional.h>
 #include <sawyer/ProgressBar.h>
 #include <stdarg.h>
 
@@ -70,6 +71,20 @@ SgAsmx86Instruction *
 Partitioner::isSgAsmx86Instruction(SgNode *node)
 {
     return ::isSgAsmx86Instruction(node);
+}
+
+/* class method */
+SgAsmM68kInstruction *
+Partitioner::isSgAsmM68kInstruction(const Instruction *insn)
+{
+    return insn ? isSgAsmM68kInstruction(insn->node) : NULL;
+}
+
+/* class method */
+SgAsmM68kInstruction *
+Partitioner::isSgAsmM68kInstruction(SgNode *node)
+{
+    return ::isSgAsmM68kInstruction(node);
 }
 
 /* Progress report class variables. */
@@ -331,6 +346,43 @@ Partitioner::update_analyses(BasicBlock *bb)
         if (!table_entries.empty()) {
             bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
             mlog[TRACE] <<"[jump table at " <<table_extent <<"]";
+        }
+    }
+
+    // Remove successors for certain kinds of indirect calls (calls made through a register or memory).  If this is an indirect
+    // call, then scan through the successors and remove some.  Each successor will be in one of the following categories:
+    //   1. a mapped address at which we can make an instruction                                [keep the successor]
+    //   2. a mapped address at which we cannot make an instruction, e.g., illegal opcode       [erase the successor]
+    //   3. an address which is not mapped, but which might be mapped in the future             [keep the successor]
+    //   4. a non-address, e.g., an "ordinal" from a PE Import Address Table                    [erase the successor]
+    //
+    // For instance, the x86 PE code "call ds:[IAT+X]" is a call to an imported function.  If the dynamic linker hasn't run or
+    // been simulated yet, then the Import Address Table entry [IAT+X] could be either an address that isn't mapped, or a
+    // non-address "ordinal". We want to erase successors that are ordinals or other garbage, but keep those that are
+    // addresses. We keep even the unmapped addresses because the Partitioner might not have the whole picture right now (the
+    // usr might run the Partitioner, then simulate dynamic linking, then run another Partitioner on the libraries, then join
+    // things together into one large control flow graph).  It's not generally possible to distinguish between ordinals and
+    // addresses, but we can use the fact that ordinals are table indices and are therefore probably relatively small.  We also
+    // look for indirect calls through registers so that we can support things like "mov edi, ds:[IAT+X]; ...; call edi"
+    if (SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn())) {
+        static const rose_addr_t largest_ordinal = 10000;               // arbitrary
+        bool is_call = last_insn->get_kind() == x86_call || last_insn->get_kind() == x86_farcall;
+        const SgAsmExpressionPtrList &operands = last_insn->get_operandList()->get_operands();
+        if (is_call && 1==operands.size() &&
+            (isSgAsmRegisterReferenceExpression(operands[0]) || isSgAsmMemoryReferenceExpression(operands[0])) &&
+            bb->cache.sucs.size() > 0) {
+            for (Disassembler::AddressSet::iterator si=bb->cache.sucs.begin(); si!=bb->cache.sucs.end(); /*void*/) {
+                rose_addr_t successor_va = *si;
+                if (find_instruction(successor_va)) {                   // category 1
+                    ++si;                            
+                } else if (map->exists(successor_va)) {                 // category 2
+                    bb->cache.sucs.erase(si++);
+                } else if (successor_va > largest_ordinal) {            // category 3
+                    ++si;
+                } else {                                                // category 4
+                    bb->cache.sucs.erase(si++);
+                }
+            }
         }
     }
 
@@ -1422,7 +1474,7 @@ Partitioner::mark_export_entries(SgAsmGenericHeader *fhdr)
     }
 }
 
-/* Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
+/* Tries to match x86 "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1437,12 +1489,12 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=2)
             break;
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_di)
             break;
-        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        rre = isSgAsmRegisterReferenceExpression(opands[1]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_di)
@@ -1461,7 +1513,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=1)
             return insns.end();
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
@@ -1480,12 +1532,12 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=2)
             return insns.end();
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
             return insns.end();
-        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        rre = isSgAsmRegisterReferenceExpression(opands[1]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_sp)
@@ -1498,7 +1550,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
 }
 
 #if 0 /*commented out in Partitioner::mark_func_patterns()*/
-/* Tries to match "nop;nop;nop" followed by something that's not a nop. */
+/* Tries to match x86 "nop;nop;nop" followed by something that's not a nop. */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1528,7 +1580,7 @@ Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterato
 #endif
 
 #if 0 /* commented out in Partitioner::mark_func_patterns() */
-/* Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop */
+/* Tries to match x86 "leave;ret" followed by one or more "nop" followed by a non-nop */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1568,6 +1620,84 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 }
 #endif
 
+// class method: Matches an x86 "ENTER xxxx, 0" instruction.
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern4(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(first->second);
+    if (!insn || insn->get_kind()!=x86_enter)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (args.size()!=2)
+        return insns.end();
+    SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
+    if (!arg || 0!=arg->get_absoluteValue())
+        return insns.end();
+
+    for (size_t i=0; i<insn->get_size(); ++i)
+        exclude.insert(insn->get_address() + i);
+    return first;
+}
+
+// class method: tries to match m68k "link.w a6, IMM16" where IMM16 is zero or negative
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern5(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_link)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (args.size()!=2)
+        return insns.end();
+    SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+    SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[1]);
+    if (!rre || !ival)
+        return insns.end();
+    RegisterDescriptor reg = rre->get_descriptor();
+    if (reg.get_major()!=m68k_regclass_addr || reg.get_minor()!=6/*link register*/)
+        return insns.end();
+    int64_t displacement = ival->get_signedValue();
+    if (displacement>0)
+        return insns.end();
+
+    for (size_t i=0; i<insn->get_size(); ++i)
+        exclude.insert(insn->get_address() + i);
+    return first;
+}
+
+// class method: tries to match m68k instructions: "rts; (trapf)?; lea.l [a7-X], a7"
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern6(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    // rts
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_rts)
+        return insns.end();
+    ++first;
+
+    // trapf (padding)
+    insn = isSgAsmM68kInstruction(first->second);
+    if (insn && insn->get_kind()==m68k_trapf)
+        ++first;
+
+    // leal. [a7-X], a7
+    insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_lea || insn->get_operandList()->get_operands().size()!=2)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+    SgAsmBinaryAdd *sum = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
+    SgAsmDirectRegisterExpression *reg1 = sum ? isSgAsmDirectRegisterExpression(sum->get_lhs()) : NULL;
+    SgAsmIntegerValueExpression *addend = sum ? isSgAsmIntegerValueExpression(sum->get_rhs()) : NULL;
+    SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(args[1]);
+    if (!reg1 || reg1->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
+        !reg2 || reg2->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
+        !addend || addend->get_signedValue()>0 || addend->get_signedValue()<4096 /*arbitrary*/)
+        return insns.end();
+
+    return first;                                       // the LEA instruction is the start of a function
+}
+
 /** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
  *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
  *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
@@ -1582,18 +1712,23 @@ Partitioner::mark_func_patterns()
         virtual bool operator()(bool enabled, const Args &args) /*override*/ {
             ASSERT_not_null(args.restrict_map);
             uint8_t buf[4096];
-            static const size_t patternsz=16;
-            ASSERT_require(patternsz<sizeof buf);
             if (enabled) {
                 rose_addr_t va = args.range.first();
                 while (va<=args.range.last()) {
                     size_t nbytes = std::min(args.range.last()+1-va, (rose_addr_t)sizeof buf);
                     size_t nread = args.restrict_map->read(buf, va, nbytes);
                     for (size_t i=0; i<nread; ++i) {
-                        // "55 8b ec" is x86 "push ebp; mov ebp, esp"
-                        if (i+3<nread && 0x55==buf[i+0] && 0x8b==buf[i+1] && 0xec==buf[i+2]) {
+                        if (i+5<nread &&                                // x86:
+                            0x8b==buf[i+0] && 0xff==buf[i+1] &&         //   mov edi, edi
+                            0x55==buf[i+2] &&                           //   push ebp
+                            0x8b==buf[i+4] && 0xec==buf[i+5]) {         //   mov ebp, esp
                             p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
-                            i+=2;
+                            i += 4;
+                        } else if (i+3<nread &&                         // x86:
+                                   0x55==buf[i+0] &&                    //   push ebp
+                                   0x8b==buf[i+1] && 0xec==buf[i+2]) {  //   mov ebp, esp
+                            p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
+                            i += 2;
                         }
                     }
                     va += nread;
@@ -1612,7 +1747,11 @@ Partitioner::mark_func_patterns()
     InstructionMap::const_iterator found;
 
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        if (exclude.find(ii->first)==exclude.end() && (found=pattern1(insns, ii, exclude))!=insns.end())
+        if (exclude.find(ii->first)==exclude.end() &&
+            ((found=pattern1(insns, ii, exclude))!=insns.end() ||
+             (found=pattern4(insns, ii, exclude))!=insns.end() ||
+             (found=pattern5(insns, ii, exclude))!=insns.end() ||
+             (found=pattern6(insns, ii, exclude))!=insns.end()))
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
@@ -2520,7 +2659,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn, rose_addr_t offset)
     SgAsmExpression *mref_addr = mref->get_address();
     if (isSgAsmBinaryExpression(mref_addr)) {
         SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
-        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
+        SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mref_bin->get_lhs());
         SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
         if (reg!=NULL && val!=NULL) {
             if (reg->get_descriptor().get_major()==x86_regclass_ip) {
@@ -2942,7 +3081,7 @@ Partitioner::is_pe_dynlink_thunk(Instruction *insn)
     SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
     if (!addr)
         return false; // not a dynamic linking thunk: wrong addressing mode
-    return pe_iat_extents.contains(Extent(addr->get_absolute_value(), 4));
+    return pe_iat_extents.contains(Extent(addr->get_absoluteValue(), 4));
 }
 
 bool
@@ -3449,6 +3588,162 @@ Partitioner::name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/)
     }
 }
 
+Partitioner::Function *
+Partitioner::find_function_containing_code(rose_addr_t va)
+{
+    if (Instruction *insn = find_instruction(va, false  /* do not create */)) {
+        if (insn->bblock)
+            return insn->bblock->function;
+    }
+    return NULL;
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing_data(rose_addr_t va)
+{
+    DataRangeMap dblock_ranges;
+    datablock_extent(&dblock_ranges /*out*/); // FIXME[Robb P. Matzke 2014-04-11]: this is not particularly fast
+    DataRangeMap::iterator found = dblock_ranges.find(va);
+    if (found!=dblock_ranges.end()) {
+        DataBlock *dblock = found->second.get();
+        return dblock->function;
+    }
+    return NULL;
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing(rose_addr_t va)
+{
+    if (Function *func = find_function_containing_code(va))
+        return func;
+    return find_function_containing_data(va);
+}
+
+ExtentMap
+Partitioner::unused_addresses()
+{
+    FunctionRangeMap used_addresses;
+    function_extent(&used_addresses /*out*/);
+    return used_addresses.invert<ExtentMap>();
+}
+
+bool
+Partitioner::is_used_address(rose_addr_t va)
+{
+    FunctionRangeMap used_addresses;
+    function_extent(&used_addresses /*out*/);
+    return used_addresses.find(va) != used_addresses.end();
+}
+
+Sawyer::Optional<rose_addr_t>
+Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
+{
+    Sawyer::Nothing NOT_FOUND;
+    ExtentMap unused = unused_addresses();              // all unused addresses regardless of whether they're mapped
+
+    while (1) {
+        // get the next unused virtual address, but it might not be mapped
+        ExtentMap::iterator ui = unused.lower_bound(start_va);
+        if (ui==unused.end())
+            return NOT_FOUND;
+        rose_addr_t unused_va = std::max(start_va, ui->first.first());
+
+        // get the next mapped address, but it might not be unused
+        rose_addr_t mapped_unused_va;
+        if (!map.next(unused_va).apply(mapped_unused_va))
+            return NOT_FOUND;                           // no higher mapped address
+        if (unused.contains(Extent(mapped_unused_va)))
+            return mapped_unused_va;                    // found
+
+        // try again at a higher address
+        start_va = mapped_unused_va + 1;
+        if (start_va==0)
+            return NOT_FOUND;                           // overflow
+    }
+}
+
+void
+Partitioner::discover_post_padding_functions(const MemoryMap &map)
+{
+    Stream debug = mlog[DEBUG];
+    if (map.empty())
+        return;
+
+    std::vector<uint8_t> padding_bytes;
+    padding_bytes.push_back(0x90);                      // x86 NOP
+    padding_bytes.push_back(0xcc);                      // x86 INT3
+    padding_bytes.push_back(0);                         // zero padding
+
+    debug <<"discover_post_padding_functions()\n";
+
+    rose_addr_t next_va = map.hull().least();           // first address in the map
+    while (1) {
+        debug <<"  current position is " <<addrToString(next_va) <<"\n";
+
+        // Find an address that is mapped but not part of any function.
+        rose_addr_t unused_va;
+        if (!next_unused_address(map, next_va).apply(unused_va))
+            break;
+        debug <<"  next unused address is " <<addrToString(unused_va) <<"\n";
+
+        // Find the next occurrence of padding bytes.
+        Extent search_limits = Extent::inin(unused_va, map.hull().greatest());
+        rose_addr_t padding_va;
+        if (!map.find_any(search_limits, padding_bytes).apply(padding_va))
+            break;
+
+        // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).
+        rose_addr_t candidate_va = padding_va;
+        while (1) {
+            uint8_t byte;
+            if (1!=map.read1(&byte, candidate_va, 1) ||
+                std::find(padding_bytes.begin(), padding_bytes.end(), byte)==padding_bytes.end())
+                break;
+            ++candidate_va;
+        }
+        rose_addr_t npadding = candidate_va - padding_va;
+        next_va = candidate_va + 1;                     // for next time through this loop
+        debug <<"  address after padding is " <<addrToString(candidate_va) <<"\n"
+              <<"  number of padding bytes is " <<npadding <<"\n";
+
+        // Only consider this to be padding if we found some minimum number of padding bytes.
+        if (npadding < 5)                               // arbitrary
+            continue;
+
+        // Make sure we found padding and that the address after the padding is not already part of some function
+        if (candidate_va<=padding_va || is_used_address(candidate_va))
+            continue;
+
+        // Look at the next few bytes and do some simple tests to see if this looks like code or data.
+        if (NULL==find_instruction(candidate_va))
+            continue;                                   // can't be a function if there's no instruction
+        uint8_t buf[64];                                // arbitrary
+        size_t nread = map.read(buf, candidate_va, sizeof buf);
+        if (nread < 5)                                  // arbitrary
+            continue;                                   // too small to be a function
+        size_t nzeros = 0, nprint = 0;
+        for (size_t i=0; i<nread; ++i) {
+            if (buf[i]==0)
+                ++nzeros;
+            if (isprint(buf[i]))
+                ++nprint;
+        }
+        if ((double)nzeros / nread > 0.5)               // arbitrary
+            continue;                                   // probably data since there are so many zero bytes
+        if ((double)nprint / nread > 0.8)               // arbitrary
+            continue;                                   // looks like ASCII data
+        debug <<"  discovering function at " <<addrToString(candidate_va) <<"\n"
+              <<"    nread=" <<nread <<", nzeros=" <<nzeros <<", nprint=" <<nprint <<"\n";
+
+        // Mark the candidate address as a function entry point and discover the basic blocks for this function.
+        mlog[TRACE] <<"Partitioner::discover_post_padding_functions: candidate function at "
+                    <<addrToString(candidate_va) <<"\n";
+        add_function(candidate_va, SgAsmFunction::FUNC_INTERPADFUNC);
+        analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+    }
+    debug <<"  discover_post_padding_functions analysis has completed\n";
+}
+    
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
@@ -3473,6 +3768,14 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         fff.threshold = 0; // treat all intra-function regions as code
         scan_unassigned_bytes(&fff, &exe_map);
     }
+
+#if 0 // [Robb P. Matzke 2014-04-29]: experimental, slow, heuristic, and a bit too greedy, but perhaps more accurate
+    // Try to discover a function at each inter-function padding pattern, but interleave the discovery with the search. Each
+    // time we find padding we will discover that function (by following its control flow graph) before we search for another
+    // inter-function padding pattern.
+    if (func_heuristics & SgAsmFunction::FUNC_PADDING)
+        discover_post_padding_functions(exe_map);
+#endif
 
     /* Detect inter-function padding */
     if (func_heuristics & SgAsmFunction::FUNC_PADDING) {
@@ -3797,10 +4100,10 @@ Partitioner::fixup_cfg_edges(SgNode *ast)
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
                     SgAsmIntegerValueExpression *target = block->get_successors()[i];
-                    if (target && NULL==target->get_base_node()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
+                    if (target && NULL==target->get_baseNode()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absoluteValue());
                         if (bi!=block_map.end())
-                            target->make_relative_to(bi->second);
+                            target->makeRelativeTo(bi->second);
                     }
                 }
             }
@@ -3851,9 +4154,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
 
                 /* Don't monkey with constants that are already relative to some other node.  These are things that have been
                  * already fixed up by other methods. */
-                if (ival->get_base_node()!=NULL)
+                if (ival->get_baseNode()!=NULL)
                     return;
-                rose_addr_t va = ival->get_absolute_value();
+                rose_addr_t va = ival->get_absoluteValue();
 
                 /* If this constant is a code pointer, then make the pointer relative to the instruction it points to.  If that
                  * instruction is the entry instruction of a function, then point to the function instead.  A value is
@@ -3865,9 +4168,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                     0==(target_insn->bblock->function->reason & SgAsmFunction::FUNC_LEFTOVERS)) {
                     SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn->node);
                     if (target_func && target_func->get_entry_va()==target_insn->get_address()) {
-                        ival->make_relative_to(target_func);
+                        ival->makeRelativeTo(target_func);
                     } else {
-                        ival->make_relative_to(target_insn->node);
+                        ival->makeRelativeTo(target_insn->node);
                     }
                     return;
                 }
@@ -3879,7 +4182,7 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                     for (size_t i=0; i<dblock->nodes.size(); ++i) {
                         SgAsmStaticData *sd = dblock->nodes[i];
                         if (va>=sd->get_address() && va<sd->get_address()+sd->get_size()) {
-                            ival->make_relative_to(sd);
+                            ival->makeRelativeTo(sd);
                             return;
                         }
                     }
@@ -3887,9 +4190,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                 
                 /* If this constant points into a non-executable data segment, then make the pointer relative to that data
                  * segment. */
-                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absolute_value());
+                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absoluteValue());
                 if (section && !section->get_mapped_xperm()) {
-                    ival->make_relative_to(section);
+                    ival->makeRelativeTo(section);
                     return;
                 }
             }
@@ -4064,7 +4367,7 @@ Partitioner::build_ast(BasicBlock* block)
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
     for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
-        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        SgAsmIntegerValueExpression *value = SageBuilderAsm::buildValueU64(*si);
         value->set_parent(retval);
         retval->get_successors().push_back(value);
     }

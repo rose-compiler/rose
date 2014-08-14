@@ -403,9 +403,9 @@ public:
 
 
     /*========================================================================================================================
-     * Private stuff
+     * Data members
      *======================================================================================================================== */
-protected:
+public:
     static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
 
 private: 

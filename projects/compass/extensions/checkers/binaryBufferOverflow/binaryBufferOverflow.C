@@ -230,11 +230,6 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
                 SgAsmMemoryReferenceExpression* memExpr = 
                   isSgAsmMemoryReferenceExpression(getOperand(asmAft,false));
                 if (memExpr) {
-                  //SgAsmRegisterReferenceExpression* refLeft = getRegister(memref->get_segment(),false);
-		    
-                  //SgAsmMemoryReferenceExpression* memExpr = 
-                  //  isSgAsmMemoryReferenceExpression(refLeft->get_offset());
-                  //if (memExpr)
                   address_of_var = getValueInMemoryRefExp( memExpr->get_address());
                   if (RoseBin_support::DEBUG_MODE()) 
 		    cerr << " The address of the malloc variable is : " << RoseBin_support::HexToString(address_of_var) << endl;
@@ -277,8 +272,6 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 	code = check_isRegister(node, asmNode, false, memRef, regRef);
 	if (regRef && code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 	  // right hand side is Register Reg / MemoryRef
-	  //	  SgAsmRegisterReferenceExpression* refRight = getRegister(mov,true);
-	  //if (refRight) {
           SgAsmMemoryReferenceExpression* memExpr = 
             isSgAsmMemoryReferenceExpression(getOperand(asmNode,true));
           if (memExpr) {

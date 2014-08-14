@@ -522,7 +522,8 @@ BinQGUI::DeleteSgTree( SgNode* root) {
 	!isSgAsmTypeQuadWord(node) &&
 
 	!isSgAsmType128bitFloat(node) && 
-	!isSgAsmType80bitFloat(node) && 
+	!isSgAsmType80bitFloat(node) &&
+        !isSgAsmType96bitFloat(node) &&
 	!isSgAsmTypeDoubleFloat(node) && 
 	!isSgAsmTypeDoubleQuadWord(node) && 
 	!isSgAsmTypeSingleFloat(node) && 

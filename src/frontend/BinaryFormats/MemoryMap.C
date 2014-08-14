@@ -216,6 +216,12 @@ MemoryMap::ExternBuffer::write(const void *buf, size_t offset, size_t nbytes)
 }
 
 MemoryMap::BufferPtr
+MemoryMap::ByteBuffer::create(size_t size)
+{
+    return BufferPtr(new ByteBuffer(size));
+}
+
+MemoryMap::BufferPtr
 MemoryMap::ByteBuffer::create(void *data, size_t size)
 {
     return BufferPtr(new ByteBuffer((uint8_t*)data, size));
@@ -597,6 +603,12 @@ MemoryMap::size() const
     return p_segments.size();
 }
 
+AddressInterval
+MemoryMap::hull() const
+{
+    return p_segments.hull();
+}
+
 void
 MemoryMap::insert(const AddressInterval &range, const Segment &segment, bool erase_prior)
 {
@@ -682,6 +694,18 @@ MemoryMap::at(rose_addr_t va) const
     if (found==p_segments.nodes().end())
         throw NotMapped("", this, va);
     return *found;
+}
+
+Sawyer::Optional<rose_addr_t>
+MemoryMap::next(rose_addr_t start_va, unsigned req_perms) const
+{
+    for (Segments::ConstNodeIterator si=p_segments.lowerBound(start_va); si!=p_segments.nodes().end(); ++si) {
+        const AddressInterval &extent = si->key();
+        const Segment &segment = si->value();
+        if (req_perms == (segment.get_mapperms() & req_perms))
+            return std::max(start_va, extent.least());
+    }
+    return Sawyer::Nothing();
 }
 
 rose_addr_t
@@ -948,6 +972,89 @@ MemoryMap::erase_zeros(size_t minsize)
     }
     BOOST_FOREACH (const AddressInterval &range, to_remove.nodes())
         erase(range);
+}
+
+size_t
+MemoryMap::match_bytes(rose_addr_t start_va, const std::vector<uint8_t> &bytesToMatch, unsigned req_perms) const
+{
+    SgUnsignedCharList buffer = read(start_va, bytesToMatch.size(), req_perms);
+    for (size_t i=0; i<buffer.size(); ++i) {
+        if (buffer[i] != bytesToMatch[i])
+            return i;
+    }
+    return buffer.size();
+}
+
+Sawyer::Optional<rose_addr_t>
+MemoryMap::find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToMatch, unsigned req_perms) const
+{
+    Sawyer::Nothing NOT_FOUND;
+    const size_t nBytesToMatch = bytesToMatch.size();
+
+    if (limits.first() + nBytesToMatch < limits.first() || limits.first() + nBytesToMatch >= limits.last())
+        return NOT_FOUND;
+    if (0==nBytesToMatch)
+        return limits.first();
+
+    // circular buffer to hold the data being read from the memory map. Using a circular buffer allows us to not have to
+    // copy-shift the buffer as we read more bytes, but it does mean that we need modulo indices.  However, by using a buffer
+    // that's twice as long as the thing we're looking for, we also don't need to modulo.
+    std::vector<uint8_t> buffer = read(limits.first(), nBytesToMatch);
+    if (buffer.size() != nBytesToMatch)
+        return NOT_FOUND;
+    buffer.insert(buffer.end(), buffer.begin(), buffer.end());  // double the buffer by repeating it
+    size_t bufferInsertIdx = 0;                                 // modulo nBytesToMatch
+
+    // look for a match or advance
+    rose_addr_t va = limits.first();
+    while (true) {
+        if (0==memcmp(&bytesToMatch[0], &buffer[bufferInsertIdx], nBytesToMatch)) {
+            return va;
+        } else if (va + nBytesToMatch >= limits.last()) {
+            return NOT_FOUND;                                   // reached end of limit without matching
+        }
+
+        // read another byte (and place it in two places in the buffer)
+        size_t nread = read(&(buffer[bufferInsertIdx]), va, 1, req_perms);
+        if (nread!=1)
+            return NOT_FOUND;                                   // reached an unmapped or unreadable address
+        buffer[bufferInsertIdx + nBytesToMatch] = buffer[bufferInsertIdx];
+        bufferInsertIdx = (bufferInsertIdx + 1) % nBytesToMatch;
+        ++va;
+    }
+}
+
+Sawyer::Optional<rose_addr_t>
+MemoryMap::find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind, unsigned req_perms) const
+{
+    Sawyer::Nothing NOT_FOUND;
+    if (limits.empty() || bytesToFind.empty())
+        return NOT_FOUND;
+
+    // Read a bunch of bytes at a time.  If the buffer size is large then we'll have fewer read calls before finding a match,
+    // which is good if a match is unlikely.  But if a match is likely, then it's better to use a smaller buffer so we don't
+    // ready more than necessary to find a match.  We'll compromise by starting with a small buffer that grows up to some
+    // limit.
+    size_t nremaining = limits.size();                  // bytes remaining to search (could be zero if limits is universe)
+    size_t bufsize = 8;                                 // initial buffer size
+    uint8_t buffer[4096];                               // full buffer
+
+    Sawyer::Optional<rose_addr_t> at = next(limits.first(), req_perms);
+    while (at && *at <= limits.last()) {
+        if (nremaining > 0)                             // zero implies entire address space
+            bufsize = std::min(bufsize, nremaining);
+        size_t nread = read(buffer, *at, bufsize, req_perms);
+        assert(nread > 0);                              // because of the next() calls
+        for (size_t offset=0; offset<nread; ++offset) {
+            if (std::find(bytesToFind.begin(), bytesToFind.end(), buffer[offset]) != bytesToFind.end())
+                return *at + offset;                    // found
+        }
+        at = next(*at + nread, req_perms);
+        bufsize = std::min(2*bufsize, sizeof buffer);   // use a larger buffer next time if possible
+        nremaining -= nread;                            // ok if nremaining is already zero
+    }
+
+    return NOT_FOUND;
 }
 
 void

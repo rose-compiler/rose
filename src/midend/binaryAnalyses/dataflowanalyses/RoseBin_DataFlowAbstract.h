@@ -151,7 +151,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
                                 SgGraphNode* node,
                                 std::pair<X86RegisterClass, int>  codeSearch,
                                 bool& cantTrack,
-                                SgAsmx86RegisterReferenceExpression* refExpr_rightHand);
+                                SgAsmRegisterReferenceExpression* refExpr_rightHand);
 
 
   std::pair<X86RegisterClass, int>

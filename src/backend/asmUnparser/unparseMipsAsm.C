@@ -45,15 +45,15 @@ static std::string mipsTypeToPtrName(SgAsmType* ty) {
         return "BAD_TYPE";
     }
 
-    switch (ty->variantT()) {
-        case V_SgAsmTypeByte: return "BYTE";
-        case V_SgAsmTypeWord: return "HALFWORD";
-        case V_SgAsmTypeDoubleWord: return "WORD";
-        case V_SgAsmTypeQuadWord: return "DOUBLEWORD";
-        default: {
-            ASSERT_not_reachable("invalid MIPS type: " + ty->class_name());
+    if (SgAsmIntegerType *it = isSgAsmIntegerType(ty)) {
+        switch (it->get_nBits()) {
+            case 8: return "BYTE";
+            case 16: return "HALFWORD";
+            case 32: return "WORD";
+            case 64: return "DOUBLEWORD";
         }
     }
+    ASSERT_not_reachable("invalid MIPS type: " + ty->toString());
 }
 
 
@@ -75,9 +75,9 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
             break;
         }
 
-        case V_SgAsmMipsRegisterReferenceExpression: {
+        case V_SgAsmDirectRegisterExpression: {
             SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
-            SgAsmMipsRegisterReferenceExpression* rr = isSgAsmMipsRegisterReferenceExpression(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparseMipsRegister(insn, rr->get_descriptor(), registers);
             break;
         }
@@ -85,13 +85,13 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ival);
-            uint64_t value = ival->get_absolute_value(); // not sign extended
-            result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+            uint64_t value = ival->get_absoluteValue(); // not sign extended
+            result = StringUtility::signedToHex2(value, ival->get_significantBits());
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
             std::string label;
-            if (ival->get_significant_bits()>8)
+            if (ival->get_significantBits()>8)
                 label =mipsValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();

@@ -23,6 +23,7 @@ install(
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/BaseSemantics.h
     instructionSemantics/DataFlowSemantics2.h
+    instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
     instructionSemantics/findConstants.h
@@ -38,7 +39,6 @@ install(
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
-    instructionSemantics/semanticsModule.h
     instructionSemantics/SMTSolver.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h

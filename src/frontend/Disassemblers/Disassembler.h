@@ -672,8 +672,9 @@ private:
     /***************************************************************************************************************************
      *                                          Data members
      ***************************************************************************************************************************/
-protected:
+public:
     static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
+protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
     class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */

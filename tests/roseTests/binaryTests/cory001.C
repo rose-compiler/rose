@@ -15,7 +15,7 @@ typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
 // This old method of using hard-coded register numbers, although fast, has some problems.  Two big ones are that it doesn't
 // allow a software layer (SymbolicSemantics::State) to safely and easily implement a subset of all available registers, and it
 // isn't able to easily describe parts of registers (like the x86 OF flag vs. the entire EFLAGS register, or EIP vs. RIP, etc.)
-#define REG_ESP registers.gpr[SgAsmx86RegisterReferenceExpression::e_esp]
+#define REG_ESP registers.gpr[x86_gpr_sp]
 
 #elif 1
 

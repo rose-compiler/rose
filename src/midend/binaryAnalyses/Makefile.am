@@ -19,6 +19,7 @@ libbinaryMidend_la_SOURCES =					\
     dataflowanalyses/RoseBin_DataFlowAbstract.cpp		\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
+    instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
     instructionSemantics/NullSemantics2.C			\
@@ -78,6 +79,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
+    instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
     instructionSemantics/IntervalSemantics.h		\
@@ -96,7 +98,6 @@ pkginclude_HEADERS =					\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
     instructionSemantics/flowEquations.h		\
-    instructionSemantics/semanticsModule.h		\
     instructionSemantics/x86InstructionSemantics.h	\
     libraryIdentification/functionIdentification.h	\
     libraryIdentification/libraryIdentification.h	\

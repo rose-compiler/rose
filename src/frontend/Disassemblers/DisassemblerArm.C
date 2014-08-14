@@ -98,7 +98,7 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
 }
 
 /** Creates a general-purpose register reference expression. */
-SgAsmArmRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerArm::makeRegister(uint8_t reg) const
 {
     ASSERT_not_null(get_registers());
@@ -106,7 +106,7 @@ DisassemblerArm::makeRegister(uint8_t reg) const
     std::string name = "r" + StringUtility::numberToString(reg);
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     ASSERT_not_null(rdesc);
-    SgAsmArmRegisterReferenceExpression* r = new SgAsmArmRegisterReferenceExpression(*rdesc);
+    SgAsmRegisterReferenceExpression* r = new SgAsmDirectRegisterExpression(*rdesc);
     return r;
 }
 
@@ -120,20 +120,20 @@ DisassemblerArm::makeRegister(uint8_t reg) const
  *     0x04 => s   status field mask bit
  *     0x08 => f   flags field mask bit
  */
-SgAsmArmRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const
 {
     ASSERT_not_null(get_registers());
     std::string name = useSPSR ? "spsr" : "cpsr";
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     ASSERT_not_null(rdesc);
-    SgAsmArmRegisterReferenceExpression *r = new SgAsmArmRegisterReferenceExpression(*rdesc);
+    SgAsmDirectRegisterExpression *r = new SgAsmDirectRegisterExpression(*rdesc);
     if (fields!=0)
         r->set_psr_mask(fields);
     return r;
 }
 
-SgAsmArmRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerArm::makePsr(bool useSPSR) const
 {
     return makePsrFields(useSPSR, 0);
@@ -147,9 +147,9 @@ DisassemblerArm::makeRotatedImmediate() const
     uint8_t rotateCount = rsField * 2;
     uint32_t immRaw = insn & 0xFF;
     if (rotateCount == 0) {
-        return SageBuilderAsm::makeDWordValue(immRaw);
+        return SageBuilderAsm::buildValueU32(immRaw);
     } else {
-        return SageBuilderAsm::makeDWordValue((immRaw >> rotateCount) | (immRaw << (32 - rotateCount)));
+        return SageBuilderAsm::buildValueU32((immRaw >> rotateCount) | (immRaw << (32 - rotateCount)));
     }
 }
 
@@ -166,23 +166,23 @@ DisassemblerArm::makeShifterField() const
     } else if ((insn & 0xFF0) == 0) {
         return makeRegister(rmField);
     } else if ((insn & 0x070) == 0) {
-        return SageBuilderAsm::makeLsl(makeRegister(rmField), SageBuilderAsm::makeByteValue(shiftCount));
+        return SageBuilderAsm::buildLslExpression(makeRegister(rmField), SageBuilderAsm::buildValueU8(shiftCount));
     } else if ((insn & 0x0F0) == 0x010) {
-        return SageBuilderAsm::makeLsl(makeRegister(rmField), makeRegister(rsField));
+        return SageBuilderAsm::buildLslExpression(makeRegister(rmField), makeRegister(rsField));
     } else if ((insn & 0x070) == 0x020) {
-        return SageBuilderAsm::makeLsr(makeRegister(rmField), SageBuilderAsm::makeByteValue(shiftCountOr32));
+        return SageBuilderAsm::buildLsrExpression(makeRegister(rmField), SageBuilderAsm::buildValueU8(shiftCountOr32));
     } else if ((insn & 0x0F0) == 0x030) {
-        return SageBuilderAsm::makeLsr(makeRegister(rmField), makeRegister(rsField));
+        return SageBuilderAsm::buildLsrExpression(makeRegister(rmField), makeRegister(rsField));
     } else if ((insn & 0x070) == 0x040) {
-        return SageBuilderAsm::makeAsr(makeRegister(rmField), SageBuilderAsm::makeByteValue(shiftCountOr32));
+        return SageBuilderAsm::buildAsrExpression(makeRegister(rmField), SageBuilderAsm::buildValueU8(shiftCountOr32));
     } else if ((insn & 0x0F0) == 0x050) {
-        return SageBuilderAsm::makeAsr(makeRegister(rmField), makeRegister(rsField));
+        return SageBuilderAsm::buildAsrExpression(makeRegister(rmField), makeRegister(rsField));
     } else if ((insn & 0xFF0) == 0x060) {
-        return SageBuilderAsm::makeRrx(makeRegister(rmField));
+        return SageBuilderAsm::buildRrxExpression(makeRegister(rmField));
     } else if ((insn & 0x070) == 0x060) {
-        return SageBuilderAsm::makeRor(makeRegister(rmField), SageBuilderAsm::makeByteValue(shiftCount));
+        return SageBuilderAsm::buildRorExpression(makeRegister(rmField), SageBuilderAsm::buildValueU8(shiftCount));
     } else if ((insn & 0x0F0) == 0x070) {
-        return SageBuilderAsm::makeRor(makeRegister(rmField), makeRegister(rsField));
+        return SageBuilderAsm::buildRorExpression(makeRegister(rmField), makeRegister(rsField));
     } else {
         throw ExceptionArm("bad shifter field", this, 25);
     }
@@ -243,7 +243,7 @@ DisassemblerArm::makeSplit8bitOffset() const
     int32_t val = ((insn >> 4) & 0xF0) | (insn & 0xF);
     val <<= 24;
     val >>= 24; // Arithmetic shift to copy highest bit of immediate
-    return SageBuilderAsm::makeDWordValue((uint32_t)val);
+    return SageBuilderAsm::buildValueU32((uint32_t)val);
 }
 
 SgAsmIntegerValueExpression *
@@ -253,7 +253,7 @@ DisassemblerArm::makeBranchTarget() const
     val <<= 8;
     val >>= 6; // Arithmetic shift to copy highest bit of immediate
     uint32_t targetAddr = ip + 8 + val;
-    return SageBuilderAsm::makeDWordValue(targetAddr);
+    return SageBuilderAsm::buildValueU32(targetAddr);
 }
 
 SgAsmExpression *
@@ -263,16 +263,16 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
     bool p = (insn >> 24) & 1;
     bool u = (insn >> 23) & 1;
     bool w = (insn >> 21) & 1;
-    SgAsmExpression* offset = bit25 ? makeShifterField() : SageBuilderAsm::makeDWordValue(insn & 0xFFFU);
+    SgAsmExpression* offset = bit25 ? makeShifterField() : SageBuilderAsm::buildValueU32(insn & 0xFFFU);
     switch ((p ? 4 : 0) | (u ? 2 : 0) | (w ? 1 : 0)) {
-      case 0: return SageBuilderAsm::makeSubtractPostupdate(rn, offset);
-      case 1: return SageBuilderAsm::makeSubtractPostupdate(rn, offset); // T suffix
-      case 2: return SageBuilderAsm::makeAddPostupdate(rn, offset);
-      case 3: return SageBuilderAsm::makeAddPostupdate(rn, offset); // T suffix
-      case 4: return SageBuilderAsm::makeSubtract(rn, offset);
-      case 5: return SageBuilderAsm::makeSubtractPreupdate(rn, offset);
-      case 6: return SageBuilderAsm::makeAdd(rn, offset);
-      case 7: return SageBuilderAsm::makeAddPreupdate(rn, offset);
+      case 0: return SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset);
+      case 1: return SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset); // T suffix
+      case 2: return SageBuilderAsm::buildAddPostupdateExpression(rn, offset);
+      case 3: return SageBuilderAsm::buildAddPostupdateExpression(rn, offset); // T suffix
+      case 4: return SageBuilderAsm::buildSubtractExpression(rn, offset);
+      case 5: return SageBuilderAsm::buildSubtractPreupdateExpression(rn, offset);
+      case 6: return SageBuilderAsm::buildAddExpression(rn, offset);
+      case 7: return SageBuilderAsm::buildAddPreupdateExpression(rn, offset);
       default: ASSERT_not_reachable("invalid memory address specification");
     }
     // DQ (11/29/2009): Avoid MSVC warning.
@@ -331,17 +331,17 @@ DisassemblerArm::decodeExtraLoadStores() const
     SgAsmExpression* offset = bit22 ? (SgAsmExpression*)makeSplit8bitOffset() : makeRegister(insn & 15);
     SgAsmExpression* addr = NULL;
     switch ((bit24 ? 4 : 0) | (bit23 ? 2 : 0) | (bit21 ? 1 : 0)) {
-        case 0: addr = SageBuilderAsm::makeSubtractPostupdate(rn, offset); break;
+        case 0: addr = SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset); break;
         case 1: throw ExceptionArm("bad bits in decodeExtraLoadStores (1)", this, 21);
-        case 2: addr = SageBuilderAsm::makeAddPostupdate(rn, offset); break;
+        case 2: addr = SageBuilderAsm::buildAddPostupdateExpression(rn, offset); break;
         case 3: throw ExceptionArm("bad bits in decodeExtraLoadStores (3)", this, 21);
-        case 4: addr = SageBuilderAsm::makeSubtract(rn, offset); break;
-        case 5: addr = SageBuilderAsm::makeSubtractPreupdate(rn, offset); break;
-        case 6: addr = SageBuilderAsm::makeAdd(rn, offset); break;
-        case 7: addr = SageBuilderAsm::makeAddPreupdate(rn, offset); break;
+        case 4: addr = SageBuilderAsm::buildSubtractExpression(rn, offset); break;
+        case 5: addr = SageBuilderAsm::buildSubtractPreupdateExpression(rn, offset); break;
+        case 6: addr = SageBuilderAsm::buildAddExpression(rn, offset); break;
+        case 7: addr = SageBuilderAsm::buildAddPreupdateExpression(rn, offset); break;
         default: ASSERT_not_reachable("invalid extra load stores");
     }
-    SgAsmExpression* memref = SageBuilderAsm::makeMemoryReference(addr);
+    SgAsmExpression* memref = SageBuilderAsm::buildMemoryReferenceExpression(addr);
     uint8_t lsh = (bit20 ? 4 : 0) | (bit6 ? 2 : 0) | (bit5 ? 1 : 0);
     switch (lsh) {
         case 0:
@@ -372,22 +372,22 @@ DisassemblerArm::decodeMiscInstruction() const
       switch ((insn >> 4) & 7) {
         case 0: {
           if (bit21) {
-            SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+            SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
             bool useSPSR = bit22;
             uint8_t mask = (insn >> 16) & 15;
-            SgAsmArmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
+            SgAsmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
             return MAKE_INSN2(msr, 3, psr, rm);
           } else {
             bool useSPSR = bit22;
-            SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
-            SgAsmArmRegisterReferenceExpression* psr = makePsr(useSPSR);
+            SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
+            SgAsmRegisterReferenceExpression* psr = makePsr(useSPSR);
             return MAKE_INSN2(mrs, 3, rd, psr);
           }
         }
         case 1: {
           if (bit22) {
-            SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
-            SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+            SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
+            SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
             return MAKE_INSN2(clz, 3, rd, rm);
           } else {
             return MAKE_INSN1(bx, 2, makeRegister(insn & 15));
@@ -397,9 +397,9 @@ DisassemblerArm::decodeMiscInstruction() const
         case 3: return MAKE_INSN1(blx, 3, makeRegister(insn & 15));
         case 4: throw ExceptionArm("bad bits in decodeMiscInstruction (4)", this, 4);
         case 5: {
-          SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
-          SgAsmArmRegisterReferenceExpression* rn = makeRegister((insn >> 16) & 15);
-          SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+          SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
+          SgAsmRegisterReferenceExpression* rn = makeRegister((insn >> 16) & 15);
+          SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
           uint8_t op = (insn >> 21) & 3;
           switch (op) {
             case 0: return MAKE_INSN3(qadd, 4, rd, rm, rn);
@@ -414,15 +414,15 @@ DisassemblerArm::decodeMiscInstruction() const
           uint16_t imm1 = (insn >> 8) & 0xFFF;
           uint16_t imm2 = insn & 0xF;
           uint16_t imm = (imm1 << 4) | imm2;
-          return MAKE_INSN1(bkpt, 4, SageBuilderAsm::makeWordValue(imm));
+          return MAKE_INSN1(bkpt, 4, SageBuilderAsm::buildValueU16(imm));
         }
         default: ASSERT_not_reachable("invalid miscellaneous instruction");
       }
     } else { // bit 7 set -- signed mul
-      SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 16) & 15);
-      SgAsmArmRegisterReferenceExpression* rn = makeRegister((insn >> 12) & 15);
-      SgAsmArmRegisterReferenceExpression* rs = makeRegister((insn >> 8) & 15);
-      SgAsmArmRegisterReferenceExpression* rm = makeRegister(insn & 15);
+      SgAsmRegisterReferenceExpression* rd = makeRegister((insn >> 16) & 15);
+      SgAsmRegisterReferenceExpression* rn = makeRegister((insn >> 12) & 15);
+      SgAsmRegisterReferenceExpression* rs = makeRegister((insn >> 8) & 15);
+      SgAsmRegisterReferenceExpression* rm = makeRegister(insn & 15);
       uint8_t op = (insn >> 21) & 3;
       bool y = (insn >> 6) & 1;
       bool x = (insn >> 5) & 1;
@@ -481,7 +481,7 @@ DisassemblerArm::disassemble()
                 SgAsmExpression* imm = makeRotatedImmediate();
                 bool useSPSR = bit22;
                 uint8_t mask = (insn >> 16) & 15;
-                SgAsmArmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
+                SgAsmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
                 return MAKE_INSN2(msr, 3, psr, imm);
               } else {
                   throw ExceptionArm("bad bit21", this, 26);
@@ -498,7 +498,7 @@ DisassemblerArm::disassemble()
           case 1: { // Load-store, media, undefined
             if (!bit4 || !bit25) {
               SgAsmExpression* rn = makeRegister((insn >> 16) & 15);
-              SgAsmExpression* memref = SageBuilderAsm::makeMemoryReference(decodeMemoryAddress(rn));
+              SgAsmExpression* memref = SageBuilderAsm::buildMemoryReferenceExpression(decodeMemoryAddress(rn));
               SgAsmExpression* rd = makeRegister((insn >> 12) & 15);
               bool isLoad = bit20;
               bool isByte = bit22;
@@ -523,21 +523,21 @@ DisassemblerArm::disassemble()
           case 2: { // Load-store multiple, branches
             if (!bit25) {
               SgAsmExpression* rn = makeRegister((insn >> 16) & 15);
-              SgAsmExprListExp* regs = SageBuilderAsm::makeExprListExp();
+              SgAsmExprListExp* regs = SageBuilderAsm::buildExprListExpression();
               for (int i = 0; i < 16; ++i) {
                 if ((insn >> i) & 1) {
-                  SgAsmArmRegisterReferenceExpression* reg = makeRegister(i);
+                  SgAsmRegisterReferenceExpression* reg = makeRegister(i);
                   regs->get_expressions().push_back(reg);
                   reg->set_parent(regs);
                 }
               }
               SgAsmExpression* base = rn;
               if (bit21) { // w
-                SgAsmExpression* offset = SageBuilderAsm::makeByteValue(regs->get_expressions().size() * 4);
+                SgAsmExpression* offset = SageBuilderAsm::buildValueU8(regs->get_expressions().size() * 4);
                 if (bit23) { // u
-                    base = SageBuilderAsm::makeAddPostupdate(rn, offset);
+                    base = SageBuilderAsm::buildAddPostupdateExpression(rn, offset);
                 } else {
-                    base = SageBuilderAsm::makeSubtractPostupdate(rn, offset);
+                    base = SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset);
                 }
               }
 
@@ -545,20 +545,20 @@ DisassemblerArm::disassemble()
               switch (((insn >> 21) & 62) | bit20) { // p, u, s, l
                 case 0x0: return MAKE_INSN2(stmda, 3, rn, regs);
                 case 0x1: return MAKE_INSN2(ldmda, 3, rn, regs);
-                case 0x2: return MAKE_INSN2(stmda, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
-                case 0x3: return MAKE_INSN2(ldmda, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
+                case 0x2: return MAKE_INSN2(stmda, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
+                case 0x3: return MAKE_INSN2(ldmda, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
                 case 0x4: return MAKE_INSN2(stmia, 3, rn, regs);
                 case 0x5: return MAKE_INSN2(ldmia, 3, rn, regs);
-                case 0x6: return MAKE_INSN2(stmia, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
-                case 0x7: return MAKE_INSN2(ldmia, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
+                case 0x6: return MAKE_INSN2(stmia, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
+                case 0x7: return MAKE_INSN2(ldmia, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
                 case 0x8: return MAKE_INSN2(stmdb, 3, rn, regs);
                 case 0x9: return MAKE_INSN2(ldmdb, 3, rn, regs);
-                case 0xA: return MAKE_INSN2(stmdb, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
-                case 0xB: return MAKE_INSN2(ldmdb, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
+                case 0xA: return MAKE_INSN2(stmdb, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
+                case 0xB: return MAKE_INSN2(ldmdb, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
                 case 0xC: return MAKE_INSN2(stmib, 3, rn, regs);
                 case 0xD: return MAKE_INSN2(ldmib, 3, rn, regs);
-                case 0xE: return MAKE_INSN2(stmib, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
-                case 0xF: return MAKE_INSN2(ldmib, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
+                case 0xE: return MAKE_INSN2(stmib, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
+                case 0xF: return MAKE_INSN2(ldmib, 3, rn, SageBuilderAsm::buildArmSpecialRegisterList(regs));
                 default: ASSERT_not_reachable("invalid bits");
               }
             } else {
@@ -572,7 +572,7 @@ DisassemblerArm::disassemble()
           }
           case 3: {
             if ((insn & 0x0F000000U) == 0x0F000000U) {
-              return MAKE_INSN1(swi, 3, SageBuilderAsm::makeDWordValue(insn & 0x00FFFFFFU));
+              return MAKE_INSN1(swi, 3, SageBuilderAsm::buildValueU32(insn & 0x00FFFFFFU));
             } else {
                 mlog[DEBUG] << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << "\n";
                 throw ExceptionArm("coprocessor not supported", this, 26);
@@ -590,9 +590,9 @@ DisassemblerArm::disassemble()
         switch (opcode1) {
           case 0x10: {
             if (bit16) {
-              return MAKE_INSN1(setend, 6, SageBuilderAsm::makeByteValue(bit9));
+              return MAKE_INSN1(setend, 6, SageBuilderAsm::buildValueU8(bit9));
             } else {
-              ASSERT_not_reachable("CPS not supported");
+                throw ExceptionArm("CPS not supported", this);
             }
           }
           default: {

@@ -1,6 +1,7 @@
 #include <sawyer/MarkupPod.h>
 
 #include <boost/foreach.hpp>
+#include <cctype>
 #include <cerrno>
 #include <cstdio>
 #include <fstream>
@@ -236,6 +237,15 @@ PodFormatter::endDocument(std::ostream &out) {
     out <<(atBeginningOfLine_?"":"\n") <<"\n=cut\n";
 }
 
+static bool
+hasNonSpace(const std::string &s) {
+    BOOST_FOREACH (char ch, s) {
+        if (isgraph(ch))
+            return true;
+    }
+    return false;
+}
+
 SAWYER_EXPORT bool
 PodFormatter::beginTag(std::ostream &out, const Tag::Ptr &tag, const TagArgs &args) {
     tagStack_.push_back(tag);
@@ -255,16 +265,20 @@ PodFormatter::beginTag(std::ostream &out, const Tag::Ptr &tag, const TagArgs &ar
         textModePush(NONPROSE);
 
     } else if (tag->name() == "section") {
+        // Nested sections, but only if the body is not empty.
         checkArgs(tag, 2, args);
         size_t level = nested() + 1;
         if (level > 4)
             throw std::runtime_error("POD formatter can handle at most four levels of section nesting");
-        out <<"=head" <<level <<" ";
+        std::ostringstream arg0, arg1;
+        arg0 <<"=head" <<level <<" ";
         atBeginningOfLine_ = false;
-        args[0]->emit(out, self());
-        out <<"\n\n";
+        args[0]->emit(arg0, self());
+        arg0 <<"\n\n";
         atBeginningOfLine_ = true;
-        args[1]->emit(out, self());
+        args[1]->emit(arg1, self());
+        if (hasNonSpace(arg1.str()))
+            out <<arg0.str() <<arg1.str();
         return false;                                   // no recursion
 
     } else if (tag->name() == "list") {

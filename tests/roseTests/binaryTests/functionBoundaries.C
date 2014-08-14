@@ -31,7 +31,7 @@ private:
             if (!insn || insn->get_kind()!=x86_push) continue;
             SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
             if (operands.size()!=1) continue;
-            SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(operands[0]);
+            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(operands[0]);
             if (!rre ||
                 rre->get_descriptor().get_major() != x86_regclass_gpr ||
                 rre->get_descriptor().get_minor() != x86_gpr_bp)
