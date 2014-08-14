@@ -1866,6 +1866,13 @@ struct IP_mov3q: P {
     }
 };
 
+struct IP_movclr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
 struct IP_move: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -3175,6 +3182,7 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_lsr,         new M68k::IP_lsr);
     iproc_set(m68k_mac,         new M68k::IP_mac);
     iproc_set(m68k_mov3q,       new M68k::IP_mov3q);
+    iproc_set(m68k_movclr,      new M68k::IP_movclr);
     iproc_set(m68k_move,        new M68k::IP_move);
     iproc_set(m68k_move16,      new M68k::IP_move16);
     iproc_set(m68k_movea,       new M68k::IP_movea);

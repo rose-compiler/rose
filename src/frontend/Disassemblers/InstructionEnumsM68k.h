@@ -389,7 +389,7 @@ enum M68kInstructionKind {
     m68k_lsr,                                           /**< Logical shift right */
     m68k_mac,                                           /**< Multiply accumulate */
     m68k_mov3q,                                         /**< Move 3-bit data quick */
-//    m68k_movclr,
+    m68k_movclr,                                        /**< Move from MAC ACC register and clear */
     m68k_move,                                          /**< Move from source to destination (data, CCR, ACC, MACSR, MASK) */
     m68k_move_acc,                                      /**< Move MAC ACC register */
     m68k_move_accext,                                   /**< Move MAC ACCext register */

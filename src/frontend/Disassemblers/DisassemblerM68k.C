@@ -3512,6 +3512,17 @@ struct M68k_mov3q: M68k {
     }
 };
 
+// MOVCLR.L ACCy, Rx
+struct M68k_movclr: M68k {
+    M68k_movclr(): M68k("movclr", m68k_freescale_emac,
+                        OP(10) & BIT<11>(0) & BITS<4, 8>(0x1c)) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        SgAsmExpression *acc = d->makeMacAccumulatorRegister(extract<9, 10>(w0));
+        SgAsmExpression *dst = d->makeDataAddressRegister(extract<0, 3>(w0), m68k_fmt_i32, 0);
+        return d->makeInstruction(m68k_movclr, "movclr.l", acc, dst);
+    }
+};
+
 // MOVE.B <ea>y, <ea>x
 // MOVE.W <ea>y, <ea>x
 // MOVE.L <ea>y, <ea>x
@@ -4785,6 +4796,7 @@ DisassemblerM68k::init()
     M68k_DECODER(mac_l2);
     M68k_DECODER(mac_w2);
     M68k_DECODER(mov3q);
+    M68k_DECODER(movclr);
     M68k_DECODER(move);
     M68k_DECODER(move_from_acc);
     M68k_DECODER(move_from_accext);
