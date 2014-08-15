@@ -479,9 +479,12 @@ InternalNode::identity(uint64_t ident) const
         return shared_from_this();
     if (args.empty())
         return LeafNode::create_integer(get_nbits(), ident, get_comment());
-    if (1==args.size())
+    if (1==args.size()) {
+        if (args.front()->get_nbits()!=get_nbits())
+            return InternalNode::create(get_nbits(), OP_UEXTEND, LeafNode::create_integer(8, get_nbits()), args.front());
         return args.front();
-
+    }
+    
     // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
     InternalNode *retval = new InternalNode(get_nbits(), get_operator(), get_comment());
     retval->children.insert(retval->children.end(), args.begin(), args.end());
@@ -855,6 +858,15 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
                                         inode->get_comment());
         }
     }
+
+    // Simplifications for (extract 0 a (uextend b c))
+    if (from_node && to_node && from_node->is_known() && 0==from && to_node->is_known()) {
+        size_t a=to, b=operand->get_nbits();
+        // (extract[a] 0 a (uextend[b] b c[a])) => c when b>=a
+        if (ioperand && OP_UEXTEND==ioperand->get_operator() && b>=a && ioperand->child(1)->get_nbits()==a)
+            return ioperand->child(1);
+    }
+
 
     return TreeNodePtr();
 }
@@ -1503,7 +1515,9 @@ InternalNode::simplifyTop() const
                 newnode = inode->rewrite(UmodSimplifier());
                 break;
             case OP_UMUL:
-                newnode = inode->nonassociative()->commutative()->constant_folding(UmulSimplifier());
+                newnode = inode->nonassociative()->commutative()->identity(1);
+                if (newnode==node)
+                    newnode = inode->constant_folding(UmulSimplifier());
                 break;
             case OP_WRITE:
                 // no simplifications
