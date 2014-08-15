@@ -354,6 +354,8 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
                       <<"  Letters indicate a stream that is enabled; hyphens indicate disabled.\n"
                       <<"  D=debug, T=trace, H=where, I=info, W=warning, E=error, F=fatal\n";
             facilities_.print(std::cout);
+            if (exitOnHelp_)
+                exit(0);
         } else if (0==value.string().compare("help")) {
             //           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
             std::cout <<"Logging is controlled with a simple language consisting of a comma-separated\n"
