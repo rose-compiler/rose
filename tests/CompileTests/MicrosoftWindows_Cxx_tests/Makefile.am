@@ -328,6 +328,12 @@ testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
 	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
 
+test_msvc_1:
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2.cxx
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2_noline.cxx
+
+
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit
 test_MPI_LAM:
