@@ -33,6 +33,11 @@ public:
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->get_insn());
+
+        // Update the PC to point to the fall-through instruction before we process the instruction, so that the semantics for
+        // individual instructions (like branches) can override this choice by assigning a new value to PC.  However, we must
+        // be careful of PC-relative addressing since the PC value during the addressing operations is the instruction address
+        // plus 2.
         operators->writeRegister(dispatcher->REG_PC, operators->add(operators->number_(32, insn->get_address()),
                                                                     operators->number_(32, insn->get_size())));
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
@@ -3378,6 +3383,23 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
         default:
             ASSERT_not_reachable("instruction is not conditional: " + stringifyM68kInstructionKind(kind));
     }
+}
+
+// Override Dispatcher::read so that if we read the PC register we get the address of the current instruction plus 2.  See
+// the note in M68k::P::process()
+BaseSemantics::SValuePtr
+DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/) {
+    ASSERT_not_null(e);
+    SValuePtr retval;
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        static const RegisterDescriptor REG_PC(m68k_regclass_spr, m68k_spr_pc, 0, 32);
+        if (re->get_descriptor() == REG_PC) {
+            SgAsmInstruction *insn = get_insn();
+            ASSERT_not_null(insn);
+            return operators->number_(32, insn->get_address() + 2);
+        }
+    }
+    return Dispatcher::read(e, value_nbits, addr_nbits);
 }
 
 } // namespace

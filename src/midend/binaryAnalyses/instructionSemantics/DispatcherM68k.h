@@ -69,6 +69,8 @@ public:
         return insn->get_kind();
     }
 
+    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=32) /*override*/;
+
     /** Determines if an instruction should branch. */
     BaseSemantics::SValuePtr condition(M68kInstructionKind, BaseSemantics::RiscOperators*);
 };
