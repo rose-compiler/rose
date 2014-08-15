@@ -4007,8 +4007,17 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
 #endif
-          bool is_Cxx_Compiler = file->get_Cxx_only();
-          bool is_C_Compiler   = file->get_C_only();
+          bool is_Cxx_Compiler = false;
+          bool is_C_Compiler   = false;
+          if (file != NULL)
+             {
+               is_Cxx_Compiler = file->get_Cxx_only();
+               is_C_Compiler   = file->get_C_only();
+             }
+            else
+             {
+               printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+             }
 
        // For C we need to use the GNU 4.9 compiler.
        // Now check the version of the identified GNU g++ compiler.
