@@ -887,6 +887,44 @@ MemoryMap::write(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t desi
     return total_copied;
 }
 
+size_t
+MemoryMap::readBackward1(void *dst_buf/*=NULL*/, rose_addr_t end_va, size_t desired, unsigned req_perms) const
+{
+    if (0==end_va)
+        return 0;
+    Segments::ConstNodeIterator found = p_segments.find(end_va-1);
+    if (found==p_segments.nodes().end())
+        return 0;
+
+    const AddressInterval &range = found->key();
+    assert(range.isContaining(end_va-1));
+    desired = std::min((rose_addr_t)desired, end_va-range.least());
+    rose_addr_t start_va = end_va - desired;
+
+    const Segment &segment = found->value();
+    if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
+        return 0;
+
+    rose_addr_t buffer_offset = segment.get_buffer_offset(range, start_va);
+    return segment.get_buffer()->read(dst_buf, buffer_offset, desired);
+}
+
+size_t
+MemoryMap::readBackward(void *dst_buf/*=NULL*/, rose_addr_t end_va, size_t desired, unsigned req_perms) const
+{
+    // Scan backward to see how much we can read
+    size_t nremain=desired, batch=0;
+    rose_addr_t start_va = end_va;
+    while (nremain>0 && (batch=readBackward1(NULL, start_va, nremain, req_perms))) {
+        assert(batch<=nremain);
+        nremain -= batch;
+        start_va -= batch;
+    }
+
+    // Then read it
+    return read(dst_buf, start_va, end_va-start_va, req_perms);
+}
+
 AddressIntervalSet
 MemoryMap::va_extents() const
 {

@@ -656,6 +656,28 @@ public:
     size_t write1(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
     /** @} */
 
+    /** Reads backward through a memory map.  Reads as much data as possible, but not more than specified, such that the last
+     *  byte read is one prior to the specified address.  The buffer is filled so that the byte read at the lowest address is
+     *  at the first position in the buffer.  For instance, a <code>readBackward(buf, 0x1000, 16)</code> will read 16 bytes
+     *  from addresses 0x0ff0 (inclusive) through 0x1000 (exclusive) such that <code>buf[0]</code> contains the byte from
+     *  address 0x0ff0 and <code>buf[15]</code> contains the byte from address 0x0fff.  If, while scanning backward from the
+     *  specified address, a location is encountered that cannot be read (i.e., not mapped, or wrong permissions) then the read
+     *  will be truncated. For instance, in the previous example if only addresses 0x0ff8 and above are mapped, then the call
+     *  will return eight rather than 16, and <code>buf[0]</code> will contain the byte from 0x0ff8 through <code>buf[7]</code>
+     *  containing the byte from 0x0fff.
+     *
+     *  The version with the "1" suffix, like @ref read1 and @ref write1, will refuse to cross a segment boundary when scanning
+     *  backward. Crossing the boundary from the exclusive specified address to the highest address read is not counted,
+     *  therefore a read1 and a readBackward1 always read the same number of bytes when given the same limits.
+     *
+     *  If the buffer is the null pointer then nothing is actually read, but the return value is the same as if a buffer had
+     *  been present.  This is useful for counting how far back we could have read.
+     *
+     *  @{ */
+    size_t readBackward(void *dst_buf, rose_addr_t end_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    size_t readBackward1(void *dst_buf, rose_addr_t end_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    /** @} */
+
     /** Searches for a prefix.
      *
      *  Reads bytes from the specified address and matches them against a search vector, returning the number of bytes that
