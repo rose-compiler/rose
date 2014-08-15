@@ -31,8 +31,6 @@ using namespace std;
 
 namespace CodeThorn {
 
-//bool inTimesOutTransitionLessThan(const EState* a, const EState* b);
-
 #define DEBUGPRINT_STMT 0x1
 #define DEBUGPRINT_STATE 0x2
 #define DEBUGPRINT_STATEMOD 0x4
