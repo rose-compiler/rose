@@ -1611,7 +1611,8 @@ struct IP_illegal: P {
 struct IP_jmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr addr = d->read(args[0], 32);
+        ops->writeRegister(d->REG_PC, addr);
     }
 };
 
