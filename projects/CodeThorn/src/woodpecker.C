@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
   if(boolOptions["inline"]) {
     // inline functions
     TrivialInlining tin;
-    tin.setDetailedOutput(true);
+    tin.setDetailedOutput(detailedOutput);
     tin.inlineFunctions(root);
     DeadCodeElimination dce;
     // eliminate non called functions
@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
   fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
-  fiConstAnalysis.setDetailedOutput(true);
+  fiConstAnalysis.setDetailedOutput(detailedOutput);
   fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
   variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
   cout<<"INFO: variables of interest: "<<variablesOfInterest.size()<<endl;
@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
   DeadCodeElimination dce;
   if(boolOptions["eliminate-dead-code"]) {
     cout<<"STATUS: performing dead code elimination."<<endl;
-    dce.setDetailedOutput(false);
+    dce.setDetailedOutput(detailedOutput);
     dce.setVariablesOfInterest(variablesOfInterest);
     dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
     cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;

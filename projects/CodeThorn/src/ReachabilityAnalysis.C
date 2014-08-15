@@ -49,7 +49,7 @@ int  ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(SgNode* node) {
 
 // will be adapted once a more general version of determining reachable program labels exists
 PropertyValueTable ReachabilityAnalysis::fiReachabilityAnalysis(Labeler& labeler, FIConstAnalysis& fiConstAnalysis) {
-  PropertyValueTable reachabilityResults;
+  PropertyValueTable reachabilityResults(100); // TODO: determine number of error labels
   LabelSet trueConditionLabelSet=fiConstAnalysis.getTrueConditions();
   LabelSet falseConditionLabelSet=fiConstAnalysis.getFalseConditions();
   for(LabelSet::iterator i=trueConditionLabelSet.begin();i!=trueConditionLabelSet.end();++i) {
