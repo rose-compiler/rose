@@ -32,6 +32,9 @@ struct generic_clause_t {
   clause_kinds_e kind;
 
   generic_clause_t(clause_kinds_e kind_) : kind(kind_) {}
+
+  template <clause_kinds_e kind>
+  parameters_t<kind> & getParameters();
 };
 
 
@@ -47,8 +50,6 @@ struct clause_t : public generic_clause_t<language_tpl> {
 
   typename generic_clause_t<language_t>::template parameters_t<(clause_kinds_e)kind> parameters;
 };
-
-
 
 template <class language_tpl>
 generic_clause_t<language_tpl> * buildClause(typename language_tpl::clause_kinds_e kind);

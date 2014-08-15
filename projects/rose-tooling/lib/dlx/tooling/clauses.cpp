@@ -65,6 +65,48 @@ bool parseClauseParameters<Tooling::language_t>(
   }
 }
 
+template <>
+template <>
+generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_var> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_var>() {
+  assert(this->kind == Tooling::language_t::e_tooling_clause_var);
+  return ((clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_var> *)this)->parameters;
+}
+
+template <>
+template <>
+generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_value> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_value>() {
+  assert(this->kind == Tooling::language_t::e_tooling_clause_value);
+  return ((clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_value> *)this)->parameters;
+}
+
+template <>
+template <>
+generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_file> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_file>() {
+  assert(this->kind == Tooling::language_t::e_tooling_clause_file);
+  return ((clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_file> *)this)->parameters;
+}
+
+template <>
+template <>
+generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_format> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_format>() {
+  assert(this->kind == Tooling::language_t::e_tooling_clause_format);
+  return ((clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_format> *)this)->parameters;
+}
+
+template <>
+template <>
+generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_tag> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_tag>() {
+  assert(this->kind == Tooling::language_t::e_tooling_clause_tag);
+  return ((clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_tag> *)this)->parameters;
+}
+
+template <>
+template <>
+generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_pack> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_pack>() {
+  assert(this->kind == Tooling::language_t::e_tooling_clause_pack);
+  return ((clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_pack> *)this)->parameters;
+}
+
 }
 
 }
