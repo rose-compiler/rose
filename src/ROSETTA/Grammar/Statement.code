@@ -11667,6 +11667,16 @@ SgVariableDeclaration::post_construction_initialization()
   // ==2562== Conditional jump or move depends on uninitialised value(s)
   // ==2562==    at 0x69758FB: Unparse_ExprStmt::unparseVarDeclStmt(SgStatement*, SgUnparse_Info&) (unparseCxx_statements.C:4421)
      p_isAssociatedWithDeclarationList = false; // non list case
+
+  // DQ (8/15/2014): These were not previously set by default.
+     p_isFirstDeclarationOfDeclarationList           = true;
+     p_is_thread_local                               = false;
+#if 0
+  // Moved these to SgInitializedName
+     p_using_C11_Alignas_keyword                     = false;
+     p_constant_or_type_argument_for_Alignas_keyword = false;
+#endif
+     p_is_constexpr                                  = false;
    }
 
 

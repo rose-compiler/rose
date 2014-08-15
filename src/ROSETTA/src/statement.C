@@ -1164,9 +1164,11 @@ Grammar::setUpStatements ()
   // CtorInitializerList.setAutomaticGenerationOfDestructor(false);
 
 
-     //
-     // [DT] 5/11/2000 -- Should have a TemplateInstantiationDefn scope as well? DQ: No, I don't think so.
-     //
+  // DQ (8/15/2014): Note that VariableDeclaration data members must be initialized explicitly in the 
+  // void SgVariableDeclaration::post_construction_initialization() function implementation.
+  //
+  // [DT] 5/11/2000 -- Should have a TemplateInstantiationDefn scope as well? DQ: No, I don't think so.
+  //
      VariableDeclaration.setFunctionPrototype ( "HEADER_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      VariableDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 
@@ -1329,12 +1331,12 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (7/25/2015): Added support for C11 thread local marking.
+  // DQ (7/25/2014): Added support for C11 thread local marking.
      VariableDeclaration.setDataPrototype("bool","is_thread_local","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // Moved to SgInitializedName IR node.
-  // DQ (7/26/2015): Added support for C11 "_Alignas" keyword (alternative alignment specification).
+  // DQ (7/26/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
      VariableDeclaration.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VariableDeclaration.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
