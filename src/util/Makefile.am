@@ -76,6 +76,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/Assert.h				\
 	sawyer/BitVector.h			\
 	sawyer/BitVectorSupport.h		\
+	sawyer/Cached.h				\
 	sawyer/Callbacks.h			\
 	sawyer/CommandLine.h			\
 	sawyer/DefaultAllocator.h		\
