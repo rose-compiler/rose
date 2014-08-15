@@ -56,7 +56,7 @@ bool option_stats=false;
 //boost::program_options::variables_map args;
 
 void generateCode(SgProject* root);
-void generateForwardCode(SgFunctionDefinition* funDef);
+void forwardCodeTransformation(SgFunctionDefinition* funDef);
 
 int countSubTreeNodes(SgNode* root) {
   int num=0;
@@ -66,7 +66,6 @@ int countSubTreeNodes(SgNode* root) {
   }
   return num;
 }
-
 
 void printRoseInfo(SgProject* project) {
   project->display("PROJECT NODE");
@@ -84,9 +83,38 @@ bool isPointerType(SgNode* node) {
   return isSgPointerType(node);
 }
 
-void generateForwardCode(SgFunctionDefinition* funDef) {
-  RoseAst ast(funDef);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+class TransformationSequence : protected AstPrePostProcessing {
+protected:
+  virtual void preOrderVisit(SgNode *astNode);
+  virtual void postOrderVisit(SgNode *astNode);
+public:
+  void reset();
+  void create(SgNode*);
+  void apply();
+private:
+  list<SgNode*> transformationSequence;
+};
+
+void TransformationSequence::reset() {
+  transformationSequence.clear();
+}
+
+void TransformationSequence::preOrderVisit(SgNode *astNode) {
+}
+
+void TransformationSequence::postOrderVisit(SgNode *astNode) {
+  if(isSgAssignOp(astNode)) {
+    transformationSequence.push_back(astNode);
+  }
+}
+
+// computes the list of nodes for which the bs-memory-mod transformation must be applied
+void TransformationSequence::create(SgNode* node) {
+  traverse(node);
+}
+
+void TransformationSequence::apply() {
+  for(list<SgNode*>::iterator i=transformationSequence.begin();i!=transformationSequence.end();++i) {
     if(isSgAssignOp(*i)) {
       SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(*i));
       SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(*i));
@@ -95,9 +123,16 @@ void generateForwardCode(SgFunctionDefinition* funDef) {
         +", "
         +rhs->unparseToString()
         +")";
+      cout<<"DEBUG: Applying transformation "<<s<<endl;
       SgNodeHelper::replaceAstWithString(*i,s);
     }
   }
+}
+
+void forwardCodeTransformation(SgFunctionDefinition* funDef) {
+  TransformationSequence ts;
+  ts.create(funDef);
+  ts.apply();
 }
 
 // clones a function definition, but also the corresponding declaration
@@ -115,10 +150,9 @@ void generateCode(SgProject* root) {
   list<SgFunctionDefinition*> functionDefs=SgNodeHelper::listOfFunctionDefinitions(root);
   for(list<SgFunctionDefinition*>::iterator i=functionDefs.begin();i!=functionDefs.end();++i) {
     SgFunctionDefinition* forwardFunDef=*i;
-    if(false)
-      forwardFunDef=cloneFunctionDefinition(*i,"__forward_","");
+    //forwardFunDef=cloneFunctionDefinition(*i,"__forward_","");
     // forwardFunDef->fixupCopy()
-    generateForwardCode(forwardFunDef);
+    forwardCodeTransformation(forwardFunDef);
     // insert the transformed forward function into original program
     //SgFunctionDefinition* reverseFunDef=cloneFunc(*i,"__reverse_","");
     //string revCode=generateReverseCode(*i, REV2);

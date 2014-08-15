@@ -70,6 +70,7 @@ class RunTimeSystem {
   void restore_ptr();
 
   size_t numberOfUncommittedEvents();
+  size_t size();
   size_t currentEventLength();
  private:
   size_t typeSize(BuiltInType biType);

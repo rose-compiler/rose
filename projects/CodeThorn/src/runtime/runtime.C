@@ -12,6 +12,10 @@ size_t Backstroke::RunTimeSystem::numberOfUncommittedEvents() {
   return eventRecordDeque.size();
 }
 
+size_t Backstroke::RunTimeSystem::size() {
+  return eventRecordDeque.size();
+}
+
 // allocates EventRecord
 void Backstroke::RunTimeSystem::initializeForwardEvent() {
   currentEventRecord=new EventRecord();
@@ -55,7 +59,7 @@ void Backstroke::RunTimeSystem::commitEvent() {
 }
 
 void Backstroke::RunTimeSystem::restore(BuiltInType bitype) {
-  cout<<"DEBUG: restoring type "<<bitype<<endl;
+  //cout<<"DEBUG: restoring type "<<bitype<<endl;
   switch(bitype) {
     CASE_ENUM_RESTORE(BOOL,bool);
     CASE_ENUM_RESTORE(CHAR,char);
@@ -148,7 +152,7 @@ void Backstroke::RunTimeSystem::print_stack_info() {
 bool Backstroke::RunTimeSystem::is_stack_ptr(void *ptr) {
   bool is_stack_ptr= ((uintptr_t) ptr >= (uintptr_t) prog_stack_bottom
           && (uintptr_t) ptr <= (uintptr_t) prog_stack_local);
-  cout<<"DEBUG: is_stack_ptr("<<ptr<<"):"<<is_stack_ptr<<endl;
+  //cout<<"DEBUG: is_stack_ptr("<<ptr<<"):"<<is_stack_ptr<<endl;
   return is_stack_ptr;
 
 }  

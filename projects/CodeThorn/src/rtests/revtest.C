@@ -4,11 +4,13 @@ using namespace Backstroke;
 
 RunTimeSystem rts;
 
-#include "rev_rtest1.C"
+//#include "rev_rtest1.C"
 
 #include <iostream>
 using namespace std;
 #include "../runtime/runtime.C"
+
+extern void func();
 
 int main() {
   rts.init_stack_info();
