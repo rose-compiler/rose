@@ -4827,7 +4827,7 @@ SgAddressOfOp::get_type() const
         {
           SgClassType* classType = classDefinition->get_declaration()->get_type();
           returnType = SgPointerMemberType::createType(baseType,classType);
-#if 1
+#if 0
        // DQ (7/16/2014): Make this a warning for the moment.
           printf ("Warning: In SgAddressOfOp::get_type(): checkForSharedTypeAndReturnSharedType() not supported for generation of SgPointerMemberType \n");
 #endif
