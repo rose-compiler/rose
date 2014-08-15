@@ -29,7 +29,7 @@ public:
 private:
     Disassembler *disassembler_;
     MemoryMap memMap_;
-    InsnMap insnMap_;
+    mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
 public:
 
@@ -66,7 +66,7 @@ public:
      *  "unknown" instruction is returned.  An "unknown" instruction is used for cases where a valid instruction could not be
      *  disassembled, including the case when the first byte of a multi-byte instruction is executable but the remaining bytes
      *  are not executable. */
-    SgAsmInstruction* operator[](rose_addr_t va);
+    SgAsmInstruction* operator[](rose_addr_t va) const;
 
     /** Returns the disassembler.
      *

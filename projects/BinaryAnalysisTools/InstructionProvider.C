@@ -4,7 +4,7 @@ namespace rose {
 namespace BinaryAnalysis {
 
 SgAsmInstruction*
-InstructionProvider::operator[](rose_addr_t va) {
+InstructionProvider::operator[](rose_addr_t va) const {
     SgAsmInstruction *insn = NULL;
     if (!insnMap_.getOptional(va).assignTo(insn)) {
         if (useDisassembler_ && memMap_.exists(va, MemoryMap::MM_PROT_EXEC)) {

@@ -64,7 +64,8 @@ struct Settings {
     rose_addr_t mapVa;
     rose_addr_t startVa;
     rose_addr_t alignment;
-    Settings(): mapVa(0), startVa(0), alignment(1) {}
+    bool runSemantics;
+    Settings(): mapVa(0), startVa(0), alignment(1), runSemantics(false) {}
 };
 
 // Describe and parse the command-line
@@ -76,6 +77,15 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     switches.insert(Switch("help", 'h')
                     .doc("Show this documentation.")
                     .action(showHelpAndExit(0)));
+    switches.insert(Switch("log", 'L')
+                    .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
+                    .argument("config")
+                    .whichValue(SAVE_ALL)
+                    .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
+    switches.insert(Switch("version", 'V')
+                    .action(showVersionAndExit(version_message(), 0))
+                    .doc("Shows version information for various ROSE components and then exits."));
+
     switches.insert(Switch("isa")
                     .argument("architecture", anyParser(settings.isaName))
                     .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
@@ -92,9 +102,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                          "cause each candidate address to be rounded up to the next multiple of @v{align}.  If this "
                          "rounding up causes addresses after a valid instruction to be skipped then a warning is printed. "
                          "No warning is printed if the alignment skips addresses after a disassembly failure."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
+    switches.insert(Switch("semantics")
+                    .intrinsicValue(true, settings.runSemantics)
+                    .doc("Run semantics for each basic block. This is only useful to debug instruction semantics."));
+    switches.insert(Switch("no-semantics")
+                    .key("semantics")
+                    .intrinsicValue(false, settings.runSemantics)
+                    .hidden(true));
 
     Parser parser;
     parser
@@ -110,6 +124,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 
 int main(int argc, char *argv[])
 {
+    Diagnostics::initialize();
+
     // Parse the command-line
     Settings settings;
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
@@ -135,12 +151,11 @@ int main(int argc, char *argv[])
     AsmUnparser unparser;
     unparser.set_registers(disassembler->get_registers());
 
-#if 0 // [Robb P. Matzke 2014-07-29]
+    // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
     ops = TraceSemantics::RiscOperators::instance(ops);
     BaseSemantics::DispatcherPtr dispatcher = DispatcherM68k::instance(ops);
     dispatcher->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
-#endif
 
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = settings.startVa;
@@ -151,60 +166,70 @@ int main(int argc, char *argv[])
             ASSERT_not_null(insn);
             unparser.unparse(std::cout, insn);
 
+            if (settings.runSemantics) {
+                if (isSgAsmM68kInstruction(insn)) {
+                    bool skipThisInstruction = false;
 #if 0 // [Robb P. Matzke 2014-07-29]
-            if (SgAsmM68kInstruction *insnM68k = isSgAsmM68kInstruction(insn)) {
-                switch (insnM68k->get_kind()) {
-                    case m68k_cpusha:
-                    case m68k_cpushl:
-                    case m68k_cpushp:
-                        std::cout <<"    No semantics yet for privileged instructions\n";
-                        break;
+                    switch (isSgAsmM68kInstruction(insn)->get_kind()) {
+                        case m68k_cpusha:
+                        case m68k_cpushl:
+                        case m68k_cpushp:
+                            std::cout <<"    No semantics yet for privileged instructions\n";
+                            skipThisInstruction = true;
+                            break;
 
-                    case m68k_fbeq:
-                    case m68k_fbne:
-                    case m68k_fboge:
-                    case m68k_fbogt:
-                    case m68k_fbule:
-                    case m68k_fbult:
-                    case m68k_fcmp:
-                    case m68k_fdabs:
-                    case m68k_fdadd:
-                    case m68k_fddiv:
-                    case m68k_fdiv:
-                    case m68k_fdmove:
-                    case m68k_fdmul:
-                    case m68k_fdneg:
-                    case m68k_fdsqrt:
-                    case m68k_fdsub:
-                    case m68k_fintrz:
-                    case m68k_fmove:
-                    case m68k_fmovem:
-                    case m68k_fsadd:
-                    case m68k_fsdiv:
-                    case m68k_fsmove:
-                    case m68k_fsmul:
-                    case m68k_fsneg:
-                    case m68k_fssub:
-                    case m68k_ftst:
-                        std::cout <<"    No semantics yet for floating-point instructions\n";
-                        break;
+                        case m68k_fbeq:
+                        case m68k_fbne:
+                        case m68k_fboge:
+                        case m68k_fbogt:
+                        case m68k_fbule:
+                        case m68k_fbult:
+                        case m68k_fcmp:
+                        case m68k_fdabs:
+                        case m68k_fdadd:
+                        case m68k_fddiv:
+                        case m68k_fdiv:
+                        case m68k_fdmove:
+                        case m68k_fdmul:
+                        case m68k_fdneg:
+                        case m68k_fdsqrt:
+                        case m68k_fdsub:
+                        case m68k_fintrz:
+                        case m68k_fmove:
+                        case m68k_fmovem:
+                        case m68k_fsadd:
+                        case m68k_fsdiv:
+                        case m68k_fsmove:
+                        case m68k_fsmul:
+                        case m68k_fsneg:
+                        case m68k_fssub:
+                        case m68k_ftst:
+                            std::cout <<"    No semantics yet for floating-point instructions\n";
+                            skipThisInstruction = true;
+                            break;
 
-                    case m68k_nbcd:
-                    case m68k_rtm:
-                    case m68k_movep:
-                        std::cout <<"    No semantics yet for this odd instruction\n";
-                        break;
+                        case m68k_nbcd:
+                        case m68k_rtm:
+                        case m68k_movep:
+                            std::cout <<"    No semantics yet for this odd instruction\n";
+                            skipThisInstruction = true;
+                            break;
 
-                    default:
+                        default:
+                            break;
+                    }
+#endif
+
+                    if (!skipThisInstruction) {
                         //ops->get_state()->clear();
                         dispatcher->processInstruction(insn);
                         std::ostringstream ss;
                         ss <<*dispatcher->get_state();
                         std::cout <<StringUtility::prefixLines(ss.str(), "    ") <<"\n";
-                        break;
+                    }
                 }
             }
-#endif
+
 
             va += insn->get_size();
             if (0 != va % settings.alignment)

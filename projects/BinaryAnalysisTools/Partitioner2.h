@@ -5,6 +5,7 @@
 #include "InstructionProvider.h"
 #include "PartitionerSemantics.h"
 
+#include <sawyer/Cached.h>
 #include <sawyer/Callbacks.h>
 #include <sawyer/Graph.h>
 #include <sawyer/IntervalMap.h>
@@ -211,6 +212,11 @@ public:
         E_FRET,                                         /**< Edge is a function return from the call site. */
     };
 
+    class Exception: public std::runtime_error {
+    public:
+        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    };
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Basic blocks (BB)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,11 +258,22 @@ public:
         bool usingDispatcher_;                          // True if dispatcher's state is up-to-date for the final instruction
         Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
 
-        // The following members are caches. Make sure clearCache() resets these to initial values.
-        mutable Sawyer::Optional<Successors> cachedSuccessors_;
-        mutable Sawyer::Optional<bool> cachedIsFunctionCall_;
-        mutable BaseSemantics::SValuePtr stackDelta_;   // change in stack pointer if known
+        // The following members are caches either because their value is seldom needed and expensive to compute, or because
+        // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the
+        // most sense to store it here. Make sure clearCache() resets these to initial values.
+        // FIXME[Robb P. Matzke 2014-08-13]: eventually we may want to support user-defined cache entries
+        Sawyer::Cached<Successors> successors_;                 // control flow successors out of final instruction
+        Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
+        Sawyer::Cached<bool> isFunctionCall_;                   // is this block semantically a function call?
+        Sawyer::Cached<BaseSemantics::SValuePtr> stackDelta_;   // change in stack pointer from beginning to end of block
 
+        void clearCache() const {
+            successors_.clear();
+            ghostSuccessors_.clear();
+            isFunctionCall_.clear();
+            stackDelta_.clear();
+        }
+        
     protected:
         // use instance() instead
         BasicBlock(rose_addr_t startVa, const Partitioner *partitioner)
@@ -363,34 +380,37 @@ public:
          *  states. A null dispatcher is returned if this basic block is empty. */
         const BaseSemantics::DispatcherPtr& dispatcher() const { return dispatcher_; }
 
-        /** Clear analysis cache.
+        /** Control flow successors.
          *
-         *  The cache is cleared automatically whenever a new instruction is inserted. */
-        void clearCache();
+         *  The control flow successors indicate how control leaves the end of a basic block. These successors should be the
+         *  most basic level of information; e.g., a basic block that results in an unconditional function call should not have
+         *  an edge representing the return from that call. The successors are typically computed in the partitioner and cached
+         *  in the basic block. */
+        const Sawyer::Cached<Successors>& successors() const { return successors_; }
 
-        /** Accessor for the successor cache.
-         *  @{ */
-        const Sawyer::Optional<Successors>& cachedSuccessors() const { return cachedSuccessors_; }
-        const Successors& cacheSuccessors(const Successors &x) const { cachedSuccessors_ = x; return x; }
-        void uncacheSuccessors() const { cachedSuccessors_ = Sawyer::Nothing(); }
-        bool isCachedSuccessors() const { return bool(cachedSuccessors_); }
-        /** @} */
+        /** Ghost successors.
+         *
+         *  A ghost successor is a control flow successor that is present in an individual instruction, but not present in the
+         *  broader scope of a basic block.  Ghost successors typically occur when a conditional branch instruction in the
+         *  middle of a basic block has an opaque predicate, causing it to become an unconditional branch.  The return value is
+         *  the union of the ghost successors for each instruction in the basic block, and is updated whenever the set of
+         *  instructions in the basic block changes.  The ghost successors are typically computed in the partitioner and cached
+         *  in the basic block. */
+        const Sawyer::Cached<std::set<rose_addr_t> >& ghostSuccessors() const { return ghostSuccessors_; }
 
-        /** Accessor for isFunctionCall cache.
-         *  @{ */
-        const Sawyer::Optional<bool>& cachedIsFunctionCall() const { return cachedIsFunctionCall_; }
-        bool cacheIsFunctionCall(bool x) const { cachedIsFunctionCall_ = x; return x; }
-        void uncacheIsFunctionCall() const { cachedIsFunctionCall_ = Sawyer::Nothing(); }
-        bool isCachedIsFunctionCall() const { return bool(cachedIsFunctionCall_); }
-        /** @} */
+        /** Is a function call?
+         *
+         *  If the basic block appears to be a function call then this property is set to true.  A block is a function call if
+         *  it appears to store a return value on the stack and then unconditionally branch to a function.  It need not end
+         *  with a specific CALL instruction, nor are all CALL instructions actually function calls.  This property is
+         *  typically computed in the partitioner and cached in the basic block. */
+        const Sawyer::Cached<bool>& isFunctionCall() const { return isFunctionCall_; }
 
-        /** Accessor for the stack delta cache.
-         *  @{ */
-        const BaseSemantics::SValuePtr cachedStackDelta() const { return stackDelta_; }
-        const BaseSemantics::SValuePtr& cacheStackDelta(const BaseSemantics::SValuePtr &d) const { stackDelta_ = d; return d; }
-        void uncacheStackDelta() const { stackDelta_ = BaseSemantics::SValuePtr(); }
-        bool isCachedStackDelta() const { return stackDelta_ != NULL; }
-        /** @} */
+        /** Stack delta.
+         *
+         *  The stack delta is a symbolic expression created by subtracting the initial stack pointer register from the final
+         *  stack pointer register.  This value is typically computed in the partitioner and cached in the basic block. */
+        const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
         
     private:
         void init(const Partitioner*);
@@ -555,6 +575,11 @@ public:
 
         /** Number of basic blocks in the function. */
         size_t nBasicBlocks() const { return bblockVas_.size(); }
+
+        /** A printable name for the function.  Returns a string like 'function 0x10001234 "main"'.  The function name is not
+         *  included if the name is empty. */
+        std::string printableName() const;
+
     private:
         friend class Partitioner;
         void freeze() { isFrozen_ = true; }
@@ -775,6 +800,23 @@ public:
          *  Returns all address users as a vector sorted by starting address. */
         const std::vector<AddressUser>& addressUsers() const { return users_; }
 
+        /** Returns all instruction users.
+         *
+         *  Returns a new list of address users that contains only the instruction users from this list. */
+        AddressUsers instructionUsers() const;
+
+        /** Returns all data block users.
+         *
+         *  Returns a new list of address users that contains only the data block users from this list. */
+        AddressUsers dataBlockUsers() const;
+
+        /** Returns all basic blocks.
+         *
+         *  Returns a list of pointers to distinct basic blocks sorted by starting address.   The return value is not an
+         *  AddressUsers because it is more useful to have a list of distinct basic blocks, and because the @ref
+         *  instructionUsers method returns the other information already. */
+        std::vector<BasicBlock::Ptr> basicBlocks() const;
+
         /** Number of address users. */
         size_t size() const { return users_.size(); }
 
@@ -796,7 +838,7 @@ public:
 
         /** Prints pairs space separated on a single line. */
         void print(std::ostream&) const;
-
+        
     protected:
         /** Checks whether the list satisfies all invariants.  This is used in pre- and post-conditions. */
         bool isConsistent() const;
@@ -1045,6 +1087,7 @@ private:
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
     ControlFlowGraph::VertexNodeIterator indeterminateVertex_;
     ControlFlowGraph::VertexNodeIterator nonexistingVertex_;
+    static const size_t nSpecialVertices = 3;
 
 public:
     static Sawyer::Message::Facility mlog;
@@ -1076,83 +1119,6 @@ public:
 
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const { return aum_.size(); }
-
-    /** Returns the number of basic blocks in the CFG. This is a constant-time operation. */
-    size_t nBasicBlocks() const { return cfg_.nVertices(); }
-
-    /** Returns the number of data blocks in the CFG.  Data blocks don't belong directly to the CFG in that they're not
-     *  vertices or edges, but rather they belong to one or more functions whose basic blocks are CFG vertices.  Regardless of
-     *  the indirection, this function returns in constant time. */
-    size_t nDataBlocks() const { return dblocks_.size(); }
-
-    /** Returns the number of functions in the CFG.  This is a constant-time operation. */
-    size_t nFunctions() const { return functions_.size(); }
-
-    /** Returns the number of instructions in the CFG.  This statistic is computed in time linearly proportional to the number
-     *  of basic blocks in the control flow graph. */
-    size_t nInstructions() const;
-
-    /** Determines whether an instruction is represented in the CFG.
-     *
-     *  If the CFG represents an instruction that starts at the specified address, then this method returns the
-     *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
-     *  basic block is only represented by a placeholder in the CFG. */
-    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const {
-        return aum_.instructionExists(startVa);
-    }
-
-    /** Determines whether a basic block or basic block placeholder exists in the CFG.
-     *
-     *  If the CFG contains a basic block or a placeholder for a basic block that begins at the specified address then the CFG
-     *  vertex is returned, otherwise the end vertex is returned.
-     *
-     *  @{ */
-    ControlFlowGraph::VertexNodeIterator placeholderExists(rose_addr_t startVa) {
-        if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
-            return *found;
-        return cfg_.vertices().end();
-    }
-    ControlFlowGraph::ConstVertexNodeIterator placeholderExists(rose_addr_t startVa) const {
-        if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
-            return *found;
-        return cfg_.vertices().end();
-    }
-    /** @} */
-
-    /** Determines whether a basic block (but not just a placeholder) exists in the CFG.
-     *
-     *  If the CFG contains a basic block that starts at the specified address then a pointer to the basic block is returned,
-     *  otherwise a null pointer is returned.  A null pointer is returned if the CFG contains only a placeholder vertex for a
-     *  basic block at the specified address. */
-    BasicBlock::Ptr basicBlockExists(rose_addr_t startVa) const {
-        ControlFlowGraph::ConstVertexNodeIterator vertex = placeholderExists(startVa);
-        if (vertex!=cfg_.vertices().end())
-            return vertex->value().bblock();
-        return BasicBlock::Ptr();
-    }
-
-    /** Determines whether a function exists in the function table.
-     *
-     *  The function table holds the entry addresses of all known functions.  If the table contains a function for 
-     *  specified address then a pointer to the function is returned, otherwise the null function pointer is returned.
-     *
-     *  @{ */
-    Function::Ptr functionExists(rose_addr_t startVa) const {
-        return functions_.getOptional(startVa).orDefault();
-    }
-    Function::Ptr functionExists(const Function::Ptr &function) const {
-        return function!=NULL && functions_.exists(function->address()) ? function : Function::Ptr();
-    }
-    /** @} */
-
-    /** Determines whether a data block exists in the partitioner.  Data blocks are either attached to the CFG (indirectly via
-     *  functions), or detached; this method returns only those data blocks that are attached.  If a data block starts at the
-     *  specified address then a data block ownership record is returned. The ownership record has a non-null pointer to the
-     *  data block along with a list of functions that own the block.  If no attached data block starts at the specified
-     *  address then nothing is returned. */
-    Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t startVa) const {
-        return dblocks_.getOptional(startVa);
-    }
 
     /** Returns the special "undiscovered" vertex.
      *
@@ -1217,49 +1183,252 @@ public:
      *  the functions that are part of the control flow graph. */
     const Functions& functions() const { return functions_; }
 
-    /** Returns the list of all attached data blocks.  Returns a map from data block starting address to data block ownership
-     *  information for each data block that is represented in the control flow graph.  The ownership information associates
-     *  each block with a list of functions that own the block since more than one function can own the same data. */
-    const DataBlocks& dataBlocks() const { return dblocks_; }
+    /** Determine all ghost successors in the control flow graph.
+     *
+     *  The return value is a list of basic block ghost successors for which no basic block or basic block placeholder exists.
+     *
+     *  @sa basicBlockGhostSuccessors */
+    std::set<rose_addr_t> ghostSuccessors() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner attached basic block operations
+    //                                  Partitioner instruction operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Returns the number of instructions attached to the CFG/AUM.
+     *
+     *  This statistic is computed in time linearly proportional to the number of basic blocks in the control flow graph. */
+    size_t nInstructions() const;
 
-    /** Remove basic block information from the CFG.
+    /** Determines whether an instruction is attached to the CFG/AUM.
      *
-     *  The basic block (specified by its starting address or CFG vertex) is turned into a placeholder vertex.  That is, the
-     *  CFG vertex no longer points to a basic block object but still contains the starting address of the basic block.  The
-     *  outgoing edges are modified so that the only outgoing edge is an edge to the special "undiscovered" vertex.  The
-     *  instructions that had been pointed to by the basic block are no longer represented in the CFG.
+     *  If the CFG/AUM represents an instruction that starts at the specified address, then this method returns the
+     *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
+     *  basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
      *
-     *  If the CFG does not have a vertex for the specified address, or if the vertex iterator is the end iterator, or if the
-     *  vertex is only a placeholder, then this method is a no-op.
+     *  @{ */
+    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const {
+        return aum_.instructionExists(startVa);
+    }
+    Sawyer::Optional<AddressUser> instructionExists(SgAsmInstruction *insn) const {
+        return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
+    }
+    /** @} */
+
+    /** Returns instructions that overlap with specified address interval.
+     *
+     *  Returns a sorted list of distinct instructions that are attached to the CFG/AUM and which overlap at least one byte in
+     *  the specified address interval. An instruction overlaps the interval if any of its bytes are within the interval.
+     *
+     *  The returned list of instructions are sorted by their starting address. */
+    std::vector<SgAsmInstruction*> instructionsOverlapping(const AddressInterval&) const;
+
+    /** Returns instructions that span an entire address interval.
+     *
+     *  Returns a sorted list of distinct instructions that are attached to the CFG/AUM and which span the entire specified
+     *  interval.  An instruction spans the interval if the set of addresses for all its bytes are a superset of the interval.
+     *
+     *  The returned list of instructions are sorted by their starting address. */
+    std::vector<SgAsmInstruction*> instructionsSpanning(const AddressInterval&) const;
+
+    /** Returns instructions that are fully contained in an address interval.
+     *
+     *  Returns a sorted list of distinct instructions that are attached to the CFG/AUM and which are fully contained within
+     *  the specified interval.  In order to be fully contained in the interval, the set of addresses of the bytes in the
+     *  instruction must be a subset of the specified interval.
+     *
+     *  The returned list of instructions are sorted by their starting address. */
+    std::vector<SgAsmInstruction*> instructionsContainedIn(const AddressInterval&) const;
+
+    /** Returns the address interval for an instruction.
+     *
+     *  Returns the minimal interval describing from where the instruction was disassembled.  An instruction always exists in a
+     *  contiguous region of memory, therefore the return value is a single interval rather than a set of intervals. If a null
+     *  pointer is specified then an empty interval is returned. */
+    AddressInterval instructionExtent(SgAsmInstruction*) const;
+
+    /** Discover an instruction.
+     *
+     *  Returns (and caches) the instruction at the specified address by invoking an InstructionProvider.  Unlike @ref
+     *  instructionExists, the address does not need to be known by the CFG/AUM.
+     *
+     *  If the @p startVa is not mapped with execute permission or is improperly aligned for the architecture then a null
+     *  pointer is returned.  If an instruction cannot be disassembled at the address (e.g., bad byte code or not implemented)
+     *  then a special 1-byte "unknown" instruction is returned; such instructions have indeterminate control flow successors
+     *  and no semantics.  If an instruction was previously returned for this address (including the "unknown" instruction)
+     *  then that same instruction will be returned this time. */
+    SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const;
+
+    
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner basic block placeholder operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Returns the number of basic basic block placeholders in the CFG.
+     *
+     *  A placeholder optionally points to a basic block, and this method returns the number of placeholders in the CFG
+     *  regardless of whether they point to a discovered basic block.  Note that vertices that are mere placeholders and don't
+     *  point to a discovered basic block are not represented in the AUM since a placeholder has no instructions.
+     *
+     *  This is a constant-time operation. */
+    size_t nPlaceholders() const;
+
+    /** Determines whether a basic block placeholder exists in the CFG.
+     *
+     *  Returns true if the CFG contains a placeholder at the specified address, and false if no such placeholder exists.  The
+     *  placeholder may or may not point to a discovered basic block.
+     *
+     *  @sa findPlaceholder */
+    bool placeholderExists(rose_addr_t startVa) const;
+
+    /** Find the CFG vertex for a basic block placeholder.
+     *  
+     *  If the CFG contains a basic block placeholder at the specified address then that CFG vertex is returned, otherwise the
+     *  end vertex (<code>partitioner.cfg().vertices().end()</code>) is returned.
+     *
+     *  @sa placeholderExists
+     *
+     *  @{ */
+    ControlFlowGraph::VertexNodeIterator findPlaceholder(rose_addr_t startVa) {
+        if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
+            return *found;
+        return cfg_.vertices().end();
+    }
+    ControlFlowGraph::ConstVertexNodeIterator findPlaceholder(rose_addr_t startVa) const {
+        if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
+            return *found;
+        return cfg_.vertices().end();
+    }
+    /** @} */
+
+    /** Insert a basic-block placeholder.
+     *
+     *  Inserts a basic block placeholder into the CFG if it does not already exist.
+     *
+     *  If a new placeholder is inserted, then it represents the starting address of a not-yet-discovered basic block (as far
+     *  as the CFG/AUM is concerned), and will contain a single incident edge which goes to the special "undiscovered"
+     *  vertex. The new placeholder does not point to a basic block yet.
+     *
+     *  If the specified address is the starting address of an instruction that's already attached to the CFG/AUM (but not the
+     *  start of a basic block) then the existing basic block that owns that instruction is truncated (see @ref
+     *  truncateBasicBlock), thereby inserting a new placeholder.
+     *
+     *  This method returns a pointer to either the existing placeholder (which may already point to an attached basic block)
+     *  or the new placeholder. */
+    ControlFlowGraph::VertexNodeIterator insertPlaceholder(rose_addr_t startVa);
+
+    /** Remove a basic block placeholder from the CFG/AUM.
+     *
+     *  The specified placeholder (basic block starting address) is removed from the CFG along with its outgoing edges. If the
+     *  placeholder pointed to a basic block then the basic block is detached from the CFG as if @ref detachBasicBlock had been
+     *  called.  It is an error to attempt to remove a placeholder that has incoming edges that are not self edges (doing so
+     *  will detach the basic block from the CFG/AUM before throwing an exception).
+     *
+     *  If the placeholder pointed to a discovered basic block then that basic block is returned, otherwise the null pointer is
+     *  returned.
+     *
+     *  @{ */
+    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::VertexNodeIterator &placeholder);
+    BasicBlock::Ptr erasePlaceholder(rose_addr_t startVa);
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner basic block operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Returns the number of basic blocks attached to the CFG/AUM.
+     *
+     *  This method returns the number of CFG vertices that are more than mere placeholders in that they point to an actual,
+     *  discovered basic block.
+     *
+     *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead. */
+    size_t nBasicBlocks() const;
+
+    /** Determines whether a discovered basic block exists in the CFG/AUM.
+     *
+     *  If the CFG/AUM contains a basic block that starts at the specified address then a pointer to that basic block is
+     *  returned, otherwise a null pointer is returned.  A null pointer is returned if the CFG contains only a placeholder
+     *  vertex for a basic block at the specified address.
+     *
+     *  If a basic block pointer is specified instead of an address, the return value will be the same pointer if the specified
+     *  basic block is attached to the CFG/AUM, otherwise the null pointer is returned.  It is not sufficient for the CFG/AUM
+     *  to contain a basic block at the same starting address -- it must be the same actual basic block object.  If you're only
+     *  looking for a similar (i.e., starting at the same address) basic block then use the version that takes an address:
+     *
+     * @code
+     *  BasicBlock::Ptr original = ...;
+     *  BasicBlock::Ptr similar = basicBlockExists(original->address());
+     * @endcode
+     *
+     *  @sa placeholderExists
+     *
+     *  @{ */
+    BasicBlock::Ptr basicBlockExists(rose_addr_t startVa) const;
+    BasicBlock::Ptr basicBlockExists(const BasicBlock::Ptr&) const;
+    /** @} */
+
+    /** Returns basic blocks that overlap with specified address interval.
+     *
+     *  Returns a sorted list of distinct basic blocks that are attached to the CFG/AUM and which overlap at least one byte in
+     *  the specified address interval.  By "overlap" we mean that the basic block has at least one instruction that overlaps
+     *  with the specified interval.  An instruction overlaps the interval if any of its bytes are within the interval.
+     *
+     *  The returned list of basic blocks are sorted by their starting address. */
+    std::vector<BasicBlock::Ptr> basicBlocksOverlapping(const AddressInterval&) const;
+
+    /** Returns basic blocks that span an entire address interval.
+     *
+     *  Returns a sorted list of distinct basic blocks that are attached to the CFG/AUM and which span the entire specified
+     *  interval. In order for a basic block to span an interval its set of instructions must span the interval.  In other
+     *  words, the union of the addresses of the bytes contained in all the basic block's instructions is a superset of the
+     *  specified interval.
+     *
+     *  The returned list of basic blocks are sorted by their starting address. */
+    std::vector<BasicBlock::Ptr> basicBlocksSpanning(const AddressInterval&) const;
+
+    /** Returns basic blocks that are fully contained in an address interval.
+     *
+     *  Returns a sorted list of distinct basic blocks that are attached to the CFG/AUM and which are fully contained within
+     *  the specified interval.  In order to be fully contained in the interval, the union of the addresses of the bytes in the
+     *  basic block's instructions must be a subset of the specified interval.
+     *
+     *  The returned list of basic blocks are sorted by their starting address. */
+    std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const;
+
+    /** Returns the addresses used by a basic block.
+     *
+     *  Returns an interval set which is the union of the addresses of the bytes byte in the basic block's instructions.  Most
+     *  basic blocks are contiguous in memory and can be represented by a single address interval, but this is not a
+     *  requirement in ROSE.  ROSE only requires that the global control flow graph has edges that enter at only the initial
+     *  instruction of the basic block and exit only from its final instruction.  The instructions need not be contiguous or
+     *  non-overlapping. */
+    Sawyer::Container::IntervalSet<AddressInterval> basicBlockExtent(const BasicBlock::Ptr&) const;
+    
+    /** Detach a basic block from the CFG/AUM.
+     *
+     *  The specified basic block is detached from the CFG/AUM, leaving only a placeholder in its place.  The original outgoing
+     *  edges in the CFG are replaced by a single edge from the placeholder to the special "undiscovered" vertex.  The
+     *  instructions that had been attached to the CFG/AUM on behalf of the basic block are also detached from the CFG/AUM.
+     *
+     *  This function does not modify the basic block itself; it only detaches it from the CFG/AUM.  A basic block that is
+     *  attached to the CFG/AUM is in a frozen state and cannot be modified directly, so one use of this function is to allow
+     *  the user to modify a basic block and then re-attach it to the CFG/AUM.
+     *
+     *  This method returns a pointer to the basic block so it can be manipulated by the user after it is detached.  If the
+     *  user specified a basic block pointer to start with, then the return value is this same pointer; this function does
+     *  nothing if the basic block was already detached. If the basic block was specified by its starting address and the
+     *  CFG/AUM has no record of such a block then a null pointer is returned.
      *
      *  In order to completely remove a basic block, including its placeholder, use @ref eraseBasicBlock.
      *
      *  @{ */
-    void nullifyBasicBlock(const ControlFlowGraph::VertexNodeIterator&);
-    void nullifyBasicBlock(rose_addr_t startVa) {
-        nullifyBasicBlock(placeholderExists(startVa));
-    }
+    BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa);
+    BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock);
+    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder);
     /** @} */
 
-    /** Erase all trace of a basic block from the CFG.
-     *
-     *  The basic block (specified by its starting address or CFG vertex) is entirely removed from the CFG, including its
-     *  placeholder.  If the CFG does not have a vertex for the specified address then this method is a no-op.  It is an error
-     *  to specify a basic block that has incoming edges.
-     *
-     *  @{ */
-    void eraseBasicBlock(const ControlFlowGraph::VertexNodeIterator&);
-    void eraseBasicBlock(rose_addr_t startVa) {
-        eraseBasicBlock(placeholderExists(startVa));
-    }
-    /** @} */
-
-    /** Truncate an existing basic-block.
+    /** Truncate an attached basic-block.
      *
      *  The specified block is modified so that its final instruction is the instruction immediately prior to the specified
      *  instruction, a new placeholder vertex is created with the address of the specified instruction, and an edge is created
@@ -1272,55 +1441,41 @@ public:
     ControlFlowGraph::VertexNodeIterator truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &basicBlock,
                                                             SgAsmInstruction *insn);
 
-    /** Insert a basic-block placeholder.
+    /** Attach a basic block to the CFG/AUM.
      *
-     *  Inserts a basic block placeholder into the CFG.  A placeholder is the starting address of a basic block and an
-     *  outgoing edge to the special "undiscovered" vertex, but no pointer to a basic block object.  If the CFG already has a
-     *  vertex with the specified address (discovered or not) then nothing happens.  If the specified address is the starting
-     *  address of an instruction that's already in the CFG (but not the start of a basic block) then the existing basic block
-     *  is truncated before the placeholder is inserted (see @ref truncateBasicBlock). In any case, the return value is the
-     *  new CFG vertex. */
-    ControlFlowGraph::VertexNodeIterator insertPlaceholder(rose_addr_t startVa);
-
-    /** Insert a basic block information into the control flow graph.
-     *
-     *  The specified basic block is inserted into the CFG.  If the CFG already has a placeholder for the block then the
+     *  The specified basic block is inserted into the CFG/AUM.  If the CFG already has a placeholder for the block then the
      *  specified block is stored at that placeholder, otherwise a new placeholder is created first.  Once the block is added
-     *  to the CFG its outgoing edges are adjusted, which may introduce new placeholders.
+     *  to the CFG its outgoing edges are adjusted, which may introduce new placeholders.  The basic block enters a frozen
+     *  state in which its instruction ownership cannot be adjusted directly via the BasicBlock API.
+     *
+     *  A basic block cannot be attached if the CFG/AUM already knows about a different basic block at the same address.
+     *  Attempting to attach a block which is already attached is allowed, and is a no-op. It is an error to specify a null
+     *  pointer for the basic block.
+     *
+     *  A placeholder can be specified for better efficiency, in which case the placeholder must have the same address as the
+     *  basic block.
      *
      *  @{ */
-    void insertBasicBlock(const BasicBlock::Ptr&);
-    void insertBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr&);
+    void attachBasicBlock(const BasicBlock::Ptr&);
+    void attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr&);
     /** @} */
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner instruction operations
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Discover an instruction.
+    /** Discover instructions for a detached basic block.
      *
-     *  Returns (and caches) the instruction at the specified address by invoking an InstructionProvider. */
-    SgAsmInstruction* discoverInstruction(rose_addr_t startVa);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner detached basic block operations
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Discover instructions for a basic block.
+     *  Obtains a basic block and its instructions without modifying the control flow graph.  If the basic block already exists
+     *  in the CFG/AUM then that block is returned, otherwise a new block is created but not added to the CFG/AUM. A basic
+     *  block is created by adding one instruction at a time until one of the following conditions is met (tested in this
+     *  order):
      *
-     *  Obtain a basic block and its instructions without modifying the control flow graph.  If the basic block already exists
-     *  in the CFG then that block is returned, otherwise a new block is created but not added to the CFG. A basic block is
-     *  created by adding one instruction at a time until one of the following conditions is met (tested in this order):
-     *
-     *  @li An instruction could not be obtained from the instruction provider. The instruction provider should only return
-     *      null if the address is not mapped or is not mapped with execute permission.  The basic block's final instruction is
-     *      the previous instruction, if any.  If the block is empty then it is said to be non-existing, and will have a
-     *      special successor when added to the CFG.
+     *  @li An instruction could not be obtained from the instruction provider via @ref discoverInstruction. The instruction
+     *      provider should return null only if the address is not mapped with execute permission or is improperly aligned for
+     *      the architecture.  The basic block's final instruction is the previous instruction, if any.  If the block is empty
+     *      then it is said to be non-existing, and will have a special successor when added to the CFG.
      *
      *  @li The instruction is an "unknown" instruction. The instruction provider returns an unknown instruction if it isn't
-     *      able to disassemble an instruction at the specified address but the address is mapped with execute permission.  The
-     *      partitioner treats this "unknown" instruction as a valid instruction with indeterminate successors.
+     *      able to disassemble an instruction at the specified address but the address is mapped with execute permission and
+     *      the address was properly aligned.  The partitioner treats this "unknown" instruction as a valid instruction with
+     *      indeterminate successors and no semantics.
      *
      *  @li The instruction has a concrete successor address that is an address of a non-initial instruction in this
      *      block. Basic blocks cannot have a non-initial instruction with more than one incoming edge, therefore we've already
@@ -1333,18 +1488,20 @@ public:
      *      method A.)
      *
      *  @li The instruction causes this basic block to look like a function call.  This instruction becomes the final
-     *      instruction of the basic block and when the block is inserted into the CFG the edge will be marked as a function
-     *      call edge.
+     *      instruction of the basic block and when the block is inserted into the CFG/AUM the edge will be marked as a
+     *      function call edge.  Function call instructions typically have one successor (the target function, usually
+     *      concrete, but sometimes indeterminate), but the partitioner may eventually insert a "return" edge into the CFG when
+     *      this basic block is attached.
      *
      *  @li The instruction doesn't have exactly one successor. Basic blocks cannot have a non-final instruction that branches,
-     *      so this instruction becomes the final instruction.  An additional return-point successor is added.
+     *      so this instruction becomes the final instruction.
      *
      *  @li The instruction successor is not a constant. If the successor cannot be resolved to a constant then this
-     *      instruction becomes the final instruction.  When this basic block is added to the CFG an edge to the special
-     *      "indeterminate" vertex will be created.
+     *      instruction becomes the final instruction.  If this basic block is eventually attached to the CFG/AUM then an edge
+     *      to the special "indeterminate" vertex will be created.
      *
      *  @li The instruction successor is the starting address for the block on which we're working. A basic block's
-     *      instructions are unique by definition, so this instruction becomes the final instruction for the block.
+     *      instructions are distinct by definition, so this instruction becomes the final instruction for the block.
      *
      *  @li The instruction successor is the starting address of a basic block already in the CFG. This is a common case and
      *      probably means that what we discovered earlier is correct.
@@ -1355,14 +1512,13 @@ public:
      *      the CFG, then we allow this block to use some of the same instructions as in the conflict block and we do not
      *      terminate construction of this block at this time. Usually what happens is the block being discovered uses all the
      *      final instructions from the conflict block; an exception is when an opaque predicate in the conflicting block is no
-     *      longer opaque in the new block.  Eventually when the new block is added to the CFG the conflict block will be
-     *      truncated.  When there is no conflict block then this instruction becomes the final instruction of the basic block.
-     *
-     *  When a basic block is created, various analysis algorithms are run on the block to characterize it.
+     *      longer opaque in the new block.  Eventually if the new block is attached to the CFG/AUM then the conflict block
+     *      will be truncated.  When there is no conflict block then this instruction becomes the final instruction of the
+     *      basic block.
      *
      *  @{ */
-    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa);
-    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder);
+    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const;
+    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexNodeIterator &placeholder) const;
     /** @} */
 
     /** Determine successors for a basic block.
@@ -1371,79 +1527,237 @@ public:
      *  for instance, function call instructions will have an edge for the called function but no edge for the return.  The
      *  basic block holds a successor cache which is consulted/updated by this method.
      *
-     *  The basic block need not be complete (this is used during basic block discovery). A basic block that has no
-     *  instructions has no successors. */
-    BasicBlock::Successors bblockSuccessors(const BasicBlock::Ptr&) const;
+     *  The basic block need not be complete or attached to the CFG/AUM. A basic block that has no instructions has no
+     *  successors. */
+    BasicBlock::Successors basicBlockSuccessors(const BasicBlock::Ptr&) const;
 
     /** Determines concrete successors for a basic block.
      *
      *  Returns a vector of distinct, concrete successor addresses.  Semantics is identical to @ref bblockSuccessors except
      *  non-concrete values are removed from the list. */
-    std::vector<rose_addr_t> bblockConcreteSuccessors(const BasicBlock::Ptr &bb) const;
+    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&) const;
+
+    /** Determine ghost successors for a basic block.
+     *
+     *  The ghost successors of a basic block are those addresses where control could have naively flowed had we looked only at
+     *  individual instructions rather than entire basic blocks.  When a whole basic block is examined, the predicate of a
+     *  conditional branch instruction might be determined to be constant, in which case the branch becomes unconditional, and
+     *  the non-taken side of the branch becomes a ghost successor.  Ghost successors are addresses rather than basic blocks
+     *  (although they can be easily turned into basic blocks if desired), and can originate from any instruction within a
+     *  basic block.
+     *
+     *  The basic block need not be complete and need not be attached to a CFG/AUM, although the specified pointer must not be
+     *  null.  A basic block that has no instructions has no ghost successors.  The true successors are not included in the
+     *  list of ghost successors.  The basic block holds a ghost successor cache which is consulted/updated by this method.
+     *
+     *  @todo Perhaps we need to represent these as edges rather than successors so that we also know which instruction they're
+     *  originating from since they can originate from anywhere in the basic block. */
+    std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlock::Ptr&) const;
 
     /** Determine if a basic block looks like a function call.
      *
      *  If the basic block appears to be a function call by some analysis then this function returns true.  The analysis may
      *  use instruction semantics to look at the stack, it may look at the kind of instructions in the block, it may look for
      *  patterns at the callee address if known, etc. The basic block caches the result of this analysis. */
-    bool bblockIsFunctionCall(const BasicBlock::Ptr&) const;
+    bool basicBlockIsFunctionCall(const BasicBlock::Ptr&) const;
 
     /** Return the stack delta expression.
      *
      *  The stack delta is the difference between the stack pointer register at the end of the block and the stack pointer
      *  register at the beginning of the block.  Returns a null pointer if the information is not available. */
-    BaseSemantics::SValuePtr bblockStackDelta(const BasicBlock::Ptr&) const;
+    BaseSemantics::SValuePtr basicBlockStackDelta(const BasicBlock::Ptr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner data block methods
+    //                                  Partitioner data block operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    void insertDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes);
+    /** Returns the number of data blocks attached to the CFG/AUM.
+     *
+     *  Data blocks don't belong directly to the CFG in that they're not vertices or edges, but rather they belong to one or
+     *  more functions whose basic blocks are CFG vertices.  Regardless of the indirection, this function returns in constant
+     *  time. */
+    size_t nDataBlocks() const { return dblocks_.size(); }
+
+    /** Determines whether a data block exists and is attached to the CFG/AUM.
+     *
+     *  Data blocks are either attached to the CFG/AUM (indirectly via functions), or detached; this method returns only those
+     *  data blocks that are attached.  If a data block starts at the specified address then a data block ownership record is
+     *  returned. The ownership record has a non-null pointer to the data block along with a list of functions that own the
+     *  block.  If no attached data block starts at the specified address then nothing is returned. */
+    Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t startVa) const {
+        return dblocks_.getOptional(startVa);
+    }
+
+    /** Returns the list of all attached data blocks.
+     *
+     *  Returns a map from data block starting address to data block ownership information for each data block that is attached
+     *  to the CFG/AUM.  The ownership information associates each block with a list of functions that own the block since more
+     *  than one function can own the same data. */
+    const DataBlocks& dataBlocks() const { return dblocks_; }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner attached function methods
+    //                                  Partitioner function operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Inserts functions into the CFG.
+    /** Returns the number of functions attached to the CFG/AUM.
+     *
+     *  This is a constant-time operation. */
+    size_t nFunctions() const { return functions_.size(); }
+
+    /** Determines whether a function exists in the CFG/AUM.
+     *
+     *  If the CFG/AUM knows about the specified function then this method returns a pointer to that function, otherwise it
+     *  returns the null pointer.
+     *
+     *  The query can supply either a function entry address or a function pointer.  If a pointer is specified then the return
+     *  value will be the same pointer if and only if the function exists in the CFG/AUM, otherwise the null pointer is
+     *  returned. It is not sufficient for the CFG/AUM to contain a function with the same entry address -- it must be the same
+     *  actual function object.
+     *
+     *  @{ */
+    Function::Ptr functionExists(rose_addr_t startVa) const {
+        return functions_.getOptional(startVa).orDefault();
+    }
+    Function::Ptr functionExists(const Function::Ptr &function) const {
+        if (function!=NULL) {
+            Function::Ptr found = functionExists(function->address());
+            if (found==function)
+                return function;
+        }
+        return Function::Ptr();
+    }
+    /** @} */
+
+    /** Returns functions that overlap with specified address interval.
+     *
+     *  Returns a sorted list of distinct functions that are attached to the CFG/AUM and which overlap at least one byte in
+     *  the specified address interval.  By "overlap" we mean that the function owns at least one basic block or data block
+     *  that overlaps with the interval.
+     *
+     *  The returned list of funtions are sorted by their entry address. */
+    std::vector<Function::Ptr> functionsOverlapping(const AddressInterval&) const;
+
+    /** Returns functions that span an entire address interval.
+     *
+     *  Returns a sorted list of distinct functions that are attached to the CFG/AUM and which span the entire specified
+     *  interval. In order for a function to span the interval its extent must be a superset of the interval. See @ref
+     *  functionExtent.  In other words, the union of all the addresseses represented by the function's basic blocks and data
+     *  blocks is a superset of the specified interval.
+     *
+     *  The returned list of functions are sorted by their starting address. */
+    std::vector<Function::Ptr> functionsSpanning(const AddressInterval&) const;
+
+    /** Returns functions that are fully contained in an address interval.
+     *
+     *  Returns a sorted list of distinct functions that are attached to the CFG/AUM and which are fully contained within
+     *  the specified interval.  In order to be fully contained in the interval, the addresses represented by the function's
+     *  basic blocks and data blocks must be a subset of the specified interval.
+     *
+     *  The returned list of functions are sorted by their starting address. */
+    std::vector<Function::Ptr> functionsContainedIn(const AddressInterval&) const;
+
+    /** Returns the addresses used by a function.
+     *
+     *  Returns an interval set which is the union of the addresses of the function's basic blocks and data blocks.  Most
+     *  functions are contiguous in memory and can be represented by a single address interval, but this is not a
+     *  requirement in ROSE. */
+    Sawyer::Container::IntervalSet<AddressInterval> functionExtent(const Function::Ptr&) const;
+    
+    /** Attaches a function to the CFG/AUM.
      *
      *  The indicated function(s) is inserted into the control flow graph.  Basic blocks (or at least placeholders) are
      *  inserted into the CFG for the function entry address and any basic block addresses the function might already contain.
-     *  Returns the number of new basic block placeholders that were created.  If any data blocks are associated with the
-     *  function then they are inserted into the AUM.
+     *  This method returns the number of new basic block placeholders that were created.  If any data blocks are associated
+     *  with the function then they are inserted into the AUM.
      *
      *  It is permissible to insert the same function multiple times at the same address (subsequent insertions are no-ops),
-     *  but it is an error to insert a different function at the same address as an existing function.
+     *  but it is an error to insert a different function at the same address as an existing function.  The CFG/AUM is capable
+     *  of representing at most one function per function entry address.
      *
-     *  All functions that exist in the function table are marked as frozen. The connectivity of frozen functions can only be
-     *  changed by using the partitioner's API, not the function's API.  This allows the partitioner to keep the CFG in a
+     *  All functions that are attached to the CFG/AUM are marked as frozen and the user is prevented from directly
+     *  manipulating the function's basic block and data block ownership lists. The connectivity of frozen functions can only
+     *  be changed by using the partitioner's API, not the function's API.  This allows the partitioner to keep the CFG in a
      *  consistent state.
      *
      *  @{ */
-    size_t insertFunction(const Function::Ptr&);
-    size_t insertFunctions(const Functions&);
+    size_t attachFunction(const Function::Ptr&);
+    size_t attachFunctions(const Functions&);
     /** @} */
 
-    /** Create CFG placeholders for functions.
+    /** Create placeholders for function basic blocks.
      *
-     *  Ensures that a CFG placeholder (or basic block) exists for each function entry address and each function basic block
-     *  address.  If a placeholder is absent then one is created by calling @ref insertPlaceholder.  The return value is the
-     *  number of new placeholders created.
+     *  Ensures that a basic block placeholder (or basic block) exists for each function entry address and each function basic
+     *  block address.  If a placeholder is absent then one is created by calling @ref insertPlaceholder.  The return value is
+     *  the number of new placeholders created.  A function that is attached to the CFG/AUM cannot have its basic block and
+     *  data block membership lists manipulated directly by the user, but only through the Partitioner API.
      *
-     *  If the function exists in the CFG (i.e., it is a function that we think is real versus a function that we're
-     *  only investigating), then additional actions occur:  any placeholders (or basic blocks) owned by this function are
-     *  verified to not be owned by some other function, and they are marked as owned by this function.
+     *  If the function is attached to the CFG/AUM then additional actions occur: any placeholders (or basic blocks) owned by
+     *  this function are verified to not be owned by some other function, and they are marked as owned by this function.
+     *
+     *  @todo Does it make sense to call insertFunctionBasicBlocks on a function that's already attached to the CFG/AUM?
+     *  Wouldn't its basic blocks already also be attached? [Robb P. Matzke 2014-08-15]
      *
      *  @{ */
-    size_t insertFunctionBasicBlocks(const Functions&);
-    size_t insertFunctionBasicBlocks(const Function::Ptr&);
+    size_t attachFunctionBasicBlocks(const Functions&);
+    size_t attachFunctionBasicBlocks(const Function::Ptr&);
     /** @} */
 
-    /** Removes a function from the CFG.
+    /** Detaches a function from the CFG/AUM.
      *
-     *  The indicated function is removed from the control flow graph and all its basic blocks and data blocks are reset so
-     *  they no longer point back to this function.  The function itself is not affected; it still contains the its original
-     *  blocks. The function is thawed so that its connectivity is modifiable again with the function's API. */
-    void eraseFunction(const Function::Ptr&);
+     *  The indicated function is detached from the control flow graph. Although this function's basic blocks remain attached
+     *  to the CFG/AUM, they are no longer considered to be owned by this function even though this function will continue to
+     *  list the addresses of those blocks as its members.  Any data blocks that were owned by only this function become
+     *  detached from the CFG/AUM, but this function continues to point to them; other multiply-owned data blocks will remain
+     *  attached to the CFG/AUM and will continue to be pointed to by this function, but the CFG/AUM will no longer list this
+     *  function as one of their owners.
+     *
+     *  Detaching a function from the CFG/AUM does not change the function other than thawing it so it can be modified by the
+     *  user directly through its API. */
+    void detachFunction(const Function::Ptr&);
+
+    /** Insert a data block into an attached or detached function.
+     *
+     *  @todo This is certainly not the final API.  The final API will likely describe data as an address and type rather than
+     *  an address and size.  It is also likely that attaching data to a function will try to adjust an existing data block's
+     *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
+     *  as we learn more about how it is accessed. */
+    void attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes);
+
+    /** Finds the function that owns the specified basic block.
+     *
+     *  If @p bblockVa is a starting address for a basic block that is in the CFG/AUM then this method returns the pointer to
+     *  the function that owns that block.  If the CFG/AUM does not contain a basic block that starts at the specified address,
+     *  or if no function owns that basic block, then a null function pointer is returned.
+     *
+     *  If a basic block pointer is supplied instead of a basic block starting address, then the starting address of the
+     *  specified basic block is used.  That is, the returned function might not own the exact specified basic block, but owns
+     *  a different basic block that starts at the same address.  This can only happen when the specified basic block is
+     *  detached from the CFG and the CFG contains a different (attached) basic block at the same starting address.
+     *
+     *  The returned function will be a function that is attached to the CFG/AUM; detached functions are never returned since
+     *  the partitioner does not necessarily know about them.
+     *
+     *  @{ */
+    Function::Ptr findFunctionOwningBasicBlock(rose_addr_t bblockVa) const;
+    Function::Ptr findFunctionOwningBasicBlock(const BasicBlock::Ptr&) const;
+    /** @} */
+
+    /** Finds functions that own specified basic blocks.
+     *
+     *  Finds the set of distinct functions that own the specified basic blocks and returns a list of such functions in entry
+     *  address order.  This is similar to @ref findFunctionOwningBasicBlock except it operates on a collection of basic blocks
+     *  and returns a collection of distinct function pointers.
+     *
+     *  @{ */
+    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<rose_addr_t>&) const;
+    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const;
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner detached function methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 
     /** Scans the CFG to find function entry basic blocks.
      *
@@ -1451,11 +1765,6 @@ public:
      *  function entry if it has an incoming edge that is a function call or if it is the entry block of a known function.
      *  This method does not modify the CFG.  It returns the functions in a map indexed by function entry address. */
     Functions discoverFunctionEntryVertices() const;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner detached function methods
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
 
     /** Adds basic blocks to a function.
      *
@@ -1494,6 +1803,12 @@ public:
                                        std::vector<size_t> &inwardInterFunctionEdges /*out*/,
                                        std::vector<size_t> &outwardInterFunctionEdges /*out*/) const;
     /** @} */
+
+    /** Returns ghost successors for a single function.
+     *
+     *  Returns the set of basic block starting addresses that are naive successors for the basic blocks of a function but
+     *  which are not actual control flow successors due to the presence of opaque predicates. */
+    std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1744,7 +2059,7 @@ private:
     ControlFlowGraph::EdgeNodeIterator adjustNonexistingEdges(const ControlFlowGraph::VertexNodeIterator &vertex);
 
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
-    BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa);
+    BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa) const;
 
     // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
     void checkConsistency() const;

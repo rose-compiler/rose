@@ -1,6 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 #include <AsmUnparser.h>
+#include <BinaryControlFlow.h>
 #include <DisassemblerArm.h>
 #include <DisassemblerPowerpc.h>
 #include <DisassemblerMips.h>
@@ -186,7 +187,7 @@ public:
     }
 };
 
-// Looks for m68k instruction prologues
+// Looks for m68k instruction prologues;  Look for a LINK.W whose first argument is A6
 class MatchM68kLink: public P2::Partitioner::FunctionPrologueMatcher {
 protected:
     P2::Partitioner::Function::Ptr function_;
@@ -201,28 +202,12 @@ public:
         if (anchor & 1)
             return false;                               // m68k instructions must be 16-bit aligned
         static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
-
-        // m68k functions are sometimes aligned on a 4-byte boundary by using two zero bytes or one TRAPF instruction.
-        P2::Partitioner::DataBlock::Ptr padding;
-        SgAsmM68kInstruction *insn = NULL;
-        uint8_t buf[2];
-        if (2==partitioner->memoryMap().read(buf, anchor, 2, MemoryMap::MM_PROT_EXEC) && 0==buf[0] && 0==buf[1]) {
-            padding = P2::Partitioner::DataBlock::instance(anchor, 2);
-            anchor += 2;
-        } else if ((insn=isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) && insn->get_kind()==m68k_trapf) {
-            padding = P2::Partitioner::DataBlock::instance(anchor, insn->get_size());
-            anchor += insn->get_size();
-        }
-        
-        // Look for a LINK.W whose first argument is A6
         if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
             const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
             if (insn->get_kind()==m68k_link && args.size()==2) {
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
                     if (rre->get_descriptor()==REG_A6) {
                         function_ = P2::Partitioner::Function::instance(anchor);
-                        if (padding!=NULL)
-                            function_->insertDataBlock(padding);
                         return true;
                     }
                 }
@@ -232,6 +217,7 @@ public:
     }
 };
 
+#if 0 // [Robb P. Matzke 2014-08-13]
 class MatchX86Prologue: public P2::Partitioner::FunctionPrologueMatcher {
 protected:
     P2::Partitioner::Function::Ptr function_;
@@ -309,6 +295,147 @@ public:
         return true;
     }
 };
+#endif
+
+// Looks for one basic block that hasn't been discovered and tries to find instructions for it.  Returns true if a basic block
+// was processed, false if not.
+static bool
+findBasicBlock(P2::Partitioner &partitioner) {
+    P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
+    if (worklist->nInEdges() > 0) {
+        P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
+        partitioner.mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
+        P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
+        partitioner.attachBasicBlock(placeholder, bb);
+        return true;
+    }
+    return false;
+}
+
+// Looks for a function prologue at or above the specified starting address.  If one is found, then create a new function, add
+// it to the partitioner, increment the starting address, and return true.  Otherwise do nothing and return false.
+static bool
+findFunctionPrologue(P2::Partitioner &partitioner, rose_addr_t &startVa /*in,out*/) {
+    if (P2::Partitioner::Function::Ptr function = partitioner.nextFunctionPrologue(startVa)) {
+        partitioner.mlog[WHERE] <<"\nFound prologue for " <<partitioner.functionName(function) <<"\n";
+        startVa = function->address() + 1;              // advance the search point past the start of the function
+        partitioner.attachFunction(function);           // also adds the function entry address to our work list
+        return true;
+    }
+    return false;
+}
+
+// Tries to assign basic blocks to functions.  Returns the number of functions that were successfully processed.
+static size_t
+findFunctionBlocks(P2::Partitioner &partitioner) {
+    size_t nProcessed = 0;
+    // Get a list of functions (those we already found, and those created due to function call edges)
+    P2::Partitioner::Functions functions = partitioner.discoverFunctionEntryVertices();
+
+    // Discover blocks for functions, and attach the functions and their blocks to the CFG.  If a function is frozen/attached
+    // to the CFG then we need to thaw/detach it before we modify its block ownership lists.  Sometimes the block assignment
+    // algorithm fails, in which case we'll reattach those functions to the CFG without modifying their block ownership and not
+    // count them in the return value.
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
+        partitioner.mlog[WHERE] <<"Discovering blocks for " <<partitioner.functionName(function) <<"\n";
+        if (function->isFrozen())
+            partitioner.detachFunction(function);
+        if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL))
+            ++nProcessed;
+        partitioner.attachFunction(function);
+    }
+    return nProcessed;
+}
+
+// Finds dead code and adds it to the function to which it seems to belong.
+static size_t
+findDeadCode(P2::Partitioner &partitioner) {
+    size_t nProcessed = 0;
+    P2::Partitioner::Functions functions = partitioner.functions();// copy because it might be modified in the loop
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
+        std::set<rose_addr_t> ghosts = partitioner.functionGhostSuccessors(function);
+        if (!ghosts.empty()) {
+            // Temporarily detach function from CFG so we can modify it
+            partitioner.detachFunction(function);
+
+            // Add the ghost blocks: targets of branch edges that cannot be taken
+            BOOST_FOREACH (rose_addr_t ghost, ghosts) {
+                partitioner.insertPlaceholder(ghost);
+                function->insertBasicBlock(ghost);
+            }
+
+            // Discover instructions for the new basic blocks and those recursively reachable by following control flow edges.
+            while (findBasicBlock(partitioner)) /*void*/;
+
+            // Discover more function basic blocks by following the control flow from the ghost blocks.  This may
+            // fail to add more blocks if there's a problem with control flow.
+            partitioner.discoverFunctionBasicBlocks(function, NULL, NULL);
+            
+            // Reattach the function to the CFG
+            partitioner.attachFunction(function);
+            ++nProcessed;
+        }
+    }
+    return nProcessed;
+}
+
+// Find padding that appears before the entry address of a function that aligns the entry address on a 4-byte boundary.
+// For m68k, padding is either 2-byte TRAPF instructions (0x51 0xfc) or zero bytes.  Patterns we've seen are 51 fc, 51 fc 00
+// 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
+static size_t
+findFunctionPadding(P2::Partitioner &partitioner) {
+    size_t nProcessed = 0;
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions().values()) {
+        rose_addr_t entryVa = function->address();
+        rose_addr_t paddingVa = entryVa;
+        uint8_t buf[2];
+        size_t nread;
+        while ((nread=std::min(paddingVa, (rose_addr_t)2))>0 &&
+               (nread=partitioner.memoryMap().readBackward(buf, paddingVa, nread, MemoryMap::MM_PROT_EXEC))) {
+            if (2==nread && ((0==buf[0] && 0==buf[1]) || (0x51==buf[0] && 0xfc==buf[1]))) {
+                paddingVa -= 2;
+            } else if ((2==nread && 0==buf[1]) || (1==nread && 0==buf[0])) {
+                paddingVa -= 1;
+            } else {
+                break;
+            }
+        }
+        if (paddingVa < entryVa) {
+            partitioner.attachFunctionDataBlock(function, paddingVa, entryVa-paddingVa);
+            ++nProcessed;
+        }
+    }
+    return nProcessed;
+}
+
+// Finds unused areas that are surrounded by a function and adds them as static data to the function.
+static size_t
+findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textArea)
+{
+    size_t nProcessed = 0;
+    Sawyer::Container::IntervalSet<AddressInterval> unused = partitioner.aum().unusedExtent(textArea);
+    BOOST_FOREACH (const AddressInterval &interval, unused.nodes()) {
+        if (interval.least()<=textArea.least() || interval.greatest()>=textArea.greatest())
+            continue;
+        typedef std::vector<P2::Partitioner::Function::Ptr> Functions;
+        Functions beforeFuncs = partitioner.functionsOverlapping(interval.least()-1);
+        Functions afterFuncs = partitioner.functionsOverlapping(interval.greatest()+1);
+
+        // What functions are in both sets?
+        Functions enclosingFuncs(beforeFuncs.size());
+        Functions::iterator final = std::set_intersection(beforeFuncs.begin(), beforeFuncs.end(),
+                                                          afterFuncs.begin(), afterFuncs.end(), enclosingFuncs.begin());
+        enclosingFuncs.resize(final-enclosingFuncs.begin());
+
+        // Add the data block to all enclosing functions
+        if (!enclosingFuncs.empty()) {
+            BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, enclosingFuncs)
+                partitioner.attachFunctionDataBlock(function, interval.least(), interval.size());
+            ++nProcessed;
+        }
+    }
+    return nProcessed;
+}
 
 int main(int argc, char *argv[]) {
     // Do this explicitly since the partitioner is not yet part of librose
@@ -337,64 +464,34 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("problem reading file: " + specimenName);
     map.mprotect(AddressInterval::baseSize(settings.mapVa, nBytesMapped), MemoryMap::MM_PROT_RX);
     map.dump(std::cerr);                                // debugging so the user can see the map
-
+    AddressInterval addressSpace = AddressInterval::baseSize(settings.mapVa, nBytesMapped);
 
     // Create the partitioner
     P2::Partitioner partitioner(disassembler, map);
     partitioner.functionPrologueMatchers().push_back(MatchM68kLink::instance());
-    partitioner.functionPrologueMatchers().push_back(MatchX86Prologue::instance());
     partitioner.cfgAdjustmentCallbacks().append(CfgChangeWatcher::instance());
 
-    // A simple disassembler
+    // Disassemble as many basic blocks as we can find by following the control flow and looking for function prologues.
     rose_addr_t prologueVa = 0;
-    P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
-    while (1) {
-        if (worklist->nInEdges() > 0) {
-            // Disassemble recursively by following undiscovered basic blocks in the CFG
-            P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-            partitioner.mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
-            P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
-            partitioner.insertBasicBlock(placeholder, bb);
-        } else if (P2::Partitioner::Function::Ptr function = partitioner.nextFunctionPrologue(prologueVa)) {
-            // We found another function prologue, so disassemble recursively at that location
-            prologueVa = function->address() + 1;       // advance the search point past the start of the function
-            partitioner.insertFunction(function);       // adds the function entry address to our work list
-            partitioner.mlog[WHERE] <<"\nFound prologue for " <<partitioner.functionName(function) <<"\n";
-        } else {
-            break;                                      // all done
-        }
-    }
+    while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
+    
+    findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
+    findDeadCode(partitioner);                          // find unreachable code and add it to functions
+    findFunctionPadding(partitioner);                   // find function alignment padding before entry points
+    findIntraFunctionData(partitioner, addressSpace);   // find data areas that are enclosed by functions
+    
 
-    // Find all the function entry points. The entry points are the function prologues we found above, and any basic block
-    // which is a target of a function call edge.
-    P2::Partitioner::Functions functions = partitioner.discoverFunctionEntryVertices();
-
-    // Discover blocks for functions, and (re)insert the functions into the CFG
-    std::vector<P2::Partitioner::Function::Ptr> badFunctions;
+    // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
+    P2::Partitioner::Functions functions = partitioner.functions(); // a copy because it's modified within the loop
     BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
-        partitioner.mlog[WHERE] <<"Discovering blocks for function "
-                                <<StringUtility::addrToString(function->address()) <<"\n";
-        if (function->isFrozen()) {
-            // If the function is is the CFG then it is frozen and we can't adjust its connectivity to blocks.  Therefore we
-            // first have to remove the function from the CFG, operate on it while it is thawed, then insert it again when
-            // we're done.
-            partitioner.eraseFunction(function);
-        }
-        if (partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
-            badFunctions.push_back(function);
-        } else {
-            partitioner.insertFunction(function);
-        }
-    }
-
-    // Try each failed function again, but this time report the errors, and maybe insert them into the CFG anyway
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, badFunctions) {
         P2::Partitioner::EdgeList inwardConflictEdges, outwardConflictEdges;
-        if (partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
+        partitioner.detachFunction(function);           // temporarily detach so we can call discoverFunctionBasicBlocks
+        if (0==partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
+            partitioner.attachFunction(function);
+        } else {
             partitioner.mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
                                    <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                                    <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
-
             BOOST_FOREACH (const P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges) {
                 using namespace P2;                     // to pick up operator<< for *edge
                 partitioner.mlog[WARN] <<"  inward conflict " <<*edge
@@ -407,7 +504,7 @@ int main(int argc, char *argv[]) {
                                        <<" to " <<partitioner.functionName(edge->target()->value().function())
                                        <<"\n";
             }
-
+#if 0 // [Robb P. Matzke 2014-08-13]
             // Forcibly insert the target vertex for inward-conflicting edges and try again.
             BOOST_FOREACH (P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
                 function->insertBasicBlock(edge->target()->value().address());
@@ -415,9 +512,9 @@ int main(int argc, char *argv[]) {
                 partitioner.mlog[WARN] <<"  conflicts have been overridden\n";
                 partitioner.insertFunction(function);
             }
+#endif
         }
     }
-
 
     // Show the results as requested
     if (settings.doShowStats) {
@@ -443,7 +540,6 @@ int main(int argc, char *argv[]) {
     }
     
     if (settings.doListUnused) {
-        AddressInterval addressSpace = AddressInterval::baseSize(settings.mapVa, nBytesMapped);
         Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(addressSpace);
         std::cout <<"Unused addresses: " <<StringUtility::plural(unusedAddresses.size(), "bytes")
                   <<" in " <<StringUtility::plural(unusedAddresses.nIntervals(), "intervals") <<"\n";
@@ -464,7 +560,12 @@ int main(int argc, char *argv[]) {
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         SgAsmBlock *globalBlock = partitioner.buildAst();
-        AsmUnparser().unparse(std::cout, globalBlock);
+        ControlFlow::BlockGraph cfg = ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(globalBlock);
+        AsmUnparser unparser;
+        unparser.set_registers(disassembler->get_registers());
+        unparser.add_control_flow_graph(cfg);
+        unparser.staticDataDisassembler.init(disassembler);
+        unparser.unparse(std::cout, globalBlock);
     }
     
     exit(0);
