@@ -26,6 +26,9 @@ namespace Directives {
 template <class language_tpl>
 struct directive_t;
 
+template <class language_tpl, int kind_tpl>
+struct construct_t;
+
 template <class language_tpl>
 struct generic_construct_t {
   typedef language_tpl language_t;
@@ -36,6 +39,14 @@ struct generic_construct_t {
   construct_kinds_e kind;
 
   generic_construct_t(construct_kinds_e kind_) : kind(kind_) {}
+
+  /// return 'this' cast to the requested type of construct, NULL if kind != 'this->kind'
+  template <construct_kinds_e kind>
+  construct_t<language_t, kind> * is();
+
+  /// return the nodes associated to the construct, assert kind == 'this->kind'
+  template <construct_kinds_e kind>
+  assoc_nodes_t<kind> & getAssociatedNodes();
 };
 
 template <class language_tpl, int kind_tpl>

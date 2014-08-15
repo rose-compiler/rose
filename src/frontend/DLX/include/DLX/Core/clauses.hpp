@@ -22,6 +22,9 @@ namespace Directives {
  * @{
 */
 
+template <class language_tpl, int kind_tpl>
+struct clause_t;
+
 template <class language_tpl>
 struct generic_clause_t {
   typedef language_tpl language_t;
@@ -33,6 +36,11 @@ struct generic_clause_t {
 
   generic_clause_t(clause_kinds_e kind_) : kind(kind_) {}
 
+  /// return 'this' cast to the requested type of clause, NULL if kind != 'this->kind'
+  template <clause_kinds_e kind>
+  clause_t<language_t, kind> * is();
+
+  /// return the parameter stored by the clause, assert kind == 'this->kind'
   template <clause_kinds_e kind>
   parameters_t<kind> & getParameters();
 };

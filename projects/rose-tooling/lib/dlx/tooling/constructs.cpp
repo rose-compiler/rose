@@ -65,6 +65,84 @@ bool findAssociatedNodes<Tooling::language_t>(
   }
 }
 
+template <>
+template <>
+construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_set> * generic_construct_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_construct_set>() {
+  return (this->kind == Tooling::language_t::e_tooling_construct_set) ? (construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_set> *)this : NULL;
+}
+
+template <>
+template <>
+construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_init> * generic_construct_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_construct_init>() {
+  return (this->kind == Tooling::language_t::e_tooling_construct_init) ? (construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_init> *)this : NULL;
+}
+
+template <>
+template <>
+construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_callgraph> * generic_construct_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_construct_callgraph>() {
+  return (this->kind == Tooling::language_t::e_tooling_construct_callgraph) ? (construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_callgraph> *)this : NULL;
+}
+
+template <>
+template <>
+construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_outline> * generic_construct_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_construct_outline>() {
+  return (this->kind == Tooling::language_t::e_tooling_construct_outline) ? (construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_outline> *)this : NULL;
+}
+
+template <>
+template <>
+construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_replay> * generic_construct_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_construct_replay>() {
+  return (this->kind == Tooling::language_t::e_tooling_construct_replay) ? (construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_replay> *)this : NULL;
+}
+
+template <>
+template <>
+construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_grapher> * generic_construct_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_construct_grapher>() {
+  return (this->kind == Tooling::language_t::e_tooling_construct_grapher) ? (construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_grapher> *)this : NULL;
+}
+
+template <>
+template <>
+generic_construct_t<Tooling::language_t>::assoc_nodes_t<Tooling::language_t::e_tooling_construct_set> & generic_construct_t<Tooling::language_t>::getAssociatedNodes<Tooling::language_t::e_tooling_construct_set>() {
+  assert(this->kind == Tooling::language_t::e_tooling_construct_set);
+  return ((construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_set> *)this)->assoc_nodes;
+}
+
+template <>
+template <>
+generic_construct_t<Tooling::language_t>::assoc_nodes_t<Tooling::language_t::e_tooling_construct_init> & generic_construct_t<Tooling::language_t>::getAssociatedNodes<Tooling::language_t::e_tooling_construct_init>() {
+  assert(this->kind == Tooling::language_t::e_tooling_construct_init);
+  return ((construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_init> *)this)->assoc_nodes;
+}
+
+template <>
+template <>
+generic_construct_t<Tooling::language_t>::assoc_nodes_t<Tooling::language_t::e_tooling_construct_callgraph> & generic_construct_t<Tooling::language_t>::getAssociatedNodes<Tooling::language_t::e_tooling_construct_callgraph>() {
+  assert(this->kind == Tooling::language_t::e_tooling_construct_callgraph);
+  return ((construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_callgraph> *)this)->assoc_nodes;
+}
+
+template <>
+template <>
+generic_construct_t<Tooling::language_t>::assoc_nodes_t<Tooling::language_t::e_tooling_construct_outline> & generic_construct_t<Tooling::language_t>::getAssociatedNodes<Tooling::language_t::e_tooling_construct_outline>() {
+  assert(this->kind == Tooling::language_t::e_tooling_construct_outline);
+  return ((construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_outline> *)this)->assoc_nodes;
+}
+
+template <>
+template <>
+generic_construct_t<Tooling::language_t>::assoc_nodes_t<Tooling::language_t::e_tooling_construct_replay> & generic_construct_t<Tooling::language_t>::getAssociatedNodes<Tooling::language_t::e_tooling_construct_replay>() {
+  assert(this->kind == Tooling::language_t::e_tooling_construct_replay);
+  return ((construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_replay> *)this)->assoc_nodes;
+}
+
+template <>
+template <>
+generic_construct_t<Tooling::language_t>::assoc_nodes_t<Tooling::language_t::e_tooling_construct_grapher> & generic_construct_t<Tooling::language_t>::getAssociatedNodes<Tooling::language_t::e_tooling_construct_grapher>() {
+  assert(this->kind == Tooling::language_t::e_tooling_construct_grapher);
+  return ((construct_t<Tooling::language_t, Tooling::language_t::e_tooling_construct_grapher> *)this)->assoc_nodes;
+}
+
 }
 
 }

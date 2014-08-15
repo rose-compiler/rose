@@ -65,6 +65,53 @@ bool parseClauseParameters<Tooling::language_t>(
   }
 }
 
+/*
+
+// We could have this in our header file (+ forcing template instantiation for each enum element).
+//    ??? pros/cons ??? : any idea?
+
+template <clause_kinds_e kind>
+clause_t<Tooling::language_t, kind> * generic_clause_t<Tooling::language_t>::is<kind>() {
+  return (this->kind == kind) ? (clause_t<Tooling::language_t, kind> *)this : NULL;
+}
+*/
+
+template <>
+template <>
+clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_var> * generic_clause_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_clause_var>() {
+  return (this->kind == Tooling::language_t::e_tooling_clause_var) ? (clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_var> *)this : NULL;
+}
+
+template <>
+template <>
+clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_value> * generic_clause_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_clause_value>() {
+  return (this->kind == Tooling::language_t::e_tooling_clause_value) ? (clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_value> *)this : NULL;
+}
+
+template <>
+template <>
+clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_file> * generic_clause_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_clause_file>() {
+  return (this->kind == Tooling::language_t::e_tooling_clause_file) ? (clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_file> *)this : NULL;
+}
+
+template <>
+template <>
+clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_format> * generic_clause_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_clause_format>() {
+  return (this->kind == Tooling::language_t::e_tooling_clause_format) ? (clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_format> *)this : NULL;
+}
+
+template <>
+template <>
+clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_tag> * generic_clause_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_clause_tag>() {
+  return (this->kind == Tooling::language_t::e_tooling_clause_tag) ? (clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_tag> *)this : NULL;
+}
+
+template <>
+template <>
+clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_pack> * generic_clause_t<Tooling::language_t>::is<Tooling::language_t::e_tooling_clause_pack>() {
+  return (this->kind == Tooling::language_t::e_tooling_clause_pack) ? (clause_t<Tooling::language_t, Tooling::language_t::e_tooling_clause_pack> *)this : NULL;
+}
+
 template <>
 template <>
 generic_clause_t<Tooling::language_t>::parameters_t<Tooling::language_t::e_tooling_clause_var> & generic_clause_t<Tooling::language_t>::getParameters<Tooling::language_t::e_tooling_clause_var>() {
