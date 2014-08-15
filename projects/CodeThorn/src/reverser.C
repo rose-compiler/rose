@@ -104,8 +104,25 @@ void TransformationSequence::preOrderVisit(SgNode *astNode) {
 
 void TransformationSequence::postOrderVisit(SgNode *astNode) {
   if(isSgAssignOp(astNode)) {
+    // TODO: getLhs
     transformationSequence.push_back(astNode);
   }
+  if(isSgPlusAssignOp(astNode)
+     || isSgMinusAssignOp(astNode)
+     || isSgMultAssignOp(astNode)
+     || isSgDivAssignOp(astNode)
+     // %=
+     // &=
+     // |=
+     // ^=
+     // <<=
+     // >>=
+     ) {
+    // TODO: getUnaryChild
+    transformationSequence.push_back(astNode);
+  }
+  // TODO: inc/dec operators
+  // delete operator
 }
 
 // computes the list of nodes for which the bs-memory-mod transformation must be applied
