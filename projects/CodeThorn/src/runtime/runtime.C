@@ -16,6 +16,10 @@ size_t Backstroke::RunTimeSystem::size() {
   return eventRecordDeque.size();
 }
 
+size_t Backstroke::RunTimeSystem::numberOfObjectsRegisteredForCommit() {
+  return currentEventRecord->registered_heapalloc_queue.size();
+}
+
 // allocates EventRecord
 void Backstroke::RunTimeSystem::initializeForwardEvent() {
   currentEventRecord=new EventRecord();
@@ -48,6 +52,7 @@ void Backstroke::RunTimeSystem::commitEvent() {
   eventRecordDeque.pop_front();
   // traverse commit-queue for event record forward and delete memory objects
   while(!commitEventRecord->registered_heapalloc_queue.empty()) {
+    cout<<"DEBUG: committing event object and deleting it."<<endl;
     ptr toDeallocPtr=commitEventRecord->registered_heapalloc_queue.front();
     commitEventRecord->registered_heapalloc_queue.pop();
     // we only need to call delete(x) because ~X() has already been called in the forward method

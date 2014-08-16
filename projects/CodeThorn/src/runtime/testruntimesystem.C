@@ -19,6 +19,7 @@ int main() {
     short int* bp=&barray[1];
     rts.assign(&(a),a+1);
     rts.assign(&(b),b+10);
+    (*rts.avpush(&(b)))=b+10;;
     char c='A';
     cout<<"a:"<<a<<" b:"<<b<<" bp:"<<bp<<" c:"<<c<<endl;
     rts.assign(&(c),'B');
