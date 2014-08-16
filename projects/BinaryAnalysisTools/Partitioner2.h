@@ -212,11 +212,6 @@ public:
         E_FRET,                                         /**< Edge is a function return from the call site. */
     };
 
-    class Exception: public std::runtime_error {
-    public:
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
-    };
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Basic blocks (BB)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -254,6 +249,7 @@ public:
         rose_addr_t startVa_;                           // Starting address, perhaps redundant with insns_[0]->p_address
         std::vector<SgAsmInstruction*> insns_;          // Instructions in the order they're executed
         BaseSemantics::DispatcherPtr dispatcher_;       // How instructions are dispatched (null if no instructions)
+        BaseSemantics::RiscOperatorsPtr operators_;     // Risc operators even if we're not using a dispatcher
         BaseSemantics::StatePtr initialState_;          // Initial state for semantics (null if no instructions)
         bool usingDispatcher_;                          // True if dispatcher's state is up-to-date for the final instruction
         Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
@@ -296,11 +292,6 @@ public:
          *  certain data members of the block (such as its instruction dispatcher). */
         virtual Ptr create(rose_addr_t startVa, const Partitioner *partitioner) const {
             return instance(startVa, partitioner);
-        }
-
-        /** Mark as read-only. */
-        void freeze() {
-            isFrozen_ = true;
         }
 
         /** Determine if basic block is read-only.
@@ -398,6 +389,16 @@ public:
          *  in the basic block. */
         const Sawyer::Cached<std::set<rose_addr_t> >& ghostSuccessors() const { return ghostSuccessors_; }
 
+        /** Insert a new successor.
+         *
+         *  Inserts a new successor into the cached successor list.  If the successor is already present then it is not added
+         *  again (the comparison uses structural equivalance).
+         *
+         *  @{ */
+        void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL);
+        void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL);
+        /** @} */
+
         /** Is a function call?
          *
          *  If the basic block appears to be a function call then this property is set to true.  A block is a function call if
@@ -412,8 +413,14 @@ public:
          *  stack pointer register.  This value is typically computed in the partitioner and cached in the basic block. */
         const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
         
+        /** A printable name for this basic block.  Returns a string like 'basic block 0x10001234'. */
+        std::string printableName() const;
+
     private:
+        friend class Partitioner;
         void init(const Partitioner*);
+        void freeze() { isFrozen_ = true; }
+        void thaw() { isFrozen_ = false; }
     };
 
 
@@ -475,6 +482,9 @@ public:
             ASSERT_require(nBytes > 0);
             size_ = nBytes;
         }
+
+        /** A printable name for this data block.  Returns a string like 'data block 0x10001234'. */
+        std::string printableName() const;
 
     private:
         friend class Partitioner;
@@ -1179,10 +1189,6 @@ public:
     /** Returns the address usage map for a single function. */
     AddressUsageMap aum(const Function::Ptr&) const;
 
-    /** Returns the list of all attached functions.  Returns a map which maps function entry address to function pointer for
-     *  the functions that are part of the control flow graph. */
-    const Functions& functions() const { return functions_; }
-
     /** Determine all ghost successors in the control flow graph.
      *
      *  The return value is a list of basic block ghost successors for which no basic block or basic block placeholder exists.
@@ -1413,7 +1419,8 @@ public:
      *
      *  This function does not modify the basic block itself; it only detaches it from the CFG/AUM.  A basic block that is
      *  attached to the CFG/AUM is in a frozen state and cannot be modified directly, so one use of this function is to allow
-     *  the user to modify a basic block and then re-attach it to the CFG/AUM.
+     *  the user to modify a basic block and then re-attach it to the CFG/AUM.  Detaching an already-detached basic block is a
+     *  no-op.
      *
      *  This method returns a pointer to the basic block so it can be manipulated by the user after it is detached.  If the
      *  user specified a basic block pointer to start with, then the return value is this same pointer; this function does
@@ -1629,6 +1636,11 @@ public:
     }
     /** @} */
 
+    /** All functions attached to the CFG/AUM.
+     *
+     *  Returns a vector of distinct functions sorted by their entry address. */
+    std::vector<Function::Ptr> functions() const;
+
     /** Returns functions that overlap with specified address interval.
      *
      *  Returns a sorted list of distinct functions that are attached to the CFG/AUM and which overlap at least one byte in
@@ -1713,7 +1725,7 @@ public:
      *  function as one of their owners.
      *
      *  Detaching a function from the CFG/AUM does not change the function other than thawing it so it can be modified by the
-     *  user directly through its API. */
+     *  user directly through its API. Attempting to detach a function that is already detached has no effect. */
     void detachFunction(const Function::Ptr&);
 
     /** Insert a data block into an attached or detached function.
@@ -1754,17 +1766,14 @@ public:
     std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const;
     /** @} */
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Partitioner detached function methods
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-
     /** Scans the CFG to find function entry basic blocks.
      *
-     *  Scans the CFG to find placeholders (or basic blocks) that are the entry points of functions.  A placeholder is a
-     *  function entry if it has an incoming edge that is a function call or if it is the entry block of a known function.
-     *  This method does not modify the CFG.  It returns the functions in a map indexed by function entry address. */
-    Functions discoverFunctionEntryVertices() const;
+     *  Scans the CFG without modifying it in order to find vertices (basic blocks and basic block placeholders) that are the
+     *  entry points of functions.  A vertex is a function entry point if it has an incoming edge that is a function call or if
+     *  it is the entry block of a function that already exists.
+     *
+     *  The returned function pointers are sorted by function entry address. */
+    std::vector<Function::Ptr> discoverFunctionEntryVertices() const;
 
     /** Adds basic blocks to a function.
      *
@@ -1825,30 +1834,57 @@ public:
     public:
         typedef Sawyer::SharedPointer<CfgAdjustmentCallback> Ptr;
 
-        /** Arguments for inserting a new basic block. */
-        struct InsertionArgs {
-            Partitioner *partitioner;                                   /**< This partitioner. */
-            ControlFlowGraph::VertexNodeIterator insertedVertex;        /**< Vertex that was recently inserted. */
-            InsertionArgs(Partitioner *partitioner, const ControlFlowGraph::VertexNodeIterator &insertedVertex)
-                : partitioner(partitioner), insertedVertex(insertedVertex) {}
+        /** Arguments for attaching a basic block.
+         *
+         *  After a basic block is attached to the CFG/AUM, or after a placeholder is inserted into the CFG, these arguments
+         *  are passed to the callback.  If a basic block was attached then the @ref bblock member will be non-null, otherwise
+         *  the arguments indicate that a placeholder was inserted. This callback is invoked after the changes have been made
+         *  to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify the CFG/AUM;
+         *  this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could confuse things. */
+        struct AttachedBasicBlock {
+            const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
+            rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
+            BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
+            AttachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
+                : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
         };
 
-        /** Arguments for erasing a basic block. */
-        struct ErasureArgs {
-            Partitioner *partitioner;                                   /**< This partitioner. */
-            BasicBlock::Ptr erasedBlock;                                /**< Basic block that was recently erased. */
-            ErasureArgs(Partitioner *partitioner, const BasicBlock::Ptr &erasedBlock)
-                : partitioner(partitioner), erasedBlock(erasedBlock) {}
+        /** Arguments for detaching a basic block.
+         *
+         *  After a basic block is detached from the CFG/AUM, or after a placeholder is removed from the CFG, these arguments
+         *  are passed to the callback.  If a basic block was detached then the @ref bblock member will be non-null, otherwise
+         *  the arguments indicate that a placeholder was removed from the CFG.  This callback is invoked after the changes
+         *  have been made to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify
+         *  the CFG/AUM; this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could
+         *  confuse things. */
+        struct DetachedBasicBlock {
+            const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
+            rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
+            BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
+            DetachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
+                : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
         };
 
-        /** Insertion callback. This method is invoked after each CFG vertex is inserted (except for special vertices). */
-        virtual bool operator()(bool enabled, const InsertionArgs&) = 0;
+        /** Called when basic block is attached or placeholder inserted. */
+        virtual bool operator()(bool chain, const AttachedBasicBlock&) = 0;
 
-        /** Erasure callback. This method is invoked after each basic block is removed from the CFG. */
-        virtual bool operator()(bool enabled, const ErasureArgs&) = 0;
+        /** Called when basic block is detached or placeholder erased. */
+        virtual bool operator()(bool chain, const DetachedBasicBlock&) = 0;
     };
 
     /** List of all callbacks invoked when the CFG is adjusted.
+     *
+     *  Inserting a new callback goes something like this:
+     *
+     * @code
+     *  struct MyCallback: Partitioner::CfgAdjustmentCallback {
+     *      static Ptr instance() { return Ptr(new MyCallback); }
+     *      virtual bool operator()(bool chain, const AttachedBasicBlock &args) { ... }
+     *      virtual bool operator()(bool chain, const DetachedBasicBlock &args) { ... }
+     *  };
+     *
+     *  partitioner.cfgAdjustmentCallbacks().append(MyCallback::instance());
+     * @endcode
      *
      *  @{ */
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks;
@@ -1858,6 +1894,40 @@ public:
 
 private:
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Basic block successor callacks
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+
+    /** Base class for adjusting basic block successors.
+     *
+     *  As each instruction of a basic block is discovered the partitioner calculates its control flow successors to decide
+     *  what to do.  The successors are calculated primarily by evaluating the basic block instructions in a symbolic domain,
+     *  and if that fails, by looking at the final instruction's concrete successors.  Once these successors are obtained, the
+     *  partitioner invokes user callbacks so that the user has a chance to make adjustments. */
+    class SuccessorCallback: public Sawyer::SharedObject {
+    public:
+        typedef Sawyer::SharedPointer<SuccessorCallback> Ptr;
+
+        struct Args {
+            const Partitioner *partitioner;
+            BasicBlock::Ptr bblock;
+            Args(const Partitioner *partitioner, const BasicBlock::Ptr &bblock)
+                : partitioner(partitioner), bblock(bblock) {}
+        };
+
+        virtual bool operator()(bool chain, const Args&) = 0;
+    };
+
+    typedef Sawyer::Callbacks<SuccessorCallback::Ptr> SuccessorCallbacks;
+    SuccessorCallbacks& successorCallbacks() { return successorCallbacks_; }
+    const SuccessorCallbacks& successorCallbacks() const { return successorCallbacks_; }
+
+private:
+    SuccessorCallbacks successorCallbacks_;
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Instruction/byte pattern matching
@@ -2026,6 +2096,12 @@ public:
     /** Name of an edge. */
     static std::string edgeName(const ControlFlowGraph::EdgeNode&);
 
+    /** Name of a basic block. */
+    static std::string basicBlockName(const BasicBlock::Ptr&);
+
+    /** Name of a data block. */
+    static std::string dataBlockName(const DataBlock::Ptr&);
+
     /** Name of a function */
     static std::string functionName(const Function::Ptr&);
 
@@ -2041,14 +2117,64 @@ public:
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Exceptions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    class Exception: public std::runtime_error {
+    public:
+        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+        ~Exception() throw() {}
+        
+    };
+
+    class PlaceholderError: public Exception {
+        rose_addr_t startVa_;
+    public:
+        PlaceholderError(rose_addr_t startVa, const std::string &mesg)
+            : Exception(mesg), startVa_(startVa) {}
+        ~PlaceholderError() throw() {}
+        rose_addr_t startVa() const { return startVa_; }
+    };
+
+    class BasicBlockError: public Exception {
+        BasicBlock::Ptr bblock_;
+    public:
+        BasicBlockError(const BasicBlock::Ptr &bblock, const std::string &mesg)
+            : Exception(mesg), bblock_(bblock) {}
+        ~BasicBlockError() throw() {}
+        BasicBlock::Ptr bblock() const { return bblock_; }
+    };
+
+    class DataBlockError: public Exception {
+        DataBlock::Ptr dblock_;
+    public:
+        DataBlockError(const DataBlock::Ptr &dblock, const std::string &mesg)
+            : Exception(mesg), dblock_(dblock) {}
+        ~DataBlockError() throw() {}
+        DataBlock::Ptr dblock() const { return dblock_; }
+    };
+
+    class FunctionError: public Exception {
+        Function::Ptr function_;
+    public:
+        FunctionError(const Function::Ptr &function, const std::string &mesg)
+            : Exception(mesg), function_(function) {}
+        ~FunctionError() throw() {}
+        Function::Ptr function() const { return function_; }
+    };
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();
     void reportProgress() const;
 
+    // Obtain a new RiscOperators along with new states
+    BaseSemantics::RiscOperatorsPtr newOperators() const;
+
     // Obtain a new instruction semantics dispatcher initialized with the partitioner's semantic domain and a fresh state.
-    BaseSemantics::DispatcherPtr newDispatcher() const;
+    BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const;
 
     // Adjusts edges for a placeholder vertex. This method erases all outgoing edges for the specified placeholder vertex and
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */
@@ -2064,15 +2190,13 @@ private:
     // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
     void checkConsistency() const;
 
-    // This method is called whenever a new basic block is inserted into the control flow graph. The call happens immediately
-    // after the partitioner internal data structures are updated to reflect the insertion.  This call occurs whether a basic
-    // block or only a placeholder was inserted.
-    virtual void bblockInserted(const ControlFlowGraph::VertexNodeIterator &newVertex);
+    // This method is called whenever a new placeholder is inserted into the CFG or a new basic block is attached to the
+    // CFG/AUM. The call happens immediately after the CFG/AUM are updated.
+    virtual void bblockAttached(const ControlFlowGraph::VertexNodeIterator &newVertex);
 
-    // This method is called whenever a non-placeholder basic block is erased from the control flow graph.  The call happens
-    // immediately after the partitioner internal data structures are updated to reflect the erasure. The call occurs whether
-    // or not a basic block placeholder is left in the graph. */
-    virtual void bblockErased(const BasicBlock::Ptr &removedBlock);
+    // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
+    // The call happens immediately after the CFG/AUM are updated.
+    virtual void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
     
 };
 

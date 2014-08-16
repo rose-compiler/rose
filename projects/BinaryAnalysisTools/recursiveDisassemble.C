@@ -11,6 +11,7 @@
 #include <map>
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
+#include <sawyer/ProgressBar.h>
 #include <string>
 
 #include "Partitioner2.h"
@@ -57,6 +58,9 @@ getDisassembler(const std::string &name)
 struct Settings {
     std::string isaName;                                // instruction set architecture name
     rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
+    bool followGhostEdges;                              // do we ignore opaque predicates?
+    bool findDeadCode;                                  // do we look for unreachable basic blocks?
+    bool intraFunctionData;                             // suck up unused addresses as intra-function data
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
@@ -64,7 +68,8 @@ struct Settings {
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(0), doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
+        : mapVa(0), followGhostEdges(false), findDeadCode(true), intraFunctionData(true),
+          doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
           doShowStats(false), doListUnused(false) {}
 };
 
@@ -99,6 +104,35 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
                .doc("The first byte of the file is mapped at the specified @v{virtual-address}, which defaults "
                     "to " + StringUtility::addrToString(settings.mapVa) + "."));
+    dis.insert(Switch("follow-ghost-edges")
+               .intrinsicValue(true, settings.followGhostEdges)
+               .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
+                    "looking for opaque predicates.  The @s{no-follow-ghost-edges} switch turns this off.  The default "
+                    "is " + std::string(settings.followGhostEdges?"true":"false") + "."));
+    dis.insert(Switch("no-follow-ghost-edges")
+               .key("follow-ghost-edges")
+               .intrinsicValue(false, settings.followGhostEdges)
+               .hidden(true));
+    dis.insert(Switch("find-dead-code")
+               .intrinsicValue(true, settings.findDeadCode)
+               .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
+                    "for unreachable code, then recursively discover basic blocks at those addresses and add them to the "
+                    "same function.  The @s{no-find-dead-code} switch turns this off.  The default is " +
+                    std::string(settings.findDeadCode?"true":"false") + "."));
+    dis.insert(Switch("no-find-dead-code")
+               .key("find-dead-code")
+               .intrinsicValue(false, settings.findDeadCode)
+               .hidden(true));
+    dis.insert(Switch("intra-function-data")
+               .intrinsicValue(true, settings.intraFunctionData)
+               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
+                    "followed by the same function then add that region of memory to that function as a static data block."
+                    "The @s{no-intra-function-data} switch turns this feature off.  The default is " +
+                    std::string(settings.intraFunctionData?"true":"false") + "."));
+    dis.insert(Switch("no-intra-function-data")
+               .key("intra-function-data")
+               .intrinsicValue(false, settings.intraFunctionData)
+               .hidden(true));
 
     // Switches for output
     SwitchGroup out;
@@ -167,23 +201,42 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     return parser.with(gen).with(dis).with(out).parse(argc, argv).apply();
 }
 
-// Example of watching CFG changes
-class CfgChangeWatcher: public P2::Partitioner::CfgAdjustmentCallback {
+// Example of watching CFG changes.  Sort of stupid, but fun to watch.  A more useful monitor might do things like adjust
+// work-lists that are defined by the user.  In any case, a CFG monitor is a good place to track progress if you need to do
+// that.
+class Monitor: public P2::Partitioner::CfgAdjustmentCallback {
 public:
-    static Ptr instance() { return Ptr(new CfgChangeWatcher); }
-    virtual bool operator()(bool enabled, const InsertionArgs &args) {
-#if 0 // [Robb P. Matzke 2014-08-05]
+    static Ptr instance() { return Ptr(new Monitor); }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) {
         std::cerr <<"+";
-        if (P2::Partitioner::BasicBlock::Ptr bb = args.insertedVertex->value().bblock())
-            std::cerr <<std::string(bb->nInsns(), '.');
-#endif
-        return enabled;
+        if (args.bblock)
+            std::cerr <<std::string(args.bblock->nInsns(), '.');
+        return chain;
     }
-    virtual bool operator()(bool enabled, const ErasureArgs &args) {
-#if 0 // [Robb P. Matzke 2014-08-05]
-        std::cerr <<"-" <<std::string(args.erasedBlock->nInsns(), '.');
-#endif
-        return enabled;
+    virtual bool operator()(bool chain, const DetachedBasicBlock &args) {
+        std::cerr <<"-";
+        if (args.bblock)
+            std::cerr <<"-" <<std::string(args.bblock->nInsns(), '.');
+        return chain;
+    }
+};
+
+// Example of making adjustments to basic block successors.  If this callback is registered with the partitioner, then it will
+// add ghost edges (non-taken side of branches with opaque predicates) to basic blocks as their instructions are discovered.
+// An alternative method is to investigate ghost edges after functions are discovered in order to find dead code.
+class AddGhostSuccessors: public P2::Partitioner::SuccessorCallback {
+public:
+    static Ptr instance() { return Ptr(new AddGhostSuccessors); }
+
+    virtual bool operator()(bool chain, const Args &args) {
+        size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits();
+        BOOST_FOREACH (rose_addr_t successorVa, args.partitioner->basicBlockGhostSuccessors(args.bblock)) {
+            args.bblock->insertSuccessor(successorVa, nBits);
+            args.partitioner->mlog[INFO] <<"opaque predicate at "
+                                         <<StringUtility::addrToString(args.bblock->instructions().back()->get_address())
+                                         <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
+        }
+        return chain;
     }
 };
 
@@ -329,20 +382,42 @@ findFunctionPrologue(P2::Partitioner &partitioner, rose_addr_t &startVa /*in,out
 static size_t
 findFunctionBlocks(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
-    // Get a list of functions (those we already found, and those created due to function call edges)
-    P2::Partitioner::Functions functions = partitioner.discoverFunctionEntryVertices();
-
-    // Discover blocks for functions, and attach the functions and their blocks to the CFG.  If a function is frozen/attached
-    // to the CFG then we need to thaw/detach it before we modify its block ownership lists.  Sometimes the block assignment
-    // algorithm fails, in which case we'll reattach those functions to the CFG without modifying their block ownership and not
-    // count them in the return value.
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
+    // Get a list of functions (those we already found, and those created due to function call edges), and discover basic
+    // blocks for each. Attach the functions and their blocks to the CFG.  The discoverFunctionEntryVertices returns a list of
+    // functions, some of which are already attached to the CFG/AUM and some which are detached.  Before we add new basic
+    // blocks to a function we must detach it from the CFG/AUM.
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.discoverFunctionEntryVertices()) {
         partitioner.mlog[WHERE] <<"Discovering blocks for " <<partitioner.functionName(function) <<"\n";
-        if (function->isFrozen())
-            partitioner.detachFunction(function);
+        partitioner.detachFunction(function);
         if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL))
             ++nProcessed;
         partitioner.attachFunction(function);
+    }
+    return nProcessed;
+}
+
+static size_t
+findDeadCode(P2::Partitioner &partitioner, const P2::Partitioner::Function::Ptr &function) {
+    ASSERT_not_null(function);
+    size_t nProcessed = 0;
+    while (1) {
+        std::set<rose_addr_t> ghosts = partitioner.functionGhostSuccessors(function);
+        if (ghosts.empty())
+            break;
+        partitioner.detachFunction(function);           // so we can modify its basic block ownership list
+        BOOST_FOREACH (rose_addr_t ghost, ghosts) {
+            partitioner.mlog[INFO] <<partitioner.functionName(function) <<" has dead code at "
+                                   <<StringUtility::addrToString(ghost) <<"\n";
+            partitioner.insertPlaceholder(ghost);       // ensure a basic block gets created here
+            function->insertBasicBlock(ghost);          // the function will own this basic block
+        }
+        while (findBasicBlock(partitioner))/*void*/;    // discover basic blocks recursively
+        if (partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
+            partitioner.mlog[WARN] <<"cannot create " <<partitioner.functionName(function) <<"\n";
+            break;
+        }
+        partitioner.attachFunction(function);           // reattach the function to the CFG/AUM
+        ++nProcessed;
     }
     return nProcessed;
 }
@@ -351,31 +426,8 @@ findFunctionBlocks(P2::Partitioner &partitioner) {
 static size_t
 findDeadCode(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
-    P2::Partitioner::Functions functions = partitioner.functions();// copy because it might be modified in the loop
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
-        std::set<rose_addr_t> ghosts = partitioner.functionGhostSuccessors(function);
-        if (!ghosts.empty()) {
-            // Temporarily detach function from CFG so we can modify it
-            partitioner.detachFunction(function);
-
-            // Add the ghost blocks: targets of branch edges that cannot be taken
-            BOOST_FOREACH (rose_addr_t ghost, ghosts) {
-                partitioner.insertPlaceholder(ghost);
-                function->insertBasicBlock(ghost);
-            }
-
-            // Discover instructions for the new basic blocks and those recursively reachable by following control flow edges.
-            while (findBasicBlock(partitioner)) /*void*/;
-
-            // Discover more function basic blocks by following the control flow from the ghost blocks.  This may
-            // fail to add more blocks if there's a problem with control flow.
-            partitioner.discoverFunctionBasicBlocks(function, NULL, NULL);
-            
-            // Reattach the function to the CFG
-            partitioner.attachFunction(function);
-            ++nProcessed;
-        }
-    }
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions())
+        nProcessed += findDeadCode(partitioner, function);
     return nProcessed;
 }
 
@@ -385,7 +437,7 @@ findDeadCode(P2::Partitioner &partitioner) {
 static size_t
 findFunctionPadding(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions().values()) {
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions()) {
         rose_addr_t entryVa = function->address();
         rose_addr_t paddingVa = entryVa;
         uint8_t buf[2];
@@ -429,8 +481,12 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textAr
 
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
-            BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, enclosingFuncs)
+            BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, enclosingFuncs) {
+                partitioner.mlog[INFO] <<partitioner.functionName(function) <<" has "
+                                       <<StringUtility::plural(interval.size(), "bytes") <<" of static data at "
+                                       <<StringUtility::addrToString(interval.least()) <<"\n";
                 partitioner.attachFunctionDataBlock(function, interval.least(), interval.size());
+            }
             ++nProcessed;
         }
     }
@@ -441,6 +497,10 @@ int main(int argc, char *argv[]) {
     // Do this explicitly since the partitioner is not yet part of librose
     Diagnostics::initialize();
     P2::Partitioner::initDiagnostics();
+#if 0 // DEBUGGING [Robb P. Matzke 2014-08-16]: make progress reporting more fluid than normal
+    Sawyer::ProgressBarSettings::initialDelay(0.5);
+    Sawyer::ProgressBarSettings::minimumUpdateInterval(0.05);
+#endif
 
     // Parse the command-line
     Settings settings;
@@ -469,21 +529,26 @@ int main(int argc, char *argv[]) {
     // Create the partitioner
     P2::Partitioner partitioner(disassembler, map);
     partitioner.functionPrologueMatchers().push_back(MatchM68kLink::instance());
-    partitioner.cfgAdjustmentCallbacks().append(CfgChangeWatcher::instance());
+    if (settings.followGhostEdges)
+        partitioner.successorCallbacks().append(AddGhostSuccessors::instance());
+#if 0 // [Robb P. Matzke 2014-08-16]: fun to watch, but verbose!
+    partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());
+#endif
 
     // Disassemble as many basic blocks as we can find by following the control flow and looking for function prologues.
     rose_addr_t prologueVa = 0;
     while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
     
     findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
-    findDeadCode(partitioner);                          // find unreachable code and add it to functions
+    if (settings.findDeadCode)
+        findDeadCode(partitioner);                      // find unreachable code and add it to functions
     findFunctionPadding(partitioner);                   // find function alignment padding before entry points
-    findIntraFunctionData(partitioner, addressSpace);   // find data areas that are enclosed by functions
+    if (settings.intraFunctionData)
+        findIntraFunctionData(partitioner, addressSpace); // find data areas that are enclosed by functions
     
 
     // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
-    P2::Partitioner::Functions functions = partitioner.functions(); // a copy because it's modified within the loop
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, functions.values()) {
+    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions()) {
         P2::Partitioner::EdgeList inwardConflictEdges, outwardConflictEdges;
         partitioner.detachFunction(function);           // temporarily detach so we can call discoverFunctionBasicBlocks
         if (0==partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
@@ -550,9 +615,10 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.doListFunctionAddresses) {
-        BOOST_FOREACH (rose_addr_t functionVa, partitioner.functions().keys()) {
-            P2::Partitioner::BasicBlock::Ptr bb = partitioner.basicBlockExists(functionVa);
-            std::cout <<StringUtility::addrToString(functionVa) <<": "
+        BOOST_FOREACH (P2::Partitioner::Function::Ptr function, partitioner.functions()) {
+            rose_addr_t entryVa = function->address();
+            P2::Partitioner::BasicBlock::Ptr bb = partitioner.basicBlockExists(entryVa);
+            std::cout <<partitioner.functionName(function) <<": "
                       <<(bb && !bb->isEmpty() ? "exists" : "missing") <<"\n";
         }
     }
