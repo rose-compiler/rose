@@ -361,7 +361,11 @@ hpctoolkit:
 
 
 check-local:
+if ROSE_USING_GCC_VERSION_LATER_4_4
 	@$(MAKE) $(PASSING_TEST_Sources)
+else
+	@echo "Microsoft C++ tests require GNU version 4.4 (or greater) backend compilers."
+endif
 	@echo "****************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************************************"
