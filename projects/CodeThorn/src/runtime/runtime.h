@@ -22,6 +22,10 @@ class RunTimeSystem {
   void commitEvent();
   void registerForCommit(ptr p);
 
+  size_t numberOfUncommittedEvents();
+  size_t size();
+  size_t currentEventLength();
+
   // headers with private data members for all built-in types
   STACK_ASSIGN_RESTORE_HEADER(bool,bool);
   STACK_ASSIGN_RESTORE_HEADER(char,char);
@@ -38,14 +42,12 @@ class RunTimeSystem {
   STACK_ASSIGN_RESTORE_HEADER(long double,longdouble);
 
   // headers for ptr handling
+ private:
   stack<pair<ptr*, ptr> > stack_ptr;
+  void restore_ptr();
+ public:
   ptr assignptr(ptr* address, ptr value);
   ptr* avpushptr(ptr* address);
-  void restore_ptr();
-
-  size_t numberOfUncommittedEvents();
-  size_t size();
-  size_t currentEventLength();
 
  public:
   void init_stack_info(); // must be called to initialize run-time-system
