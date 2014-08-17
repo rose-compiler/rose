@@ -15,39 +15,12 @@ namespace Backstroke {
 class RunTimeSystem {
  public:
   RunTimeSystem();
- private:
-  enum BuiltInType {
-    BITYPE_BOOL,
-    BITYPE_CHAR,
-    BITYPE_SHORT_INT,
-    BITYPE_INT,
-    BITYPE_LONG_INT,
-    BITYPE_LONG_LONG_INT,
-    BITYPE_USHORT_INT,
-    BITYPE_UINT,
-    BITYPE_ULONG_INT,
-    BITYPE_ULONG_LONG_INT,
-    BITYPE_FLOAT,
-    BITYPE_DOUBLE,
-    BITYPE_LONG_DOUBLE,
-    BITYPE_PTR,
-    BITYPE_NUM
-  };
   typedef void* ptr;
- public:
   void initializeForwardEvent();
   void finalizeForwardEvent();
   void reverseEvent();
   void commitEvent();
- private:
-  struct EventRecord {
-    stack<BuiltInType> stack_bitype;
-    queue<ptr> registered_heapalloc_queue;
-  };
-  deque<EventRecord*> eventRecordDeque;
- public:
   void registerForCommit(ptr p);
-  void restore(BuiltInType bitype);
 
   // headers with private data members for all built-in types
   STACK_ASSIGN_RESTORE_HEADER(bool,bool);
@@ -67,22 +40,47 @@ class RunTimeSystem {
   // headers for ptr handling
   stack<pair<ptr*, ptr> > stack_ptr;
   ptr assignptr(ptr* address, ptr value);
+  ptr* avpushptr(ptr* address);
   void restore_ptr();
 
   size_t numberOfUncommittedEvents();
-  size_t numberOfObjectsRegisteredForCommit();
   size_t size();
   size_t currentEventLength();
- private:
-  size_t typeSize(BuiltInType biType);
- private:
-  EventRecord* currentEventRecord;
-  // STACK/HEAP detection
+
  public:
-  void init_stack_info();
+  void init_stack_info(); // must be called to initialize run-time-system
   void print_stack_info();
   bool is_stack_ptr(void *ptr);
+
  private:
+  enum BuiltInType {
+    BITYPE_BOOL,
+    BITYPE_CHAR,
+    BITYPE_SHORT_INT,
+    BITYPE_INT,
+    BITYPE_LONG_INT,
+    BITYPE_LONG_LONG_INT,
+    BITYPE_USHORT_INT,
+    BITYPE_UINT,
+    BITYPE_ULONG_INT,
+    BITYPE_ULONG_LONG_INT,
+    BITYPE_FLOAT,
+    BITYPE_DOUBLE,
+    BITYPE_LONG_DOUBLE,
+    BITYPE_PTR,
+    BITYPE_NUM
+  };
+  void restore(BuiltInType bitype);
+  struct EventRecord {
+    void deallocateHeapQueue();
+    stack<BuiltInType> stack_bitype;
+    queue<ptr> registeredHeapQueue;
+  };
+  deque<EventRecord*> eventRecordDeque;
+  size_t typeSize(BuiltInType biType);
+  EventRecord* currentEventRecord;
+
+  // STACK/HEAP detection
   uintptr_t prog_stack_bottom;
   uintptr_t prog_stack_local; // can be set to function stack (default: same as stack_bottom)
   uintptr_t prog_stack_max;
