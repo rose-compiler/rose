@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+INCLUDES = $(ROSE_INCLUDES)
 
 # Later add EDG_1.4, EDG_3.3, Open64, SAGE_III
 # SUBDIRS = SageIII EDG EDG_SAGE_Connection
@@ -51,3 +52,34 @@ endif
 # as part of adding the Fortran 2003 support using the Open Fortan Parser.
 EXTRA_DIST = CMakeLists.txt frontend.docs
 
+#------------------------------------------------------------------------------------------------------------------------
+# Binary partitioner -- partitions instructions into basic blocks and functions.  Header files must be installed under
+# the Partitioner2 subdirectory and included as <Partitioner2/*.h> to avoid conflicts with other headers.
+noinst_LTLIBRARIES = libPartitioner2.la
+
+libPartitioner2_la_SOURCES =			\
+	Partitioner2/AddressUsageMap.C		\
+	Partitioner2/BasicBlock.C		\
+	Partitioner2/ControlFlowGraph.C		\
+	Partitioner2/DataBlock.C		\
+	Partitioner2/Exception.C		\
+	Partitioner2/Function.C			\
+	Partitioner2/InstructionProvider.C	\
+	Partitioner2/OwnedDataBlock.C		\
+	Partitioner2/Partitioner.C		\
+	Partitioner2/Semantics.C		\
+	Partitioner2/Utility.C
+
+nobase_pkginclude_HEADERS=			\
+	Partitioner2/AddressUsageMap.h		\
+	Partitioner2/BasicBlock.h		\
+	Partitioner2/BasicTypes.h		\
+	Partitioner2/ControlFlowGraph.h		\
+	Partitioner2/DataBlock.h		\
+	Partitioner2/Exception.h		\
+	Partitioner2/Function.h			\
+	Partitioner2/InstructionProvider.h	\
+	Partitioner2/OwnedDataBlock.h		\
+	Partitioner2/Partitioner.h		\
+	Partitioner2/Semantics.h		\
+	Partitioner2/Utility.h
