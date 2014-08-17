@@ -7,14 +7,12 @@
 #include <DisassemblerMips.h>
 #include <DisassemblerX86.h>
 #include <DisassemblerM68k.h>
+#include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Utility.h>
 
-#include <map>
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
-#include <string>
-
-#include "Partitioner2.h"
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
@@ -232,9 +230,9 @@ public:
         size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits();
         BOOST_FOREACH (rose_addr_t successorVa, args.partitioner->basicBlockGhostSuccessors(args.bblock)) {
             args.bblock->insertSuccessor(successorVa, nBits);
-            args.partitioner->mlog[INFO] <<"opaque predicate at "
-                                         <<StringUtility::addrToString(args.bblock->instructions().back()->get_address())
-                                         <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
+            P2::mlog[INFO] <<"opaque predicate at "
+                           <<StringUtility::addrToString(args.bblock->instructions().back()->get_address())
+                           <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
         }
         return chain;
     }
@@ -243,11 +241,11 @@ public:
 // Looks for m68k instruction prologues;  Look for a LINK.W whose first argument is A6
 class MatchM68kLink: public P2::Partitioner::FunctionPrologueMatcher {
 protected:
-    P2::Partitioner::Function::Ptr function_;
+    P2::Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchM68kLink); }
 
-    virtual P2::Partitioner::Function::Ptr function() const {
+    virtual P2::Function::Ptr function() const {
         return function_;
     }
 
@@ -260,7 +258,7 @@ public:
             if (insn->get_kind()==m68k_link && args.size()==2) {
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
                     if (rre->get_descriptor()==REG_A6) {
-                        function_ = P2::Partitioner::Function::instance(anchor);
+                        function_ = P2::Function::instance(anchor);
                         return true;
                     }
                 }
@@ -271,13 +269,13 @@ public:
 };
 
 #if 0 // [Robb P. Matzke 2014-08-13]
-class MatchX86Prologue: public P2::Partitioner::FunctionPrologueMatcher {
+class MatchX86Prologue: public P2::FunctionPrologueMatcher {
 protected:
-    P2::Partitioner::Function::Ptr function_;
+    P2::Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchX86Prologue); }
 
-    virtual P2::Partitioner::Function::Ptr function() const {
+    virtual P2::Function::Ptr function() const {
         return function_;
     }
 
@@ -344,7 +342,7 @@ public:
                 return false;
         }
 
-        function_ = P2::Partitioner::Function::instance(anchor);
+        function_ = P2::Function::instance(anchor);
         return true;
     }
 };
@@ -354,11 +352,11 @@ public:
 // was processed, false if not.
 static bool
 findBasicBlock(P2::Partitioner &partitioner) {
-    P2::Partitioner::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
+    P2::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
     if (worklist->nInEdges() > 0) {
-        P2::Partitioner::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-        partitioner.mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
-        P2::Partitioner::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
+        P2::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
+        P2::mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
+        P2::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
         partitioner.attachBasicBlock(placeholder, bb);
         return true;
     }
@@ -369,8 +367,8 @@ findBasicBlock(P2::Partitioner &partitioner) {
 // it to the partitioner, increment the starting address, and return true.  Otherwise do nothing and return false.
 static bool
 findFunctionPrologue(P2::Partitioner &partitioner, rose_addr_t &startVa /*in,out*/) {
-    if (P2::Partitioner::Function::Ptr function = partitioner.nextFunctionPrologue(startVa)) {
-        partitioner.mlog[WHERE] <<"\nFound prologue for " <<partitioner.functionName(function) <<"\n";
+    if (P2::Function::Ptr function = partitioner.nextFunctionPrologue(startVa)) {
+        P2::mlog[WHERE] <<"\nFound prologue for " <<partitioner.functionName(function) <<"\n";
         startVa = function->address() + 1;              // advance the search point past the start of the function
         partitioner.attachFunction(function);           // also adds the function entry address to our work list
         return true;
@@ -386,8 +384,8 @@ findFunctionBlocks(P2::Partitioner &partitioner) {
     // blocks for each. Attach the functions and their blocks to the CFG.  The discoverFunctionEntryVertices returns a list of
     // functions, some of which are already attached to the CFG/AUM and some which are detached.  Before we add new basic
     // blocks to a function we must detach it from the CFG/AUM.
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.discoverFunctionEntryVertices()) {
-        partitioner.mlog[WHERE] <<"Discovering blocks for " <<partitioner.functionName(function) <<"\n";
+    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.discoverFunctionEntryVertices()) {
+        P2::mlog[WHERE] <<"Discovering blocks for " <<partitioner.functionName(function) <<"\n";
         partitioner.detachFunction(function);
         if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL))
             ++nProcessed;
@@ -397,7 +395,7 @@ findFunctionBlocks(P2::Partitioner &partitioner) {
 }
 
 static size_t
-findDeadCode(P2::Partitioner &partitioner, const P2::Partitioner::Function::Ptr &function) {
+findDeadCode(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     ASSERT_not_null(function);
     size_t nProcessed = 0;
     while (1) {
@@ -406,14 +404,14 @@ findDeadCode(P2::Partitioner &partitioner, const P2::Partitioner::Function::Ptr 
             break;
         partitioner.detachFunction(function);           // so we can modify its basic block ownership list
         BOOST_FOREACH (rose_addr_t ghost, ghosts) {
-            partitioner.mlog[INFO] <<partitioner.functionName(function) <<" has dead code at "
-                                   <<StringUtility::addrToString(ghost) <<"\n";
+            P2::mlog[INFO] <<partitioner.functionName(function) <<" has dead code at "
+                           <<StringUtility::addrToString(ghost) <<"\n";
             partitioner.insertPlaceholder(ghost);       // ensure a basic block gets created here
             function->insertBasicBlock(ghost);          // the function will own this basic block
         }
         while (findBasicBlock(partitioner))/*void*/;    // discover basic blocks recursively
         if (partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
-            partitioner.mlog[WARN] <<"cannot create " <<partitioner.functionName(function) <<"\n";
+            P2::mlog[WARN] <<"cannot create " <<partitioner.functionName(function) <<"\n";
             break;
         }
         partitioner.attachFunction(function);           // reattach the function to the CFG/AUM
@@ -426,7 +424,7 @@ findDeadCode(P2::Partitioner &partitioner, const P2::Partitioner::Function::Ptr 
 static size_t
 findDeadCode(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions())
+    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
         nProcessed += findDeadCode(partitioner, function);
     return nProcessed;
 }
@@ -437,7 +435,7 @@ findDeadCode(P2::Partitioner &partitioner) {
 static size_t
 findFunctionPadding(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions()) {
+    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
         rose_addr_t entryVa = function->address();
         rose_addr_t paddingVa = entryVa;
         uint8_t buf[2];
@@ -469,7 +467,7 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textAr
     BOOST_FOREACH (const AddressInterval &interval, unused.nodes()) {
         if (interval.least()<=textArea.least() || interval.greatest()>=textArea.greatest())
             continue;
-        typedef std::vector<P2::Partitioner::Function::Ptr> Functions;
+        typedef std::vector<P2::Function::Ptr> Functions;
         Functions beforeFuncs = partitioner.functionsOverlapping(interval.least()-1);
         Functions afterFuncs = partitioner.functionsOverlapping(interval.greatest()+1);
 
@@ -481,10 +479,10 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textAr
 
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
-            BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, enclosingFuncs) {
-                partitioner.mlog[INFO] <<partitioner.functionName(function) <<" has "
-                                       <<StringUtility::plural(interval.size(), "bytes") <<" of static data at "
-                                       <<StringUtility::addrToString(interval.least()) <<"\n";
+            BOOST_FOREACH (const P2::Function::Ptr &function, enclosingFuncs) {
+                P2::mlog[INFO] <<partitioner.functionName(function) <<" has "
+                               <<StringUtility::plural(interval.size(), "bytes") <<" of static data at "
+                               <<StringUtility::addrToString(interval.least()) <<"\n";
                 partitioner.attachFunctionDataBlock(function, interval.least(), interval.size());
             }
             ++nProcessed;
@@ -494,9 +492,9 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textAr
 }
 
 int main(int argc, char *argv[]) {
-    // Do this explicitly since the partitioner is not yet part of librose
+    // Do this explicitly since librose doesn't do this automatically yet
     Diagnostics::initialize();
-    P2::Partitioner::initDiagnostics();
+
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-16]: make progress reporting more fluid than normal
     Sawyer::ProgressBarSettings::initialDelay(0.5);
     Sawyer::ProgressBarSettings::minimumUpdateInterval(0.05);
@@ -548,33 +546,31 @@ int main(int argc, char *argv[]) {
     
 
     // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
-    BOOST_FOREACH (const P2::Partitioner::Function::Ptr &function, partitioner.functions()) {
-        P2::Partitioner::EdgeList inwardConflictEdges, outwardConflictEdges;
+    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+        P2::EdgeList inwardConflictEdges, outwardConflictEdges;
         partitioner.detachFunction(function);           // temporarily detach so we can call discoverFunctionBasicBlocks
         if (0==partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
             partitioner.attachFunction(function);
         } else {
-            partitioner.mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
-                                   <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
-                                   <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
-            BOOST_FOREACH (const P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges) {
+            P2::mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
+                           <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
+                           <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
+            BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges) {
                 using namespace P2;                     // to pick up operator<< for *edge
-                partitioner.mlog[WARN] <<"  inward conflict " <<*edge
-                                       <<" from " <<partitioner.functionName(edge->source()->value().function())
-                                        <<"\n";
+                P2::mlog[WARN] <<"  inward conflict " <<*edge
+                               <<" from " <<partitioner.functionName(edge->source()->value().function()) <<"\n";
             }
-            BOOST_FOREACH (const P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, outwardConflictEdges) {
+            BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNodeIterator &edge, outwardConflictEdges) {
                 using namespace P2;                     // to pick up operator<< for *edge
-                partitioner.mlog[WARN] <<"  outward conflict " <<*edge
-                                       <<" to " <<partitioner.functionName(edge->target()->value().function())
-                                       <<"\n";
+                P2::mlog[WARN] <<"  outward conflict " <<*edge
+                               <<" to " <<partitioner.functionName(edge->target()->value().function()) <<"\n";
             }
 #if 0 // [Robb P. Matzke 2014-08-13]
             // Forcibly insert the target vertex for inward-conflicting edges and try again.
-            BOOST_FOREACH (P2::Partitioner::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
+            BOOST_FOREACH (P2::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
                 function->insertBasicBlock(edge->target()->value().address());
             if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
-                partitioner.mlog[WARN] <<"  conflicts have been overridden\n";
+                P2::mlog[WARN] <<"  conflicts have been overridden\n";
                 partitioner.insertFunction(function);
             }
 #endif
@@ -615,9 +611,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.doListFunctionAddresses) {
-        BOOST_FOREACH (P2::Partitioner::Function::Ptr function, partitioner.functions()) {
+        BOOST_FOREACH (P2::Function::Ptr function, partitioner.functions()) {
             rose_addr_t entryVa = function->address();
-            P2::Partitioner::BasicBlock::Ptr bb = partitioner.basicBlockExists(entryVa);
+            P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(entryVa);
             std::cout <<partitioner.functionName(function) <<": "
                       <<(bb && !bb->isEmpty() ? "exists" : "missing") <<"\n";
         }

@@ -279,6 +279,18 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/Diagnostics.C
      )
 
+set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUsageMap.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/BasicBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ControlFlowGraph.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Exception.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Function.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/InstructionProvider.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/OwnedDataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Partitioner.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Semantics.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Utility.C
+)
 
 
 set(roseDisassemblers_SRC
@@ -976,6 +988,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${virtualCFG_SRC}
  ${AstFromString_SRC}
  ${rose_support_src}
+ ${rosePartitioner2_SRC}
  ${roseDisassemblers_SRC}
  ${roseBinaryFormats_fileList_part0}
  ${roseBinaryLoader_SRC}

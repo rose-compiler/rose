@@ -14,7 +14,7 @@ linearDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # disassembler using the new partitioner
 
 bin_PROGRAMS += recursiveDisassemble
-recursiveDisassemble_SOURCES = InstructionProvider.C PartitionerSemantics.C Partitioner2.C recursiveDisassemble.C
+recursiveDisassemble_SOURCES = recursiveDisassemble.C
 recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

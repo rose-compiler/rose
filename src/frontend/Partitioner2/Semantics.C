@@ -1,9 +1,12 @@
-#include "PartitionerSemantics.h"
+#include "sage3basic.h"
+#include <Partitioner2/Semantics.h>
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Semantics {
+
+namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 BaseSemantics::SValuePtr
 RiscOperators::trim(const BaseSemantics::SValuePtr &a_) {
