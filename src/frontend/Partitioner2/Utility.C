@@ -62,7 +62,7 @@ sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator &a,
                       const ControlFlowGraph::ConstVertexNodeIterator &b) {
     const CfgVertex &av = a->value();
     const CfgVertex &bv = b->value();
-    if (av.type() != bv.type() || av.type() != V_BASICBLOCK)
+    if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
         return av.type() < bv.type();
     return av.address() < bv.address();
 }

@@ -23,6 +23,10 @@
 
 namespace rose {
 namespace BinaryAnalysis {
+
+/** Binary function detection.
+ *
+ *  @sa rose::BinaryAnalysis::Partitioner2::Partitioner */
 namespace Partitioner2 {
 
 /** Partitions instructions into basic blocks and functions.

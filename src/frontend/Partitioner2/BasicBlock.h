@@ -108,7 +108,7 @@ public:
     rose_addr_t fallthroughVa() const;
 
     /** Get the number of instructions in this block. */
-    size_t nInsns() const { return insns_.size(); }
+    size_t nInstructions() const { return insns_.size(); }
 
     /** Return true if this block has no instructions. */
     bool isEmpty() const { return insns_.empty(); }

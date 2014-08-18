@@ -26,17 +26,17 @@ private:
 
 public:
     /** Construct a basic block placeholder vertex. */
-    explicit CfgVertex(rose_addr_t startVa): type_(V_BASICBLOCK), startVa_(startVa) {}
+    explicit CfgVertex(rose_addr_t startVa): type_(V_BASIC_BLOCK), startVa_(startVa) {}
 
     /** Construct a basic block vertex. */
-    explicit CfgVertex(const BasicBlock::Ptr &bb): type_(V_BASICBLOCK), bblock_(bb) {
+    explicit CfgVertex(const BasicBlock::Ptr &bb): type_(V_BASIC_BLOCK), bblock_(bb) {
         ASSERT_not_null(bb);
         startVa_ = bb->address();
     }
 
     /** Construct a special vertex. */
     explicit CfgVertex(VertexType type): type_(type), startVa_(0) {
-        ASSERT_forbid2(type==V_BASICBLOCK, "this constructor does not create basic block or placeholder vertices");
+        ASSERT_forbid2(type==V_BASIC_BLOCK, "this constructor does not create basic block or placeholder vertices");
     }
 
     /** Returns the vertex type. */
@@ -44,7 +44,7 @@ public:
 
     /** Return the starting address of a placeholder or basic block. */
     rose_addr_t address() const {
-        ASSERT_require(V_BASICBLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_);
         return startVa_;
     }
 
@@ -52,7 +52,7 @@ public:
      *
      *  A null pointer is returned when the vertex is only a basic block placeholder. */
     const BasicBlock::Ptr& bblock() const {
-        ASSERT_require(V_BASICBLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_);
         return bblock_;
     }
 
@@ -61,7 +61,7 @@ public:
      *  A basic block may belong to a function, in which case the function pointer is returned. Otherwise the null pointer is
      *  returned. */
     const Function::Ptr& function() const {
-        ASSERT_require(V_BASICBLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_);
         return function_;
     }
 
@@ -69,7 +69,7 @@ public:
      *
      *  The basic block pointer is reset to null. */
     void nullify() {
-        ASSERT_require(V_BASICBLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_);
         bblock_ = BasicBlock::Ptr();
     }
 

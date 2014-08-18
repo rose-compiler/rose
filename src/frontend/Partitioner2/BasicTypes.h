@@ -7,7 +7,7 @@ namespace Partitioner2 {
 
 /** Partitioner control flow vertex types. */
 enum VertexType {
-    V_BASICBLOCK,                                       /**< A basic block or placeholder for a basic block. */
+    V_BASIC_BLOCK,                                      /**< A basic block or placeholder for a basic block. */
     V_UNDISCOVERED,                                     /**< The special "undiscovered" vertex. */
     V_INDETERMINATE,                                    /**< Special vertex destination for indeterminate edges. */
     V_NONEXISTING,                                      /**< Special vertex destination for non-existing basic blocks. */
@@ -16,8 +16,8 @@ enum VertexType {
 /** Partitioner control flow edge types. */
 enum EdgeType {
     E_NORMAL,                                           /**< Normal control flow edge, nothing special. */
-    E_FCALL,                                            /**< Edge is a function call. */
-    E_FRET,                                             /**< Edge is a function return from the call site. */
+    E_FUNCTION_CALL,                                    /**< Edge is a function call. */
+    E_CALL_RETURN,                                      /**< Edge is a function return from the call site. */
 };
 
 class Partitioner;
