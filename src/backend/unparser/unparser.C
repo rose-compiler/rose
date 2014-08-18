@@ -2187,7 +2187,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             outFolder += package_name;
             outFolder += (package_name.size() > 0 ? "/" : "");
             // Create package folder structure
-            boost::filesystem::create_directory(outFolder);
+            boost::filesystem::create_directories(outFolder);
             ROSE_ASSERT(boost::filesystem::exists(outFolder));
             outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
             // Convert Windows-style paths to POSIX-style.
