@@ -3623,6 +3623,16 @@ HEADER_JAVA_PACKAGE_STATEMENT_START
           virtual SgName get_mangled_name() const;
 HEADER_JAVA_PACKAGE_STATEMENT_END
 
+
+HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
+
+       // We need this to be defined to avoid calling the base class version (which is an error).
+          SgName get_mangled_name() const;
+
+          bool hasExplicitScope() const;
+
+HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -17109,4 +17119,34 @@ SgOmpSimdStatement::post_construction_initialization()
    {}
 SOURCE_OMP_SIMD_STATEMENT_END
 
+
+SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
+
+void
+SgMicrosoftAttributeDeclaration::post_construction_initialization()
+   {
+  // Not sure we have to do anything here!
+   }
+
+// We need this to be defined to avoid calling the base class version (which is an error).
+SgName
+SgMicrosoftAttributeDeclaration::get_mangled_name() const
+   {
+  // Not sure we have to do anything here!
+
+#if 0
+     printf ("Exiting as a test! (SgMicrosoftAttributeDeclaration::get_mangled_name() not implemented) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return "microsoft_attribute";
+   }
+
+bool
+SgMicrosoftAttributeDeclaration::hasExplicitScope() const
+   {
+  // This function reports that this IR node does NOT store its scope explicitly.
+     return false;
+   }
+SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
 

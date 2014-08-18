@@ -460,16 +460,18 @@ Grammar::setUpStatements ()
           ClinkageStartStatement | ClinkageEndStatement,
           "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT", false );
 
-    // + variable list
-    NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
-     // simplest directives, just one line 
-    NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
-    NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
+  // + variable list
+     NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
+  // simplest directives, just one line 
+     NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
+     NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
 
 
-    // + variable list
-    NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
+  // + variable list
+     NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
 
+  // DQ (8/16/2014): Adding support for Microsoft attributes (e.g. "[repeatable] int x;")
+     NEW_TERMINAL_MACRO (MicrosoftAttributeDeclaration, "MicrosoftAttributeDeclaration", "MS_ATTRIBUTE_DECL_STMT"    );
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
@@ -485,7 +487,8 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement        |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine       | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement |
-          StaticAssertionDeclaration, "DeclarationStatement", "DECL_STMT", false);
+          StaticAssertionDeclaration              | MicrosoftAttributeDeclaration, 
+          "DeclarationStatement", "DECL_STMT", false);
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -3429,6 +3432,11 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+
+     MicrosoftAttributeDeclaration.setFunctionPrototype ( "HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     MicrosoftAttributeDeclaration.setDataPrototype ("SgName", "attribute_string", "= \"\"",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
   // This support allows transformations to introduce their own macros.
@@ -3869,6 +3877,9 @@ Grammar::setUpStatements ()
 
 //    OmpClauseBodyStatement.setAutomaticGenerationOfDestructor(false);
 #endif
+
+     MicrosoftAttributeDeclaration.setFunctionSource ( "SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
    }
 
 

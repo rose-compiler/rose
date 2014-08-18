@@ -1267,6 +1267,9 @@ SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefin
 // DQ (7/25/2014): Adding support for C11 static assertions.
 ROSE_DLL_API SgStaticAssertionDeclaration* buildStaticAssertionDeclaration(SgExpression* condition, const SgName & string_literal);
 
+// DQ (8/17/2014): Adding support for Microsoft MSVC specific attributes.
+ROSE_DLL_API SgMicrosoftAttributeDeclaration* buildMicrosoftAttributeDeclaration (const SgName & name);
+
 //@}
 
 //--------------------------------------------------------------
