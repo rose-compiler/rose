@@ -17,7 +17,7 @@ namespace BackstrokeReversed {
 
 int main() {
   
-  bool verbose=false;
+  bool verbose=true;
   int n=10000;
   int nr=n*0.25;
   Timer t;
@@ -26,7 +26,6 @@ int main() {
 
   t.start();
   {
-    if(verbose)cout<<"Stack size: "<<BackstrokeReversed::rts.size()<<endl;
     for(int i=0;i<n;i++) {
       extern void func();
       func();
@@ -54,6 +53,7 @@ int main() {
     fwdTime=t.getElapsedTimeInMilliSec();
 
     t.start();
+    // TODO: nr (less than n)
     for(int i=0;i<n;i++) {
       BackstrokeReversed::rts.reverseEvent();
       if(verbose)cout<<"Stack size: "<<BackstrokeReversed::rts.size()<<endl;

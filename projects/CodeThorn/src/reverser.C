@@ -93,6 +93,7 @@ public:
   void apply();
 private:
   list<SgNode*> transformationSequence;
+  list<SgNode*> transformationSequenceCommit;
 };
 
 void TransformationSequence::reset() {
@@ -103,26 +104,39 @@ void TransformationSequence::preOrderVisit(SgNode *astNode) {
 }
 
 void TransformationSequence::postOrderVisit(SgNode *astNode) {
+  //cout<<"SgNode:"<<astNode->class_name()<<endl;
   if(isSgAssignOp(astNode)) {
-    // TODO: getLhs
-    transformationSequence.push_back(astNode);
+    SgNode* lhs;
+#if 1
+    lhs=SgNodeHelper::getLhs(astNode);
+#else
+    lhs=astNode;
+#endif
+    transformationSequence.push_back(lhs);
   }
   if(isSgPlusAssignOp(astNode)
      || isSgMinusAssignOp(astNode)
      || isSgMultAssignOp(astNode)
      || isSgDivAssignOp(astNode)
-     // %=
-     // &=
-     // |=
-     // ^=
-     // <<=
-     // >>=
+     || isSgModAssignOp(astNode) // %=
+     || isSgAndAssignOp(astNode) // &=
+     || isSgIorAssignOp(astNode) // |=
+     || isSgXorAssignOp(astNode) // ^=
+     || isSgLshiftAssignOp(astNode) // <<=
+     || isSgRshiftAssignOp(astNode) // >>=
      ) {
-    // TODO: getUnaryChild
-    transformationSequence.push_back(astNode);
+    SgNode* lhs=SgNodeHelper::getLhs(astNode);
+    transformationSequence.push_back(lhs);
   }
-  // TODO: inc/dec operators
-  // delete operator
+  if(isSgPlusPlusOp(astNode) || isSgMinusMinusOp(astNode)) {
+    SgNode* operand=SgNodeHelper::getUnaryOpChild(astNode);
+    transformationSequence.push_back(operand);
+  }
+  if(isSgDeleteExp(astNode)) {
+    // delete operator
+    //cout<<"Delete operator found but ignored: "<<astNode->unparseToString()<<endl;
+    transformationSequenceCommit.push_back(astNode);
+  }
 }
 
 // computes the list of nodes for which the bs-memory-mod transformation must be applied
@@ -140,9 +154,27 @@ void TransformationSequence::apply() {
         +", "
         +rhs->unparseToString()
         +")";
-      cout<<"DEBUG: Applying transformation "<<s<<endl;
+      cout<<"DEBUG: Applying transformation assignop: "<<s<<endl;
+      SgNodeHelper::replaceAstWithString(*i,s);
+    } else {
+      SgExpression* exp=isSgExpression(*i);
+      ROSE_ASSERT(exp);
+      string s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
+      cout<<"DEBUG: Applying transformation on operand: "<<s<<endl;
       SgNodeHelper::replaceAstWithString(*i,s);
     }
+  }
+  for(list<SgNode*>::iterator i=transformationSequenceCommit.begin();i!=transformationSequenceCommit.end();++i) {
+    // split delete operation in: 1) destructor call, 2) register for commit
+    // TODO: implement as proper AST manipulation
+    SgNode* operand=SgNodeHelper::getFirstChild(*i);
+    SgExpression* deleteOperand=isSgExpression(operand);
+    string typeName=deleteOperand->get_type()->unparseToString();
+    typeName.erase(typeName.size()-1); // remove trailing "*" (must be pointer)
+    string destructorCall="~"+typeName+"()";
+    string registerCall=string(";rts.registerForCommit((void*)")+operand->unparseToString()+")";
+    string code=destructorCall+registerCall;
+    SgNodeHelper::replaceAstWithString(*i,code);
   }
 }
 
