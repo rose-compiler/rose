@@ -159,8 +159,33 @@ test2014_02.C \
 test2014_03.C \
 test2014_04.C \
 test2014_05.C \
-test2014_06.C
+test2014_06.C 
 
+if ROSE_USE_MICROSOFT_EXTENSIONS
+# Linux support does not include Microsoft support (at the same time), so these 
+# tests fail unless we have configured with --enable-microsoft-extensions.
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2014_07.C \
+test2014_08.C \
+test2014_09.C \
+test2014_10.C \
+test2014_11.C \
+test2014_12.C \
+test2014_13.C \
+test2014_14.C \
+test2014_15.C \
+test2014_16.C \
+test2014_17.C \
+test2014_18.C \
+test2014_19.C \
+test2014_20.C \
+test2014_21.C \
+test2014_22.C \
+test2014_23.C 
+endif
+
+# Waiting for commit from Zack.
+# hello.C
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -198,10 +223,12 @@ $(TESTCODE_CURRENTLY_FAILING)
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 # SKIP_UNPARSE_C_ASM_STATEMENTS = 
 
+# DQ (8/18/2014): When unparsing Microsoft extensions we can't pass this the generated code to the GNU g++ compiler.
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
 
 # DQ (3/10/2013): Add the Boost path so that the case where Boost is not installed in /usr/include is covered.
 # Some of these test codes reference A++ header files as part of their tests

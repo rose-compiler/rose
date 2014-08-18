@@ -8651,6 +8651,21 @@ SgStaticAssertionDeclaration* SageBuilder::buildStaticAssertionDeclaration(SgExp
    }
 
 
+// DQ (8/17/2014): Adding support for Microsoft MSVC specific attributes.
+SgMicrosoftAttributeDeclaration* SageBuilder::buildMicrosoftAttributeDeclaration (const SgName & attribute_string)
+   {
+     SgMicrosoftAttributeDeclaration* result = new SgMicrosoftAttributeDeclaration(attribute_string);
+     ROSE_ASSERT(result != NULL);
+
+  // DQ (8/17/2014): It is enforced that at least the firstNondefiningDeclaration be set.
+     ROSE_ASSERT(result->get_firstNondefiningDeclaration() == NULL);
+     result->set_firstNondefiningDeclaration(result);
+     ROSE_ASSERT(result->get_firstNondefiningDeclaration() != NULL);
+
+     setOneSourcePositionForTransformation(result);
+
+     return result;
+   }
 
 //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
 // This does not work properly since the global scope expects declaration statement, not just SgNullStatement
