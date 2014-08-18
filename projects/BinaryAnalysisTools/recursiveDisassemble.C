@@ -7,6 +7,7 @@
 #include <DisassemblerMips.h>
 #include <DisassemblerX86.h>
 #include <DisassemblerM68k.h>
+#include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
@@ -57,6 +58,7 @@ struct Settings {
     std::string isaName;                                // instruction set architecture name
     rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
     bool followGhostEdges;                              // do we ignore opaque predicates?
+    bool findSwitchCases;                               // search for C-like "switch" statement cases
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     bool doListCfg;                                     // list the control flow graph
@@ -66,7 +68,7 @@ struct Settings {
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(0), followGhostEdges(false), findDeadCode(true), intraFunctionData(true),
+        : mapVa(0), followGhostEdges(false), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
           doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
           doShowStats(false), doListUnused(false) {}
 };
@@ -120,6 +122,15 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("no-find-dead-code")
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
+               .hidden(true));
+    dis.insert(Switch("find-switch-cases")
+               .intrinsicValue(true, settings.findSwitchCases)
+               .doc("Scan for common encodings of C-like \"switch\" statements so that the cases can be disassembled. The "
+                    "@s{no-find-switch-cases} switch turns this off.  The default is " +
+                    std::string(settings.findSwitchCases?"true":"false") + "."));
+    dis.insert(Switch("no-find-switch-cases")
+               .key("find-switch-cases")
+               .intrinsicValue(false, settings.findSwitchCases)
                .hidden(true));
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
@@ -202,19 +213,19 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 // Example of watching CFG changes.  Sort of stupid, but fun to watch.  A more useful monitor might do things like adjust
 // work-lists that are defined by the user.  In any case, a CFG monitor is a good place to track progress if you need to do
 // that.
-class Monitor: public P2::Partitioner::CfgAdjustmentCallback {
+class Monitor: public P2::CfgAdjustmentCallback {
 public:
     static Ptr instance() { return Ptr(new Monitor); }
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) {
         std::cerr <<"+";
         if (args.bblock)
-            std::cerr <<std::string(args.bblock->nInsns(), '.');
+            std::cerr <<std::string(args.bblock->nInstructions(), '.');
         return chain;
     }
     virtual bool operator()(bool chain, const DetachedBasicBlock &args) {
         std::cerr <<"-";
         if (args.bblock)
-            std::cerr <<"-" <<std::string(args.bblock->nInsns(), '.');
+            std::cerr <<"-" <<std::string(args.bblock->nInstructions(), '.');
         return chain;
     }
 };
@@ -222,7 +233,7 @@ public:
 // Example of making adjustments to basic block successors.  If this callback is registered with the partitioner, then it will
 // add ghost edges (non-taken side of branches with opaque predicates) to basic blocks as their instructions are discovered.
 // An alternative method is to investigate ghost edges after functions are discovered in order to find dead code.
-class AddGhostSuccessors: public P2::Partitioner::SuccessorCallback {
+class AddGhostSuccessors: public P2::SuccessorCallback {
 public:
     static Ptr instance() { return Ptr(new AddGhostSuccessors); }
 
@@ -235,36 +246,6 @@ public:
                            <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
         }
         return chain;
-    }
-};
-
-// Looks for m68k instruction prologues;  Look for a LINK.W whose first argument is A6
-class MatchM68kLink: public P2::Partitioner::FunctionPrologueMatcher {
-protected:
-    P2::Function::Ptr function_;
-public:
-    static Ptr instance() { return Ptr(new MatchM68kLink); }
-
-    virtual P2::Function::Ptr function() const {
-        return function_;
-    }
-
-    virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
-        if (anchor & 1)
-            return false;                               // m68k instructions must be 16-bit aligned
-        static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
-        if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
-            const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
-            if (insn->get_kind()==m68k_link && args.size()==2) {
-                if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
-                    if (rre->get_descriptor()==REG_A6) {
-                        function_ = P2::Function::instance(anchor);
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 };
 
@@ -526,7 +507,9 @@ int main(int argc, char *argv[]) {
 
     // Create the partitioner
     P2::Partitioner partitioner(disassembler, map);
-    partitioner.functionPrologueMatchers().push_back(MatchM68kLink::instance());
+    partitioner.functionPrologueMatchers().push_back(P2::ModulesM68k::MatchLink::instance());
+    if (settings.findSwitchCases)
+        partitioner.successorCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
         partitioner.successorCallbacks().append(AddGhostSuccessors::instance());
 #if 0 // [Robb P. Matzke 2014-08-16]: fun to watch, but verbose!

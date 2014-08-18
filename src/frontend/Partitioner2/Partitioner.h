@@ -8,6 +8,7 @@
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/InstructionProvider.h>
+#include <Partitioner2/Modules.h>
 #include <Partitioner2/OwnedDataBlock.h>
 
 #include <sawyer/Callbacks.h>

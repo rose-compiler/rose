@@ -97,7 +97,7 @@ Partitioner::nInstructions() const {
     BOOST_FOREACH (const CfgVertex &vertex, cfg_.vertexValues()) {
         if (vertex.type() == V_BASIC_BLOCK) {
             if (BasicBlock::Ptr bb = vertex.bblock())
-                nInsns += bb->nInsns();
+                nInsns += bb->nInstructions();
         }
     }
     return nInsns;
@@ -580,6 +580,11 @@ Partitioner::basicBlockStackDelta(const BasicBlock::Ptr &bb) const {
     }
     bb->stackDelta() = delta;
     return delta;
+}
+
+std::vector<BasicBlock::Ptr>
+Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
+    return aum_.overlapping(interval).basicBlocks();
 }
 
 SgAsmInstruction *
