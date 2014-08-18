@@ -115,6 +115,54 @@ typedef std::list<ControlFlowGraph::EdgeNodeIterator> EdgeList;
 typedef std::list<ControlFlowGraph::ConstEdgeNodeIterator> ConstEdgeList;
 /** @} */
 
+/** Base class for CFG-adjustment callbacks.
+ *
+ *  Users may create subclass objects from this class and pass their shared-ownership pointers to the partitioner, in which
+ *  case the partitioner will invoke one of the callback's virtual function operators every time the control flow graph
+ *  changes (the call occurs after the CFG has been adjusted).  Multiple callbacks are allowed; the list is obtained with
+ *  the @ref cfgAdjustmentCallbacks method. */
+class CfgAdjustmentCallback: public Sawyer::SharedObject {
+public:
+    typedef Sawyer::SharedPointer<CfgAdjustmentCallback> Ptr;
+
+    /** Arguments for attaching a basic block.
+     *
+     *  After a basic block is attached to the CFG/AUM, or after a placeholder is inserted into the CFG, these arguments
+     *  are passed to the callback.  If a basic block was attached then the @ref bblock member will be non-null, otherwise
+     *  the arguments indicate that a placeholder was inserted. This callback is invoked after the changes have been made
+     *  to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify the CFG/AUM;
+     *  this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could confuse things. */
+    struct AttachedBasicBlock {
+        const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
+        rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
+        BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
+        AttachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
+            : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
+    };
+
+    /** Arguments for detaching a basic block.
+     *
+     *  After a basic block is detached from the CFG/AUM, or after a placeholder is removed from the CFG, these arguments
+     *  are passed to the callback.  If a basic block was detached then the @ref bblock member will be non-null, otherwise
+     *  the arguments indicate that a placeholder was removed from the CFG.  This callback is invoked after the changes
+     *  have been made to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify
+     *  the CFG/AUM; this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could
+     *  confuse things. */
+    struct DetachedBasicBlock {
+        const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
+        rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
+        BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
+        DetachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
+            : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
+    };
+
+    /** Called when basic block is attached or placeholder inserted. */
+    virtual bool operator()(bool chain, const AttachedBasicBlock&) = 0;
+
+    /** Called when basic block is detached or placeholder erased. */
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) = 0;
+};
+
 } // namespace
 } // namespace
 } // namespace

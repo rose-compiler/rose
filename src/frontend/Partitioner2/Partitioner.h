@@ -943,57 +943,9 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  CFG change callbacks
+    //                                  Callbacks
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Base class for CFG-adjustment callbacks.
-     *
-     *  Users may create subclass objects from this class and pass their shared-ownership pointers to the partitioner, in which
-     *  case the partitioner will invoke one of the callback's virtual function operators every time the control flow graph
-     *  changes (the call occurs after the CFG has been adjusted).  Multiple callbacks are allowed; the list is obtained with
-     *  the @ref cfgAdjustmentCallbacks method. */
-    class CfgAdjustmentCallback: public Sawyer::SharedObject {
-    public:
-        typedef Sawyer::SharedPointer<CfgAdjustmentCallback> Ptr;
-
-        /** Arguments for attaching a basic block.
-         *
-         *  After a basic block is attached to the CFG/AUM, or after a placeholder is inserted into the CFG, these arguments
-         *  are passed to the callback.  If a basic block was attached then the @ref bblock member will be non-null, otherwise
-         *  the arguments indicate that a placeholder was inserted. This callback is invoked after the changes have been made
-         *  to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify the CFG/AUM;
-         *  this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could confuse things. */
-        struct AttachedBasicBlock {
-            const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
-            rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
-            BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
-            AttachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
-                : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
-        };
-
-        /** Arguments for detaching a basic block.
-         *
-         *  After a basic block is detached from the CFG/AUM, or after a placeholder is removed from the CFG, these arguments
-         *  are passed to the callback.  If a basic block was detached then the @ref bblock member will be non-null, otherwise
-         *  the arguments indicate that a placeholder was removed from the CFG.  This callback is invoked after the changes
-         *  have been made to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify
-         *  the CFG/AUM; this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could
-         *  confuse things. */
-        struct DetachedBasicBlock {
-            const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
-            rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
-            BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
-            DetachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
-                : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
-        };
-
-        /** Called when basic block is attached or placeholder inserted. */
-        virtual bool operator()(bool chain, const AttachedBasicBlock&) = 0;
-
-        /** Called when basic block is detached or placeholder erased. */
-        virtual bool operator()(bool chain, const DetachedBasicBlock&) = 0;
-    };
-
     /** List of all callbacks invoked when the CFG is adjusted.
      *
      *  Inserting a new callback goes something like this:
@@ -1017,94 +969,22 @@ public:
 private:
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Basic block successor callacks
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-
-    /** Base class for adjusting basic block successors.
+    /** Callbacks for adjusting basic block successors.
      *
-     *  As each instruction of a basic block is discovered the partitioner calculates its control flow successors to decide
-     *  what to do.  The successors are calculated primarily by evaluating the basic block instructions in a symbolic domain,
-     *  and if that fails, by looking at the final instruction's concrete successors.  Once these successors are obtained, the
-     *  partitioner invokes user callbacks so that the user has a chance to make adjustments. */
-    class SuccessorCallback: public Sawyer::SharedObject {
-    public:
-        typedef Sawyer::SharedPointer<SuccessorCallback> Ptr;
-
-        struct Args {
-            const Partitioner *partitioner;
-            BasicBlock::Ptr bblock;
-            Args(const Partitioner *partitioner, const BasicBlock::Ptr &bblock)
-                : partitioner(partitioner), bblock(bblock) {}
-        };
-
-        virtual bool operator()(bool chain, const Args&) = 0;
-    };
-
+     *  Each time an instruction is appended to a basic block these callbacks are invoked to make adjustments to the successor
+     *  list.  See @ref SuccessorCallback for details.
+     *
+     *  @{ */
     typedef Sawyer::Callbacks<SuccessorCallback::Ptr> SuccessorCallbacks;
     SuccessorCallbacks& successorCallbacks() { return successorCallbacks_; }
     const SuccessorCallbacks& successorCallbacks() const { return successorCallbacks_; }
+    /** @} */
 
 private:
     SuccessorCallbacks successorCallbacks_;
-    
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Instruction/byte pattern matching
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-
-    /** Base class for matching an instruction pattern.
-     *
-     *  Instruction matchers are generally reference from the partitioner via shared-ownership pointers.  Subclasses must
-     *  implement a @ref match method that performs the actual matching. */
-    class InstructionMatcher: public Sawyer::SharedObject {
-    public:
-        /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-         *  partitioners are copied. */
-        typedef Sawyer::SharedPointer<InstructionMatcher> Ptr;
-
-        /** Attempt to match an instruction pattern.
-         *
-         *  If the subclass implementation is able to match instructions, bytes, etc. anchored at the @p anchor address then it
-         *  should return true, otherwise false.  The anchor address will always be valid for the situation (e.g., if the
-         *  partitioner is trying to match something anchored at an address that is not in the CFG, then the @p anchor will be
-         *  such an address; if it is trying to match something that is definitely an instruction then the address will be
-         *  mapped with execute permission; etc.).  This precondition makes writing matchers that match against a single
-         *  address easier to write, but matchers that match at additional locations must explicitly check those other
-         *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
-         *  argument). */
-        virtual bool match(Partitioner*, rose_addr_t anchor) = 0;
-    };
-
-    /** Base class for matching function prologues.
-     *
-     *  A function prologue is a pattern of bytes or instructions that typically mark the beginning of a function.  For
-     *  instance, many x86-based functions start with "PUSH EBX; MOV EBX, ESP" while many M68k functions begin with a single
-     *  LINK instruction affecting the A6 register.  A subclass must implement the @ref match method that does the actual
-     *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref function method to
-     *  obtain a function object.
-     *
-     *  The matcher will be called only with anchor addresses that are mapped with execute permission and which are not a
-     *  starting address of any instruction in the CFG.  The matcher should ensure similar conditions are met for any
-     *  additional addresses, especially the address returned by @ref functionVa. */
-    class FunctionPrologueMatcher: public InstructionMatcher {
-    public:
-        /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-         *  partitioners are copied. */
-        typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
-
-        /** Returns the function for the previous successful match.  If the previous call to @ref match returned true then this
-         *  method should return a function for the matched function prologue.  Although the function returned by this method
-         *  is often at the same address as the anchor for the match, it need not be.  For instance, a matcher could match
-         *  against some amount of padding followed the instructions for setting up the stack frame, in which case it might
-         *  choose to return a function that starts at the stack frame setup instructions and includes the padding as static
-         *  data. The partitioner will never call @ref function without first having called @ref match. */
-        virtual Function::Ptr function() const = 0;
-    };
-
     /** Ordered list of function prologue matchers.
      *
      *  @{ */
@@ -1238,10 +1118,6 @@ public:
     bool isReportingProgress() const { return isReportingProgress_; }
     /** @} */
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Exceptions
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
