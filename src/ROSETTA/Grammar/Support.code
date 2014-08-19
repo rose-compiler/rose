@@ -992,13 +992,15 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
        */
           enum special_function_modifier_enum
              {
-               e_unknown     = 0,         /*!< error value */
-               e_default     = 1,         /*!< Not a special function (default) */
-               e_none        = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
-               e_constructor = 2,         /*!< A constructor */
-               e_destructor  = 3,         /*!< A destructor */
-               e_conversion  = 4,         /*!< A conversion operator function */
-               e_operator    = 5,         /*!< Any other operator function */
+               e_unknown            = 0,         /*!< error value */
+               e_default            = 1,         /*!< Not a special function (default) */
+               e_none               = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
+               e_constructor        = 2,         /*!< A constructor */
+               e_destructor         = 3,         /*!< A destructor */
+               e_conversion         = 4,         /*!< A conversion operator function */
+               e_operator           = 5,         /*!< Any other operator function */
+               e_uld_operator       = 6,         /*!< ULD operator function (operators on literals) */
+               e_lambda_entry_point = 7,   /*!< C++11 lambda support */
                e_last_modifier            /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -1038,6 +1040,14 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
           void setOperator();
           void unsetOperator();
 
+          bool isUldOperator() const;
+          void setUldOperator();
+          void unsetUldOperator();
+
+          bool isLambdaEntryPoint() const;
+          void setLambdaEntryPoint();
+          void unsetLambdaEntryPoint();
+
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m );
@@ -1068,10 +1078,33 @@ HEADER_DECLARATION_MODIFIER_START
                e_export        = 4,  /*!< Export qualifier */
                e_throw         = 5,  /*!< Exception handling support (throw) */
                e_bind          = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
-               e_final         = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+               e_final         = 7,  /*!< PHP, Java, and C++11 support for specification to not be extended */
+               e_override      = 8,  /*!< C++11 support for specification to not be extended */
 
             // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
-               e_java_abstract = 8,  /*!< abstract keyword for Java functions, classes and interfaces */
+               e_java_abstract = 9,  /*!< abstract keyword for Java functions, classes and interfaces */
+
+               e_ms_declspec_align        = 10, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_allocate     = 11, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_appdomain    = 12, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_code_seg     = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_deprecated   = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_dllimport    = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_dllexport    = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_jitintrinsic = 17, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_naked        = 18, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noalias      = 19, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noinline     = 20, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noreturn     = 21, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_nothrow      = 22, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_novtable     = 23, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_process      = 24, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_property     = 25, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_restrict     = 26, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_safebuffers  = 27, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_selectany    = 28, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_thread       = 29, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_uuid         = 30, /*!< Microsoft declspec() attributes */
 
                e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
@@ -1139,15 +1172,125 @@ HEADER_DECLARATION_MODIFIER_START
           void setBind();
           void unsetBind();
 
-       // PHP and Java specific attribute
+       // PHP, Java, and C++11 specific attribute
           bool isFinal() const;
           void setFinal();
           void unsetFinal();
+
+       // C++11 specific attribute
+          bool isOverride() const;
+          void setOverride();
+          void unsetOverride();
 
        // DQ (8/11/2011): Added Java specific "abstract" attribute.
           bool isJavaAbstract() const;
           void setJavaAbstract();
           void unsetJavaAbstract();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_align() const;
+          void set_ms_declspec_align();
+          void unset_ms_declspec_align();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_allocate() const;
+          void set_ms_declspec_allocate();
+          void unset_ms_declspec_allocate();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_appdomain() const;
+          void set_ms_declspec_appdomain();
+          void unset_ms_declspec_appdomain();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_code_seg() const;
+          void set_ms_declspec_code_seg();
+          void unset_ms_declspec_code_seg();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_deprecated() const;
+          void set_ms_declspec_deprecated();
+          void unset_ms_declspec_deprecated();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_dllimport() const;
+          void set_ms_declspec_dllimport();
+          void unset_ms_declspec_dllimport();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_dllexport() const;
+          void set_ms_declspec_dllexport();
+          void unset_ms_declspec_dllexport();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_jitintrinsic() const;
+          void set_ms_declspec_jitintrinsic();
+          void unset_ms_declspec_jitintrinsic();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_naked() const;
+          void set_ms_declspec_naked();
+          void unset_ms_declspec_naked();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_noalias() const;
+          void set_ms_declspec_noalias();
+          void unset_ms_declspec_noalias();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_noinline() const;
+          void set_ms_declspec_noinline();
+          void unset_ms_declspec_noinline();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_noreturn() const;
+          void set_ms_declspec_noreturn();
+          void unset_ms_declspec_noreturn();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_nothrow() const;
+          void set_ms_declspec_nothrow();
+          void unset_ms_declspec_nothrow();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_novtable() const;
+          void set_ms_declspec_novtable();
+          void unset_ms_declspec_novtable();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_process() const;
+          void set_ms_declspec_process();
+          void unset_ms_declspec_process();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_property() const;
+          void set_ms_declspec_property();
+          void unset_ms_declspec_property();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_restrict() const;
+          void set_ms_declspec_restrict();
+          void unset_ms_declspec_restrict();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_safebuffers() const;
+          void set_ms_declspec_safebuffers();
+          void unset_ms_declspec_safebuffers();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_selectany() const;
+          void set_ms_declspec_selectany();
+          void unset_ms_declspec_selectany();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_thread() const;
+          void set_ms_declspec_thread();
+          void unset_ms_declspec_thread();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_uuid() const;
+          void set_ms_declspec_uuid();
+          void unset_ms_declspec_uuid();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -2779,6 +2922,14 @@ bool $CLASSNAME::isOperator() const    { return checkBit(e_operator,p_modifierVe
 void $CLASSNAME::setOperator()         { setBit(e_operator,p_modifierVector); }
 void $CLASSNAME::unsetOperator()       { unsetBit(e_operator,p_modifierVector); }
 
+bool $CLASSNAME::isUldOperator() const    { return checkBit(e_uld_operator,p_modifierVector); }
+void $CLASSNAME::setUldOperator()         { setBit(e_uld_operator,p_modifierVector); }
+void $CLASSNAME::unsetUldOperator()       { unsetBit(e_uld_operator,p_modifierVector); }
+
+bool $CLASSNAME::isLambdaEntryPoint() const    { return checkBit(e_lambda_entry_point,p_modifierVector); }
+void $CLASSNAME::setLambdaEntryPoint()         { setBit(e_lambda_entry_point,p_modifierVector); }
+void $CLASSNAME::unsetLambdaEntryPoint()       { unsetBit(e_lambda_entry_point,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -2896,10 +3047,124 @@ bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifier
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
 
+// DQ (8/11/2014): C++11 specific attribute
+bool SgDeclarationModifier::isOverride() const { return checkBit(e_override,p_modifierVector); }
+void SgDeclarationModifier::setOverride()      { setBit(e_override,p_modifierVector); }
+void SgDeclarationModifier::unsetOverride()    { unsetBit(e_override,p_modifierVector); }
+
 // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
 bool SgDeclarationModifier::isJavaAbstract() const { return checkBit(e_java_abstract,p_modifierVector); }
 void SgDeclarationModifier::setJavaAbstract()      { setBit(e_java_abstract,p_modifierVector); }
 void SgDeclarationModifier::unsetJavaAbstract()    { unsetBit(e_java_abstract,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_align() const { return checkBit(e_ms_declspec_align,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_align()      { setBit(e_ms_declspec_align,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_align()    { unsetBit(e_ms_declspec_align,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_allocate() const { return checkBit(e_ms_declspec_allocate,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_allocate()      { setBit(e_ms_declspec_allocate,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_allocate()    { unsetBit(e_ms_declspec_allocate,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_appdomain() const { return checkBit(e_ms_declspec_appdomain,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_appdomain()      { setBit(e_ms_declspec_appdomain,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_appdomain()    { unsetBit(e_ms_declspec_appdomain,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_code_seg() const { return checkBit(e_ms_declspec_code_seg,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_code_seg()      { setBit(e_ms_declspec_code_seg,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_code_seg()    { unsetBit(e_ms_declspec_code_seg,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_deprecated() const { return checkBit(e_ms_declspec_deprecated,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_deprecated()      { setBit(e_ms_declspec_deprecated,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_deprecated()    { unsetBit(e_ms_declspec_deprecated,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_dllimport() const { return checkBit(e_ms_declspec_dllimport,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_dllimport()      { setBit(e_ms_declspec_dllimport,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_dllimport()    { unsetBit(e_ms_declspec_dllimport,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_dllexport() const { return checkBit(e_ms_declspec_dllexport,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_dllexport()      { setBit(e_ms_declspec_dllexport,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_dllexport()    { unsetBit(e_ms_declspec_dllexport,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_jitintrinsic() const { return checkBit(e_ms_declspec_jitintrinsic,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_jitintrinsic()      { setBit(e_ms_declspec_jitintrinsic,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_jitintrinsic()    { unsetBit(e_ms_declspec_jitintrinsic,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_naked() const { return checkBit(e_ms_declspec_naked,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_naked()      { setBit(e_ms_declspec_naked,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_naked()    { unsetBit(e_ms_declspec_naked,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_noalias() const { return checkBit(e_ms_declspec_noalias,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_noalias()      { setBit(e_ms_declspec_noalias,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_noalias()    { unsetBit(e_ms_declspec_noalias,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_noinline() const { return checkBit(e_ms_declspec_noinline,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_noinline()      { setBit(e_ms_declspec_noinline,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_noinline()    { unsetBit(e_ms_declspec_noinline,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_noreturn() const { return checkBit(e_ms_declspec_noreturn,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_noreturn()      { setBit(e_ms_declspec_noreturn,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_noreturn()    { unsetBit(e_ms_declspec_noreturn,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_nothrow() const { return checkBit(e_ms_declspec_nothrow,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_nothrow()      { setBit(e_ms_declspec_nothrow,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_nothrow()    { unsetBit(e_ms_declspec_nothrow,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_novtable() const { return checkBit(e_ms_declspec_novtable,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_novtable()      { setBit(e_ms_declspec_novtable,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_novtable()    { unsetBit(e_ms_declspec_novtable,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_process() const { return checkBit(e_ms_declspec_process,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_process()      { setBit(e_ms_declspec_process,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_process()    { unsetBit(e_ms_declspec_process,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_property() const { return checkBit(e_ms_declspec_property,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_property()      { setBit(e_ms_declspec_property,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_property()    { unsetBit(e_ms_declspec_property,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_restrict() const { return checkBit(e_ms_declspec_restrict,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_restrict()      { setBit(e_ms_declspec_restrict,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_restrict()    { unsetBit(e_ms_declspec_restrict,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_safebuffers() const { return checkBit(e_ms_declspec_safebuffers,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_safebuffers()      { setBit(e_ms_declspec_safebuffers,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_safebuffers()    { unsetBit(e_ms_declspec_safebuffers,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_selectany() const { return checkBit(e_ms_declspec_selectany,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_selectany()      { setBit(e_ms_declspec_selectany,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_selectany()    { unsetBit(e_ms_declspec_selectany,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_thread() const { return checkBit(e_ms_declspec_thread,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_thread()      { setBit(e_ms_declspec_thread,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_thread()    { unsetBit(e_ms_declspec_thread,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_uuid() const { return checkBit(e_ms_declspec_uuid,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_uuid()      { setBit(e_ms_declspec_uuid,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_uuid()    { unsetBit(e_ms_declspec_uuid,p_modifierVector); }
+
+
+
+
 
 
 string
@@ -4306,6 +4571,18 @@ HEADER_INITIALIZED_NAME_START
             // DQ (1/6/2014): Added support for GNU noreturn attribute
                e_gnu_attribute__noreturn__               = 8,/*!< GNU specific attribute for (GNU extension) */
 
+               e_ms_declspec_parameter_appdomain    =  9, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_deprecated   = 10, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllimport    = 11, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllexport    = 12, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_novtable     = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_process      = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_property     = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_restrict     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_selectany    = 18, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_thread       = 19, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_uuid         = 20, /*!< Microsoft declspec() attributes */
+
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -4360,6 +4637,60 @@ HEADER_INITIALIZED_NAME_START
           bool isGnuAttributeNoReturn() const;
           void setGnuAttributeNoReturn();
           void unsetGnuAttributeNoReturn();
+
+#if 0
+ // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
+    appdomain
+    deprecated
+    dllimport
+    dllexport
+    novtable
+    process
+    restrict
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+          bool is_ms_declspec_parameter_appdomain() const;
+          void set_ms_declspec_parameter_appdomain();
+          void unset_ms_declspec_parameter_appdomain();
+
+          bool is_ms_declspec_parameter_deprecated() const;
+          void set_ms_declspec_parameter_deprecated();
+          void unset_ms_declspec_parameter_deprecated();
+
+          bool is_ms_declspec_parameter_dllimport() const;
+          void set_ms_declspec_parameter_dllimport();
+          void unset_ms_declspec_parameter_dllimport();
+
+          bool is_ms_declspec_parameter_dllexport() const;
+          void set_ms_declspec_parameter_dllexport();
+          void unset_ms_declspec_parameter_dllexport();
+
+          bool is_ms_declspec_parameter_novtable() const;
+          void set_ms_declspec_parameter_novtable();
+          void unset_ms_declspec_parameter_novtable();
+
+          bool is_ms_declspec_parameter_process() const;
+          void set_ms_declspec_parameter_process();
+          void unset_ms_declspec_parameter_process();
+
+          bool is_ms_declspec_parameter_restrict() const;
+          void set_ms_declspec_parameter_restrict();
+          void unset_ms_declspec_parameter_restrict();
+
+          bool is_ms_declspec_parameter_selectany() const;
+          void set_ms_declspec_parameter_selectany();
+          void unset_ms_declspec_parameter_selectany();
+
+          bool is_ms_declspec_parameter_thread() const;
+          void set_ms_declspec_parameter_thread();
+          void unset_ms_declspec_parameter_thread();
+
+          bool is_ms_declspec_parameter_uuid() const;
+          void set_ms_declspec_parameter_uuid();
+          void unset_ms_declspec_parameter_uuid();
 
           void post_construction_initialization();
 
@@ -10768,6 +11099,9 @@ SgInitializedName::post_construction_initialization()
      p_using_C11_Alignas_keyword                     = false;
      p_constant_or_type_argument_for_Alignas_keyword = NULL;
 
+  // DQ (8/2/2014): Adding support for C++11 auto keyword.
+     p_using_auto_keyword = false;
+
   // DQ (6/10/2012): Testing for test2012_102.C.
   // printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
    }
@@ -10917,11 +11251,15 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 
 
   // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-     p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
+     p_hasArrayTypeWithEmptyBracketSyntax     = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
 
   // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
      p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
      p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+
+  // DQ (8/2/2014): Adding support for C++11 auto keyword.
+     p_using_auto_keyword                     = ptr.p_using_auto_keyword;
+
    }
 
 SgInitializedName&
@@ -11019,6 +11357,9 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
        // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
           p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
           p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+
+       // DQ (8/2/2014): Adding support for C++11 auto keyword.
+          p_using_auto_keyword                     = ptr.p_using_auto_keyword;
         }
        else
         {
@@ -11429,6 +11770,59 @@ bool SgInitializedName::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_
 void SgInitializedName::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__); }
 void SgInitializedName::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__); }
 
+#if 0
+ // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
+    appdomain
+    deprecated
+    dllimport
+    dllexport
+    novtable
+    process
+    restrict
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+bool SgInitializedName::is_ms_declspec_parameter_appdomain() const  { return checkBit(e_ms_declspec_parameter_appdomain); }
+void SgInitializedName::set_ms_declspec_parameter_appdomain()       { setBit(e_ms_declspec_parameter_appdomain); }
+void SgInitializedName::unset_ms_declspec_parameter_appdomain()     { unsetBit(e_ms_declspec_parameter_appdomain); }
+
+bool SgInitializedName::is_ms_declspec_parameter_deprecated() const  { return checkBit(e_ms_declspec_parameter_deprecated); }
+void SgInitializedName::set_ms_declspec_parameter_deprecated()       { setBit(e_ms_declspec_parameter_deprecated); }
+void SgInitializedName::unset_ms_declspec_parameter_deprecated()     { unsetBit(e_ms_declspec_parameter_deprecated); }
+
+bool SgInitializedName::is_ms_declspec_parameter_dllimport() const  { return checkBit(e_ms_declspec_parameter_dllimport); }
+void SgInitializedName::set_ms_declspec_parameter_dllimport()       { setBit(e_ms_declspec_parameter_dllimport); }
+void SgInitializedName::unset_ms_declspec_parameter_dllimport()     { unsetBit(e_ms_declspec_parameter_dllimport); }
+
+bool SgInitializedName::is_ms_declspec_parameter_dllexport() const  { return checkBit(e_ms_declspec_parameter_dllexport); }
+void SgInitializedName::set_ms_declspec_parameter_dllexport()       { setBit(e_ms_declspec_parameter_dllexport); }
+void SgInitializedName::unset_ms_declspec_parameter_dllexport()     { unsetBit(e_ms_declspec_parameter_dllexport); }
+
+bool SgInitializedName::is_ms_declspec_parameter_novtable() const  { return checkBit(e_ms_declspec_parameter_novtable); }
+void SgInitializedName::set_ms_declspec_parameter_novtable()       { setBit(e_ms_declspec_parameter_novtable); }
+void SgInitializedName::unset_ms_declspec_parameter_novtable()     { unsetBit(e_ms_declspec_parameter_novtable); }
+
+bool SgInitializedName::is_ms_declspec_parameter_process() const  { return checkBit(e_ms_declspec_parameter_process); }
+void SgInitializedName::set_ms_declspec_parameter_process()       { setBit(e_ms_declspec_parameter_process); }
+void SgInitializedName::unset_ms_declspec_parameter_process()     { unsetBit(e_ms_declspec_parameter_process); }
+
+bool SgInitializedName::is_ms_declspec_parameter_restrict() const  { return checkBit(e_ms_declspec_parameter_restrict); }
+void SgInitializedName::set_ms_declspec_parameter_restrict()       { setBit(e_ms_declspec_parameter_restrict); }
+void SgInitializedName::unset_ms_declspec_parameter_restrict()     { unsetBit(e_ms_declspec_parameter_restrict); }
+
+bool SgInitializedName::is_ms_declspec_parameter_selectany() const  { return checkBit(e_ms_declspec_parameter_selectany); }
+void SgInitializedName::set_ms_declspec_parameter_selectany()       { setBit(e_ms_declspec_parameter_selectany); }
+void SgInitializedName::unset_ms_declspec_parameter_selectany()     { unsetBit(e_ms_declspec_parameter_selectany); }
+
+bool SgInitializedName::is_ms_declspec_parameter_thread() const  { return checkBit(e_ms_declspec_parameter_thread); }
+void SgInitializedName::set_ms_declspec_parameter_thread()       { setBit(e_ms_declspec_parameter_thread); }
+void SgInitializedName::unset_ms_declspec_parameter_thread()     { unsetBit(e_ms_declspec_parameter_thread); }
+
+bool SgInitializedName::is_ms_declspec_parameter_uuid() const  { return checkBit(e_ms_declspec_parameter_uuid); }
+void SgInitializedName::set_ms_declspec_parameter_uuid()       { setBit(e_ms_declspec_parameter_uuid); }
+void SgInitializedName::unset_ms_declspec_parameter_uuid()     { unsetBit(e_ms_declspec_parameter_uuid); }
 
 SOURCE_INITIALIZED_NAME_END
 
@@ -15143,6 +15537,7 @@ SgProject::initialization()
      p_Cxx_only              = false;
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
+     p_Java_only             = false;
 
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
      p_frontendConstantFolding = false;

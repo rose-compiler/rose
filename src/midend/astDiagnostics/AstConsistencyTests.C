@@ -2764,8 +2764,8 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
                          printf ("Waringg: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
                        }
-		      else
-		       {
+                      else
+                       {
                          printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
 
                          firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
@@ -3714,8 +3714,8 @@ TestExpressionTypes::visit ( SgNode* node )
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
        /* Except when it is the operand of the sizeof operator or the unary & operator, or is a
-          string literal used to initialize an array, an expression that has type ‚Äò‚Äòarray of type‚Äô‚Äô is
-          converted to an expression with type ‚Äò‚Äòpointer to type‚Äô‚Äô that points to the initial element of
+          string literal used to initialize an array, an expression that has type array of type is
+          converted to an expression with type pointer to type that points to the initial element of
           the array object and is not an lvalue. */
           type = type->stripTypedefsAndModifiers();
           ROSE_ASSERT(type != NULL);

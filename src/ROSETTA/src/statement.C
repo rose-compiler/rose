@@ -460,16 +460,18 @@ Grammar::setUpStatements ()
           ClinkageStartStatement | ClinkageEndStatement,
           "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT", false );
 
-    // + variable list
-    NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
-     // simplest directives, just one line 
-    NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
-    NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
+  // + variable list
+     NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
+  // simplest directives, just one line 
+     NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
+     NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
 
 
-    // + variable list
-    NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
+  // + variable list
+     NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
 
+  // DQ (8/16/2014): Adding support for Microsoft attributes (e.g. "[repeatable] int x;")
+     NEW_TERMINAL_MACRO (MicrosoftAttributeDeclaration, "MicrosoftAttributeDeclaration", "MS_ATTRIBUTE_DECL_STMT"    );
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
@@ -485,7 +487,8 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement        |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine       | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement |
-          StaticAssertionDeclaration, "DeclarationStatement", "DECL_STMT", false);
+          StaticAssertionDeclaration              | MicrosoftAttributeDeclaration, 
+          "DeclarationStatement", "DECL_STMT", false);
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -1066,9 +1069,18 @@ Grammar::setUpStatements ()
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/26/2014): Added support for C11 "_Noreturn" keyword (alternative noreturn specification).
+  // This could maybe be moved to the SgFunctionModifier.
      FunctionDeclaration.setDataPrototype("bool","using_C11_Noreturn_keyword","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/1/2014): Added support for C++11 "constexpr" keyword.
+  // This could maybe be moved to the SgFunctionModifier.
+     FunctionDeclaration.setDataPrototype("bool","is_constexpr","= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/3/2014): Added support for C++11 new function return type syntax.
+     FunctionDeclaration.setDataPrototype("bool","using_new_function_return_type_syntax","= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1169,9 +1181,11 @@ Grammar::setUpStatements ()
   // CtorInitializerList.setAutomaticGenerationOfDestructor(false);
 
 
-     //
-     // [DT] 5/11/2000 -- Should have a TemplateInstantiationDefn scope as well? DQ: No, I don't think so.
-     //
+  // DQ (8/15/2014): Note that VariableDeclaration data members must be initialized explicitly in the 
+  // void SgVariableDeclaration::post_construction_initialization() function implementation.
+  //
+  // [DT] 5/11/2000 -- Should have a TemplateInstantiationDefn scope as well? DQ: No, I don't think so.
+  //
      VariableDeclaration.setFunctionPrototype ( "HEADER_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      VariableDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 
@@ -1334,17 +1348,23 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (7/25/2015): Added support for C11 thread local marking.
+  // DQ (7/25/2014): Added support for C11 thread local marking.
      VariableDeclaration.setDataPrototype("bool","is_thread_local","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // Moved to SgInitializedName IR node.
-  // DQ (7/26/2015): Added support for C11 "_Alignas" keyword (alternative alignment specification).
+  // DQ (7/26/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
      VariableDeclaration.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VariableDeclaration.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (8/1/2014): Added support for C++11 "constexpr" keyword.
+  // This could maybe be moved to the SgInitializedName.
+     VariableDeclaration.setDataPrototype("bool","is_constexpr","= false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1869,6 +1889,12 @@ Grammar::setUpStatements ()
      TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/2/2014): Added to support C++11 "extern template class vector<float>;" used to specify 
+  // that a template should not be instantiated (see Cxx11_tests/test2014_18.C).
+     TemplateInstantiationDirectiveStatement.setDataPrototype("bool","do_not_instantiate","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      TemplateInstantiationDecl.setFunctionPrototype ( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
   // This might have to be made to be type == "int" but it makes more sense as a template_type_enum
   // TemplateInstantiationDecl.setDataPrototype ( "template_type_enum" , "template_kind", "= e_template_none");
@@ -2101,6 +2127,13 @@ Grammar::setUpStatements ()
      EnumDeclaration.setDataPrototype("bool","isAutonomousDeclaration","= true",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/12/2014): Adding support for enum field type specifier.
+     EnumDeclaration.setDataPrototype ( "SgType*", "field_type", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+
+  // DQ (8/12/2014): Adding support for C++11 scoped enum declarations.
+     EnumDeclaration.setDataPrototype("bool","isScopedEnum","= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ExprStatement.setFunctionPrototype ( "HEADER_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2565,6 +2598,9 @@ Grammar::setUpStatements ()
      NamespaceDeclarationStatement.setDataPrototype ( "bool", "isUnnamedNamespace", "= false",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/12/2014): Adding support for C++11 inlined namespaces.
+     NamespaceDeclarationStatement.setDataPrototype ( "bool", "isInlinedNamespace", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (2/19/2006): Added to handle case destribed in the header file.
      NamespaceDeclarationStatement.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
@@ -3423,6 +3459,11 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+
+     MicrosoftAttributeDeclaration.setFunctionPrototype ( "HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     MicrosoftAttributeDeclaration.setDataPrototype ("SgName", "attribute_string", "= \"\"",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
   // This support allows transformations to introduce their own macros.
@@ -3863,6 +3904,9 @@ Grammar::setUpStatements ()
 
 //    OmpClauseBodyStatement.setAutomaticGenerationOfDestructor(false);
 #endif
+
+     MicrosoftAttributeDeclaration.setFunctionSource ( "SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
    }
 
 
