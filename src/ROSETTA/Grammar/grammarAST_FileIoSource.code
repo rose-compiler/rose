@@ -608,8 +608,8 @@ AST_FILE_IO :: writeASTToStream ( std::ostream& out) {
 
   // 2. Initialize the StorageClass and write
 
-     int sizeOfActualPool = 0;
-     long storageClassIndex = 0 ;
+     int sizeOfActualPool   = 0;
+     long storageClassIndex = 0;
 
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
@@ -853,7 +853,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() rebuild AST (part 2):");
 
      unsigned long sizeOfActualPool = 0;
-     long storageClassIndex = 0 ;
+     long storageClassIndex         = 0 ;
 
 
 $REPLACE_READASTFROMFILE

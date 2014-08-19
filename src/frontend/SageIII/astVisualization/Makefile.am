@@ -15,7 +15,7 @@ libastVisualization_la_SOURCES = astGraph.C AstAttributeDOT.C wholeAST.C copyGra
 libastVisualization_la_LIBADD       = 
 libastVisualization_la_DEPENDENCIES = 
 
-include_HEADERS = AstAttributeDOT.h astGraph.h astGraphTemplateImpl.h wholeAST.h wholeAST_API.h copyGraph.h walrus.h intermediateRepresentationNodeGraphs.h
+pkginclude_HEADERS = AstAttributeDOT.h astGraph.h astGraphTemplateImpl.h wholeAST.h wholeAST_API.h copyGraph.h walrus.h intermediateRepresentationNodeGraphs.h
 
 
 EXTRA_DIST = CMakeLists.txt

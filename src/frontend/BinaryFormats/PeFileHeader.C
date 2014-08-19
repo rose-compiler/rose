@@ -546,14 +546,14 @@ SgAsmPEFileHeader::create_table_sections()
         rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
         MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
-        if (!map->exists(Extent(pair_va, pair->get_e_size()))) {
+        if (!map->exists(AddressInterval::baseSize(pair_va, pair->get_e_size()))) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
                     " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname.c_str());
             continue;
         }
-        std::pair<Extent, MemoryMap::Segment> me = map->at(pair_va);
-        rose_addr_t file_offset = me.second.get_buffer_offset(me.first, pair_va);
+        const MemoryMap::Segments::Node &me = map->at(pair_va);
+        rose_addr_t file_offset = me.value().get_buffer_offset(me.key(), pair_va);
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
