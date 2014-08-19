@@ -21,7 +21,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  ValueAnnot.h ValuePropagate.h
+pkginclude_HEADERS =  ValueAnnot.h ValuePropagate.h
 
 
 

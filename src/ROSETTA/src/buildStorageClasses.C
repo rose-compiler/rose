@@ -800,6 +800,10 @@ Terminal::evaluateType(std::string& varTypeString)
        {
           returnType = SKIP_TYPE;
        }
+     else if (varTypeString == "Sawyer::Container::BitVector")
+       {
+         returnType = BIT_VECTOR;
+       }
   // This might change, as soon as the enum types have a common name style ...
      else  if (
                  ( varTypeString == "SgUnaryOp::Sgop_mode" ) ||
@@ -859,6 +863,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "PowerpcSpecialPurposeRegister" ) ||
                  ( varTypeString == "PowerpcTimeBaseRegister" ) ||
                  ( varTypeString == "MipsInstructionKind") ||
+                 ( varTypeString == "M68kInstructionKind") ||
                  ( varTypeString == "ByteOrder::Endianness" ) ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||

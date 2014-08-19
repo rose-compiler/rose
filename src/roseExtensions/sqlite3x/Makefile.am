@@ -10,7 +10,7 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libRoseSQLite3xDatabase.la
 libRoseSQLite3xDatabase_la_SOURCES = \
 	sqlite3x_command.C sqlite3x_exception.C  sqlite3x_transaction.C sqlite3x_connection.C  sqlite3x_reader.C
-include_HEADERS = sqlite3x.h
+pkginclude_HEADERS = sqlite3x.h
 
 # SQLite3 is missing some common string and arithmetic functions, but we can provide them through a dynamic plugin.
 lib_LTLIBRARIES = libsqlitefunctions.la

@@ -14,7 +14,7 @@ librosePythonFrontend_la_SOURCES = \
 	SagePythonSupport.C \
 	PythonFrontend.C
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 	PythonFrontend.h \
 	SagePythonInterface.h \
 	SagePythonSupport.h
