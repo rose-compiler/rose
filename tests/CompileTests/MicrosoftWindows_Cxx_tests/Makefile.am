@@ -170,18 +170,32 @@ test2014_08.C \
 test2014_09.C \
 test2014_10.C \
 test2014_11.C \
-test2014_12.C \
-test2014_13.C \
 test2014_14.C \
 test2014_15.C \
-test2014_16.C \
 test2014_17.C \
 test2014_18.C \
+test2014_23.C \
+test2014_12_nouuid.C \
+test2014_13_nouuid.C \
+test2014_16_nouuid.C \
+test2014_19_nouuid.C \
+test2014_20_nouuid.C \
+test2014_21_nouuid.C \
+test2014_22_nouuid.C 
+
+
+if ROSE_USE_EDG_VERSION_4_9
+# These test code require EDG version 4.9 for the better Microsoft support for the declspec(uuid).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2014_12.C \
+test2014_13.C \
+test2014_16.C \
 test2014_19.C \
 test2014_20.C \
 test2014_21.C \
-test2014_22.C \
-test2014_23.C 
+test2014_22.C 
+endif
+
 endif
 
 # Waiting for commit from Zack.
