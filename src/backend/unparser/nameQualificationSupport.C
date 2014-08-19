@@ -395,6 +395,12 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSigned128bitInteger:
           case V_SgTypeUnsigned128bitInteger:
 
+       // DQ (7/30/2014): Adding C++11 support.
+          case V_SgTypeNullptr:
+
+       // DQ (8/12/2014): Adding C++11 support.
+          case V_SgDeclType:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
@@ -4067,9 +4073,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         {
        // DQ (4/3/2014): We no longer traverse the declaration referenced in this IR node so we
        // have to handle the name qualification requiredments for the associated declaration directly.
-
+#if 0
           printf ("Processing SgTemplateInstantiationDirectiveStatement \n");
-
+#endif
        // Note that test2005_63.C presents an example that triggers this case and so might be a relevant.
        // This is also the reason why test2005_73.C is failing!!!  Fix it tomorrow!!! (SgTemplateInstantiationDirectiveStatement)
        // SgDeclarationStatement* currentStatement = isSgDeclarationStatement(memberFunctionDeclaration->get_parent());
@@ -4078,19 +4084,22 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgDeclarationStatement* currentStatement = isSgDeclarationStatement(declarationStatement->get_parent());
           if (currentStatement == NULL)
              {
+#if 0
                printf ("In name qualification: case SgTemplateInstantiationDirectiveStatement: Using backup mechanism to generate current statement (because EDG 4.8 shared template instantiations) \n");
+#endif
                currentStatement = templateInstantiationDirectiveStatement;
              }
           ROSE_ASSERT(currentStatement != NULL);
-
+#if 0
           printf ("declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
           printf ("currentStatement     = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-
+#endif
           SgScopeStatement* currentScope = isSgScopeStatement(currentStatement->get_parent());
           if (currentScope != NULL)
              {
+#if 0
                printf ("currentScope     = %p = %s \n",currentScope,currentScope->class_name().c_str());
-
+#endif
                int amountOfNameQualificationRequired = nameQualificationDepth(declarationStatement,currentScope,declarationStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("SgTemplateInstantiationDirectiveStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);

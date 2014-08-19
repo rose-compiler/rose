@@ -442,8 +442,14 @@ namespace StringUtility
             /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
             ROSE_UTIL_API std::string htmlEscape(const std::string& s);
 
+   /** Escape as for C/C++ string literals. */
+   ROSE_UTIL_API std::string cEscape(const std::string&);
+
     // DQ (2/3/2009): Moved this function from attach_all_info.C
        ROSE_UTIL_API std::vector<std::string> readWordsInFile( std::string filename);
+
+   /** Convert an ASCII hexadecimal character to an integer. */
+   ROSE_UTIL_API unsigned hexadecimalToInt(char);
 
    /** Convert a number to a hexadecimal and decimal string.
     *
@@ -612,13 +618,22 @@ namespace StringUtility
      *  received 1 value
      *  received 2 values
      * @endcode
+     *
+     * This function uses a handful of grade-school rules for converting the supplied plural word to a singular word when
+     * necessary.  If these are not enough, then the singular form can be supplied as the third argument.
+     *
+     * @code
+     *  std::cout <<"graph contains " <<plural(nverts, "vertices", "vertex") <<"\n";
+     * @endcode
      */
     template<typename T>
-    std::string plural(T n, const std::string &plural_word) {
+    std::string plural(T n, const std::string &plural_word, const std::string &singular_word="") {
         assert(!plural_word.empty());
         std::string retval = numberToString(n) + " ";
         if (1==n) {
-            if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
+            if (!singular_word.empty()) {
+                retval += singular_word;
+            } else if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
                 // string ends with "ies", as in "parties", so emit "party" instead
                 retval += plural_word.substr(0, plural_word.size()-3) + "y";
             } else if (plural_word.size()>1 && plural_word[plural_word.size()-1]=='s') {

@@ -23,7 +23,6 @@ using this memory map for disassembly:
     va 0x080496f4 + 0x00000008 = 0x080496fc rw-p at anon acc     + 0x00000000 i686-test1.O3-stripped.bin(.bss)
     va 0x080496fc + 0x00000624 = 0x08049d20 rw-p at anon aal     + 0x00000008 i686-test1.O3-stripped.bin(LOAD#3)
     va 0x08049d20 + 0x000002e0 = 0x0804a000 rw-p at anon aak     + 0x00000000 i686-test1.O3-stripped.bin(LOAD#3)
-disassembled 3469 instructions and 50 failures (use --show-bad to see errors)
 
 
 0x080482c8: ================================== Function (function call) unknown name
@@ -2056,4 +2055,3 @@ disassembled 3469 instructions and 50 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

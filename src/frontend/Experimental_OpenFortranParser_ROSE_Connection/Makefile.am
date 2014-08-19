@@ -26,7 +26,7 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 # libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserActionROSE.C $(OFP_DIR)/token.c $(OFP_DIR)/jni_token_funcs.c $(OFP_DIR)/c_actions_jni.c
 
 # DQ (3/13/2010): Moved OFP specific files to 3rdPartyLibraries/fortran-parser
-include_HEADERS = fortran_support.h
+pkginclude_HEADERS = fortran_support.h
 # rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jserver.h ofp.h FortranModuleInfo.h FortranParserState.h fortran_error_handler.h
 
 OFP_SOURCE_FILES =

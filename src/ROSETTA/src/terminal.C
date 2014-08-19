@@ -25,6 +25,16 @@ const std::vector<Terminal*>& SubclassListBuilder::getList() const {
   return children;
 }
 
+bool
+Terminal::isInnerNode() {
+  return subclasses.size()>0;
+}
+
+bool
+Terminal::isLeafNode() {
+  return subclasses.size()==0;
+}
+
 Terminal::~Terminal()
    {
    }
@@ -47,6 +57,8 @@ Terminal::Terminal ( const string& lexemeString , Grammar & X , const string& st
      associatedGrammar(&X)
    {
      for (size_t i = 0; i < subclasses.size(); ++i) {
+       // If the next assertion fails, it's probably because you have an IR type that appears in more than one
+       // NEW_NONTERMINAL_MACRO() [Robb P. Matzke 2014-05-07]
        ROSE_ASSERT (subclasses[i]->getBaseClass() == NULL);
        ROSE_ASSERT (subclasses[i]);
        subclasses[i]->setBaseClass(this);
@@ -542,7 +554,11 @@ Terminal::addGrammarPrefixToName()
 
   // Error Checking! Check to make sure that grammar's name does not already exist in the
   // terminal's name.  This helps make sure that elements are not represented twice!
-     ROSE_ASSERT (GrammarString::isContainedIn(name,grammarName) == false);
+     if (GrammarString::isContainedIn(name, grammarName)) {
+         std::cerr <<"Grammar's name already exists in the terminal's name"
+                   <<"; name=" <<name <<", grammarName=" <<grammarName <<"\n";
+     }
+     ROSE_ASSERT(!GrammarString::isContainedIn(name,grammarName));
 
   // Set the name to include the grammar's prefix
   // Modify this statement to avoid Insure++ warning

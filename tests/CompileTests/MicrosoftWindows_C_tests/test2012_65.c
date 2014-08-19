@@ -1,3 +1,7 @@
+int x;
+
+#if 0
+/* Review this issues later (problem with MSVC support for un-named unions). */
 struct X
   {
     union
@@ -23,5 +27,6 @@ void foobar()
      x = A.v.x;
      x = B.v->x;
    }
+#endif
 #endif
 

@@ -157,13 +157,14 @@ int PhiNode::getCost() const
 
 SgType* ValueNode::getType() const
 {
-    SgType* type;
+    SgType* type=0;
     if (!var.isNull())
         type = var.name.back()->get_type();
     else if (SgExpression* expr = isSgExpression(astNode))
         type = expr->get_type();
     else if (SgInitializedName* initName = isSgInitializedName(astNode))
         type = initName->get_type();
+    ROSE_ASSERT(type);
 
     // Remove reference.
     if (SgReferenceType* refType = isSgReferenceType(type))

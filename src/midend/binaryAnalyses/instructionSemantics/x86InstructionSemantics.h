@@ -5,17 +5,21 @@
  * run automatically because it depends on setting up a slave machine who's architecture is what is being simulated by the
  * instruction semantics (not necessarily the same architecture that's running ROSE). */
 
-#include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include "integerOps.h"
 #include "AsmUnparser_compat.h" /* for unparseInstructionWithAddress() */
 
+static inline int numBytesInAsmType(SgAsmType* type) {
+    ASSERT_not_null(type);
+    return type->get_nBytes();
+}
+
 /* Returns the segment register corresponding to the specified register reference address expression. */
 static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferenceExpression* mr) {
     X86SegmentRegister segreg = x86_segreg_none;
-    SgAsmx86RegisterReferenceExpression* seg = isSgAsmx86RegisterReferenceExpression(mr->get_segment());
+    SgAsmRegisterReferenceExpression* seg = isSgAsmRegisterReferenceExpression(mr->get_segment());
     if (seg) {
         ROSE_ASSERT(seg->get_descriptor().get_major() == x86_regclass_segment);
         segreg = (X86SegmentRegister)(seg->get_descriptor().get_minor());
@@ -502,8 +506,8 @@ struct X86InstructionSemantics {
     /* Returns an eight-bit value desribed by an instruction operand. */
     Word(8) read8(SgAsmExpression* e) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 return policy.readRegister<8>(rre->get_descriptor());
             }
             case V_SgAsmBinaryAdd: {
@@ -521,7 +525,7 @@ struct X86InstructionSemantics {
                                      readEffectiveAddress(e), policy.true_());
             }
             case V_SgAsmIntegerValueExpression: {
-                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signed_value();
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signedValue();
                 return number<8>(val & 0xFFU);
             }
             default: {
@@ -534,8 +538,8 @@ struct X86InstructionSemantics {
     /* Returns a 16-bit value described by an instruction operand. */
     Word(16) read16(SgAsmExpression* e) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 return policy.readRegister<16>(rre->get_descriptor());
             }
             case V_SgAsmBinaryAdd: {
@@ -553,7 +557,7 @@ struct X86InstructionSemantics {
                                       readEffectiveAddress(e), policy.true_());
             }
             case V_SgAsmIntegerValueExpression: {
-                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signed_value();
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signedValue();
                 return number<16>(val & 0xFFFFU);
             }
             default: {
@@ -566,8 +570,8 @@ struct X86InstructionSemantics {
     /* Returns a 32-bit value described by an instruction operand. */
     Word(32) read32(SgAsmExpression* e) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 return policy.readRegister<32>(rre->get_descriptor());
             }
             case V_SgAsmBinaryAdd: {
@@ -598,8 +602,8 @@ struct X86InstructionSemantics {
     /* Writes the specified eight-bit value to the location specified by an instruction operand. */
     void write8(SgAsmExpression* e, const Word(8)& value) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 policy.writeRegister(rre->get_descriptor(), value);
                 break;
             }
@@ -618,8 +622,8 @@ struct X86InstructionSemantics {
     /* Writes the specified 16-bit value to the location specified by an instruction operand. */
     void write16(SgAsmExpression* e, const Word(16)& value) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 policy.writeRegister(rre->get_descriptor(), value);
                 break;
             }
@@ -638,8 +642,8 @@ struct X86InstructionSemantics {
     /* Writes the specified 32-bit value to the location specified by an instruction operand. */
     void write32(SgAsmExpression* e, const Word(32)& value) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 policy.writeRegister(rre->get_descriptor(), value);
                 break;
             }
@@ -1588,7 +1592,7 @@ struct X86InstructionSemantics {
                 writeRegister(REG_AF, undefined_<1>());
                 writeRegister(REG_PF, undefined_<1>());
                 
-                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmRegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
                     int numBytes = numBytesInAsmType(operands[1]->get_type());
@@ -1633,7 +1637,7 @@ struct X86InstructionSemantics {
                 writeRegister(REG_AF, undefined_<1>());
                 writeRegister(REG_PF, undefined_<1>());
                 
-                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmRegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
                     int numBytes = numBytesInAsmType(operands[1]->get_type());
@@ -1687,7 +1691,7 @@ struct X86InstructionSemantics {
                 writeRegister(REG_AF, undefined_<1>());
                 writeRegister(REG_PF, undefined_<1>());
                 
-                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmRegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
                     int numBytes = numBytesInAsmType(operands[1]->get_type());

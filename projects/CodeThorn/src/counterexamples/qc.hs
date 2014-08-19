@@ -23,6 +23,7 @@ apt-get install ghc libghc6-missingh-dev libghc6-quickcheck2-dev expect-dev
 
 --}
 module Main where
+import Control.Exception hiding (assert)
 import Control.Concurrent
 import Data.Char
 import Data.String.Utils
@@ -47,6 +48,8 @@ data LTL = In Char
          | U LTL LTL
          | WU LTL LTL
          | R LTL LTL
+         | TTTrue
+         | FFFalse
          | None deriving (Eq, Show)
 
 data State = StIn Char | StOut Char deriving (Eq, Show)
@@ -80,16 +83,25 @@ instance Arbitrary RersData where
       shrink' []     = []
       shrink' (x:xs) = [ xs ] ++ [ x:xs' | xs' <- shrink' xs ]
 
-prop_holds :: LTL -> RersData -> Property
-prop_holds formula input =
+prop_holds :: [(LTL, Int)] -> RersData -> Property
+prop_holds formulae input =
   not (input == RersData []) ==> monadicIO test
   where test = do states <- run $ actualOutput input
-                  assert $ holds' formula states
-        holds' _ [] = True
-        holds' f ss = case holds f ss of
-                         Top -> True -- ignore
-                         TTrue -> True
-                         FFalse -> False
+                  xs <- run $ hold' formulae states
+                  return True
+
+        hold' fs ss = do mapM_ (holds' ss) fs; return ()
+        holds' :: [State] -> (LTL, Int) -> IO ()
+        holds' ss (f, n) =
+            do
+              case holds f ss of
+                FFalse -> do
+                              printf "===================================================\n"
+                              printf "checking %s\n[ " (show f)
+                              printf " ]\n"
+                              printf "%d FALSE, found counterexample\n" n
+                              return ()
+                _ -> do return ()
                          
 
 -- execute the actual program to get its output
@@ -108,10 +120,10 @@ actualOutput (RersData input) = do
   -- ... unbuffer redirects err&>out
   -- hasErrOutput <- newEmptyMVar
   -- forkIO $ do err <- hGetContents m_err; putMVar hasErrOutput err; return ()
-  result <- try $ action m_in m_out input
-  mapM_ hClose [m_in, m_out, m_err]
-  terminateProcess pid
-  --err <- takeMVar hasErrOutput
+  result <- (try $ action m_in m_out input) :: IO (Either IOException [State])
+  try $ mapM_ hClose [m_in, m_out, m_err] :: IO (Either IOException ())
+  terminateProcess pid  --err <- takeMVar hasErrOutput
+  waitForProcess pid
   case result of
     Left _ -> do
       --printf "**I/O Error\n"
@@ -121,14 +133,13 @@ actualOutput (RersData input) = do
       if True then -- ignore traces which wrote to stderr
         do
           prettyprint output
-          terminateProcess pid
           hFlush stdout -- flush the *console*, so the user gets to watch our progress
           return output
         else do return []
 
   
   where inputStr = join "\n" (map show input)
-        timeout = 50 -- milliseconds
+        timeout = 5 -- milliseconds
         action _ _ [] = do return []
         action m_in m_out (input:is) = do 
           hPutStrLn m_in (show (rersInt input))
@@ -145,7 +156,7 @@ actualOutput (RersData input) = do
                  Just i -> do --printf "out %c\n" (rersChar (i::Int))
                               res <- action m_in m_out is
                               return $ (StIn input) : (StOut (rersChar i)) : res
-                 _      -> do --printf "I/O Error: '%s'\n" reply
+                 _      -> do printf "I/O Error: '%s'\n" reply
                               ioError $ userError "invalid input"
                               --res <- action m_in m_out is
                               --return $ (StIn input) : res
@@ -176,6 +187,8 @@ rersInt :: Char -> Int
 rersInt c = (ord c) - (ord 'A')+1
 
 holds :: LTL -> [State] -> BoolLattice
+holds (TTTrue)  _ = TTrue
+holds (FFFalse) _ = FFalse
 holds (In  c) ((StIn  stc):_) = lift (c == stc)
 holds (Out c) ((StOut stc):_) = lift (c == stc)
 holds (In  c) ((StOut stc):states) = holds (In  c) states
@@ -223,17 +236,13 @@ formulae' = [ WU (Not (Out 'Y')) (In 'B'), None]
 main = do 
   --testData <- sample' 13 (arbitrary::(Gen RersData))
   --print testData
-  mapM printResult (zip (allbutlast formulae) [1..])
+  checkAll (zip (allbutlast formulae) [1..])
     where allbutlast list = take ((length list)-1) list
 
-printResult :: (LTL, Int) -> IO ()
-printResult (f, n) = do
-  printf "===================================================\n"
-  printf "checking %s\n[ " (show f)
+checkAll :: [(LTL, Int)] -> IO ()
+checkAll ltls = do
   sample (arbitrary::(Gen RersData))
-  result <- quickCheckWithResult stdArgs { maxSuccess = 10, maxDiscard = 10 } (prop_holds f)
-  printf " ]\n"
-  case result of
-    Failure _ _ _ _ -> printf "%d FALSE, found counterexample\n" n
-    _ -> printf ""
-  
+  quickCheckWithResult stdArgs { maxSuccess = 100 --, maxDiscard = 10
+                               } (prop_holds ltls)
+  return ()
+

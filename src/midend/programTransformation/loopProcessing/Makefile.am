@@ -68,7 +68,7 @@ libLoopProcessing_la_SOURCES=\
 	$(mptlpDriver_la_sources) \
 	$(mptlpPrepostTransformation_la_sources)
 
-include_HEADERS=\
+pkginclude_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \
 	$(mptlpDepGraph_includeHeaders) \
 	$(mptlpComputation_includeHeaders) \

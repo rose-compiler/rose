@@ -1600,7 +1600,7 @@ public:
                         if (SgAsmx86Instruction *ret = isSgAsmx86Instruction(node)) {
                             const SgAsmExpressionPtrList &args = ret->get_operandList()->get_operands();
                             if (x86_ret==ret->get_kind() && 1==args.size() && isSgAsmIntegerValueExpression(args[0]))
-                                nbytes = isSgAsmIntegerValueExpression(args[0])->get_absolute_value();
+                                nbytes = isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
                         }
                     }
                 } t1;
@@ -1858,7 +1858,7 @@ public:
             } else if (ebp_is_stack_frame && addr>=ebp-8192 && addr<ebp+8) {
                 // This is probably a local stack variable
                 retval = next_input_value<nBits>(IQ_LOCAL, addr);
-            } else if (this->get_map() && this->get_map()->exists(Extent(addr, 4))) {
+            } else if (this->get_map() && this->get_map()->exists(AddressInterval::baseSize(addr, 4))) {
                 // Memory is read only, so we don't need to consume a value.
                 int32_t buf=0;
                 this->get_map()->read(&buf, addr, 4);

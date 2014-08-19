@@ -20,7 +20,6 @@
 class RoseBin_IDAPRO_buildTree : public RoseBin_buildTree  {
  private:
   SgAsmExpression* previousExp;
-  //  SgAsmRegisterReferenceExpression* rememberOffset;
 
   /****************************************************
    * create a BinaryNode
