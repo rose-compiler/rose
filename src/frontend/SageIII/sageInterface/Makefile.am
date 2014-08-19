@@ -30,7 +30,7 @@ endif
 libsageInterface_la_LIBADD       =
 libsageInterface_la_DEPENDENCIES =
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      sageInterface.h \
      sageBuilder.h \
      sageGeneric.h \
@@ -41,7 +41,7 @@ include_HEADERS = \
 #     loopHelpers.h
 
 # if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   include_HEADERS += \
+   pkginclude_HEADERS += \
      sageInterfaceAsm.h \
      sageBuilderAsm.h
 # endif

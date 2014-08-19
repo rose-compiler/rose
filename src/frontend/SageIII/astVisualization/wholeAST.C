@@ -5,6 +5,7 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+#include "transformationTracking.h"
 #include "wholeAST.h"
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -536,6 +537,15 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
 #else
   // DQ (3/6/2007): This builds a default set of mappings of edge colors and edge options to edges.
 
+#if 0
+     ROSE_ASSERT(from != NULL);
+     printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): from = %p = %s \n",from,from->class_name().c_str());
+     ROSE_ASSERT(to != NULL);
+  // printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): to = %p = %s \n",to,to->class_name().c_str());
+     printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): SgType::static_variant = %d to = %p \n",(int)SgType::static_variant,to);
+     printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): to->variantT() = %d \n",(int)(to->variantT()));
+#endif
+
   // Color all edges that lead to a SgType (this is overwritten for the parent edges)
      SgType* type = isSgType(to);
      if (type != NULL)
@@ -594,7 +604,9 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
    {
      ROSE_ASSERT(node!= NULL);
 
-  // printf ("CustomMemoryPoolDOTGenerationData::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#if 0
+     printf ("CustomMemoryPoolDOTGenerationData::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
      bool ignoreThisIRnode = false;
   // bool ignoreThisIRnode = true;
@@ -642,6 +654,15 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
             // and do something like include that IR node in the AST?
                SgNode* n             = (*i).first;
                std::string edgelabel = (*i).second;
+#if 0
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: node->variantT() = %d \n",(int)(node->variantT()));
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: n = %p \n",n);
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: edgelabel = %s \n",edgelabel.c_str());
+               if (n != NULL)
+                  {
+                    printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: n->variantT() = %d \n",(int)(n->variantT()));
+                  }
+#endif
 #if 0
                if (isSgFunctionDeclaration(node) != NULL)
                   {
@@ -701,6 +722,14 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                             {
                            // DQ (3/5/2007): Support for edge options
                            // These are both virtual function calls
+#if 0
+                              printf ("In CustomMemoryPoolDOTGenerationData::visit(): calling additionalEdgeOptions(): node->variantT() = %d \n",(int)(node->variantT()));
+                              printf ("In CustomMemoryPoolDOTGenerationData::visit(): calling additionalEdgeOptions(): n = %p \n",n);
+                              if (n != NULL)
+                                 {
+                                   printf ("In CustomMemoryPoolDOTGenerationData::visit(): calling additionalEdgeOptions(): n->variantT() = %d \n",(int)(n->variantT()));
+                                 }
+#endif
                               std::string additionalEdgeOption = additionalEdgeOptions(node,n,edgelabel);
                               std::string additionalEdgeLabel  = additionalEdgeInfo(node,n,edgelabel);
 
@@ -1509,6 +1538,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+          // Liao, 5/8/2014, display unique ID if set (non-zero)
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1558,6 +1591,18 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     char value = charVal->get_value();
                     labelWithSourceCode += string("\\n alpha/numeric value = ") + (isalnum(value) ? "true" : "false") + "  ";
+                  }
+
+            // DQ (8/13/2014): Added debugging output to support C++11 unicode specific details.
+               SgStringVal* stringVal = isSgStringVal(valueExp);
+               if (stringVal != NULL)
+                  {
+                    bool is_wchar     = stringVal->get_wcharString();
+                    bool is_16Bitchar = stringVal->get_is16bitString();
+                    bool is_32Bitchar = stringVal->get_is32bitString();
+                    labelWithSourceCode += string("\\n is_wchar = ") + (is_wchar ? "true" : "false") + "  ";
+                    labelWithSourceCode += string("\\n is_16Bitchar = ") + (is_16Bitchar ? "true" : "false") + "  ";
+                    labelWithSourceCode += string("\\n is_32Bitchar = ") + (is_32Bitchar ? "true" : "false") + "  ";
                   }
 
             // DQ (10/4/2010): Output the value so that we can provide more information.
@@ -1611,6 +1656,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                ROSE_ASSERT(isSgCastExp(node) != NULL);
              }
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1675,35 +1723,50 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
 #if 1
           SgModifierType* mod_type = isSgModifierType(node);
-          if (mod_type != NULL && mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+          if (mod_type != NULL)
              {
-               long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+               if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
+                  {
+                    long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
 
-               labelWithSourceCode += string("UPC: ");
+                    labelWithSourceCode += string("UPC: ");
 
-               if (block_size == 0) // block size empty
-                  {
-                 // curprint ("shared[] ") ;
-                    labelWithSourceCode += string("shared[] ");
+                    if (block_size == 0) // block size empty
+                       {
+                      // curprint ("shared[] ") ;
+                         labelWithSourceCode += string("shared[] ");
+                       }
+                    else if (block_size == -1) // block size omitted
+                       {
+                      // curprint ("shared ") ;
+                         labelWithSourceCode += string("shared ");
+                       }
+                    else if (block_size == -2) // block size is *
+                       {
+                      // curprint ("shared[*] ") ;
+                         labelWithSourceCode += string("shared[*] ");
+                       }
+                    else
+                       {
+                         ROSE_ASSERT(block_size > 0);
+                         stringstream ss;
+                         ss << block_size;
+
+                      // curprint ("shared["+ss.str()+"] ") ;
+                         labelWithSourceCode += string("shared["+ss.str()+"] ");
+                       }
                   }
-               else if (block_size == -1) // block size omitted
+
+               if (mod_type->get_typeModifier().get_constVolatileModifier().isConst() == true)
                   {
-                 // curprint ("shared ") ;
-                    labelWithSourceCode += string("shared ");
+                    labelWithSourceCode += string("\\n const ");
                   }
-               else if (block_size == -2) // block size is *
+
+               if (mod_type->get_typeModifier().get_elaboratedTypeModifier().get_modifier() != SgElaboratedTypeModifier::e_default)
                   {
-                 // curprint ("shared[*] ") ;
-                    labelWithSourceCode += string("shared[*] ");
-                  }
-               else
-                  {
-                    ROSE_ASSERT(block_size > 0);
                     stringstream ss;
-                    ss << block_size;
-
-                 // curprint ("shared["+ss.str()+"] ") ;
-                    labelWithSourceCode += string("shared["+ss.str()+"] ");
+                    ss << mod_type->get_typeModifier().get_elaboratedTypeModifier().get_modifier();
+                    labelWithSourceCode += string("\\n type modifier enum value = "+ss.str()+" ");
                   }
              }
 
@@ -1717,6 +1780,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           labelWithSourceCode += unparsedType + string("\\n   ");
 #endif
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1924,6 +1990,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1937,6 +2006,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                                   string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
          // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
  //           break;
+ 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
             NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
             addNode(graphNode);
           }
@@ -1951,8 +2024,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           string labelWithSourceCode;
 
           labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
-          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
 
+          AST_NODE_ID id = TransformationTracking::getId(node) ;
+          if (id != 0)
+            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
 #endif
@@ -2116,7 +2192,6 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           printf ("Warning: In wholeAST.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
 #endif
         }
-
 
 
 #if 0

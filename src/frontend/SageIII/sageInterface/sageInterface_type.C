@@ -992,13 +992,24 @@ bool isCopyConstructible(SgType* type)
     bool result = false;
     SgExpression * exp = t->get_index();
     SgMultiplyOp* multiply = isSgMultiplyOp(exp);
-    if (multiply)
-      if (isSgUpcThreads(multiply->get_rhs_operand()))
-        result = true;
-   // DQ (9/26/2011): Added else case to handle static compilation of UPC threads to be integer values.
-      else
-        if (isSgIntVal(multiply->get_rhs_operand()))
-          result = true;
+
+  // DQ (7/22/2014): Fixed to remove compiler warning.
+  // if (multiply)
+     if (multiply != NULL)
+        {
+          if (isSgUpcThreads(multiply->get_rhs_operand()))
+             {
+               result = true;
+             }
+            else
+             {
+            // DQ (9/26/2011): Added else case to handle static compilation of UPC threads to be integer values.
+               if (isSgIntVal(multiply->get_rhs_operand()))
+                  {
+                    result = true;
+                  }
+             }
+       }
 
     return result;  
   }
@@ -1181,6 +1192,92 @@ bool isCopyConstructible(SgType* type)
     }
     return result + mangleType(type->get_base_type());  
   }
+
+
+SgType*
+getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression)
+   {
+  // DQ (7/22/2014): Added support for comparing expression types in actual arguments 
+  // with those expected from the formal function parameter types.
+  // Get the type of the associated argument expression from the function type.
+     ROSE_ASSERT(actual_argument_expression != NULL);
+
+#if 0
+     printf ("In SageInterface::getAssociatedTypeFromFunctionTypeList(): actual_argument_expression = %p = %s \n",actual_argument_expression,actual_argument_expression->class_name().c_str());
+#endif
+
+     SgExprListExp* exprListExp = isSgExprListExp(actual_argument_expression->get_parent());
+     if (exprListExp == NULL)
+        {
+          printf ("Error: input actual_argument_expression = %p = %s is not a direct argument of a function argument list \n",actual_argument_expression,actual_argument_expression->class_name().c_str());
+        }
+     ROSE_ASSERT(exprListExp != NULL);
+
+     int index = 0;
+     SgExpressionPtrList & expressionList = exprListExp->get_expressions();
+     SgExpressionPtrList::iterator i = expressionList.begin(); 
+
+  // Generate the associated index into the array of function parameters.
+     while (*i != actual_argument_expression && i != expressionList.end())
+        {
+          index++;
+          i++;
+        }
+     ROSE_ASSERT(i != expressionList.end());
+
+  // Get the associated type list.
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exprListExp->get_parent());
+     ROSE_ASSERT(functionCallExp != NULL);
+
+  // Note that the result of functionCallExp->get_function() can sometime not be a SgFunctionRefExp, 
+  // e.g. when called from a pointer to a function.  These cases are not handled.
+     SgExpression* tmp_exp = functionCallExp->get_function();
+     ROSE_ASSERT(tmp_exp != NULL);
+
+     SgType* tmp_functionType = NULL;
+     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(tmp_exp);
+     if (functionRefExp != NULL)
+        {
+       // This is the most common case.
+          ROSE_ASSERT(functionRefExp != NULL);
+          tmp_functionType = functionRefExp->get_type();
+        }
+       else
+        {
+          SgPointerDerefExp* pointerDerefExp = isSgPointerDerefExp(tmp_exp);
+          if (pointerDerefExp != NULL)
+             {
+            // This is the next most common case.
+               tmp_functionType = pointerDerefExp->get_type();
+#if 0
+               printf ("tmp_functionType = %p = %s = %s \n",tmp_functionType,tmp_functionType->class_name().c_str(),tmp_functionType->unparseToString().c_str());
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+               tmp_functionType = NULL;
+
+               printf ("Error: this is a case of a indirect reference to a function (not yet handled in SageInterface::getAssociatedTypeFromFunctionTypeList()) tmp_exp = %p = %s \n",tmp_exp,tmp_exp->class_name().c_str());
+               functionCallExp->get_file_info()->display("Error: functionRefExp == NULL: functionCallExp: debug");
+             }
+        }
+
+     ROSE_ASSERT(tmp_functionType != NULL);
+
+     SgFunctionType* functionType = isSgFunctionType(tmp_functionType);
+     ROSE_ASSERT(functionType != NULL);
+
+     SgTypePtrList & typeList = functionType->get_arguments();
+
+     SgType* indexed_function_parameter_type = typeList[index];
+     ROSE_ASSERT(indexed_function_parameter_type != NULL);
+
+     return indexed_function_parameter_type;
+   }
 
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT

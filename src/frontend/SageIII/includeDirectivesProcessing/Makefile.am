@@ -10,7 +10,7 @@ libincludeDirectivesProcessing_la_SOURCES = CompilerOutputReader.C CompilerOutpu
 libincludeDirectivesProcessing_la_LIBADD       = 
 libincludeDirectivesProcessing_la_DEPENDENCIES = 
 
-include_HEADERS = CompilerOutputReader.h CompilerOutputParser.h IncludingPreprocessingInfosCollector.h
+pkginclude_HEADERS = CompilerOutputReader.h CompilerOutputParser.h IncludingPreprocessingInfosCollector.h
 
 
 # EXTRA_DIST = CMakeLists.txt

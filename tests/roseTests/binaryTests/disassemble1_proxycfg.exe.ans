@@ -6,7 +6,6 @@ using this memory map for disassembly:
     va 0x01003000 + 0x00000200 = 0x01003200 rw-- at buffer aav   + 0x00000e00 proxycfg.exe(.data)
     va 0x01004000 + 0x00000600 = 0x01004600 r--- at buffer aax   + 0x00001000 proxycfg.exe(.idata)
     va 0x01005000 + 0x00000e00 = 0x01005e00 r--- at buffer aaz   + 0x00001600 proxycfg.exe(.rsrc)
-disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 
 
 0x01001169: ================================== Function (function call) unknown name
@@ -2070,4 +2069,3 @@ disassembled 1210 instructions and 12 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

@@ -29,13 +29,11 @@ theiterator begin() const
 #endif
 };
 
-#if 0
 #ifndef INDEFINITION
 template < typename T > ISpace<T>::theiterator::theiterator( )
 {
 	_max = 10;
 }
-#endif
 #endif
 
 void foo_main()

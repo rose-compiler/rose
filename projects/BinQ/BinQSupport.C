@@ -196,8 +196,8 @@ BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
     left=Val;
   }
   if (left || right) {
-    SgAsmx86RegisterReferenceExpression* leftReg = isSgAsmx86RegisterReferenceExpression(left);
-    SgAsmx86RegisterReferenceExpression* rightReg = isSgAsmx86RegisterReferenceExpression(right);
+    SgAsmRegisterReferenceExpression* leftReg = isSgAsmRegisterReferenceExpression(left);
+    SgAsmRegisterReferenceExpression* rightReg = isSgAsmRegisterReferenceExpression(right);
     SgAsmValueExpression* leftVal = isSgAsmValueExpression(left);
     SgAsmValueExpression* rightVal = isSgAsmValueExpression(right);
     X86RegisterClass regClass;
@@ -254,8 +254,8 @@ BinQSupport::memoryExpressionContainsRegister(X86RegisterClass cl, int registerN
     right = add->get_rhs();
   }
   if (left || right) {
-    SgAsmx86RegisterReferenceExpression* leftReg = isSgAsmx86RegisterReferenceExpression(left);
-    SgAsmx86RegisterReferenceExpression* rightReg = isSgAsmx86RegisterReferenceExpression(right);
+    SgAsmRegisterReferenceExpression* leftReg = isSgAsmRegisterReferenceExpression(left);
+    SgAsmRegisterReferenceExpression* rightReg = isSgAsmRegisterReferenceExpression(right);
     X86RegisterClass regClass ;
     int regNr =0;
     if (leftReg) {

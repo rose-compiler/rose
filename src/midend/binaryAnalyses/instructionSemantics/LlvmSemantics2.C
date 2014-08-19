@@ -12,8 +12,9 @@ namespace LlvmSemantics {
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
+    size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
     return svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_READ,
                                             LeafNode::create_memory(nbits), addr->get_expression()));
@@ -38,7 +39,7 @@ RiscOperators::reset()
     BaseSemantics::MemoryStatePtr mem = state->get_memory_state();
 
     RegisterStatePtr new_regs = RegisterState::promote(regs->create(get_protoval(), regs->get_register_dictionary()));
-    BaseSemantics::MemoryStatePtr new_mem = mem->create(get_protoval());
+    BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
 
     new_regs->initialize_nonoverlapping(get_important_registers(), false);
@@ -206,7 +207,9 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     assert(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
-            } else if (LeafNodePtr leaf = node->isLeafNode()) {
+            } else {
+                LeafNodePtr leaf = node->isLeafNode();
+                ASSERT_not_null(leaf);
                 if (leaf->is_variable()) {
                     std::string comment = leaf->get_comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
@@ -214,6 +217,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     LeafNodePtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
+            return InsnSemanticsExpr::CONTINUE;
         }
         virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&)/*override*/ {
             return InsnSemanticsExpr::CONTINUE;
@@ -290,7 +294,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             o <<prefix() <<"call void " <<funcname <<"()\n";
             rose_addr_t ret_addr = fallthrough_va;
             SgAsmFunction *ret_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(ret_addr, NULL));
-            if (ret_func!=dst_func) {
+            if (ret_func!=func) {
                 // The fall through address might be invalid or in a different function if the call never returns.
                 o <<prefix() <<"unreachable\n";
             } else {
@@ -323,7 +327,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             const SgAsmIntegerValuePtrList &succs = bb->get_successors();
             std::vector<rose_addr_t> succs_va;
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si)
-                succs_va.push_back((*si)->get_absolute_value());
+                succs_va.push_back((*si)->get_absoluteValue());
 
             if (succs.size()==2 && true_func==func && false_func==func &&
                 std::min(succs_va[0], succs_va[1])==std::min(true_va, false_va) &&

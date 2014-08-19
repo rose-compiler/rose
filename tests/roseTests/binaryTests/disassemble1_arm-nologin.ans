@@ -20,7 +20,6 @@ using this memory map for disassembly:
     va 0x00010728 + 0x00000004 = 0x0001072c rw-p at anon aca     + 0x00000000 arm-nologin(.bss)
     va 0x0001072c + 0x000004bc = 0x00010be8 rw-p at anon aal     + 0x00000004 arm-nologin(LOAD#3)
     va 0x00010be8 + 0x00000418 = 0x00011000 rw-p at anon aak     + 0x00000000 arm-nologin(LOAD#3)
-disassembled 859 instructions and 2585 failures (use --show-bad to see errors)
 
 
 0x00008304: ================================== Function (symbol) <write>
@@ -1289,4 +1288,3 @@ disassembled 859 instructions and 2585 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

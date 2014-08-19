@@ -4,42 +4,46 @@
 
 0x80482c8:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080482c9[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080482c9[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80482c9:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080482cb[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080482cb[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80482cb:sub    esp, 0x08
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080482ce[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080482ce[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80482ce:call   0x08048364<call_gmon_start>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048364[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048364[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -47,8 +51,9 @@ memory:
 
 0x80482d3:call   0x080483d0<frame_dummy>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x080483d0[32]
+  esp          = doubleword[32]
+  eip          = 0x080483d0[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -56,8 +61,9 @@ memory:
 
 0x80482d8:call   0x08048580<__do_global_ctors_aux>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x08048580[32]
+  esp          = doubleword[32]
+  eip          = 0x08048580[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -65,16 +71,18 @@ memory:
 
 0x80482dd:leave  
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080482de[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080482de[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80482de:ret    
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -82,7 +90,8 @@ memory:
 
 0x80482f0:jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
 registers:
-  eip    = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -90,7 +99,8 @@ memory:
 
 0x8048300:jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
 registers:
-  eip    = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -98,7 +108,8 @@ memory:
 
 0x8048310:jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
 registers:
-  eip    = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -106,7 +117,8 @@ memory:
 
 0x8048320:jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
 registers:
-  eip    = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -114,7 +126,8 @@ memory:
 
 0x8048330:jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
 registers:
-  eip    = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -122,209 +135,222 @@ memory:
 
 0x8048340:xor    ebp, ebp
 registers:
-  ebp    = 0[32]
-  eip    = 0x08048342[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  ebp          = 0[32]
+  eip          = 0x08048342[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048342:pop    esi
 registers:
-  esp    = doubleword[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048343[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  esp          = doubleword[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048343[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048343:mov    ecx, esp
 registers:
-  ecx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048345[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  ecx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048345[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048345:and    esp, 0xf0<-16>
 registers:
-  ecx    = doubleword[32]
-  esp    = 0[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048348[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  ecx          = doubleword[32]
+  esp          = 0[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048348[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048348:push   eax
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  esp    = 0xfffffffc[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048349[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  esp          = 0xfffffffc[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048349[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048349:push   esp
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  esp    = 0xfffffff8[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x0804834a[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  esp          = 0xfffffff8[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x0804834a[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804834a:push   edx
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xfffffff4[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x0804834b[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xfffffff4[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x0804834b[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804834b:push   0x08048520<__libc_csu_fini>
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xfffffff0[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048350[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xfffffff0[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048350[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048350:push   0x080484b0<__libc_csu_init>
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xffffffec[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048355[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xffffffec[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048355[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048355:push   ecx
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xffffffe8[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048356[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xffffffe8[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048356[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048356:push   esi
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xffffffe4[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048357[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xffffffe4[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048357[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048357:push   0x08048410<main>
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xffffffe0[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x0804835c[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xffffffe0[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x0804835c[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804835c:call   0x08048310<__libc_start_main@plt>
 registers:
-  eax    = doubleword[32]
-  ecx    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = 0xffffffdc[32]
-  ebp    = 0[32]
-  esi    = doubleword[32]
-  eip    = 0x08048310[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  ecx          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = 0xffffffdc[32]
+  ebp          = 0[32]
+  esi          = doubleword[32]
+  eip          = 0x08048310[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -332,7 +358,8 @@ memory:
 
 0x8048361:hlt    
 registers:
-  eip    = 0x08048361[32]
+  eip          = 0x08048361[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -340,42 +367,47 @@ memory:
 
 0x8048364:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048365[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048365[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048365:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048367[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048367[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048367:push   ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048368[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048368[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048368:push   ecx
 registers:
-  ecx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048369[32]
+  ecx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048369[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048369:call   0x0804836e<<Insn>>
 registers:
-  ecx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804836e[32]
+  ecx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804836e[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -383,126 +415,135 @@ memory:
 
 0x804836e:pop    ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x0804836f[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x0804836f[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x804836f:add    ebx, 0x0000135a<4954>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048375[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048375[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 registers:
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x0804837b[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x0804837b[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804837b:test   edx, edx
 registers:
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x0804837d[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x0804837d[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804837d:je     0x08048384<<Insn>>
 registers:
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048384[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048384[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048384:pop    eax
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048385[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048385[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048385:pop    ebx
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048386[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048386[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048386:leave  
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048387[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048387[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048387:ret    
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -510,8 +551,9 @@ memory:
 
 0x804837f:call   0x08048330<__gmon_start__@plt>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x08048330[32]
+  esp          = doubleword[32]
+  eip          = 0x08048330[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -519,55 +561,60 @@ memory:
 
 0x8048390:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048391[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048391[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048391:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048393[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048393[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048393:sub    esp, 0x08
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048396[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048396[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804839d[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0[1]
-  cf     = 0[1]
-  of     = 0[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804839d[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804839d:jne    0x080483cc<<Insn>>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804839f, 0x080483cc[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0[1]
-  cf     = 0[1]
-  of     = 0[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804839f, 0x080483cc[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -575,84 +622,91 @@ memory:
 
 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
-  eax    = doubleword[32]
-  eip    = 0x080483a4[32]
+  eax          = doubleword[32]
+  eip          = 0x080483a4[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483a4:mov    edx, DWORD PTR ds:[eax]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483a6[32]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483a6[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483a6:test   edx, edx
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483a8[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483a8[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483a8:je     0x080483c5<<Insn>>
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483c5[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483c5[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483cc[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483cc[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483cc:leave  
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080483cd[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080483cd[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483cd:ret    
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -660,49 +714,53 @@ memory:
 
 0x80483aa:lea    esi, [esi + 0x00000000]
 registers:
-  esi    = doubleword[32]
-  eip    = 0x080483b0[32]
+  esi          = doubleword[32]
+  eip          = 0x080483b0[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483b0:add    eax, 0x04
 registers:
-  eax    = doubleword[32]
-  esi    = doubleword[32]
-  eip    = 0x080483b3[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  esi          = doubleword[32]
+  eip          = 0x080483b3[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
 registers:
-  eax    = doubleword[32]
-  esi    = doubleword[32]
-  eip    = 0x080483b8[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  esi          = doubleword[32]
+  eip          = 0x080483b8[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483b8:call   edx
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -710,41 +768,45 @@ memory:
 
 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
-  eax    = doubleword[32]
-  eip    = 0x080483bf[32]
+  eax          = doubleword[32]
+  eip          = 0x080483bf[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483bf:mov    edx, DWORD PTR ds:[eax]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483c1[32]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483c1[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483c1:test   edx, edx
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483c3[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483c3[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483c3:jne    0x080483b0<<Insn>>
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  eip    = 0x080483c5[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  eip          = 0x080483c5[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -752,113 +814,122 @@ memory:
 
 0x80483d0:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080483d1[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080483d1[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483d1:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080483d3[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080483d3[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483d3:sub    esp, 0x08
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080483d6[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080483d6[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080483db[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080483db[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483db:test   eax, eax
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080483dd[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080483dd[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483dd:je     0x08048400<<Insn>>
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048400[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048400[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048400:mov    esp, ebp
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048402[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048402[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048402:pop    ebp
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048403[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048403[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048403:ret    
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -866,32 +937,35 @@ memory:
 
 0x80483df:mov    eax, 0x00000000
 registers:
-  eax    = 0[32]
-  eip    = 0x080483e4[32]
+  eax          = 0[32]
+  eip          = 0x080483e4[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483e4:test   eax, eax
 registers:
-  eax    = 0[32]
-  eip    = 0x080483e6[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = 0[32]
+  eip          = 0x080483e6[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483e6:je     0x08048400<<Insn>>
 registers:
-  eax    = 0[32]
-  eip    = 0x08048400[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = 0[32]
+  eip          = 0x08048400[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -899,14 +973,16 @@ memory:
 
 0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x080483ef[32]
+  esp          = doubleword[32]
+  eip          = 0x080483ef[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483ef:call   0x00000000
 registers:
-  esp    = doubleword[32]
-  eip    = 0[32]
+  esp          = doubleword[32]
+  eip          = 0[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -914,15 +990,17 @@ memory:
 
 0x80483f4:lea    esi, [esi + 0x00000000]
 registers:
-  esi    = doubleword[32]
-  eip    = 0x080483fa[32]
+  esi          = doubleword[32]
+  eip          = 0x080483fa[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80483fa:lea    edi, [edi + 0x00000000]
 registers:
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048400[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048400[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -930,95 +1008,103 @@ memory:
 
 0x8048410:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048411[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048411[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048411:mov    edx, 0x08048480<handler>
 registers:
-  edx    = 0x08048480[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048416[32]
+  edx          = 0x08048480[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048416[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048416:mov    ebp, esp
 registers:
-  edx    = 0x08048480[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048418[32]
+  edx          = 0x08048480[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048418[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048418:sub    esp, 0x08
 registers:
-  edx    = 0x08048480[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804841b[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  edx          = 0x08048480[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804841b[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804841b:and    esp, 0xf0<-16>
 registers:
-  edx    = 0x08048480[32]
-  esp    = 0[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804841e[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  edx          = 0x08048480[32]
+  esp          = 0[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804841e[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx
 registers:
-  edx    = 0x08048480[32]
-  esp    = 0[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048422[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  edx          = 0x08048480[32]
+  esp          = 0[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048422[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a
 registers:
-  edx    = 0x08048480[32]
-  esp    = 0[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048429[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  edx          = 0x08048480[32]
+  esp          = 0[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048429[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048429:call   0x080482f0<signal@plt>
 registers:
-  edx    = 0x08048480[32]
-  esp    = 0xfffffffc[32]
-  ebp    = doubleword[32]
-  eip    = 0x080482f0[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  af     = 0..1[1]
-  cf     = 0[1]
-  of     = 0[1]
+  edx          = 0x08048480[32]
+  esp          = 0xfffffffc[32]
+  ebp          = doubleword[32]
+  eip          = 0x080482f0[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  of           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1026,51 +1112,55 @@ memory:
 
 0x804842e:mov    esp, ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048430[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048430[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048430:xor    eax, eax
 registers:
-  eax    = 0[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048432[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = 0[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048432[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048432:pop    ebp
 registers:
-  eax    = 0[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048433[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = 0[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048433[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048433:ret    
 registers:
-  eax    = 0[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = 0[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1078,55 +1168,60 @@ memory:
 
 0x8048440:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048441[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048441[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048441:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048443[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048443[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048443:sub    esp, 0x08
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048446[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048446[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804844d[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804844d[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804844d:call   0x08048300<puts@plt>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048300[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048300[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1134,23 +1229,26 @@ memory:
 
 0x8048452:mov    esp, ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048454[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048454[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048454:pop    ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048455[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048455[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048455:ret    
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1158,55 +1256,60 @@ memory:
 
 0x8048460:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048461[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048461[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048461:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048463[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048463[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048463:sub    esp, 0x08
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048466[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048466[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804846d[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804846d[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804846d:call   0x08048300<puts@plt>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048300[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048300[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1214,14 +1317,16 @@ memory:
 
 0x8048472:mov    DWORD PTR ss:[esp], 0x00000000
 registers:
-  esp    = doubleword[32]
-  eip    = 0x08048479[32]
+  esp          = doubleword[32]
+  eip          = 0x08048479[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048479:call   0x08048320<_exit@plt>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x08048320[32]
+  esp          = doubleword[32]
+  eip          = 0x08048320[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1229,68 +1334,74 @@ memory:
 
 0x8048480:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048481[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048481[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048481:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048483[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048483[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048483:sub    esp, 0x08
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048486[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048486[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804848c[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804848c[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048493[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048493[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048493:call   0x08048300<puts@plt>
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048300[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048300[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1298,14 +1409,16 @@ memory:
 
 0x8048498:mov    DWORD PTR ss:[esp], 0x00000000
 registers:
-  esp    = doubleword[32]
-  eip    = 0x0804849f[32]
+  esp          = doubleword[32]
+  eip          = 0x0804849f[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x804849f:call   0x08048320<_exit@plt>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x08048320[32]
+  esp          = doubleword[32]
+  eip          = 0x08048320[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1313,75 +1426,82 @@ memory:
 
 0x80484b0:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080484b1[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080484b1[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484b1:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080484b3[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080484b3[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484b3:push   edi
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484b4[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484b4[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484b4:push   esi
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484b5[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484b5[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484b5:push   ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484b6[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484b6[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484b6:sub    esp, 0x0c
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484b9[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484b9[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484b9:call   0x080484be<<Insn>>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484be[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484be[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1389,35 +1509,38 @@ memory:
 
 0x80484be:pop    ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080484bf[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080484bf[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484bf:add    ebx, 0x0000120a<4618>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080484c5[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080484c5[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484c5:call   0x080482c8<_init>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080482c8[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080482c8[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1425,75 +1548,81 @@ memory:
 
 0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080484d0[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080484d0[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080484d6[32]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080484d6[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484d6:sub    eax, edx
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080484d8[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080484d8[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484d8:sar    eax, 0x02
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080484db[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080484db[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080484de[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080484de[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080484e0, 0x080484f0[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080484e0, 0x080484f0[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1501,88 +1630,94 @@ memory:
 
 0x80484e0:add    esp, 0x0c
 registers:
-  esp    = doubleword[32]
-  eip    = 0x080484e3[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  eip          = 0x080484e3[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484e3:pop    ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080484e4[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080484e4[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484e4:pop    esi
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  eip    = 0x080484e5[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  eip          = 0x080484e5[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484e5:pop    edi
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484e6[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484e6[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484e6:pop    ebp
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080484e7[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080484e7[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80484e7:ret    
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1590,75 +1725,82 @@ memory:
 
 0x8048520:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048521[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048521[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048521:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048523[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048523[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048523:push   edi
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048524[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048524[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048524:push   esi
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048525[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048525[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048525:push   ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048526[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048526[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048526:sub    esp, 0x0c
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048529[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048529[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048529:call   0x0804852e<<Insn>>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x0804852e[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x0804852e[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1666,145 +1808,155 @@ memory:
 
 0x804852e:pop    ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x0804852f[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x0804852f[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x804852f:add    ebx, 0x0000119a<4506>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048535[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048535[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x0804853b[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x0804853b[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048541[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048541[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048541:sub    eax, edx
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048543[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048543[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048543:sar    eax, 0x02
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048546[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048546[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048549[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048549[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048549:dec    eax
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804854a[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804854a[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804854a:cmp    eax, 0xff<-1>
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804854d[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804854d[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804854d:je     0x0804856b<<Insn>>
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804854f, 0x0804856b[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804854f, 0x0804856b[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1812,71 +1964,76 @@ memory:
 
 0x804854f:lea    esi, [edx + eax*0x04]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esi    = doubleword[32]
-  eip    = 0x08048552[32]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esi          = doubleword[32]
+  eip          = 0x08048552[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048552:xor    edi, edi
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = 0[32]
-  eip    = 0x08048554[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = 0[32]
+  eip          = 0x08048554[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048554:lea    esi, [esi + 0x00000000]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = 0[32]
-  eip    = 0x0804855a[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = 0[32]
+  eip          = 0x0804855a[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804855a:lea    edi, [edi + 0x00000000]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = 0[32]
-  eip    = 0x08048560[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = 0[32]
+  eip          = 0x08048560[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048560:call   DWORD PTR ds:[esi]
 registers:
-  eax    = doubleword[32]
-  edx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = 0[32]
-  eip    = doubleword[32]
-  pf     = 1[1]
-  sf     = 0[1]
-  zf     = 1[1]
-  of     = 0[1]
-  af     = 0..1[1]
-  cf     = 0[1]
+  eax          = doubleword[32]
+  edx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = 0[32]
+  eip          = doubleword[32]
+  pf           = 1[1]
+  sf           = 0[1]
+  zf           = 1[1]
+  of           = 0[1]
+  af           = 0..1[1]
+  cf           = 0[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1884,54 +2041,58 @@ memory:
 
 0x8048562:inc    edi
 registers:
-  edi    = doubleword[32]
-  eip    = 0x08048563[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  of     = 0..1[1]
+  edi          = doubleword[32]
+  eip          = 0x08048563[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048563:sub    esi, 0x04
 registers:
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048566[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  of     = 0..1[1]
-  cf     = 0..1[1]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048566[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  of           = 0..1[1]
+  cf           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
 registers:
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048569[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  of     = 0..1[1]
-  cf     = 0..1[1]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048569[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  of           = 0..1[1]
+  cf           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048569:jne    0x08048560<<Insn>>
 registers:
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048560, 0x0804856b[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  of     = 0..1[1]
-  cf     = 0..1[1]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048560, 0x0804856b[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  of           = 0..1[1]
+  cf           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1939,8 +2100,9 @@ memory:
 
 0x804856b:call   0x080485b0<_fini>
 registers:
-  esp    = doubleword[32]
-  eip    = 0x080485b0[32]
+  esp          = doubleword[32]
+  eip          = 0x080485b0[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -1948,88 +2110,94 @@ memory:
 
 0x8048570:add    esp, 0x0c
 registers:
-  esp    = doubleword[32]
-  eip    = 0x08048573[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  esp          = doubleword[32]
+  eip          = 0x08048573[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048573:pop    ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048574[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048574[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048574:pop    esi
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  eip    = 0x08048575[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  eip          = 0x08048575[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048575:pop    edi
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048576[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048576[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048576:pop    ebp
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x08048577[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x08048577[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048577:ret    
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2037,97 +2205,105 @@ memory:
 
 0x8048580:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048581[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048581[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048581:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048583[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048583[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048583:push   ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048584[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048584[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048584:sub    esp, 0x04
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048587[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048587[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048587:mov    ebx, 0x080495e8<.ctors>
 registers:
-  ebx    = 0x080495e8[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x0804858c[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = 0x080495e8[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x0804858c[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
 registers:
-  eax    = doubleword[32]
-  ebx    = 0x080495e8[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048591[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = 0x080495e8[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048591[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048591:cmp    eax, 0xff<-1>
 registers:
-  eax    = doubleword[32]
-  ebx    = 0x080495e8[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048594[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = 0x080495e8[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048594[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048594:je     0x080485ac<<Insn>>
 registers:
-  eax    = doubleword[32]
-  ebx    = 0x080495e8[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x08048596, 0x080485ac[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = 0x080495e8[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x08048596, 0x080485ac[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2135,45 +2311,49 @@ memory:
 
 0x8048596:lea    esi, [esi + 0x00]
 registers:
-  esi    = doubleword[32]
-  eip    = 0x08048599[32]
+  esi          = doubleword[32]
+  eip          = 0x08048599[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x8048599:lea    edi, [edi + 0x00000000]
 registers:
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080485a0[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080485a0[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485a0:sub    ebx, 0x04
 registers:
-  ebx    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = 0x080485a3[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = 0x080485a3[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485a3:call   eax
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  esi    = doubleword[32]
-  edi    = doubleword[32]
-  eip    = doubleword[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  esi          = doubleword[32]
+  edi          = doubleword[32]
+  eip          = doubleword[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2181,35 +2361,38 @@ memory:
 
 0x80485a5:mov    eax, DWORD PTR ds:[ebx]
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080485a7[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080485a7[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485a7:cmp    eax, 0xff<-1>
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080485aa[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080485aa[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485aa:jne    0x080485a0<<Insn>>
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  eip    = 0x080485a0, 0x080485ac[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  eip          = 0x080485a0, 0x080485ac[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2217,35 +2400,39 @@ memory:
 
 0x80485ac:pop    eax
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080485ad[32]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080485ad[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485ad:pop    ebx
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080485ae[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080485ae[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485ae:pop    ebp
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485af[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485af[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485af:ret    
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2253,42 +2440,47 @@ memory:
 
 0x80485b0:push   ebp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485b1[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485b1[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485b1:mov    ebp, esp
 registers:
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485b3[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485b3[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485b3:push   ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485b4[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485b4[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485b4:push   eax
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485b5[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485b5[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485b5:call   0x080485ba<<Insn>>
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485ba[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485ba[32]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2296,35 +2488,38 @@ memory:
 
 0x80485ba:pop    ebx
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080485bb[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080485bb[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485bb:add    ebx, 0x0000110e<4366>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080485c1[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080485c1[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485c1:call   0x08048390<__do_global_dtors_aux>
 registers:
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x08048390[32]
-  pf     = 0..1[1]
-  sf     = 0..1[1]
-  zf     = 0..1[1]
-  af     = 0..1[1]
-  cf     = 0..1[1]
-  of     = 0..1[1]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x08048390[32]
+  pf           = 0..1[1]
+  sf           = 0..1[1]
+  zf           = 0..1[1]
+  af           = 0..1[1]
+  cf           = 0..1[1]
+  of           = 0..1[1]
+  fpstatus_top = 0[3]
 memory:
 =====================================================================================
 === Starting a new basic block                                                    ===
@@ -2332,34 +2527,38 @@ memory:
 
 0x80485c6:pop    eax
 registers:
-  eax    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080485c7[32]
+  eax          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080485c7[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485c7:pop    ebx
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  eip    = 0x080485c8[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  eip          = 0x080485c8[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485c8:leave  
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = 0x080485c9[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = 0x080485c9[32]
+  fpstatus_top = 0[3]
 memory:
 
 0x80485c9:ret    
 registers:
-  eax    = doubleword[32]
-  ebx    = doubleword[32]
-  esp    = doubleword[32]
-  ebp    = doubleword[32]
-  eip    = doubleword[32]
+  eax          = doubleword[32]
+  ebx          = doubleword[32]
+  esp          = doubleword[32]
+  ebp          = doubleword[32]
+  eip          = doubleword[32]
+  fpstatus_top = 0[3]
 memory:
 analyzed headers: 1

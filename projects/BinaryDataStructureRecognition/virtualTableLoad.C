@@ -332,7 +332,7 @@ detectVirtualTableLoad( SgProject* project )
   // Build a specific instruction to match a specific address (in .rodata, where the vitual function tables are located)
 #ifdef USE_NEW_ISA_INDEPENDENT_REGISTER_HANDLING
      SgAsmInstruction* target = SageBuilderAsm::buildx86Instruction(x86_mov,
-                   SageBuilderAsm::buildAsmx86RegisterReferenceExpression(x86_regclass_gpr,SgAsmx86RegisterReferenceExpression::e_edx),
+                   SageBuilderAsm::buildAsmRegisterReferenceExpression(x86_regclass_gpr,SgAsmRegisterReferenceExpression::e_edx),
                 // Note that the address value is ignored in our "equivalenceTest()" function.
                    SageBuilderAsm::buildAsmDWordValue(0x0));
      printf ("Target instruction = %s \n",unparseInstructionWithAddress(target).c_str());

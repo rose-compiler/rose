@@ -1764,6 +1764,9 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
             // DQ (8/15/2007): This has been moved to the base class
                case EXPR_LIST: { unparseExprList(expr, info); break; }
 
+            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+               case NULLPTR_VAL:
+
             // DQ: These cases are separated out so that we can handle the 
             // original expression tree from any possible constant folding by EDG.
                case BOOL_VAL:
@@ -3282,6 +3285,9 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgLongDoubleVal:          { unparseLongDoubleVal(expr, info);   break; }
                case V_SgComplexVal:             { unparseComplexVal(expr, info);      break; }
 
+            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+               case V_SgNullptrValExp:          { unparseNullptrVal(expr, info);      break; }
+
                default:
                   {
                     printf ("Default reached in switch statement valueExp = %p = %s \n",valueExp,valueExp->class_name().c_str());
@@ -3292,6 +3298,23 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
         }
    }
 
+
+// DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+void
+UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(expr != NULL);
+#if 0
+     printf ("In UnparseLanguageIndependentConstructs::unparseNullptrVal(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
+
+     curprint("nullptr");
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 
 void

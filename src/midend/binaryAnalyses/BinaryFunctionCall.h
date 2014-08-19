@@ -238,8 +238,8 @@ void
 BinaryAnalysis::FunctionCall::cache_vertex_descriptors(const FunctionCallGraph &cg)
 {
     typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
-        SgAsmFunction *func = get(boost::vertex_name, cg, *vi);
+    for (boost::tie(vi, vi_end)=boost::vertices(cg); vi!=vi_end; ++vi) {
+        SgAsmFunction *func = get_ast_node(cg, *vi);
         if (func && !is_vertex_filtered(func))
             func->set_cached_vertex(*vi);
     }
@@ -257,27 +257,26 @@ BinaryAnalysis::FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, Fun
 
     /* Add CG vertices by collapsing CFG nodes that belong to a common function. */
     FunctionVertexMap fv_map;
-    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
-        SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
-        SgAsmFunction *func = block->get_enclosing_function();
+    typename boost::graph_traits<const ControlFlowGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(get_ast_node(cfg, *vi));
         if (!is_vertex_filtered(func)) {
             typename FunctionVertexMap::iterator fi=fv_map.find(func);
             if (func && fi==fv_map.end()) {
-                CG_Vertex v = add_vertex(cg);
-                put(boost::vertex_name, cg, v, func);
+                CG_Vertex v = boost::add_vertex(cg);
+                put_ast_node(cg, v, func);
                 fv_map[func] = v;
             }
         }
     }
 
     /* Add edges whose target is a function entry block. */
-    typename boost::graph_traits<ControlFlowGraph>::edge_iterator ei, ei_end;
-    for (boost::tie(ei, ei_end)=edges(cfg); ei!=ei_end; ++ei) {
-        CFG_Vertex cfg_a = source(*ei, cfg);
-        CFG_Vertex cfg_b = target(*ei, cfg);
-        SgAsmBlock *block_a = get(boost::vertex_name, cfg, cfg_a);
-        SgAsmBlock *block_b = get(boost::vertex_name, cfg, cfg_b);
+    typename boost::graph_traits<const ControlFlowGraph>::edge_iterator ei, ei_end;
+    for (boost::tie(ei, ei_end)=boost::edges(cfg); ei!=ei_end; ++ei) {
+        CFG_Vertex cfg_a = boost::source(*ei, cfg);
+        CFG_Vertex cfg_b = boost::target(*ei, cfg);
+        SgAsmBlock *block_a = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_a), true/* inc. self */);
+        SgAsmBlock *block_b = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_b), true/* inc. self */);
         SgAsmFunction *func_a = block_a->get_enclosing_function();
         SgAsmFunction *func_b = block_b->get_enclosing_function();
         if (func_a && func_b && block_b==func_b->get_entry_block() && !is_edge_filtered(func_a, func_b)) {
@@ -285,7 +284,7 @@ BinaryAnalysis::FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, Fun
             if (fi_a!=fv_map.end()) {
                 typename FunctionVertexMap::iterator fi_b = fv_map.find(func_b);
                 if (fi_b!=fv_map.end())
-                    add_edge(fi_a->second, fi_b->second, cg);
+                    boost::add_edge(fi_a->second, fi_b->second, cg);
             }
         }
     }
@@ -321,9 +320,9 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
         void visit(SgNode *node) {
             SgAsmFunction *func = isSgAsmFunction(node);
             if (func && !analyzer->is_vertex_filtered(func)) {
-                Vertex vertex = add_vertex(cg);
+                Vertex vertex = boost::add_vertex(cg);
                 fv_map[func] = vertex;
-                put(boost::vertex_name, cg, vertex, func);
+                put_ast_node(cg, vertex, func);
             }
         }
     };
@@ -347,12 +346,12 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
                 return;
             const SgAsmIntegerValuePtrList &succs = block_a->get_successors();
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
-                SgAsmBlock *block_b = isSgAsmBlock((*si)->get_base_node()); /* the called block */
+                SgAsmBlock *block_b = isSgAsmBlock((*si)->get_baseNode()); /* the called block */
                 SgAsmFunction *func_b = function_of(block_b); /* the called function */
                 if (func_b && block_b==func_b->get_entry_block() && !analyzer->is_edge_filtered(func_a, func_b)) {
                     typename FunctionVertexMap::iterator fi_b = fv_map.find(func_b); /* find vertex for called function */
                     if (fi_b!=fv_map.end())
-                        add_edge(source_vertex, fi_b->second, cg);
+                        boost::add_edge(source_vertex, fi_b->second, cg);
                 }
             }
         }
@@ -360,8 +359,8 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
 
     VertexAdder(this, cg, fv_map).traverse(root, preorder);
     typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
-        SgAsmFunction *source_func = get(boost::vertex_name, cg, *vi);
+    for (boost::tie(vi, vi_end)=boost::vertices(cg); vi!=vi_end; ++vi) {
+        SgAsmFunction *source_func = get_ast_node(cg, *vi);
         EdgeAdder(this, cg, fv_map, *vi).traverse(source_func, preorder);
     }
 }
@@ -383,24 +382,24 @@ BinaryAnalysis::FunctionCall::copy(const FunctionCallGraph &src, FunctionCallGra
     Vertex NO_VERTEX = boost::graph_traits<FunctionCallGraph>::null_vertex();
 
     dst.clear();
-    std::vector<Vertex> src_to_dst(num_vertices(src), NO_VERTEX);
+    std::vector<Vertex> src_to_dst(boost::num_vertices(src), NO_VERTEX);
 
-    typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(src); vi!=vi_end; ++vi) {
-        SgAsmFunction *func = get(boost::vertex_name, src, *vi);
+    typename boost::graph_traits<const FunctionCallGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=boost::vertices(src); vi!=vi_end; ++vi) {
+        SgAsmFunction *func = get_ast_node(src, *vi);
         if (!is_vertex_filtered(func)) {
-            src_to_dst[*vi] = add_vertex(dst);
-            put(boost::vertex_name, dst, src_to_dst[*vi], func);
+            src_to_dst[*vi] = boost::add_vertex(dst);
+            put_ast_node(dst, src_to_dst[*vi], func);
         }
     }
 
-    typename boost::graph_traits<FunctionCallGraph>::edge_iterator ei, ei_end;
-    for (boost::tie(ei, ei_end)=edges(src); ei!=ei_end; ++ei) {
-        if (NO_VERTEX!=src_to_dst[source(*ei, src)] && NO_VERTEX!=src_to_dst[target(*ei, src)]) {
-            SgAsmFunction *func1 = get(boost::vertex_name, src, source(*ei, src));
-            SgAsmFunction *func2 = get(boost::vertex_name, src, target(*ei, src));
+    typename boost::graph_traits<const FunctionCallGraph>::edge_iterator ei, ei_end;
+    for (boost::tie(ei, ei_end)=boost::edges(src); ei!=ei_end; ++ei) {
+        if (NO_VERTEX!=src_to_dst[boost::source(*ei, src)] && NO_VERTEX!=src_to_dst[boost::target(*ei, src)]) {
+            SgAsmFunction *func1 = get_ast_node(src, boost::source(*ei, src));
+            SgAsmFunction *func2 = get_ast_node(src, boost::target(*ei, src));
             if (!is_edge_filtered(func1, func2))
-                add_edge(src_to_dst[source(*ei, src)], src_to_dst[target(*ei, src)], dst);
+                boost::add_edge(src_to_dst[boost::source(*ei, src)], src_to_dst[boost::target(*ei, src)], dst);
         }
     }
 }

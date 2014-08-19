@@ -1,3 +1,7 @@
+int x;
+
+#if 1
+/* Review this issue later (problem with MSVC support for reference to compiler defined implicit copy constructor (now fixed)). */
 class X
    {
      public:
@@ -14,4 +18,4 @@ X foo()
 
      X object3 = object1;
    }
-
+#endif

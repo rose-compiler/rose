@@ -4,7 +4,7 @@ EXTRA_DIST = CMakeLists.txt
 
 noinst_LTLIBRARIES = libroseX10.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 	jni_x10SourceCodePosition.h \
 	jni_x10_token.h \
 	jni_x10_utils.h \

@@ -16,15 +16,15 @@ DataMemberInitializationAttribute::DataMemberInitializationAttribute ( SgAsmInst
      SgAsmMemoryReferenceExpression* memoryReferenceExpression = isSgAsmMemoryReferenceExpression(instruction->get_operandList()->get_operands()[0]);
      ROSE_ASSERT(memoryReferenceExpression != NULL);
 
-     SgAsmx86RegisterReferenceExpression* segmentRegister = isSgAsmx86RegisterReferenceExpression(memoryReferenceExpression->get_segment());
+     SgAsmRegisterReferenceExpression* segmentRegister = isSgAsmRegisterReferenceExpression(memoryReferenceExpression->get_segment());
      ROSE_ASSERT(segmentRegister != NULL);
 
 #ifdef USE_NEW_ISA_INDEPENDENT_REGISTER_HANDLING
   // This is a data member
-     isStackVariable  = (segmentRegister->get_register_number() == SgAsmx86RegisterReferenceExpression::e_ss);
+     isStackVariable  = (segmentRegister->get_register_number() == SgAsmRegisterReferenceExpression::e_ss);
 
   // This is to test if there is another register being referenced.
-     bool isGlobalVariable = (segmentRegister->get_register_number() == SgAsmx86RegisterReferenceExpression::e_ds);
+     bool isGlobalVariable = (segmentRegister->get_register_number() == SgAsmRegisterReferenceExpression::e_ds);
 
   // This should be either a stack or global variable (no other allowed).
      ROSE_ASSERT(isStackVariable == true  || isGlobalVariable == true);
@@ -105,7 +105,8 @@ TypeAnalysisAttribute::TypeAnalysisAttribute(size_t addr, SgAsmType* type)
 // Support functions for building patterns checked against the AST.
 // ****************************************************************
 vector<SgNode*>
-dataMemberInitializationWithoutOffsetSupport( SgProject* project, SgAsmx86RegisterReferenceExpression::regnames32_enum registerName, SgAsmx86RegisterReferenceExpression::segregnames_enum segmentRegister )
+dataMemberInitializationWithoutOffsetSupport( SgProject* project, SgAsmRegisterReferenceExpression::regnames32_enum registerName,
+                                              SgAsmRegisterReferenceExpression::segregnames_enum segmentRegister )
    {
   // This is a data member initialization in a member function of a data structure on the stack
 
@@ -117,8 +118,8 @@ dataMemberInitializationWithoutOffsetSupport( SgProject* project, SgAsmx86Regist
 #ifdef USE_NEW_ISA_INDEPENDENT_REGISTER_HANDLING
      SgAsmInstruction* target = buildx86Instruction(x86_mov,
                    buildAsmMemoryReferenceExpression(
-                        buildAsmx86RegisterReferenceExpression(x86_regclass_gpr,registerName),
-                        buildAsmx86RegisterReferenceExpression(x86_regclass_segment,segmentRegister),
+                        buildAsmRegisterReferenceExpression(x86_regclass_gpr,registerName),
+                        buildAsmRegisterReferenceExpression(x86_regclass_segment,segmentRegister),
                      // This value should match the type below.
                         buildAsmTypeDoubleWord() ),
                 // This value will be ignored in matching (but the type will be checked).
@@ -144,7 +145,8 @@ dataMemberInitializationWithoutOffsetSupport( SgProject* project, SgAsmx86Regist
    }
 
 vector<SgNode*>
-dataMemberInitializationWithOffsetSupport( SgProject* project, SgAsmx86RegisterReferenceExpression::regnames32_enum registerName, SgAsmx86RegisterReferenceExpression::segregnames_enum segmentRegister )
+dataMemberInitializationWithOffsetSupport( SgProject* project, SgAsmRegisterReferenceExpression::regnames32_enum registerName,
+                                           SgAsmRegisterReferenceExpression::segregnames_enum segmentRegister )
    {
   // This is a data member initialization in a member function of a data structure on the stack
 
@@ -157,12 +159,12 @@ dataMemberInitializationWithOffsetSupport( SgProject* project, SgAsmx86RegisterR
      SgAsmInstruction* target = buildx86Instruction(x86_mov,
                    buildAsmMemoryReferenceExpression(
                         buildAsmAddExpression(
-                          // buildAsmx86RegisterReferenceExpression(x86_regclass_gpr,SgAsmx86RegisterReferenceExpression::e_eax),
-                             buildAsmx86RegisterReferenceExpression(x86_regclass_gpr,registerName),
+                          // buildAsmRegisterReferenceExpression(x86_regclass_gpr,SgAsmRegisterReferenceExpression::e_eax),
+                             buildAsmRegisterReferenceExpression(x86_regclass_gpr,registerName),
                           // This value will be ignored in matching.
                              buildAsmByteValue(0x04)),
-                     // buildAsmx86RegisterReferenceExpression(x86_regclass_segment,SgAsmx86RegisterReferenceExpression::e_ds),
-                        buildAsmx86RegisterReferenceExpression(x86_regclass_segment,segmentRegister),
+                     // buildAsmRegisterReferenceExpression(x86_regclass_segment,SgAsmRegisterReferenceExpression::e_ds),
+                        buildAsmRegisterReferenceExpression(x86_regclass_segment,segmentRegister),
                      // Note that the type will not be checked since it is not traversed in the AST.
                         buildAsmTypeDoubleWord() ),
                 // This value will be ignored in matching (but the type will be checked).
@@ -185,7 +187,7 @@ dataMemberInitializationWithOffsetSupport( SgProject* project, SgAsmx86RegisterR
    }
 
 vector<SgNode*>
-dataMemberInitializationUsingAddressSupport( SgProject* project, SgAsmx86RegisterReferenceExpression::segregnames_enum segmentRegister )
+dataMemberInitializationUsingAddressSupport( SgProject* project, SgAsmRegisterReferenceExpression::segregnames_enum segmentRegister )
    {
   // This is a data member initialization in either a member function or regular function of a data structure in the global scope.
 
@@ -199,7 +201,7 @@ dataMemberInitializationUsingAddressSupport( SgProject* project, SgAsmx86Registe
                    buildAsmMemoryReferenceExpression(
                      // This value will be ignored in matching.
                         buildAsmDWordValue(0x8049c8c),
-                        buildAsmx86RegisterReferenceExpression(x86_regclass_segment,segmentRegister),
+                        buildAsmRegisterReferenceExpression(x86_regclass_segment,segmentRegister),
                         buildAsmTypeDoubleWord() ),
                 // This value will be ignored in matching (but the type will be checked).
                    buildAsmDWordValue(0x8048858)->addRegExpAttribute("regex",new AstRegExAttribute("*")));
@@ -354,7 +356,7 @@ void
 dataMemberInitializationWithoutOffsetInMemberFunction( SgProject* project)
    {
   // This is a data member initialization in a member function of its data structure.
-     vector<SgNode*> instructionList = dataMemberInitializationWithoutOffsetSupport(project,SgAsmx86RegisterReferenceExpression::e_eax,SgAsmx86RegisterReferenceExpression::e_ds);
+     vector<SgNode*> instructionList = dataMemberInitializationWithoutOffsetSupport(project,SgAsmRegisterReferenceExpression::e_eax,SgAsmRegisterReferenceExpression::e_ds);
 
      setupInstructionAttributes(project,instructionList,"Data segment (global variable) initialization (without offset) in member function");
 
@@ -365,7 +367,7 @@ void
 dataMemberInitializationWithOffsetInMemberFunction( SgProject* project )
    {
   // This is a data member initialization in a member function of its data structure.
-     vector<SgNode*> instructionList = dataMemberInitializationWithOffsetSupport(project,SgAsmx86RegisterReferenceExpression::e_eax,SgAsmx86RegisterReferenceExpression::e_ds);
+     vector<SgNode*> instructionList = dataMemberInitializationWithOffsetSupport(project,SgAsmRegisterReferenceExpression::e_eax,SgAsmRegisterReferenceExpression::e_ds);
 
      setupInstructionAttributes(project,instructionList,"Data segment (global variable) initialization (with offset) in member function");
 
@@ -376,7 +378,7 @@ void
 dataMemberInitializationWithoutOffsetInFunction( SgProject* project )
    {
   // This is a data member initialization in a normal function of a data structure on the stack
-     vector<SgNode*> instructionList = dataMemberInitializationWithoutOffsetSupport(project,SgAsmx86RegisterReferenceExpression::e_ebp,SgAsmx86RegisterReferenceExpression::e_ss);
+     vector<SgNode*> instructionList = dataMemberInitializationWithoutOffsetSupport(project,SgAsmRegisterReferenceExpression::e_ebp,SgAsmRegisterReferenceExpression::e_ss);
 
   // DQ (11/8/2009): It seems that this is always true since the compiler will not generate this type of instruction without an offset from "ebp".
      ROSE_ASSERT(instructionList.empty() == true);
@@ -390,7 +392,7 @@ void
 dataMemberInitializationWithOffsetInFunction( SgProject* project )
    {
   // This is a data member initialization in a normal function of a data structure on the stack
-     vector<SgNode*> instructionList = dataMemberInitializationWithOffsetSupport(project,SgAsmx86RegisterReferenceExpression::e_ebp,SgAsmx86RegisterReferenceExpression::e_ss);
+     vector<SgNode*> instructionList = dataMemberInitializationWithOffsetSupport(project,SgAsmRegisterReferenceExpression::e_ebp,SgAsmRegisterReferenceExpression::e_ss);
 
      setupInstructionAttributes(project,instructionList,"Data member initialization in function (stack reference)");
 
@@ -401,7 +403,7 @@ void
 dataMemberInitializationUsingAddress( SgProject* project )
    {
   // This is a data member initialization in any function of a data structure in global scope.
-     vector<SgNode*> instructionList = dataMemberInitializationUsingAddressSupport(project,SgAsmx86RegisterReferenceExpression::e_ds);
+     vector<SgNode*> instructionList = dataMemberInitializationUsingAddressSupport(project,SgAsmRegisterReferenceExpression::e_ds);
 
      setupInstructionAttributes(project,instructionList,"Data member initialization in any function (global variable reference)");
 
@@ -414,7 +416,7 @@ stackDataInitializationUsingAddress( SgProject* project )
   // This is a simpler primative type data initialization for data on the stack in any function.
   // Since this is not about data structure initialization we might separate it out (refactor) later.
   // Looking for mov    WORD PTR ss:[ebp + *], *
-     vector<SgNode*> instructionList = dataMemberInitializationUsingAddressSupport(project,SgAsmx86RegisterReferenceExpression::e_ss);
+     vector<SgNode*> instructionList = dataMemberInitializationUsingAddressSupport(project,SgAsmRegisterReferenceExpression::e_ss);
 
      setupInstructionAttributes(project,instructionList,"Data member initialization in any function (stack variable reference)");
 

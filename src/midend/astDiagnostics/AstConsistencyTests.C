@@ -2441,9 +2441,9 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                ROSE_ASSERT(locatedNode->get_file_info() != NULL);
                if (locatedNode->get_file_info()->isShared() == false)
                   {
-                    printf ("Warning: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
                     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                        {
+                         printf ("Warning: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
                          locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
                        }
                   }
@@ -2477,16 +2477,18 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+             {
                printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
-          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
-          if (declarationStatement != NULL)
-             {
-               printf ("*** (possible sharing violation) declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
-               ROSE_ASSERT(declarationStatement->get_parent() != NULL);
-               printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
-               printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
-               printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+               SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
+               if (declarationStatement != NULL)
+                  {
+                    printf ("*** (possible sharing violation) declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+                    ROSE_ASSERT(declarationStatement->get_parent() != NULL);
+                    printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
+                    printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
+                    printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+                  }
              }
 
 #if 0
@@ -2529,7 +2531,10 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
           ROSE_ASSERT(false);
 #else
        // DQ (4/26/2012): debugging... (test2012_67.C)
-          printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples) \n");
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+             {
+               printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples) \n");
+             }
 #endif
         }
 #if 0

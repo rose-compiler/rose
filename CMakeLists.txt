@@ -867,7 +867,7 @@ endif (NOT WIN32)
 if (NOT WIN32)
   set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} )
 else (NOT WIN32)
-  set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib )
+  set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)
 
 # Check compilers and version numbers, Liao 11/25/2009

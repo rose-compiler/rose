@@ -15,7 +15,7 @@ T & operator+( T & i, T & j)
      return i;
    }
 
-#if 0
+#if 1
 void foobar()
    {
      X<int> x,y,z;

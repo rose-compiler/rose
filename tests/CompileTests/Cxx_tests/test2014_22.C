@@ -12,7 +12,8 @@ template <typename T>
 class Base
 {
   public:
-    template<> friend ostream& operator<< <T>(ostream &, const int &);
+ // template<> friend ostream& operator<< <T>(ostream &, const int &);
+    friend ostream& operator<< <>(ostream &, const int &);
 };
 
 template <typename T>

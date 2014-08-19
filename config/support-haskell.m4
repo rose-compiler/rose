@@ -66,10 +66,14 @@ if test $USE_HASKELL = 1; then
          echo "Recognized an accepted minor version number."
       else
          echo "ERROR: Could not identify an acceptable Haskell gch minor version number (ROSE requires 6.10.x)."
+         echo "Please use --with-haskell to specify the path of a right version of gch."
+         echo "Or you can use --without-haskell to turn off this check."
          exit 1
       fi
    else
       echo "ERROR: Could not identify an acceptable Haskell gch major version number (ROSE requires 6.10.x)."
+      echo "Please use --with-haskell to specify the path of a right version of gch."
+      echo "Or you can use --without-haskell to turn off this check."
       exit 1
    fi
 
