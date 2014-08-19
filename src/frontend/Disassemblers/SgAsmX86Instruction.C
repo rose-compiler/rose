@@ -8,6 +8,9 @@
 #include "DispatcherX86.h"
 #include "YicesSolver.h"
 #include "Disassembler.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 // see base class
 bool
@@ -77,7 +80,7 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->boolean_(true), 32));
+        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(32), esp->boolean_(true)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
             SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
@@ -116,7 +119,8 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
 
         // Look at the top of the stack
         SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(dispatcher->REG_ESP),
-                                                        ops->get_protoval()->boolean_(true), 32));
+                                                        ops->get_protoval()->undefined_(32),
+                                                        ops->get_protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target) {
                 SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_EIP));
@@ -128,7 +132,6 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
             return true;
         }
     }
-        
 
     return false;
 }
@@ -276,7 +279,7 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
             if (!ival)
                 return false;
             if (target)
-                *target = ival->get_absolute_value();
+                *target = ival->get_absoluteValue();
             return true;
         }
         default:
@@ -289,11 +292,11 @@ Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
     using namespace BinaryAnalysis::InstructionSemantics;
-    static const bool debug = false;
+    Stream debug(mlog[DEBUG]);
 
     if (debug) {
-        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
-                  <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<std::endl;
+        debug <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
+              <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
@@ -337,8 +340,8 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
                 semantics.processInstruction(insn);
                 if (debug) {
-                    std::cerr << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
-                              <<policy.get_state();
+                    debug << "  state after " <<unparseInstructionWithAddress(insn) <<"\n"
+                          <<policy.get_state();
                 }
             }
             const RegisterType &newip = policy.get_ip();
@@ -349,21 +352,18 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             }
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
-            if (debug)
-                std::cerr <<e <<"\n";
+            debug <<e <<"\n";
         } catch(const Policy::Exception& e) {
             /* Abandon entire basic block if the semantics policy cannot handle the instruction. */
-            if (debug)
-                std::cerr <<e <<"\n";
+            debug <<e <<"\n";
         }
     }
 
     if (debug) {
-        std::cerr <<"  successors:";
+        debug <<"  successors:";
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            std::cerr <<" " <<StringUtility::addrToString(*si);
-        if (!*complete) std::cerr <<"...";
-        std::cerr <<std::endl;
+            debug <<" " <<StringUtility::addrToString(*si);
+        debug <<(*complete?"":"...") <<"\n";
     }
 
     return successors;

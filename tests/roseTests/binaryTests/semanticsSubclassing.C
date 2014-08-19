@@ -20,11 +20,11 @@ class MyMemoryState: public SymbolicSemantics::MemoryState {
     // Implement the same real c'tors as the super class. No need to document these since they're private and they would have
     // mostly the same documentation as the corresponding static allocating constructor.
 protected:
-    MyMemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
-        : SymbolicSemantics::MemoryState(protocell, protoval) {}
+    MyMemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+        : SymbolicSemantics::MemoryState(protocell) {}
 
-    explicit MyMemoryState(const BaseSemantics::SValuePtr &protoval)
-        : SymbolicSemantics::MemoryState(protoval) {}
+    explicit MyMemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : SymbolicSemantics::MemoryState(addrProtoval, valProtoval) {}
 
     MyMemoryState(const MyMemoryState &other)
         : SymbolicSemantics::MemoryState(other) {}
@@ -34,13 +34,13 @@ protected:
     // super class.
 public:
     /** Instantiate a new memory state from ... */
-    static MyMemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
-        return MyMemoryStatePtr(new MyMemoryState(protocell, protoval));
+    static MyMemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MyMemoryStatePtr(new MyMemoryState(protocell));
     }
 
     /** Instantiate a new memory state from ... */
-    static MyMemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
-        return MyMemoryStatePtr(new MyMemoryState(protoval));
+    static MyMemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MyMemoryStatePtr(new MyMemoryState(addrProtoval, valProtoval));
     }
 
     /** Instantiate a new memory state by deep-copying an existing state. */
@@ -54,13 +54,13 @@ public:
     // to distinguish between a virtual default constructor that takes no arguments, and the virtual copy constructor which
     // also takes no arguments.  No need for doxygen comments since they're documented in the base class.
 public:
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
-                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protocell, protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+        return instance(protocell);
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
     }
 
     virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
@@ -171,7 +171,7 @@ int main()
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
     BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
     BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval);
+    BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     BaseSemantics::RiscOperatorsPtr ops = MyRiscOperators::instance(state, solver);
 

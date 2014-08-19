@@ -123,7 +123,7 @@ Visualizer::Visualizer(Analyzer* analyzer):
 }
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
+Visualizer::Visualizer(IOLabeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
   labeler(l),
   variableIdMapping(vim),
   flow(f),
@@ -136,7 +136,7 @@ Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* s
 {}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
-void Visualizer::setLabeler(Labeler* x) { labeler=x; }
+void Visualizer::setLabeler(IOLabeler* x) { labeler=x; }
 void Visualizer::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
 void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
@@ -206,12 +206,17 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
     string textcolor="black";
     string bgcolor="lightgrey";
 
+    if((*j)->isConst(variableIdMapping)) bgcolor="mediumpurple2";
     if(labeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
     if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
     if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
 
     if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
-    if((*j)->io.isFailedAssertIO()) {bgcolor="black";textcolor="red";}
+    if((*j)->io.isFailedAssertIO()) {
+      bgcolor="black";textcolor="red";
+      // FAILEDASSERTVIS
+      continue;
+    }
 
     // check for start state
     if(transitionGraph->getStartLabel()==(*j)->label()) {bgcolor="white";} 
@@ -247,7 +252,10 @@ string Visualizer::transitionGraphToDot() {
   stringstream ss;
   ss<<"node [shape=box style=filled color=lightgrey];"<<endl;
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    //if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
+    // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
+    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
     ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source));
     ss <<"["<<(*j).edge.typesToString()<<"]";
@@ -316,7 +324,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     newedges<<" [label=\"";
     newedges<<(*j)->target->constraints()->toString()<<"\"";
     if((*j)->source==(*j)->target)
-      newedges<<" color=red ";
+      newedges<<" color=black "; // self-edge-color
     newedges<<"];"<<endl;
       }
       newedges<<endl;
@@ -330,8 +338,10 @@ string Visualizer::transitionGraphWithIOToDot() {
       color="orange";
     if(labeler->isStdErrLabel(lab))
       color="orangered";
-    if((*i)->io.op==InputOutput::FAILED_ASSERT)
-       color="grey10";
+
+
+    if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode(lab)))
+       color="black";
     ss<<" color="<<color<<" style=\"filled\"";
     ss<<"];";
     ss<<endl;
@@ -365,7 +375,10 @@ string Visualizer::foldedTransitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
     const EState* source=(*j).source;
     const EState* target=(*j).target;
-    //if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
+    // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
+    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+
     ss <<"L"<<Labeler::labelToString(source->label())<<":";
     ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
     ss <<"->";

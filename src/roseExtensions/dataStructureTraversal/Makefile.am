@@ -57,7 +57,7 @@ $(TEST_Objects): $(TESTCODES)
 	rm -f $(TEST_Objects)
 
 # helpFunctions.h need to be put into the util directory
-include_HEADERS = \
+pkginclude_HEADERS = \
      ControlStructure.h  GenGeneration.h  GenRepresentation.h  helpFunctions.h
 
 EXTRA_DIST = CMakeLists.txt $(TESTCODES)

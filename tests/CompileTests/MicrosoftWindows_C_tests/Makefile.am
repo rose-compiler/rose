@@ -111,11 +111,15 @@ $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
+if ROSE_USING_GCC_VERSION_LATER_4_4
 	@echo "Tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 #	@$(MAKE) $(PASSING_TEST_Objects_passed)
 	@$(MAKE) $(PASSING_TEST_Source_passed)
+else
+	@echo "Microsoft C tests require GNU version 4.4 (or greater) backend compilers."
+endif
 	@echo "**************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_C_tests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************************"

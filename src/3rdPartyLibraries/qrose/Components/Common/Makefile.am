@@ -7,7 +7,7 @@ if ROSE_USE_QT
 INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES) 
 
 METASOURCES = auto
-include_HEADERS = QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h  QRoseComponent.h
+pkginclude_HEADERS = QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h  QRoseComponent.h
 
 noinst_LTLIBRARIES = libqrcommon.la
 

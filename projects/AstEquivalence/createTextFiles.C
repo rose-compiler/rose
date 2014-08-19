@@ -195,19 +195,19 @@ void normalizeInstructionInSubTree(SgNode* topNode ){
         if( isSgAsmMemoryReferenceExpression(operand) )
         {
           SgAsmMemoryReferenceExpression* memRefExp = new SgAsmMemoryReferenceExpression;
-          SgAsmIntegerValueExpression* wordVal = SageBuilderAsm::makeWordValue(0);
+          SgAsmIntegerValueExpression* wordVal = SageBuilderAsm::buildValueX86Word(0);
 
           memRefExp->set_segment(wordVal);
           memRefExp->set_address(wordVal);
-          memRefExp->set_type(new SgAsmTypeWord);
+          memRefExp->set_type(SageBuilderAsm::buildTypeX86Word());
           newOperand = memRefExp;
         }else if(isSgAsmRegisterReferenceExpression(operand) ){
-          RegisterDescriptor reg(x86_regclass_mm, 0, 0, 64);
-          SgAsmx86RegisterReferenceExpression* regRef = new SgAsmx86RegisterReferenceExpression(reg);
+          RegisterDescriptor reg(x86_regclass_st, 0, 0, 64);
+          SgAsmRegisterReferenceExpression* regRef = new SgAsmDirectRegisterExpression(reg);
           newOperand = regRef;
 
         }else{
-          SgAsmIntegerValueExpression* wordVal = SageBuilderAsm::makeWordValue(0);
+          SgAsmIntegerValueExpression* wordVal = SageBuilderAsm::buildValueX86Word(0);
           newOperand = wordVal;
           
         }

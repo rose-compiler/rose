@@ -987,7 +987,8 @@ void PathNumManager::insertPathNumberOnEdge(
             foreach (SgGotoStatement* gotoStmt, 
                     querySubTree<SgGotoStatement>(whileStmt, V_SgGotoStatement))
             {
-                ROSE_ASSERT(!"Cannot handle goto in while stmt!");
+              cerr<<"Goto Stmt found:\n"<<gotoStmt->unparseToString()<<endl;
+              ROSE_ASSERT("Cannot handle goto in while stmt!");
             }
         }
     }
@@ -1027,7 +1028,8 @@ void PathNumManager::insertPathNumberOnEdge(
             foreach (SgGotoStatement* gotoStmt, 
                     querySubTree<SgGotoStatement>(forStmt, V_SgGotoStatement))
             {
-                ROSE_ASSERT(!"Cannot handle goto in while stmt!");
+              cerr<<"Goto Stmt found:\n"<<gotoStmt->unparseToString()<<endl;
+              ROSE_ASSERT("Cannot handle goto in while stmt!");
             }
         }
     }

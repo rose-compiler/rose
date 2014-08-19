@@ -185,6 +185,15 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+          case V_SgNullptrValExp:
+             {
+               const SgNullptrValExp* nullptrValueExpression = isSgNullptrValExp(this);
+               ROSE_ASSERT(nullptrValueExpression != NULL);
+               s = "nullptr";
+               break;
+             }
+
        // DQ (8/19/2009): Added case
           case V_SgStringVal:
              {
@@ -1032,7 +1041,10 @@ cout.flush();
                               file->set_outputLanguage(SgFile::e_C_output_language);
 
                               file->set_C_only(true);
-
+#if 0
+                              printf ("Checking for UPC file extension: CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) = %s \n",CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) ? "true" : "false");
+                              printf ("   --- sourceFile->get_UPC_only() = %s \n",sourceFile->get_UPC_only() ? "true" : "false");
+#endif
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {
@@ -1702,7 +1714,10 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
   // printf ("In the SgSourceFile constructor \n");
-
+     this->p_package = NULL;
+     this->p_import_list = NULL;
+     this->p_class_list = NULL;
+     
      set_globalScope(NULL);
 
   // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
@@ -5184,7 +5199,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("Number of command line arguments: %zu\n", compilerCmdLine.size());
                for (size_t i = 0; i < compilerCmdLine.size(); ++i)
                   {
+                    #ifdef _MSC_VER
+                    printf ("Backend compiler arg[%Iu]: = %s\n", i, compilerCmdLine[i].c_str());
+                    #else
                     printf ("Backend compiler arg[%zu]: = %s\n", i, compilerCmdLine[i].c_str());
+                    #endif
                   }
                printf("End of command line for backend compiler\n");
 

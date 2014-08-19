@@ -3,8 +3,8 @@
 #include "sage3basic.h"
 #include "AnalysisAbstractionLayer.h"
 
-#include "addressTakenAnalysis/addressTakenAnalysis.h"
-#include "addressTakenAnalysis/defUseQuery.h"
+#include "addressTakenAnalysis.h"
+#include "defUseQuery.h"
 
 VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
@@ -20,6 +20,7 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
 VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
+  cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
   VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
     setOfUsedVars.insert(variableIdMapping->variableId(*i));
@@ -53,3 +54,20 @@ VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMap
   return resultSet;
 }
 
+VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, VariableIdMapping& vidm) {
+  VariableIdSet vset;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    VariableId vid; // default creates intentionally an invalid id.
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      vid=vidm.variableId(varDecl);
+    } else if(SgVarRefExp* varRefExp=isSgVarRefExp(*i)) {
+      vid=vidm.variableId(varRefExp);
+    } else if(SgInitializedName* initName=isSgInitializedName(*i)) {
+      vid=vidm.variableId(initName);
+    }
+    if(vid.isValid())
+      vset.insert(vid);
+  }
+  return vset;
+}
