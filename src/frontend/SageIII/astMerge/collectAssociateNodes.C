@@ -298,6 +298,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (9/1/2012): Added more template support.
           case V_SgTemplateType:
 
+       // DQ (8/2/2014): Added C++11 SgDeclType support.
+          case V_SgDeclType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:

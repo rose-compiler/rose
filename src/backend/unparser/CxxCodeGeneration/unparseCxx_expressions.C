@@ -179,6 +179,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
           case TYPE_EXPRESSION:  { unparseTypeExpression(expr, info); break; }
 
+       // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+          case FUNCTION_PARAMETER_REF_EXP:  { unparseFunctionParameterRefExpression(expr, info); break; }
+
        // DQ (4/27/2014): This case appears in a snippet test code (testJava3a) as a result 
        // of something added to support the new shared memory DSL.  Not clear what this is,
        // I will ignore it for the moment as part of debugging this larger issue.
@@ -199,7 +202,41 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
    }
 
 
-// DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+
+
+// DQ (8/11/2014): Added more general support for function parameter expressions (required for C++11 support).
+void
+Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(expr != NULL);
+
+     printf ("In unparseFunctionParameterRefExpression = %p = %s) \n",expr,expr->class_name().c_str());
+
+     SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(expr);
+     ROSE_ASSERT(functionParameterRefExp != NULL);
+
+#if 0
+     if (functionParameterRefExp->get_base_expression() != NULL)
+        {
+          unp->u_exprStmt->unparseExpression(functionParameterRefExp->get_base_expression(),info);
+        }
+       else
+        {
+          ROSE_ASSERT(functionParameterRefExp->get_base_type() != NULL);
+          unp->u_type->unparseType(functionParameterRefExp->get_base_type(),info);
+        }
+#else
+     unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+// DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support).
 void
 Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info& info)
    {
@@ -212,6 +249,7 @@ Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info& inf
      ROSE_ASSERT(false);
 #endif
    }
+
 
 // DQ (7/21/2012): Added support for new template IR nodes (only used in C++11 code so far, see test2012_133.C).
 void
@@ -2961,16 +2999,77 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
           string remainingString = stringValue.replace(location,targetStringLength,"");
        // printf ("Specify a MACRO: remainingString = %s \n",remainingString.c_str());
           remainingString.replace(remainingString.find("\\\""),4,"\"");
-          curprint ( "\n" + remainingString + "\n");
+          curprint("\n" + remainingString + "\n");
         }
        else
         {
+          SgFile* file = TransformationSupport::getFile(str_val);
+#if 0
+          printf ("In unparseStringVal(): resolving file to be %p \n",file);
+#endif
+       // bool is_Cxx_Compiler = file->get_Cxx_only();
+          bool is_Cxx_Compiler = false;
+          if (file != NULL)
+             {
+               is_Cxx_Compiler = file->get_Cxx_only();
+             }
+            else
+             {
+               printf ("Warning: TransformationSupport::getFile(str_val) == NULL \n");
+             }
+       // bool is_C_Compiler   = file->get_C_only();
+
        // curprint ( "\"" + str_val->get_value() + "\"";
           if (str_val->get_wcharString() == true)
+             {
                curprint("L");
+             }
+            else
+             {
+               if (str_val->get_is16bitString() == true)
+                  {
+                    curprint("u");
+                  }
+                 else
+                  {
+                    if (str_val->get_is32bitString() == true)
+                       {
+                      // curprint("U");
+                         if (is_Cxx_Compiler == true)
+                            {
+                              curprint("U");
+                            }
+                           else
+                            {
+                           // For C (C11) code.
+                              curprint("L");
+                            }
+                       }
+                      else
+                       {
+                      // This is the default, but "u8" would be a more explicit prefix.
+                       }
+                  }
+             }
 
+#if 1
+       // DQ (8/13/2014): Added support for C++11 raw string prefix values.
+          string s;
+          if (str_val->get_isRawString() == true)
+             {
+               curprint("R");
+
+            // Note added delimiters.
+               s = string("\"(") + str_val->get_raw_string_value() + string(")\"");
+             }
+            else
+             {
+               s = string("\"") + str_val->get_value() + string("\"");
+             }
+#else
        // curprint("\"" + str_val->get_value() + "\"");
           string s = string("\"") + str_val->get_value() + string("\"");
+#endif
 #if 0
           printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
           printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());

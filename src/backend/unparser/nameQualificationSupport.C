@@ -408,6 +408,12 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSigned128bitInteger:
           case V_SgTypeUnsigned128bitInteger:
 
+       // DQ (7/30/2014): Adding C++11 support.
+          case V_SgTypeNullptr:
+
+       // DQ (8/12/2014): Adding C++11 support.
+          case V_SgDeclType:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
@@ -4424,11 +4430,33 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
                if (currentStatement == NULL)
                   {
+                 // DQ (8/19/2014): Because we know where this can happen we don't need to always output debugging info.
+                 // A better test might be to find the type that embeds the expression and make sure it is a SgArrayType.
                  // DQ (7/11/2014): test2014_83.C demonstrates how this can happen because the SgMemberFunctionRefExp 
                  // appears in an index expression of an array type in a variable declaration.
-                    printf ("Error: Location of where we can't associate the expression to a statement \n");
-                    memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
-                    memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                    SgType* associatedType = TransformationSupport::getAssociatedType(memberFunctionRefExp);
+                    if (associatedType != NULL)
+                       {
+                         SgArrayType* arrayType = isSgArrayType(associatedType);
+                         if (arrayType == NULL)
+                            {
+                              printf ("Warning: Location of where we can NOT associate the expression to a SgArrayType \n");
+                              memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
+                              memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                            }
+                           else
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("Note: Location of where we CAN associate the expression to a statement: confirmed unassociated expression is buried in a type: associatedType = %p = %s \n",associatedType,associatedType->class_name().c_str());
+#endif
+                            }
+                       }
+                      else
+                       {
+                         printf ("Error: Location of where we can NOT associate the expression to a statement \n");
+                         memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
+                         memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                       }
 
                  // DQ (7/11/2014): Added wupport for when this is a nested call and the scope where the call is made from is essential.
                     if (explictlySpecifiedCurrentScope != NULL)

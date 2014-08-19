@@ -1,4 +1,9 @@
 
+// DQ (8/19/2014): This file will not compile as is with g++, so it is a meaningly test of ROSE.
+
+#if 0
+// Commented out this file (not a valid C++ file).
+
 #include <vector>
 
 #include "boost/foreach.hpp"
@@ -87,3 +92,4 @@ return numZones;
 
 } // namespace
 
+#endif

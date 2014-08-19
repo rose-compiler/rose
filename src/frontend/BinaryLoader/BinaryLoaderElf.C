@@ -769,7 +769,7 @@ BinaryLoaderElf::SymverResolver::dump(FILE *f, const char *prefix, ssize_t idx) 
         SgAsmElfSymbol *sym = si->first;
         VersionedSymbol *vsym = si->second;
         std::string pp = std::string(p)+"versionedSymbol["+StringUtility::numberToString(i)+"].";
-        ASSERT_require(sym == vsym->get_symbol());
+        ASSERT_always_require(sym == vsym->get_symbol());
         vsym->dump(f, pp.c_str(), -1); // sym is printed as part of this
     }
 }

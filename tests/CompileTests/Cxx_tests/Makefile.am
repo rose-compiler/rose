@@ -121,6 +121,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_80.C \
    test2014_81.C \
    test2014_82.C \
+   test2014_83.C \
+   test2014_84.C \
    test2014_85.C \
    test2014_86.C \
    test2014_87.C \
@@ -128,32 +130,105 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_89.C \
    test2014_90.C \
    test2014_91.C \
+   test2014_92.C \
+   test2014_93.C \
+   test2014_94.C \
+   test2014_95.C \
+   test2014_96.C \
+   test2014_97.C \
+   test2014_98.C \
+   test2014_104.C \
+   test2014_105.C \
+   test2014_106.C \
+   test2014_107.C \
+   test2014_108.C \
+   test2014_109.C \
+   test2014_122.C \
    test2014_123.C \
+   test2014_124.C \
+   test2014_125.C \
+   test2014_126.C \
+   test2014_127.C \
    test2014_128.C \
+   test2014_129.C \
    lulesh.C \
    luleshTALC.C
 
+# DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
+TESTS_NOT_PASSING = \
+   test2009_25.C \
+   test2012_252.C \
+   test2012_261.C \
+   test2012_272.C \
+   test2012_273.C \
+   test2012_274.C \
+   test2012_275.C \
+   test2012_276.C \
+   test2012_277.C \
+   test2012_278.C \
+   test2013_185.C \
+   test2013_224.C \
+   test2013_233.C \
+   test2013_245.C \
+   test2013_247.C \
+   test2013_248.C \
+   test2013_249.C \
+   test2013_254.C \
+   test2013_255.h \
+   test2013_256.h \
+   test2013_262.C \
+   test2013_263.C \
+   test2013_264.C \
+   test2013_265.C \
+   test2013_266.C \
+   test2013_267.C \
+   test2013_268.C \
+   test2013_269.C \
+   test2013_270.C \
+   test2013_289.h \
+   test2013_309.C \
+   test2013_321.C \
+   test2013_322.C \
+   test2013_323.C \
+   test2014_96.C \
+   test2014_97.C \
+   test2014_98.C \
+   test2014_99.C \
+   test2014_100.C \
+   test2014_101.C \
+   test2014_102.C \
+   test2014_103.C \
+   test2014_104.C \
+   test2014_105.C \
+   test2014_106.C \
+   test2014_107.C \
+   test2014_108.C \
+   test2014_109.C \
+   test2014_110.C \
+   test2014_111.C \
+   test2014_112.C \
+   test2014_112.h \
+   test2014_113.C \
+   test2014_114.C \
+   test2014_115.C \
+   test2014_116.C \
+   test2014_117.C \
+   test2014_118.C \
+   test2014_119.C \
+   test2014_120.C \
+   test2014_121.C \
+   test2014_122.C \
+   test2014_124.C \
+   test2014_125.C \
+   test2014_126.C \
+   test2014_127.C 
+
 # DQ (7/10/2014): Remaining bugs in new application.
-#  test2014_83.C 
-#  test2014_84.C 
-#  test2014_92.C 
-#  test2014_93.C 
-#  test2014_94.C 
-#  test2014_95.C 
-#  test2014_96.C 
-#  test2014_97.C 
-#  test2014_98.C 
 #  test2014_99.C 
 #  test2014_100.C 
 #  test2014_101.C 
 #  test2014_102.C 
 #  test2014_103.C 
-#  test2014_104.C 
-#  test2014_105.C 
-#  test2014_106.C 
-#  test2014_107.C 
-#  test2014_108.C 
-#  test2014_109.C 
 #  test2014_110.C 
 #  test2014_111.C 
 #  test2014_112.C 
@@ -166,8 +241,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 #  test2014_119.C 
 #  test2014_120.C 
 #  test2014_121.C 
-#  test2014_122.C 
-#  test2014_124.C 
 
 # DQ (7/3/2014): This C++ language feature is only properly supported in EDG version 4.9
 if ROSE_USE_EDG_VERSION_4_9
@@ -931,7 +1004,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_36.h test2006_42.h test2006_187a.h \
      test2006_187b.h test2007_08.h test2007_41.h  test2007_42.h test2007_47.h test2007_48.h test2007_97.h \
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
+     test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
      test2004_82.C 
 

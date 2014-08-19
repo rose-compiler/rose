@@ -2039,9 +2039,19 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgStorageModifier", "storageModifier", ".reset()",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/18/2014): Note that this is no longer GNU specific and is used to hold the section name for microsoft 
+  // specific attributes (e.g. allocate("segment_name") and code_seg("segment_name")). Changing the name of this
+  // data member would make this more clear.
      DeclarationModifier.setDataPrototype("std::string", "gnu_attribute_section_name", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "microsoft_uuid_string", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "microsoft_property_get_function_name", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "microsoft_property_put_function_name", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeModifier.setDataPrototype("SgBitVector", "modifierVector", "",

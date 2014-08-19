@@ -36,19 +36,31 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeLongDouble      , "TypeLongDouble",       "T_LONG_DOUBLE" );
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
+
+  // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
+     NEW_TERMINAL_MACRO ( TypeNullptr         , "TypeNullptr",          "T_NULLPTR" );
+
      NEW_TERMINAL_MACRO ( TypeComplex         , "TypeComplex",          "T_COMPLEX" );
      NEW_TERMINAL_MACRO ( TypeImaginary       , "TypeImaginary",        "T_IMAGINARY" );
      NEW_TERMINAL_MACRO ( TypeDefault         , "TypeDefault",          "T_DEFAULT" );
      NEW_TERMINAL_MACRO ( PointerMemberType   , "PointerMemberType",    "T_MEMBER_POINTER" );
      NEW_TERMINAL_MACRO ( ReferenceType       , "ReferenceType",        "T_REFERENCE" );
+
+  // DQ (7/29/2014): Added nullptr type (I think we required this for C++11 support..
+     NEW_TERMINAL_MACRO ( RvalueReferenceType , "RvalueReferenceType",  "T_RVALUE_REFERENCE" );
+
+  // DQ (8/2/2014): Adding support for C++11 decltype() (which should be an new SgType in the IR).
+     NEW_TERMINAL_MACRO ( DeclType            , "DeclType",             "T_DECLTYPE" );
+
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
   // DQ (3/24/2014): Adding support for 128 bit integers.
      NEW_TERMINAL_MACRO ( TypeUnsigned128bitInteger, "TypeUnsigned128bitInteger",  "T_UNSIGNED_128BIT_INTEGER" );
      NEW_TERMINAL_MACRO ( TypeSigned128bitInteger  , "TypeSigned128bitInteger"  ,  "T_SIGNED_128BIT_INTEGER" );
 
+  // DQ (7/30/2014): Fixed spelling of T_LABEL tag.
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
-     NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABLE" );
+     NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABEL" );
 
   // DQ (5/7/2004): Made this a terminal, was previously a nonterminal 
   // with a TemplateInstantiationType derived from it.
@@ -156,17 +168,18 @@ Grammar::setUpTypes ()
   // to have a TemplateType and since all templates are the same (until they are instatiated, 
   // likely there should only be a single TemplateType).
      NEW_NONTERMINAL_MACRO (Type,
-          TypeUnknown      | TypeChar          | TypeSignedChar    | TypeUnsignedChar     | 
-          TypeShort        | TypeSignedShort   | TypeUnsignedShort | TypeInt              | 
-          TypeSignedInt    | TypeUnsignedInt   | TypeLong          | TypeSignedLong       | 
-          TypeUnsignedLong | TypeVoid          | TypeGlobalVoid    | TypeWchar            |
-          TypeFloat        | TypeDouble        | TypeLongLong      | TypeSignedLongLong   |
-          TypeUnsignedLongLong  |  TypeSigned128bitInteger  |  TypeUnsigned128bitInteger  |
-          TypeLongDouble   | TypeString        | TypeBool          | PointerType          |
-          ReferenceType    | NamedType         | ModifierType      | FunctionType         |
-          ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
-          TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
-          TypeCrayPointer  | TypeLabel         | JavaUnionType, "Type","TypeTag", false);
+          TypeUnknown          | TypeChar                | TypeSignedChar            | TypeUnsignedChar     | 
+          TypeShort            | TypeSignedShort         | TypeUnsignedShort         | TypeInt              | 
+          TypeSignedInt        | TypeUnsignedInt         | TypeLong                  | TypeSignedLong       | 
+          TypeUnsignedLong     | TypeVoid                | TypeGlobalVoid            | TypeWchar            |
+          TypeFloat            | TypeDouble              | TypeLongLong              | TypeSignedLongLong   |
+          TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger |
+          TypeLongDouble       | TypeString              | TypeBool                  | PointerType          |
+          ReferenceType        | NamedType               | ModifierType              | FunctionType         |
+          ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
+          TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
+          TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
+          TypeNullptr          | DeclType , "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -234,6 +247,14 @@ Grammar::setUpTypes ()
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (7/29/2014): Adding support for C++11 rvalue references.
+     Type.setDataPrototype("SgRvalueReferenceType*","rvalue_ref_to","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     Type.setDataPrototype("SgDeclType*","decltype_ref_to","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
   // DQ (10/5/2010): I think we can move back to an implementation with DEF_DELETE now (the other uninitialized memory problem was fixed).
@@ -306,12 +327,18 @@ Grammar::setUpTypes ()
      TypeInt.excludeFunctionSource          ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ReferenceType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ReferenceType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     RvalueReferenceType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     RvalueReferenceType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ModifierType.excludeFunctionPrototype  ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ModifierType.excludeFunctionSource     ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      PointerType.excludeFunctionPrototype   ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      PointerType.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     DeclType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     DeclType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      TemplateType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TemplateType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -398,6 +425,10 @@ Grammar::setUpTypes ()
   // TypeString.setDataPrototype           ("bool"         , "definedUsingScalarLength", "= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeBool.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
+     TypeNullptr.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PointerType.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // ReferenceType.setDataPrototype        ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -449,6 +480,16 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(ReferenceType,
             "SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE",
             "SgType* type = NULL");
+
+     CUSTOM_CREATE_TYPE_MACRO(RvalueReferenceType,
+            "SOURCE_CREATE_TYPE_FOR_RVALUE_REFERENCE_TYPE",
+            "SgType* type = NULL");
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     CUSTOM_CREATE_TYPE_MACRO(DeclType,
+            "SOURCE_CREATE_TYPE_FOR_DECL_TYPE",
+            "SgExpression* expr = NULL");
+
   // DQ (12/4/2011): Adding support for template declarations into the AST.
   // CUSTOM_CREATE_TYPE_MACRO(ClassType,"SOURCE_CREATE_TYPE_FOR_CLASS_TYPE","SgClassDeclaration* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(ClassType,"SOURCE_CREATE_TYPE_FOR_CLASS_TYPE","SgDeclarationStatement* decl = NULL");
@@ -542,6 +583,26 @@ Grammar::setUpTypes ()
 
      ReferenceType.setDataPrototype     ("SgType*","base_type","= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     RvalueReferenceType.setDataPrototype ("SgType*","base_type","= NULL",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     DeclType.setFunctionPrototype ("HEADER_DECL_TYPE", "../Grammar/Type.code" );
+     DeclType.setDataPrototype ("SgExpression*","base_expression","= NULL",
+                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/11/2014): We need to handle the case were the input is a function parameter code (number and level) 
+  // and then store the associated type until we can translate the code into a parameter.  Then we need only
+  // make sure that the expression type (if available) is consistant with the associated stored type.
+  // If the expresssion's type is available, then the expression weill be stored, but if the expression's 
+  // type is unavailable (either the expression is unavailable or the expression is a SgFunctionParameterRefExp
+  // then the type is stored).  This is the more complex handling of stored type, but is hidden within the 
+  // SgDeclType and the SgFunctionParameterRefExp, as required to present a simple API).
+     DeclType.setDataPrototype ("SgType*","base_type","= NULL",
+                                CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     DeclType.setFunctionPrototype ("HEADER_GET_BASE_TYPE", "../Grammar/Type.code" );
 
      PointerMemberType.setFunctionPrototype  ("HEADER_POINTER_MEMBER_TYPE", "../Grammar/Type.code" );
      PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
@@ -841,6 +902,13 @@ Grammar::setUpTypes ()
      ReferenceType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      ReferenceType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
+     RvalueReferenceType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     RvalueReferenceType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     DeclType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+
      ArrayType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
   // ArrayType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
@@ -910,11 +978,19 @@ Grammar::setUpTypes ()
      TypeLongDouble.editSubstitute( "MANGLED_ID_STRING", "ld" );
      TypeString.editSubstitute( "MANGLED_ID_STRING", "str" );
      TypeBool.editSubstitute( "MANGLED_ID_STRING", "b" );
+
+  // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
+     TypeNullptr.editSubstitute( "MANGLED_ID_STRING", "nullptr_t" );
+
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );
      TypeImaginary.editSubstitute( "MANGLED_ID_STRING", "Imaginary" );
   // TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );
      PointerType.editSubstitute( "MANGLED_ID_STRING", "P" );
      ReferenceType.editSubstitute( "MANGLED_ID_STRING", "R" );
+     RvalueReferenceType.editSubstitute( "MANGLED_ID_STRING", "Rvalue" );
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     DeclType.editSubstitute( "MANGLED_ID_STRING", "decltype" );
 
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
@@ -949,6 +1025,11 @@ Grammar::setUpTypes ()
 
      PointerType.setFunctionSource         ( "SOURCE_POINTER_TYPE", "../Grammar/Type.code");
      ReferenceType.setFunctionSource       ( "SOURCE_REFERENCE_TYPE", "../Grammar/Type.code");
+     RvalueReferenceType.setFunctionSource ( "SOURCE_RVALUE_REFERENCE_TYPE", "../Grammar/Type.code");
+
+  // DQ (8/2/2014): Adding support for C++11 decltype().
+     DeclType.setFunctionSource ( "SOURCE_DECL_TYPE", "../Grammar/Type.code");
+
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");
      QualifiedNameType.setFunctionSource   ( "SOURCE_QUALIFIED_NAME_TYPE", "../Grammar/Type.code");

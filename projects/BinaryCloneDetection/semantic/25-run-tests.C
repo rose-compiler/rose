@@ -698,7 +698,7 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
                     SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
                     SgAsmIntegerValueExpression *val = isSgAsmIntegerValueExpression(mre ? mre->get_address() : NULL);
                     if (val)
-                        gotplt_addr[f] = val->get_absolute_value();
+                        gotplt_addr[f] = val->get_absoluteValue();
                 }
             }
         }

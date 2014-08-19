@@ -10,7 +10,7 @@ class PtrSetWrap
              };
 
       // This causes an error!
-      // Iterator GetIterator() const {};
+         Iterator GetIterator() const {};
    };
 
 // template <class T> PtrSetWrap<T>::Iterator::Iterator() {}
@@ -33,12 +33,12 @@ class GroupGraphNode : public GraphNode
              { 
                PtrSetWrap<GraphNode>::Iterator iter;
 
-#if 0
+#if 1
             // This line causes an error: should be unparsed as "iter.Current();"
                iter.Current();
 #endif
             // Or alternatively...(commented out for testing...)
-//             iter.PtrSetWrap<GraphNode>::Iterator::Current();
+               iter.PtrSetWrap<GraphNode>::Iterator::Current();
              }
    };
 

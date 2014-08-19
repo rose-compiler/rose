@@ -347,9 +347,12 @@ $CLASSNAME::getVariant() const
 // (since the "T" was ment to stand for temporary).
 // When this happens the variantT() will be depricated.
 VariantT
-$CLASSNAME::variantT() const {
-  return V_$CLASSNAME;
-}
+$CLASSNAME::variantT() const 
+   {
+  // DQ (7/30/2014): Added assertion so that we can make sure we have a valid IR node.
+     ROSE_ASSERT(this != NULL);
+     return V_$CLASSNAME;
+   }
 
 #if 0
 int
@@ -401,15 +404,7 @@ $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
           addNewAttribute(prefixCode + s,a);
         }
 
-  /* Return "this" so that it can be used with the build function interface to add regex attributes.
-     Example is:
-     SgAsmInstruction* target = buildx86Instruction(x86_mov,
-                   buildAsmMemoryReferenceExpression(
-                        buildAsmDWordValue(0x8049c8c)->addRegExpAttribute("*"),
-                        buildAsmx86RegisterReferenceExpression(x86_regclass_segment,segmentRegister),
-                        buildAsmTypeDoubleWord() ),
-                   buildAsmDWordValue(0x8048858)->addRegExpAttribute("*"));
-   */
+  /* Return "this" so that it can be used with the build function interface to add regex attributes. */
      return this;
    }
 

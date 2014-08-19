@@ -61,24 +61,25 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
         return "BAD_TYPE";
     }
 
-    switch (ty->variantT()) {
-        case V_SgAsmTypeByte: return "BYTE";
-        case V_SgAsmTypeWord: return "WORD";
-        case V_SgAsmTypeDoubleWord: return "DWORD";
-        case V_SgAsmTypeQuadWord: return "QWORD";
-        case V_SgAsmTypeDoubleQuadWord: return "DQWORD";
-        case V_SgAsmTypeSingleFloat: return "FLOAT";
-        case V_SgAsmTypeDoubleFloat: return "DOUBLE";
-        case V_SgAsmType80bitFloat: return "LDOUBLE";
-        case V_SgAsmTypeVector: {
-            SgAsmTypeVector* v = isSgAsmTypeVector(ty);
-            return "V" + StringUtility::numberToString(v->get_elementCount()) + x86TypeToPtrName(v->get_elementType());
+    if (SgAsmIntegerType *it = isSgAsmIntegerType(ty)) {
+        switch (it->get_nBits()) {
+            case 8: return "BYTE";
+            case 16: return "WORD";
+            case 32: return "DWORD";
+            case 64: return "QWORD";
         }
-        default: {
-            ASSERT_not_reachable("bad class " + ty->class_name());
-            return "error in x86TypeToPtrName()";// DQ (11/29/2009): Avoid MSVC warning.
+    } else if (SgAsmFloatType *ft = isSgAsmFloatType(ty)) {
+        switch (ft->get_nBits()) {
+            case 32: return "FLOAT";
+            case 64: return "DOUBLE";
+            case 80: return "LDOUBLE";
         }
+    } else if (ty == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64())) {
+        return "DQWORD";
+    } else if (SgAsmVectorType *vt = isSgAsmVectorType(ty)) {
+        return "V" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());
     }
+    ASSERT_not_reachable("unhandled type: " + ty->toString());
 }
 
 std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
@@ -112,30 +113,40 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             break;
         }
 
-        case V_SgAsmx86RegisterReferenceExpression: {
+        case V_SgAsmDirectRegisterExpression: {
             SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
-            SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
             result = unparseX86Register(insn, rr->get_descriptor(), registers);
+            break;
+        }
+
+        case V_SgAsmIndirectRegisterExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmIndirectRegisterExpression* rr = isSgAsmIndirectRegisterExpression(expr);
+            result = unparseX86Register(insn, rr->get_descriptor(), registers);
+            if (!result.empty() && '0'==result[result.size()-1])
+                result = result.substr(0, result.size()-1);
+            result += "(" + StringUtility::numberToString(rr->get_index()) + ")";
             break;
         }
 
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
             ASSERT_not_null(ival);
-            uint64_t value = ival->get_absolute_value(); // not sign extended
+            uint64_t value = ival->get_absoluteValue(); // not sign extended
 
             // If the value looks like it might be an address, then don't bother showing the decimal form.
-            if ((32==ival->get_significant_bits() || 64==ival->get_significant_bits()) &&
+            if ((32==ival->get_significantBits() || 64==ival->get_significantBits()) &&
                 value > 0x0000ffff && value < 0xffff0000) {
-                result = StringUtility::addrToString(value, ival->get_significant_bits());
+                result = StringUtility::addrToString(value, ival->get_significantBits());
             } else {
-                result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+                result = StringUtility::signedToHex2(value, ival->get_significantBits());
             }
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
             std::string label;
-            if (ival->get_significant_bits()>8)
+            if (ival->get_significantBits()>8)
                 label =x86ValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();

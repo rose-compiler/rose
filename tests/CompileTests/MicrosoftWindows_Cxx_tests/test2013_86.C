@@ -5,7 +5,7 @@ class Class_A
           Class_A();
    };
 
-#if 0
+#if 1
 template<typename T> 
 class Template_Class_A
    {
@@ -23,7 +23,7 @@ struct
   // generated for the struct, this constructor will be a function with out a name.
      Class_A var_0;
 #endif
-#if 0
+#if 1
      Template_Class_A<int> var_1;
 #endif
    } tcl;

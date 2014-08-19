@@ -521,9 +521,8 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
   SgAsmOperandList* opList = inst->get_operandList();
   ROSE_ASSERT(opList);
 
-  SgAsmx86RegisterReferenceExpression* refExpr =NULL;
+  SgAsmRegisterReferenceExpression* refExpr =NULL;
   std::pair<X86RegisterClass, int>  code ;
-  //SgAsmx86RegisterReferenceExpression::x86_position_in_register_enum pos ;
   //SgAsmMemoryReferenceExpression* memRef = NULL;
   int counter=0;
   if (rightSide)
@@ -547,7 +546,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
       // left hand side if rightSide=true *************************************************************
       // right hand side if rightSide=false *************************************************************
       SgAsmValueExpression* valExp = isSgAsmValueExpression(expr);
-      refExpr = isSgAsmx86RegisterReferenceExpression(expr);
+      refExpr = isSgAsmRegisterReferenceExpression(expr);
 
       // ****** 1. valueExpression
       if (valExp) {
@@ -584,7 +583,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
     } else {
       // right hand side if rightSide=true  ************************************************************
       // left hand side if rightSide=false  ************************************************************
-      SgAsmx86RegisterReferenceExpression* refExprR = isSgAsmx86RegisterReferenceExpression(expr);
+      SgAsmRegisterReferenceExpression* refExprR = isSgAsmRegisterReferenceExpression(expr);
       if (refExprR) {
           code = std::make_pair((X86RegisterClass)refExprR->get_descriptor().get_major(), refExprR->get_descriptor().get_minor());
         operands += " <<right :: refExpr>> ";
@@ -620,7 +619,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
   ROSE_ASSERT(opList);
 
 
-  SgAsmx86RegisterReferenceExpression* refExpr =NULL;
+  SgAsmRegisterReferenceExpression* refExpr =NULL;
   std::pair<X86RegisterClass, int>  code = std::make_pair(x86_regclass_gpr, 0); // meaningless
   int counter=0;
   int endCounter=0;
@@ -645,44 +644,18 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
     if (mem) {
       memoryReference = true;
       SgAsmExpression* memOff = mem->get_address();
-        if (isSgAsmx86RegisterReferenceExpression(memOff)) {
-          SgAsmx86RegisterReferenceExpression* memRegRef = isSgAsmx86RegisterReferenceExpression(memOff);
+        if (isSgAsmRegisterReferenceExpression(memOff)) {
+          SgAsmRegisterReferenceExpression* memRegRef = isSgAsmRegisterReferenceExpression(memOff);
           code = std::make_pair((X86RegisterClass)memRegRef->get_descriptor().get_major(), memRegRef->get_descriptor().get_minor());
           registerReference = true;
         }
     }
-    refExpr = isSgAsmx86RegisterReferenceExpression(expr);
+    refExpr = isSgAsmRegisterReferenceExpression(expr);
     if (refExpr) {
       code = std::make_pair((X86RegisterClass)refExpr->get_descriptor().get_major(), refExpr->get_descriptor().get_minor());
       registerReference = true;
     }
   }
-
-#if 0
-    refExpr = isSgAsmx86RegisterReferenceExpression(expr);
-    if (refExpr) {
-      // check if it could be a memory reference
-      // changed by tps on 16Jan08
-
-      SgAsmExpression* offset = refExpr->get_offset();
-      if (isSgAsmMemoryReferenceExpression(offset)) {
-        // is a memory reference
-        memoryReference = true;
-        SgAsmMemoryReferenceExpression* mem = isSgAsmMemoryReferenceExpression(offset);
-        SgAsmExpression* memOff = mem->get_address();
-        if (isSgAsmx86RegisterReferenceExpression(memOff)) {
-          SgAsmx86RegisterReferenceExpression* memRegRef = isSgAsmx86RegisterReferenceExpression(memOff);
-          code = memRegRef->get_identifier();
-          registerReference = true;
-        }
-      } else {
-        // is a register reference
-        code = refExpr->get_identifier();
-        registerReference = true;
-        //      }
-      }
-    }
-#endif
 
   return code;
 }
@@ -721,7 +694,7 @@ RoseBin_DataFlowAbstract::getOperand(
     } else
       counter++;
 
-    refExpr = isSgAsmx86RegisterReferenceExpression(expr);
+    refExpr = isSgAsmRegisterReferenceExpression(expr);
     if (refExpr==NULL)
     refExpr = isSgAsmMemoryReferenceExpression(expr);
   }
@@ -733,8 +706,8 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
   uint64_t res = 0;
   if (isSgAsmValueExpression(expr)) {
     res = getValueInExpression(isSgAsmValueExpression(expr));
-  } else if (isSgAsmx86RegisterReferenceExpression(expr)) {
-    SgAsmx86RegisterReferenceExpression* refexp = isSgAsmx86RegisterReferenceExpression(expr);
+  } else if (isSgAsmRegisterReferenceExpression(expr)) {
+    SgAsmRegisterReferenceExpression* refexp = isSgAsmRegisterReferenceExpression(expr);
     std::pair<X86RegisterClass, int>  code;
     if (refexp) {
       code = std::make_pair((X86RegisterClass)refexp->get_descriptor().get_major(), refexp->get_descriptor().get_minor());
@@ -809,7 +782,7 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
                                                 SgGraphNode* node,
                                                 std::pair<X86RegisterClass, int>  codeSearch,
                                                 bool& cantTrack,
-                                                SgAsmx86RegisterReferenceExpression* refExpr_rightHand) {
+                                                SgAsmRegisterReferenceExpression* refExpr_rightHand) {
   int64_t value = 0xffffffff;
   if (RoseBin_support::DEBUG_MODE())
     cout << "    ........ trying to resolve value for register :: " << codeSearch.first << "." << codeSearch.second << endl;

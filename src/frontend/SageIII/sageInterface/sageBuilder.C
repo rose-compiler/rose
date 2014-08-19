@@ -4954,6 +4954,22 @@ SgBoolValExp* SageBuilder::buildBoolValExp_nfi(int value)
   return boolValue;
 }
 
+SgNullptrValExp* SageBuilder::buildNullptrValExp()
+   {
+     SgNullptrValExp* nullptrValue = new SgNullptrValExp();
+     ROSE_ASSERT(nullptrValue);
+     setOneSourcePositionForTransformation(nullptrValue);
+     return nullptrValue;
+   }
+
+SgNullptrValExp* SageBuilder::buildNullptrValExp_nfi()
+   {
+     SgNullptrValExp* nullptrValue = new SgNullptrValExp();
+     ROSE_ASSERT(nullptrValue);
+     setOneSourcePositionNull(nullptrValue);
+     return nullptrValue;
+   }
+
 SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)
 {
   SgCharVal* result = new SgCharVal(value, "");
@@ -8648,6 +8664,21 @@ SgStaticAssertionDeclaration* SageBuilder::buildStaticAssertionDeclaration(SgExp
    }
 
 
+// DQ (8/17/2014): Adding support for Microsoft MSVC specific attributes.
+SgMicrosoftAttributeDeclaration* SageBuilder::buildMicrosoftAttributeDeclaration (const SgName & attribute_string)
+   {
+     SgMicrosoftAttributeDeclaration* result = new SgMicrosoftAttributeDeclaration(attribute_string);
+     ROSE_ASSERT(result != NULL);
+
+  // DQ (8/17/2014): It is enforced that at least the firstNondefiningDeclaration be set.
+     ROSE_ASSERT(result->get_firstNondefiningDeclaration() == NULL);
+     result->set_firstNondefiningDeclaration(result);
+     ROSE_ASSERT(result->get_firstNondefiningDeclaration() != NULL);
+
+     setOneSourcePositionForTransformation(result);
+
+     return result;
+   }
 
 //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
 // This does not work properly since the global scope expects declaration statement, not just SgNullStatement
@@ -8689,6 +8720,44 @@ SgReferenceType* SageBuilder::buildReferenceType(SgType * base_type /*= NULL*/)
      return result;
    }
 
+SgRvalueReferenceType* SageBuilder::buildRvalueReferenceType(SgType* base_type /*= NULL*/)
+   {
+     ROSE_ASSERT(base_type != NULL);
+     SgRvalueReferenceType* result = SgRvalueReferenceType::createType(base_type);
+     ROSE_ASSERT(result != NULL);
+
+     return result;
+   }
+
+SgDeclType* SageBuilder::buildDeclType ( SgExpression *base_expression, SgType* base_type )
+   {
+     ROSE_ASSERT(base_expression != NULL);
+#if 0
+     printf ("In SageBuilder::buildDeclType(): base_expression = %p = %s \n",base_expression,base_expression->class_name().c_str());
+#endif
+
+  // SgDeclType* result = SgDeclType::createType(base_expression);
+     SgDeclType* result = NULL;
+     if (isSgFunctionParameterRefExp(base_expression) != NULL)
+        {
+       // result = SgDeclType::createType(base_type);
+           result = new SgDeclType(base_expression);
+           result->set_base_type(base_type);
+        }
+       else
+        {
+          result = SgDeclType::createType(base_expression);
+        }
+
+     ROSE_ASSERT(result != NULL);
+
+  // DQ (8/12/2014): Set the parent in the expression.
+     base_expression->set_parent(result);
+
+     return result;
+   }
+
+
 #if 0
 // Liao, 8/16/2010, This function is being phased out. Please don't call this!!
 SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
@@ -8718,6 +8787,13 @@ SgTypeBool * SageBuilder::buildBoolType() {
   ROSE_ASSERT(result); 
   return result;
 }
+
+SgTypeNullptr* SageBuilder::buildNullptrType() 
+   {
+     SgTypeNullptr * result = SgTypeNullptr::createType(); 
+     ROSE_ASSERT(result); 
+     return result;
+   }
 
 SgTypeChar * SageBuilder::buildCharType() 
 { 
@@ -9429,6 +9505,30 @@ SageBuilder::buildTypeExpression(SgType *type)
      SageInterface::setSourcePosition(expr);
      return expr;
    }
+
+// DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
+SgFunctionParameterRefExp*
+SageBuilder::buildFunctionParameterRefExp(int parameter_number, int parameter_level )
+   {
+     SgFunctionParameterRefExp *expr = new SgFunctionParameterRefExp(NULL,parameter_number,parameter_level);
+     ROSE_ASSERT(expr != NULL);
+
+     setSourcePosition(expr);
+     return expr;
+   }
+
+
+// DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
+SgFunctionParameterRefExp*
+SageBuilder::buildFunctionParameterRefExp_nfi(int parameter_number, int parameter_level )
+   {
+     SgFunctionParameterRefExp *expr = new SgFunctionParameterRefExp(NULL,parameter_number,parameter_level);
+     ROSE_ASSERT(expr != NULL);
+
+     setOneSourcePositionNull(expr);
+     return expr;
+   }
+
 
 SgNamespaceDefinitionStatement*
 SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
