@@ -764,7 +764,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                    (enumDeclaration      != NULL) ? enumDeclaration->get_name()      : "unknown_name";
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("In nameQualificationDepth(SgDeclarationStatement*,...): name = %s \n",name.str());
+     printf ("In nameQualificationDepth(SgDeclarationStatement*,...): declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),name.str());
 #endif
 
   // ROSE_ASSERT(name.is_null() == false);
@@ -774,7 +774,20 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("CASE OF EMPTY NAME: declaration = %p = %s but has no valid name (it has and empty name), thus we have to recurse to the next level \n",declaration,declaration->class_name().c_str());
 #endif
-          qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+
+       // DQ (8/20/2014): Add support for un-named namespaces (see test2014_132.C for an example).
+       // qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+          if (namespaceDeclaration != NULL)
+             {
+            // I am clearer on the case that for a namespace declaration we do not want to increment the qualificationDepth.
+               qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 0;
+             }
+            else
+             {
+               printf ("NEW CASE OF EMPTY NAME: declaration = %p = %s but has no valid name (it has and empty name), thus we add 1 to the qualificationDepth and have to recurse to the next level \n",declaration,declaration->class_name().c_str());
+
+               qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+             }
         }
 
   // DQ (8/16/2013): Build the template parameters and template arguments as appropriate (will be NULL pointers for some types of declarations).
@@ -2181,7 +2194,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("In NameQualificationTraversal::nameQualificationDepth(): Report type elaboration: typeElaborationIsRequired = %s \n",(typeElaborationIsRequired == true) ? "true" : "false");
+     printf ("In NameQualificationTraversal::nameQualificationDepth(): qualificationDepth = %d Report type elaboration: typeElaborationIsRequired = %s \n",qualificationDepth,(typeElaborationIsRequired == true) ? "true" : "false");
 #endif
 
      return qualificationDepth;
@@ -6172,7 +6185,8 @@ NameQualificationTraversal::setNameQualification(SgInitializedName* initializedN
   // if (skipGlobalQualification == true && qualifier == "::")
      if (skipGlobalQualification == true)
         {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("In NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName): skipGlobalQualification has caused global qualification to be ignored \n");
 #endif
           qualifier = "";
@@ -6251,7 +6265,8 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
   // if (skipGlobalQualification == true && qualifier == "::")
      if (skipGlobalQualification == true)
         {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("In NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName): skipGlobalQualification has caused global qualification to be ignored \n");
 #endif
           qualifier = "";
@@ -6791,9 +6806,13 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      for (int i = 0; i < inputNameQualificationLength; i++)
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("   --- In loop: scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+          printf ("   --- In loop: i = %d scope = %p = %s = %s \n",i,scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
 #endif
           string scope_name;
+
+       // DQ (8/19/2014): This is used to control the generation of qualified names for un-named namespaces
+       // (and maybe also other un-named language constructs).
+          bool skip_over_scope = false;
 
        // This requirement to visit the template arguments occurs for templaed functions and templated member functions as well.
           SgTemplateInstantiationDefn* templateClassDefinition = isSgTemplateInstantiationDefn(scope);
@@ -6853,7 +6872,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
              {
             // scope_name = scope->class_name().c_str();
                scope_name = SageInterface::get_name(scope).c_str();
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Before test for __anonymous_ un-named scopes: scope_name = %s \n",scope_name.c_str());
 #endif
             // DQ (4/6/2013): Test this scope name for that of n un-named scope so that we can avoid name qualification 
@@ -6886,6 +6906,24 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                   {
                  // DQ (4/6/2013): Added test (this would be better to add to the AST consistancy tests).
                  // ROSE_ASSERT(scope->get_isUnNamed() == false);
+
+                    SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+                    if (namespaceDefinition != NULL)
+                       {
+#if 0
+                         printf ("In NameQualificationTraversal::setNameQualificationSupport(): Detected a SgNamespaceDefinition: namespaceDefinition = %p \n",namespaceDefinition);
+#endif
+
+                         SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(namespaceDefinition->get_namespaceDeclaration());
+                         ROSE_ASSERT(namespaceDeclaration != NULL);
+                         if (namespaceDeclaration->get_isUnnamedNamespace() == true)
+                            {
+#if 0
+                              printf ("In NameQualificationTraversal::setNameQualificationSupport(): found un-named namespace: namespaceDefinition = %p \n",namespaceDefinition);
+#endif
+                              skip_over_scope = true;
+                            }
+                       }
                   }
              }
 
@@ -6905,25 +6943,36 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
              }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("In NameQualificationTraversal::setNameQualificationSupport(): scope_name = %s \n",scope_name.c_str());
+          printf ("In NameQualificationTraversal::setNameQualificationSupport(): scope_name = %s skip_over_scope = %s \n",scope_name.c_str(),skip_over_scope ? "true" : "false");
 #endif
-       // qualifierString = scope_name + "::" + qualifierString;
-          if (outputGlobalQualification == true)
+
+          if (skip_over_scope == false)
              {
-            // Avoid out put of "::::" as substrings.
-               qualifierString = "::" + qualifierString;
-             }
-            else
-             {
+#if 0
+               printf ("In NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s \n",outputGlobalQualification ? "true" : "false");
+#endif
             // qualifierString = scope_name + "::" + qualifierString;
-               if (scope_name.length() == 0)
+               if (outputGlobalQualification == true)
                   {
-                 // Nothing to do for this case of an empty string for a scope name (see test2006_121.C, using an un-named namespace).
+                 // Avoid out put of "::::" as substrings.
+                    qualifierString = "::" + qualifierString;
                   }
                  else
                   {
-                    qualifierString = scope_name + "::" + qualifierString;
+                 // qualifierString = scope_name + "::" + qualifierString;
+                    if (scope_name.length() == 0)
+                       {
+                      // Nothing to do for this case of an empty string for a scope name (see test2006_121.C, using an un-named namespace).
+                       }
+                      else
+                       {
+                         qualifierString = scope_name + "::" + qualifierString;
+                       }
                   }
+             }
+            else
+             {
+               printf ("In NameQualificationTraversal::setNameQualificationSupport(): Case of skip_over_scope == true! \n");
              }
 
        // We have to loop over scopes that are not named scopes!
@@ -6946,7 +6995,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
   // This is a bug in the inlining support where the symbol tables are not setup just right.
      if (qualifierString.substr(0,2) == "0x")
         {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("WARNING: Detected qualified name generated from pointer value 0x..., reset to empty string (inlining does not fixup symbol tables) \n");
 #endif
           qualifierString = "";

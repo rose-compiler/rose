@@ -143,6 +143,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_107.C \
    test2014_108.C \
    test2014_109.C \
+   test2014_110.C \
+   test2014_111.C \
+   test2014_112.C \
+   test2014_114.C \
+   test2014_115.C \
+   test2014_116.C \
    test2014_122.C \
    test2014_123.C \
    test2014_124.C \
@@ -229,13 +235,7 @@ TESTS_NOT_PASSING = \
 #  test2014_101.C 
 #  test2014_102.C 
 #  test2014_103.C 
-#  test2014_110.C 
-#  test2014_111.C 
-#  test2014_112.C 
 #  test2014_113.C 
-#  test2014_114.C 
-#  test2014_115.C 
-#  test2014_116.C 
 #  test2014_117.C 
 #  test2014_118.C 
 #  test2014_119.C 
