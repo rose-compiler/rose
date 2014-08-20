@@ -1114,12 +1114,13 @@ void
 Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
   // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
-#if 0
-     curprint("/* In unparseNamespaceDeclarationStatement() */ ");
-#endif
-
      SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceDeclaration != NULL);
+
+#if 0
+     printf("In unparseNamespaceDeclarationStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     curprint("/* In unparseNamespaceDeclarationStatement() */ ");
+#endif
 
   // DQ (8/12/2014): Adding support for inlined namespaces (C++11 support).
      if (namespaceDeclaration->get_isInlinedNamespace() == true)
@@ -1145,7 +1146,11 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
 #if 0
           printf ("Calling unparseStatement() for namespaceDeclaration->get_definition() = %p \n",namespaceDeclaration->get_definition());
 #endif
-          unparseStatement(namespaceDeclaration->get_definition(),info);
+       // DQ (8/19/2014): If we unparse the SgNamespaceDeclarationStatement, then we mean to unparse the SgNamespaceDefinition as well.
+       // test2014_110.C demonstrates where the SgNamespaceDefinition has the wrong source position (from a header file) and
+       // thus is not unparsed (filterd by the logic in unparseStatement()).  So try to call the correct unparse function directly.
+       // unparseStatement(namespaceDeclaration->get_definition(),info);
+          unparseNamespaceDefinitionStatement(namespaceDeclaration->get_definition(),info);
         }
        else
         {
@@ -1153,6 +1158,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
         }
 
 #if 0
+     printf("Leaving unparseNamespaceDeclarationStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint("/* Leaving unparseNamespaceDeclarationStatement() */ ");
 #endif
 
@@ -1170,6 +1176,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
   // to support the output of the declaration.
   // ROSE_ASSERT(stmt->get_file_info()->isCompilerGenerated() == true || stmt->get_file_info()->isOutputInCodeGeneration() == false);
    }
+
 
 void
 Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnparse_Info & info )

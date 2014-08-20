@@ -1634,6 +1634,10 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("In Unparse_ExprStmt::unparseVarRef() \n");
+     curprint(" /* In Unparse_ExprStmt::unparseVarRef() */ \n ");
+#endif
+
+#if 0
      var_ref->get_startOfConstruct()->display("In Unparse_ExprStmt::unparseVarRef()");
 #endif
 
@@ -1646,9 +1650,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 
      if (var_ref->get_symbol() == NULL)
         {
-          printf ("Error in unparseVarRef() at line %d column %d \n",
-               var_ref->get_file_info()->get_line(),
-               var_ref->get_file_info()->get_col());
+          printf ("Error in unparseVarRef() at line %d column %d \n",var_ref->get_file_info()->get_line(),var_ref->get_file_info()->get_col());
         }
      ROSE_ASSERT(var_ref->get_symbol() != NULL);
 
@@ -1680,12 +1682,22 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 
        // DQ (5/30/2011): Newest refactored support for name qualification.
           nameQualifier = var_ref->get_qualified_name_prefix();
+
+#if 0
+          printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
+          curprint(" /* In Unparse_ExprStmt::unparseVarRef() */ \n ");
+#endif
         }
 
   // DQ (1/22/2014): Adding support for generated names used in un-named variables.
      bool isAnonymousName = (string(var_ref->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
 #if 0
      printf ("In unparseVarRef(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+
+#if 0
+     printf ("In Unparse_ExprStmt::unparseVarRef(): output nameQualifier = %s \n",nameQualifier.str());
+     curprint(" /* In Unparse_ExprStmt::unparseVarRef(): output nameQualifier */ \n ");
 #endif
 
 #if 0
@@ -1699,7 +1711,14 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           curprint(nameQualifier.str());
         }
 #else
+  // DQ (8/19/2014): This causes output such as: "XXX::isValidDomainSize(domain_extents . Extents_s::imin);"
+  // with the function parameter's SgVarRefExp qualified un-nessesarily (see test2014_116.C).
      curprint(nameQualifier.str());
+#endif
+
+#if 0
+     printf ("In Unparse_ExprStmt::unparseVarRef(): DONE output nameQualifier = %s \n",nameQualifier.str());
+     curprint(" /* In Unparse_ExprStmt::unparseVarRef(): DONE output nameQualifier */ \n ");
 #endif
 
   // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
@@ -1722,6 +1741,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseVarRef() \n");
+     curprint(" /* Leaving Unparse_ExprStmt::unparseVarRef() */ \n ");
 #endif
    }
 

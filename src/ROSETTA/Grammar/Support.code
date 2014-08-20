@@ -18202,7 +18202,9 @@ SgTemplateArgument::get_mangled_name (void) const
                   }
                  else
                   {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                 // DQ (8/19/2014): I am not clear how important it is to warn about this issue.
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                     printf ("WARNING: In SgTemplateArgument::get_mangled_name(): parent declaration is not handled: this->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
 #endif
                   }

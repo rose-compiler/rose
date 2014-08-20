@@ -5302,8 +5302,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
+                           // DQ (8/19/2014): Since these are shared (by design, so that the symbol table use is optimal) it is less important to warn about these.
                            // DQ (3/6/2007): This is always a case we want to warn about!
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
 #endif
