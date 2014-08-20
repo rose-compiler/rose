@@ -205,6 +205,26 @@ dnl build using ROSE)
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_LATER_4_4, [test "x$gfortran_version_later_4_4" = "xyes"])
 
+# DQ (8/15/2014): GNU GCC 4.4 starts more complex Microsoft C++ support.
+  gcc_version_later_4_4=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "4"; then
+        echo "Note: we have identified version 4.4+ of gcc!"
+        gcc_version_later_4_4=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_4, [test "x$gcc_version_later_4_4" = "xyes"])
+
+# DQ (8/15/2014): Added for more complete support of GNU GCC.
+  gcc_version_later_4_5=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "5"; then
+        echo "Note: we have identified version 4.5+ of gcc!"
+        gcc_version_later_4_5=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_5, [test "x$gcc_version_later_4_5" = "xyes"])
+
 # Phlin (8/22/2012): GNU GCC 4.6 starts AVX support.
   gcc_version_later_4_6=no
   if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
@@ -224,6 +244,16 @@ dnl build using ROSE)
      fi
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_8, [test "x$gcc_version_later_4_8" = "xyes"])
+
+# DQ (8/15/2014): Added for more complete support of GNU GCC.
+  gcc_version_later_4_7=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "7"; then
+        echo "Note: we have identified version 4.7+ of gcc!"
+        gcc_version_later_4_7=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_7, [test "x$gcc_version_later_4_7" = "xyes"])
 
 # DQ (7/28/2014): GNU GCC 4.9 adds more C11 support (we need this to control what tests are run).
   gcc_version_later_4_9=no
