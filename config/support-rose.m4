@@ -289,6 +289,7 @@ else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
 # DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
