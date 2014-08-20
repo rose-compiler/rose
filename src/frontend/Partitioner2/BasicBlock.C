@@ -2,6 +2,7 @@
 
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Utility.h>
 
 #include <boost/foreach.hpp>
 
@@ -144,6 +145,18 @@ BasicBlock::fallthroughVa() const {
 std::string
 BasicBlock::printableName() const {
     return "basic block " + StringUtility::addrToString(address());
+}
+
+DataBlock::Ptr
+BasicBlock::dataBlockExists(const DataBlock::Ptr &dblock) const {
+    return dblock!=NULL && existsUnique(dblocks_, dblock, sortDataBlocks) ? dblock : DataBlock::Ptr();
+}
+
+bool
+BasicBlock::insertDataBlock(const DataBlock::Ptr &dblock) {
+    ASSERT_forbid2(isFrozen(), "basic block must be modifiable to insert data block");
+    ASSERT_not_null(dblock);
+    return insertUnique(dblocks_, dblock, sortDataBlocks);
 }
 
 } // namespace

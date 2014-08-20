@@ -151,7 +151,10 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     BOOST_FOREACH (rose_addr_t va, codeVas)
         args.bblock->insertSuccessor(va, 32);
 
-    
+    // Create a data block for the offset table and attach it to the basic block
+    DataBlock::Ptr offsetTable = DataBlock::instance(startOfOffsetTable, 2*tableIdx);
+    args.bblock->insertDataBlock(offsetTable);
+
     return chain;
 }
 

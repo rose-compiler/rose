@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_BasicBlock_H
 
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
 
 #include <sawyer/Cached.h>
@@ -39,7 +40,10 @@ public:
     public:
         explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL)
             : expr_(expr), type_(type) {}
+        /** Symbolic expression for the successor address. */
         const Semantics::SValuePtr& expr() const { return expr_; }
+
+        /** Type of successor. */
         EdgeType type() const { return type_; }
     };
 
@@ -55,6 +59,7 @@ private:
     BaseSemantics::StatePtr initialState_;              // Initial state for semantics (null if no instructions)
     bool usingDispatcher_;                              // True if dispatcher's state is up-to-date for the final instruction
     Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
+    std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because
     // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the
@@ -72,6 +77,10 @@ private:
         stackDelta_.clear();
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Constructors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
     // use instance() instead
     BasicBlock(rose_addr_t startVa, const Partitioner *partitioner)
@@ -96,22 +105,62 @@ public:
         return instance(startVa, partitioner);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Status
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Determine if basic block is read-only.
      *
      *  Returns true if read-only, false otherwise. */
     bool isFrozen() const { return isFrozen_; }
 
-    /** Get the address for a basic block. */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Instructions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Get the address for a basic block.
+     *
+     *  A basic block's address is also the starting address of its initial instruction.  The initial instruction need not be
+     *  the instruction with the lowest address, but rather the instruction which is always executed first by the basic
+     *  block. */
     rose_addr_t address() const { return startVa_; }
 
-    /** Get the address after the end of the last instruction. */
+    /** Get the address after the end of the final instruction.
+     *
+     *  This is the address that immediately follows the final byte of the instruction that is executed last by the basic
+     *  block.  The final executed instruction need not be the instruction with the highest address. */
     rose_addr_t fallthroughVa() const;
 
     /** Get the number of instructions in this block. */
     size_t nInstructions() const { return insns_.size(); }
 
-    /** Return true if this block has no instructions. */
+    /** Return true if this basic block has no instructions.
+     *
+     *  A basic block is always expected to have at least one instruction whose address is the same as the basic block's
+     *  address, and this method returns true if that instruction has not yet been discovered and appended to this basic
+     *  block. A basic block may also own data blocks, but they are not counted by this method. */
     bool isEmpty() const { return insns_.empty(); }
+
+    /** Determine if this basic block contains an instruction at a specific address.
+     *
+     *  Returns a non-null instruction pointer if this basic block contains an instruction that starts at the specified
+     *  address, returns null otherwise. */
+    SgAsmInstruction* instructionExists(rose_addr_t startVa) const;
+
+    /** Determines if this basic block contains the specified instruction.
+     *
+     *  If the basic block contains the instruction then this method returns the index of this instruction within the
+     *  block, otherwise it returns nothing. */
+    Sawyer::Optional<size_t> instructionExists(SgAsmInstruction*) const;
+
+    /** Get the instructions for this block.
+     *
+     *  Instructions are returned in the order they would be executed (i.e., the order they were added to the block).
+     *  Blocks in the undiscovered and not-existing states never have instructions (they return an empty vector); blocks in
+     *  the incomplete and complete states always return at least one instruction. */
+    const std::vector<SgAsmInstruction*> instructions() const { return insns_; }
 
     /** Append an instruction to a basic block.
      *
@@ -135,25 +184,37 @@ public:
      *  of undo is available. */
     void pop();
 
-    /** Get the instructions for this block.
-     *
-     *  Instructions are returned in the order they would be executed (i.e., the order they were added to the block).
-     *  Blocks in the undiscovered and not-existing states never have instructions (they return an empty vector); blocks in
-     *  the incomplete and complete states always return at least one instruction. */
-    const std::vector<SgAsmInstruction*> instructions() const { return insns_; }
 
-    /** Determine if the basic block contains an instruction at a specific address.
-     *
-     *  Returns a non-null instruction pointer if this basic block contains an instruction that starts at the specified
-     *  address, returns null otherwise. */
-    SgAsmInstruction* instructionExists(rose_addr_t startVa) const;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Static data blocks
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Get the number of data blocks owned. */
+    size_t nDataBlocks() const { return dblocks_.size(); }
 
-    /** Determines if the basic block contains the specified instruction.
+    /** Determine if this basic block contains the specified data block.
      *
-     *  If the basic block contains the instruction then this function returns the index of this instruction within the
-     *  block, otherwise it returns nothing. */
-    Sawyer::Optional<size_t> instructionExists(SgAsmInstruction*) const;
+     *  If the basic block owns the specified data block then this method returns the specified pointer, otherwise it returns
+     *  the null pointer. */
+    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
 
+    /** Make this basic block own the specified data block.
+     *
+     *  If the specified data block is not yet owned by this basic block, then this method adds the data block as a member of
+     *  this basic block and returns true, otherwise nothing is inserted and returns false.  A data block cannot be inserted
+     *  when this basic block is frozen. */
+    bool insertDataBlock(const DataBlock::Ptr&);
+
+    /** Data blocks owned.
+     *
+     *  Returned vector is sorted according to data block starting address. */
+    const std::vector<DataBlock::Ptr> dataBlocks() const { return dblocks_; }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Semantics
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Return the initial semantic state.
      *
      *  A null pointer is returned if this basic block has no instructions. */
@@ -173,6 +234,11 @@ public:
      *  states. A null dispatcher is returned if this basic block is empty. */
     const BaseSemantics::DispatcherPtr& dispatcher() const { return dispatcher_; }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Control flow
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Control flow successors.
      *
      *  The control flow successors indicate how control leaves the end of a basic block. These successors should be the
@@ -201,6 +267,11 @@ public:
     void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL);
     /** @} */
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Cached properties computed elsewhere
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Is a function call?
      *
      *  If the basic block appears to be a function call then this property is set to true.  A block is a function call if
@@ -215,9 +286,18 @@ public:
      *  stack pointer register.  This value is typically computed in the partitioner and cached in the basic block. */
     const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Output
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** A printable name for this basic block.  Returns a string like 'basic block 0x10001234'. */
     std::string printableName() const;
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Private members for the partitioner
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     friend class Partitioner;
     void init(const Partitioner*);

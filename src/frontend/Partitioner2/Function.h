@@ -83,12 +83,14 @@ public:
      *  starting address. */
     const std::vector<DataBlock::Ptr>& dataBlocks() const { return dblocks_; }
 
-    /** Add a data block to this function.  This method does not adjust the partitioner CFG.  Data blocks cannot be added by
-     *  this method when this function is attached to the CFG since it would cause the CFG to become outdated with respect to
-     *  this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  The specified
-     *  data block cannot be a null pointer.  If a data block is already present at the same address then the specified data
-     *  block replaces it. */
-    void insertDataBlock(const DataBlock::Ptr&);
+    /** Add a data block to this function.
+     *
+     *  This method does not adjust the partitioner CFG.  Data blocks cannot be added by this method when this function is
+     *  attached to the CFG since it would cause the CFG to become outdated with respect to this function, but as long as the
+     *  function is detached blocks can be inserted and removed arbitrarily.  The specified data block cannot be a null
+     *  pointer. If the data block is already owned by this function then nothing happens and this method returns false;
+     *  otherwise the data block is inserted and the method returns true. */
+    bool insertDataBlock(const DataBlock::Ptr&);
 
     /** Remove a data block from this function.  This method does not adjust the partitioner CFG.  Data blocks cannot be
      *  removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated with

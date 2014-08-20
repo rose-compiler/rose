@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include <Partitioner2/Partitioner.h>
 
+#include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/Exception.h>
 #include <Partitioner2/Utility.h>
 
@@ -177,6 +178,10 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
         adjustPlaceholderEdges(placeholder);
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
             aum_.eraseInstruction(insn);
+        BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
+            if (0==dblock->decrementOwnerCount())
+                detachDataBlock(dblock);
+        }
         bblock->thaw();
         bblockDetached(bblock->address(), bblock);
     }
@@ -235,7 +240,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
     // the termination conditions below.
     AddressUser conflict;
     if (instructionExists(startVa).assignTo(conflict))
-        ASSERT_forbid(conflict.insn()->get_address() == conflict.bblock()->address());// handled in discoverBasicBlock
+        ASSERT_forbid(conflict.insn()->get_address() == conflict.basicBlock()->address());// handled in discoverBasicBlock
 
     // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
     // the doxygen documentation for this function. READ IT AND KEEP IT UP TO DATE!!!
@@ -274,12 +279,12 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (successorVa == startVa)                                     // case: successor is our own basic block
             goto done;
 
-        if (findPlaceholder(successorVa)!=cfg_.vertices().end())      // case: successor is an existing block
+        if (findPlaceholder(successorVa)!=cfg_.vertices().end())        // case: successor is an existing block
             goto done;
 
         AddressUser addressUser;
         if (instructionExists(successorVa).assignTo(addressUser)) {     // case: successor is inside an existing block
-            if (addressUser.bblock() != conflict.bblock())
+            if (addressUser.basicBlock() != conflict.basicBlock())
                 goto done;
         }
 
@@ -322,7 +327,7 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
     if (placeholder == cfg_.vertices().end()) {
         AddressUser addressUser;
         if (instructionExists(startVa).assignTo(addressUser)) {
-            ControlFlowGraph::VertexNodeIterator conflictBlock = findPlaceholder(addressUser.bblock()->address());
+            ControlFlowGraph::VertexNodeIterator conflictBlock = findPlaceholder(addressUser.basicBlock()->address());
             placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
             ASSERT_require(placeholder->value().address() == startVa);
         } else {
@@ -387,7 +392,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     BOOST_FOREACH (const VertexEdgePair &pair, successors)
         cfg_.insertEdge(placeholder, pair.first, pair.second);
 
-    // Insert the basicblock
+    // Insert the basic block instructions
     placeholder->value().bblock(bblock);
     BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
         aum_.insertInstruction(insn, bblock);
@@ -395,7 +400,33 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     if (bblock->isEmpty())
         adjustNonexistingEdges(placeholder);
 
+    // Insert the basic block static data
+    BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
+        attachDataBlock(dblock);
+        dblock->incrementOwnerCount();
+    }
+
     bblockAttached(placeholder);
+}
+
+Sawyer::Container::IntervalSet<AddressInterval>
+Partitioner::basicBlockInstructionExtent(const BasicBlock::Ptr &bblock) const {
+    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    if (bblock!=NULL) {
+        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
+            retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
+    }
+    return retval;
+}
+
+Sawyer::Container::IntervalSet<AddressInterval>
+Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
+    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    if (bblock!=NULL) {
+        BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks())
+            retval.insert(dblock->extent());
+    }
+    return retval;
 }
 
 BasicBlock::Successors
@@ -592,45 +623,118 @@ Partitioner::discoverInstruction(rose_addr_t startVa) const {
     return instructionProvider_[startVa];
 }
 
+bool
+Partitioner::dataBlockExists(const DataBlock::Ptr &dblock) const {
+    if (dblock==NULL)
+        return false;
+    if (dblock->nAttachedOwners()>0)
+        return true;
+    BOOST_FOREACH (const DataBlock::Ptr &exists, dataBlocksSpanning(dblock->extent())) {
+        if (exists==dblock)
+            return true;
+    }
+    return false;
+}
+
+void
+Partitioner::attachDataBlock(const DataBlock::Ptr &dblock) {
+    ASSERT_not_null(dblock);
+    if (!dataBlockExists(dblock)) {
+        ASSERT_require(0==dblock->nAttachedOwners());
+        aum_.insertDataBlock(OwnedDataBlock(dblock));
+        dblock->freeze();
+    }
+}
+
+DataBlock::Ptr
+Partitioner::detachDataBlock(const DataBlock::Ptr &dblock) {
+    if (dblock!=NULL) {
+        if (dblock->nAttachedOwners()) {
+            throw DataBlockError(dblock, dataBlockName(dblock) + " cannot be detached because it has " +
+                                 StringUtility::plural(dblock->nAttachedOwners(), "basic block and/or function owners"));
+        }
+        aum_.eraseDataBlock(dblock);
+    }
+    return dblock;
+}
+
+std::vector<DataBlock::Ptr>
+Partitioner::dataBlocksOverlapping(const AddressInterval &interval) const {
+    return aum_.overlapping(interval).dataBlocks();
+}
+
+std::vector<DataBlock::Ptr>
+Partitioner::dataBlocksSpanning(const AddressInterval &interval) const {
+    return aum_.spanning(interval).dataBlocks();
+}
+
+AddressInterval
+Partitioner::dataBlockExtent(const DataBlock::Ptr &dblock) const {
+    AddressInterval extent;
+    if (dblock!=NULL)
+        extent = dblock->extent();
+    return extent;
+}
+
+DataBlock::Ptr
+Partitioner::findBestDataBlock(const AddressInterval &interval) const {
+    DataBlock::Ptr existing;
+    if (!interval.isEmpty()) {
+        std::vector<DataBlock::Ptr> found = dataBlocksSpanning(interval);
+        BOOST_REVERSE_FOREACH (const DataBlock::Ptr &dblock, found) { // choose the smallest one (highest address if tied)
+            if (existing==NULL || dblock->size() < existing->size())
+                existing = dblock;
+        }
+        if (existing==NULL) {
+            found = dataBlocksOverlapping(AddressInterval(interval.least()));
+            BOOST_REVERSE_FOREACH (const DataBlock::Ptr &dblock, found) { // choose the largest one (highest address if tied)
+                if (existing==NULL || dblock->size() > existing->size())
+                    existing = dblock;
+            }
+        }
+    }
+    return existing;
+}
+
 // FIXME[Robb P. Matzke 2014-08-12]: nBytes to be replaced by a data type
 void
 Partitioner::attachFunctionDataBlock(const Function::Ptr &function, rose_addr_t startVa, size_t nBytes) {
     ASSERT_not_null(function);
     ASSERT_require(nBytes>0);
+    bool isFunctionAttached = NULL!=functionExists(function);
 
-    if (functionExists(function)) {
-        DataBlocks::NodeIterator dbi = dblocks_.find(startVa);
-        if (dbi==dblocks_.nodes().end()) {
-            // No data block starts at this address, so create a new one
-            DataBlock::Ptr dblock = DataBlock::instance(startVa, nBytes);
-            dblocks_.insert(startVa, OwnedDataBlock(dblock, function));
-            aum_.insertDataBlock(dblock);
-            function->thaw();
-            function->insertDataBlock(dblock);
-            function->freeze();
-        } else {
-            DataBlock::Ptr dblock = dbi->value().dblock();
-            if (dblock->size() < nBytes) {
-                // An existing data block, but it's too small. We can make it larger.
-                aum_.eraseDataBlock(dblock);            // remove the small version from the AUM
-                dblock->thaw();
-                dblock->size(nBytes);
-                dblock->freeze();
-                aum_.insertDataBlock(dblock);           // insert the larger version into the AUM
-                dbi->value().insert(function);          // ensure this function is an owner
-                function->thaw();
-                function->insertDataBlock(dblock);
-                function->freeze();
-            } else {
-                // An existing data block that is large enough
-                dbi->value().insert(function);          // ensure this function is an owner
-                function->thaw();
-                function->insertDataBlock(dblock);
-                function->freeze();
-            }
+    AddressInterval needInterval = AddressInterval::baseSize(startVa, nBytes);
+    DataBlock::Ptr dblock = findBestDataBlock(needInterval);
+    if (dblock==NULL) {
+        // Create a new data block since there is none at this location.  If the function is attached to the CFG/AUM then we
+        // must attach the new data block also.
+        dblock = DataBlock::instance(startVa, nBytes);
+        if (isFunctionAttached) {
+            dblock->freeze();
+            aum_.insertDataBlock(OwnedDataBlock(dblock, function));
         }
+    } else if (!dblock->extent().isContaining(needInterval)) {
+        // A data block exists in the CFG/AUM but it doesn't contain everything we want.  We can extend the extent of the
+        // existing data block.  FIXME[Robb P. Matzke 2014-08-20]: This will eventually merge data types.
+        OwnedDataBlock odb = aum_.dataBlockExists(dblock);
+        ASSERT_require(odb.isValid());                  // we know it exists in the AUM because of findBestDataBlock above
+        aum_.eraseDataBlock(dblock);                    // temporarily erase the data block from the AUM
+        dblock->thaw();                                 // needs to be thawed and refrozen to change the size
+        dblock->size(startVa+nBytes - dblock->address());
+        dblock->freeze();
+        if (isFunctionAttached)
+            odb.insertOwner(function);
+        aum_.insertDataBlock(odb);                      // insert it back into the AUM w/new owners and size
+    }
+
+    // Attach the data block to the function
+    if (isFunctionAttached) {
+        function->thaw();
+        if (function->insertDataBlock(dblock))
+            dblock->incrementOwnerCount();
+        function->freeze();
     } else {
-        ASSERT_not_implemented("[Robb P. Matzke 2014-08-12]");
+        function->insertDataBlock(dblock);
     }
 }
 
@@ -669,21 +773,61 @@ Partitioner::findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr> &
     return findFunctionsOwningBasicBlocks(bblockVas);
 }
 
+// We have a number of choices for the algorithm:
+//  (1) iterate over all functions, compute each function's extent and compare it to the interval.  Probably not too fast since
+//      most functions would probably be excluded (intervals are often small, even single addresses), and also not fast because
+//      it computes the full function extent even when only part of it could cause the function to be selected.
+//  (2) iterate over all functions, descending into basic blocks and data blocks.  This is faster because we don't have to
+//      compute a full function extent and we can short circuit once we find an overlap.  But it requires looking up each basic
+//      block by address, which will be O(n log(n)) in total.
+//  (3) Use the fact that the interval is probably small and therefore the list of basic blocks and data blocks that overlap
+//      with it is small, and that the list can be returned quite quickly from the AUM.  For each instruction and data block
+//      returned by the AUM, look at its function ownership list and merge it into the return value.  This is the approach we
+//      take here.
 std::vector<Function::Ptr>
 Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     std::vector<Function::Ptr> functions;
-    AddressUsers users = aum_.overlapping(interval);
-    BOOST_FOREACH (const AddressUser &user, users.addressUsers()) {
-        if (BasicBlock::Ptr bb = user.bblock()) {
-            if (Function::Ptr function = findFunctionOwningBasicBlock(bb))
-                sortedInsert(functions, function);
-        } else if (DataBlock::Ptr db = user.dblock()) {
-            OwnedDataBlock odb = *dataBlockExists(db->address());
-            BOOST_FOREACH (const Function::Ptr &function, odb.owningFunctions())
-                sortedInsert(functions, function);
+
+    AddressUsers overlapping = aum_.overlapping(interval);
+    BOOST_FOREACH (const AddressUser &user, overlapping.addressUsers()) {
+        if (BasicBlock::Ptr bb = user.basicBlock()) {
+            ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bb->address());
+            ASSERT_require(placeholder != cfg_.vertices().end());
+            ASSERT_require(placeholder->value().bblock()==bb);
+            if (Function::Ptr function = placeholder->value().function())
+                insertUnique(functions, function, sortFunctionsByAddress);
+        } else {
+            ASSERT_not_null(user.dataBlock());
+            BOOST_FOREACH (const Function::Ptr &function, user.dataBlockOwnership().owningFunctions())
+                insertUnique(functions, function, sortFunctionsByAddress);
         }
     }
     return functions;
+}
+
+Sawyer::Container::IntervalSet<AddressInterval>
+Partitioner::functionExtent(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    Sawyer::Container::IntervalSet<AddressInterval> retval;
+
+    // Basic blocks and their data
+    BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
+        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblockVa);
+        if (placeholder != cfg_.vertices().end()) {
+            if (BasicBlock::Ptr bblock = placeholder->value().bblock()) {
+                retval.insertMultiple(basicBlockInstructionExtent(bblock));
+                retval.insertMultiple(basicBlockDataExtent(bblock));
+            } else {
+                retval.insert(AddressInterval(bblockVa));// all we know is the placeholder address
+            }
+        }
+    }
+
+    // Data blocks owned by the function
+    BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
+        retval.insert(dataBlockExtent(dblock));
+
+    return retval;
 }
 
 void
@@ -1073,19 +1217,10 @@ Partitioner::attachFunction(const Function::Ptr &function) {
         functions_.insert(function->address(), function);
         nNewBlocks = attachFunctionBasicBlocks(function);
 
-        // Insert function data blocks into the data block table and AUM.  Data blocks can be owned by multiple functions, but
-        // there can be only one data block per starting address.
+        // Attach function data blocks.
         BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
-            ASSERT_not_null(dblock);
-            dblock->freeze();                           // make sure it doesn't change while in the AUM
-            OwnedDataBlock &odb = dblocks_.insertMaybe(dblock->address(), OwnedDataBlock(dblock));
-            if (odb.dblock() != dblock)
-                throw DataBlockError(odb.dblock(),
-                                     dataBlockName(odb.dblock()) + " is already attached with a different data block pointer");
-            bool newlyCreated = odb.nOwners()==0;
-            odb.insert(function);
-            if (newlyCreated)
-                aum_.insertDataBlock(dblock);
+            attachDataBlock(dblock);
+            dblock->incrementOwnerCount();
         }
 
         // Prevent the function connectivity from changing while the function is in the CFG.  Non-frozen functions
@@ -1133,7 +1268,7 @@ Partitioner::detachFunction(const Function::Ptr &function) {
     if (functionExists(function->address()) != function)
         return;                                         // already detached
 
-    // Unlink basic blocks
+    // Unlink basic block ownership, but do not detach basic blocks from CFG/AUM
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
         ControlFlowGraph::VertexNodeIterator placeholder = findPlaceholder(blockVa);
         ASSERT_require(placeholder != cfg_.vertices().end());
@@ -1142,18 +1277,11 @@ Partitioner::detachFunction(const Function::Ptr &function) {
         placeholder->value().function(Function::Ptr());
     }
 
-    // Unlink data blocks
+    // Unlink data block ownership, but do not detach data blocks from CFG/AUM unless ownership count hits zero.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
         ASSERT_not_null(dblock);
-        DataBlocks::ValueIterator found = dblocks_.find(dblock->address());
-        ASSERT_require(found!=dblocks_.nodes().end());
-        if (0==found->erase(function)) {
-            // This function was the last attached owner of the data block, so erase the data block from the data block table
-            // and the address usage map and thaw it.
-            aum_.eraseDataBlock(dblock);
-            dblocks_.eraseAt(found);
-            dblock->thaw();
-        }
+        if (0==dblock->decrementOwnerCount())
+            detachDataBlock(dblock);
     }
 
     // Unlink the function itself
@@ -1171,9 +1299,14 @@ Partitioner::aum(const Function::Ptr &function) const {
             if (BasicBlock::Ptr bb = placeholder->value().bblock()) {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
                     retval.insertInstruction(insn, bb);
+                BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
+                    retval.insertDataBlock(OwnedDataBlock(dblock, bb));
             }
         }
     }
+    BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
+        retval.insertDataBlock(OwnedDataBlock(dblock, function));
+
     return retval;
 }
 
@@ -1221,7 +1354,7 @@ Partitioner::discoverFunctionEntryVertices() const {
             BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex.inEdges()) {
                 if (edge.value().type() == E_FUNCTION_CALL) {
                     rose_addr_t entryVa = vertex.value().address();
-                    sortedInsert(functions, Function::instance(entryVa));
+                    insertUnique(functions, Function::instance(entryVa), sortFunctionsByAddress);
                     break;
                 }
             }
@@ -1453,7 +1586,10 @@ Partitioner::buildDataBlockAst(const DataBlock::Ptr &dblock, bool relaxed) const
 
 SgAsmFunction*
 Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const {
-    // Build the child basic block IR nodes
+    ASSERT_not_null(function);
+
+    // Build the child basic block IR nodes and remember all the data blocks
+    std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
     std::vector<SgAsmBlock*> children;
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexNodeIterator vertex = findPlaceholder(blockVa);
@@ -1463,6 +1599,8 @@ Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             if (SgAsmBlock *child = buildBasicBlockAst(bb, relaxed))
                 children.push_back(child);
+            BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
+                insertUnique(dblocks, dblock, sortDataBlocks);
         } else {
             mlog[WARN] <<functionName(function) <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" is undiscovered in the CFG; no AST node created\n";
@@ -1476,8 +1614,9 @@ Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const
         }
     }
 
-    // Build the child data block IR nodes.
-    BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
+    // Build the child data block IR nodes.  The data blocks attached to the SgAsmFunction node are the union of the data
+    // blocks owned by the function and the data blocks owned by each of its basic blocks.
+    BOOST_FOREACH (const DataBlock::Ptr &dblock, dblocks) {
         if (SgAsmBlock *child = buildDataBlockAst(dblock, relaxed))
             children.push_back(child);
     }

@@ -12,6 +12,21 @@ namespace Partitioner2 {
 //                                      AddressUser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool
+AddressUser::operator<(const AddressUser &other) const {
+    if (insn_!=NULL && other.insn_!=NULL) {
+        ASSERT_require((insn_!=other.insn_) ^ (insn_->get_address()==other.insn_->get_address()));
+        ASSERT_require(insn_!=other.insn_ || bblock_==NULL || other.bblock_==NULL || bblock_==other.bblock_);
+        return insn_->get_address() < other.insn_->get_address();
+    } else if (insn_!=NULL || other.insn_!=NULL) {
+        return insn_==NULL;                         // instructions come before data blocks
+    } else {
+        ASSERT_not_null(odblock_.dataBlock());
+        ASSERT_not_null(other.odblock_.dataBlock());
+        return sortDataBlocks(odblock_.dataBlock(), other.odblock_.dataBlock());
+    }
+}
+
 void
 AddressUser::print(std::ostream &out) const {
     if (insn_!=NULL) {
@@ -21,8 +36,9 @@ AddressUser::print(std::ostream &out) const {
             out <<unparseInstructionWithAddress(insn_);
         }
     } else {
-        ASSERT_not_null(dblock_);
-        out <<"data at " <<StringUtility::addrToString(dblock_->address());
+        ASSERT_require(odblock_.isValid());
+        out <<"data at " <<StringUtility::addrToString(odblock_.dataBlock()->address())
+            <<" has " <<StringUtility::plural(odblock_.nOwners(), "owners");
     }
 }
 
@@ -39,20 +55,21 @@ AddressUsers::instructionExists(SgAsmInstruction *insn) const {
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->insn()!=insn)
         return BasicBlock::Ptr();
-    ASSERT_not_null(lb->bblock());
-    return lb->bblock();
+    ASSERT_not_null(lb->basicBlock());
+    return lb->basicBlock();
 }
 
-DataBlock::Ptr
+Sawyer::Optional<OwnedDataBlock>
 AddressUsers::dataBlockExists(const DataBlock::Ptr &dblock) const {
     if (dblock==NULL)
-        return DataBlock::Ptr();
-    AddressUser needle(dblock);
+        return Sawyer::Nothing();
+    AddressUser needle = AddressUser(OwnedDataBlock(dblock));
     ASSERT_require(isConsistent());
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
-    if (lb==users_.end() || lb->dblock()==NULL || lb->dblock()->address()!=dblock->address())
-        return DataBlock::Ptr();
-    return lb->dblock();
+    if (lb==users_.end() || lb->dataBlock()!=dblock)
+        return Sawyer::Nothing();
+    ASSERT_require(lb->dataBlockOwnership().isValid());
+    return lb->dataBlockOwnership();
 }
 
 Sawyer::Optional<AddressUser>
@@ -65,17 +82,19 @@ AddressUsers::instructionExists(rose_addr_t startVa) const {
     return Sawyer::Nothing();
 }
 
-Sawyer::Optional<AddressUser>
+Sawyer::Optional<OwnedDataBlock>
 AddressUsers::dataBlockExists(rose_addr_t startVa) const {
     // This could be a binary search, but since data blocks seldom overlap much, linear is almost certainly ok.
     BOOST_FOREACH (const AddressUser &user, users_) {
-        if (user.dblock() && user.dblock()->address() == startVa)
-            return user;
+        if (user.dataBlock() && user.dataBlock()->address() == startVa) {
+            ASSERT_require(user.dataBlockOwnership().isValid());
+            return user.dataBlockOwnership();
+        }
     }
     return Sawyer::Nothing();
 }
 
-AddressUsers&
+void
 AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(insn);
     ASSERT_not_null(bblock);
@@ -86,24 +105,26 @@ AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &b
     ASSERT_require2(lb==users_.end() || lb->insn()!=user.insn(), "instruction already exists in the list");
     users_.insert(lb, user);
     ASSERT_require(isConsistent());
-    return *this;
 }
 
-AddressUsers&
-AddressUsers::insertDataBlock(const DataBlock::Ptr &dblock) {
-    ASSERT_not_null(dblock);
-    ASSERT_forbid(dataBlockExists(dblock));
-    ASSERT_require(isConsistent());
-    AddressUser user(dblock);
+void
+AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
+    ASSERT_require(odb.isValid());
+    AddressUser user(odb);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
-    ASSERT_require2(lb==users_.end() || lb->dblock()->address()!=user.dblock()->address(),
-                    "data blockalready exists in the list");
-    users_.insert(lb, user);
-    ASSERT_require(isConsistent());
-    return *this;
+    if (lb==users_.end() || lb->dataBlock()!=odb.dataBlock()) {
+        users_.insert(lb, odb);
+    } else {
+        // merge new ownership list into existing ownership list
+        ASSERT_require(lb->dataBlock()==odb.dataBlock());
+        BOOST_FOREACH (const Function::Ptr &function, odb.owningFunctions())
+            lb->dataBlockOwnership().insertOwner(function);
+        BOOST_FOREACH (const BasicBlock::Ptr &bblock, odb.owningBasicBlocks())
+            lb->dataBlockOwnership().insertOwner(bblock);
+    }
 }
 
-AddressUsers&
+void
 AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
     if (insn!=NULL) {
         ASSERT_require(isConsistent());
@@ -112,19 +133,17 @@ AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
         if (lb!=users_.end() && lb->insn()==insn)
             users_.erase(lb);
     }
-    return *this;
 }
 
-AddressUsers&
+void
 AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock!=NULL) {
         ASSERT_require(isConsistent());
-        AddressUser needle(dblock);
+        AddressUser needle = AddressUser(OwnedDataBlock(dblock));
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
-        if (lb!=users_.end() && lb->dblock() && lb->dblock()->address()==dblock->address())
+        if (lb!=users_.end() && lb->dataBlock()==dblock)
             users_.erase(lb);
     }
-    return *this;
 }
 
 AddressUsers
@@ -141,7 +160,7 @@ AddressUsers
 AddressUsers::dataBlockUsers() const {
     AddressUsers dblocks;
     BOOST_FOREACH (const AddressUser &user, users_) {
-        if (user.dblock())
+        if (user.dataBlock())
             dblocks.users_.push_back(user);
     }
     return dblocks;
@@ -152,15 +171,22 @@ AddressUsers::basicBlocks() const {
     std::vector<BasicBlock::Ptr> bblocks;
     BOOST_FOREACH (const AddressUser &user, users_) {
         if (user.insn()) {
-            BasicBlock::Ptr bblock = user.bblock();
+            BasicBlock::Ptr bblock = user.basicBlock();
             ASSERT_not_null(bblock);
-            std::vector<BasicBlock::Ptr>::iterator lb = std::lower_bound(bblocks.begin(), bblocks.end(), bblock,
-                                                                         sortBasicBlocksByAddress);
-            if (lb==bblocks.end() || (*lb)->address()!=bblock->address())
-                bblocks.insert(lb, bblock);
+            insertUnique(bblocks, bblock, sortBasicBlocksByAddress);
         }
     }
     return bblocks;
+}
+
+std::vector<DataBlock::Ptr>
+AddressUsers::dataBlocks() const {
+    std::vector<DataBlock::Ptr> dblocks;
+    BOOST_FOREACH (const AddressUser &user, users_) {
+        if (DataBlock::Ptr dblock = user.dataBlock())
+            insertUnique(dblocks, dblock, sortDataBlocks);
+    }
+    return dblocks;
 }
 
 AddressUsers
@@ -213,12 +239,12 @@ AddressUsers::isConsistent() const {
         while (current != users_.end()) {
             if (current->insn()!=NULL) {
                 // instruction user
-                if (current->dblock()!=NULL) {
-                    ASSERT_require2(current->dblock()==NULL, "user cannot have both instruction and data block");
+                if (current->dataBlock()!=NULL) {
+                    ASSERT_require2(current->dataBlock()==NULL, "user cannot have both instruction and data block");
                     return false;
                 }
-                if (current->bblock()==NULL) {
-                    ASSERT_not_null2(current->bblock(), "instruction user must belong to a basic block");
+                if (current->basicBlock()==NULL) {
+                    ASSERT_not_null2(current->basicBlock(), "instruction user must belong to a basic block");
                     return false;
                 }
             } else {
@@ -227,8 +253,8 @@ AddressUsers::isConsistent() const {
                     ASSERT_require2(current->insn()==NULL, "user cannot have both instruction and data block");
                     return false;
                 }
-                if (current->bblock()!=NULL) {
-                    ASSERT_require2(current->bblock()==NULL, "user cannot have both basic block and data block");
+                if (current->basicBlock()!=NULL) {
+                    ASSERT_require2(current->basicBlock()==NULL, "user cannot have both basic block and data block");
                     return false;
                 }
             }
@@ -272,15 +298,15 @@ AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr
 }
 
 void
-AddressUsageMap::insertDataBlock(const DataBlock::Ptr &dblock) {
-    ASSERT_not_null(dblock);
-    ASSERT_forbid(dataBlockExists(dblock));
-    AddressInterval interval = AddressInterval::baseSize(dblock->address(), dblock->size());
+AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
+    ASSERT_require(odb.isValid());
+    ASSERT_forbid2(dataBlockExists(odb.dataBlock()).isValid(), "data block must not already exist in the AUM");
+    AddressInterval interval = AddressInterval::baseSize(odb.dataBlock()->address(), odb.dataBlock()->size());
     Map adjustment;
-    adjustment.insert(interval, AddressUsers(dblock));
+    adjustment.insert(interval, AddressUsers(odb));
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
         AddressUsers newUsers = node.value();
-        newUsers.insertDataBlock(dblock);
+        newUsers.insertDataBlock(odb);
         adjustment.insert(interval.intersection(node.key()), newUsers);
     }
     map_.insertMultiple(adjustment);
@@ -337,26 +363,34 @@ AddressUsageMap::instructionExists(rose_addr_t startVa) const {
 BasicBlock::Ptr
 AddressUsageMap::basicBlockExists(rose_addr_t startVa) const {
     if (Sawyer::Optional<AddressUser> found = instructionExists(startVa)) {
-        if (found->bblock()->address() == startVa)
-            return found->bblock();
+        if (found->basicBlock()->address() == startVa)
+            return found->basicBlock();
     }
     return BasicBlock::Ptr();
 }
 
-DataBlock::Ptr
-AddressUsageMap::dataBlockExists(const DataBlock::Ptr &dblock) const {
-    const AddressUsers noUsers;
-    return dblock ? map_.getOptional(dblock->address()).orElse(noUsers).dataBlockExists(dblock) : DataBlock::Ptr();
-}
-
-Sawyer::Optional<AddressUser>
+OwnedDataBlock
 AddressUsageMap::dataBlockExists(rose_addr_t startVa) const {
     const AddressUsers noUsers;
-    if (Sawyer::Optional<AddressUser> found = map_.getOptional(startVa).orElse(noUsers).dataBlockExists(startVa)) {
-        if (found->dblock()->address() == startVa)
-            return found;
+    if (Sawyer::Optional<OwnedDataBlock> odb = map_.getOptional(startVa).orElse(noUsers).dataBlockExists(startVa)) {
+        if (odb->dataBlock()->address() == startVa) {
+            ASSERT_require(odb->isValid());
+            return *odb;
+        }
     }
-    return Sawyer::Nothing();
+    return OwnedDataBlock();
+}
+
+OwnedDataBlock
+AddressUsageMap::dataBlockExists(const DataBlock::Ptr &dblock) const {
+    if (dblock!=NULL) {
+        const AddressUsers noUsers;
+        if (Sawyer::Optional<OwnedDataBlock> odb = map_.getOptional(dblock->address()).orElse(noUsers).dataBlockExists(dblock)) {
+            ASSERT_require(odb->isValid());
+            return *odb;
+        }
+    }
+    return OwnedDataBlock();
 }
 
 Sawyer::Container::IntervalSet<AddressInterval>

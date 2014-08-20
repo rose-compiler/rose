@@ -20,13 +20,14 @@ public:
     typedef Sawyer::SharedPointer<DataBlock> Ptr;
 
 private:
-    bool isFrozen_;                                 // true if object is read-only because it's in the CFG
-    rose_addr_t startVa_;                           // starting address
-    size_t size_;                                   // size in bytes; FIXME[Robb P. Matzke 2014-08-12]: replace with type
+    bool isFrozen_;                                     // true if object is read-only because it's in the CFG
+    rose_addr_t startVa_;                               // starting address
+    size_t size_;                                       // size in bytes; FIXME[Robb P. Matzke 2014-08-12]: replace with type
+    size_t nAttachedOwners_;                            // number of attached basic blocks and functions that own this data
 
 protected:
     // use instance() instead
-    DataBlock(rose_addr_t startVa, size_t size): startVa_(startVa), size_(size) {
+    DataBlock(rose_addr_t startVa, size_t size): startVa_(startVa), size_(size), nAttachedOwners_(0) {
         ASSERT_require(size_ > 0);
     }
 
@@ -59,12 +60,18 @@ public:
     /** Change size of data block.
      *
      *  The size of a data block can only be changed directly when it is not represented by the control flow graph. That
-     *  is, when this object is not in a frozen state. */
-    void size(size_t nBytes) {
-        ASSERT_forbid(isFrozen_);
-        ASSERT_require(nBytes > 0);
-        size_ = nBytes;
-    }
+     *  is, when this object is not in a frozen state.
+     *
+     *  @todo In the future, data block sizes will be modified only by changing the associated data type. */
+    void size(size_t nBytes);
+
+    /** Number of attached basic block and function owners.
+     *
+     *  Returns the number of data blocks and functions that are attached to the CFG/AUM and that own this data block. */
+    size_t nAttachedOwners() const { return nAttachedOwners_; }
+
+    /** Addresses represented. */
+    AddressInterval extent() const { return AddressInterval::baseSize(address(), size()); }
 
     /** A printable name for this data block.  Returns a string like 'data block 0x10001234'. */
     std::string printableName() const;
@@ -73,6 +80,8 @@ private:
     friend class Partitioner;
     void freeze() { isFrozen_ = true; }
     void thaw() { isFrozen_ = false; }
+    size_t incrementOwnerCount();
+    size_t decrementOwnerCount();
 };
 
 

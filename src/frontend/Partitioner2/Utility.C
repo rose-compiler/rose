@@ -29,13 +29,15 @@ sortBasicBlocksByAddress(const BasicBlock::Ptr &a, const BasicBlock::Ptr &b) {
 }
 
 bool
-sortDataBlocksByAddress(const DataBlock::Ptr &a, const DataBlock::Ptr &b) {
+sortDataBlocks(const DataBlock::Ptr &a, const DataBlock::Ptr &b) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    if (a->address() != b->address())
-        return a->address() < b->address();
-    if (a->size() < b->size())
-        return true;
+    if (a!=b) {
+        if (a->address() != b->address())
+            return a->address() < b->address();
+        if (a->size() < b->size())
+            return true;
+    }
     return false;
 }
 

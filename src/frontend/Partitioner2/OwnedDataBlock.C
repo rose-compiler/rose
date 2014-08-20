@@ -8,27 +8,33 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 size_t
-OwnedDataBlock::insert(const Function::Ptr &function) {
-    std::vector<Function::Ptr>::iterator lb = std::lower_bound(owners_.begin(), owners_.end(), function,
-                                                               sortFunctionsByAddress);
-    if (lb!=owners_.end() && function->address()==(*lb)->address()) {
-        ASSERT_require2(function==(*lb), "two functions with the same address must be the same function");
-    } else {
-        owners_.insert(lb, function);
-        ASSERT_require(isSorted(owners_, sortFunctionsByAddress, true));
-    }
-    return owners_.size();
+OwnedDataBlock::insertOwner(const Function::Ptr &function) {
+    ASSERT_require(isValid());
+    if (function!=NULL)
+        insertUnique(functions_, function, sortFunctionsByAddress);
+    return nOwners();
 }
 
 size_t
-OwnedDataBlock::erase(const Function::Ptr &function) {
-    if (function) {
-        std::vector<Function::Ptr>::iterator lb = std::lower_bound(owners_.begin(), owners_.end(), function,
-                                                                   sortFunctionsByAddress);
-        if (lb!=owners_.end())
-            owners_.erase(lb);
-    }
-    return owners_.size();
+OwnedDataBlock::insertOwner(const BasicBlock::Ptr &bblock) {
+    ASSERT_require(isValid());
+    if (bblock!=NULL)
+        insertUnique(bblocks_, bblock, sortBasicBlocksByAddress);
+    return nOwners();
+}
+
+size_t
+OwnedDataBlock::eraseOwner(const Function::Ptr &function) {
+    if (function!=NULL)
+        eraseUnique(functions_, function, sortFunctionsByAddress);
+    return nOwners();
+}
+
+size_t
+OwnedDataBlock::eraseOwner(const BasicBlock::Ptr &bblock) {
+    if (bblock!=NULL)
+        eraseUnique(bblocks_, bblock, sortBasicBlocksByAddress);
+    return nOwners();
 }
 
 } // namespace

@@ -9,7 +9,6 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/InstructionProvider.h>
 #include <Partitioner2/Modules.h>
-#include <Partitioner2/OwnedDataBlock.h>
 
 #include <sawyer/Callbacks.h>
 #include <sawyer/IntervalSet.h>
@@ -96,12 +95,10 @@ namespace Partitioner2 {
  * @section data_block Data Blocks
  *
  *  A data block is an address and data type anywhere in memory.  A data block can be attached to a CFG/AUM, or exist in a
- *  detached state. The CFG/AUM will contain at most one data block per starting address.  A data block that is attached to the
- *  CFG/AUM is frozen and its address and size cannot be modified directly, although it may still be possible to do so through
- *  the Partitioner API.  A data block is attached to the CFG/AUM by virtue of being owned by a function which is attached to
- *  the CFG/AUM.  A data block may be owned by any number of attached or detached functions. When owned by multiple attached
- *  functions, the resulting ROSE AST will contain multiple SgAsmStaticData IR nodes each having a copy of the same data and
- *  being a child of one of the functions.
+ *  detached state. They are attached to the CFG/AUM by virtue of being owned by one or more basic blocks or functions that are
+ *  attached to the CFG/AUM. Data blocks such as function alignment are typically attached to a function, while data blocks
+ *  such as branch tables are typically attached to a basic block.  A data block may be attached to more than one function
+ *  and/or basic block, and the CFG/AUM is able to support multiple data blocks having the same address.
  *
  * @section functions Functions
  *
@@ -217,7 +214,6 @@ private:
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
-    DataBlocks dblocks_;                                // List of all attached data blocks by starting address
 
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
@@ -525,20 +521,28 @@ public:
      *  The returned list of basic blocks are sorted by their starting address. */
     std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const;
 
-    /** Returns the addresses used by a basic block.
+    /** Returns the addresses used by basic block instructions.
      *
-     *  Returns an interval set which is the union of the addresses of the bytes byte in the basic block's instructions.  Most
+     *  Returns an interval set which is the union of the addresses of the bytes in the basic block's instructions.  Most
      *  basic blocks are contiguous in memory and can be represented by a single address interval, but this is not a
      *  requirement in ROSE.  ROSE only requires that the global control flow graph has edges that enter at only the initial
      *  instruction of the basic block and exit only from its final instruction.  The instructions need not be contiguous or
      *  non-overlapping. */
-    Sawyer::Container::IntervalSet<AddressInterval> basicBlockExtent(const BasicBlock::Ptr&) const;
-    
+    Sawyer::Container::IntervalSet<AddressInterval> basicBlockInstructionExtent(const BasicBlock::Ptr&) const;
+
+    /** Returns the addresses used by basic block data.
+     *
+     *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
+    Sawyer::Container::IntervalSet<AddressInterval> basicBlockDataExtent(const BasicBlock::Ptr&) const;
+
     /** Detach a basic block from the CFG/AUM.
      *
      *  The specified basic block is detached from the CFG/AUM, leaving only a placeholder in its place.  The original outgoing
      *  edges in the CFG are replaced by a single edge from the placeholder to the special "undiscovered" vertex.  The
      *  instructions that had been attached to the CFG/AUM on behalf of the basic block are also detached from the CFG/AUM.
+     *
+     *  Any data blocks owned by this attached basic block will have their ownership counts decremented, and those data blocks
+     *  whose attached owner counts reach zero are detached from the CFG/AUM.
      *
      *  This function does not modify the basic block itself; it only detaches it from the CFG/AUM.  A basic block that is
      *  attached to the CFG/AUM is in a frozen state and cannot be modified directly, so one use of this function is to allow
@@ -703,27 +707,73 @@ public:
 public:
     /** Returns the number of data blocks attached to the CFG/AUM.
      *
-     *  Data blocks don't belong directly to the CFG in that they're not vertices or edges, but rather they belong to one or
-     *  more functions whose basic blocks are CFG vertices.  Regardless of the indirection, this function returns in constant
-     *  time. */
-    size_t nDataBlocks() const { return dblocks_.size(); }
+     *  This is a relatively expensive operation compared to querying the number of basic blocks or functions. */
+    size_t nDataBlocks() const;
 
-    /** Determines whether a data block exists and is attached to the CFG/AUM.
+    /** Determine if a data block is attached to the CFG/AUM.
      *
-     *  Data blocks are either attached to the CFG/AUM (indirectly via functions), or detached; this method returns only those
-     *  data blocks that are attached.  If a data block starts at the specified address then a data block ownership record is
-     *  returned. The ownership record has a non-null pointer to the data block along with a list of functions that own the
-     *  block.  If no attached data block starts at the specified address then nothing is returned. */
-    Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t startVa) const {
-        return dblocks_.getOptional(startVa);
-    }
+     *  Returns true if this data block is attached to the CFG/AUM and false if not attached. */
+    bool dataBlockExists(const DataBlock::Ptr&) const;
+
+    /** Find an existing data block.
+     *
+     *  Finds a data block that spans the specified address interval or which can be extended to span the address interval.
+     *  The first choice is to return the smallest data block that spans the entire interval; second choice is the largest
+     *  block that contains the first byte of the interval.  If there is a tie in sizes then the block with the highest
+     *  starting address wins.  If no suitable data block can be found then the null pointer is returned. */
+    DataBlock::Ptr findBestDataBlock(const AddressInterval&) const;
+
+    /** Attach a data block to the CFG/AUM.
+     *
+     *  Attaches the data block to the CFG/AUM if it is not already attached.  A newly attached data block will have a
+     *  ownership count of zero since none of its owners are attached (otherwise the data block would also have been
+     *  already attached). Multiple data blocks having the same address can be attached. It is an error to supply a null
+     *  pointer. */
+    void attachDataBlock(const DataBlock::Ptr&);
+
+    /** Detaches a data block from the CFG/AUM.
+     *
+     *  The specified data block is detached from the CFG/AUM and thawed, and returned so it can be modified.  It is an error
+     *  to attempt to detach a data block which is owned by attached basic blocks or attached functions. */
+    DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&);
+
+    /** Returns data blocks that overlap with specified address interval.
+     *
+     *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM and which overlap at least one byte in
+     *  the specified address interval.  All bytes represented by the data block are returned, even if they are unused or
+     *  marked as padding in the data block type.
+     *
+     *  The returned list of data blocks are sorted by their starting address. */
+    std::vector<DataBlock::Ptr> dataBlocksOverlapping(const AddressInterval&) const;
+
+    /** Returns data blocks that span an entire address interval.
+     *
+     *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM and which span the entire specified
+     *  interval. All bytes represented by the data block are returned, even if they are unused or marked as padding in the
+     *  data block type.
+     *
+     *  The returned list of data blocks are sorted by their starting address. */
+    std::vector<DataBlock::Ptr> dataBlocksSpanning(const AddressInterval&) const;
+
+    /** Returns data blocks that are fully contained in an address interval.
+     *
+     *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM and which are fully contained within the
+     *  specified interval.  All bytes represented by the data block are returned, even if they are unused or marked as padding
+     *  in the data block type.
+     *
+     *  The returned list of data blocks are sorted by their starting address. */
+    std::vector<DataBlock::Ptr> dataBlocksContainedIn(const AddressInterval&) const;
+
+    /** Returns the addresses used by a data block.
+     *
+     *  Returns an address interval describing all addresses of the data block, even if they are unused or marked as padding
+     *  in the data block type.  Since all addresses are returned, the extent of a data block is always contiguous. */
+    AddressInterval dataBlockExtent(const DataBlock::Ptr&) const;
 
     /** Returns the list of all attached data blocks.
      *
-     *  Returns a map from data block starting address to data block ownership information for each data block that is attached
-     *  to the CFG/AUM.  The ownership information associates each block with a list of functions that own the block since more
-     *  than one function can own the same data. */
-    const DataBlocks& dataBlocks() const { return dblocks_; }
+     *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM. */
+    std::vector<DataBlock::Ptr> dataBlocks() const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
