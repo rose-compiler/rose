@@ -71,17 +71,17 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 
      //std::cout << "\n\nVector of names" << std::endl;
 
-#if 0	 
+#if 1	 
 	 //Print out the number of elements found for each variant in the subtree
-     for(int i = 0;  i < lengthVariantT; i++  ){
+     for(int i = 0;  i < V_SgNumVariants; i++  ){
        if(returnAttribute.nodesInSubtree[i] > 0)
-          std::cout << returnAttribute.nodesInSubtree[i] << " " << variantToName[i] << " ";
+          std::cout << returnAttribute.nodesInSubtree[i] << " " << roseGlobalVariantNameList[i] << " ";
 	 }
      std::cout << "\n\n";
 #endif
 
 	 //Write to the file specified in the config file on the commandline
-	 if(std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end())
+	 if( std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end())
 	 {
 
 	   int numTokens = 0;

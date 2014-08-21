@@ -15,7 +15,6 @@ class SynthesizedAttribute
          //the node itself
          int *nodesInSubtree;
 
-
          SynthesizedAttribute(); 
          void addToVector(int *vectorToAdd);
      
