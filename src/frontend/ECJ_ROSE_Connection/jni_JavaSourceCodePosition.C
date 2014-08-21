@@ -4,6 +4,9 @@
 #include "jni_JavaSourceCodePosition.h"
 #include "jni_utils.h"
 
+// This is needed to fixup Windows-style paths returned from Java.
+#include <boost/algorithm/string.hpp>
+
 using namespace std;
 
 //
@@ -43,6 +46,11 @@ std::string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string
     assert(str != NULL);
 
     string returnString = str;
+
+    /* Convert Windows-style path separators to POSIX */
+    #ifdef _MSC_VER
+    boost::replace_all(returnString, "\\", "/");
+    #endif
 
     // printf ("Inside of convertJavaStringToCxxString s = %s \n", str);
 
