@@ -211,6 +211,8 @@ namespace CodeThorn {
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
     set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    typedef list<SgVariableDeclaration*> VariableDeclarationList;
+    VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
     //bool isAssertExpr(SgNode* node);
     bool isFailedAssertEState(const EState* estate);

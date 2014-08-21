@@ -10,7 +10,7 @@ using namespace std;
 /*! 
   * \author Markus Schordan
   * \date 2012.
-  * requires for type T the following operators: 
+  * requires for type T the following operators: default constructor, 
  */
 template<typename T>
 class EqualityMaintainer {
