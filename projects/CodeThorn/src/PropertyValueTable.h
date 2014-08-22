@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include "Miscellaneous.h"
 
@@ -19,6 +20,7 @@ class PropertyValueTable {
   void setPropertyValue(size_t num, PropertyValue value);
   void updatePropertyValue(size_t num, PropertyValue value);
   void strictUpdatePropertyValue(size_t num, PropertyValue value);
+  void strictUpdateCounterexample(size_t num, string ce);
   //allocates and returns a new list of property numbers which are currently still unknown. The returned list has
   //to be deleted by the calling function.
   std::list<int>* getPropertyNumbers(PropertyValue value);
@@ -26,11 +28,13 @@ class PropertyValueTable {
   void finished();
   void finishedReachability(bool isPrecise, bool isComplete);
   void convertValue(PropertyValue from, PropertyValue to);
-  void writeFile(const char* filename, bool onlyyesno=false, int offset=0);
+  void writeFile(const char* filename, bool onlyyesno=false, int offset = 0);
+  void writeFile(const char* filename, bool onlyyesno, int offset, bool withCounterexamples);
   void write2013File(const char* filename, bool onlyyesno=false);
   void write2012File(const char* filename, bool onlyyesno=false);
   void printResults();
   void printLtlResults();
+  void printResults(string yesAnswer, string noAnswer, string propertyName = "property", bool withCounterExample = true);
   void printResultsStatistics();
   void init();
   void init(size_t size);
@@ -38,6 +42,7 @@ class PropertyValueTable {
  private:
   string reachToString(PropertyValue num);
   vector<PropertyValue> _propertyValueTable;
+  map<int,string> _counterexamples;
 };
 
 #endif

@@ -15,6 +15,8 @@
 
 #include <omp.h>
 
+#include <boost/unordered_set.hpp>
+
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalyzer.h"
@@ -146,6 +148,9 @@ namespace CodeThorn {
     // cuts off all paths in the transition graph that lead to leaves 
     // (recursively until only paths of infinite length remain)
     void pruneLeavesRec();
+    // connects start, input, output and worklist states according to possible paths in the transition graph. 
+    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions.
+    void reduceGraphInOutWorklistOnly();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -164,6 +169,12 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+
+    //returns a list of transitions representing existing paths from "startState" to all possible input/output/worklist states (no output -> output)
+    // the returned set has to be deleted by the calling function.
+    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* startState);                                                          
+    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
+                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited);
     
   public:
     SgNode* getCond(SgNode* node);

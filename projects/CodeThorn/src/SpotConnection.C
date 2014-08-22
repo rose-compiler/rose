@@ -19,7 +19,7 @@ std::list<LtlProperty>* SpotConnection::getUnknownFormulae() {
   std::list<int>* unknownPropertyNumbers = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
   
   for (std::list<int>::iterator i = unknownPropertyNumbers->begin(); i != unknownPropertyNumbers->end(); ++i) {
-    //TO-DO: reduce to one loop only by sorting the behaviorProperty list according to the propertyNumbers
+    //possible improvement: reduce to one loop only by sorting the behaviorProperty list according to the propertyNumbers
     for (std::list<LtlProperty>::iterator k = behaviorProperties.begin(); k != behaviorProperties.end(); ++k) {
       if ((*i) == k->propertyNumber) {
         result->push_back(*k);
@@ -39,7 +39,7 @@ PropertyValueTable* SpotConnection::getLtlResults() {
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterExample) {
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample) {
   if (stg.size() == 0) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
@@ -69,10 +69,12 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
         } else {
           //not all possible execution paths are covered in this stg model, ignore SPOT's result
         }
-      } else {  //SPOT returns that there exists a counter-example that falsifies the formula
+      } else {  //SPOT returns that there exists a counterexample that falsifies the formula
         if (stg.isPrecise()) {
           ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
-          //possible TO-DO: add the counterExample to the ltlResults table (third column in csv file)
+          if (withCounterexample) {
+            ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+          }
           delete pCounterExample;
         } else {
           //the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
@@ -179,7 +181,7 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
   //cout<<"STATUS: emptiness check."<<endl;
   spot::emptiness_check *ec= new spot::couvreur99_check(&product);
   spot::emptiness_check_result* ce = ec->check();
-  if(ce) {   //a counter-example exists, original formula does not hold on the model
+  if(ce) {   //a counterexample exists, original formula does not hold on the model
     result = false;
     spot::tgba_run* run = ce->accepting_run();
     if (run) {
@@ -188,7 +190,8 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
       //assign a string representation of the counter example if the corresponding out parameter is set
       if (ce_ptr) {
         std::string r = runResult.str();
-        *ce_ptr = formatRun(r);	
+        r = filterRunInputOnly(r);
+        *ce_ptr = new string(r);//formatRun(r);	
       }
       delete run;
     }
@@ -237,8 +240,8 @@ std::string SpotConnection::comparison(bool spotRes, bool expectedRes, std::stri
     if (!expectedRes) {
       result = "correct solution: false expected, model does not satisfy formula. Formula was " + ltlFormula; 
     } else {
-      result = "ERROR in solution: true expected but counter-example exists. Formula was " + ltlFormula +"\n";
-      result += "Counter-example: \n";
+      result = "ERROR in solution: true expected but counterexample exists. Formula was " + ltlFormula +"\n";
+      result += "counterexample: \n";
       result += ce;
     }
   }
@@ -347,6 +350,82 @@ std::string* SpotConnection::formatRun(string& run) {
   delete temp;
   //result->append("******************************\n");
   return result;
+}
+
+std::string SpotConnection::filterRunInputOnly(std::string spotRun) {
+  // 1.) read in list of prefix props and cycle props
+  std::list<std::string> prefix, cycle;
+  std::istringstream run(spotRun);
+  std::string result = "";	
+  std::string line;
+  enum PartOfRun {RUN_PREFIX, RUN_CYCLE, RUN_UNKNOWN};
+  PartOfRun currentPart = RUN_UNKNOWN;
+  while (std::getline(run, line)){
+    //cout << "DEBUG: current line being parsed: " << line << endl;
+    boost::trim(line);
+    if (line.at(0) == 'P') {  //identify where the prefix of the run begins
+      currentPart = RUN_PREFIX;
+      //cout << "DEBUG: prefix detected. " << endl;
+    } else if (line.at(0) == 'C') {  //identify where the cycle part of the run begins
+      currentPart = RUN_CYCLE;
+      //cout << "DEBUG: cycle detected. " << endl;
+    } else if (line.at(0) == '|') {  //indicates a transition
+      line = line.substr(1, (line.size()-1));	//cut off the '|' prefix
+      boost::trim(line);
+      // iterate over all propositions in the transition and only add the non-negated one
+      vector<std::string> props; 		
+      boost::split_regex(props, line, boost::regex("( & )|(\\{)"));
+      //cout << "DEBUG: props.size(): " << props.size()  << endl;
+      vector<string>::iterator i;
+      for(vector<string>::iterator i = props.begin(); i < props.end(); i++) {
+        boost::trim(*i);
+        if (i->at(0) != '!' && i->at(0) != 'A') {  //'A' indicates "{Acc[<num>]}" (acceptance set)
+          if (currentPart == RUN_PREFIX) {
+            prefix.push_back(*i);
+          } else if (currentPart == RUN_CYCLE) {
+            cycle.push_back(*i);
+          } else {
+            cout << "ERROR: could not reformat SPOT counterexample run. " << endl;
+            assert(0);
+          }
+        }
+      }			
+    }
+  }		
+  // 2.) remove all output elements
+  std::list<std::string> inputPrefix;
+  for (std::list<std::string>::iterator i = prefix.begin(); i != prefix.end() ; ++i) {
+    if (i->at(0) == 'i') {  //only select input propositions
+      inputPrefix.push_back(*i);
+      //cout << "DEBUG: added " << (*i) << " to inputPrefix. " << endl;
+    }
+  }
+  std::list<std::string> inputCycle;
+  for (std::list<std::string>::iterator i = cycle.begin(); i != cycle.end() ; ++i) {
+    if (i->at(0) == 'i') {  //only select input propositions
+      inputCycle.push_back(*i);
+      //cout << "DEBUG: added " << (*i) << " to inputCycle. " << endl;
+    }
+  }
+  // 3.) concatenate and return both prefix and cycle as a formatted string
+  result += "[";
+  for (std::list<std::string>::iterator i = inputPrefix.begin(); i != inputPrefix.end() ; ++i) {
+    if (i != inputPrefix.begin()) {
+      result += ",";
+    }
+    result += (*i);
+  }
+  result += "]";
+  result += "(";
+  for (std::list<std::string>::iterator i = inputCycle.begin(); i != inputCycle.end() ; ++i) {
+    if (i != inputCycle.begin()) {
+      result += ",";
+    }
+    result += (*i);
+  }
+  result += ")*";
+  return result;
+  //cout << "DEBUG: result in function: " << result  << endl;
 }
 
 // return a string representation of the I/O characters from the given spot run. 

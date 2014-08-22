@@ -20,14 +20,17 @@ void PropertyValueTable::init(size_t size) {
     // reinit
     for(size_t i=0;i<size;i++) {
       setPropertyValue(i,PROPERTY_VALUE_UNKNOWN);
+      _counterexamples[i] = "";
     }
   } else {
     // init
     for(size_t i=0;i<size;i++) {
-      _propertyValueTable.push_back(PROPERTY_VALUE_UNKNOWN);
+      _propertyValueTable.push_back(PROPERTY_VALUE_UNKNOWN); 
+      _counterexamples.insert(pair<int,string>(i, ""));
     }
   }
   assert(_propertyValueTable.size()==size);
+  assert(_counterexamples.size()==size);
 }
 
 void PropertyValueTable::reachable(size_t num) {
@@ -60,6 +63,16 @@ void PropertyValueTable::strictUpdatePropertyValue(size_t num, PropertyValue val
     setPropertyValue(num,value);
   } else {
     throw "Error: property value table: reset of value.";
+  }
+}
+
+void PropertyValueTable::strictUpdateCounterexample(size_t num, string ce) {
+  assert(num>=0 && num<_propertyValueTable.size());
+  assert(getPropertyValue(num) == PROPERTY_VALUE_NO);
+  if(_counterexamples[num]=="") {
+    _counterexamples[num] = ce;
+  } else {
+    throw "Error: property value table: counterexample already exists.";
   }
 }
 
@@ -137,12 +150,18 @@ void PropertyValueTable::convertValue(PropertyValue from, PropertyValue to) {
 }
 
 void PropertyValueTable::writeFile(const char* filename, bool onlyyesno, int offset) {
+  writeFile(filename, onlyyesno, offset, false);
+}
+
+void PropertyValueTable::writeFile(const char* filename, bool onlyyesno, int offset, bool withCounterexamples) {
   ofstream myfile;
   myfile.open(filename);
   for(size_t i=0;i<_propertyValueTable.size();++i) {
     if(onlyyesno && (_propertyValueTable[i]!=PROPERTY_VALUE_YES && _propertyValueTable[i]!=PROPERTY_VALUE_NO))
       continue;
-    myfile<<i+offset<<","<<reachToString(_propertyValueTable[i])<<endl;
+    myfile<<i+offset<<","<<reachToString(_propertyValueTable[i]);
+    if (withCounterexamples && _propertyValueTable[i]== PROPERTY_VALUE_NO) {myfile<<","<<_counterexamples[i];}
+    myfile<<endl;
   }
   myfile.close();
 }
@@ -170,31 +189,29 @@ void PropertyValueTable::write2012File(const char* filename, bool onlyyesno) {
 }
 
 void PropertyValueTable::printLtlResults() {
-  cout<<"LTL Property Results:"<<endl;
-  int maxCode=_propertyValueTable.size()-1;
-  for(int i=0;i<=maxCode;++i) {
-    cout<<color("white")<<"property_"<<i<<": ";
-    switch(_propertyValueTable[i]) {
-    case PROPERTY_VALUE_UNKNOWN: cout <<color("magenta")<<"UNKNOWN";break;
-    case PROPERTY_VALUE_YES: cout <<color("green")<<"YES (verified)";break;
-    case PROPERTY_VALUE_NO: cout  <<color("cyan")<<"NO (falsified)";break;
-    default:cerr<<"Error: unknown reachability type."<<endl;assert(0);
-    }
-    cout<<color("normal")<<endl;
-  }
-  cout<<color("default-text-color");
+  printResults("YES (verified)", "NO (falsified)", "ltl_property_"); 
 }
+
 void PropertyValueTable::printResults() {
+  printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_"); 
+}
+
+void PropertyValueTable::printResults(string yesAnswer, string noAnswer, string propertyName, bool withCounterexample) {
   cout<<"Analysis Property Results:"<<endl;
   //int maxCode=_propertyValueTable.size()-1;
   int maxCode=_propertyValueTable.size()-1;
   for(int i=0;i<=maxCode;++i) {
-    cout<<color("white")<<"error_"<<i<<": ";
+    cout<<color("white")<<propertyName<<i<<": ";
     switch(_propertyValueTable[i]) {
-    case PROPERTY_VALUE_UNKNOWN: cout <<color("magenta")<<"UNKNOWN";break;
-    case PROPERTY_VALUE_YES: cout <<color("green")<<"YES (REACHABLE)";break;
-    case PROPERTY_VALUE_NO: cout  <<color("cyan")<<"NO (UNREACHABLE)";break;
-    default:cerr<<"Error: unknown reachability type."<<endl;assert(0);
+    case PROPERTY_VALUE_UNKNOWN: cout <<color("magenta")<<"UNKNOWN"; break; 
+    case PROPERTY_VALUE_YES: cout <<color("green")<< yesAnswer; break;
+    case PROPERTY_VALUE_NO:
+      {
+      cout  <<color("cyan")<<noAnswer;
+      if(withCounterexample) {cout << "   " << _counterexamples[i];}
+      }
+      break;
+    default:cerr<<"Error: unknown property type."<<endl;assert(0);
     }
     cout<<color("normal")<<endl;
   }
