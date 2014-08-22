@@ -5,6 +5,17 @@
 
 using namespace std;
 
+// this function is called when an event is reversed ("de-register") and when an event is committed.
+void Backstroke::RunTimeSystem::EventRecord::deallocateHeapQueue() {
+  while(!registeredHeapQueue.empty()) {
+    //cout<<"DEBUG: deleting object."<<endl;
+    ptr toDeallocPtr=registeredHeapQueue.front();
+    registeredHeapQueue.pop();
+    // we only need to call delete(x) because ~X() has already been called in the forward method
+    operator delete(toDeallocPtr);
+  }
+}
+
 Backstroke::RunTimeSystem::RunTimeSystem():currentEventRecord(0) {
 }
 
@@ -16,10 +27,6 @@ size_t Backstroke::RunTimeSystem::size() {
   return eventRecordDeque.size();
 }
 
-size_t Backstroke::RunTimeSystem::numberOfObjectsRegisteredForCommit() {
-  return currentEventRecord->registered_heapalloc_queue.size();
-}
-
 // allocates EventRecord
 void Backstroke::RunTimeSystem::initializeForwardEvent() {
   currentEventRecord=new EventRecord();
@@ -27,6 +34,7 @@ void Backstroke::RunTimeSystem::initializeForwardEvent() {
 
 void Backstroke::RunTimeSystem::finalizeForwardEvent() {
  eventRecordDeque.push_back(currentEventRecord);
+ currentEventRecord=0;
 }
 
 // deallocates EventRecord
@@ -38,29 +46,25 @@ void Backstroke::RunTimeSystem::reverseEvent() {
     restorationEventRecord->stack_bitype.pop();
     restore(bitype);
   }
+
+  // de-register and delete objects in commit heap queue
+  restorationEventRecord->deallocateHeapQueue();
+
   delete restorationEventRecord;
   restorationEventRecord=0;
 }
 
 void Backstroke::RunTimeSystem::registerForCommit(ptr p) {
-  currentEventRecord->registered_heapalloc_queue.push(p);
+  currentEventRecord->registeredHeapQueue.push(p);
 }
 
 // deallocates EventRecord
 void Backstroke::RunTimeSystem::commitEvent() {
   EventRecord* commitEventRecord=eventRecordDeque.front();
   eventRecordDeque.pop_front();
-  // traverse commit-queue for event record forward and delete memory objects
-  while(!commitEventRecord->registered_heapalloc_queue.empty()) {
-    cout<<"DEBUG: committing event object and deleting it."<<endl;
-    ptr toDeallocPtr=commitEventRecord->registered_heapalloc_queue.front();
-    commitEventRecord->registered_heapalloc_queue.pop();
-    // we only need to call delete(x) because ~X() has already been called in the forward method
-    operator delete(toDeallocPtr);
-  }
-  // TODO:clean up of forward stack data
-  // should be implicit when the EventRecord is deleted (TODO: check)
+  commitEventRecord->deallocateHeapQueue();
   delete commitEventRecord;
+  commitEventRecord=0;
 }
 
 void Backstroke::RunTimeSystem::restore(BuiltInType bitype) {
@@ -105,6 +109,14 @@ Backstroke::RunTimeSystem::ptr Backstroke::RunTimeSystem::assignptr(Backstroke::
     stack_ptr.push(make_pair(address,*address));
   }
   return *address=value;
+}
+
+Backstroke::RunTimeSystem::ptr* Backstroke::RunTimeSystem::avpushptr(Backstroke::RunTimeSystem::ptr* address) {
+  if(!is_stack_ptr(address)) {
+    currentEventRecord->stack_bitype.push(BITYPE_PTR);
+    stack_ptr.push(make_pair(address,*address));
+  }
+  return address;
 }
 
 void Backstroke::RunTimeSystem::restore_ptr() {

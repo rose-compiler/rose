@@ -26,6 +26,7 @@
 #include "AstMatching.h"
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
+#include "AnalysisAbstractionLayer.h"
 
 // test
 #include "Evaluator.h"
@@ -964,6 +965,163 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
   myfile.close();
 }
 
+
+void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
+  // 1) transform initializers of global variables : a[]={1,2,3} ==> int a_0=1;int a_1=2;int a_2=3;
+  // 2) eliminate initializers of pointer variables: int p* = a; ==> \eps
+  // 3) replace uses of p[k]: with a_k (where k is a constant)
+
+  //ad 1 and 2)
+  VariableIdMapping* variableIdMapping=analyzer->getVariableIdMapping();
+  Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList=analyzer->computeUsedGlobalVariableDeclarationList(root);
+  cout<<"STATUS: number of used global variables: "<<usedGlobalVariableDeclarationList.size()<<endl;
+  typedef map<string,string> ArrayPointerMapType;
+  list<pair<SgNode*,string> > toReplaceArrayInitializations;
+  list<SgVariableDeclaration*> toDeleteDeclarations;
+  ArrayPointerMapType arrayPointer; // var,arrayName
+  for(Analyzer::VariableDeclarationList::iterator i=usedGlobalVariableDeclarationList.begin();
+      i!=usedGlobalVariableDeclarationList.end();
+      ++i) {
+    SgVariableDeclaration* decl=*i;
+    SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+    ROSE_ASSERT(initName0);
+    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+      // array initializer
+      SgInitializer* arrayInitializer=initName->get_initializer();
+      string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(*i));
+      if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(arrayInitializer)) {
+        // x[2] = {1,2};"). In this case the SgExprListExp ("{1,2}") is wrapped in an SgAggregateInitializer
+        // SgExprListExp* SgAggregateInitializer->get_initializers () const 
+        // pointer variable initializer
+        SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+        //cout<<"RHS-ARRAY-INIT:"<<rhsOfArrayInit->unparseToString()<<endl;
+        SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+        string newRhs;
+        int num=0;
+        stringstream ss;
+        SgType* type=rhsOfArrayInit->get_type();
+        for(SgExpressionPtrList::iterator i=exprPtrList.begin();i!=exprPtrList.end();++i) {
+          ss<<type->unparseToString()<<" "<<arrayName<<"_"<<num<<"="<<(*i)->unparseToString()<<";\n";
+          num++;
+        }
+        string transformedArrayInitializer=ss.str();
+        toReplaceArrayInitializations.push_back(make_pair(decl,transformedArrayInitializer));
+        //SgNodeHelper::replaceAstWithString(decl,transformedArrayInitializer);
+      } else {
+        //cout<<"initName:"<<astTermWithNullValuesToString(initName)<<endl;
+        string variableName=variableIdMapping->variableName(variableIdMapping->variableId(*i));
+        SgType* type=variableIdMapping->getType(variableIdMapping->variableId(*i));
+        // match: SgInitializedName(SgAssignInitializer(SgVarRefExp))
+        // variable on lhs
+        cout<<"Var:"<<variableName<<" of type: "<<type->unparseToString()<<":"<<astTermWithNullValuesToString(type)<<endl;
+        // check if variable is a pointer variable
+        if(isSgPointerType(type)) {
+          cout<<"IS-POINTER"<<endl;
+          AstMatching m;
+          MatchResult res;
+          res=m.performMatching("SgInitializedName(SgAssignInitializer($varRef=SgVarRefExp))",initName);
+          if(res.size()==1) {
+            toDeleteDeclarations.push_back(decl);
+            MatchResult::iterator j=res.begin();
+            string rhsVarName=isSgVarRefExp((*j)["$varRef"])->unparseToString();
+            arrayPointer[variableName]=rhsVarName;
+            //cout<<"Inserted pair "<<variableName<<":"<<rhsVarName<<endl;
+          }
+        }
+      }
+    }
+  }
+
+  typedef list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > ArrayAccessInfoType;
+  ArrayAccessInfoType arrayAccesses;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgExpression* exp=isSgExpression(*i);
+    if(exp) {
+      if(SgPntrArrRefExp* arrAccess=isSgPntrArrRefExp(exp)) {
+        ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
+        ROSE_ASSERT(aead.isValid());
+        VariableId arrayVar=aead.varId;
+        cout<<"array-element: "<<variableIdMapping->variableName(arrayVar);
+        if(aead.subscripts.size()==1) {
+          cout<<" ArrayIndex:"<<*aead.subscripts.begin();
+          arrayAccesses.push_back(make_pair(arrAccess,aead));
+        } else {
+          cout<<" ArrayIndex: unknown";
+        }          
+        cout<<endl;
+      }
+    }
+  }
+  cout<<"Array-Pointer Map:"<<endl;
+  for(ArrayPointerMapType::iterator i=arrayPointer.begin();i!=arrayPointer.end();++i) {
+    cout<<(*i).first<<":"<<(*i).second<<endl;
+  }
+  cout<<"To-Replace ArrayInitializations:"<<endl;
+  for(list<pair<SgNode*,string> >::iterator i=toReplaceArrayInitializations.begin();i!=toReplaceArrayInitializations.end();++i) {
+    cout<<(*i).first->unparseToString()<<":\n"<<(*i).second<<endl;
+  }
+  cout<<"To-Delete Declarations:"<<endl;
+  for(list<SgVariableDeclaration*>::iterator i=toDeleteDeclarations.begin();i!=toDeleteDeclarations.end();++i) {
+    cout<<(*i)->unparseToString()<<endl;
+  }
+  
+  //list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > 
+  cout<<"To-Replace Expressions:"<<endl;
+  for(ArrayAccessInfoType::iterator i=arrayAccesses.begin();i!=arrayAccesses.end();++i) {
+    cout<<(*i).first->unparseToString()<<":"/*<<(*i).second.xxxx*/<<endl;
+  }
+        
+}
+
+#ifdef EXPERIMENTAL_POINTER_ANALYSIS
+
+#include "AbstractValue.h"
+#include "AbstractValue.C"
+
+void pointerAnalysis(SgNode* root, Analyzer* analyzer) {
+  ExprAnalyzer* exprAnalyzer=analyzer->getExprAnalyzer();
+  VariableIdMapping* variableIdMapping=analyzer->getVariableIdMapping();
+  // VariableId->set(addr(VariableId)|Number)
+  typedef AType::ConstIntLattice AbstractNumberType;
+  typedef AbstractMemoryLocation<VariableId,AType::ConstIntLattice> AbstractMemoryLocationType;
+  typedef AbstractValueSurrogate<AbstractNumberType,AbstractMemoryLocationType> AbstractValueSurrogateType;
+  map<VariableId,set< AbstractValueSurrogateType > > aliasInfo;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
+    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+      VariableId lhsVar;
+      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(assignOp));
+      bool isLhsVar=exprAnalyzer->variable(lhs,lhsVar);
+      if(isLhsVar) {
+        SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(assignOp));
+        if(SgPntrArrRefExp* arrAccess=isSgPntrArrRefExp(rhs)) {
+          ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
+          ROSE_ASSERT(aead.isValid());
+          cout<<"DEBUG: lhs:"<<variableIdMapping->variableName(lhsVar);
+          //cout<<" rhs:"<<SgNodeHelper::getRhs(isSgAssignOp(*i))->unparseToString();
+          VariableId rhsArrayVar=aead.varId;
+          cout<<" rhs:"<<"array-element: "<<variableIdMapping->variableName(rhsArrayVar);
+          if(aead.subscripts.size()==1) {
+            cout<<" ArrayIndex:"<<*aead.subscripts.begin();
+          } else {
+            cout<<" ArrayIndex: unknown";
+          }          
+          cout<<endl;
+          AbstractValueSurrogateType avst;
+          aliasInfo[lhsVar].insert(avst);
+        }
+
+      } else {
+        cerr<<"Error: pointer-analysis: lhs of assignment is not a variable. Not supported yet."<<endl;
+        exit(1);
+      }
+    }
+  }
+}
+
+#endif
+
 int main( int argc, char * argv[] ) {
   string ltl_file;
   try {
@@ -1414,6 +1572,19 @@ int main( int argc, char * argv[] ) {
     // extraction of expressions: skip function calls to selected functions (also inside expressions) for defered handling.
     analyzer.setSkipSelectedFunctionCalls(true);
   }
+  #ifdef EXPERIMENTAL_POINTER_ANALYSIS
+  if(option_debug_mode==400) {
+    pointerAnalysis(root, &analyzer);
+    exit(0);
+  }
+  #endif
+
+  if(option_debug_mode==401) {
+    transformArrayProgram(sageProject, &analyzer);
+    sageProject->unparse(0,0);
+    exit(0);
+  }
+
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();

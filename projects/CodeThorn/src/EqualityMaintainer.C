@@ -8,12 +8,12 @@
 
 template<typename T>
 void EqualityMaintainer<T>::addEquality(T var1, T var2) {
-  // 1) find set where var1 exists
-  // 2) find set where var2 exists
-  // a) if none of the two vars exists add {var1,var2}
-  // b) if both vars exist in the same set: nothing to do
-  // c) if only one of the two vars exists: add the other var to this set
-  // d) if the two vars exist in different sets: union those two sets
+  // a) determine whether var1 exists (found+=1)
+  // b) determine whether var2 exists (found+=2)
+  // case 0) none of the two vars exists: add {var1,var2}
+  // case 1,2) only one of the two vars exists: add the other var to this set
+  // case 3 a) both vars exist in the same set: nothing to do
+  // case 3 b) the two vars exist in different sets: union those two sets
 
   int found=0;
   typename list<set<T> >::iterator i1=equality.end();
@@ -36,7 +36,7 @@ void EqualityMaintainer<T>::addEquality(T var1, T var2) {
   case 2: { (*i2).insert(var1);return;}
   case 3: 
     if(i1==i2) {
-      // both element in same set (already) => nothing to do
+      // both elements are in the same set (already) => nothing to do
       return;
     } else {
       // each element in a different set => union sets

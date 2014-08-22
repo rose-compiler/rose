@@ -185,6 +185,28 @@ set<string> Analyzer::variableIdsToVariableNames(VariableIdMapping::VariableIdSe
   return res;
 }
 
+Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclarationList(SgProject* root) {
+  if(SgProject* project=isSgProject(root)) {
+    Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList;
+    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    int filteredVars=0;
+    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+      VariableId globalVarId=variableIdMapping.variableId(*i);
+      if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
+        usedGlobalVariableDeclarationList.push_back(*i);
+      } else {
+        filteredVars++;
+      }
+    }
+    return usedGlobalVariableDeclarationList;
+  } else {
+    cout << "Error: no global scope.";
+    exit(1);
+  }    
+}
+  
+
 string Analyzer::nodeToString(SgNode* node) {
   string textual;
   if(node->attributeExists("info"))
