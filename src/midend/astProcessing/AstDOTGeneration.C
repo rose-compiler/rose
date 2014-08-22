@@ -35,7 +35,7 @@ AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, stri
      this->filenamePostfix=filenamePostfix;
      DOTInheritedAttribute ia;
      traverse(node,ia);
-     string filename2=string("./")+filename+"."+filenamePostfix+"dot";
+     string filename2=string("./")+filename+"."+filenamePostfix+".dot";
      dotrep.writeToFileAsGraph(filename2);
    }
 
@@ -689,7 +689,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                     printf ("Proposed (generated) filename is too long, shortened to: %s \n",generatedProjectName.c_str());
                   }
 
-               string filename = string("./") + generatedProjectName + ".dot";
+               string filename = string("./") + generatedProjectName + "." + filenamePostfix + ".dot";
 
             // printf ("generated filename for dot file (from SgProject) = %s \n",filename.c_str());
                if ( SgProject::get_verbose() >= 1 )
