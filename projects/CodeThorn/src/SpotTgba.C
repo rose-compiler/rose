@@ -4,7 +4,8 @@
 using namespace CodeThorn;
 
 SpotTgba::SpotTgba(TransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap,
-		spot::bdd_dict& dic, std::set<int> inVars) :stg(ctstg), dict(dic), propNums(inVars) {
+		   spot::bdd_dict& dic, std::set<int> inVars, std::set<int> outVars) 
+                           :stg(ctstg), dict(dic), ltlInVars(inVars),  ltlOutVars(outVars) {
   //register the atomic propositions used by this TGBA. They are passed in as a set
   // in the current implementation. Retrieving them from CodeThorn's STG might be possible
   spot::ltl::atomic_prop_set::iterator i;
@@ -30,7 +31,7 @@ spot::tgba_succ_iterator* SpotTgba::succ_iter (const spot::state* local_state,
         			const spot::state*, const spot::tgba*) const {
   const SpotState* state = dynamic_cast<const SpotState*>(local_state);
   assert(state);
-  return new SpotSuccIter(stg, (state->getEState()), propNum2DictNum, propNums);
+  return new SpotSuccIter(stg, (state->getEState()), propNum2DictNum, ltlInVars, ltlOutVars);
 } 
 
 spot::bdd_dict* SpotTgba::get_dict() const {

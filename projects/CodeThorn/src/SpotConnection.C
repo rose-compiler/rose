@@ -57,7 +57,7 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     // (will be used by the model tgba as well as by the ltl formula tgbas)
     spot::bdd_dict dict;
     //create a tgba from CodeThorn's STG model
-    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ioValues);
+    SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
     std::string* pCounterExample; 
     std::list<LtlProperty>* yetToEvaluate = getUnknownFormulae();
     for (std::list<LtlProperty>::iterator i=yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
@@ -101,7 +101,7 @@ void SpotConnection::compareResults(TransitionGraph& stg, std::string ltl_fsPlus
   // (will be used by the model tgba as well as by the ltl formula tgbas)
   spot::bdd_dict dict;
   //create a tgba from CodeThorn's STG model
-  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ioValues);
+  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
   // open the LTL text file
   ifstream ltl_input(ltl_fsPlusRes_file.c_str());
   if (ltl_input.is_open()) {

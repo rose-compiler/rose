@@ -26,7 +26,7 @@ namespace CodeThorn {
   class SpotTgba : public spot::tgba {
   public:
     SpotTgba(TransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap, 
-             spot::bdd_dict& dic, std::set<int> inVars);
+             spot::bdd_dict& dic, std::set<int> inVars, std::set<int> outVars);
     ~SpotTgba();
     // return the initial state of this tgba
     spot::state* get_init_state() const;
@@ -60,8 +60,9 @@ namespace CodeThorn {
     //map matching atomic propositions as used in the LTL formula with their 
     // corresponding slots in the bdd_dict dictionary table. 
     std::map<int, int> propNum2DictNum;
-    //a set of atomic propositions containing all possible input and output values (int representation)
-    std::set<int> propNums;
+    //sets of atomic propositions containing all possible input/output values (int representation)
+    std::set<int> ltlInVars;
+    std::set<int> ltlOutVars;
   };
 }  //end of namespace CodeThorn
 
