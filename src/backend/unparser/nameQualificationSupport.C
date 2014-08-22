@@ -395,6 +395,12 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSigned128bitInteger:
           case V_SgTypeUnsigned128bitInteger:
 
+       // DQ (7/30/2014): Adding C++11 support.
+          case V_SgTypeNullptr:
+
+       // DQ (8/12/2014): Adding C++11 support.
+          case V_SgDeclType:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
