@@ -16,11 +16,6 @@
 #include <string>
 #include <sys/mman.h>
 #include <unistd.h>
-#include "sqlite3x.h"
-
-using namespace sqlite3x;
-
-
 
 namespace CloneDetection {
 
