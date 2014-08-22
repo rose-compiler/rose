@@ -40,7 +40,7 @@ using namespace rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 
-static Sawyer::Message::Facility mlog("tool");          // diagnostics at the tool level; further initialization in main()
+static Sawyer::Message::Facility mlog; // diagnostics at the tool level; initialization in main()
 
 enum DisassembleDriver { DDRIVE_PD, DDRIVE_DP, DDRIVE_D, DDRIVE_NONE };
 enum SyscallMethod { SYSCALL_NONE, SYSCALL_LINUX32 };
@@ -722,7 +722,7 @@ main(int argc, char *argv[])
      * can be controlled by the same command-line switches that control ROSE.
      *------------------------------------------------------------------------------------------------------------------------*/
     rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
-    mlog.initStreams(rose::Diagnostics::destination);
+    mlog = Sawyer::Message::Facility("tool", rose::Diagnostics::destination);
     rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     /*------------------------------------------------------------------------------------------------------------------------

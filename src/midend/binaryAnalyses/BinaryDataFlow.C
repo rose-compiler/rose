@@ -8,14 +8,14 @@ namespace BinaryAnalysis {
 using namespace Diagnostics;
 using namespace InstructionSemantics2;
 
-Sawyer::Message::Facility DataFlow::mlog("rose::BinaryAnalysis::DataFlow");
+Sawyer::Message::Facility DataFlow::mlog;
 
 void
 DataFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(rose::Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::DataFlow", Diagnostics::destination);
         rose::Diagnostics::mfacilities.insert(mlog);
     }
 }

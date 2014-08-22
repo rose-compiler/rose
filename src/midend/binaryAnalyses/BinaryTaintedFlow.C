@@ -5,14 +5,14 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-Sawyer::Message::Facility TaintedFlow::mlog("rose::BinaryAnalysis::TaintedFlow");
+Sawyer::Message::Facility TaintedFlow::mlog;
 
 void
 TaintedFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(rose::Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::TaintedFlow", Diagnostics::destination);
         rose::Diagnostics::mfacilities.insert(mlog);
     }
 }

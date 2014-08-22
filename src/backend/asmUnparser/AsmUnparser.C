@@ -7,7 +7,7 @@ namespace BinaryAnalysis {
 
 using namespace Diagnostics;
 
-Sawyer::Message::Facility AsmUnparser::mlog("AsmUnparser");
+Sawyer::Message::Facility AsmUnparser::mlog;
 
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
@@ -72,7 +72,7 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
         Diagnostics::mfacilities.insert(mlog);
     }
 }

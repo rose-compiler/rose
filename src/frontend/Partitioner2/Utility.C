@@ -9,14 +9,14 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-Sawyer::Message::Facility mlog("rose::BinaryAnalysis::Partitioner2");
+Sawyer::Message::Facility mlog;
 
 void
 initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Partitioner2", Diagnostics::destination);
         Diagnostics::mfacilities.insert(mlog);
     }
 }

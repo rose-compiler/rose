@@ -18,7 +18,7 @@ namespace Diagnostics {
 
 Sawyer::Message::DestinationPtr destination;
 Sawyer::Message::PrefixPtr mprefix;
-Sawyer::Message::Facility mlog("rose");
+Sawyer::Message::Facility mlog;
 
 void initialize() {
     if (!isInitialized()) {
@@ -32,7 +32,7 @@ void initialize() {
             // use FileSink or FdSink because StreamSink can't tell whether output is a tty or not.
             destination = Sawyer::Message::FileSink::instance(stderr)->prefix(mprefix);
         }
-        mlog.initStreams(destination);
+        mlog = Sawyer::Message::Facility("rose", destination);
         mfacilities.insert(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?

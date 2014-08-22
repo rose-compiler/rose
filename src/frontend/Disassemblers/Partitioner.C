@@ -35,14 +35,14 @@ std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
     return o;
 }
 
-Sawyer::Message::Facility Partitioner::mlog("Partitioner");
+Sawyer::Message::Facility Partitioner::mlog;
 
 // class method
 void Partitioner::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Partitioner", Diagnostics::destination);
         Diagnostics::mfacilities.insert(mlog);
     }
 }

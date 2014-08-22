@@ -82,8 +82,8 @@
 using namespace rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
-// Diagnostic output for this tool
-Sawyer::Message::Facility mlog("taintedFlow");
+// Diagnostic output for this tool; initialized in main()
+Sawyer::Message::Facility mlog;
 
 // Template function to build a control flow graph whose vertices are either instructions or basic blocks
 template<class SageNode>
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
 {
     // Configure diagnostic output
     rose::Diagnostics::initialize();
-    mlog.initStreams(rose::Diagnostics::destination);
+    mlog = Sawyer::Message::Facility("taintedFlow", rose::Diagnostics::destination);
     rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
     rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
