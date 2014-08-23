@@ -13,9 +13,9 @@ namespace Partitioner2 {
 void
 BasicBlock::init(const Partitioner *partitioner) {
     operators_ = partitioner->newOperators();
-#if 1
+
     // Try to use our own semantics
-    if (usingDispatcher_) {
+    if (usingDispatcher_ && partitioner->usingSymbolicSemantics()) {
         if (dispatcher_ = partitioner->newDispatcher(operators_)) {
             usingDispatcher_ = true;
             initialState_ = dispatcher_->get_operators()->get_state(); // points to dispatcher's state
@@ -25,11 +25,10 @@ BasicBlock::init(const Partitioner *partitioner) {
         } else {
             usingDispatcher_ = false;
         }
+    } else {
+        // Rely on other methods to get basic block characteristics
+        usingDispatcher_ = false;
     }
-#else
-    // Rely on other methods to get basic block characteristics
-    usingDispatcher_ = false;
-#endif
 }
 
 void

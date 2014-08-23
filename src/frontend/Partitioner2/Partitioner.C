@@ -479,10 +479,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
         // basic block.
         std::set<rose_addr_t> successorVas = lastInsn->get_successors(&complete);
 #endif
+        BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::instance(REG_IP.get_nbits(), va)));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.get_nbits(), va))));
         if (!complete)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::instance(REG_IP.get_nbits())));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.get_nbits()))));
     }
 
     // We don't want parallel edges in the CFG, so remove duplicates.

@@ -214,6 +214,7 @@ private:
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
+    bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
 
     // Special CFG vertices
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
@@ -227,7 +228,7 @@ private:
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : instructionProvider_(InstructionProvider(disassembler, map)), memoryMap_(map), solver_(NULL),
-          progressTotal_(0), isReportingProgress_(true) {
+          progressTotal_(0), isReportingProgress_(true), useSemantics_(true) {
         init();
     }
 
@@ -1167,6 +1168,17 @@ public:
     void enableProgressReports(bool b=true) { isReportingProgress_ = b; }
     void disableProgressReports() { isReportingProgress_ = false; }
     bool isReportingProgress() const { return isReportingProgress_; }
+    /** @} */
+
+    /** Use or not use symbolic semantics.
+     *
+     *  When true, a symbolic semantics domain will be used to reason about certain code properties such as successors for a
+     *  basic block.  When false, more naive but faster methods are used.
+     *
+     *  @{ */
+    void enableSymbolicSemantics(bool b=true) { useSemantics_ = b; }
+    void disableSymbolicSemantics() { useSemantics_ = false; }
+    bool usingSymbolicSemantics() const { return useSemantics_; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
