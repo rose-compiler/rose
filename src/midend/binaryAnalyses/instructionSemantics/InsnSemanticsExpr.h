@@ -7,11 +7,11 @@
 
 #include "Map.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <cassert>
 #include <inttypes.h>
 #include <sawyer/BitVector.h>
+#include <sawyer/SharedPointer.h>
+#include <sawyer/SmallObject.h>
 #include <set>
 #include <vector>
 
@@ -85,9 +85,9 @@ class TreeNode;
 class InternalNode;
 class LeafNode;
 
-typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
-typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
-typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
+typedef Sawyer::SharedPointer<const TreeNode> TreeNodePtr;
+typedef Sawyer::SharedPointer<const InternalNode> InternalNodePtr;
+typedef Sawyer::SharedPointer<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
@@ -130,11 +130,11 @@ public:
  *  Every node has a specified number of significant bits that is constant over the life of the node.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
- *  lattice and not a graph with cycles), tree nodes are always referenced through boost::shared_ptr<const T> where T is one of
- *  the tree node types: TreeNode, InternalNode, or LeafNode.  For convenience, we define TreeNodePtr, InternalNodePtr, and
- *  LeafNodePtr typedefs.  The shared_ptr owns the pointer to the tree node and thus the tree node pointer should never be
- *  deleted explicitly. */
-class TreeNode: public boost::enable_shared_from_this<TreeNode> {
+ *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
+ *  (<code>Sawyer::SharedPointer<const T></code> where @t T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
+ *  For convenience, we define TreeNodePtr, InternalNodePtr, and LeafNodePtr typedefs.  The pointers themselves collectively
+ *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
+class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
     size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
@@ -212,12 +212,12 @@ public:
 
     /** Dynamic cast of this object to an internal node. */
     InternalNodePtr isInternalNode() const {
-        return boost::dynamic_pointer_cast<const InternalNode>(shared_from_this());
+        return sharedFromThis().dynamicCast<const InternalNode>();
     }
 
     /** Dynamic cast of this object to a leaf node. */
     LeafNodePtr isLeafNode() const {
-        return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
+        return sharedFromThis().dynamicCast<const LeafNode>();
     }
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
@@ -252,7 +252,7 @@ public:
      * 
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(sharedFromThis(), fmt); }
     WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
     /** @} */
 
@@ -413,7 +413,7 @@ private:
     uint64_t nnodes_;                                   // total number of nodes; self + children's nnodes
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
-    // accidently using pointers to these objects -- all access should be through boost::shared_ptr<>.
+    // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
     InternalNode(size_t nbits, Operator op, const std::string comment="")
         : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
@@ -625,7 +625,7 @@ nnodesUnique(InputIterator begin, InputIterator end)
         T1(): nUnique(0) {}
 
         VisitAction preVisit(const TreeNodePtr &node) {
-            if (seen.insert(node.get()).second) {
+            if (seen.insert(getRawPointer(node)).second) {
                 ++nUnique;
                 return CONTINUE;                        // this node has not been seen before; traverse into children
             } else {

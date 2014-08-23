@@ -80,12 +80,12 @@ TreeNode::assert_acyclic() const
     struct T1: Visitor {
         std::vector<const TreeNode*> ancestors;
         VisitAction preVisit(const TreeNodePtr &node) {
-            assert(std::find(ancestors.begin(), ancestors.end(), node.get())==ancestors.end());
-            ancestors.push_back(node.get());
+            assert(std::find(ancestors.begin(), ancestors.end(), getRawPointer(node))==ancestors.end());
+            ancestors.push_back(getRawPointer(node));
             return CONTINUE;
         }
         VisitAction postVisit(const TreeNodePtr &node) {
-            assert(!ancestors.empty() && ancestors.back()==node.get());
+            assert(!ancestors.empty() && ancestors.back()==getRawPointer(node));
             ancestors.pop_back();
             return CONTINUE;
         }
@@ -182,14 +182,14 @@ bool
 InternalNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (this==other_.get()) {
+    if (this==getRawPointer(other_)) {
         retval = true;
     } else if (equivalent_to(other_)) {
         // This is probably faster than using an SMT solver. It also serves as the naive approach when an SMT solver
         // is not available.
         retval = true;
     } else if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+        TreeNodePtr assertion = InternalNode::create(1, OP_NE, sharedFromThis(), other_);
         retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     }
     return retval;
@@ -199,14 +199,14 @@ bool
 InternalNode::may_equal(const TreeNodePtr &other, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         return true;
     } else if (equivalent_to(other)) {
         // This is probably faster than using an SMT solver.  It also serves as the naive approach when an SMT solver
         // is not available.
         retval = true;
     } else if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other);
+        TreeNodePtr assertion = InternalNode::create(1, OP_EQ, sharedFromThis(), other);
         retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
     }
     return retval;
@@ -216,7 +216,7 @@ int
 InternalNode::structural_compare(const TreeNodePtr &other_) const
 {
     InternalNodePtr other = other_->isInternalNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         return 0;
     } else if (other==NULL) {
         return 1;                                       // leaf nodes < internal nodes
@@ -242,7 +242,7 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
 {
     bool retval = false;
     InternalNodePtr other = other_->isInternalNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other==NULL || get_nbits()!=other->get_nbits()) {
         retval = false;
@@ -295,14 +295,14 @@ InternalNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
         }
     }
     if (!substituted)
-        return shared_from_this();
+        return sharedFromThis();
     return InternalNode::create(get_nbits(), get_operator(), newnodes, get_comment());
 }
 
 VisitAction
 InternalNode::depth_first_traversal(Visitor &v) const
 {
-    TreeNodePtr self = shared_from_this();
+    TreeNodePtr self = sharedFromThis();
     VisitAction action = v.preVisit(self);
     if (CONTINUE==action) {
         for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci) {
@@ -336,7 +336,7 @@ InternalNode::nonassociative() const
     if (modified)
         return InternalNodePtr(retval);
     delete retval;
-    return shared_from_this()->isInternalNode();
+    return isInternalNode();
 }
 
 // compare expressions for sorting operands of commutative operators. Returns -1, 0, 1
@@ -394,7 +394,7 @@ commutative_order(const TreeNodePtr &a, const TreeNodePtr &b)
 {
     if (int cmp = expr_cmp(a, b))
         return cmp<0;
-    return a.get() < b.get(); // make it a strict ordering
+    return getRawPointer(a) < getRawPointer(b); // make it a strict ordering
 }
 
 InternalNodePtr
@@ -404,7 +404,7 @@ InternalNode::commutative() const
     TreeNodes sorted_operands = orig_operands;
     std::sort(sorted_operands.begin(), sorted_operands.end(), commutative_order);
     if (std::equal(sorted_operands.begin(), sorted_operands.end(), orig_operands.begin()))
-        return shared_from_this()->isInternalNode();
+        return isInternalNode();
 
     // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
     InternalNode *inode = new InternalNode(get_nbits(), get_operator(), sorted_operands, get_comment());
@@ -423,7 +423,7 @@ InternalNode::involutary() const
             }
         }
     }
-    return shared_from_this();
+    return sharedFromThis();
 }
 
 // simplifies things like:
@@ -453,7 +453,7 @@ InternalNode::additive_nesting() const
                                                nested->child(1), get_comment());
         return InternalNodePtr(inode);
     }
-    return shared_from_this()->isInternalNode();
+    return isInternalNode();
 }
 
 TreeNodePtr
@@ -476,7 +476,7 @@ InternalNode::identity(uint64_t ident) const
         }
     }
     if (!modified)
-        return shared_from_this();
+        return sharedFromThis();
     if (args.empty())
         return LeafNode::create_integer(get_nbits(), ident, get_comment());
     if (1==args.size()) {
@@ -494,7 +494,7 @@ InternalNode::identity(uint64_t ident) const
 TreeNodePtr
 InternalNode::unaryNoOp() const
 {
-    return 1==nchildren() ? child(0) : shared_from_this();
+    return 1==nchildren() ? child(0) : sharedFromThis();
 }
 
 TreeNodePtr
@@ -502,7 +502,7 @@ InternalNode::rewrite(const Simplifier &simplifier) const
 {
     if (TreeNodePtr simplified = simplifier.rewrite(this))
         return simplified;
-    return shared_from_this();
+    return sharedFromThis();
 }
 
 TreeNodePtr
@@ -529,7 +529,7 @@ InternalNode::constant_folding(const Simplifier &simplifier) const
     }
     if (!modified) {
         delete retval;
-        return shared_from_this()->isInternalNode();
+        return isInternalNode();
     }
     if (1==retval->nchildren()) {
         TreeNodePtr tmp = TreeNodePtr(retval->child(0)); // need to hold this pointer while we delete
@@ -603,8 +603,8 @@ AddSimplifier::rewrite(const InternalNode *inode) const
         if (children[i]!=NULL) {
             for (size_t j=i+1; j<children.size() && children[j]!=NULL; ++j) {
                 if (children[j]!=NULL && are_duals()(children[i], children[j], adjustment/*in,out*/)) {
-                    children[i].reset();
-                    children[j].reset();
+                    children[i] = Sawyer::Nothing();
+                    children[j] = Sawyer::Nothing();
                     had_duals = true;
                     break;
                 }
@@ -1367,7 +1367,7 @@ MssbSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 InternalNode::simplifyTop() const
 {
-    TreeNodePtr node = shared_from_this();
+    TreeNodePtr node = sharedFromThis();
     while (InternalNodePtr inode = node->isInternalNode()) {
         TreeNodePtr newnode = node;
         switch (inode->get_operator()) {
@@ -1704,12 +1704,12 @@ LeafNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other==NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x must_equal (not (not x))" which is true.
         if (solver) {
-            TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+            TreeNodePtr assertion = InternalNode::create(1, OP_NE, sharedFromThis(), other_);
             retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
     } else if (is_known()) {
@@ -1725,12 +1725,12 @@ LeafNode::may_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other==NULL) {
         // We need an SMT solver to figure out things like "x may_equal (add y 1))", which is true.
         if (solver) {
-            TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
+            TreeNodePtr assertion = InternalNode::create(1, OP_EQ, sharedFromThis(), other_);
             retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
         }
     } else if (!is_known() || !other->is_known() || 0==bits.compare(other->bits)) {
@@ -1743,7 +1743,7 @@ int
 LeafNode::structural_compare(const TreeNodePtr &other_) const
 {
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         return 0;
     } else if (other==NULL) {
         return -1;                                      // leaf nodes < internal nodes
@@ -1762,7 +1762,7 @@ LeafNode::equivalent_to(const TreeNodePtr &other_) const
 {
     bool retval = false;
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other && get_nbits()==other->get_nbits()) {
         if (is_known()) {
@@ -1780,13 +1780,13 @@ LeafNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
     assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
     if (equivalent_to(from))
         return to;
-    return shared_from_this();
+    return sharedFromThis();
 }
 
 VisitAction
 LeafNode::depth_first_traversal(Visitor &v) const
 {
-    TreeNodePtr self = shared_from_this();
+    TreeNodePtr self = sharedFromThis();
     VisitAction retval = v.preVisit(self);
     if (TERMINATE!=retval)
         retval = v.postVisit(self);
