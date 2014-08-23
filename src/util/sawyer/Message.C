@@ -304,10 +304,10 @@ Multiplexer::addDestination(const DestinationPtr &destination) {
     std::vector<DestinationPtr> work(1, destination);
     while (!work.empty()) {
         DestinationPtr d = work.back();
-        if (get(d)==this)
+        if (getRawPointer(d)==this)
             throw std::runtime_error("cycle introduced in Sawyer::Multiplexer tree");
         work.pop_back();
-        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(get(d)))
+        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(getRawPointer(d)))
             work.insert(work.end(), seq->destinations_.begin(), seq->destinations_.end());
     }
     

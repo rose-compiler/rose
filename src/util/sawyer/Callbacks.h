@@ -7,6 +7,7 @@
 
 namespace Sawyer {
 
+// FIXME[Robb Matzke 2014-08-13]: documentation
 template<class Callback>
 class Callbacks {
 private:

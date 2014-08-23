@@ -142,6 +142,7 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/SmallObject.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)

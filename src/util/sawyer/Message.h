@@ -577,7 +577,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for all types of message destinations. This is the base class for all nodes in the plumbing lattice. */
-class SAWYER_EXPORT Destination: public SharedFromThis<Destination> {
+class SAWYER_EXPORT Destination: public SharedObject, public SharedFromThis<Destination> {
 protected:
     MesgProps dflts_;                                   /**< Default properties merged into each incoming message. */
     MesgProps overrides_;                               /**< Override properties applied to incoming message. */
@@ -847,7 +847,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Information printed at the beginning of each free-format message. */
-class SAWYER_EXPORT Prefix: public SharedFromThis<Prefix> {
+class SAWYER_EXPORT Prefix: public SharedObject, public SharedFromThis<Prefix> {
 #include <sawyer/WarningsOff.h>
     enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
     ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */
