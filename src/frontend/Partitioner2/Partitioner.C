@@ -624,6 +624,11 @@ Partitioner::discoverInstruction(rose_addr_t startVa) const {
     return instructionProvider_[startVa];
 }
 
+size_t
+Partitioner::nDataBlocks() const {
+    return dataBlocksOverlapping(aum_.hull()).size();
+}
+
 bool
 Partitioner::dataBlockExists(const DataBlock::Ptr &dblock) const {
     if (dblock==NULL)
