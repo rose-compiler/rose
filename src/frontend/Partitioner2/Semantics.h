@@ -16,14 +16,100 @@ typedef SymbolicSemantics::SValuePtr SValuePtr;
 typedef BaseSemantics::RegisterStateGeneric RegisterState;
 typedef BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
 
-typedef SymbolicSemantics::MemoryState MemoryState;
-typedef SymbolicSemantics::MemoryStatePtr MemoryStatePtr;
-
 typedef BaseSemantics::State State;
 typedef BaseSemantics::StatePtr StatePtr;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
+
+/** Memory state.
+ *
+ *  Able to read concrete values from memory that is readable but lacks write permission.  All other operations are delegated
+ *  to the symbolic semantics memory state. */
+class MemoryState: public SymbolicSemantics::MemoryState {
+    const MemoryMap *map_;
+protected:
+    explicit MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+        : SymbolicSemantics::MemoryState(protocell), map_(NULL) {}
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : SymbolicSemantics::MemoryState(addrProtoval, valProtoval), map_(NULL) {}
+    MemoryState(const MemoryState &other)
+        : SymbolicSemantics::MemoryState(other), map_(other.map_) {}
+
+public:
+    /** Instantiates a new memory state having specified prototypical cells and value. */
+    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryStatePtr(new MemoryState(protocell));
+    }
+
+    /** Instantiates a new memory state having specified prototypical value. */
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
+    }
+
+    /** Instantiates a new deep copy of an existing state. */
+    static MemoryStatePtr instance(const MemoryStatePtr &other) {
+        return MemoryStatePtr(new MemoryState(*other));
+    }
+
+public:
+    /** Virtual constructor. Creates a memory state having specified prototypical value. */
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
+    }
+
+    /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+        return instance(protocell);
+    }
+
+    /** Virtual copy constructor. Creates a new deep copy of this memory state. */
+    virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
+        return MemoryStatePtr(new MemoryState(*this));
+    }
+
+public:
+    /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
+     *  not point to an object of our class. */
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+        assert(x!=NULL);
+        return retval;
+    }
+
+public:
+    /** The memory map for the specimen.
+     *
+     *  If this memory map exists and contains segments that have read permission but lack write permission, then any reads
+     *  from such addresses will return the concrete values read from the map.  Any writes to such addresses will cause
+     *  warnings and no operation to be performed.
+     *
+     *  @{ */
+    const MemoryMap* memoryMap() const;
+    void memoryMap(const MemoryMap *map) { map_=map; }
+    /** @} */
+
+public:
+    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) /*override*/;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC Operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
+/** Semantic operators.
+ *
+ *  Most operations are delegated to the symbolic state. The return value from the symbolic state is replaced with an unknown
+ *  if the expression grows beyond a certain complexity. */
 class RiscOperators: public SymbolicSemantics::RiscOperators {
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;

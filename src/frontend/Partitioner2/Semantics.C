@@ -8,6 +8,26 @@ namespace Semantics {
 
 namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BaseSemantics::SValuePtr
+MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    if (map_ && addr->is_number()) {
+        ASSERT_require2(8==dflt->get_width(), "multi-byte reads should have been handled above this call");
+        uint8_t byte;
+        if (1==map_->read(&byte, addr->get_number(), 1, MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE))
+            return valOps->number_(8, byte);
+    }
+    return SymbolicSemantics::MemoryState::readMemory(addr, dflt, addrOps, valOps);
+}
+        
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Risc Operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 BaseSemantics::SValuePtr
 RiscOperators::trim(const BaseSemantics::SValuePtr &a_) {
     if (trimThreshold_ > 0) {

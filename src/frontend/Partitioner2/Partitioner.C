@@ -158,7 +158,9 @@ Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators() const {
-    return Semantics::RiscOperators::instance(instructionProvider_.registerDictionary(), solver_);
+    Semantics::RiscOperatorsPtr ops = Semantics::RiscOperators::instance(instructionProvider_.registerDictionary(), solver_);
+    Semantics::MemoryState::promote(ops->get_state()->get_memory_state())->memoryMap(&memoryMap_);
+    return ops;
 }
 
 BaseSemantics::DispatcherPtr
