@@ -81,7 +81,7 @@ public:
         MM_PROT_EXEC    = 0x00000004,    /**< Pages can be executed. */
 
         /* Protection convenience stuff */
-        MM_PROT_NONE    = 0x00000000,    /**< Pages cannot be accessed. */
+        MM_PROT_NONE    = 0x00000000,    /**< Pages cannot be accessed. */ // value must be zero
         MM_PROT_ANY     = 0x00000007,    /**< Any access. */
         MM_PROT_RW      = (MM_PROT_READ|MM_PROT_WRITE), /**< Read or write. */                  /*NO_STRINGIFY*/
         MM_PROT_RX      = (MM_PROT_READ|MM_PROT_EXEC),  /**< Read or execute. */                /*NO_STRINGIFY*/
@@ -545,19 +545,21 @@ public:
 
     /** Determines whether a virtual address is defined.  Returns true if the specified virtual address (or all addresses in a
      *  range of addresses) are defined, false otherwise.  An address is defined if it is associated with a Segment.  If @p
-     *  required_perms is non-zero, then the address (or all addresses in the range) must be mapped with at least those
-     *  permission bits.
+     *  requiredPerms is non-zero, then the address (or all addresses in the range) must be mapped with at least those
+     *  permission bits.  Similarly, @p prohibitedPerms indicates permissions that are prohibited.
      * @{ */
-    bool exists(rose_addr_t va, unsigned required_perms=0) const { return exists(AddressInterval(va), required_perms); }
-    bool exists(AddressInterval range, unsigned required_perms=0) const;
+    bool exists(rose_addr_t va, unsigned requiredPerms=0, unsigned prohibitedPerms=0) const {
+        return exists(AddressInterval(va), requiredPerms, prohibitedPerms);
+    }
+    bool exists(AddressInterval range, unsigned requiredPerms=0, unsigned prohibitedPerms=0) const;
     /** @} */
 
     /** Returns the next valid address.
      *
-     *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions.  If no
-     *  permissions are specified then the address need only be mapped.  Returns nothing if there is no valid address greater
-     *  than or equal to @p va. */
-    Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned required_perms=0) const;
+     *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions and none of
+     *  the prohibited permissions.  If no permissions are specified then the address need only be mapped.  Returns nothing if
+     *  there is no valid address greater than or equal to @p va. */
+    Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned requiredPerms=0, unsigned prohibitedPerms=0) const;
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
      *  necessarily need to correspond to a similar add() call; for instance, it's possible to add a large address space and
@@ -596,7 +598,7 @@ public:
 
     /** Removes segments based on permissions.  Keeps segments that have any of the required bits and none of the
      *  prohibited bits.   No bits are required if @p required is zero. */
-    void prune(unsigned required, unsigned prohibited=MM_PROT_NONE);
+    void prune(unsigned requiredPerms, unsigned prohibitedPerms=0);
 
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void erase_zeros(size_t minsize);
@@ -605,55 +607,61 @@ public:
     const Segments &segments() const { return p_segments; }
 
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
-     *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
-     *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
-     *  than the number of  bytes desired if the mapping does not include part of the address space requested or part of the
-     *  address space does not have MM_PROT_READ permission (or the specified permissions). The @p dst_buf bytes that do not
-     *  correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized.
+     *  virtual address space to copy begins at @p startVa and continues for @p desired bytes. The data is copied into the
+     *  beginning of the @p dstBuf buffer. The return value is the number of bytes that were copied, which might be fewer than
+     *  the number of bytes desired if the mapping does not include part of the address space requested or part of the address
+     *  space does not have the permission restrictions indicated by @p requiredPerms and @p prohibitedPerms. The @p dstBuf
+     *  bytes that do not correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always
+     *  initialized.
      *
-     *  If @p dst_buf is the null pointer then this method only measures how many bytes could have been read.
+     *  If @p dstBuf is the null pointer then this method only measures how many bytes could have been read.
      *
      *  The read() and read1() methods behave identically except read1() restricts the readable area to be from a single
      *  segment. Thus, read1() may return fewer bytes than read().
      *
      * @{ */
-    size_t read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
-    size_t read1(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    size_t read(void *dstBuf, rose_addr_t startVa, size_t desired,
+                unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+    size_t read1(void *dstBuf, rose_addr_t startVa, size_t desired,
+                 unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
     /** @} */
 
-    /** Reads data from a memory map.  Reads data beginning at the @p start_va virtual address in the memory map and continuing
+    /** Reads data from a memory map.  Reads data beginning at the @p startVa virtual address in the memory map and continuing
      *  for up to @p desired bytes, returning the result as an SgUnsignedCharList.  The read may be shorter than requested if
      *  we reach a point in the memory map that is not defined or which does not have the requested permissions.  The size of
      *  the return value indicates that number of bytes that were read (i.e., the return value is not zero-filled). */
-    SgUnsignedCharList read(rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    SgUnsignedCharList read(rose_addr_t startVa, size_t desired,
+                            unsigned requiredPerms=MM_PROT_READ, unsigned ProhibitedPerms=MM_PROT_NONE) const;
 
-    /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p start_va in the memory map and
+    /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p startVa in the memory map and
      *  continuing until one of the following conditions:
      *    <ul>
      *      <li>The return value contains the @p desired number of characters.</li>
      *      <li>The next character to be read is a NUL character.</li>
-     *      <li>A @p valid_char function is specified but the next character causes it to return zero.</li>
-     *      <li>An @p invalid_char function is specified and the next character causes it to return non-zero.</li>
+     *      <li>A @p validChar function is specified but the next character causes it to return zero.</li>
+     *      <li>An @p invalidChar function is specified and the next character causes it to return non-zero.</li>
      *    </ul>
      *
-     *  The @p valid_char and @p invalid_char take an integer argument and return an integer value so that the C character
+     *  The @p validChar and @p invalidChar take an integer argument and return an integer value so that the C character
      *  classification functions from <ctype.h> can be used directly. */
-    std::string read_string(rose_addr_t start_va, size_t desired, int(*valid_char)(int)=NULL, int(*invalid_char)(int)=NULL,
-                            unsigned req_perms=MM_PROT_READ) const;
+    std::string read_string(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
+                            unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
-     *  aborted early if a segment lacks the MM_PROT_WRITE bit (or specified bits) or its buffer is marked as read-only.  The
-     *  return value is the number of bytes copied.
+     *  aborted early if a segment lacks any required permissions or has any prohibited permissions.  The return value is the
+     *  number of bytes copied.
      *
-     *  If @p src_buf is the null pointer then this method only measures how many bytes could have been written.
+     *  If @p srcBuf is the null pointer then this method only measures how many bytes could have been written.
      *
      *  The write() and write1() methods behave identically, except write1() restricts the operation to a single segment. Thus,
      *  write1() may write fewer bytes than write().
      *
      *  @{ */
-    size_t write(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
-    size_t write1(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
+    size_t write(const void *srcBuf, rose_addr_t startVa, size_t desired,
+                 unsigned requiredPerms=MM_PROT_WRITE, unsigned prohibitedPerms=MM_PROT_NONE);
+    size_t write1(const void *srcBuf, rose_addr_t startVa, size_t desired,
+                  unsigned requiredPerms=MM_PROT_WRITE, unsigned prohibitedPerms=MM_PROT_NONE);
     /** @} */
 
     /** Reads backward through a memory map.  Reads as much data as possible, but not more than specified, such that the last
@@ -674,15 +682,18 @@ public:
      *  been present.  This is useful for counting how far back we could have read.
      *
      *  @{ */
-    size_t readBackward(void *dst_buf, rose_addr_t end_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
-    size_t readBackward1(void *dst_buf, rose_addr_t end_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    size_t readBackward(void *dstBuf, rose_addr_t endVa, size_t desired,
+                        unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+    size_t readBackward1(void *dstBuf, rose_addr_t endVa, size_t desired,
+                         unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
     /** @} */
 
     /** Searches for a prefix.
      *
      *  Reads bytes from the specified address and matches them against a search vector, returning the number of bytes that
      *  matched. */
-    size_t match_bytes(rose_addr_t start_va, const std::vector<uint8_t> &bytesToFind, unsigned req_perms=MM_PROT_READ) const;
+    size_t match_bytes(rose_addr_t startVa, const std::vector<uint8_t> &bytesToFind,
+                       unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
 
     /** Search for a byte sequence.
      *
@@ -690,7 +701,7 @@ public:
      *  The bytes must appear in the order they are specified.  Returns the address of the start of the sequence if found, or
      *  none if not found. */
     Sawyer::Optional<rose_addr_t> find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
-                                                unsigned req_perms=MM_PROT_READ) const;
+                                                unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
 
     /** Search for any byte.
      *
@@ -698,7 +709,7 @@ public:
      *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
      *  method returns none. */
     Sawyer::Optional<rose_addr_t> find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
-                                           unsigned req_perms=MM_PROT_READ) const;
+                                           unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
 
     /** Returns just the virtual address extents for a memory map. */
     AddressIntervalSet va_extents() const;
