@@ -2,12 +2,14 @@
 #include <rosePublicConfig.h>
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
+#include <BinaryLoader.h>
 #include <DisassemblerArm.h>
 #include <DisassemblerPowerpc.h>
 #include <DisassemblerMips.h>
 #include <DisassemblerX86.h>
 #include <DisassemblerM68k.h>
 #include <Partitioner2/ModulesM68k.h>
+#include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
@@ -53,10 +55,13 @@ getDisassembler(const std::string &name)
     }
 }
 
+static const rose_addr_t NO_ADDRESS(-1);
+
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;                                // instruction set architecture name
     rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
+    bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
     bool findSwitchCases;                               // search for C-like "switch" statement cases
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
@@ -68,8 +73,8 @@ struct Settings {
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(0), followGhostEdges(false), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
-          doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
+        : mapVa(NO_ADDRESS), useSemantics(true), followGhostEdges(false), findSwitchCases(true), findDeadCode(true),
+          intraFunctionData(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
           doShowStats(false), doListUnused(false) {}
 };
 
@@ -93,6 +98,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     gen.insert(Switch("version", 'V')
                .action(showVersionAndExit(version_message(), 0))
                .doc("Shows version information for various ROSE components and then exits."));
+    gen.insert(Switch("use-semantics")
+               .intrinsicValue(true, settings.useSemantics)
+               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
+                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
+                    "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is " +
+                    std::string(settings.useSemantics?"true":"false") + "."));
+    gen.insert(Switch("no-use-semantics")
+               .key("use-semantics")
+               .intrinsicValue(false, settings.useSemantics)
+               .hidden(true));
 
     // Switches for disassembly
     SwitchGroup dis;
@@ -102,8 +117,9 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
     dis.insert(Switch("map")
                .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
-               .doc("The first byte of the file is mapped at the specified @v{virtual-address}, which defaults "
-                    "to " + StringUtility::addrToString(settings.mapVa) + "."));
+               .doc("If this switch is present, then the specimen is treated as raw data and mapped in its entirety "
+                    "into the address space beginning at the address specified for this switch. Otherwise the file "
+                    "is interpreted as an ELF or PE container."));
     dis.insert(Switch("follow-ghost-edges")
                .intrinsicValue(true, settings.followGhostEdges)
                .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -249,85 +265,69 @@ public:
     }
 };
 
-#if 0 // [Robb P. Matzke 2014-08-13]
-class MatchX86Prologue: public P2::FunctionPrologueMatcher {
+// Matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue
+class X86AbbreviatedPrologue: public P2::FunctionPrologueMatcher {
 protected:
     P2::Function::Ptr function_;
 public:
-    static Ptr instance() { return Ptr(new MatchX86Prologue); }
-
-    virtual P2::Function::Ptr function() const {
-        return function_;
-    }
-
+    static Ptr instance() { return Ptr(new X86AbbreviatedPrologue); }
+    virtual P2::Function::Ptr function() const /*override*/ { return function_; }
     virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
-        // Look for optional MOV RDI, RDI
-        rose_addr_t va = anchor;
-        do {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(va));
-            if (!insn || insn->get_kind()!=x86_mov)
-                break;
-            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-            if (opands.size()!=2)
-                break;
-            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-            if (!rre ||
-                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
-                rre->get_descriptor().get_minor()!=x86_gpr_di)
-                break;
-            rre = isSgAsmRegisterReferenceExpression(opands[1]);
-            if (!rre ||
-                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
-                rre->get_descriptor().get_minor()!=x86_gpr_di)
-                break;
-            va += insn->get_size();
-        } while (0);
-
-        // Look for PUSH RBP at the (adjusted) anchor address. It must not already be in the CFG
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(va));
+        SgAsmx86Instruction *insn = NULL;
+        // Look for MOV EDI, EDI
         {
-            if (partitioner->instructionExists(va))
-                return false;
-            if (!insn || insn->get_kind()!=x86_push)
-                return false;
-            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-            if (opands.size()!=1)
-                return false;
-            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-            if (!rre ||
-                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
-                rre->get_descriptor().get_minor()!=x86_gpr_bp)
-                return false;
-        }
-
-        // Look for MOV RBP,RSP following the PUSH. It must not already be in the CFG
-        {
-            rose_addr_t moveVa = insn->get_address() + insn->get_size();
+            static const RegisterDescriptor REG_EDI(x86_regclass_gpr, x86_gpr_di, 0, 32);
+            rose_addr_t moveVa = anchor;
             if (partitioner->instructionExists(moveVa))
-                return false;
+                return false;                               // already in the CFG/AUM
             insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
             if (!insn || insn->get_kind()!=x86_mov)
                 return false;
             const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
             if (opands.size()!=2)
                 return false;
-            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-            if (!rre ||
-                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
-                rre->get_descriptor().get_minor()!=x86_gpr_bp)
+            SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
+            if (!dst || dst->get_descriptor()!=REG_EDI)
                 return false;
-            rre = isSgAsmRegisterReferenceExpression(opands[1]);
-            if (!rre ||
-                rre->get_descriptor().get_major()!=x86_regclass_gpr ||
-                rre->get_descriptor().get_minor()!=x86_gpr_sp)
+            SgAsmDirectRegisterExpression *src = isSgAsmDirectRegisterExpression(opands[1]);
+            if (!src || dst->get_descriptor()!=src->get_descriptor())
                 return false;
         }
 
+        // Look for PUSH ESI
+        {
+            static const RegisterDescriptor REG_ESI(x86_regclass_gpr, x86_gpr_si, 0, 32);
+            rose_addr_t pushVa = insn->get_address() + insn->get_size();
+            insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
+            if (partitioner->instructionExists(pushVa))
+                return false;                               // already in the CFG/AUM
+            if (!insn || insn->get_kind()!=x86_push)
+                return false;
+            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+            if (opands.size()!=1)
+                return false;                               // crazy operands!
+            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
+            if (!rre || rre->get_descriptor()!=REG_ESI)
+                return false;
+        }
+
+        // Seems good!
         function_ = P2::Function::instance(anchor);
         return true;
     }
 };
-#endif
+
+static void
+markEntryFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
+    if (interp) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            BOOST_FOREACH (const rose_rva_t &rva, fileHeader->get_entry_rvas()) {
+                rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
+                partitioner.attachFunction(P2::Function::instance(va));
+            }
+        }
+    }
+}
 
 // Looks for one basic block that hasn't been discovered and tries to find instructions for it.  Returns true if a basic block
 // was processed, false if not.
@@ -441,9 +441,12 @@ findFunctionPadding(P2::Partitioner &partitioner) {
 
 // Finds unused areas that are surrounded by a function and adds them as static data to the function.
 static size_t
-findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textArea)
+findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet textArea)
 {
     size_t nProcessed = 0;
+#if 1 // [Robb P. Matzke 2014-08-22]
+    P2::mlog[WARN] <<"findIntraFunctionData is temporarily commented out\n";
+#else
     Sawyer::Container::IntervalSet<AddressInterval> unused = partitioner.aum().unusedExtent(textArea);
     BOOST_FOREACH (const AddressInterval &interval, unused.nodes()) {
         if (interval.least()<=textArea.least() || interval.greatest()>=textArea.greatest())
@@ -469,6 +472,7 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressInterval textAr
             ++nProcessed;
         }
     }
+#endif
     return nProcessed;
 }
 
@@ -485,28 +489,60 @@ int main(int argc, char *argv[]) {
     Settings settings;
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
     std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
-
-    // Obtain a disassembler (do this before opening the specimen so "--isa=list" has a chance to run)
-    Disassembler *disassembler = getDisassembler(settings.isaName);
-    ASSERT_not_null(disassembler);
-    disassembler->set_progress_reporting(-1.0);         // turn it off
-
-    // Open the file that needs to be disassembled and map it with read and execute permission
+    Disassembler *disassembler = NULL;
+    if (!settings.isaName.empty())
+        disassembler = getDisassembler(settings.isaName);// do this before we check for positional arguments (for --isa=list)
     if (positionalArgs.empty())
         throw std::runtime_error("no file name specified; see --help");
     if (positionalArgs.size()>1)
         throw std::runtime_error("too many files specified; see --help");
     std::string specimenName = positionalArgs[0];
+
+    // Load the specimen as raw data or an ELF or PE container
+    SgAsmInterpretation *interp = NULL;
     MemoryMap map;
-    size_t nBytesMapped = map.insert_file(specimenName, settings.mapVa);
-    if (0==nBytesMapped)
-        throw std::runtime_error("problem reading file: " + specimenName);
-    map.mprotect(AddressInterval::baseSize(settings.mapVa, nBytesMapped), MemoryMap::MM_PROT_RX);
-    map.dump(std::cerr);                                // debugging so the user can see the map
-    AddressInterval addressSpace = AddressInterval::baseSize(settings.mapVa, nBytesMapped);
+    if (settings.mapVa!=NO_ADDRESS) {
+        if (!disassembler)
+            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
+        size_t nBytesMapped = map.insert_file(specimenName, settings.mapVa);
+        if (0==nBytesMapped)
+            throw std::runtime_error("problem reading file: " + specimenName);
+        map.mprotect(AddressInterval::baseSize(settings.mapVa, nBytesMapped), MemoryMap::MM_PROT_RX);
+    } else {
+        std::vector<std::string> args;
+        args.push_back(argv[0]);
+        args.push_back("-rose:binary");
+        args.push_back("-rose:read_executable_file_format_only");
+        args.push_back(specimenName);
+        SgProject *project = frontend(args);
+        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
+        if (interps.empty())
+            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
+        interp = interps.back();    // windows PE is always after DOS
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        loader->remap(interp);
+        ASSERT_not_null(interp->get_map());
+        map = *interp->get_map();
+        if (!disassembler && !(disassembler = Disassembler::lookup(interp)))
+            throw std::runtime_error("an instruction set architecture could not be discerned");
+    }
+    map.dump(std::cerr);
+    disassembler->set_progress_reporting(-1.0);         // turn it off
+    size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
+
+    // Some analyses need to know what part of the address space is being disassembled.
+    AddressIntervalSet executableSpace;
+    BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
+        if ((node.value().get_mapperms() & MemoryMap::MM_PROT_EXEC)!=0)
+            executableSpace.insert(node.key());
+    }
 
     // Create the partitioner
     P2::Partitioner partitioner(disassembler, map);
+    partitioner.enableSymbolicSemantics(settings.useSemantics);
+    partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchHotPatchPrologue::instance());
+    partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchStandardPrologue::instance());
+    partitioner.functionPrologueMatchers().push_back(X86AbbreviatedPrologue::instance());
     partitioner.functionPrologueMatchers().push_back(P2::ModulesM68k::MatchLink::instance());
     if (settings.findSwitchCases)
         partitioner.successorCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
@@ -516,16 +552,16 @@ int main(int argc, char *argv[]) {
     partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());
 #endif
 
-    // Disassemble as many basic blocks as we can find by following the control flow and looking for function prologues.
+
+    markEntryFunctions(partitioner, interp);
     rose_addr_t prologueVa = 0;
     while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
-    
     findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
     if (settings.findDeadCode)
         findDeadCode(partitioner);                      // find unreachable code and add it to functions
     findFunctionPadding(partitioner);                   // find function alignment padding before entry points
     if (settings.intraFunctionData)
-        findIntraFunctionData(partitioner, addressSpace); // find data areas that are enclosed by functions
+        findIntraFunctionData(partitioner, executableSpace); // find data areas that are enclosed by functions
     
 
     // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
@@ -564,13 +600,15 @@ int main(int argc, char *argv[]) {
     if (settings.doShowStats) {
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBasicBlocks(), "basic blocks") <<"\n";
+        std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nDataBlocks(), "data blocks") <<"\n";
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nInstructions(), "instructions") <<"\n";
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBytes(), "bytes") <<"\n";
         std::cout <<"Instruction cache contains "
                   <<StringUtility::plural(partitioner.instructionProvider().nCached(), "instructions") <<"\n";
-        std::cout <<"Specimen contains " <<StringUtility::plural(nBytesMapped, "bytes") <<"\n";
-        std::cout <<"CFG covers " <<(100.0*partitioner.nBytes()/nBytesMapped) <<"% of specimen\n";
-        std::cout <<"Specimen not covered by CFG: " <<StringUtility::plural(nBytesMapped-partitioner.nBytes(), "bytes") <<"\n";
+        std::cout <<"Specimen contains " <<StringUtility::plural(executableSpace.size(), "executable bytes") <<"\n";
+        size_t nMapped = executableSpace.size();
+        std::cout <<"CFG covers " <<(100.0*partitioner.nBytes()/nMapped) <<"% of executable bytes\n";
+        std::cout <<"Executable bytes not covered by CFG: " <<(nMapped-partitioner.nBytes()) <<"\n";
     }
 
     if (settings.doListCfg) {
@@ -584,7 +622,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (settings.doListUnused) {
-        Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(addressSpace);
+        Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(wordSize);
         std::cout <<"Unused addresses: " <<StringUtility::plural(unusedAddresses.size(), "bytes")
                   <<" in " <<StringUtility::plural(unusedAddresses.nIntervals(), "intervals") <<"\n";
         BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.nodes()) {
