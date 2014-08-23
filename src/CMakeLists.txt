@@ -288,7 +288,9 @@ set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUs
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Function.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/InstructionProvider.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Modules.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesElf.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesM68k.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesPe.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesX86.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/OwnedDataBlock.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Partitioner.C
