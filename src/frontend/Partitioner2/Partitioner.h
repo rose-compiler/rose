@@ -871,6 +871,14 @@ public:
     size_t attachFunctions(const Functions&);
     /** @} */
 
+    /** Attaches or merges a function into the CFG/AUM.
+     *
+     *  If no other function exists at the specified function's entry address, then this method behaves identically to @ref
+     *  attachFunction.  Otherwise, this method attempts to merge the specified function into an existing function.  In any
+     *  case, it returns a pointer to the function in the CFG/AUM (the existing one, or the new one). If the merge is not
+     *  possible, then an exception is thrown. */
+    Function::Ptr attachOrMergeFunction(const Function::Ptr&);
+
     /** Create placeholders for function basic blocks.
      *
      *  Ensures that a basic block placeholder (or basic block) exists for each function entry address and each function basic

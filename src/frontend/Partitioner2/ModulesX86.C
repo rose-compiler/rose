@@ -8,7 +8,7 @@ namespace Partitioner2 {
 namespace ModulesX86 {
 
 bool
-MatchStandardPrologue::match(Partitioner *partitioner, rose_addr_t anchor) {
+MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     const RegisterDescriptor bp(x86_regclass_gpr, x86_gpr_bp, 0,
                                 partitioner->instructionProvider().instructionPointerRegister().get_nbits());
     const RegisterDescriptor sp(x86_regclass_gpr, x86_gpr_sp, 0, bp.get_nbits());
@@ -55,7 +55,7 @@ MatchStandardPrologue::match(Partitioner *partitioner, rose_addr_t anchor) {
 
 
 bool
-MatchHotPatchPrologue::match(Partitioner *partitioner, rose_addr_t anchor) {
+MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     // Look for optional MOV EDI, EDI
     rose_addr_t moveVa = anchor;
     if (partitioner->instructionExists(moveVa))

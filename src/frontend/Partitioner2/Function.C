@@ -28,7 +28,10 @@ Function::eraseDataBlock(const DataBlock::Ptr &dblock) {
 
 std::string
 Function::printableName() const {
-    return "function " + StringUtility::addrToString(address());
+    std::string s = "function " + StringUtility::addrToString(address());
+    if (!name_.empty())
+        s += " \"" + StringUtility::cEscape(name_) + "\"";
+    return s;
 }
 
 

@@ -34,23 +34,53 @@ public:
                      OWN_PROVISIONAL,                   /**< Function might own the block in the future. */
     };
     typedef Sawyer::SharedPointer<Function> Ptr;
+
 private:
     rose_addr_t entryVa_;                               // entry address; destination for calls to this function
+    std::string name_;                                  // optional function name
+    unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
+
 protected:
     // Use instance() instead
-    Function(rose_addr_t entryVa): entryVa_(entryVa), isFrozen_(false) {
+    explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
+        : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
         bblockVas_.insert(entryVa);
     }
+
 public:
-    /** Static allocating constructor.  Creates a new function having the specified entry address. */
-    static Ptr instance(rose_addr_t entryVa) { return Ptr(new Function(entryVa)); }
+    /** Static allocating constructor.  Creates a new function having the specified characteristics.
+     *
+     *  @{ */
+    static Ptr instance(rose_addr_t entryVa, const std::string &name="", unsigned reasons=0) {
+        return Ptr(new Function(entryVa, name, reasons));
+    }
+    static Ptr instance(rose_addr_t entryVa, unsigned reasons) {
+        return Ptr(new Function(entryVa, "", reasons));
+    }
+    /** @} */
 
     /** Return the entry address.  The entry address also serves as an identifier for the function since the CFG can only hold
      *  one function per entry address.  Detached functions need not have unique entry addresses. */
     rose_addr_t address() const { return entryVa_; }
+
+    /** Optional function name.
+     *
+     *  @{ */
+    const std::string& name() const { return name_; }
+    void name(const std::string &name) { name_ = name; }
+    /** @} */
+
+    /** Function reasons.  These are SgAsmFunction::FunctionReason bits.
+     *
+     *  @{ */
+    unsigned reasons() const { return reasons_; }
+    void reasons(unsigned reasons) { reasons_ = reasons; }
+    void insertReasons(unsigned reasons) { reasons_ |= reasons; }
+    void eraseReasons(unsigned reasons) { reasons_ &= ~reasons; }
+    /** @} */
 
     /** Returns basic block addresses.  Because functions can exist in a detatched state, a function stores basic block
      *  addresses rather than basic blocks.  This allows a function to indicate which blocks will be ultimately part of its

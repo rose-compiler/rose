@@ -17,7 +17,9 @@ libPartitioner_la_SOURCES =			\
 	Function.C				\
 	InstructionProvider.C			\
 	Modules.C				\
+	ModulesElf.C				\
 	ModulesM68k.C				\
+	ModulesPe.C				\
 	ModulesX86.C				\
 	OwnedDataBlock.C			\
 	Partitioner.C				\

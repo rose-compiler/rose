@@ -66,7 +66,7 @@ public:
      *  address easier to write, but matchers that match at additional locations must explicitly check those other
      *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
      *  argument). */
-    virtual bool match(Partitioner*, rose_addr_t anchor) = 0;
+    virtual bool match(const Partitioner*, rose_addr_t anchor) = 0;
 };
 
 
@@ -95,6 +95,20 @@ public:
      *  data. The partitioner will never call @ref function without first having called @ref match. */
     virtual Function::Ptr function() const = 0;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Generic modules
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace Modules {
+
+/** Finds functions for which symbols exist.
+ *
+ *  Scans the specified AST to find symbols that point to functions and makes a function at each such address.  A function is
+ *  made only if an instruction can be disassembled at the address. The return value is a sorted list of unique functions. */
+std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*);
+
+} // namespace
 
 } // namespace
 } // namespace

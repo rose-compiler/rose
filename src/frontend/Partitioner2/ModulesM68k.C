@@ -12,7 +12,7 @@ namespace ModulesM68k {
 using namespace rose::Diagnostics;
 
 bool
-MatchLink::match(Partitioner *partitioner, rose_addr_t anchor) {
+MatchLink::match(const Partitioner *partitioner, rose_addr_t anchor) {
     if (anchor & 1)
         return false;                               // m68k instructions must be 16-bit aligned
     static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);

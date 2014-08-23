@@ -1239,6 +1239,43 @@ Partitioner::attachFunction(const Function::Ptr &function) {
     return nNewBlocks;
 }
 
+Function::Ptr
+Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
+    ASSERT_not_null(function);
+    Function::Ptr exists;
+    if (functions_.getOptional(function->address()).assignTo(exists)) {
+        if (exists != function) {
+            bool canMerge = false;
+            do {
+                // FIXME[Robb P. Matzke 2014-08-23]: we could relax these: found could be a subset of exists
+                if (exists->basicBlockAddresses().size() != function->basicBlockAddresses().size())
+                    break;
+                if (!std::equal(exists->basicBlockAddresses().begin(), exists->basicBlockAddresses().end(),
+                                function->basicBlockAddresses().begin()))
+                    break;
+                if (exists->dataBlocks().size() != function->dataBlocks().size())
+                    break;
+                if (!std::equal(exists->dataBlocks().begin(), exists->dataBlocks().end(), function->dataBlocks().begin()))
+                    break;
+                if (!exists->name().empty() && !function->name().empty() && exists->name()!=function->name())
+                    break;
+                canMerge = true;
+            } while (0);
+            if (canMerge) {
+                if (exists->name().empty())
+                    exists->name(function->name());
+                exists->insertReasons(function->reasons());
+            } else {
+                throw FunctionError(function,
+                                    functionName(function) + " cannot be merged with attached " + functionName(exists));
+            }
+        }
+        return exists;
+    }
+    attachFunction(function);
+    return function;
+}
+    
 size_t
 Partitioner::attachFunctionBasicBlocks(const Functions &functions) {
     size_t nNewBlocks = 0;
@@ -1632,7 +1669,7 @@ Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const
     // Sort the children in the order usually used by ROSE
     std::sort(children.begin(), children.end(), sortBlocksForAst);
 
-    unsigned reasons = 0;
+    unsigned reasons = function->reasons();
 
     // Is the function part of the CFG?
     ControlFlowGraph::ConstVertexNodeIterator entryVertex = findPlaceholder(function->address());
@@ -1656,7 +1693,7 @@ Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const
     // Build the AST
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
     ast->set_reason(reasons);
-    ast->set_name("");                                  // FIXME[Robb P. Matzke 2014-08-07]
+    ast->set_name(function->name());
     ast->set_may_return(SgAsmFunction::RET_UNKNOWN);    // FIXME[Robb P. Matzke 2014-08-07]
     return ast;
 }

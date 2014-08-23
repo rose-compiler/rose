@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
+#include <AsmFunctionIndex.h>
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
 #include <BinaryLoader.h>
@@ -8,6 +9,7 @@
 #include <DisassemblerMips.h>
 #include <DisassemblerX86.h>
 #include <DisassemblerM68k.h>
+#include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
@@ -69,13 +71,14 @@ struct Settings {
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
+    bool doListFunctions;                               // produce a function index
     bool doListFunctionAddresses;                       // list function entry addresses
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
         : mapVa(NO_ADDRESS), useSemantics(true), followGhostEdges(false), findSwitchCases(true), findDeadCode(true),
-          intraFunctionData(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctionAddresses(false),
-          doShowStats(false), doListUnused(false) {}
+          intraFunctionData(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false),
+          doListFunctionAddresses(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -187,6 +190,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(false, settings.doListCfg)
                .hidden(true));
 
+    out.insert(Switch("list-functions")
+               .intrinsicValue(true, settings.doListFunctions)
+               .doc("Produce a table of contents showing all the functions that were detected.  The @s{no-list-functions} "
+                    "switch disables this.  The default is to " + std::string(settings.doListFunctions?"":"not ") +
+                    "show this information."));
+    out.insert(Switch("no-list-functions")
+               .key("list-functions")
+               .intrinsicValue(false, settings.doListFunctions)
+               .hidden(true));
+
     out.insert(Switch("list-function-entries")
                .intrinsicValue(true, settings.doListFunctionAddresses)
                .doc("Produce a listing of function entry addresses, one address per line in hexadecimal format. Each address "
@@ -272,7 +285,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new X86AbbreviatedPrologue); }
     virtual P2::Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
+    virtual bool match(const P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
         SgAsmx86Instruction *insn = NULL;
         // Look for MOV EDI, EDI
         {
@@ -317,13 +330,56 @@ public:
     }
 };
 
+// Make functions at specimen entry addresses
 static void
 markEntryFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
     if (interp) {
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
             BOOST_FOREACH (const rose_rva_t &rva, fileHeader->get_entry_rvas()) {
                 rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
-                partitioner.attachFunction(P2::Function::instance(va));
+                partitioner.attachOrMergeFunction(P2::Function::instance(va));
+            }
+        }
+    }
+}
+
+// Make functions at error handling addresses
+static void
+markErrorHandlingFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
+    if (interp) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
+                std::vector<P2::Function::Ptr> functions = P2::ModulesElf::findErrorHandlingFunctions(elfHeader);
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                    partitioner.attachOrMergeFunction(function);
+            }
+        }
+    }
+}
+
+// Make functions at import trampolines
+static void
+markImportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
+    if (interp) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
+                std::vector<P2::Function::Ptr> functions = P2::ModulesElf::findPltFunctions(partitioner, elfHeader);
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                    partitioner.attachOrMergeFunction(function);
+            }
+        }
+    }
+}
+
+// Make functions that have symbols
+static void
+markSymbolFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
+    if (interp) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
+                std::vector<P2::Function::Ptr> functions = P2::Modules::findSymbolFunctions(partitioner, elfHeader);
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                    partitioner.attachOrMergeFunction(function);
             }
         }
     }
@@ -357,15 +413,18 @@ findFunctionPrologue(P2::Partitioner &partitioner, rose_addr_t &startVa /*in,out
     return false;
 }
 
-// Tries to assign basic blocks to functions.  Returns the number of functions that were successfully processed.
+// Tries to assign basic blocks to functions.  Returns the number of functions that were successfully processed.  Get a list of
+// functions (those we already found, and those created due to function call edges), and discover basic blocks for each. Attach
+// the functions and their blocks to the CFG.  The discoverFunctionEntryVertices returns a list of functions, some of which are
+// already attached to the CFG/AUM and some which are detached.  Before we add new basic blocks to a function we must detach it
+// from the CFG/AUM.
 static size_t
 findFunctionBlocks(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
-    // Get a list of functions (those we already found, and those created due to function call edges), and discover basic
-    // blocks for each. Attach the functions and their blocks to the CFG.  The discoverFunctionEntryVertices returns a list of
-    // functions, some of which are already attached to the CFG/AUM and some which are detached.  Before we add new basic
-    // blocks to a function we must detach it from the CFG/AUM.
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.discoverFunctionEntryVertices()) {
+    std::vector<P2::Function::Ptr> functions = partitioner.discoverFunctionEntryVertices();
+    BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+        partitioner.attachFunction(function);
+    BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
         P2::mlog[WHERE] <<"Discovering blocks for " <<partitioner.functionName(function) <<"\n";
         partitioner.detachFunction(function);
         if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL))
@@ -554,6 +613,9 @@ int main(int argc, char *argv[]) {
 
 
     markEntryFunctions(partitioner, interp);
+    markErrorHandlingFunctions(partitioner, interp);
+    markImportFunctions(partitioner, interp);
+    markSymbolFunctions(partitioner, interp);
     rose_addr_t prologueVa = 0;
     while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
     findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
@@ -596,6 +658,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    SgAsmBlock *globalBlock = NULL;
+
     // Show the results as requested
     if (settings.doShowStats) {
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
@@ -614,6 +678,12 @@ int main(int argc, char *argv[]) {
     if (settings.doListCfg) {
         std::cout <<"Final control flow graph:\n";
         partitioner.dumpCfg(std::cout, "  ", true);
+    }
+
+    if (settings.doListFunctions) {
+        if (!globalBlock)
+            globalBlock = partitioner.buildAst();
+        std::cout <<AsmFunctionIndex(globalBlock);
     }
 
     if (settings.doListAum) {
@@ -642,7 +712,8 @@ int main(int argc, char *argv[]) {
 
     // Build the AST and unparse it.
     if (settings.doListAsm) {
-        SgAsmBlock *globalBlock = partitioner.buildAst();
+        if (!globalBlock)
+            globalBlock = partitioner.buildAst();
         ControlFlow::BlockGraph cfg = ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(globalBlock);
         AsmUnparser unparser;
         unparser.set_registers(disassembler->get_registers());

@@ -25,7 +25,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
     virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -35,7 +35,7 @@ class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
     virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
 };
 
 } // namespace

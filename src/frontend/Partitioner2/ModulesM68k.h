@@ -18,7 +18,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchLink); } /**< Allocating constructor. */
     virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
 };
 
 /** Adjusts basic block successors for M68k "switch" statements. */
