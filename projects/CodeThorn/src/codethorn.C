@@ -638,6 +638,9 @@ void extractArrayUpdateOperations(Analyzer* ana,
 struct ArrayElementAccessData {
   VariableId varId;
   vector<int> subscripts;
+  VariableId getVariable();
+  int getSubscript(int numOfDimension);
+  int getDimensions();
   ArrayElementAccessData();
   ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping);
   string toString(VariableIdMapping* variableIdMapping);
@@ -652,6 +655,18 @@ struct ArrayElementAccessData {
 };
 
 ArrayElementAccessData::ArrayElementAccessData() {
+}
+
+VariableId ArrayElementAccessData::getVariable() {
+  return varId;
+}
+
+int ArrayElementAccessData::getSubscript(int dimension) {
+  return subscripts.at(dimension);
+}
+
+int ArrayElementAccessData::getDimensions() {
+  return subscripts.size();
 }
 
 string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) {
@@ -965,6 +980,84 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
   myfile.close();
 }
 
+SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping) {
+  SgVariableDeclaration* decl=variableIdMapping->getVariableDeclaration(arrayVar);
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    SgInitializer* initializer=initName->get_initializer();
+    if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
+      SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+      SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+      return exprPtrList;
+    }
+  }
+  cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
+  exit(1);
+}
+    
+
+string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    SgInitializer* initializer=initName->get_initializer();
+    ROSE_ASSERT(initializer);
+    stringstream ss;
+    // x[2] = {1,2};"). In this case the SgExprListExp ("{1,2}") is wrapped in an SgAggregateInitializer
+    // SgExprListExp* SgAggregateInitializer->get_initializers () const 
+    // pointer variable initializer
+    if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
+      string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(decl));
+      SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+      //cout<<"RHS-ARRAY-INIT:"<<rhsOfArrayInit->unparseToString()<<endl;
+      SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+      string newRhs;
+      int num=0;
+      SgType* type=rhsOfArrayInit->get_type();
+      for(SgExpressionPtrList::iterator i=exprPtrList.begin();i!=exprPtrList.end();++i) {
+        ss<<type->unparseToString()<<" "<<arrayName<<"_"<<num<<" = "<<(*i)->unparseToString()<<";\n";
+        num++;
+      }
+      string transformedArrayInitializer=ss.str();
+      return transformedArrayInitializer;
+    } else {
+      cerr<<"Error: attempted to transform non-array initializer."<<endl;
+      exit(1);
+    }
+  } else {
+      cerr<<"Error: attempted to transform non-initialized declaration."<<endl;
+      exit(1);
+  }
+}
+
+bool isArrayAccess(SgNode* node) {
+  return isSgPntrArrRefExp(node)!=0;
+}
+
+bool isPointerVariable(SgVarRefExp* var) {
+  if(var==0)
+    return false;
+  SgType* type=var->get_type();
+  return isSgPointerType(type)!=0;
+}
+
+void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping) {
+  ROSE_ASSERT(isArrayAccess(node));
+  if(SgPntrArrRefExp* arrayAccessAst=isSgPntrArrRefExp(node)) {
+    ArrayElementAccessData arrayAccess(arrayAccessAst,variableIdMapping);
+    ROSE_ASSERT(arrayAccess.getDimensions()==1);
+    VariableId accessVar=arrayAccess.getVariable();
+    int accessSubscript=arrayAccess.getSubscript(0);
+    stringstream newAccess;
+    newAccess<<variableIdMapping->variableName(accessVar)<<"_"<<accessSubscript;
+    SgNodeHelper::replaceAstWithString(node,newAccess.str());
+  } else {
+    cerr<<"Error: transformation of array access failed."<<endl;
+  }
+}
 
 void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
   // 1) transform initializers of global variables : a[]={1,2,3} ==> int a_0=1;int a_1=2;int a_2=3;
@@ -975,56 +1068,43 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
   VariableIdMapping* variableIdMapping=analyzer->getVariableIdMapping();
   Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList=analyzer->computeUsedGlobalVariableDeclarationList(root);
   cout<<"STATUS: number of used global variables: "<<usedGlobalVariableDeclarationList.size()<<endl;
-  typedef map<string,string> ArrayPointerMapType;
   list<pair<SgNode*,string> > toReplaceArrayInitializations;
   list<SgVariableDeclaration*> toDeleteDeclarations;
+  typedef map<VariableId,VariableId> ArrayPointerMapType;
   ArrayPointerMapType arrayPointer; // var,arrayName
   for(Analyzer::VariableDeclarationList::iterator i=usedGlobalVariableDeclarationList.begin();
       i!=usedGlobalVariableDeclarationList.end();
       ++i) {
     SgVariableDeclaration* decl=*i;
+    //cout<<"DEBUG: variableDeclaration:"<<decl->unparseToString()<<endl;
     SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
     ROSE_ASSERT(initName0);
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
       // array initializer
       SgInitializer* arrayInitializer=initName->get_initializer();
-      string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(*i));
-      if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(arrayInitializer)) {
-        // x[2] = {1,2};"). In this case the SgExprListExp ("{1,2}") is wrapped in an SgAggregateInitializer
-        // SgExprListExp* SgAggregateInitializer->get_initializers () const 
-        // pointer variable initializer
-        SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
-        //cout<<"RHS-ARRAY-INIT:"<<rhsOfArrayInit->unparseToString()<<endl;
-        SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
-        string newRhs;
-        int num=0;
-        stringstream ss;
-        SgType* type=rhsOfArrayInit->get_type();
-        for(SgExpressionPtrList::iterator i=exprPtrList.begin();i!=exprPtrList.end();++i) {
-          ss<<type->unparseToString()<<" "<<arrayName<<"_"<<num<<"="<<(*i)->unparseToString()<<";\n";
-          num++;
-        }
-        string transformedArrayInitializer=ss.str();
+      //string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(*i));
+      if(isSgAggregateInitializer(arrayInitializer)) {
+        string transformedArrayInitializer=flattenArrayInitializer(decl,variableIdMapping);
         toReplaceArrayInitializations.push_back(make_pair(decl,transformedArrayInitializer));
         //SgNodeHelper::replaceAstWithString(decl,transformedArrayInitializer);
       } else {
         //cout<<"initName:"<<astTermWithNullValuesToString(initName)<<endl;
-        string variableName=variableIdMapping->variableName(variableIdMapping->variableId(*i));
+        VariableId lhsVarId=variableIdMapping->variableId(*i);
+        string lhsVariableName=variableIdMapping->variableName(lhsVarId);
         SgType* type=variableIdMapping->getType(variableIdMapping->variableId(*i));
         // match: SgInitializedName(SgAssignInitializer(SgVarRefExp))
         // variable on lhs
-        cout<<"Var:"<<variableName<<" of type: "<<type->unparseToString()<<":"<<astTermWithNullValuesToString(type)<<endl;
         // check if variable is a pointer variable
         if(isSgPointerType(type)) {
-          cout<<"IS-POINTER"<<endl;
           AstMatching m;
           MatchResult res;
           res=m.performMatching("SgInitializedName(SgAssignInitializer($varRef=SgVarRefExp))",initName);
           if(res.size()==1) {
             toDeleteDeclarations.push_back(decl);
             MatchResult::iterator j=res.begin();
-            string rhsVarName=isSgVarRefExp((*j)["$varRef"])->unparseToString();
-            arrayPointer[variableName]=rhsVarName;
+            SgVarRefExp* rhsVarRef=isSgVarRefExp((*j)["$varRef"]);
+            VariableId rhsVarId=variableIdMapping->variableId(rhsVarRef);
+            arrayPointer[lhsVarId]=rhsVarId;
             //cout<<"Inserted pair "<<variableName<<":"<<rhsVarName<<endl;
           }
         }
@@ -1042,36 +1122,156 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
         ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
         ROSE_ASSERT(aead.isValid());
         VariableId arrayVar=aead.varId;
-        cout<<"array-element: "<<variableIdMapping->variableName(arrayVar);
+        //cout<<"array-element: "<<variableIdMapping->variableName(arrayVar);
         if(aead.subscripts.size()==1) {
-          cout<<" ArrayIndex:"<<*aead.subscripts.begin();
+          //cout<<" ArrayIndex:"<<*aead.subscripts.begin();
           arrayAccesses.push_back(make_pair(arrAccess,aead));
         } else {
-          cout<<" ArrayIndex: unknown";
+          cout<<"Error: ArrayIndex: unknown (dimension>1)";
+          exit(1);
         }          
-        cout<<endl;
       }
     }
   }
+#if 0
   cout<<"Array-Pointer Map:"<<endl;
   for(ArrayPointerMapType::iterator i=arrayPointer.begin();i!=arrayPointer.end();++i) {
-    cout<<(*i).first<<":"<<(*i).second<<endl;
+    cout<<(*i).first.toString()<<":"<<(*i).second.toString()<<endl;
   }
-  cout<<"To-Replace ArrayInitializations:"<<endl;
+#endif
+  cout<<"Replacing array-initializations."<<endl;
   for(list<pair<SgNode*,string> >::iterator i=toReplaceArrayInitializations.begin();i!=toReplaceArrayInitializations.end();++i) {
-    cout<<(*i).first->unparseToString()<<":\n"<<(*i).second<<endl;
+    //cout<<(*i).first->unparseToString()<<":\n"<<(*i).second<<endl;
+    SgNodeHelper::replaceAstWithString((*i).first,"\n"+(*i).second);
   }
-  cout<<"To-Delete Declarations:"<<endl;
+  cout<<"Transforming Pointer Declarations."<<endl;
   for(list<SgVariableDeclaration*>::iterator i=toDeleteDeclarations.begin();i!=toDeleteDeclarations.end();++i) {
-    cout<<(*i)->unparseToString()<<endl;
+    //cout<<(*i)->unparseToString()<<endl;
+    VariableId declaredPointerVar=variableIdMapping->variableId(*i);
+    SgNode* initName0=(*i)->get_traversalSuccessorByIndex(1); // get-InitializedName
+    ROSE_ASSERT(initName0);
+    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+      // initializer
+      SgInitializer* initializer=initName->get_initializer();
+      if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
+        //cout<<"var-initializer:"<<initializer->unparseToString()<<astTermWithNullValuesToString(initializer)<<endl;
+        if(SgVarRefExp* rhsInitVar=isSgVarRefExp(assignInitializer->get_operand_i())) {
+          VariableId arrayVar=variableIdMapping->variableId(rhsInitVar);
+          SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(arrayVar,variableIdMapping);
+          //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
+          int num=0;
+          stringstream ss;
+          for(SgExpressionPtrList::iterator j=arrayInitializerList.begin();j!=arrayInitializerList.end();++j) {
+            ss<<"int "<<variableIdMapping->variableName(declaredPointerVar)<<"_"<<num<<" = "
+              <<(*j)->unparseToString()
+              <<";\n"
+              ;
+            num++;
+          }
+          SgNodeHelper::replaceAstWithString(*i,"\n"+ss.str());
+        }
+      }
+    }
+#if 0
+    ArrayElementAccessData arrayAccess=
+    ROSE_ASSERT(arrayAccess.getDimensions()==1);
+    VariableId accessVar=arrayAccess.getVariable();
+    int accessSubscript=arrayAccess.getSubscript(0);
+#endif
+    //SageInterface::removeStatement(*i);
+    
+    //SgNodeHelper::replaceAstWithString((*i),"POINTER-INIT-ARRAY:"+(*i)->unparseToString()+"...;");
   }
   
   //list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > 
-  cout<<"To-Replace Expressions:"<<endl;
-  for(ArrayAccessInfoType::iterator i=arrayAccesses.begin();i!=arrayAccesses.end();++i) {
-    cout<<(*i).first->unparseToString()<<":"/*<<(*i).second.xxxx*/<<endl;
+  cout<<"Replacing Expressions ... ";
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(isSgAssignOp(*i)) {
+      if(SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(*i))) {
+        if(isPointerVariable(lhsVar)) {
+          //cout<<"DEBUG: pointer var on lhs :"<<(*i)->unparseToString()<<endl;
+          if(SgVarRefExp* rhsVar=isSgVarRefExp(SgNodeHelper::getRhs(*i))) {
+            VariableId lhsVarId=variableIdMapping->variableId(lhsVar);
+            VariableId rhsVarId=variableIdMapping->variableId(rhsVar);
+            SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(rhsVarId,variableIdMapping);
+            //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
+            int num=0;
+            stringstream ss;
+            for(SgExpressionPtrList::iterator j=arrayInitializerList.begin();j!=arrayInitializerList.end();++j) {
+              ss<<variableIdMapping->variableName(lhsVarId)<<"_"<<num<<" = "
+                <<(*j)->unparseToString();
+
+              // workaround for the fact that the ROSE unparser generates a "\n;" for a replaced assignment
+              {
+                SgExpressionPtrList::iterator j2=j;
+                j2++;
+                if(j2!=arrayInitializerList.end())
+                  ss<<";\n";
+              }
+
+              num++;
+            }
+            SgNodeHelper::replaceAstWithString(*i,ss.str());
+            //SgNodeHelper::replaceAstWithString(*i,"COPY-ARRAY("+lhsVar->unparseToString()+"<="+rhsVar->unparseToString()+")");
+          }
+        } else {
+          RoseAst subAst(*i);
+          for(RoseAst::iterator j=subAst.begin();j!=subAst.end();++j) {
+            if(isArrayAccess(*j)) {
+              //cout<<"DEBUG: arrays access on rhs of assignment :"<<(*i)->unparseToString()<<endl;
+              transformArrayAccess(*j,analyzer->getVariableIdMapping());
+            }
+          }
+        }
+      }
+    }
+    if(SgNodeHelper::isCond(*i)) {
+      RoseAst subAst(*i);
+      for(RoseAst::iterator j=subAst.begin();j!=subAst.end();++j) {
+        if(isArrayAccess(*j)) {
+          transformArrayAccess(*j,analyzer->getVariableIdMapping());
+        }
+      }
+    }
   }
-        
+  cout<<" done."<<endl;
+#if 0
+  for(ArrayAccessInfoType::iterator i=arrayAccesses.begin();i!=arrayAccesses.end();++i) {
+    //cout<<(*i).first->unparseToString()<<":"/*<<(*i).second.xxxx*/<<endl;
+    ArrayElementAccessData arrayAccess=(*i).second;
+    ROSE_ASSERT(arrayAccess.getDimensions()==1);
+    VariableId accessVar=arrayAccess.getVariable();
+    int accessSubscript=arrayAccess.getSubscript(0);
+    // expression is now: VariableId[subscript]
+    // information available is: arrayPointer map: VariableId:pointer -> VariableId:array
+    // pointerArray
+
+    // if the variable is not a pointer var it will now be added to the stl-map but with
+    // a default VariableId. Default variableIds are not valid() IDs.
+    // therefor this becomes a cheap check, whether we need to replace the expression or not.
+    VariableId mappedVar=arrayPointer[accessVar];
+    if(mappedVar.isValid()) {
+      // need to replace
+      stringstream newAccess;
+#if 0
+      newAccess<<variableIdMapping->variableName(mappedVar)<<"["<<accessSubscript<<"]";
+#else
+      newAccess<<variableIdMapping->variableName(accessVar)<<"_"<<accessSubscript<<" ";
+#endif
+      cout<<"to replace: @"<<(*i).first<<":"<<(*i).first->unparseToString()<<" ==> "<<newAccess.str()<<endl;
+      SgNodeHelper::replaceAstWithString((*i).first,newAccess.str());
+    }
+  }
+#endif
+  Analyzer::VariableDeclarationList unusedGlobalVariableDeclarationList=analyzer->computeUnusedGlobalVariableDeclarationList(root);
+  cout<<"STATUS: deleting unused global variables."<<endl;
+  for(Analyzer::VariableDeclarationList::iterator i=unusedGlobalVariableDeclarationList.begin();
+      i!=unusedGlobalVariableDeclarationList.end();
+      ++i) {
+    SgVariableDeclaration* decl=*i;
+    SageInterface::removeStatement(decl);
+  }
+      
 }
 
 #ifdef EXPERIMENTAL_POINTER_ANALYSIS
@@ -1098,7 +1298,7 @@ void pointerAnalysis(SgNode* root, Analyzer* analyzer) {
         if(SgPntrArrRefExp* arrAccess=isSgPntrArrRefExp(rhs)) {
           ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
           ROSE_ASSERT(aead.isValid());
-          cout<<"DEBUG: lhs:"<<variableIdMapping->variableName(lhsVar);
+          //cout<<"DEBUG: lhs:"<<variableIdMapping->variableName(lhsVar);
           //cout<<" rhs:"<<SgNodeHelper::getRhs(isSgAssignOp(*i))->unparseToString();
           VariableId rhsArrayVar=aead.varId;
           cout<<" rhs:"<<"array-element: "<<variableIdMapping->variableName(rhsArrayVar);
@@ -1190,6 +1390,7 @@ int main( int argc, char * argv[] ) {
     ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
+    ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
     ("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
@@ -1261,6 +1462,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
   boolOptions.registerOption("post-collapse-stg",true);
+  boolOptions.registerOption("eliminate-arrays",false);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
@@ -1349,8 +1551,6 @@ int main( int argc, char * argv[] ) {
       analyzer.addInputSequenceValue(*i);
     }
   }
-
-
 
   if(args.count("rersformat")) {
     int year=args["rersformat"].as<int>();
@@ -1564,6 +1764,13 @@ int main( int argc, char * argv[] ) {
     fragmentEndNode=*i;
   }
 
+  if(boolOptions["eliminate-arrays"]) {
+    //analyzer.initializeVariableIdMapping(sageProject);
+    transformArrayProgram(sageProject, &analyzer);
+    sageProject->unparse(0,0);
+    exit(0);
+  }
+
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
@@ -1578,11 +1785,6 @@ int main( int argc, char * argv[] ) {
   }
   #endif
 
-  if(option_debug_mode==401) {
-    transformArrayProgram(sageProject, &analyzer);
-    sageProject->unparse(0,0);
-    exit(0);
-  }
 
   double initRunTime=timer.getElapsedTimeInMilliSec();
 

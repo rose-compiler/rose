@@ -181,6 +181,15 @@ set<string> Analyzer::variableIdsToVariableNames(VariableIdMapping::VariableIdSe
   return res;
 }
 
+Analyzer::VariableDeclarationList Analyzer::computeUnusedGlobalVariableDeclarationList(SgProject* root) {
+  list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(root);
+  Analyzer::VariableDeclarationList usedGlobalVars=computeUsedGlobalVariableDeclarationList(root);
+  for(Analyzer::VariableDeclarationList::iterator i=usedGlobalVars.begin();i!=usedGlobalVars.end();++i) {
+    globalVars.remove(*i);
+  }
+  return globalVars;
+}
+
 Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclarationList(SgProject* root) {
   if(SgProject* project=isSgProject(root)) {
     Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList;

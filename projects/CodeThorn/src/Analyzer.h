@@ -185,6 +185,8 @@ namespace CodeThorn {
     void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
     CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
     
+    //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
+
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
     IOLabeler* getLabeler() const {
@@ -212,6 +214,7 @@ namespace CodeThorn {
     
     set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
     typedef list<SgVariableDeclaration*> VariableDeclarationList;
+    VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
     //bool isAssertExpr(SgNode* node);
