@@ -139,9 +139,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_98.C \
    test2014_100.C \
    test2014_101.C \
-   test2014_104.C \
-   test2014_105.C \
-   test2014_106.C \
+   test2014_102.C \
    test2014_107.C \
    test2014_108.C \
    test2014_109.C \
@@ -166,8 +164,34 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_133.C \
    test2014_134.C \
    test2014_135.C \
+   test2014_136.C \
+   test2014_137.C \
+   test2014_139.C \
+   test2014_140.C \
+   test2014_141.C \
+   test2014_142.C \
+   test2014_143.C \
+   test2014_144.C \
+   test2014_145.C \
+   test2014_146.C \
+   test2014_147.C \
+   test2014_148.C \
+   test2014_149.C \
+   test2014_150.C \
+   test2014_151.C \
+   test2014_152.C \
+   test2014_153.C \
+   test2014_154.C \
+   test2014_155.C \
+   test2014_156.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (8/24/2014): This pass outside of Jenkins but fail for Jenkins 
+# since the location of boost is not specified for the test codes.
+#  test2014_104.C 
+#  test2014_105.C 
+#  test2014_106.C 
 
 # DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
 TESTS_NOT_PASSING = \
@@ -219,7 +243,6 @@ TESTS_NOT_PASSING = \
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_99.C 
-#  test2014_102.C 
 #  test2014_103.C 
 #  test2014_113.C 
 #  test2014_118.C 

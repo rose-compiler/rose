@@ -1849,8 +1849,18 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      printf ("In unparseFuncRefSupport(): nodeReferenceToFunction = %p \n",nodeReferenceToFunction);
 #endif
 
+  // DQ (8/24/2014): test2014_156.C demonstrates where we need to sometime distinquish between when a 
+     if (functionCallExp == NULL)
+        {
+          printf ("This SgFunctionRefExp is not a part of a SgFunctionCallExp, so just using the associated function name. \n");
+
+       // reset the nodeReferenceToFunction to avoid the wrong logic from being used.
+          nodeReferenceToFunction = NULL;
+        }
+
      if (nodeReferenceToFunction != NULL)
         {
+       // See test2005_02.C for an example of where this logic is required fro constructors.
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
           printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
@@ -1863,6 +1873,10 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                functionNameString = i->second.c_str();
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
+#endif
+#if 0
+            // DQ (8/24/2014): reset the string to generate an error so that I can better understand where this name qualification feature is required.
+               functionNameString = "TEST_TEST_TEST";
 #endif
              }
             else

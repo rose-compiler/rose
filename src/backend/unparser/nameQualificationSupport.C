@@ -4739,6 +4739,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                printf ("SgConstructorInitializer's constructor member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                setNameQualification(constructorInitializer,memberFunctionDeclaration,amountOfNameQualificationRequired);
+#if 0
+               printf ("In name qualification: Case of SgConstructorInitializer: memberFunctionDeclaration = %p \n",memberFunctionDeclaration);
+#endif
+#if 0
+               printf ("DONE: Calling setNameQualification() on constructorInitializer: Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
             else
              {
@@ -4775,7 +4782,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // After processing the name qualification for the class declaration, we need to also process the 
        // reference to the type for any name qualification on possible template arguments.
           ROSE_ASSERT(constructorInitializer->get_type() != NULL);
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Calling traverseType() on constructorInitializer = %p class type = %p = %s \n",
                     constructorInitializer,constructorInitializer->get_type(),constructorInitializer->get_type()->class_name().c_str());
 #endif
