@@ -121,7 +121,9 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
      if (firstNondefiningDeclaration == NULL)
         {
        // It appears that some loop transformations (pass3.C) don't set the firstNondefiningDeclaration.
+#if 0
           printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): firstNondefiningDeclaration == NULL: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
           return;
         }
      ROSE_ASSERT(firstNondefiningDeclaration != NULL);

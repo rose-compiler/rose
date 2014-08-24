@@ -4885,8 +4885,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
             // DQ (7/23/2011): This case happens when the SgVarRefExp can not be associated with a statement.
             // I think this only happens when a constant variable is used in an array index of an array type.
+#if 0
                printf ("Case of TransformationSupport::getStatement(varRefExp) == NULL explictlySpecifiedCurrentScope = %p \n",explictlySpecifiedCurrentScope);
-
+#endif
             // DQ (7/24/2011): This fails for the tests/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
             // ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
                if (explictlySpecifiedCurrentScope != NULL)
@@ -7131,7 +7132,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
              }
             else
              {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("In NameQualificationTraversal::setNameQualificationSupport(): Case of skip_over_scope == true! \n");
+#endif
              }
 
        // We have to loop over scopes that are not named scopes!
