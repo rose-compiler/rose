@@ -368,13 +368,13 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
    {
      ROSE_ASSERT(type != NULL);
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseType(): type->class_name() = %s firstPart = %s secondPart = %s \n",
              type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      curprint ( string("\n/* Top of unparseType name ") + type->class_name().c_str()
          + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif

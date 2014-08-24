@@ -10076,7 +10076,6 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
   // build defining declaration
      SgNamespaceDefinitionStatement* namespaceDef = buildNamespaceDefinition();
 
-#if 1
      SgNamespaceDeclarationStatement* defdecl = new SgNamespaceDeclarationStatement(name,namespaceDef,unnamednamespace);
      ROSE_ASSERT(defdecl != NULL);
      namespaceDef->set_parent(defdecl);
@@ -10094,7 +10093,6 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
   // DQ (3/6/2012): For namespaces the definingDeclaration should be NULL.
   // defdecl->set_definingDeclaration(defdecl);
      ROSE_ASSERT(defdecl->get_definingDeclaration() == NULL);
-#endif
 
   // Get the nondefining declaration from the symbol if it has been built (if this works, 
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).

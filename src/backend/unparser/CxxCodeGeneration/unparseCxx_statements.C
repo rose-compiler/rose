@@ -4275,7 +4275,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      printf ("In unparseVarDeclStmt(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In unparseVarDeclStmt(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): info.SkipBaseType()        = %s \n",(info.SkipBaseType() == true) ? "true" : "false");
 #endif
+
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
@@ -4656,7 +4658,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
                printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
+               printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType()        = %s \n",(ninfo_for_type.SkipBaseType() == true) ? "true" : "false");
 #endif
+
             // DQ (1/9/2014): These should have been setup to be the same.
                ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
@@ -4753,7 +4757,33 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // But it would have to be uniform that all the pieces of the first part of the type would have to 
                  // be output.  E.g. "*" in "*X".
                     ninfo_for_type.set_PrintName();
+#if 0
                     unp->u_type->unparseType(tmp_type, ninfo_for_type);
+#else
+                    if (ninfo_for_type.SkipBaseType() == false)
+                       {
+                         unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                       }
+                      else
+                       {
+                      // DQ (8/20/2014): We need to check if this is a pointer or reference (or rvalue reference?).
+#if 0
+                         printf ("In unparseVarDeclStmt(): isAssociatedWithDeclarationList: Note that (ninfo_for_type.SkipBaseType() == true) so type was not unparsed (but we need to handle pointers) \n");
+#endif
+                         SgPointerType* pointerType = isSgPointerType(tmp_type);
+                         if (pointerType != NULL)
+                            {
+                              curprint(" *");
+
+                              SgPointerType* nested_pointerType = isSgPointerType(pointerType->get_base_type());
+                              if (nested_pointerType != NULL)
+                                 {
+                                   curprint(" *");
+                                   printf ("Maybe we need to check the base_type to see if this is a chain of pointers. \n");
+                                 }
+                            }
+                       }
+#endif
 #else
                  // Get the base type and if it is a class or enum, is it associated with a un-named 
                  // declaration (if so then we need to output the name in this associated declaration).
@@ -4809,7 +4839,15 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // DQ (7/28/2012): Output the type if this is not associated with a declaration list from a previous declaration.
                  // unp->u_type->unparseType(tmp_type, ninfo_for_type);
                  // unp->u_type->unparseType(tmp_type, ninfo);
-                    unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                 // unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                    if (ninfo_for_type.SkipBaseType() == false)
+                       {
+                         unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                       }
+                      else
+                       {
+                         printf ("In unparseVarDeclStmt(): Note that (ninfo_for_type.SkipBaseType() == true) so type was not unparsed \n");
+                       }
                   }
 #else
 
@@ -5654,7 +5692,10 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      ninfo.set_current_context(NULL);
      ninfo.set_current_context(classDeclaration->get_type());
 
-  // curprint ( string("/* Print out inheritance */ \n";
+#if 0
+     printf ("In unparseClassDefnStmt(): Print out inheritance \n");
+     curprint("/* Print out inheritance */ \n");
+#endif
 
   // print out inheritance
      SgBaseClassPtrList::iterator p = classdefn_stmt->get_inheritances().begin();
@@ -5713,8 +5754,21 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                curprint(nameQualifier.str());
 
-            // base name
-               curprint ( tmp_decl->get_name().str());
+            // print the base class name
+            // DQ (8/20/2014): We need to output the template name when this is a templated base class.
+            // curprint(tmp_decl->get_name().str());
+               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(tmp_decl);
+#if 0
+               printf ("In unparseClassDefnStmt(): base class output: tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
+#endif
+               if (templateInstantiationDeclaration != NULL)
+                  {
+                    unparseTemplateName(templateInstantiationDeclaration,info);
+                  }
+                 else
+                  {
+                    curprint(tmp_decl->get_name().str());
+                  }
 
                p++;
 
