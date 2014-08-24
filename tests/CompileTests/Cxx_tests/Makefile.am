@@ -137,6 +137,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_96.C \
    test2014_97.C \
    test2014_98.C \
+   test2014_100.C \
+   test2014_101.C \
    test2014_104.C \
    test2014_105.C \
    test2014_106.C \
@@ -149,6 +151,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_114.C \
    test2014_115.C \
    test2014_116.C \
+   test2014_117.C \
    test2014_122.C \
    test2014_123.C \
    test2014_124.C \
@@ -157,6 +160,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_127.C \
    test2014_128.C \
    test2014_129.C \
+   test2014_130.C \
+   test2014_131.C \
+   test2014_132.C \
+   test2014_133.C \
+   test2014_134.C \
+   test2014_135.C \
    lulesh.C \
    luleshTALC.C
 
@@ -196,47 +205,23 @@ TESTS_NOT_PASSING = \
    test2013_321.C \
    test2013_322.C \
    test2013_323.C \
-   test2014_96.C \
-   test2014_97.C \
-   test2014_98.C \
    test2014_99.C \
    test2014_100.C \
    test2014_101.C \
    test2014_102.C \
    test2014_103.C \
-   test2014_104.C \
-   test2014_105.C \
-   test2014_106.C \
-   test2014_107.C \
-   test2014_108.C \
-   test2014_109.C \
-   test2014_110.C \
-   test2014_111.C \
-   test2014_112.C \
    test2014_112.h \
    test2014_113.C \
-   test2014_114.C \
-   test2014_115.C \
-   test2014_116.C \
-   test2014_117.C \
    test2014_118.C \
    test2014_119.C \
    test2014_120.C \
-   test2014_121.C \
-   test2014_122.C \
-   test2014_124.C \
-   test2014_125.C \
-   test2014_126.C \
-   test2014_127.C 
+   test2014_121.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_99.C 
-#  test2014_100.C 
-#  test2014_101.C 
 #  test2014_102.C 
 #  test2014_103.C 
 #  test2014_113.C 
-#  test2014_117.C 
 #  test2014_118.C 
 #  test2014_119.C 
 #  test2014_120.C 
