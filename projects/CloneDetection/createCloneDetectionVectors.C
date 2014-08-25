@@ -71,7 +71,7 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 
      //std::cout << "\n\nVector of names" << std::endl;
 
-#if 1	 
+#if 0	 
 	 //Print out the number of elements found for each variant in the subtree
      for(int i = 0;  i < V_SgNumVariants; i++  ){
        if(returnAttribute.nodesInSubtree[i] > 0)
@@ -81,7 +81,9 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 #endif
 
 	 //Write to the file specified in the config file on the commandline
-	 if( std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end())
+	 if( std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end() && 
+             astNode->get_file_info() != NULL && astNode->get_file_info()->isCompilerGenerated() == false 
+           )
 	 {
 
 	   int numTokens = 0;

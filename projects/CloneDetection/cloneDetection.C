@@ -232,5 +232,7 @@ int main( int argc, char * argv[] ) {
 
 	t.myfile.close();
 
+        return backend(project);
+
 }
 
