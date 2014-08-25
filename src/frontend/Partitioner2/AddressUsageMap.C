@@ -196,9 +196,11 @@ AddressUsers::intersection(const AddressUsers &other) const {
     while (i<size() && j<other.size()) {
         while (i<size() && users_[i] < other.users_[j])
             ++i;
+        if (i>=size())
+            break; 
         while (j<other.size() && other.users_[j] < users_[i])
             ++j;
-        if (i<size() && j<other.size() && users_[i]==other.users_[j]) {
+        if (j<other.size() && users_[i]==other.users_[j]) {
             retval.users_.push_back(users_[i]);
             ++i;
             ++j;
@@ -229,6 +231,19 @@ AddressUsers::union_(const AddressUsers &other) const {
         retval.users_.push_back(other.users_[j++]);
     ASSERT_require(retval.isConsistent());
     return retval;
+}
+
+void
+AddressUsers::insert(const AddressUsers &other) {
+    if (users_.empty()) {
+        users_ = other.users_;
+    } else {
+        BOOST_FOREACH (const AddressUser &user, other.users_) {
+            std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
+            if (lb==users_.end() || !(*lb==user))
+                users_.insert(lb, user);
+        }
+    }
 }
 
 bool
@@ -431,7 +446,7 @@ AddressUsers
 AddressUsageMap::overlapping(const AddressInterval &interval) const {
     AddressUsers retval;
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval))
-        retval = retval.union_(node.value());
+        retval.insert(node.value());
     return retval;
 }
 

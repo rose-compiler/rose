@@ -5,14 +5,12 @@
 #include <Partitioner2/Exception.h>
 #include <Partitioner2/Utility.h>
 
+#include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
 #include "DispatcherM68k.h"
 #include "Diagnostics.h"
 
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-02]
-#include "AsmUnparser_compat.h"
-#endif
-
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <sawyer/ProgressBar.h>
 #include <sawyer/Stack.h>
@@ -43,6 +41,14 @@ Partitioner::init() {
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
+}
+
+void
+Partitioner::clear() {
+    cfg_.clear();
+    vertexIndex_.clear();
+    aum_.clear();
+    functions_.clear();
 }
 
 // Label the progress report and also show some other statistics.  It is okay for this to be slightly expensive since its only
@@ -1245,27 +1251,47 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
     Function::Ptr exists;
     if (functions_.getOptional(function->address()).assignTo(exists)) {
         if (exists != function) {
-            bool canMerge = false;
-            do {
+            bool canMerge = true;
+            for (int pass=0; pass<2 && canMerge; ++pass) { // first pass to check, second pass to make changes
                 // FIXME[Robb P. Matzke 2014-08-23]: we could relax these: found could be a subset of exists
-                if (exists->basicBlockAddresses().size() != function->basicBlockAddresses().size())
+                if (0==pass) {
+                    if (exists->basicBlockAddresses().size() != function->basicBlockAddresses().size()) {
+                        canMerge = false;
+                        break;
+                    }
+                    if (!std::equal(exists->basicBlockAddresses().begin(), exists->basicBlockAddresses().end(),
+                                    function->basicBlockAddresses().begin())) {
+                        canMerge = false;
+                        break;
+                    }
+                    if (exists->dataBlocks().size() != function->dataBlocks().size()) {
+                        canMerge = false;
+                        break;
+                    }
+                    if (!std::equal(exists->dataBlocks().begin(), exists->dataBlocks().end(), function->dataBlocks().begin())) {
+                        canMerge = false;
+                        break;
+                    }
+                }
+
+                // Function name. Use new function's name if existing function has no name.  If names are the same except for
+                // the "@plt" part then use the version with the "@plt".
+                if (exists->name() == function->name()) {
+                    // nothing to do
+                } else if (exists->name().empty()) {
+                    if (pass>0)
+                        exists->name(function->name());
+                } else if (boost::ends_with(exists->name(), "@plt") && boost::starts_with(exists->name(), function->name())) {
+                    // nothing to do
+                } else if (boost::ends_with(function->name(), "@plt") && boost::starts_with(function->name(), exists->name())) {
+                    if (pass>0)
+                        exists->name(function->name());
+                } else {
+                    canMerge = false;
                     break;
-                if (!std::equal(exists->basicBlockAddresses().begin(), exists->basicBlockAddresses().end(),
-                                function->basicBlockAddresses().begin()))
-                    break;
-                if (exists->dataBlocks().size() != function->dataBlocks().size())
-                    break;
-                if (!std::equal(exists->dataBlocks().begin(), exists->dataBlocks().end(), function->dataBlocks().begin()))
-                    break;
-                if (!exists->name().empty() && !function->name().empty() && exists->name()!=function->name())
-                    break;
-                canMerge = true;
-            } while (0);
-            if (canMerge) {
-                if (exists->name().empty())
-                    exists->name(function->name());
-                exists->insertReasons(function->reasons());
-            } else {
+                }
+            }
+            if (!canMerge) {
                 throw FunctionError(function,
                                     functionName(function) + " cannot be merged with attached " + functionName(exists));
             }

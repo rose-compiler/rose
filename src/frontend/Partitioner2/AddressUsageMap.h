@@ -108,7 +108,7 @@ public:
  *  function and basic block owners). The list is maintained in a sorted order.  The class ensures that all users in the list
  *  have valid pointers and that the list contains no duplicates. */
 class AddressUsers {
-    std::vector<AddressUser> users_;
+    std::vector<AddressUser> users_;                    // sorted
 public:
     /** Constructs an empty list. */
     AddressUsers() {}
@@ -155,6 +155,11 @@ public:
      *  record. */
     void insertDataBlock(const OwnedDataBlock&);
 
+    /** Inser a user.
+     *
+     *  The specified user information is inserted into this list of users.  If this list already contains an equal record then
+     *  the specified record is not inserted. */
+    void insert(const AddressUsers&);
 
     /** Erase an instruction.
      *
@@ -239,6 +244,9 @@ public:
      *  Returns true if the map contains no instructions or data, false if it contains at least one instruction or at least one
      *  data block. */
     bool isEmpty() const { return map_.isEmpty(); }
+
+    /** Reset map to initial empty state. */
+    void clear() { map_.clear(); }
 
     /** Number of addresses represented by the map.
      *

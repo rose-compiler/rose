@@ -23,7 +23,7 @@ MatchLink::match(const Partitioner *partitioner, rose_addr_t anchor) {
         if (insn->get_kind()==m68k_link && args.size()==2 &&
             (rre=isSgAsmDirectRegisterExpression(args[0])) && rre->get_descriptor()==REG_A6 &&
             (offset=isSgAsmIntegerValueExpression(args[1])) && offset->get_signedValue()<=0) {
-            function_ = Function::instance(anchor);
+            function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
             return true;
         }
     }

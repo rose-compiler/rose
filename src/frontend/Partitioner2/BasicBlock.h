@@ -301,7 +301,7 @@ public:
 private:
     friend class Partitioner;
     void init(const Partitioner*);
-    void freeze() { isFrozen_ = true; }
+    void freeze() { isFrozen_ = true; optionalPenultimateState_ = Sawyer::Nothing(); }
     void thaw() { isFrozen_ = false; }
 };
 

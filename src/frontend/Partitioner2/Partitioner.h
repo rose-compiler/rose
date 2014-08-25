@@ -206,7 +206,7 @@ namespace Partitioner2 {
 class Partitioner {
 private:
     InstructionProvider instructionProvider_;           // cache for all disassembled instructions
-    const MemoryMap &memoryMap_;                        // description of memory, especially insns and non-writable
+    MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     VertexIndex vertexIndex_;                           // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
@@ -234,6 +234,9 @@ public:
 
     static void initDiagnostics();
 
+    /** Reset CFG/AUM to initial state. */
+    void clear();
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner CFG queries
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -244,8 +247,16 @@ public:
     const InstructionProvider& instructionProvider() const { return instructionProvider_; }
     /** @} */
 
-    /** Returns the memory map. */
+    /** Returns the memory map.
+     *
+     *  It is generally unwise to make extensive changes to a memory map after the partitioner has started using it, because
+     *  that means that any instructions or data obtained earlier from the map might not be an accurate representation of
+     *  memory anymore.
+     *
+     *  @{ */
     const MemoryMap& memoryMap() const { return memoryMap_; }
+    MemoryMap& memoryMap() { return memoryMap_; }
+    /** @} */
 
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const { return aum_.size(); }

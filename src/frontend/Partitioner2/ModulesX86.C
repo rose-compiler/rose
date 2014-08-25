@@ -9,6 +9,7 @@ namespace ModulesX86 {
 
 bool
 MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
     const RegisterDescriptor bp(x86_regclass_gpr, x86_gpr_bp, 0,
                                 partitioner->instructionProvider().instructionPointerRegister().get_nbits());
     const RegisterDescriptor sp(x86_regclass_gpr, x86_gpr_sp, 0, bp.get_nbits());
@@ -17,9 +18,9 @@ MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
     SgAsmx86Instruction *insn = NULL; 
     {
         rose_addr_t pushVa = anchor;
-        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
         if (partitioner->instructionExists(pushVa))
             return false;                               // already in the CFG/AUM
+        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
         if (!insn || insn->get_kind()!=x86_push)
             return false;
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -49,10 +50,9 @@ MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
             return false;
     }
 
-    function_ = Function::instance(anchor);
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
     return true;
 }
-
 
 bool
 MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
@@ -79,7 +79,26 @@ MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
     if (!MatchStandardPrologue::match(partitioner, insn->get_address()+insn->get_size()))
         return false;
 
-    function_ = Function::instance(anchor);
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    return true;
+}
+
+bool
+MatchEnterPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+    if (partitioner->instructionExists(anchor))
+        return false;                                   // already in the CFG/AUM
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(anchor));
+    if (!insn || insn->get_kind()!=x86_enter)
+        return false;
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (2!=args.size())
+        return false;
+    SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
+    if (!arg || 0!=arg->get_absoluteValue())
+        return false;
+
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
     return true;
 }
 

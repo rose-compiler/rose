@@ -11,6 +11,7 @@
 #include <DisassemblerM68k.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesM68k.h>
+#include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -18,6 +19,23 @@
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
+
+#if 1 // DEBUGGING [Robb P. Matzke 2014-08-24]
+#include "AsmUnparser_compat.h"
+#endif
+
+
+// FIXME[Robb P. Matzke 2014-08-24]: These matchers still need to be implemented:
+/* 
+ | name                   | purpose                                                   |
+ |------------------------+-----------------------------------------------------------|
+ | mark_call_insns        | find CALL insns and make functions at their target        |
+ | FindFunctionFragments  | uses code criteria to make code from data                 |
+ | FindThunks             | makes functions from BB's containing only a JMP           |
+ | FindInterpadFunctions  | find functions between other functions                    |
+ | FindThunkTables        | find long sequences of JMP instructions                   |
+ | FindPostFunctionInsns  |                                                           |
+ */
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
@@ -360,10 +378,30 @@ markErrorHandlingFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *in
 // Make functions at import trampolines
 static void
 markImportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
+    // Windows PE imports
+    P2::ModulesPe::rebaseImportAddressTables(partitioner, P2::ModulesPe::getImportIndex(interp));
+    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesPe::findImportFunctions(partitioner, interp))
+        partitioner.attachOrMergeFunction(function);
+    
+    // ELF imports
     if (interp) {
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
             if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
                 std::vector<P2::Function::Ptr> functions = P2::ModulesElf::findPltFunctions(partitioner, elfHeader);
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                    partitioner.attachOrMergeFunction(function);
+            }
+        }
+    }
+}
+
+// Make functions at export addresses
+static void
+markExportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
+    if (interp) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            if (SgAsmPEFileHeader *peHeader = isSgAsmPEFileHeader(fileHeader)) {
+                std::vector<P2::Function::Ptr> functions = P2::ModulesPe::findExportFunctions(partitioner, peHeader);
                 BOOST_FOREACH (const P2::Function::Ptr &function, functions)
                     partitioner.attachOrMergeFunction(function);
             }
@@ -585,7 +623,6 @@ int main(int argc, char *argv[]) {
         if (!disassembler && !(disassembler = Disassembler::lookup(interp)))
             throw std::runtime_error("an instruction set architecture could not be discerned");
     }
-    map.dump(std::cerr);
     disassembler->set_progress_reporting(-1.0);         // turn it off
     size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
 
@@ -603,6 +640,7 @@ int main(int argc, char *argv[]) {
     partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchStandardPrologue::instance());
     partitioner.functionPrologueMatchers().push_back(X86AbbreviatedPrologue::instance());
     partitioner.functionPrologueMatchers().push_back(P2::ModulesM68k::MatchLink::instance());
+    partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchEnterPrologue::instance());
     if (settings.findSwitchCases)
         partitioner.successorCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
@@ -615,8 +653,10 @@ int main(int argc, char *argv[]) {
     markEntryFunctions(partitioner, interp);
     markErrorHandlingFunctions(partitioner, interp);
     markImportFunctions(partitioner, interp);
+    markExportFunctions(partitioner, interp);
     markSymbolFunctions(partitioner, interp);
     rose_addr_t prologueVa = 0;
+    partitioner.memoryMap().dump(std::cerr);
     while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
     findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
     if (settings.findDeadCode)
@@ -633,7 +673,7 @@ int main(int argc, char *argv[]) {
         if (0==partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
             partitioner.attachFunction(function);
         } else {
-            P2::mlog[WARN] <<"discovery for function " <<StringUtility::addrToString(function->address())
+            P2::mlog[WARN] <<"discovery for " <<partitioner.functionName(function)
                            <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                            <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
             BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges) {
@@ -657,6 +697,10 @@ int main(int argc, char *argv[]) {
 #endif
         }
     }
+
+    // Now that the partitioner's work is all done, try to give names to some things.
+    if (interp)
+        P2::ModulesPe::nameImportThunks(partitioner, interp);
 
     SgAsmBlock *globalBlock = NULL;
 
@@ -721,6 +765,14 @@ int main(int argc, char *argv[]) {
         unparser.staticDataDisassembler.init(disassembler);
         unparser.unparse(std::cout, globalBlock);
     }
-    
+
+#if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
+    // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
+    partitioner.clear();
+    InsnSemanticsExpr::TreeNode::poolAllocator().showInfo(std::cerr);
+    std::cerr <<"all done; entering busy loop\n";
+    while (1);                                          // makes us easy to find in process listings
+#endif
+
     exit(0);
 }

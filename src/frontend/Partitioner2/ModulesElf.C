@@ -35,7 +35,7 @@ PltEntryMatcher::match(const Partitioner *partitioner, rose_addr_t anchor) {
     static bool warned = false;
     const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
     if (insn && !insnX86 && !warned && REG_IP.get_nbits()!=32) {
-        mlog[WARN] <<"ModulesELF::pltEntryMatcher does not yet support this ISA\n";
+        mlog[WARN] <<"ModulesElf::pltEntryMatcher does not yet support this ISA\n";
         warned = true;
     }
 
