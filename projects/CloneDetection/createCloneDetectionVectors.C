@@ -119,16 +119,17 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 		   int n_decls = 0;
 
 		   for( VariantVector::iterator iItr = stmts.begin(); 
-			   iItr != stmts.end(); ++iItr )
-			 n_stmts+=stmts[*iItr];
+			   iItr != stmts.end(); ++iItr ){
+			 n_stmts+=returnAttribute.nodesInSubtree[*iItr];
+                   }
 
 		   for( VariantVector::iterator iItr = exprs.begin(); 
 			   iItr != exprs.end(); ++iItr )
-			 n_exprs+=exprs[*iItr];
+			 n_exprs+=returnAttribute.nodesInSubtree[*iItr];
 
 		   for( VariantVector::iterator iItr = decls.begin(); 
 			   iItr != decls.end(); ++iItr )
-			 n_decls+=decls[*iItr];
+			 n_decls+=returnAttribute.nodesInSubtree[*iItr];
 
 
 		   myfile << "# FILE:" <<astNode->get_file_info()->get_filenameString();
