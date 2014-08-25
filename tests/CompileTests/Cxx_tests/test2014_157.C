@@ -1,29 +1,35 @@
 #include <vector>
 
-namespace XXX {
+namespace XXX 
+   {
      void foobar(const int def[3]);
-} // namespace XXX
+   } // namespace XXX
 
-namespace XXX {
-namespace {
-
-const unsigned size = 3;
-
-struct AAA
+namespace XXX 
    {
-     bool isPeriodic;
-   };
+     namespace 
+        {
 
-struct YYY;
-std::vector<YYY*> boundary_data;
+          const unsigned size = 3;
 
-} // unnamed namespace, back to XXX
+          struct AAA
+             {
+               bool isPeriodic;
+             };
 
-void foobar( const int def[size] )
-   {
-     AAA abc;
+       // struct YYY;
+          struct YYY {};
+          std::vector<YYY*> boundary_data;
 
-     abc.isPeriodic = false;
-   }
+      } // unnamed namespace, back to XXX
 
-} // namespace XXX
+#if 1
+     void foobar( const int def[size] )
+        {
+#if 0
+          AAA abc;
+          abc.isPeriodic = false;
+#endif
+        }
+#endif
+   } // namespace XXX

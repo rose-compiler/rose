@@ -137,6 +137,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_96.C \
    test2014_97.C \
    test2014_98.C \
+   test2014_99.C \
    test2014_100.C \
    test2014_101.C \
    test2014_102.C \
@@ -184,6 +185,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_154.C \
    test2014_155.C \
    test2014_156.C \
+   test2014_157.C \
+   test2014_159.C \
    lulesh.C \
    luleshTALC.C
 
@@ -242,7 +245,6 @@ TESTS_NOT_PASSING = \
    test2014_121.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
-#  test2014_99.C 
 #  test2014_103.C 
 #  test2014_113.C 
 #  test2014_118.C 
