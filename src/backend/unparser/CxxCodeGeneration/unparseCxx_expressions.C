@@ -321,8 +321,13 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
 
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
 
+  // DQ (8/24/2014): Made this a warning instead of an error (see unparseToString/test2004_35.C).
   // DQ (5/7/2013): I think these should be false so that the full type will be output.
-     ROSE_ASSERT(info.isTypeFirstPart()  == false);
+     if (info.isTypeFirstPart()  == true)
+        {
+          printf ("WARNING: In unparseTemplateName(): info.isTypeFirstPart() == true \n");
+        }
+  // ROSE_ASSERT(info.isTypeFirstPart()  == false);
      ROSE_ASSERT(info.isTypeSecondPart() == false);
 
 #if 1
@@ -1852,8 +1857,9 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
   // DQ (8/24/2014): test2014_156.C demonstrates where we need to sometime distinquish between when a 
      if (functionCallExp == NULL)
         {
+#if DEBUG_FUNCTION_REFERENCE_SUPPORT
           printf ("This SgFunctionRefExp is not a part of a SgFunctionCallExp, so just using the associated function name. \n");
-
+#endif
        // reset the nodeReferenceToFunction to avoid the wrong logic from being used.
           nodeReferenceToFunction = NULL;
         }

@@ -10072,6 +10072,12 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#endif
+
   // TODO How about class type??
   // build defining declaration
      SgNamespaceDefinitionStatement* namespaceDef = buildNamespaceDefinition();
@@ -10258,7 +10264,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
 
        // nondefdecl->set_parent(topScopeStack());
           nondefdecl->set_parent(scope);
-                  ROSE_ASSERT(nondefdecl->get_parent());
+          ROSE_ASSERT(nondefdecl->get_parent());
 
           if (scope != NULL)
              {
