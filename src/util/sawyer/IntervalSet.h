@@ -45,6 +45,7 @@ public:
         bool equal(const ConstNodeIterator &other) const { return iter_ == other.iter_; }
         void increment() { ++iter_; }
         void decrement() { --iter_; }
+        MapNodeIterator base() const { return iter_; }
     };
 
     /** Scalar value iterator.
@@ -194,6 +195,33 @@ public:
      *  Returns an iterator to the matching node, or the end iterator if no such node exists. */
     ConstNodeIterator find(const typename Interval::Value &scalar) const {
         return ConstNodeIterator(map_.find(scalar));
+    }
+
+    /** Finds all nodes overlapping the specified interval.
+     *
+     *  Returns an iterator range that enumerates the nodes that overlap with the specified interval. */
+    boost::iterator_range<ConstNodeIterator> findAll(const Interval &interval) const {
+        boost::iterator_range<typename Map::ConstNodeIterator> range = map_.findAll(interval);
+        return boost::iterator_range<ConstNodeIterator>(ConstNodeIterator(range.begin()), ConstNodeIterator(range.end()));
+    }
+
+    /** Finds first node that overlaps with the specified interval.
+     *
+     *  Returns an iterator to the matching node, or the end iterator if no such node exists. */
+    ConstNodeIterator findFirstOverlap(const Interval &interval) const {
+        return ConstNodeIterator(map_.findFirstOverlap(interval));
+    }
+    /** @} */
+
+    /** Find first nodes that overlap.
+     *
+     *  Given two ranges of iterators for two sets, advance the iterators to the closest nodes that overlap with each other,
+     *  and return the result as two iterators.  If no overlaps can be found then the return value is two end iterators. */
+    std::pair<ConstNodeIterator, ConstNodeIterator>
+    findFirstOverlap(ConstNodeIterator thisIter, const IntervalSet &other, ConstNodeIterator otherIter) const {
+        std::pair<typename Map::ConstNodeIterator, typename Map::ConstNodeIterator> found =
+            map_.findFirstOverlap(thisIter.base(), other.map_, otherIter.base());
+        return std::make_pair(ConstNodeIterator(found.first), ConstNodeIterator(found.second));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -385,6 +413,13 @@ public:
         map_.clear();
     }
 
+    /** Invert.
+     *
+     *  Invert this set in place. */
+    void invert() {
+        invert(Interval::whole());
+    }
+
     /** Invert and intersect.
      *
      *  Inverts this set and then intersects it with @p restricted. */
@@ -467,20 +502,94 @@ public:
     /** Interset with specified values.
      *
      *  Computes in place intersection of this container with the specified argument.  The argument may be an interval (or
-     *  scalar if the interval has an implicit constructor), another set whose interval type is convertible to this set's
-     *  interval type, or an IntervalMap whose intervals are convertible.
+     *  scalar if the interval has an implicit constructor), or another set whose interval type is convertible to this set's
+     *  interval type.
      *
      * @{ */
     template<class Interval2>
-    void intersect(const Interval2 &interval);          // FIXME[Robb Matzke 2014-04-12]: not implemented yet
+    void intersect(const Interval2 &interval) {
+        if (isEmpty())
+            return;
+        if (interval.isEmpty()) {
+            clear();
+            return;
+        }
+        if (hull().least() < interval.least())
+            map_.eraseMultiple(Interval::hull(hull().least(), interval.least()-1));
+        if (hull().greatest() > interval.greatest())
+            map_.eraseMultiple(Interval::hull(interval.greatest(), hull.greatest()));
+    }
 
     template<class Interval2>
-    void intersect(const IntervalSet<Interval2> &other);// FIXME[Robb Matzke 2014-04-12]: not implemented yet
+    void intersect(IntervalSet<Interval2> other) {
+        other.invert(hull());
+        map_.eraseMultiple(other.map_);
+    }
 
     template<class Interval2, class T, class Policy>
     void intersect(const IntervalMap<Interval2, T, Policy> &other);// FIXME[Robb Matzke 2014-04-12]: not implemented yet
     /** @} */
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Operators
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Determines if two sets contain the same elements. */
+    bool operator==(const IntervalSet &other) const {
+        return !(*this!=other);
+    }
+
+    /** Determines if two sets contain different elements. */
+    bool operator!=(const IntervalSet &other) const {
+        if (map_.nIntervals()!=other.map_.nIntervals())
+            return true;
+        for (ConstNodeIterator ai=nodes().begin(), bi=other.nodes().begin(); ai!=nodes().end(); ++ai, ++bi) {
+            if (*ai!=*bi)
+                return true;
+        }
+        return false;
+    }
+        
+    /** Return inverse of specified set. */
+    IntervalSet operator~() const {
+        IntervalSet tmp = *this;
+        tmp.invert();
+        return tmp;
+    }
+
+    /** Union of two sets. */
+    IntervalSet operator|(const IntervalSet &other) const {
+        if (nIntervals() < other.nIntervals()) {
+            IntervalSet tmp = other;
+            tmp.insertMultiple(*this);
+            return tmp;
+        }
+        IntervalSet tmp = *this;
+        tmp.insertMultiple(other);
+        return tmp;
+    }
+
+    /** Intersection of two sets. */
+    IntervalSet operator&(const IntervalSet &other) const {
+        if (nIntervals() < other.nIntervals()) {
+            IntervalSet tmp = other;
+            tmp.intersect(*this);
+            return tmp;
+        }
+        IntervalSet tmp = *this;
+        tmp.intersect(other);
+        return tmp;
+    }
+
+    /** Subtract another set from this one.
+     *
+     *  <code>A-B</code> is equivalent to <code>A & ~B</code> but perhaps faster. */
+    IntervalSet operator-(const IntervalSet &other) const {
+        IntervalSet tmp = *this;
+        tmp.eraseMultiple(other);
+        return tmp;
+    }
 };
 
 } // namespace

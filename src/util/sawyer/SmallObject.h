@@ -14,6 +14,9 @@ class SAWYER_EXPORT SmallObject {
     static PoolAllocator allocator_;
 #include <sawyer/WarningsRestore.h>
 public:
+    /** Return the pool allocator for this class. */
+    static PoolAllocator& poolAllocator() { return allocator_; }
+
     static void *operator new(size_t size) { return allocator_.allocate(size); }
     static void operator delete(void *ptr, size_t size) { allocator_.deallocate(ptr, size); }
 };

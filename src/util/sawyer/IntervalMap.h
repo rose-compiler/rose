@@ -314,12 +314,16 @@ public:
      *
      *  @{ */
     boost::iterator_range<NodeIterator> findAll(const Interval &interval) {
+        if (interval.isEmpty())
+            return boost::iterator_range<NodeIterator>(nodes().end(), nodes().end());
         NodeIterator begin = lowerBound(interval.least());
         if (begin==nodes().end() || begin->key().least() > interval.greatest())
             return boost::iterator_range<NodeIterator>(nodes().end(), nodes().end());
         return boost::iterator_range<NodeIterator>(begin, upperBound(interval.greatest()));
     }
     boost::iterator_range<ConstNodeIterator> findAll(const Interval &interval) const {
+        if (interval.isEmpty())
+            return boost::iterator_range<ConstNodeIterator>(nodes().end(), nodes().end());
         ConstNodeIterator begin = lowerBound(interval.least());
         if (begin==nodes().end() || begin->key().least() > interval.greatest())
             return boost::iterator_range<ConstNodeIterator>(nodes().end(), nodes().end());
@@ -333,10 +337,14 @@ public:
      *
      * @{ */
     NodeIterator findFirstOverlap(const Interval &interval) {
+        if (interval.isEmpty())
+            return nodes().end();
         NodeIterator lb = lowerBound(interval.least());
         return lb!=nodes().end() && interval.isOverlapping(lb->key()) ? lb : nodes().end();
     }
     ConstNodeIterator findFirstOverlap(const Interval &interval) const {
+        if (interval.isEmpty())
+            return nodes().end();
         ConstNodeIterator lb = lowerBound(interval.least());
         return lb!=nodes().end() && interval.isOverlapping(lb->key()) ? lb : nodes().end();
     }
@@ -759,8 +767,7 @@ public:
 // FIXME[Robb Matzke 2014-04-13]
 //    // Intersection
 //    void intersect(const Interval&);
-//    template<T2, Policy2>
-//    void intersect(const IntervalMap<Interval, T2, Policy2> &other);
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -71,6 +71,16 @@ public:
        }
     }
 
+    /** Destructor.
+     *
+     *  The destructor invokes the destructor for the value if a value is stored, otherwise it does nothing. */
+    ~Optional() {
+        if (!isEmpty_) {
+            Value &thisValue = **this;
+            thisValue.~Value();
+        }
+    }
+
     /** Value assignment.
      *
      *  Assigns the @p value to this optional. If this optional previously contained a value then the @ref Value assignment
