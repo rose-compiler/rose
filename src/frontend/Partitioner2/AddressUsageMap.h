@@ -11,6 +11,7 @@
 #include <sawyer/Optional.h>
 
 #include <algorithm>
+#include <boost/foreach.hpp>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -40,6 +41,12 @@ public:
 
     /** Constructs a new user which is a data block. The data block must not be the null pointer. */
     AddressUser(const OwnedDataBlock &odblock): insn_(NULL), odblock_(odblock) {}
+
+    /** Predicate returning true if user is a basic block or instruction. */
+    bool isBasicBlock() const { return insn_!=NULL; }
+
+    /** Predicate returning true if user is a data block. */
+    bool isDataBlock() const { return odblock_.dataBlock()!=NULL; }
 
     /** Return the instruction.
      *
@@ -173,6 +180,35 @@ public:
      *  then this is a no-op. */
     void eraseDataBlock(const DataBlock::Ptr&);
 
+    /** Selector to select all users.
+     *
+     *  This selector is the default for methods like @ref AddressUsageMap::overlapping, and causes all users to be selected. */
+    static bool selectAllUsers(const AddressUser&) { return true; }
+
+    /** Selector to select instructions and basic blocks.
+     *
+     *  This selector can be passed as the argument to the @ref select method, or to methods like @ref
+     *  AddressUsageMap::overlapping to select only those users that are instructions and basic blocks. */
+    static bool selectBasicBlocks(const AddressUser &user) { return user.isBasicBlock(); }
+
+    /** Selector to select data blocks.
+     *
+     *  This selector can be passed as the argument to the @ref select method, or to methods like @ref
+     *  AddressUsageMap::overlapping to select only those users that are data blocks. */
+    static bool selectDataBlocks(const AddressUser &user) { return user.isDataBlock(); }
+
+    /** Selects certain users from a list.
+     *
+     *  Returns a new address users list containing only those users for which the predicate returns true. */
+    template<class UserPredicate>
+    AddressUsers select(UserPredicate predicate) const {
+        AddressUsers retval;
+        BOOST_FOREACH (const AddressUser &user, users_) {
+            if (predicate(user))
+                retval.users_.push_back(user);
+        }
+        return retval;
+    }
 
     /** Return all address users.
      *
@@ -182,12 +218,12 @@ public:
     /** Returns all instruction users.
      *
      *  Returns a new list of address users that contains only the instruction users from this list. */
-    AddressUsers instructionUsers() const;
+    AddressUsers instructionUsers() const { return select(selectBasicBlocks); }
 
     /** Returns all data block users.
      *
      *  Returns a new list of address users that contains only the data block users from this list. */
-    AddressUsers dataBlockUsers() const;
+    AddressUsers dataBlockUsers() const { return select(selectDataBlocks); }
 
     /** Returns all basic blocks.
      *
@@ -262,16 +298,18 @@ public:
     /** Addresses represented.
      *
      *  Returns the set of addresses that are represented. */
-    Sawyer::Container::IntervalSet<AddressInterval> extent() const;
+    AddressIntervalSet extent() const;
 
     /** Addresses not represented.
      *
      *  Returns the set of addresses that are not represented.  The nBits argument is the number of bits in the virtual address
-     *  space, usually 32 or 64, and must be between 1 and 64, inclusive; or an interval can be supplied.
+     *  space, usually 32 or 64, and must be between 1 and 64, inclusive. Alternatively, an interval or interval set can be
+     *  supplied to limit the return value.
      *
      *  @{ */
-    Sawyer::Container::IntervalSet<AddressInterval> unusedExtent(size_t nBits) const;
-    Sawyer::Container::IntervalSet<AddressInterval> unusedExtent(const AddressInterval&) const;
+    AddressIntervalSet unusedExtent(size_t nBits) const;
+    AddressIntervalSet unusedExtent(const AddressInterval&) const;
+    AddressIntervalSet unusedExtent(const AddressIntervalSet&) const;
     /** @} */
 
     /** Determines whether an instruction exists in the map.
@@ -308,22 +346,69 @@ public:
     /** Find address users that span the entire interval.
      *
      *  The return value is a vector of address users (instructions and/or data blocks) sorted by starting address where each
-     *  user starts at or before the beginning of the interval and ends at or after the end of the interval. */
-    AddressUsers spanning(const AddressInterval&) const;
+     *  user starts at or before the beginning of the interval and ends at or after the end of the interval. The specified
+     *  predicate is used to select which users are inserted into the result and should be a functor that takes an AddressUser
+     *  as an argument and returns true to select that user for inclusion in the result.
+     *
+     * @{ */
+    AddressUsers spanning(const AddressInterval &interval) const {
+        return spanning(interval, AddressUsers::selectAllUsers);
+    }
+    
+    template<class UserPredicate>
+    AddressUsers spanning(const AddressInterval &interval, UserPredicate userPredicate) const {
+        AddressUsers retval;
+        size_t nIters = 0;
+        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+            AddressUsers users = node.value().select(userPredicate);
+            retval = 0==nIters++ ? users : retval.intersection(users);
+            if (retval.isEmpty())
+                break;
+        }
+        return retval;
+    }
+    /** @} */
 
     /** Users that overlap the interval.
      *
      *  The return value is a vector of address users (instructions and/or data blocks) sorted by starting address where each
      *  user overlaps with the interval.  That is, at least one byte of the instruction or data block came from the specified
-     *  interval of byte addresses. */
-    AddressUsers overlapping(const AddressInterval&) const;
+     *  interval of byte addresses. The specified predicate is used to select which users are inserted into the result and
+     *  should be a functor that takes an AddressUser as an argument and returns true to select that user for inclusion in the
+     *  result.
+     *
+     * @{ */
+    AddressUsers overlapping(const AddressInterval &interval) const {
+        return overlapping(interval, AddressUsers::selectAllUsers);
+    }
+        
+    template<class UserPredicate>
+    AddressUsers overlapping(const AddressInterval &interval, UserPredicate userPredicate) const {
+        AddressUsers retval;
+        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval))
+            retval.insert(node.value().select(userPredicate));
+        return retval;
+    }
+    /** @} */
 
     /** Users that are fully contained in the interval.
      *
      *  The return value is a vector of address users (instructions and/or data blocks) sorted by starting address where each
      *  user is fully contained within the specified interval.  That is, each user starts at or after the beginning of the
-     *  interval and ends at or before the end of the interval. */
-    AddressUsers containedIn(const AddressInterval&) const;
+     *  interval and ends at or before the end of the interval. The specified predicate is used to select which users are
+     *  inserted into the result and should be a functor that takes an AddressUser as an argument and returns true to select
+     *  that user for inclusion in the result.
+     *
+     * @{ */
+    AddressUsers containedIn(const AddressInterval &interval) const {
+        return containedIn(interval, AddressUsers::selectAllUsers);
+    }
+
+    template<class UserPredicate>
+    AddressUsers containedIn(const AddressInterval &interval, UserPredicate userPredicate) const;
+    // FIXME[Robb P. Matzke 2014-08-26]: not implemented yet
+    /** @} */
+        
 
     /** Returns the least unmapped address with specified lower limit.
      *

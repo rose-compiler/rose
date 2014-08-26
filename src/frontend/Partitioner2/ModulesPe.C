@@ -119,14 +119,6 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 
     // Process each function that's attached to the CFG/AUM
     BOOST_FOREACH (const Function::Ptr &function, functions) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-24]
-        Stream debug(mlog[INFO]);
-        debug.enable(function->address()==0x401686);
-        debug <<"testing " <<partitioner.functionName(function) <<"\n";
-        debug <<"  number of basic blocks: " <<function->basicBlockAddresses().size() <<"\n";
-        BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses())
-            debug <<"    " <<StringUtility::addrToString(va) <<"\n";
-#endif
         if (!function->name().empty())
             continue;                                   // no need to name functions that already have a name
         if (function->basicBlockAddresses().size()!=1)
@@ -150,20 +142,13 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
         if (!addr)
             continue;                                   // ...with addressing mode [C] where C is a constant...
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-24]
-        debug <<"        appears to be a thunk\n";
-#endif
         AddressInterval indirectionAddress = AddressInterval::baseSize(addr->get_absoluteValue(), 4);
         if (!iatExtent.contains(indirectionAddress))
             continue;                                   // ...and where C is inside an Import Address Table...
-        if (partitioner.basicBlockSuccessors(bblock).size()!=1)
-            continue;                                   // ...and the JMP has a single successor...
-        std::vector<rose_addr_t> successors = partitioner.basicBlockConcreteSuccessors(bblock);
-        if (successors.size()!=1)
-            continue;                                   // ...that is concrete...
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-24]
-        debug <<"        with a single concrete successor\n";
-#endif
+        bool isComplete = true;
+        std::vector<rose_addr_t> successors = partitioner.basicBlockConcreteSuccessors(bblock, &isComplete);
+        if (isComplete && successors.size()!=1)
+            continue;                                   // ...and the JMP has a single successor that is concrete...
         SgAsmPEImportItem *importItem = NULL;
         if (!importIndex.getOptional(successors.front()).assignTo(importItem))
             continue;                                   // ...and is a known address for an imported function.
@@ -175,9 +160,6 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             importName += "@" + importDir->get_dll_name()->get_string();
         function->name(importName);
         function->insertReasons(SgAsmFunction::FUNC_THUNK | SgAsmFunction::FUNC_IMPORT);
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-24]
-        debug <<"        inserted!\n";
-#endif
     }
 }
 

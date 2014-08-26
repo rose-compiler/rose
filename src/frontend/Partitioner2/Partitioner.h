@@ -540,12 +540,12 @@ public:
      *  requirement in ROSE.  ROSE only requires that the global control flow graph has edges that enter at only the initial
      *  instruction of the basic block and exit only from its final instruction.  The instructions need not be contiguous or
      *  non-overlapping. */
-    Sawyer::Container::IntervalSet<AddressInterval> basicBlockInstructionExtent(const BasicBlock::Ptr&) const;
+    AddressIntervalSet basicBlockInstructionExtent(const BasicBlock::Ptr&) const;
 
     /** Returns the addresses used by basic block data.
      *
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
-    Sawyer::Container::IntervalSet<AddressInterval> basicBlockDataExtent(const BasicBlock::Ptr&) const;
+    AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const;
 
     /** Detach a basic block from the CFG/AUM.
      *
@@ -680,8 +680,10 @@ public:
     /** Determines concrete successors for a basic block.
      *
      *  Returns a vector of distinct, concrete successor addresses.  Semantics is identical to @ref bblockSuccessors except
-     *  non-concrete values are removed from the list. */
-    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&) const;
+     *  non-concrete values are removed from the list.  The optional @p isComplete argument is set to true or false depending
+     *  on whether the set of returned concrete successors represents the complete set of successors (true) or some member in
+     *  the complete set is not concrete (false). */
+    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&, bool *isComplete=NULL) const;
 
     /** Determine ghost successors for a basic block.
      *
@@ -859,7 +861,7 @@ public:
      *  Returns an interval set which is the union of the addresses of the function's basic blocks and data blocks.  Most
      *  functions are contiguous in memory and can be represented by a single address interval, but this is not a
      *  requirement in ROSE. */
-    Sawyer::Container::IntervalSet<AddressInterval> functionExtent(const Function::Ptr&) const;
+    AddressIntervalSet functionExtent(const Function::Ptr&) const;
     
     /** Attaches a function to the CFG/AUM.
      *

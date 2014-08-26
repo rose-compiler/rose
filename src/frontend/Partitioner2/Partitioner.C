@@ -417,9 +417,9 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     bblockAttached(placeholder);
 }
 
-Sawyer::Container::IntervalSet<AddressInterval>
+AddressIntervalSet
 Partitioner::basicBlockInstructionExtent(const BasicBlock::Ptr &bblock) const {
-    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    AddressIntervalSet retval;
     if (bblock!=NULL) {
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
             retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
@@ -427,9 +427,9 @@ Partitioner::basicBlockInstructionExtent(const BasicBlock::Ptr &bblock) const {
     return retval;
 }
 
-Sawyer::Container::IntervalSet<AddressInterval>
+AddressIntervalSet
 Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
-    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    AddressIntervalSet retval;
     if (bblock!=NULL) {
         BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks())
             retval.insert(dblock->extent());
@@ -542,11 +542,17 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
 }
 
 std::vector<rose_addr_t>
-Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isComplete/*=NULL*/) const {
+    ASSERT_not_null(bb);
     std::vector<rose_addr_t> retval;
+    if (isComplete)
+        *isComplete = true;
     BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bb)) {
-        if (successor.expr()->is_number())
+        if (successor.expr()->is_number()) {
             retval.push_back(successor.expr()->get_number());
+        } else if (isComplete) {
+            *isComplete = false;
+        }
     }
     return retval;
 }
@@ -624,7 +630,7 @@ Partitioner::basicBlockStackDelta(const BasicBlock::Ptr &bb) const {
 
 std::vector<BasicBlock::Ptr>
 Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
-    return aum_.overlapping(interval).basicBlocks();
+    return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).basicBlocks();
 }
 
 SgAsmInstruction *
@@ -674,12 +680,12 @@ Partitioner::detachDataBlock(const DataBlock::Ptr &dblock) {
 
 std::vector<DataBlock::Ptr>
 Partitioner::dataBlocksOverlapping(const AddressInterval &interval) const {
-    return aum_.overlapping(interval).dataBlocks();
+    return aum_.overlapping(interval, AddressUsers::selectDataBlocks).dataBlocks();
 }
 
 std::vector<DataBlock::Ptr>
 Partitioner::dataBlocksSpanning(const AddressInterval &interval) const {
-    return aum_.spanning(interval).dataBlocks();
+    return aum_.spanning(interval, AddressUsers::selectDataBlocks).dataBlocks();
 }
 
 AddressInterval
@@ -819,10 +825,10 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     return functions;
 }
 
-Sawyer::Container::IntervalSet<AddressInterval>
+AddressIntervalSet
 Partitioner::functionExtent(const Function::Ptr &function) const {
     ASSERT_not_null(function);
-    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    AddressIntervalSet retval;
 
     // Basic blocks and their data
     BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
@@ -1630,14 +1636,10 @@ Partitioner::buildBasicBlockAst(const BasicBlock::Ptr &bb, bool relaxed) const {
         ast->set_successors_complete(isComplete);
     } else {
         bool isComplete = true;
-        BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bb)) {
-            if (successor.expr()->is_number()) {
-                SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successor.expr()->get_number());
-                succ->set_parent(ast);
-                ast->get_successors().push_back(succ);
-            } else {
-                isComplete = false;
-            }
+        BOOST_FOREACH (rose_addr_t successorVa, basicBlockConcreteSuccessors(bb, &isComplete)) {
+            SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successorVa);
+            succ->set_parent(ast);
+            ast->get_successors().push_back(succ);
         }
         ast->set_successors_complete(isComplete);
     }

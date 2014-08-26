@@ -146,26 +146,6 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     }
 }
 
-AddressUsers
-AddressUsers::instructionUsers() const {
-    AddressUsers insns;
-    BOOST_FOREACH (const AddressUser &user, users_) {
-        if (user.insn())
-            insns.users_.push_back(user);
-    }
-    return insns;
-}
-
-AddressUsers
-AddressUsers::dataBlockUsers() const {
-    AddressUsers dblocks;
-    BOOST_FOREACH (const AddressUser &user, users_) {
-        if (user.dataBlock())
-            dblocks.users_.push_back(user);
-    }
-    return dblocks;
-}
-
 std::vector<BasicBlock::Ptr>
 AddressUsers::basicBlocks() const {
     std::vector<BasicBlock::Ptr> bblocks;
@@ -408,46 +388,31 @@ AddressUsageMap::dataBlockExists(const DataBlock::Ptr &dblock) const {
     return OwnedDataBlock();
 }
 
-Sawyer::Container::IntervalSet<AddressInterval>
+AddressIntervalSet
 AddressUsageMap::extent() const {
-    Sawyer::Container::IntervalSet<AddressInterval> retval;
+    AddressIntervalSet retval;
     BOOST_FOREACH (const Map::Interval &interval, map_.keys())
         retval.insert(interval);
     return retval;
 }
 
-Sawyer::Container::IntervalSet<AddressInterval>
+AddressIntervalSet
 AddressUsageMap::unusedExtent(size_t nBits) const {
     ASSERT_require(nBits>0 && nBits<=8*sizeof(rose_addr_t));
     AddressInterval vaSpace = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(nBits));
     return unusedExtent(vaSpace);
 }
 
-Sawyer::Container::IntervalSet<AddressInterval>
-AddressUsageMap::unusedExtent(const AddressInterval &vaSpace) const {
-    Sawyer::Container::IntervalSet<AddressInterval> retval = extent();
-    retval.invert(vaSpace);
+AddressIntervalSet
+AddressUsageMap::unusedExtent(const AddressInterval &space) const {
+    AddressIntervalSet retval = extent();
+    retval.invert(space);
     return retval;
 }
 
-AddressUsers
-AddressUsageMap::spanning(const AddressInterval &interval) const {
-    AddressUsers retval;
-    size_t nIters = 0;
-    BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
-        retval = 0==nIters++ ? node.value() : retval.intersection(node.value());
-        if (retval.isEmpty())
-            break;
-    }
-    return retval;
-}
-
-AddressUsers
-AddressUsageMap::overlapping(const AddressInterval &interval) const {
-    AddressUsers retval;
-    BOOST_FOREACH (const Map::Node &node, map_.findAll(interval))
-        retval.insert(node.value());
-    return retval;
+AddressIntervalSet
+AddressUsageMap::unusedExtent(const AddressIntervalSet &space) const {
+    return space - extent();
 }
 
 void
