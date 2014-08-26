@@ -602,7 +602,7 @@ findFunctionPadding(P2::Partitioner &partitioner) {
 
 // Finds unused areas that are surrounded by a function and adds them as static data to the function.
 static size_t
-findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet executableSpace)
+findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet &executableSpace)
 {
     size_t nProcessed = 0;
     Sawyer::Container::IntervalSet<AddressInterval> unused = partitioner.aum().unusedExtent(executableSpace);
