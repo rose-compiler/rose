@@ -132,6 +132,7 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
         return true;
     }
 
+#if 0 // [Robb P. Matzke 2014-08-22]: too slow
     static const size_t EXECUTION_LIMIT = 25; // max size of basic blocks for expensive analyses
     SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(last);
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
@@ -228,6 +229,7 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
             return true;
         }
     }
+#endif
 
     return false;
 }
