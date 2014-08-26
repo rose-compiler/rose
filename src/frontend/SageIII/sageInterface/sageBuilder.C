@@ -2358,7 +2358,20 @@ checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope ( SgDeclarat
           if (isSgTemplateInstantiationMemberFunctionDecl(func) != NULL)
              {
             // DQ (12/14/2011): We should not have a member function template instantiation in a template class definition.
+
+            // DQ (8/25/2014): Allow non-template functions in a template class declaration (see test2014_161.C).
+               if (isSgTemplateClassDefinition(scope) != NULL)
+                  {
+                    printf ("In checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope(): p->source_corresp.is_class_member == true: Allow non-template functions in a template class declaration \n");
+                  }
+
+            // DQ (8/25/2014): Un-Commented out to revert to previous working state.
+            // DQ (8/25/2014): Commented out to test new logic at base of isTemplateDeclaration(a_routine_ptr).
+            // DQ (8/25/2014): Un-Commented out to revert to previous working state.
+            // DQ (8/25/2014): Allow non-template functions in a template class declaration (see test2014_161.C).
+#if !ENFORCE_NO_FUNCTION_TEMPLATE_DECLARATIONS_IN_TEMPLATE_CLASS_INSTANTIATIONS
                ROSE_ASSERT(isSgTemplateClassDefinition(scope) == NULL);
+#endif
              }
         }
        else
