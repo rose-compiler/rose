@@ -11,30 +11,51 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Base class for adjusting basic block successors.
+/** Base class for adjusting basic blocks during discovery.
  *
- *  As each instruction of a basic block is discovered the partitioner calculates its control flow successors to decide
- *  what to do.  The successors are calculated primarily by evaluating the basic block instructions in a symbolic domain,
- *  and if that fails, by looking at the final instruction's concrete successors.  Once these successors are obtained, the
- *  partitioner invokes user callbacks so that the user has a chance to make adjustments.
+ *  User-defined basic block callbacks are invoked as each instruction is discovered for a basic block. See @ref
+ *  Partitioner::discoverBasicBlock for details.
  *
- *  By time this callback is invoked, the basic block's initial successors have been computed and cached in the basic
- *  block. That list can be obtained by invoking @ref Partitioner::basicBlockSuccessors or by accessing the @ref
- *  BasicBlock::successors cache directly. Likewise, the successor list can be adjusted by invoking methods in the partitioner
- *  API or by modifying the cache directly.
+ *  One of the important uses for basic block callbacks is to adjust the control flow successors for a basic block.  As each
+ *  instruction of a basic block is discovered the partitioner calculates its control flow successors to decide what to do.
+ *  The successors are calculated by evaluating the basic block instructions in a symbolic domain, and if that fails, by
+ *  looking at the final instruction's concrete successors.  Once these successors are obtained, the partitioner invokes user
+ *  callbacks so that the user has a chance to make adjustments. By time this callback is invoked, the basic block's initial
+ *  successors have been computed and cached in the basic block. That list can be obtained by invoking @ref
+ *  Partitioner::basicBlockSuccessors (or similar) or by accessing the @ref BasicBlock::successors cache directly. Likewise,
+ *  the successor list can be adjusted by invoking methods in the partitioner API or by modifying the cache directly.
+ *
+ *  Another important use for these callbacks is to tell the partitioner when a basic block is finished.  The partitioner has a
+ *  fairly long list of criteria that it uses as documented in @ref Partitioner::discoverBasicBlock.  One of these criteria is
+ *  to look at the <code>args.results.termination</code> enum returned by the callbacks: if it is TERMINATE_NOW or
+ *  TERMINATE_PRIOR then the block is forcibly terminated regardless of what would have otherwise happened.
  *
  *  The partitioner expects callbacks to have shared ownership and references them only via Sawyer::SharedPointer.  Therefore,
  *  subclasses should implement an @c instance class method that allocates a new object and returns a shared pointer. */
-class SuccessorCallback: public Sawyer::SharedObject {
+class BasicBlockCallback: public Sawyer::SharedObject {
 public:
-    typedef Sawyer::SharedPointer<SuccessorCallback> Ptr;
+    typedef Sawyer::SharedPointer<BasicBlockCallback> Ptr;
+
+    /** Whether to terminate a basic block. */
+    enum Termination {
+        CONTINUE_DISCOVERY,                             /**< Do not explicitly terminate block here. */
+        TERMINATE_NOW,                                  /**< Make current instruction the final instruction of the block. */
+        TERMINATE_PRIOR,                                /**< Make previous instruction the final instruction of the block. */
+    };
+
+    /** Results coordinated across all callbacks. */
+    struct Results {
+        Termination terminate;                          /**< Whether block should be explicitly terminated. */
+        Results(): terminate(CONTINUE_DISCOVERY) {}
+    };
 
     /** Arguments passed to the callback. */
     struct Args {
         const Partitioner *partitioner;                 /**< Partitioner requesting basic block successors. */
         BasicBlock::Ptr bblock;                         /**< Basic block whose successors are to be computed. */
-        Args(const Partitioner *partitioner, const BasicBlock::Ptr &bblock)
-            : partitioner(partitioner), bblock(bblock) {}
+        Results &results;                               /**< Results to control basic block discovery. */
+        Args(const Partitioner *partitioner, const BasicBlock::Ptr &bblock, Results &results)
+            : partitioner(partitioner), bblock(bblock), results(results) {}
     };
 
     /** Callback method.

@@ -263,7 +263,8 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
             goto done;
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
-        successorCallbacks_.apply(true, SuccessorCallback::Args(this, retval));
+        BasicBlockCallback::Results userResult;
+        basicBlockCallbacks_.apply(true, BasicBlockCallback::Args(this, retval, userResult));
 
         BOOST_FOREACH (rose_addr_t successorVa, basicBlockConcreteSuccessors(retval)) {
             if (successorVa!=startVa && retval->instructionExists(successorVa)) { // case: successor is inside our own block
@@ -271,17 +272,24 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
                 goto done;
             }
         }
+
+        if (userResult.terminate == BasicBlockCallback::TERMINATE_NOW)   // case: user wants us to terminate block here
+            goto done;
+        if (userResult.terminate == BasicBlockCallback::TERMINATE_PRIOR) {
+            retval->pop();                                              // case: user wants to terminate at prior insn
+            goto done;
+        }
         
         if (basicBlockIsFunctionCall(retval))                           // case: bb looks like a function call
-            break;
+            goto done;
         BasicBlock::Successors successors = basicBlockSuccessors(retval);
 
         if (successors.size()!=1)                                       // case: not exactly one successor
-            break;
+            goto done;
         SValuePtr successorExpr = successors.front().expr();
 
         if (!successorExpr->is_number())                                // case: successor is indeterminate
-            break;
+            goto done;
         rose_addr_t successorVa = successorExpr->get_number();
 
         if (successorVa == startVa)                                     // case: successor is our own basic block

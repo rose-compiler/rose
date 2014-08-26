@@ -623,6 +623,10 @@ public:
      *      the address was properly aligned.  The partitioner treats this "unknown" instruction as a valid instruction with
      *      indeterminate successors and no semantics.
      *
+     *  @li Note: at this point the user-defined basic block successors callbacks are invoked. They can query characteristics
+     *      of the basic block, adjust the basic block successor cache and other characteristics of the block, and write values
+     *      into a results structure that is used by some of the subsequent block termination conditions.
+     *
      *  @li The instruction has a concrete successor address that is an address of a non-initial instruction in this
      *      block. Basic blocks cannot have a non-initial instruction with more than one incoming edge, therefore we've already
      *      added too many instructions to this block.  We could proceed two ways: (A) We could throw away this instruction
@@ -632,6 +636,11 @@ public:
      *      target so that the instruction prior to that is the final instruction. This is good because it converges to a
      *      steady state faster, but could result in basic blocks that are smaller than optimal. (The current algorithm uses
      *      method A.)
+     *
+     *  @li The user-defined basic block callbacks indicated that the block should be terminated.  If the successors set the @c
+     *      terminate member of the @c results output argument to @ref BasicBlockCallback::TERMINATE_NOW or @ref
+     *      BasicBlockCallback::TERMINATE_PRIOR, then the current instruction either becomes the final instruction of the basic
+     *      block, or the prior instruction becomes the final instruction.
      *
      *  @li The instruction causes this basic block to look like a function call.  This instruction becomes the final
      *      instruction of the basic block and when the block is inserted into the CFG/AUM the edge will be marked as a
@@ -1043,19 +1052,19 @@ private:
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
 
 public:
-    /** Callbacks for adjusting basic block successors.
+    /** Callbacks for adjusting basic block during discovery.
      *
-     *  Each time an instruction is appended to a basic block these callbacks are invoked to make adjustments to the successor
-     *  list.  See @ref SuccessorCallback for details.
+     *  Each time an instruction is appended to a basic block these callbacks are invoked to make adjustments to the block.
+     *  See @ref BasicBlockCallback and @ref discoverBasicBlock for details.
      *
      *  @{ */
-    typedef Sawyer::Callbacks<SuccessorCallback::Ptr> SuccessorCallbacks;
-    SuccessorCallbacks& successorCallbacks() { return successorCallbacks_; }
-    const SuccessorCallbacks& successorCallbacks() const { return successorCallbacks_; }
+    typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks;
+    BasicBlockCallbacks& basicBlockCallbacks() { return basicBlockCallbacks_; }
+    const BasicBlockCallbacks& basicBlockCallbacks() const { return basicBlockCallbacks_; }
     /** @} */
 
 private:
-    SuccessorCallbacks successorCallbacks_;
+    BasicBlockCallbacks basicBlockCallbacks_;
 
 public:
     /** Ordered list of function prologue matchers.

@@ -83,6 +83,7 @@ struct Settings {
     rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
     bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
+    bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findSwitchCases;                               // search for C-like "switch" statement cases
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
@@ -94,9 +95,9 @@ struct Settings {
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(NO_ADDRESS), useSemantics(true), followGhostEdges(false), findSwitchCases(true), findDeadCode(true),
-          intraFunctionData(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false),
-          doListFunctionAddresses(false), doShowStats(false), doListUnused(false) {}
+        : mapVa(NO_ADDRESS), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
+          findSwitchCases(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
+          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -141,6 +142,20 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .doc("If this switch is present, then the specimen is treated as raw data and mapped in its entirety "
                     "into the address space beginning at the address specified for this switch. Otherwise the file "
                     "is interpreted as an ELF or PE container."));
+    dis.insert(Switch("allow-discontiguous-blocks")
+               .intrinsicValue(true, settings.allowDiscontiguousBlocks)
+               .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
+                    "the other requirements for a basic block are still met. Discontiguous blocks can be formed when a "
+                    "compiler fails to optimize away an opaque predicate for a conditional branch, or when basic blocks "
+                    "are scattered in memory by the introduction of unconditional jumps.  The @s{no-allow-discontiguous-blocks} "
+                    "switch disables this feature and can slightly improve partitioner performance by avoiding cases where "
+                    "an unconditional branch initially creates a larger basic block which is later discovered to be "
+                    "multiple blocks.  The default is to " + std::string(settings.allowDiscontiguousBlocks?"":"not ") +
+                    "allow discontiguous basic blocks."));
+    dis.insert(Switch("no-allow-discontiguous-blocks")
+               .key("allow-discontiguous-blocks")
+               .intrinsicValue(false, settings.allowDiscontiguousBlocks)
+               .hidden(true));
     dis.insert(Switch("follow-ghost-edges")
                .intrinsicValue(true, settings.followGhostEdges)
                .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -280,17 +295,36 @@ public:
 // Example of making adjustments to basic block successors.  If this callback is registered with the partitioner, then it will
 // add ghost edges (non-taken side of branches with opaque predicates) to basic blocks as their instructions are discovered.
 // An alternative method is to investigate ghost edges after functions are discovered in order to find dead code.
-class AddGhostSuccessors: public P2::SuccessorCallback {
+class AddGhostSuccessors: public P2::BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new AddGhostSuccessors); }
 
     virtual bool operator()(bool chain, const Args &args) {
-        size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits();
-        BOOST_FOREACH (rose_addr_t successorVa, args.partitioner->basicBlockGhostSuccessors(args.bblock)) {
-            args.bblock->insertSuccessor(successorVa, nBits);
-            P2::mlog[INFO] <<"opaque predicate at "
-                           <<StringUtility::addrToString(args.bblock->instructions().back()->get_address())
-                           <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
+        if (chain) {
+            size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits();
+            BOOST_FOREACH (rose_addr_t successorVa, args.partitioner->basicBlockGhostSuccessors(args.bblock)) {
+                args.bblock->insertSuccessor(successorVa, nBits);
+                P2::mlog[INFO] <<"opaque predicate at "
+                               <<StringUtility::addrToString(args.bblock->instructions().back()->get_address())
+                               <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
+            }
+        }
+        return chain;
+    }
+};
+
+// Example successor callback that forces basic blocks to terminate at unconditional branch instructions whose target is not
+// the fall-through address of the branch.
+class PreventDiscontiguousBlocks: public P2::BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
+
+    virtual bool operator()(bool chain, const Args &args) {
+        if (chain) {
+            bool complete;
+            std::vector<rose_addr_t> successors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &complete);
+            if (complete && 1==successors.size() && successors[0]!=args.bblock->fallthroughVa())
+                args.results.terminate = TERMINATE_NOW;
         }
         return chain;
     }
@@ -423,6 +457,36 @@ markSymbolFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
     }
 }
 
+// Make functions for any x86 CALL instruction. This is intended to be a demonstration of how to search for specific
+// instruction patterns, and probably isn't all that useful since function calls in reachable code are already detected anyway
+// as part of Partitioner::discoverBasicBlock.
+static void
+markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
+    std::set<rose_addr_t> targets;                      // distinct call targets
+
+    // Iterate over every executable address in the memory map
+    for (rose_addr_t va=0; partitioner.memoryMap().next(va, MemoryMap::MM_PROT_EXEC).assignTo(va); ++va) {
+        if (alignment>1)                                // apply alignment here as an optimization
+            va = ((va+alignment-1)/alignment)*alignment;
+
+        // Disassemble an instruction (or get one that was previously disassembled) and see if it's a function call. The
+        // function call detection normally operates at a basic block level, so we make a singleton basic block since we're
+        // interested only in single instructions.
+        if (SgAsmInstruction *insn = partitioner.discoverInstruction(va)) {
+            std::vector<SgAsmInstruction*> bb(1, insn);
+            rose_addr_t target(-1);
+            if (insn->is_function_call(bb, &target, NULL) && partitioner.memoryMap().exists(target, MemoryMap::MM_PROT_EXEC))
+                targets.insert(target);
+        }
+    }
+
+    // Now create functions at each target address
+    BOOST_FOREACH (rose_addr_t entryVa, targets) {
+        P2::Function::Ptr function = P2::Function::instance(entryVa, SgAsmFunction::FUNC_CALL_INSN);
+        partitioner.attachOrMergeFunction(function);
+    }
+}
+
 // Looks for one basic block that hasn't been discovered and tries to find instructions for it.  Returns true if a basic block
 // was processed, false if not.
 static bool
@@ -538,15 +602,12 @@ findFunctionPadding(P2::Partitioner &partitioner) {
 
 // Finds unused areas that are surrounded by a function and adds them as static data to the function.
 static size_t
-findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet textArea)
+findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet executableSpace)
 {
     size_t nProcessed = 0;
-#if 1 // [Robb P. Matzke 2014-08-22]
-    P2::mlog[WARN] <<"findIntraFunctionData is temporarily commented out\n";
-#else
-    Sawyer::Container::IntervalSet<AddressInterval> unused = partitioner.aum().unusedExtent(textArea);
+    Sawyer::Container::IntervalSet<AddressInterval> unused = partitioner.aum().unusedExtent(executableSpace);
     BOOST_FOREACH (const AddressInterval &interval, unused.nodes()) {
-        if (interval.least()<=textArea.least() || interval.greatest()>=textArea.greatest())
+        if (interval.least()<=executableSpace.least() || interval.greatest()>=executableSpace.greatest())
             continue;
         typedef std::vector<P2::Function::Ptr> Functions;
         Functions beforeFuncs = partitioner.functionsOverlapping(interval.least()-1);
@@ -569,7 +630,6 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet tex
             ++nProcessed;
         }
     }
-#endif
     return nProcessed;
 }
 
@@ -642,19 +702,22 @@ int main(int argc, char *argv[]) {
     partitioner.functionPrologueMatchers().push_back(P2::ModulesM68k::MatchLink::instance());
     partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchEnterPrologue::instance());
     if (settings.findSwitchCases)
-        partitioner.successorCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
+        partitioner.basicBlockCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
-        partitioner.successorCallbacks().append(AddGhostSuccessors::instance());
+        partitioner.basicBlockCallbacks().append(AddGhostSuccessors::instance());
+    if (!settings.allowDiscontiguousBlocks)
+        partitioner.basicBlockCallbacks().append(PreventDiscontiguousBlocks::instance());
 #if 0 // [Robb P. Matzke 2014-08-16]: fun to watch, but verbose!
     partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());
 #endif
 
 
-    markEntryFunctions(partitioner, interp);
-    markErrorHandlingFunctions(partitioner, interp);
-    markImportFunctions(partitioner, interp);
-    markExportFunctions(partitioner, interp);
-    markSymbolFunctions(partitioner, interp);
+    markEntryFunctions(partitioner, interp);            // make functions at program entry points
+    markErrorHandlingFunctions(partitioner, interp);    // make functions based on exception handling information
+    markImportFunctions(partitioner, interp);           // make functions for things that are imported
+    markExportFunctions(partitioner, interp);           // make functions for things that are exported
+    markSymbolFunctions(partitioner, interp);           // make functions for symbols in the symbol table
+    //markCallTargets(partitioner);                     // make functions at all CALL targets
     rose_addr_t prologueVa = 0;
     partitioner.memoryMap().dump(std::cerr);
     while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;

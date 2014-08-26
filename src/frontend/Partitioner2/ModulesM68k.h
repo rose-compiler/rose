@@ -22,7 +22,7 @@ public:
 };
 
 /** Adjusts basic block successors for M68k "switch" statements. */
-class SwitchSuccessors: public SuccessorCallback {
+class SwitchSuccessors: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new SwitchSuccessors); } /**< Allocating constructor. */
     virtual bool operator()(bool chain, const Args&) /*override*/;
