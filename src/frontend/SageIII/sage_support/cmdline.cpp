@@ -2818,6 +2818,7 @@ GetRoseClasspath ()
 {
   std::string classpath = "-Djava.class.path=";
 
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
   classpath +=
       std::string(X10_INSTALL_PATH) + "/lib/x10c.jar" + ":" +
       std::string(X10_INSTALL_PATH) + "/lib/lpg.jar" + ":" +
@@ -2827,6 +2828,7 @@ GetRoseClasspath ()
       std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.shrike_1.3.1.201101071300.jar" + ":" +
       std::string(X10_INSTALL_PATH) + "/lib/x10wala.jar" + ":" +
       std::string(X10_INSTALL_PATH) + "/lib/org.eclipse.equinox.common_3.6.0.v20100503.jar";
+#endif // ROSE_BUILD_X10_LANGUAGE_SUPPORT
 
   classpath += ":";
 
