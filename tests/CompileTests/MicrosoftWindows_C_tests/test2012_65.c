@@ -1,7 +1,7 @@
 int x;
 
-#if 0
-/* Review this issues later (problem with MSVC support for un-named unions). */
+#if 1
+/* Review this issues later (problem with MSVC support for un-named unions, now fixed). */
 struct X
   {
     union

@@ -3928,8 +3928,8 @@ HEADER_TYPE_START
 
         public:
                 virtual void check() const;
-                virtual std::string toString() const { abort(); }       // ROSETTA doesn't support pure virtual methods
-                virtual size_t get_nBits() const { abort(); }           // ROSETTA doesn't support pure virtual methods
+                virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+                virtual size_t get_nBits() const { abort(); return -1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
                 virtual size_t get_nBytes() const;
 
                 template<class Type>                                    // Type is a subclass of SgAsmType
