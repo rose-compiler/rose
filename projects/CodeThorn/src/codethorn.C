@@ -98,7 +98,7 @@ void CodeThornLanguageRestrictor::initialize() {
   //SgIntegerDivideAssignOp
 
   //more general test codes
-  //setAstNodeVariant(V_SgPointerDerefExp, true);
+  setAstNodeVariant(V_SgPointerDerefExp, true);
   setAstNodeVariant(V_SgNullExpression, true);
 }
 
@@ -1098,7 +1098,7 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
         if(isSgPointerType(type)) {
           AstMatching m;
           MatchResult res;
-          res=m.performMatching("SgInitializedName(SgAssignInitializer($varRef=SgVarRefExp))",initName);
+          res=m.performMatching("SgInitializedName(SgAssignInitializer($varRef=SgVarRefExp))|SgInitializedName(SgAssignInitializer(SgAddressOfOp($varRef=SgVarRefExp)))",initName);
           if(res.size()==1) {
             toDeleteDeclarations.push_back(decl);
             MatchResult::iterator j=res.begin();
@@ -1139,12 +1139,12 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
     cout<<(*i).first.toString()<<":"<<(*i).second.toString()<<endl;
   }
 #endif
-  cout<<"Replacing array-initializations."<<endl;
+  cout<<"STATUS: Replacing array-initializations."<<endl;
   for(list<pair<SgNode*,string> >::iterator i=toReplaceArrayInitializations.begin();i!=toReplaceArrayInitializations.end();++i) {
     //cout<<(*i).first->unparseToString()<<":\n"<<(*i).second<<endl;
     SgNodeHelper::replaceAstWithString((*i).first,"\n"+(*i).second);
   }
-  cout<<"Transforming Pointer Declarations."<<endl;
+  cout<<"STATUS: Transforming pointer declarations."<<endl;
   for(list<SgVariableDeclaration*>::iterator i=toDeleteDeclarations.begin();i!=toDeleteDeclarations.end();++i) {
     //cout<<(*i)->unparseToString()<<endl;
     VariableId declaredPointerVar=variableIdMapping->variableId(*i);
@@ -1155,7 +1155,12 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
       SgInitializer* initializer=initName->get_initializer();
       if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
         //cout<<"var-initializer:"<<initializer->unparseToString()<<astTermWithNullValuesToString(initializer)<<endl;
-        if(SgVarRefExp* rhsInitVar=isSgVarRefExp(assignInitializer->get_operand_i())) {
+        SgExpression* assignInitOperand=assignInitializer->get_operand_i();
+        if(isSgAddressOfOp(assignInitOperand)) {
+          assignInitOperand=isSgExpression(SgNodeHelper::getFirstChild(assignInitOperand));
+          ROSE_ASSERT(assignInitOperand);
+        }
+        if(SgVarRefExp* rhsInitVar=isSgVarRefExp(assignInitOperand)) {
           VariableId arrayVar=variableIdMapping->variableId(rhsInitVar);
           SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(arrayVar,variableIdMapping);
           //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
@@ -1184,13 +1189,20 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
   }
   
   //list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > 
-  cout<<"Replacing Expressions ... ";
+  cout<<"STATUS: Replacing Expressions ... ";
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(isSgAssignOp(*i)) {
       if(SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(*i))) {
         if(isPointerVariable(lhsVar)) {
           //cout<<"DEBUG: pointer var on lhs :"<<(*i)->unparseToString()<<endl;
-          if(SgVarRefExp* rhsVar=isSgVarRefExp(SgNodeHelper::getRhs(*i))) {
+
+          SgExpression* rhsExp=isSgExpression(SgNodeHelper::getRhs(*i));
+          ROSE_ASSERT(rhsExp);
+          if(isSgAddressOfOp(rhsExp)) {
+            rhsExp=isSgExpression(SgNodeHelper::getFirstChild(rhsExp));
+            ROSE_ASSERT(rhsExp);
+          }
+          if(SgVarRefExp* rhsVar=isSgVarRefExp(rhsExp)) {
             VariableId lhsVarId=variableIdMapping->variableId(lhsVar);
             VariableId rhsVarId=variableIdMapping->variableId(rhsVar);
             SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(rhsVarId,variableIdMapping);
