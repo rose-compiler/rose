@@ -1914,7 +1914,8 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["std-io-only"]) {
     cout << "STATUS: bypassing all non standard I/O states."<<endl;
     timer.start();
-    analyzer.removeNonIOStates();
+    //analyzer.removeNonIOStates();  //old version, works correclty but takes far too long
+    analyzer.reduceGraphInOutWorklistOnly();
     stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
   }
 
