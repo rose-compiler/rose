@@ -517,7 +517,7 @@ public:
         if (hull().least() < interval.least())
             map_.eraseMultiple(Interval::hull(hull().least(), interval.least()-1));
         if (hull().greatest() > interval.greatest())
-            map_.eraseMultiple(Interval::hull(interval.greatest(), hull.greatest()));
+            map_.eraseMultiple(Interval::hull(interval.greatest(), hull().greatest()));
     }
 
     template<class Interval2>
