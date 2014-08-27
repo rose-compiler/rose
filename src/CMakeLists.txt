@@ -1024,6 +1024,10 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${AST_REWRITE_SRC}
  ${mstl_SRC}
 )
+if(enable-java)
+  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseJava>)
+endif()
+
 
 ###############################################################################################################################
 ### The stringify.h and stringify.C files have prototypes and definitions for functions that convert enum constants
@@ -1093,8 +1097,8 @@ if(enable-fortran)
   list(APPEND LINK_FILES roseFortran)
 endif()
 
-if(enable-java)
-  list(APPEND LINK_FILES roseJava)
+if (enable-java)
+  list(APPEND LINK_FILES ${JAVA_JVM_LIBRARY})
 endif()
 
 if(enable-python)
