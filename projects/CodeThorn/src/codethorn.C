@@ -25,9 +25,38 @@
 #include "AType.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
+#include "SpotConnection.h"
+#include "AnalysisAbstractionLayer.h"
+
+// test
+#include "Evaluator.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
+
+// experimental
+#include "IOSequenceGenerator.C"
+
+bool isExprRoot(SgNode* node) {
+  if(SgExpression* exp=isSgExpression(node)) {
+    return isSgStatement(exp->get_parent());
+  }
+  return false;
+}
+
+list<SgExpression*> exprRootList(SgNode *node) {
+  RoseAst ast(node);
+  list<SgExpression*> exprList;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(isExprRoot(*i)) {
+      SgExpression* expr=isSgExpression(*i);
+      ROSE_ASSERT(expr);
+      exprList.push_back(expr);
+      i.skipChildrenOnForward();
+    }
+  }
+  return exprList;
+}
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
 list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string prefix) {
@@ -55,6 +84,7 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgRshiftOp, true);
   setAstNodeVariant(V_SgLshiftOp, true);
   setAstNodeVariant(V_SgAggregateInitializer, true);
+  setAstNodeVariant(V_SgNullExpression, true);
   // Polyhedral test codes
   setAstNodeVariant(V_SgPlusAssignOp, true);
   setAstNodeVariant(V_SgMinusAssignOp, true);
@@ -66,6 +96,10 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgDoubleVal, true);
   setAstNodeVariant(V_SgFloatVal, true);
   //SgIntegerDivideAssignOp
+
+  //more general test codes
+  setAstNodeVariant(V_SgPointerDerefExp, true);
+  setAstNodeVariant(V_SgNullExpression, true);
 }
 
 
@@ -428,7 +462,7 @@ static Analyzer* global_analyzer=0;
    AstMatching m;
    MatchResult res;
    int numConstExprElim=0;
- #pragma omp critical
+#pragma omp critical(EXPRSUBSTITUTION)
    {
    res=m.performMatching("SgPntrArrRefExp(_,$ArrayIndexExpr)",root);
    }
@@ -534,14 +568,6 @@ void extractArrayUpdateOperations(Analyzer* ana,
    }
 
    while(succSet.size()>=1) {
-     if(succSet.size()>1) {
-       cerr<<estate->toString()<<endl;
-       cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
-       exit(1);
-     } else {
-       EStatePtrSet::iterator i=succSet.begin();
-       estate=*i;
-     }  
      foundStartMarker=foundStartMarker||isAtMarker(startMarkerLabel,estate);
      foundEndMarker=foundEndMarker||isAtMarker(endMarkerLabel,estate);
      if(foundStartMarker && !foundEndMarker) {
@@ -559,7 +585,14 @@ void extractArrayUpdateOperations(Analyzer* ana,
          }
        }
      }
-
+     if(succSet.size()>1) {
+       cerr<<estate->toString()<<endl;
+       cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
+       exit(1);
+     } else {
+       EStatePtrSet::iterator i=succSet.begin();
+       estate=*i;
+     }  
      // next successor set
      succSet=tg->succ(estate);
    }
@@ -605,6 +638,9 @@ void extractArrayUpdateOperations(Analyzer* ana,
 struct ArrayElementAccessData {
   VariableId varId;
   vector<int> subscripts;
+  VariableId getVariable();
+  int getSubscript(int numOfDimension);
+  int getDimensions();
   ArrayElementAccessData();
   ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping);
   string toString(VariableIdMapping* variableIdMapping);
@@ -619,6 +655,18 @@ struct ArrayElementAccessData {
 };
 
 ArrayElementAccessData::ArrayElementAccessData() {
+}
+
+VariableId ArrayElementAccessData::getVariable() {
+  return varId;
+}
+
+int ArrayElementAccessData::getSubscript(int dimension) {
+  return subscripts.at(dimension);
+}
+
+int ArrayElementAccessData::getDimensions() {
+  return subscripts.size();
 }
 
 string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) {
@@ -881,6 +929,7 @@ void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* 
   }
 }
 
+#if 0
 bool compare_array_accesses(EStateExprInfo& e1, EStateExprInfo& e2) {
   //ArrayElementAccessData d1(SgNodeHelper::getLhs(e1.second));
   //SgNodeHelper::getLhs(e2.second);
@@ -891,6 +940,7 @@ bool compare_array_accesses(EStateExprInfo& e1, EStateExprInfo& e2) {
 void sortArrayUpdates(ArrayUpdatesSequence& arrayUpdates) {
 
 }
+#endif
 
 void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {
   // 1) create vector of generated assignments (preparation for sorting)
@@ -930,6 +980,360 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
   myfile.close();
 }
 
+SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping) {
+  SgVariableDeclaration* decl=variableIdMapping->getVariableDeclaration(arrayVar);
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    SgInitializer* initializer=initName->get_initializer();
+    if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
+      SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+      SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+      return exprPtrList;
+    }
+  }
+  cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
+  exit(1);
+}
+    
+
+string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    SgInitializer* initializer=initName->get_initializer();
+    ROSE_ASSERT(initializer);
+    stringstream ss;
+    // x[2] = {1,2};"). In this case the SgExprListExp ("{1,2}") is wrapped in an SgAggregateInitializer
+    // SgExprListExp* SgAggregateInitializer->get_initializers () const 
+    // pointer variable initializer
+    if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
+      string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(decl));
+      SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+      //cout<<"RHS-ARRAY-INIT:"<<rhsOfArrayInit->unparseToString()<<endl;
+      SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+      string newRhs;
+      int num=0;
+      SgType* type=rhsOfArrayInit->get_type();
+      for(SgExpressionPtrList::iterator i=exprPtrList.begin();i!=exprPtrList.end();++i) {
+        ss<<type->unparseToString()<<" "<<arrayName<<"_"<<num<<" = "<<(*i)->unparseToString()<<";\n";
+        num++;
+      }
+      string transformedArrayInitializer=ss.str();
+      return transformedArrayInitializer;
+    } else {
+      cerr<<"Error: attempted to transform non-array initializer."<<endl;
+      exit(1);
+    }
+  } else {
+      cerr<<"Error: attempted to transform non-initialized declaration."<<endl;
+      exit(1);
+  }
+}
+
+bool isArrayAccess(SgNode* node) {
+  return isSgPntrArrRefExp(node)!=0;
+}
+
+bool isPointerVariable(SgVarRefExp* var) {
+  if(var==0)
+    return false;
+  SgType* type=var->get_type();
+  return isSgPointerType(type)!=0;
+}
+
+void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping) {
+  ROSE_ASSERT(isArrayAccess(node));
+  if(SgPntrArrRefExp* arrayAccessAst=isSgPntrArrRefExp(node)) {
+    ArrayElementAccessData arrayAccess(arrayAccessAst,variableIdMapping);
+    ROSE_ASSERT(arrayAccess.getDimensions()==1);
+    VariableId accessVar=arrayAccess.getVariable();
+    int accessSubscript=arrayAccess.getSubscript(0);
+    stringstream newAccess;
+    newAccess<<variableIdMapping->variableName(accessVar)<<"_"<<accessSubscript;
+    SgNodeHelper::replaceAstWithString(node,newAccess.str());
+  } else {
+    cerr<<"Error: transformation of array access failed."<<endl;
+  }
+}
+
+void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
+  // 1) transform initializers of global variables : a[]={1,2,3} ==> int a_0=1;int a_1=2;int a_2=3;
+  // 2) eliminate initializers of pointer variables: int p* = a; ==> \eps
+  // 3) replace uses of p[k]: with a_k (where k is a constant)
+
+  //ad 1 and 2)
+  VariableIdMapping* variableIdMapping=analyzer->getVariableIdMapping();
+  Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList=analyzer->computeUsedGlobalVariableDeclarationList(root);
+  cout<<"STATUS: number of used global variables: "<<usedGlobalVariableDeclarationList.size()<<endl;
+  list<pair<SgNode*,string> > toReplaceArrayInitializations;
+  list<SgVariableDeclaration*> toDeleteDeclarations;
+  typedef map<VariableId,VariableId> ArrayPointerMapType;
+  ArrayPointerMapType arrayPointer; // var,arrayName
+  for(Analyzer::VariableDeclarationList::iterator i=usedGlobalVariableDeclarationList.begin();
+      i!=usedGlobalVariableDeclarationList.end();
+      ++i) {
+    SgVariableDeclaration* decl=*i;
+    //cout<<"DEBUG: variableDeclaration:"<<decl->unparseToString()<<endl;
+    SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+    ROSE_ASSERT(initName0);
+    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+      // array initializer
+      SgInitializer* arrayInitializer=initName->get_initializer();
+      //string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(*i));
+      if(isSgAggregateInitializer(arrayInitializer)) {
+        string transformedArrayInitializer=flattenArrayInitializer(decl,variableIdMapping);
+        toReplaceArrayInitializations.push_back(make_pair(decl,transformedArrayInitializer));
+        //SgNodeHelper::replaceAstWithString(decl,transformedArrayInitializer);
+      } else {
+        //cout<<"initName:"<<astTermWithNullValuesToString(initName)<<endl;
+        VariableId lhsVarId=variableIdMapping->variableId(*i);
+        string lhsVariableName=variableIdMapping->variableName(lhsVarId);
+        SgType* type=variableIdMapping->getType(variableIdMapping->variableId(*i));
+        // match: SgInitializedName(SgAssignInitializer(SgVarRefExp))
+        // variable on lhs
+        // check if variable is a pointer variable
+        if(isSgPointerType(type)) {
+          AstMatching m;
+          MatchResult res;
+          res=m.performMatching("SgInitializedName(SgAssignInitializer($varRef=SgVarRefExp))|SgInitializedName(SgAssignInitializer(SgAddressOfOp($varRef=SgVarRefExp)))",initName);
+          if(res.size()==1) {
+            toDeleteDeclarations.push_back(decl);
+            MatchResult::iterator j=res.begin();
+            SgVarRefExp* rhsVarRef=isSgVarRefExp((*j)["$varRef"]);
+            VariableId rhsVarId=variableIdMapping->variableId(rhsVarRef);
+            arrayPointer[lhsVarId]=rhsVarId;
+            //cout<<"Inserted pair "<<variableName<<":"<<rhsVarName<<endl;
+          }
+        }
+      }
+    }
+  }
+
+  typedef list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > ArrayAccessInfoType;
+  ArrayAccessInfoType arrayAccesses;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgExpression* exp=isSgExpression(*i);
+    if(exp) {
+      if(SgPntrArrRefExp* arrAccess=isSgPntrArrRefExp(exp)) {
+        ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
+        ROSE_ASSERT(aead.isValid());
+        VariableId arrayVar=aead.varId;
+        //cout<<"array-element: "<<variableIdMapping->variableName(arrayVar);
+        if(aead.subscripts.size()==1) {
+          //cout<<" ArrayIndex:"<<*aead.subscripts.begin();
+          arrayAccesses.push_back(make_pair(arrAccess,aead));
+        } else {
+          cout<<"Error: ArrayIndex: unknown (dimension>1)";
+          exit(1);
+        }          
+      }
+    }
+  }
+#if 0
+  cout<<"Array-Pointer Map:"<<endl;
+  for(ArrayPointerMapType::iterator i=arrayPointer.begin();i!=arrayPointer.end();++i) {
+    cout<<(*i).first.toString()<<":"<<(*i).second.toString()<<endl;
+  }
+#endif
+  cout<<"STATUS: Replacing array-initializations."<<endl;
+  for(list<pair<SgNode*,string> >::iterator i=toReplaceArrayInitializations.begin();i!=toReplaceArrayInitializations.end();++i) {
+    //cout<<(*i).first->unparseToString()<<":\n"<<(*i).second<<endl;
+    SgNodeHelper::replaceAstWithString((*i).first,"\n"+(*i).second);
+  }
+  cout<<"STATUS: Transforming pointer declarations."<<endl;
+  for(list<SgVariableDeclaration*>::iterator i=toDeleteDeclarations.begin();i!=toDeleteDeclarations.end();++i) {
+    //cout<<(*i)->unparseToString()<<endl;
+    VariableId declaredPointerVar=variableIdMapping->variableId(*i);
+    SgNode* initName0=(*i)->get_traversalSuccessorByIndex(1); // get-InitializedName
+    ROSE_ASSERT(initName0);
+    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+      // initializer
+      SgInitializer* initializer=initName->get_initializer();
+      if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
+        //cout<<"var-initializer:"<<initializer->unparseToString()<<astTermWithNullValuesToString(initializer)<<endl;
+        SgExpression* assignInitOperand=assignInitializer->get_operand_i();
+        if(isSgAddressOfOp(assignInitOperand)) {
+          assignInitOperand=isSgExpression(SgNodeHelper::getFirstChild(assignInitOperand));
+          ROSE_ASSERT(assignInitOperand);
+        }
+        if(SgVarRefExp* rhsInitVar=isSgVarRefExp(assignInitOperand)) {
+          VariableId arrayVar=variableIdMapping->variableId(rhsInitVar);
+          SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(arrayVar,variableIdMapping);
+          //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
+          int num=0;
+          stringstream ss;
+          for(SgExpressionPtrList::iterator j=arrayInitializerList.begin();j!=arrayInitializerList.end();++j) {
+            ss<<"int "<<variableIdMapping->variableName(declaredPointerVar)<<"_"<<num<<" = "
+              <<(*j)->unparseToString()
+              <<";\n"
+              ;
+            num++;
+          }
+          SgNodeHelper::replaceAstWithString(*i,"\n"+ss.str());
+        }
+      }
+    }
+#if 0
+    ArrayElementAccessData arrayAccess=
+    ROSE_ASSERT(arrayAccess.getDimensions()==1);
+    VariableId accessVar=arrayAccess.getVariable();
+    int accessSubscript=arrayAccess.getSubscript(0);
+#endif
+    //SageInterface::removeStatement(*i);
+    
+    //SgNodeHelper::replaceAstWithString((*i),"POINTER-INIT-ARRAY:"+(*i)->unparseToString()+"...;");
+  }
+  
+  //list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > 
+  cout<<"STATUS: Replacing Expressions ... ";
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(isSgAssignOp(*i)) {
+      if(SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(*i))) {
+        if(isPointerVariable(lhsVar)) {
+          //cout<<"DEBUG: pointer var on lhs :"<<(*i)->unparseToString()<<endl;
+
+          SgExpression* rhsExp=isSgExpression(SgNodeHelper::getRhs(*i));
+          ROSE_ASSERT(rhsExp);
+          if(isSgAddressOfOp(rhsExp)) {
+            rhsExp=isSgExpression(SgNodeHelper::getFirstChild(rhsExp));
+            ROSE_ASSERT(rhsExp);
+          }
+          if(SgVarRefExp* rhsVar=isSgVarRefExp(rhsExp)) {
+            VariableId lhsVarId=variableIdMapping->variableId(lhsVar);
+            VariableId rhsVarId=variableIdMapping->variableId(rhsVar);
+            SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(rhsVarId,variableIdMapping);
+            //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
+            int num=0;
+            stringstream ss;
+            for(SgExpressionPtrList::iterator j=arrayInitializerList.begin();j!=arrayInitializerList.end();++j) {
+              ss<<variableIdMapping->variableName(lhsVarId)<<"_"<<num<<" = "
+                <<(*j)->unparseToString();
+
+              // workaround for the fact that the ROSE unparser generates a "\n;" for a replaced assignment
+              {
+                SgExpressionPtrList::iterator j2=j;
+                j2++;
+                if(j2!=arrayInitializerList.end())
+                  ss<<";\n";
+              }
+
+              num++;
+            }
+            SgNodeHelper::replaceAstWithString(*i,ss.str());
+            //SgNodeHelper::replaceAstWithString(*i,"COPY-ARRAY("+lhsVar->unparseToString()+"<="+rhsVar->unparseToString()+")");
+          }
+        } else {
+          RoseAst subAst(*i);
+          for(RoseAst::iterator j=subAst.begin();j!=subAst.end();++j) {
+            if(isArrayAccess(*j)) {
+              //cout<<"DEBUG: arrays access on rhs of assignment :"<<(*i)->unparseToString()<<endl;
+              transformArrayAccess(*j,analyzer->getVariableIdMapping());
+            }
+          }
+        }
+      }
+    }
+    if(SgNodeHelper::isCond(*i)) {
+      RoseAst subAst(*i);
+      for(RoseAst::iterator j=subAst.begin();j!=subAst.end();++j) {
+        if(isArrayAccess(*j)) {
+          transformArrayAccess(*j,analyzer->getVariableIdMapping());
+        }
+      }
+    }
+  }
+  cout<<" done."<<endl;
+#if 0
+  for(ArrayAccessInfoType::iterator i=arrayAccesses.begin();i!=arrayAccesses.end();++i) {
+    //cout<<(*i).first->unparseToString()<<":"/*<<(*i).second.xxxx*/<<endl;
+    ArrayElementAccessData arrayAccess=(*i).second;
+    ROSE_ASSERT(arrayAccess.getDimensions()==1);
+    VariableId accessVar=arrayAccess.getVariable();
+    int accessSubscript=arrayAccess.getSubscript(0);
+    // expression is now: VariableId[subscript]
+    // information available is: arrayPointer map: VariableId:pointer -> VariableId:array
+    // pointerArray
+
+    // if the variable is not a pointer var it will now be added to the stl-map but with
+    // a default VariableId. Default variableIds are not valid() IDs.
+    // therefor this becomes a cheap check, whether we need to replace the expression or not.
+    VariableId mappedVar=arrayPointer[accessVar];
+    if(mappedVar.isValid()) {
+      // need to replace
+      stringstream newAccess;
+#if 0
+      newAccess<<variableIdMapping->variableName(mappedVar)<<"["<<accessSubscript<<"]";
+#else
+      newAccess<<variableIdMapping->variableName(accessVar)<<"_"<<accessSubscript<<" ";
+#endif
+      cout<<"to replace: @"<<(*i).first<<":"<<(*i).first->unparseToString()<<" ==> "<<newAccess.str()<<endl;
+      SgNodeHelper::replaceAstWithString((*i).first,newAccess.str());
+    }
+  }
+#endif
+  Analyzer::VariableDeclarationList unusedGlobalVariableDeclarationList=analyzer->computeUnusedGlobalVariableDeclarationList(root);
+  cout<<"STATUS: deleting unused global variables."<<endl;
+  for(Analyzer::VariableDeclarationList::iterator i=unusedGlobalVariableDeclarationList.begin();
+      i!=unusedGlobalVariableDeclarationList.end();
+      ++i) {
+    SgVariableDeclaration* decl=*i;
+    SageInterface::removeStatement(decl);
+  }
+      
+}
+
+#ifdef EXPERIMENTAL_POINTER_ANALYSIS
+
+#include "AbstractValue.h"
+#include "AbstractValue.C"
+
+void pointerAnalysis(SgNode* root, Analyzer* analyzer) {
+  ExprAnalyzer* exprAnalyzer=analyzer->getExprAnalyzer();
+  VariableIdMapping* variableIdMapping=analyzer->getVariableIdMapping();
+  // VariableId->set(addr(VariableId)|Number)
+  typedef AType::ConstIntLattice AbstractNumberType;
+  typedef AbstractMemoryLocation<VariableId,AType::ConstIntLattice> AbstractMemoryLocationType;
+  typedef AbstractValueSurrogate<AbstractNumberType,AbstractMemoryLocationType> AbstractValueSurrogateType;
+  map<VariableId,set< AbstractValueSurrogateType > > aliasInfo;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
+    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+      VariableId lhsVar;
+      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(assignOp));
+      bool isLhsVar=exprAnalyzer->variable(lhs,lhsVar);
+      if(isLhsVar) {
+        SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(assignOp));
+        if(SgPntrArrRefExp* arrAccess=isSgPntrArrRefExp(rhs)) {
+          ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
+          ROSE_ASSERT(aead.isValid());
+          //cout<<"DEBUG: lhs:"<<variableIdMapping->variableName(lhsVar);
+          //cout<<" rhs:"<<SgNodeHelper::getRhs(isSgAssignOp(*i))->unparseToString();
+          VariableId rhsArrayVar=aead.varId;
+          cout<<" rhs:"<<"array-element: "<<variableIdMapping->variableName(rhsArrayVar);
+          if(aead.subscripts.size()==1) {
+            cout<<" ArrayIndex:"<<*aead.subscripts.begin();
+          } else {
+            cout<<" ArrayIndex: unknown";
+          }          
+          cout<<endl;
+          AbstractValueSurrogateType avst;
+          aliasInfo[lhsVar].insert(avst);
+        }
+
+      } else {
+        cerr<<"Error: pointer-analysis: lhs of assignment is not a variable. Not supported yet."<<endl;
+        exit(1);
+      }
+    }
+  }
+}
+
+#endif
+
 int main( int argc, char * argv[] ) {
   string ltl_file;
   try {
@@ -938,8 +1342,8 @@ int main( int argc, char * argv[] ) {
 
   // Command line option handling.
   po::options_description desc
-    ("CodeThorn V1.2\n"
-     "Written by Markus Schordan and Adrian Prantl 2012\n"
+    ("CodeThorn\n"
+     "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n"
      "Supported options");
 
   desc.add_options()
@@ -951,17 +1355,19 @@ int main( int argc, char * argv[] ) {
     ("ltl-verifier",po::value< int >(),"specify which ltl-verifier to use [=1|2]")
     ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
+    ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
     ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
-    ("tg1-estate-properties", po::value< string >(), 
-     "transition graph 1: visualize all estate-properties [=yes|no]")
+    ("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]") 
+    ("tg1-estate-predicate", po::value< string >(), "transition graph 1: show estate as predicate [=yes|no]")
     ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
     ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
-    ("tg2-estate-properties", po::value< string >(),
-     "transition graph 2: visualize all estate-properties [=yes|no]")
+    ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
+    ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
+    ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
     ("colors",po::value< string >(),"use colors in output [=yes|no]")
     ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
     ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
@@ -991,14 +1397,18 @@ int main( int argc, char * argv[] ) {
     ("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+    ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
     ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
     ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
+    ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
     ("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
+    ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
+    ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
@@ -1012,6 +1422,16 @@ int main( int argc, char * argv[] ) {
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
+    ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
+    ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
+    ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
+    ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
+    ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
+    ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
+    ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
+    ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
+    ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
+    ("spot-counter-example", po::value< string >(), "adds a third column to ltl results. It contains counter example input sequences for formulae that could be falsified. [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1029,7 +1449,7 @@ int main( int argc, char * argv[] ) {
 
   if (args.count("version")) {
     cout << "CodeThorn version 1.4\n";
-    cout << "Written by Markus Schordan and Adrian Prantl 2012-2014\n";
+    cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
     return 0;
   }
 
@@ -1037,9 +1457,11 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg1-estate-address",false);
   boolOptions.registerOption("tg1-estate-id",false);
   boolOptions.registerOption("tg1-estate-properties",true);
+  boolOptions.registerOption("tg1-estate-predicate",false);
   boolOptions.registerOption("tg2-estate-address",false);
   boolOptions.registerOption("tg2-estate-id",true);
   boolOptions.registerOption("tg2-estate-properties",false);
+  boolOptions.registerOption("tg2-estate-predicate",false);
   boolOptions.registerOption("colors",true);
   boolOptions.registerOption("report-stdout",false);
   boolOptions.registerOption("report-stderr",false);
@@ -1052,11 +1474,12 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
   boolOptions.registerOption("post-collapse-stg",true);
+  boolOptions.registerOption("eliminate-arrays",false);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",false);
-  boolOptions.registerOption("reduce-cfg",true);
+  boolOptions.registerOption("reduce-cfg",false);
   boolOptions.registerOption("print-all-options",false);
   boolOptions.registerOption("annotate-results",false);
   boolOptions.registerOption("generate-assertions",false);
@@ -1079,6 +1502,10 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("eliminate-stg-back-edges",false);
   boolOptions.registerOption("dump1",false);
   boolOptions.registerOption("rule-const-subst",true);
+
+  boolOptions.registerOption("inf-paths-only",false);
+  boolOptions.registerOption("std-io-only",false);
+  boolOptions.registerOption("spot-counter-example",false);
 
   boolOptions.processOptions();
 
@@ -1111,7 +1538,10 @@ int main( int argc, char * argv[] ) {
     ltl_file = args["verify"].as<string>();
   }
   if(args.count("csv-assert-live")) {
-    analyzer._csv_assert_live_file=args["csv-assert-live"].as<string>();
+    analyzer.setCsvAssertLiveFileName(args["csv-assert-live"].as<string>());
+  }
+  if(args.count("tg-trace")) {
+    analyzer.setStgTraceFileName(args["tg-trace"].as<string>());
   }
 
   if(args.count("input-values")) {
@@ -1121,6 +1551,16 @@ int main( int argc, char * argv[] ) {
     set<int> intSet=Parse::integerSet(setstring);
     for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
       analyzer.insertInputVarValue(*i);
+    }
+  }
+
+  if(args.count("input-sequence")) {
+    string liststring=args["input-sequence"].as<string>();
+    cout << "STATUS: input-sequence="<<liststring<<endl;
+
+    list<int> intList=Parse::integerList(liststring);
+    for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
+      analyzer.addInputSequenceValue(*i);
     }
   }
 
@@ -1143,9 +1583,16 @@ int main( int argc, char * argv[] ) {
       cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
     }
+  } else {
+    // default value
+    analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
   }
   if(args.count("max-transitions")) {
     analyzer.setMaxTransitions(args["max-transitions"].as<int>());
+  }
+
+  if(args.count("max-transitions-forced-top")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
   }
 
   int numberOfThreadsToUse=1;
@@ -1155,10 +1602,12 @@ int main( int argc, char * argv[] ) {
   analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
   // check threads == 1
+#if 0
   if(args.count("rers-binary") && numberOfThreadsToUse>1) {
 	cerr<<"Error: binary mode is only supported for 1 thread."<<endl;
 	exit(1);
   }
+#endif
   if(args.count("semantic-fold-threshold")) {
     int semanticFoldThreshold=args["semantic-fold-threshold"].as<int>();
     analyzer.setSemanticFoldThreshold(semanticFoldThreshold);
@@ -1178,6 +1627,9 @@ int main( int argc, char * argv[] ) {
   if(args.count("debug-mode")) {
     option_debug_mode=args["debug-mode"].as<int>();
   }
+  if(args.count("variable-value-threshold")) {
+    analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
+  }
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
@@ -1195,6 +1647,11 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--dump-sorted"
         || string(argv[i])=="--dump-non-sorted"
         || string(argv[i])=="--limit-to-fragment"
+        || string(argv[i])=="--check-ltl"
+        || string(argv[i])=="--csv-spot-ltl"
+        || string(argv[i])=="--check-ltl-sol"
+        || string(argv[i])=="--ltl-in-alphabet"
+        || string(argv[i])=="--ltl-out-alphabet"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -1207,6 +1664,7 @@ int main( int argc, char * argv[] ) {
   // reset dump1 in case sorted or non-sorted is used
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     boolOptions.registerOption("dump1",true);
+    analyzer.setSkipSelectedFunctionCalls(true);
     if(numberOfThreadsToUse>1) {
       //cerr<<"Error: multi threaded rewrite not supported yet."<<endl;
     }
@@ -1240,6 +1698,22 @@ int main( int argc, char * argv[] ) {
     cout << "INIT: Running ROSE AST tests."<<endl;
     // Run internal consistency tests on AST
     AstTests::runAllTests(sageProject);
+
+    // test: constant expressions
+    {
+      cout<<"STATUS: testing constant expressions."<<endl;
+      CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
+      list<SgExpression*> exprList=exprRootList(sageProject);
+      cout<<"INFO: found "<<exprList.size()<<" expressions."<<endl;
+      for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
+        EvalResult r=evaluator->traverse(*i);
+        if(r.isConst()) {
+          cout<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
+        }
+      }
+      delete evaluator;
+    }
+    return 0;
   }
 
   SgNode* root=sageProject;
@@ -1302,6 +1776,13 @@ int main( int argc, char * argv[] ) {
     fragmentEndNode=*i;
   }
 
+  if(boolOptions["eliminate-arrays"]) {
+    //analyzer.initializeVariableIdMapping(sageProject);
+    transformArrayProgram(sageProject, &analyzer);
+    sageProject->unparse(0,0);
+    exit(0);
+  }
+
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
@@ -1309,6 +1790,14 @@ int main( int argc, char * argv[] ) {
     // extraction of expressions: skip function calls to selected functions (also inside expressions) for defered handling.
     analyzer.setSkipSelectedFunctionCalls(true);
   }
+  #ifdef EXPERIMENTAL_POINTER_ANALYSIS
+  if(option_debug_mode==400) {
+    pointerAnalysis(root, &analyzer);
+    exit(0);
+  }
+  #endif
+
+
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();
@@ -1351,12 +1840,16 @@ int main( int argc, char * argv[] ) {
 #endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
+    analyzer.reachabilityResults.writeFile(filename.c_str());
+    cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
+#if 0  //result tables of different sizes are now handled by the PropertyValueTable object itself
     switch(resultsFormat) {
     case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
     case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
-    default: assert(0);
+    default: analyzer.reachabilityResults.writeFile(filename.c_str());break;
     }
     //    OLD VERSION:  generateAssertsCsvFile(analyzer,sageProject,filename);
+#endif
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
@@ -1408,13 +1901,21 @@ int main( int argc, char * argv[] ) {
   long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
   double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
 
+  long numOfStdinEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+  long numOfStdoutVarEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+  long numOfStdoutConstEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+  long numOfStderrEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+  long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+  long numOfConstEStates=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+  long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
+  
   cout <<color("white");
-  cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
-  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
-  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST))<<color("white")<<endl;
-  cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
-  cout << "Number of failed-assert-estates: "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT))<<color("white")<<endl;
-  cout << "Number of const estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()))<<color("white")<<endl;
+  cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
+  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
+  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
+  cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
+  cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
+  cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
 
   cout << "=============================================================="<<endl;
   cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
@@ -1427,6 +1928,79 @@ int main( int argc, char * argv[] ) {
   cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
   cout << "=============================================================="<<endl;
   cout <<color("normal");
+
+  double infPathsOnlyTime = 0;
+  double stdIoOnlyTime = 0;
+
+  if(boolOptions["inf-paths-only"]) {
+    cout << "STATUS: recursively removing all leaves."<<endl;
+    timer.start();
+    analyzer.pruneLeavesRec();
+    infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+  }
+  
+  if(boolOptions["std-io-only"]) {
+    cout << "STATUS: bypassing all non standard I/O states."<<endl;
+    timer.start();
+    analyzer.removeNonIOStates();
+    stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+  }
+
+  double spotLtlAnalysisTime = 0;
+  
+  if (args.count("check-ltl")) {
+    string ltl_filename = args["check-ltl"].as<string>();
+    if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
+      if (!boolOptions["inf-paths-only"]) {
+        cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
+        timer.start();
+        analyzer.pruneLeavesRec();
+        infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+      }
+      if (!boolOptions["std-io-only"]) {
+        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
+        timer.start();
+        analyzer.removeNonIOStates();
+        stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+      }
+    }
+    bool withCounterExample = false;
+    if(boolOptions["spot-counter-example"]) {  //output a counter-example input sequence for falsified formulae
+      withCounterExample = true;
+    }
+    timer.start();
+    std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
+    //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
+    if (args.count("ltl-in-alphabet")) {
+      string setstring=args["ltl-in-alphabet"].as<string>();
+      ltlInAlphabet=Parse::integerSet(setstring);
+      cout << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
+    }
+    //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
+    std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
+    if (args.count("ltl-out-alphabet")) {
+      string setstring=args["ltl-out-alphabet"].as<string>();
+      ltlOutAlphabet=Parse::integerSet(setstring);
+      cout << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
+    }
+    cout << "STATUS: generating LTL results"<<endl;
+    SpotConnection spotConnection(ltl_filename);
+    spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterExample);
+    PropertyValueTable* ltlResults = spotConnection.getLtlResults();
+    ltlResults->printLtlResults();
+    ltlResults->printResultsStatistics();
+    if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
+      std::string csv_filename = args["csv-spot-ltl"].as<string>();
+      cout << "STATUS: writing ltl results to file: " << csv_filename << endl;
+      ltlResults->writeFile(csv_filename.c_str());
+    }
+    delete ltlResults;
+    ltlResults = NULL;
+    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+    cout << "=============================================================="<<endl;
+  }
+
+  totalRunTime += infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
   // TEST
   if (boolOptions["generate-assertions"]) {
@@ -1503,7 +2077,12 @@ int main( int argc, char * argv[] ) {
     text<<"Sizes,"<<pstateSetSize<<", "
         <<eStateSetSize<<", "
         <<transitionGraphSize<<", "
-        <<numOfconstraintSets<<endl;
+        <<numOfconstraintSets<<", "
+        << numOfStdinEStates<<", "
+        << numOfStdoutEStates<<", "
+        << numOfStderrEStates<<", "
+        << numOfFailedAssertEStates<<", "
+        << numOfConstEStates<<endl;
     text<<"Memory,"<<pstateSetBytes<<", "
         <<eStateSetBytes<<", "
         <<transitionGraphBytes<<", "
@@ -1517,6 +2096,9 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(arrayUpdateExtractionRunTime)<<", "
         <<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
         <<readableruntime(sortingAndIORunTime)<<", "
+        <<readableruntime(infPathsOnlyTime)<<", "
+        <<readableruntime(stdIoOnlyTime)<<", "
+        <<readableruntime(spotLtlAnalysisTime)<<", "
         <<readableruntime(totalRunTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
@@ -1549,6 +2131,37 @@ int main( int argc, char * argv[] ) {
         <<endl;
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
+  }
+
+  if (args.count("check-ltl-sol")) {
+    string ltl_filename = args["check-ltl-sol"].as<string>();
+    if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
+      if (!boolOptions["inf-paths-only"]) {
+        cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
+        analyzer.pruneLeavesRec();
+      }
+      if (!boolOptions["std-io-only"]) {
+        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
+        analyzer.removeNonIOStates();
+      }
+    }
+    std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
+    //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
+    if (args.count("ltl-in-alphabet")) {
+      string setstring=args["ltl-in-alphabet"].as<string>();
+      ltlInAlphabet=Parse::integerSet(setstring);
+      cout << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
+    }
+    //take ltl output alphabet if specifically described, otherwise the usual 21...26 (a.k.a. oU...oZ)
+    std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
+    if (args.count("ltl-out-alphabet")) {
+      string setstring=args["ltl-out-alphabet"].as<string>();
+      ltlOutAlphabet=Parse::integerSet(setstring);
+      cout << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
+    }
+    SpotConnection* spotConnection = new SpotConnection();
+    spotConnection->compareResults( *(analyzer.getTransitionGraph()) , ltl_filename, ltlInAlphabet, ltlOutAlphabet);
+    cout << "=============================================================="<<endl;
   }
   
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
@@ -1594,17 +2207,72 @@ int main( int argc, char * argv[] ) {
   if (args.count("spot-stg")) {
     string filename=args["spot-stg"].as<string>();
     cout << "generating spot IO STG file:"<<filename<<endl;
+    if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
+      if (!boolOptions["inf-paths-only"]) {
+        cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
+        analyzer.pruneLeavesRec();
+      }
+      if (!boolOptions["std-io-only"]) {
+        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
+        analyzer.removeNonIOStates();
+      }
+    }
     string spotSTG=analyzer.generateSpotSTG();
     write_file(filename, spotSTG);
     cout << "=============================================================="<<endl;
   }
+
+  // InputPathGenerator
+#if 1
+  {
+    if(args.count("iseq-file")) {
+      int iseqLen=0;
+      if(args.count("iseq-length")) {
+        iseqLen=args["iseq-length"].as<int>();
+      } else {
+        cerr<<"Error: input-sequence file specified, but no sequence length."<<endl;
+        exit(1);
+      }
+      string fileName=args["iseq-file"].as<string>();
+      cout<<"STATUS: computing input sequences of length "<<iseqLen<<endl;
+      IOSequenceGenerator iosgen;
+      if(args.count("iseq-random-num")) {
+        int randomNum=args["iseq-random-num"].as<int>();
+        cout<<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
+        iosgen.computeRandomInputPathSet(iseqLen,*analyzer.getTransitionGraph(),randomNum);
+      } else {
+        iosgen.computeInputPathSet(iseqLen,*analyzer.getTransitionGraph());
+      }
+      cout<<"STATUS: generating input sequence file "<<fileName<<endl;
+      iosgen.generateFile(fileName);
+    } else {
+      if(args.count("iseq-length")) {
+        cerr<<"Error: input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
+        exit(1);
+      }
+    }
+  }
+#endif
 
 
 
 
 #if 0
   {
-    cout << "EStateSet:\n"<<analyzer.getEStateSet()->toString()<<endl;
+    cout << "EStateSet:\n"<<analyzer.getEStateSet()->toString(analyzer.getVariableIdMapping())<<endl;
+  }
+#endif
+
+#if 0
+  {
+    cout << "ConstraintSet:\n"<<analyzer.getConstraintSetMaintainer()->toString()<<endl;
+  }
+#endif
+
+#if 1
+  {
+    if(analyzer.variableValueMonitor.isActive())
+      cout << "VariableValueMonitor:\n"<<analyzer.variableValueMonitor.toString(analyzer.getVariableIdMapping())<<endl;
   }
 #endif
 

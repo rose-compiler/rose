@@ -11,7 +11,7 @@ using namespace CodeThorn;
 template<typename Element>
 bool WorkListSeq<Element>::isEmpty() { 
   bool res;
-  #pragma omp critical
+#pragma omp critical(WL)
   {
     res=(workList.size()==0);
   }
@@ -21,7 +21,7 @@ bool WorkListSeq<Element>::isEmpty() {
 template<typename Element>
 bool WorkListSeq<Element>::exists(Element elem) {
   typename list<Element>::iterator findIter;
-#pragma omp critical
+#pragma omp critical(WL)
   {
     findIter=std::find(workList.begin(), workList.end(), elem);
   }
@@ -30,7 +30,7 @@ bool WorkListSeq<Element>::exists(Element elem) {
 
 template<typename Element>
 void WorkListSeq<Element>::add(Element elem) { 
-#pragma omp critical
+#pragma omp critical(WL)
   {
     workList.push_back(elem); 
   }
@@ -38,7 +38,7 @@ void WorkListSeq<Element>::add(Element elem) {
 
 template<typename Element>
 void WorkListSeq<Element>::add(std::set<Element>& elemSet) { 
-#pragma omp critical
+#pragma omp critical(WL)
   {
     for(typename std::set<Element>::iterator i=elemSet.begin();i!=elemSet.end();++i) {
         workList.push_back(*i);
@@ -53,7 +53,7 @@ Element WorkListSeq<Element>::take() {
 
   }  else {
     Element co;
-#pragma omp critical
+#pragma omp critical(WL)
     {
       co=*workList.begin();
       workList.pop_front();
@@ -67,7 +67,7 @@ Element WorkListSeq<Element>::examine() {
   if(workList.size()==0)
     throw "Error: attempted to examine next element in empty work list.";
   Element elem;
-#pragma omp critical
+#pragma omp critical(WL)
   {
     if(workList.size()>0)
       elem=*workList.begin();

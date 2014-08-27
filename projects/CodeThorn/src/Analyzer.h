@@ -22,7 +22,7 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
-#include "ReachabilityResults.h"
+#include "PropertyValueTable.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -61,20 +61,46 @@ namespace CodeThorn {
   typedef list<const EState*> EStateWorkList;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
+  class Analyzer;
+
+  class VariableValueMonitor {
+  public:
+    enum VariableMode { VARMODE_FORCED_TOP, VARMODE_ADAPTIVE_TOP, VARMODE_PRECISE, VARMODE_FORCED_PRECISE};
+    VariableValueMonitor();
+    void setThreshold(size_t threshold);
+    size_t getThreshold();
+    bool isActive();
+    // the init function only uses the variableIds of a given estate (not its values) for initialization
+    void init(const EState* estate);
+    void init(const PState* pstate);
+    VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
+    VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
+    void setVariableMode(VariableMode,VariableId);
+    VariableMode getVariableMode(VariableId);
+    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
+    void update(Analyzer* analyzer, EState* estate, VariableIdSet& hotVariables);
+    bool isHotVariable(Analyzer* analyzer, VariableId varId);
+    string toString(VariableIdMapping* variableIdMapping);
+  private:
+    map<VariableId,set<int>* > _variablesMap;
+    map<VariableId,VariableMode> _variablesModeMap;
+    size_t _threshold;
+  };
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
   class Analyzer {
     friend class Visualizer;
-
+    friend class VariableValueMonitor;
   public:
     
     Analyzer();
     ~Analyzer();
     
     void initAstNodeInfo(SgNode* node);
-    
+    bool isActiveGlobalTopify();
     static string nodeToString(SgNode* node);
     void initializeSolver1(std::string functionToStartAt,SgNode* root);
     
@@ -114,6 +140,12 @@ namespace CodeThorn {
     bool checkTransitionGraph();
     // this function requires that no LTL graph is computed
     void deleteNonRelevantEStates();
+
+    // bypasses and removes all states that are not standard I/O states
+    void removeNonIOStates();
+    // cuts off all paths in the transition graph that lead to leaves 
+    // (recursively until only paths of infinite length remain)
+    void pruneLeavesRec();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -123,6 +155,8 @@ namespace CodeThorn {
     const PState* processNewOrExisting(PState& s);
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
+    const EState* processCompleteNewOrExisting(const EState* es);
+    void topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId);
     
     EStateSet::ProcessingResult process(EState& s);
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
@@ -143,11 +177,16 @@ namespace CodeThorn {
     void runSolver2();
     void runSolver3();
     void runSolver4();
+    void runSolver5();
+    void runSolver6();
+    void runSolver7();
     void runSolver();
     //! The analyzer requires a CFAnalyzer to obtain the ICFG.
     void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
     CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
     
+    //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
+
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
     IOLabeler* getLabeler() const {
@@ -165,13 +204,18 @@ namespace CodeThorn {
     Flow flow;
     SgNode* startFunRoot;
     CFAnalyzer* cfanalyzer;
-    
+    VariableValueMonitor variableValueMonitor;
+    void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
+  public:
     //! compute the VariableIds of variable declarations
     VariableIdMapping::VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
     //! compute the VariableIds of SgInitializedNamePtrList
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
     set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    typedef list<SgVariableDeclaration*> VariableDeclarationList;
+    VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
+    VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
     //bool isAssertExpr(SgNode* node);
     bool isFailedAssertEState(const EState* estate);
@@ -184,6 +228,7 @@ namespace CodeThorn {
     void initLabeledAssertNodes(SgProject* root) {
       _assertNodes=listOfLabeledAssertNodes(root);
     }
+    size_t getNumberOfErrorLabels();
     string labelNameOfAssertLabel(Label lab) {
       string labelName;
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
@@ -199,37 +244,55 @@ namespace CodeThorn {
     InputOutput::OpType ioOp(const EState* estate) const;
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
-    void setSolver(int solver) { _solver=solver; ROSE_ASSERT(_solver>=1 && _solver<=4);}
+    void setSolver(int solver) { _solver=solver; }
     int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
+    void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
+    std::set<int> getInputVarValues() { return _inputVarValues; }
     list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    string _csv_assert_live_file; // to become private
+    void setCsvAssertLiveFileName(string filename) { _csv_assert_live_file=filename; }
     VariableId globalVarIdByName(string varName) { return globalVarName2VarIdMapping[varName]; }
-    
+    void setStgTraceFileName(string filename) {
+      _stg_trace_filename=filename;
+      std::ofstream fout;
+      fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
+      fout<<"START"<<endl;
+      fout.close();    // close. Will be used with append.
+    }
+    string _csv_assert_live_file; // to become private
+  private:
+    string _stg_trace_filename;
  public:
     // only used temporarily for binary-binding prototype
     map<string,VariableId> globalVarName2VarIdMapping;
     vector<bool> binaryBindingAssert;
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     bool isIncompleteSTGReady();
-    ReachabilityResults reachabilityResults;
+    bool isPrecise();
+    PropertyValueTable reachabilityResults;
     int reachabilityAssertCode(const EState* currentEStatePtr);
     enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
+    ExplorationMode getExplorationMode() { return _explorationMode; }
     void setSkipSelectedFunctionCalls(bool defer) {
       _skipSelectedFunctionCalls=true; 
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
     ExprAnalyzer* getExprAnalyzer();
+    
   private:
     set<int> _inputVarValues;
+    list<int> _inputSequence;
+    list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     EStateWorkList estateWorkList;
@@ -247,10 +310,11 @@ namespace CodeThorn {
     AnalyzerMode _analyzerMode;
     set<const EState*> _newNodesToFold;
     size_t _maxTransitions;
+    size_t _maxTransitionsForcedTop;
     bool _treatStdErrLikeFailedAssert;
-    ExplorationMode _explorationMode;
     bool _skipSelectedFunctionCalls;
-  };
+    ExplorationMode _explorationMode;
+  }; // end of class analyzer
   
 } // end of namespace CodeThorn
 
@@ -258,16 +322,25 @@ namespace CodeThorn {
 #ifdef RERS_SPECIALIZATION
 // RERS-binary-binding-specific declarations
 #define STR_VALUE(arg) #arg
-#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
+#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
 
 //cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
 
-#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME);
+#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME[thread_id]);
+
+// macro used to generate the initialization of global variables in the hybrid analyzer (linked binary with threads)
+#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
 
 namespace RERS_Problem {
-  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate);
-  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate);
-  int calculate_output(int);
+  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
+  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
+  void rersGlobalVarsArrayInit(int numberOfThreads);
+#if 0
+  // input variable passed as a parameter (obsolete since transformation of "input" into a global varialbe)
+  void calculate_output(int);
+#endif
+  void calculate_output(int numberOfThreads);
+  extern int* output;
 }
 // END OF RERS-binary-binding-specific declarations
 #endif

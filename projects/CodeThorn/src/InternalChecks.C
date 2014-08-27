@@ -21,6 +21,7 @@
 #include <boost/program_options.hpp>
 #include <map>
 #include "RDLattice.h"
+#include "Miscellaneous.h"
 #include "InternalChecks.h"
 
 using namespace CodeThorn;
@@ -32,10 +33,9 @@ void checkLargeSets();
 void nocheck(string checkIdentifier, bool checkResult);
 void check(string checkIdentifier, bool checkResult, bool check);
 
-// intentionally global
-bool checkresult=true;
-
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
+  // intentionally global
+  extern bool checkresult;
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -66,6 +66,7 @@ namespace po = boost::program_options;
 // this function reports the results of checks
 // if the passed argument is true the check is PASS, otherwise FAIL.
 
+#if 0
 void nocheck(string checkIdentifier, bool checkResult) {
   check(checkIdentifier,checkResult,false);
 }
@@ -88,7 +89,7 @@ void check(string checkIdentifier, bool checkResult, bool check=true) {
   checkNr++;
   cout<<color("normal")<<endl;
 }
-
+#endif
 
 void checkTypes() {
   VariableIdMapping variableIdMapping;
