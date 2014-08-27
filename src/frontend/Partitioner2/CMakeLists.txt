@@ -14,5 +14,5 @@ install(FILES       Partitioner2/AddressUsageMap.h
                     Partitioner2/Partitioner.h
                     Partitioner2/Semantics.h
 		    Partitioner2/Utility.h
-        DESTINATION include/Partitioner2)
+        DESTINATION ${INCLUDE_INSTALL_DIR}/Partitioner2)
   
