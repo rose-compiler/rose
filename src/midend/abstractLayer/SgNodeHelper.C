@@ -963,6 +963,19 @@ SgNode* SgNodeHelper::getCond(SgNode* node) {
   throw "SgNodeHelper::getCond: improper node operation.";
 }
 
+string SgNodeHelper::unparseCond(SgNode* cond) {
+  if(SgNodeHelper::isCond(cond)) {
+    string condString;
+    condString=cond->unparseToString();
+    if(condString[condString.size()-1]==';')
+      condString.erase(condString.size()-1); // C++11: condString.pop_back()
+    return condString;
+  } else {
+    throw "SgNodeHelper::unparseCond: improper node operation.";
+  }
+}
+
+
 
 /*! 
   * \author Markus Schordan
@@ -1258,4 +1271,9 @@ void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mo
   } else {
     SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
   }
+}
+
+void SgNodeHelper::replaceAstWithString(SgNode* node, string s) {
+  AstUnparseAttribute* substituteNameAttribute=new AstUnparseAttribute(s,AstUnparseAttribute::e_replace);
+  node->setAttribute("AstUnparseAttribute",substituteNameAttribute);
 }
