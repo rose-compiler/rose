@@ -8,13 +8,15 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Modules {
 
-std::vector<Function::Ptr>
-findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
+size_t
+findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
     struct T1: AstSimpleProcessing {
         const Partitioner &partitioner;
         SgAsmGenericHeader *fileHeader;
-        std::vector<Function::Ptr> functions;
-        T1(const Partitioner &p, SgAsmGenericHeader *fh): partitioner(p), fileHeader(fh) {}
+        std::vector<Function::Ptr> &functions;
+        size_t nInserted;
+        T1(const Partitioner &p, SgAsmGenericHeader *fh, std::vector<Function::Ptr> &functions)
+            : partitioner(p), fileHeader(fh), functions(functions), nInserted(0) {}
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
                 if (symbol->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
@@ -33,7 +35,8 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     if (partitioner.discoverInstruction(va)) {
                         Function::Ptr function = Function::instance(va, symbol->get_name()->get_string(),
                                                                     SgAsmFunction::FUNC_SYMBOL);
-                        insertUnique(functions, function, sortFunctionsByAddress);
+                        if (insertUnique(functions, function, sortFunctionsByAddress))
+                            ++nInserted;
                     }
 
                     // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
@@ -43,15 +46,34 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     if (partitioner.discoverInstruction(value)) {
                         Function::Ptr function = Function::instance(value, symbol->get_name()->get_string(),
                                                                     SgAsmFunction::FUNC_SYMBOL);
-                        insertUnique(functions, function, sortFunctionsByAddress);
+                        if (insertUnique(functions, function, sortFunctionsByAddress))
+                            ++nInserted;
                     }
                 }
             }
         }
-    } t1(partitioner, fileHeader);
+    } t1(partitioner, fileHeader, functions);
     t1.traverse(fileHeader, preorder);
-    return t1.functions;
+    return t1.nInserted;
 }
+
+std::vector<Function::Ptr>
+findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
+    std::vector<Function::Ptr> functions;
+    findSymbolFunctions(partitioner, fileHeader, functions);
+    return functions;
+}
+
+std::vector<Function::Ptr>
+findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+    std::vector<Function::Ptr> functions;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            findSymbolFunctions(partitioner, fileHeader, functions);
+    }
+    return functions;
+}
+
 
 } // namespace
 } // namespace

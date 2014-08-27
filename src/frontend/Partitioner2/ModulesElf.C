@@ -3,6 +3,8 @@
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
+#include <boost/foreach.hpp>
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -10,20 +12,42 @@ namespace ModulesElf {
 
 using namespace rose::Diagnostics;
 
-std::vector<Function::Ptr>
-findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader) {
-    struct: AstSimpleProcessing {
-        std::vector<Function::Ptr> functions;
+size_t
+findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
+    struct T1: AstSimpleProcessing {
+        size_t nInserted;
+        std::vector<Function::Ptr> &functions;
+        T1(std::vector<Function::Ptr> &functions): nInserted(0), functions(functions) {}
         void visit(SgNode *node) {
             if (SgAsmElfEHFrameEntryFD *fde = isSgAsmElfEHFrameEntryFD(node)) {
                 Function::Ptr function = Function::instance(fde->get_begin_rva().get_rva(), SgAsmFunction::FUNC_EH_FRAME);
-                insertUnique(functions, function, sortFunctionsByAddress);
+                if (insertUnique(functions, function, sortFunctionsByAddress))
+                    ++nInserted;
             }
         }
-    } t1;
-    t1.traverse(elfHeader, preorder);
-    return t1.functions;
+    } t1(functions);
+    if (elfHeader!=NULL)
+        t1.traverse(elfHeader, preorder);
+    return t1.nInserted;
 }
+
+std::vector<Function::Ptr>
+findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader) {
+    std::vector<Function::Ptr> functions;
+    findErrorHandlingFunctions(elfHeader, functions);
+    return functions;
+}
+
+std::vector<Function::Ptr>
+findErrorHandlingFunctions(SgAsmInterpretation *interp) {
+    std::vector<Function::Ptr> functions;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            findErrorHandlingFunctions(isSgAsmElfFileHeader(fileHeader), functions);
+    }
+    return functions;
+}
+
 
 bool
 PltEntryMatcher::match(const Partitioner *partitioner, rose_addr_t anchor) {
@@ -65,15 +89,13 @@ PltEntryMatcher::match(const Partitioner *partitioner, rose_addr_t anchor) {
     return false;
 }
 
-std::vector<Function::Ptr>
-findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
-    std::vector<Function::Ptr> functions;
-
+size_t
+findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
     // Find important sections
     SgAsmGenericSection *plt = elfHeader ? elfHeader->get_section_by_name(".plt") : NULL;
     SgAsmGenericSection *gotplt = elfHeader ? elfHeader->get_section_by_name(".got.plt") : NULL;
     if (!plt || !plt->is_mapped() || !gotplt || !gotplt->is_mapped())
-        return functions;
+        return 0;
 
     // Find all relocation sections
     std::set<SgAsmElfRelocSection*> relocSections;
@@ -83,10 +105,11 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) 
         
     }
     if (relocSections.empty())
-        return functions;
+        return 0;
 
     // Look at each instruction in the .plt section. If the instruction is a computed jump to an address stored in the .got.plt
     // then we've found the beginning of a plt trampoline.
+    size_t nInserted = 0;
     rose_addr_t pltOffset = 14; /* skip the first entry (PUSH ds:XXX; JMP ds:YYY; 0x00; 0x00)--the JMP is not a function*/
     while (pltOffset<plt->get_mapped_size()) {
         PltEntryMatcher matcher(elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva());
@@ -122,15 +145,33 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) 
     foundName:
 
         Function::Ptr function = Function::instance(pltEntryVa, name, SgAsmFunction::FUNC_IMPORT);
-        insertUnique(functions, function, sortFunctionsByAddress);
+        if (insertUnique(functions, function, sortFunctionsByAddress))
+            ++nInserted;
         pltOffset += matcher.nBytesMatched();
 
         // FIXME[Robb P. Matzke 2014-08-23]: we can assume that some functions don't ever return, or they return to the call
         // site: abort, execl, execlp, execv, execvp, exit, _exit, fexecve, longjmp, __longjmp, siglongjmp.
     }
+    return nInserted;
+}
+
+std::vector<Function::Ptr>
+findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
+    std::vector<Function::Ptr> functions;
+    findPltFunctions(partitioner, elfHeader, functions);
     return functions;
 }
-    
+
+std::vector<Function::Ptr>
+findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+    std::vector<Function::Ptr> functions;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            findPltFunctions(partitioner, isSgAsmElfFileHeader(fileHeader), functions);
+    }
+    return functions;
+}
+
 
 } // namespace
 } // namespace

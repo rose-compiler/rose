@@ -126,8 +126,13 @@ namespace Modules {
 /** Finds functions for which symbols exist.
  *
  *  Scans the specified AST to find symbols that point to functions and makes a function at each such address.  A function is
- *  made only if an instruction can be disassembled at the address. The return value is a sorted list of unique functions. */
+ *  made only if an instruction can be disassembled at the address. The return value is a sorted list of unique functions.
+ *
+ * @{ */
 std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*);
+std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmInterpretation*);
+size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<Function::Ptr>&);
+/** @} */
 
 } // namespace
 

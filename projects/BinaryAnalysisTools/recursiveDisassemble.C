@@ -20,16 +20,12 @@
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
 
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-24]
-#include "AsmUnparser_compat.h"
-#endif
 
 
 // FIXME[Robb P. Matzke 2014-08-24]: These matchers still need to be implemented:
 /* 
  | name                   | purpose                                                   |
  |------------------------+-----------------------------------------------------------|
- | mark_call_insns        | find CALL insns and make functions at their target        |
  | FindFunctionFragments  | uses code criteria to make code from data                 |
  | FindThunks             | makes functions from BB's containing only a JMP           |
  | FindInterpadFunctions  | find functions between other functions                    |
@@ -267,10 +263,21 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
         .doc("synopsis",
              "@prop{programName} [@v{switches}] @v{specimen_name}")
         .doc("description",
-             "This program tests the new partitioner architecture by disassembling the specified raw file.");
+             "This program tests the new partitioner architecture by disassembling the specified file.");
     
     return parser.with(gen).with(dis).with(out).parse(argc, argv).apply();
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                              Callbacks
+//
+// Callbacks are a way of adapting the partitioner to a particular task, architecture, etc. They are different than subclassing
+// in that they are more of a pluggable-module approach where one can mix and match different behaviors in a non-linear way.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // Example of watching CFG changes.  Sort of stupid, but fun to watch.  A more useful monitor might do things like adjust
 // work-lists that are defined by the user.  In any case, a CFG monitor is a good place to track progress if you need to do
@@ -294,7 +301,8 @@ public:
 
 // Example of making adjustments to basic block successors.  If this callback is registered with the partitioner, then it will
 // add ghost edges (non-taken side of branches with opaque predicates) to basic blocks as their instructions are discovered.
-// An alternative method is to investigate ghost edges after functions are discovered in order to find dead code.
+// An alternative method is to investigate (but not attach) ghost edges after functions are discovered in order to find dead
+// code.
 class AddGhostSuccessors: public P2::BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new AddGhostSuccessors); }
@@ -330,7 +338,7 @@ public:
     }
 };
 
-// Matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue
+// Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
 class X86AbbreviatedPrologue: public P2::FunctionPrologueMatcher {
 protected:
     P2::Function::Ptr function_;
@@ -377,10 +385,27 @@ public:
         }
 
         // Seems good!
-        function_ = P2::Function::instance(anchor);
+        function_ = P2::Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
         return true;
     }
 };
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                              "marking" functions
+//
+// The following functions look for certain features in the specimen memory or its ELF/PE container and decide where we might
+// want to start disassembling functions.  These are all greedy implementations -- they mark as many locations as possible in
+// one shot.  An alternative could be to write non-greedy versions or to have the greedy versions create prioritized work lists
+// rather than immediately attaching functions to the CFG/UAM.
+//
+// Most of the functions in the various Module name spaces are overloaded to operate on a single ELF/PE file header (from a
+// single specimen file) or an Interpretation containing compatible headers from multiple files (like an executable plus all
+// its dynamic libraries).
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // Make functions at specimen entry addresses
 static void
@@ -398,15 +423,8 @@ markEntryFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
 // Make functions at error handling addresses
 static void
 markErrorHandlingFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
-            if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
-                std::vector<P2::Function::Ptr> functions = P2::ModulesElf::findErrorHandlingFunctions(elfHeader);
-                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
-                    partitioner.attachOrMergeFunction(function);
-            }
-        }
-    }
+    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesElf::findErrorHandlingFunctions(interp))
+        partitioner.attachOrMergeFunction(function);
 }
 
 // Make functions at import trampolines
@@ -418,48 +436,27 @@ markImportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
         partitioner.attachOrMergeFunction(function);
     
     // ELF imports
-    if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
-            if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
-                std::vector<P2::Function::Ptr> functions = P2::ModulesElf::findPltFunctions(partitioner, elfHeader);
-                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
-                    partitioner.attachOrMergeFunction(function);
-            }
-        }
-    }
+    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesElf::findPltFunctions(partitioner, interp))
+        partitioner.attachOrMergeFunction(function);
 }
 
 // Make functions at export addresses
 static void
 markExportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
-            if (SgAsmPEFileHeader *peHeader = isSgAsmPEFileHeader(fileHeader)) {
-                std::vector<P2::Function::Ptr> functions = P2::ModulesPe::findExportFunctions(partitioner, peHeader);
-                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
-                    partitioner.attachOrMergeFunction(function);
-            }
-        }
-    }
+    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesPe::findExportFunctions(partitioner, interp))
+        partitioner.attachOrMergeFunction(function);
 }
 
 // Make functions that have symbols
 static void
 markSymbolFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
-            if (SgAsmElfFileHeader *elfHeader = isSgAsmElfFileHeader(fileHeader)) {
-                std::vector<P2::Function::Ptr> functions = P2::Modules::findSymbolFunctions(partitioner, elfHeader);
-                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
-                    partitioner.attachOrMergeFunction(function);
-            }
-        }
-    }
+    BOOST_FOREACH (const P2::Function::Ptr &function, P2::Modules::findSymbolFunctions(partitioner, interp))
+        partitioner.attachOrMergeFunction(function);
 }
 
 // Make functions for any x86 CALL instruction. This is intended to be a demonstration of how to search for specific
-// instruction patterns, and probably isn't all that useful since function calls in reachable code are already detected anyway
-// as part of Partitioner::discoverBasicBlock.
+// instruction patterns and do something when the pattern is found, and probably isn't all that useful since function calls in
+// reachable code are already detected anyway as part of Partitioner::discoverBasicBlock.
 static void
 markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
     std::set<rose_addr_t> targets;                      // distinct call targets
@@ -474,7 +471,7 @@ markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
         // interested only in single instructions.
         if (SgAsmInstruction *insn = partitioner.discoverInstruction(va)) {
             std::vector<SgAsmInstruction*> bb(1, insn);
-            rose_addr_t target(-1);
+            rose_addr_t target = NO_ADDRESS;
             if (insn->is_function_call(bb, &target, NULL) && partitioner.memoryMap().exists(target, MemoryMap::MM_PROT_EXEC))
                 targets.insert(target);
         }
@@ -486,6 +483,18 @@ markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
         partitioner.attachOrMergeFunction(function);
     }
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                              "finding" functions
+//
+// The following functions build on the basic partitioner API (discovering information about a specimen and attaching it to the
+// CFG/AUM) to provide operations that are a bit higher level.  Our partitioner engine will be implemented in terms of these
+// operations, all of which return non-zero when they did some work.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // Looks for one basic block that hasn't been discovered and tries to find instructions for it.  Returns true if a basic block
 // was processed, false if not.
@@ -605,7 +614,7 @@ static size_t
 findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet &executableSpace)
 {
     size_t nProcessed = 0;
-    Sawyer::Container::IntervalSet<AddressInterval> unused = partitioner.aum().unusedExtent(executableSpace);
+    AddressIntervalSet unused = partitioner.aum().unusedExtent(executableSpace);
     BOOST_FOREACH (const AddressInterval &interval, unused.nodes()) {
         if (interval.least()<=executableSpace.least() || interval.greatest()>=executableSpace.greatest())
             continue;
@@ -632,6 +641,12 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet &ex
     }
     return nProcessed;
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 int main(int argc, char *argv[]) {
     // Do this explicitly since librose doesn't do this automatically yet
@@ -684,7 +699,6 @@ int main(int argc, char *argv[]) {
             throw std::runtime_error("an instruction set architecture could not be discerned");
     }
     disassembler->set_progress_reporting(-1.0);         // turn it off
-    size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
 
     // Some analyses need to know what part of the address space is being disassembled.
     AddressIntervalSet executableSpace;
@@ -693,33 +707,37 @@ int main(int argc, char *argv[]) {
             executableSpace.insert(node.key());
     }
 
-    // Create the partitioner
+    // Create and configure the partitioner
     P2::Partitioner partitioner(disassembler, map);
     partitioner.enableSymbolicSemantics(settings.useSemantics);
+
     partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchHotPatchPrologue::instance());
     partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchStandardPrologue::instance());
     partitioner.functionPrologueMatchers().push_back(X86AbbreviatedPrologue::instance());
     partitioner.functionPrologueMatchers().push_back(P2::ModulesM68k::MatchLink::instance());
     partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchEnterPrologue::instance());
+
     if (settings.findSwitchCases)
         partitioner.basicBlockCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
         partitioner.basicBlockCallbacks().append(PreventDiscontiguousBlocks::instance());
-#if 0 // [Robb P. Matzke 2014-08-16]: fun to watch, but verbose!
-    partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());
-#endif
+    if (false)
+        partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
 
-
+    // Find interesting places at which to disassemble
     markEntryFunctions(partitioner, interp);            // make functions at program entry points
     markErrorHandlingFunctions(partitioner, interp);    // make functions based on exception handling information
     markImportFunctions(partitioner, interp);           // make functions for things that are imported
     markExportFunctions(partitioner, interp);           // make functions for things that are exported
     markSymbolFunctions(partitioner, interp);           // make functions for symbols in the symbol table
     //markCallTargets(partitioner);                     // make functions at all CALL targets
+
+    // Do an initial pass to discover functions and partition them into basic blocks and functions. Functions for which the CFG
+    // is a bit wonky won't get assigned any basic blocks (other than the entry blocks we just added above).
     rose_addr_t prologueVa = 0;
-    partitioner.memoryMap().dump(std::cerr);
+    partitioner.memoryMap().dump(std::cout);
     while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
     findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
     if (settings.findDeadCode)
@@ -728,8 +746,8 @@ int main(int argc, char *argv[]) {
     if (settings.intraFunctionData)
         findIntraFunctionData(partitioner, executableSpace); // find data areas that are enclosed by functions
     
-
-    // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
+    // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow. This is
+    // pretty much the same as findFunctionBlocks except it will issue warning messages.
     BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
         P2::EdgeList inwardConflictEdges, outwardConflictEdges;
         partitioner.detachFunction(function);           // temporarily detach so we can call discoverFunctionBasicBlocks
@@ -761,13 +779,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Now that the partitioner's work is all done, try to give names to some things.
+    // Now that the partitioner's work is all done, try to give names to some things.  Most functions will have been given
+    // names when we marked their locations, but import thunks can be scattered all over the place and its nice if we give them
+    // the same name as the imported function to which they point.  This is especially important if there's no basic block at
+    // the imported function's address (i.e., the dynamic linker hasn't run) because ROSE's AST can't represent basic blocks
+    // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
     if (interp)
         P2::ModulesPe::nameImportThunks(partitioner, interp);
 
     SgAsmBlock *globalBlock = NULL;
 
-    // Show the results as requested
+    //-------------------------------------------------------------- 
+    // The rest of main() is just about showing the results...
+    //-------------------------------------------------------------- 
+    
     if (settings.doShowStats) {
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBasicBlocks(), "basic blocks") <<"\n";
@@ -799,13 +824,11 @@ int main(int argc, char *argv[]) {
     }
     
     if (settings.doListUnused) {
-        Sawyer::Container::IntervalSet<AddressInterval> unusedAddresses = partitioner.aum().unusedExtent(wordSize);
+        AddressIntervalSet unusedAddresses = partitioner.aum().unusedExtent(executableSpace);
         std::cout <<"Unused addresses: " <<StringUtility::plural(unusedAddresses.size(), "bytes")
                   <<" in " <<StringUtility::plural(unusedAddresses.nIntervals(), "intervals") <<"\n";
-        BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.nodes()) {
-            std::cout <<unused;
-            std::cout <<"\t" <<StringUtility::plural(unused.size(), "bytes") <<"\n";
-        }
+        BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.nodes())
+            std::cout <<unused <<"\t" <<StringUtility::plural(unused.size(), "bytes") <<"\n";
     }
 
     if (settings.doListFunctionAddresses) {
@@ -821,10 +844,9 @@ int main(int argc, char *argv[]) {
     if (settings.doListAsm) {
         if (!globalBlock)
             globalBlock = partitioner.buildAst();
-        ControlFlow::BlockGraph cfg = ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(globalBlock);
         AsmUnparser unparser;
         unparser.set_registers(disassembler->get_registers());
-        unparser.add_control_flow_graph(cfg);
+        unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(globalBlock));
         unparser.staticDataDisassembler.init(disassembler);
         unparser.unparse(std::cout, globalBlock);
     }

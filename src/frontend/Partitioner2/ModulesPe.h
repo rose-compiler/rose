@@ -9,19 +9,6 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesPe {
 
-/** Reads PE export sections to find functions.
- *
- *  Scans all PE export sections under the specified PE file header to obtain names and addresses for functions.  Returns a
- *  list of new, unique functions sorted by entry address. */
-std::vector<Function::Ptr> findExportFunctions(const Partitioner&, SgAsmPEFileHeader*);
-
-/** Reads PE import sections to find functions.
- *
- *  Scans all PE import sections in the specified interpretation to obtain addresses where imported functions will be mapped or
- *  have been mapped, depending on whether a dynamic linker has run.  The return value is a list of new, unique functions
- *  sorted by entry address. */
-std::vector<Function::Ptr> findImportFunctions(const Partitioner&, SgAsmInterpretation*);
-
 /** Index for PE import addresses.
  *
  *  This is a map from possible import addresses to the item in the Import Address Table (IAT) that describes the function that
@@ -29,8 +16,36 @@ std::vector<Function::Ptr> findImportFunctions(const Partitioner&, SgAsmInterpre
  *  relative address, because we're not sure which is contained in the IAT -- it depends on whether a linker has run. */
 typedef Sawyer::Container::Map<rose_addr_t, SgAsmPEImportItem*> ImportIndex;
 
-/** Scans PE import sections to build an index. */
+/** Reads PE export sections to find functions.
+ *
+ *  Scans all PE export sections under the specified PE file header to obtain names and addresses for functions.  Returns a
+ *  list of new, unique functions sorted by entry address.
+ *
+ * @{ */
+std::vector<Function::Ptr> findExportFunctions(const Partitioner&, SgAsmPEFileHeader*);
+std::vector<Function::Ptr> findExportFunctions(const Partitioner&, SgAsmInterpretation*);
+size_t findExportFunctions(const Partitioner&, SgAsmInterpretation*, std::vector<Function::Ptr>&);
+/** @} */
+
+/** Reads PE import sections to find functions.
+ *
+ *  Scans all PE import sections in the specified interpretation to obtain addresses where imported functions will be mapped or
+ *  have been mapped, depending on whether a dynamic linker has run.  The return value is a list of new, unique functions
+ *  sorted by entry address.
+ *
+ * @{ */
+std::vector<Function::Ptr> findImportFunctions(const Partitioner&, SgAsmPEFileHeader*);
+std::vector<Function::Ptr> findImportFunctions(const Partitioner&, SgAsmInterpretation*);
+size_t findImportFunctions(const Partitioner&, SgAsmPEFileHeader*, const ImportIndex&, std::vector<Function::Ptr>&);
+/** @} */
+
+/** Scans PE import sections to build an index.
+ *
+ * @{ */
+ImportIndex getImportIndex(SgAsmPEFileHeader*);
 ImportIndex getImportIndex(SgAsmInterpretation*);
+size_t getImportIndex(SgAsmPEFileHeader*, ImportIndex&);
+/** @} */
 
 /** Update import address tables to reflect addresses of imported functions. */
 void rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index);

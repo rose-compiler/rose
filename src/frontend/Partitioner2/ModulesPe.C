@@ -12,57 +12,112 @@ namespace ModulesPe {
 
 using namespace rose::Diagnostics;
 
-ImportIndex
-getImportIndex(SgAsmInterpretation *interp) {
-    ImportIndex index;
-    if (!interp)
-        return index;
-
-    BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
-        BOOST_FOREACH (SgAsmGenericSection *section, fileHeader->get_sections()->get_sections()) {
+size_t
+getImportIndex(SgAsmPEFileHeader *peHeader, ImportIndex &index) {
+    size_t nInserted = 0;
+    if (peHeader!=NULL) {
+        BOOST_FOREACH (SgAsmGenericSection *section, peHeader->get_sections()->get_sections()) {
             if (SgAsmPEImportSection *importSection = isSgAsmPEImportSection(section)) {
                 BOOST_FOREACH (SgAsmPEImportDirectory *importDir, importSection->get_import_directories()->get_vector()) {
-                    BOOST_FOREACH (SgAsmPEImportItem *import, importDir->get_imports()->get_vector())
-                        index.insertMaybe(import->get_hintname_rva().get_va(), import);
+                    BOOST_FOREACH (SgAsmPEImportItem *import, importDir->get_imports()->get_vector()) {
+                        if (index.insertMaybe(import->get_hintname_rva().get_va(), import))
+                            ++nInserted;
+                    }
                 }
             }
         }
+    }
+    return nInserted;
+}
+
+ImportIndex
+getImportIndex(SgAsmPEFileHeader *peHeader) {
+    ImportIndex index;
+    getImportIndex(peHeader, index);
+    return index;
+}
+
+ImportIndex
+getImportIndex(SgAsmInterpretation *interp) {
+    ImportIndex index;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            getImportIndex(isSgAsmPEFileHeader(fileHeader), index);
     }
     return index;
 }
 
-std::vector<Function::Ptr>
-findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
-    ASSERT_not_null(peHeader);
-    std::vector<Function::Ptr> functions;
-    BOOST_FOREACH (SgAsmGenericSection *section, peHeader->get_sections()->get_sections()) {
-        if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
-            BOOST_FOREACH (SgAsmPEExportEntry *exportEntry, exportSection->get_exports()->get_exports()) {
-                rose_addr_t va = exportEntry->get_export_rva().get_va();
-                if (partitioner.discoverInstruction(va)) {
-                    Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
-                                                                SgAsmFunction::FUNC_EXPORT);
-                    insertUnique(functions, function, sortFunctionsByAddress);
+size_t
+findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, std::vector<Function::Ptr> &functions) {
+    size_t nInserted = 0;
+    if (peHeader!=NULL) {
+        BOOST_FOREACH (SgAsmGenericSection *section, peHeader->get_sections()->get_sections()) {
+            if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
+                BOOST_FOREACH (SgAsmPEExportEntry *exportEntry, exportSection->get_exports()->get_exports()) {
+                    rose_addr_t va = exportEntry->get_export_rva().get_va();
+                    if (partitioner.discoverInstruction(va)) {
+                        Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
+                                                                    SgAsmFunction::FUNC_EXPORT);
+                        if (insertUnique(functions, function, sortFunctionsByAddress))
+                            ++nInserted;
+                    }
                 }
             }
         }
     }
+    return nInserted;
+}
+
+std::vector<Function::Ptr>
+findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
+    std::vector<Function::Ptr> functions;
+    findExportFunctions(partitioner, peHeader, functions);
+    return functions;
+}
+
+std::vector<Function::Ptr>
+findExportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+    std::vector<Function::Ptr> functions;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            findExportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), functions);
+    }
+    return functions;
+}
+
+size_t
+findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, const ImportIndex &imports,
+                    std::vector<Function::Ptr> &functions) {
+    size_t nInserted = 0;
+    if (peHeader) {
+        BOOST_FOREACH (const ImportIndex::Node &import, imports.nodes()) {
+            std::string name = import.value()->get_name()->get_string();
+            SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(import.value());
+            if (importDir && !importDir->get_dll_name()->get_string().empty())
+                name += "@" + importDir->get_dll_name()->get_string();
+            Function::Ptr function = Function::instance(import.key(), name, SgAsmFunction::FUNC_IMPORT);
+            if (insertUnique(functions, function, sortFunctionsByAddress))
+                ++nInserted;
+        }
+    }
+    return nInserted;
+}
+
+std::vector<Function::Ptr>
+findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
+    ImportIndex imports = getImportIndex(peHeader);
+    std::vector<Function::Ptr> functions;
+    findImportFunctions(partitioner, peHeader, imports, functions);
     return functions;
 }
 
 std::vector<Function::Ptr>
 findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
-    if (!interp)
-        return functions;
-    ImportIndex imports = getImportIndex(interp);
-    BOOST_FOREACH (const ImportIndex::Node &import, imports.nodes()) {
-        std::string name = import.value()->get_name()->get_string();
-        SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(import.value());
-        if (importDir && !importDir->get_dll_name()->get_string().empty())
-            name += "@" + importDir->get_dll_name()->get_string();
-        Function::Ptr function = Function::instance(import.key(), name, SgAsmFunction::FUNC_IMPORT);
-        insertUnique(functions, function, sortFunctionsByAddress);
+    if (interp!=NULL) {
+        ImportIndex imports = getImportIndex(interp);
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            findImportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), imports, functions);
     }
     return functions;
 }
@@ -162,11 +217,6 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         function->insertReasons(SgAsmFunction::FUNC_THUNK | SgAsmFunction::FUNC_IMPORT);
     }
 }
-
-            
-    
-    
-
     
 } // namespace
 } // namespace

@@ -13,11 +13,21 @@ namespace ModulesElf {
 /** Reads ELF .eh_frames to find function entry addresses.
  *
  *  Performs an AST traversal rooted at the specified @p ast to find ELF .eh_frames sections and returns a sorted list of
- *  functions at unique starting addresses.  The functions are not attached to the CFG/AUM. */
+ *  functions at unique starting addresses.  The functions are not attached to the CFG/AUM.
+ *
+ * @{ */
 std::vector<Function::Ptr> findErrorHandlingFunctions(SgAsmElfFileHeader*);
+std::vector<Function::Ptr> findErrorHandlingFunctions(SgAsmInterpretation*);
+size_t findErrorHandlingFunctions(SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
+/** @} */
 
-/** Reads ELF PLT sections and returns a list of functions. */
+/** Reads ELF PLT sections and returns a list of functions.
+ *
+ * @{ */
 std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmElfFileHeader*);
+std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmInterpretation*);
+size_t findPltFunctions(const Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
+/** @} */
 
 /** Matches an ELF PLT entry.  The address through which the PLT entry branches is remembered. This address is typically an
  *  RVA which is added to the initial base address. */
