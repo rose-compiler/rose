@@ -126,7 +126,7 @@ void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
     ASSERT_require2(partitioner.instructionProvider().instructionPointerRegister().get_nbits()==32,
                     "FIXME[Robb P. Matzke 2014-08-24]: supports only 32-bit addresses at this time");
-    ASSERT_require2(partitioner.newOperators()->get_state()->get_memory_state()->get_byteOrder()==ByteOrder::ORDER_LSB,
+    ASSERT_require2(partitioner.instructionProvider().defaultByteOrder()==ByteOrder::ORDER_LSB,
                     "FIXME[Robb P. Matzke 2014-08-24]: supports only little-endian architectures at this time");
 
     // FIXME[Robb P. Matzke 2014-08-24]: we should probably check that monkeying with memory won't affect existing instructions
@@ -202,7 +202,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             continue;                                   // ...and where C is inside an Import Address Table...
         bool isComplete = true;
         std::vector<rose_addr_t> successors = partitioner.basicBlockConcreteSuccessors(bblock, &isComplete);
-        if (isComplete && successors.size()!=1)
+        if (!isComplete || successors.size()!=1)
             continue;                                   // ...and the JMP has a single successor that is concrete...
         SgAsmPEImportItem *importItem = NULL;
         if (!importIndex.getOptional(successors.front()).assignTo(importItem))

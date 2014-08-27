@@ -96,6 +96,9 @@ public:
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
     RegisterDescriptor stackSegmentRegister() const { return disassembler_->stackSegmentRegister(); }
 
+    /** Default memory byte order. */
+    ByteOrder::Endianness defaultByteOrder() const { return disassembler_->get_sex(); }
+
     /** Instruction dispatcher.
      *
      *  Returns a pointer to a dispatcher used for instruction semantics.  Not all architectures support instruction semantics,
