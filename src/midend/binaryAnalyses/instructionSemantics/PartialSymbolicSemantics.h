@@ -310,12 +310,18 @@ namespace PartialSymbolicSemantics {
         /** Returns the original instruction pointer. See also get_orig_state(). */
         const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
 
+        // Microsoft C++ seems to need a fully qualified return type that's not necessary with other compilers. MSVC
+        // complains "MSVC does not handle covariant return types properly" after giving an error.
         /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
-        typename State<ValueType>::Memory memory_for_equality(const State<ValueType>&) const;
+        typename rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State<ValueType>::Memory
+        memory_for_equality(const State<ValueType>&) const;
 
+        // Microsoft C++ seems to need a fully qualified return type that's not necessary with other compilers. MSVC
+        // complains "MSVC does not handle covariant return types properly" after giving an error.
         /** Returns a copy of the current state after removing memory that is not pertinent to an equal_states()
          *  comparison. */
-        typename State<ValueType>::Memory memory_for_equality() const {
+        typename rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State<ValueType>::Memory
+        memory_for_equality() const {
             return memory_for_equality(cur_state);
         }
 
@@ -1034,11 +1040,13 @@ namespace PartialSymbolicSemantics {
      *                              Policy template functions
      *****************************************************************************************************************/
 
+    // Microsoft C++ seems to need a fully qualified return type that's not necessary with other compilers. MSVC
+    // complains "MSVC does not handle covariant return types properly" after giving an error.
     /* Returns memory that needs to be compared by equal_states() */
     template<
         template <template <size_t> class ValueType> class State,
         template<size_t> class ValueType>
-    typename State<ValueType>::Memory
+    typename rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State<ValueType>::Memory
     Policy<State, ValueType>::memory_for_equality(const State<ValueType> &state) const
     {
         State<ValueType> tmp_state = state;
