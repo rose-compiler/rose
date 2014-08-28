@@ -40,20 +40,9 @@ libcompass2_la_SOURCES=\
 	compass.cpp
 
 libcompass2_la_include_HEADERS=\
-	compass.h \
-	$(top_srcdir)/projects/CodeThorn/src/RoseAst.h \
-	$(top_srcdir)/projects/CodeThorn/src/AstTerm.h \
-	$(top_srcdir)/projects/CodeThorn/src/matcherparser_decls.h \
-	$(top_srcdir)/projects/CodeThorn/src/AstMatching.h \
-	$(top_srcdir)/projects/CodeThorn/src/MatchOperation.h \
-	$(top_srcdir)/projects/CodeThorn/src/SgNodeHelper.h \
-	$(top_srcdir)/projects/CodeThorn/src/VariableIdMapping.h
+	compass.h
 
-BUILT_SOURCES = generate-matcherparser.h generate-VariableIdMapping.h
-
-#make matcherparser.h -C $(top_builddir)/projects/CodeThorn/src
-generate-matcherparser.h:
-	make matcher_demo -C $(top_builddir)/projects/CodeThorn/src
+BUILT_SOURCES = generate-VariableIdMapping.h
 
 generate-VariableIdMapping.h:
 	make varwatch -C $(top_builddir)/projects/CodeThorn/src
@@ -107,12 +96,6 @@ bin_compass2_LDADD=\
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
-	$(top_builddir)/projects/CodeThorn/src/AstMatching.o \
-	$(top_builddir)/projects/CodeThorn/src/AstTerm.o \
-	$(top_builddir)/projects/CodeThorn/src/matcherparser.o \
-	$(top_builddir)/projects/CodeThorn/src/MatchOperation.o \
-	$(top_builddir)/projects/CodeThorn/src/RoseAst.o \
-	$(top_builddir)/projects/CodeThorn/src/SgNodeHelper.o \
 	$(top_builddir)/projects/CodeThorn/src/VariableIdMapping.o
 
 
