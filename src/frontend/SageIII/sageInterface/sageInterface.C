@@ -175,7 +175,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  else
                   {
 #if 1
-                    printf ("ERROR: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+                    printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
 #endif
                  // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
                  // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.

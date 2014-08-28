@@ -442,6 +442,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
         }
 
 #if 0
+     printf ("In unparseType(): usingGeneratedNameQualifiedTypeNameString = %s \n",usingGeneratedNameQualifiedTypeNameString ? "true" : "false");
+#endif
+#if 0
      curprint ("\n /* In unparseType(): usingGeneratedNameQualifiedTypeNameString = " + string(usingGeneratedNameQualifiedTypeNameString ? "true" : "false") + " */ \n");
 #endif
 
@@ -685,7 +688,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Leaving Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
           type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
      curprint ( string("\n/* Bottom of unparseType name ") + type->sage_class_name()
@@ -1206,6 +1209,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
 #if 0
      printf ("Inside of Unparse_Type::unparseClassType type = %p \n",type);
+     curprint("/* Inside of Unparse_Type::unparseClassType */ \n");
 #endif
 
 #if 0
@@ -1234,14 +1238,18 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(decl == decl->get_firstNondefiningDeclaration());
 
 #if 0
+  // printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
      printf ("In Unparse_Type::unparseClassType(): class_type->get_autonomous_declaration() = %s \n",class_type->get_autonomous_declaration() ? "true" : "false");
      printf ("In Unparse_Type::unparseClassType(): decl->get_isAutonomousDeclaration()      = %s \n",decl->get_isAutonomousDeclaration() ? "true" : "false");
      printf ("In Unparse_Type::unparseClassType(): decl->get_isUnNamed()                    = %s \n",decl->get_isUnNamed() ? "true" : "false");
 
-     SgClassDeclaration *defining_decl = isSgClassDeclaration(class_type->get_declaration()->get_definingDeclaration());
+     SgClassDeclaration* defining_decl = isSgClassDeclaration(class_type->get_declaration()->get_definingDeclaration());
      printf ("decl = %p defining_decl = %p \n",decl,defining_decl);
-     printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isAutonomousDeclaration() = %s \n",defining_decl->get_isAutonomousDeclaration() ? "true" : "false");
-     printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isUnNamed()               = %s \n",defining_decl->get_isUnNamed() ? "true" : "false");
+     if (defining_decl != NULL)
+        {
+          printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isAutonomousDeclaration() = %s \n",defining_decl->get_isAutonomousDeclaration() ? "true" : "false");
+          printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isUnNamed()               = %s \n",defining_decl->get_isUnNamed() ? "true" : "false");
+        }
 
      printf ("In Unparse_Type::unparseClassType(): decl = %p = %s decl->get_definition() = %p \n",decl,decl->class_name().c_str(),decl->get_definition());
 #endif

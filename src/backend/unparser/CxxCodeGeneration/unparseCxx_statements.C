@@ -4746,7 +4746,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                printf ("Inside of unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = %s \n",ninfo_for_type.SkipBaseType() ? "true" : "false");
                curprint ("\n /* In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = " + string(ninfo_for_type.SkipBaseType() ? "true" : "false") + " */ \n");
 #endif
-
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
 #if 1
@@ -4758,6 +4757,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // be output.  E.g. "*" in "*X".
                     ninfo_for_type.set_PrintName();
 #if 0
+
+#error "DEAD CODE!"
                     unp->u_type->unparseType(tmp_type, ninfo_for_type);
 #else
                     if (ninfo_for_type.SkipBaseType() == false)

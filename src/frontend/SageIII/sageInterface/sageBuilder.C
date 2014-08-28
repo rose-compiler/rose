@@ -216,7 +216,7 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
                case V_SgTemplateInstantiationFunctionDecl:
                   {
 #if 0
-                    printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function \n");
+                     printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function: name = %s \n",name.str());
 #endif
                  // DQ (8/11/2013): Verify that the template arguments are provided for the correct cases and not for the incorrect cases.
                     if ((VariantT)T::static_variant == V_SgTemplateInstantiationFunctionDecl)
@@ -233,9 +233,17 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
                  // func_symbol = lookup_nontemplate_function_symbol(name,func_type);
                     func_symbol = lookup_nontemplate_function_symbol(name,func_type,templateArgumentsList);
 
+                    if (isSgTemplateFunctionSymbol(func_symbol) != NULL)
+                       {
+                         printf ("ERROR: func_symbol == SgTemplateFunctionSymbol in find_symbol_by_type_of_function(): case V_SgFunctionDeclaration: \n");
+                         SgFunctionDeclaration* functionDeclaration = func_symbol->get_declaration();
+                         ROSE_ASSERT(functionDeclaration != NULL);
+                         printf ("   --- functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+                         ROSE_ASSERT(functionDeclaration->get_file_info() != NULL);
+                         functionDeclaration->get_file_info()->display("func_symbol == SgTemplateFunctionSymbol");
+                       }
                  // DQ (5/22/2013): This function symbol should not be a SgTemplateFunctionSymbol (associated with a template function.  It should be an instantiated template.
                     ROSE_ASSERT(isSgTemplateFunctionSymbol(func_symbol) == NULL);
-                    
                     break;
                   }
 
@@ -2370,7 +2378,8 @@ checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope ( SgDeclarat
             // DQ (8/25/2014): Un-Commented out to revert to previous working state.
             // DQ (8/25/2014): Allow non-template functions in a template class declaration (see test2014_161.C).
 #if !ENFORCE_NO_FUNCTION_TEMPLATE_DECLARATIONS_IN_TEMPLATE_CLASS_INSTANTIATIONS
-               ROSE_ASSERT(isSgTemplateClassDefinition(scope) == NULL);
+            // printf ("In checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope(): This is the wrong scope that is associated with this function (because EDG uses a single pointeer for a scope that maps to two different scopes in ROSE (and the scope_cache is not reset) \n");
+            // ROSE_ASSERT(isSgTemplateClassDefinition(scope) == NULL);
 #endif
              }
         }
@@ -3075,6 +3084,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           printf ("In buildNondefiningFunctionDeclaration_T(): Setting the func = %p set_firstNondefiningDeclaration(nondefiningDeclaration = %p)      (to nondefiningDeclaration) \n",func,nondefiningDeclaration);
           printf ("In buildNondefiningFunctionDeclaration_T(): Setting the func = %p set_definingDeclaration(prevDecl->get_definingDeclaration() = %p) (to prevDecl->get_definingDeclaration()) \n",func,prevDecl->get_definingDeclaration());
 #endif
+       // DQ (8/27/2014): Added assertions.
+          ROSE_ASSERT(func != NULL);
+          ROSE_ASSERT(prevDecl != NULL);
+
        // func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
           func->set_firstNondefiningDeclaration(nondefiningDeclaration);
           func->set_definingDeclaration(prevDecl->get_definingDeclaration());
@@ -9817,7 +9830,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                   {
                     printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): nondefdecl = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
                          nondefdecl,nondefdecl->class_name().c_str(),firstNondefdecl,firstNondefdecl->class_name().c_str());
+                    ROSE_ASSERT(nondefdecl->get_file_info() != NULL);
                     nondefdecl->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): nondefdecl: debug");
+                    ROSE_ASSERT(firstNondefdecl->get_file_info() != NULL);
                     firstNondefdecl->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefdecl: debug");
                   }
 
