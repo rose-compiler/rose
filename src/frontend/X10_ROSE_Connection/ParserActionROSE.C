@@ -1959,13 +1959,13 @@ printf("cactionCompilationUnitList():sourceFile=%p\n", sourcefile);
 JNIEXPORT void JNICALL cactionCompilationUnitListEnd(JNIEnv *env, jclass) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of cactionCompilationUnitListEnd() \n");
-	
+        
     ROSE_ASSERT(! astX10ScopeStack.empty());
-	
+        
     SgGlobal *global = astX10ScopeStack.popGlobal(); // remove the global scope
     ROSE_ASSERT(global == ::globalScope);
     ROSE_ASSERT(astX10ScopeStack.empty());
-	
+        
     // TODO: We need the next line for EDG4 [DONE]
     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
     if (SgProject::get_verbose() > 0)

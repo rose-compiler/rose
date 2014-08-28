@@ -4408,14 +4408,14 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
   int argc = p_argv.size();
   char** argv = NULL;
 
-	CommandlineProcessing::
-	generateArgcArgvFromList(frontEndCommandLine, argc, argv);
+        CommandlineProcessing::
+        generateArgcArgvFromList(frontEndCommandLine, argc, argv);
 
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-	Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
+        Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
     ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
 #endif
-	int status = x10_main(argc, argv);
+        int status = x10_main(argc, argv);
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
     Rose::Frontend::X10::X10c::X10c_globalFilePointer = NULL;
 #endif
