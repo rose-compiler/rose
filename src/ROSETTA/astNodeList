@@ -455,6 +455,7 @@ SgMemberFunctionRefExp
 SgMemberFunctionSymbol
 SgMemberFunctionType
 SgMembershipOp
+SgMicrosoftAttributeDeclaration
 SgMinusAssignOp
 SgMinusMinusOp
 SgMinusOp

@@ -301,6 +301,105 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
   // initializedName.get_storageModifier().display("New storage modifiers in unparseFunctionParameterDeclaration()");
 
+#if 0
+ // DQ (*8/18/2014): Microsoft declspec attributes that apply to function parameters.
+    appdomain
+    deprecated
+    dllimport
+    dllexport
+    novtable
+    process
+    restrict
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+#define MS_DECLSPEC_DEBUG 0
+
+     if (initializedName->is_ms_declspec_parameter_appdomain())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(appdomain) \n");
+#endif
+          curprint("__declspec(appdomain) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_deprecated())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(deprecated) \n");
+#endif
+          curprint("__declspec(deprecated) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_dllimport())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(dllimport) \n");
+#endif
+          curprint("__declspec(dllimport) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_dllexport())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(dllexport) \n");
+#endif
+          curprint("__declspec(dllexport) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_novtable())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(novtable) \n");
+#endif
+          curprint("__declspec(novtable) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_process())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(process) \n");
+#endif
+          curprint("__declspec(process) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_restrict())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(restrict) \n");
+#endif
+          curprint("__declspec(restrict) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_selectany())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(selectany) \n");
+#endif
+          curprint("__declspec(selectany) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_thread())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(thread) \n");
+#endif
+          curprint("__declspec(thread) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_uuid())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(uuid) \n");
+#endif
+       // curprint("__declspec(uuid) ");
+          curprint("__declspec(uuid(\"");
+          curprint(initializedName->get_microsoft_uuid_string());
+          curprint("\")) ");
+        }
+
      SgStorageModifier & storage = initializedName->get_storageModifier();
      if (storage.isExtern())
         {
@@ -912,7 +1011,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
                break;
 
        // DQ (7/25/2014): Adding support for C11 static assertions.
-          case V_SgStaticAssertionDeclaration:          unparseStaticAssertionDeclaration (stmt, info);          break;
+          case V_SgStaticAssertionDeclaration:          unparseStaticAssertionDeclaration (stmt, info);    break;
+
+       // DQ (8/17/2014): Adding support for Microsoft attributes.
+          case V_SgMicrosoftAttributeDeclaration:       unparseMicrosoftAttributeDeclaration (stmt, info); break;
 
           default:
              {
@@ -7627,6 +7729,26 @@ Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnpars
       ROSE_ASSERT(false);
 #endif
    }
+
+
+
+void
+Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // DQ (8/17/2014): Adding support for Microsoft attributes.
+     SgMicrosoftAttributeDeclaration* microsoftAttributeDeclaration = isSgMicrosoftAttributeDeclaration(stmt);
+     ROSE_ASSERT(microsoftAttributeDeclaration != NULL);
+
+     curprint("[");
+     curprint(microsoftAttributeDeclaration->get_attribute_string());
+     curprint("]");
+
+#if 0
+      printf ("Exiting as a test! (unparseMicrosoftAttributeDeclaration not implemented) \n");
+      ROSE_ASSERT(false);
+#endif
+   }
+
 
 
  // EOF
