@@ -149,6 +149,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_115.C \
    test2014_116.C \
    test2014_117.C \
+   test2014_120.C \
+   test2014_121.C \
    test2014_122.C \
    test2014_123.C \
    test2014_124.C \
@@ -185,6 +187,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_156.C \
    test2014_157.C \
    test2014_159.C \
+   test2014_160.C \
+   test2014_161.C \
+   test2014_162.C \
+   test2014_163.C \
+   test2014_165.C \
    lulesh.C \
    luleshTALC.C
 
@@ -249,15 +256,14 @@ TESTS_NOT_PASSING = \
    test2014_118.C \
    test2014_119.C \
    test2014_120.C \
-   test2014_121.C 
+   test2014_121.C \
+   test2014_164.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_103.C 
 #  test2014_113.C 
 #  test2014_118.C 
 #  test2014_119.C 
-#  test2014_120.C 
-#  test2014_121.C 
 
 # DQ (7/3/2014): This C++ language feature is only properly supported in EDG version 4.9
 if ROSE_USE_EDG_VERSION_4_9
