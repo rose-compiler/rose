@@ -1,14 +1,16 @@
 #include "rose.h"
 #include "BinaryControlFlow.h"
 
+using namespace rose::BinaryAnalysis;
+
 void foo(SgAsmFunction* func) {
-  BinaryAnalysis::ControlFlow cfg_analyzer;
-  BinaryAnalysis::ControlFlow::Graph cfg = cfg_analyzer.build_block_cfg_from_ast<BinaryAnalysis::ControlFlow::Graph>(func);
+  ControlFlow cfg_analyzer;
+  ControlFlow::Graph cfg = cfg_analyzer.build_block_cfg_from_ast<ControlFlow::Graph>(func);
 }
 
 void bar(SgAsmFunction* func) {
-  BinaryAnalysis::ControlFlow cfg_analyzer;
-  BinaryAnalysis::ControlFlow::Graph cfg = cfg_analyzer.build_block_cfg_from_ast<BinaryAnalysis::ControlFlow::Graph>(func);
+  ControlFlow cfg_analyzer;
+  ControlFlow::Graph cfg = cfg_analyzer.build_block_cfg_from_ast<ControlFlow::Graph>(func);
 }
 
 void

@@ -4,8 +4,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 
-using namespace rose;                                   // temporary until this stuff is all inside that namespace
-
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace LlvmSemantics {
@@ -1199,7 +1198,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
             case InsnSemanticsExpr::OP_NOOP:
             case InsnSemanticsExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyInsnSemanticsExprOperator(inode->get_operator()) +
+                                               stringifyBinaryAnalysisInsnSemanticsExprOperator(inode->get_operator()) +
                                                " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
@@ -1481,6 +1480,7 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp)
     return ss.str();
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

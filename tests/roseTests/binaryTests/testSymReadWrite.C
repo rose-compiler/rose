@@ -35,7 +35,7 @@ struct Analysis: public AstSimpleProcessing {
     void visit(SgNode *node) {
         SgAsmBlock *block = isSgAsmBlock(node);
         if (block && block->has_instructions()) {
-            using namespace BinaryAnalysis::InstructionSemantics2;
+            using namespace rose::BinaryAnalysis::InstructionSemantics2;
             const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
             SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
             ops->set_compute_usedef(); // only used so we can test that it works

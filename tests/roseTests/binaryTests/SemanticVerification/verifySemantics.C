@@ -4,6 +4,8 @@
 #include "Debugger.h"
 #include "x86InstructionSemantics.h"
 
+using namespace rose::BinaryAnalysis;
+
 static const char *trace_prefix = "    ";
 
 /* Registers names, etc. for x86 32-bit */
@@ -957,7 +959,7 @@ int main(int argc, char *argv[]) {
     Verifier verifier(&dbg);
 
 #ifndef USE_ROSE
-    BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue> semantics(verifier);
+    rose::BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue> semantics(verifier);
 #endif
 
     dbg.cont(); /* Advance to the first breakpoint. */
@@ -1010,7 +1012,7 @@ int main(int argc, char *argv[]) {
             dump_registers(stderr, dbg.registers());
             dbg.cont();
             continue;
-        } catch (const BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
+        } catch (const rose::BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
             fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
         }
 #endif

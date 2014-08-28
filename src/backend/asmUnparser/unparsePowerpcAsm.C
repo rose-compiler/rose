@@ -16,8 +16,8 @@
 #include "Registers.h"
 #include "Diagnostics.h"
 
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 /****************************************************
  * resolve expression

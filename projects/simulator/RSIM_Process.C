@@ -11,6 +11,8 @@
 #include <sys/user.h>
 #include <sys/types.h>
 
+using namespace rose::BinaryAnalysis;
+
 void
 RSIM_Process::ctor()
 {

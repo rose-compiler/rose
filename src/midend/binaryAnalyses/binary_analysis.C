@@ -1,3 +1,29 @@
+// This entire file is deprecated.  Use the newer Binary*.h files in this directory instead.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "stringify.h"
@@ -9,6 +35,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace rose;
+using namespace rose::BinaryAnalysis;
 
 /*********************************
 * Find root nodes in the graph. A root node is a node with no in edges.

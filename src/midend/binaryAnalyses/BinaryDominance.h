@@ -6,403 +6,401 @@
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/reverse_graph.hpp>
 
+namespace rose {
 namespace BinaryAnalysis {
 
-    /** Class for calculating dominance on control flow graphs.
+/** Class for calculating dominance on control flow graphs.
+ *
+ *  Block D "dominates" block I if every possible execution path from the function entry block to block I includes block
+ *  D. Note that "dominates" is reflexive; we say D "strictly dominates" I if D dominates I and D!=I.  The "dominates"
+ *  relationship is also transitive and antisymmetric.  Furthermore, block D is an "immediate dominator" of block I if D
+ *  dominates I and there does not exist a block C (C!=D and C!=I) for which D dominates C and C dominates I.
+ *
+ *  ROSE tracks dominance via a single block pointer within each block, which can be obtained by
+ *  SgAsmBlock::get_immediate_dominator().  Although these pointers can also be explicitly modifed with
+ *  SgAsmBlock::set_immediate_dominator(), one normally uses the Dominance class to do this.
+ *
+ *  Dominance information is represented three ways:
+ *  <ol>
+ *    <li>Within the AST: The SgAsmBlock::get_dominators() returns a list of all dominators (or all strict dominators) for
+ *        a given node by following the immediate dominator pointers stored in the AST.</li>
+ *    <li>As a boost graph:  The vertices of the graph point to basic blocks (SgAsmBlock); the edges flow to subordinate
+ *        blocks from their immediate dominator, and form a tree.  Note that the direction of edges is opposite that
+ *        stored in the AST&mdash;this is intentional since many dominance anlyses use this direction. Methods producing
+ *        or operating on this representation usually have "graph" as part of their name.</li>
+ *    <li>As a vector:  Since every block has zero or one immediate dominators, the immediate dominance relation can be
+ *        represented as a map from suborindate block to immediate dominator block.  The dominance relationship is
+ *        calculated from a control flow graph (CFG) whose vertex descriptors are integers, so we use those integers
+ *        as indices into the vector. The values stored in the vector are also CFG vertex descriptors.  Methods producing
+ *        or operating on this representation usually have "map" as part of their name.</li>
+ *  </ol>
+ *
+ *  The Dominance class provides two forms for most methods: one form in which the result is returned by reference, and one
+ *  form in which the result is returned by value.  The return-by-reference functions are slightly faster since they don't
+ *  require the result to be copied.
+ *
+ *  @section BinaryDominance_Ex1 Example
+ *
+ *  This example shows one way to initialize the SgAsmBlock::get_immediate_dominator() information for an entire AST.  We
+ *  use an AST traversal to find the function nodes (SgAsmFunction), and for each function we calculate that
+ *  function's control flow graph, and use the control flow graph to calculate the dominance graph.  We then clear all
+ *  previous immediate dominator pointers in the function, and re-initialize them with the dominance graph.  The reason we
+ *  first clear the AST is because apply_to_ast() only initializes the blocks which have dominators; if we didn't clear the
+ *  AST then some of the blocks might have stale data.
+ *
+ *  Control flow graphs and dominance graphs are created with methods of a control flow and dominance class, respectively.
+ *  The reason for this extra class is to hold various properties that might affect how the graphs are created, such as
+ *  whether we want a debug trace of the creation process (the commented out line).
+ *
+ *  Most of the methods of this class are function templates that take any kind of boost graph providing it satisfies
+ *  certain interface constraints: the vertices must be stored in a vector, the graph must be bidirectional, and the
+ *  boost::vertex_name property must point to a SgAsmBlock.  This is the same interface used for control flow graphs, so
+ *  the user can use rose::BinaryAnalysis::ControlFlow::Graph, BinaryAnalysis::Dominance::Graph, or any other Boost graph
+ *  satisfying these requirements.
+ *
+ *  @code
+ *  // The AST traversal.
+ *  struct CalculateDominance: public AstSimpleProcessing {
+ *      rose::BinaryAnalysis::ControlFlow &cfg_analysis;
+ *      rose::BinaryAnalysis::Dominance &dom_analysis;
+ *      CalculateDominance(rose::BinaryAnalysis::ControlFlow &cfg_analysis,
+ *                         rose::BinaryAnalysis::Dominance &dom_analysis)
+ *          : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
+ *          {}
+ *      void visit(SgNode *node) {
+ *          using namespace rose::BinaryAnalysis;
+ *          SgAsmFunction *func = isSgAsmFunction(node);
+ *          if (func) {
+ *              ControlFlow::Graph cfg = cfg_analysis.build_block_cfg_from_ast<ControlFlow::Graph>(func);
+ *              typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
+ *              CFG_Vertex entry = 0; // first vertex is function entry block
+ *              assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
+ *              Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
+ *              dom_analysis.clear_ast(func);
+ *              dom_analysis.apply_to_ast(dg);
+ *          }
+ *      }
+ *  };
+ *
+ *  // Create the analysis objects
+ *  rose::BinaryAnalysis::ControlFlow cfg_analysis;
+ *  rose::BinaryAnalysis::Dominance   dom_analysis;
+ *  //dom_analysis.set_debug(stderr);
+ *
+ *  // Perform the analysis; results are stored in the AST.
+ *  CalculateDominance(cfg_analysis, dom_analysis).traverse(project, preorder);
+ *  @endcode
+ */
+class Dominance {
+public:
+    Dominance(): debug(NULL) {}
+
+    /** The default dominance graph type.
      *
-     *  Block D "dominates" block I if every possible execution path from the function entry block to block I includes block
-     *  D. Note that "dominates" is reflexive; we say D "strictly dominates" I if D dominates I and D!=I.  The "dominates"
-     *  relationship is also transitive and antisymmetric.  Furthermore, block D is an "immediate dominator" of block I if D
-     *  dominates I and there does not exist a block C (C!=D and C!=I) for which D dominates C and C dominates I.
+     *  A dominance graph (DG) is a Boost graph whose vertex descriptors are integers and whose vertices point to
+     *  SgAsmBlock nodes in the AST (via the boost::vertex_name property).  Graph edges represent dominance relationships
+     *  between the vertices.  The particular relationship varies depending on the method by which the graph was built. For
+     *  example, build_idom_graph() results in a graph whose edge (U,V) indicates that U is the immediate dominator of V,
+     *  while build_sdom_graph() results in a graph whose edge (U,V) indicates that U is any strict dominator of V.
      *
-     *  ROSE tracks dominance via a single block pointer within each block, which can be obtained by
-     *  SgAsmBlock::get_immediate_dominator().  Although these pointers can also be explicitly modifed with
-     *  SgAsmBlock::set_immediate_dominator(), one normally uses the Dominance class to do this.
+     *  Note that the edges of the graph are reversed from those stored in the AST.  In the AST each block points to its
+     *  immediate dominator, while in the graph each block has edges going to the blocks which it dominates.  We do it this
+     *  way because:
+     *  <ul>
+     *    <li>it's more succinct to store only the immediate dominator pointers in the AST, and</li>
+     *    <li>most dominance graph algorithms use the edges in the direction we've made them, and</li>
+     *    <li>it's easy to reverse the graph via the boost::reverse_graph if necessary, and</li>
+     *    <li>having two directions natively stored gives more flexibility to algorithm writers.</li>
+     *  </ul>
      *
-     *  Dominance information is represented three ways:
-     *  <ol>
-     *    <li>Within the AST: The SgAsmBlock::get_dominators() returns a list of all dominators (or all strict dominators) for
-     *        a given node by following the immediate dominator pointers stored in the AST.</li>
-     *    <li>As a boost graph:  The vertices of the graph point to basic blocks (SgAsmBlock); the edges flow to subordinate
-     *        blocks from their immediate dominator, and form a tree.  Note that the direction of edges is opposite that
-     *        stored in the AST&mdash;this is intentional since many dominance anlyses use this direction. Methods producing
-     *        or operating on this representation usually have "graph" as part of their name.</li>
-     *    <li>As a vector:  Since every block has zero or one immediate dominators, the immediate dominance relation can be
-     *        represented as a map from suborindate block to immediate dominator block.  The dominance relationship is
-     *        calculated from a control flow graph (CFG) whose vertex descriptors are integers, so we use those integers
-     *        as indices into the vector. The values stored in the vector are also CFG vertex descriptors.  Methods producing
-     *        or operating on this representation usually have "map" as part of their name.</li>
-     *  </ol>
+     *  When a dominance graph is built from a control flow graph, the vertices of the dominance graph will correspond with
+     *  the vertices of the control flow graph.  That is, vertex V in the dominance graph points to the same basic block as
+     *  vertex V in the control flow graph.
      *
-     *  The Dominance class provides two forms for most methods: one form in which the result is returned by reference, and one
-     *  form in which the result is returned by value.  The return-by-reference functions are slightly faster since they don't
-     *  require the result to be copied.
-     *
-     *  @section BinaryDominance_Ex1 Example
-     *
-     *  This example shows one way to initialize the SgAsmBlock::get_immediate_dominator() information for an entire AST.  We
-     *  use an AST traversal to find the function nodes (SgAsmFunction), and for each function we calculate that
-     *  function's control flow graph, and use the control flow graph to calculate the dominance graph.  We then clear all
-     *  previous immediate dominator pointers in the function, and re-initialize them with the dominance graph.  The reason we
-     *  first clear the AST is because apply_to_ast() only initializes the blocks which have dominators; if we didn't clear the
-     *  AST then some of the blocks might have stale data.
-     *
-     *  Control flow graphs and dominance graphs are created with methods of a control flow and dominance class, respectively.
-     *  The reason for this extra class is to hold various properties that might affect how the graphs are created, such as
-     *  whether we want a debug trace of the creation process (the commented out line).
-     *
-     *  Most of the methods of this class are function templates that take any kind of boost graph providing it satisfies
-     *  certain interface constraints: the vertices must be stored in a vector, the graph must be bidirectional, and the
-     *  boost::vertex_name property must point to a SgAsmBlock.  This is the same interface used for control flow graphs, so
-     *  the user can use BinaryAnalysis::ControlFlow::Graph, BinaryAnalysis::Dominance::Graph, or any other Boost graph
-     *  satisfying these requirements.
+     *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
+     *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
+     *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
+     *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
      *
      *  @code
-     *  // The AST traversal.
-     *  struct CalculateDominance: public AstSimpleProcessing {
-     *      BinaryAnalysis::ControlFlow &cfg_analysis;
-     *      BinaryAnalysis::Dominance &dom_analysis;
-     *      CalculateDominance(BinaryAnalysis::ControlFlow &cfg_analysis,
-     *                         BinaryAnalysis::Dominance &dom_analysis)
-     *          : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
-     *          {}
-     *      void visit(SgNode *node) {
-     *          using namespace BinaryAnalysis;
-     *          SgAsmFunction *func = isSgAsmFunction(node);
-     *          if (func) {
-     *              ControlFlow::Graph cfg = cfg_analysis.build_block_cfg_from_ast<ControlFlow::Graph>(func);
-     *              typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
-     *              CFG_Vertex entry = 0; // first vertex is function entry block
-     *              assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
-     *              Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
-     *              dom_analysis.clear_ast(func);
-     *              dom_analysis.apply_to_ast(dg);
-     *          }
-     *      }
-     *  };
-     *
-     *  // Create the analysis objects
-     *  BinaryAnalysis::ControlFlow cfg_analysis;
-     *  BinaryAnalysis::Dominance   dom_analysis;
-     *  //dom_analysis.set_debug(stderr);
-     *
-     *  // Perform the analysis; results are stored in the AST.
-     *  CalculateDominance(cfg_analysis, dom_analysis).traverse(project, preorder);
+     *  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+     *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
      *  @endcode
      */
-    class Dominance {
-    public:
-        Dominance(): debug(NULL) {}
+    typedef boost::adjacency_list<boost::setS,      /* edge storage */
+                                  boost::vecS,      /* vertex storage */
+                                  boost::bidirectionalS,
+                                  boost::property<boost::vertex_name_t, SgAsmBlock*>
+                                 > Graph;
 
-        /** The default dominance graph type.
-         *
-         *  A dominance graph (DG) is a Boost graph whose vertex descriptors are integers and whose vertices point to
-         *  SgAsmBlock nodes in the AST (via the boost::vertex_name property).  Graph edges represent dominance relationships
-         *  between the vertices.  The particular relationship varies depending on the method by which the graph was built. For
-         *  example, build_idom_graph() results in a graph whose edge (U,V) indicates that U is the immediate dominator of V,
-         *  while build_sdom_graph() results in a graph whose edge (U,V) indicates that U is any strict dominator of V.
-         *
-         *  Note that the edges of the graph are reversed from those stored in the AST.  In the AST each block points to its
-         *  immediate dominator, while in the graph each block has edges going to the blocks which it dominates.  We do it this
-         *  way because:
-         *  <ul>
-         *    <li>it's more succinct to store only the immediate dominator pointers in the AST, and</li>
-         *    <li>most dominance graph algorithms use the edges in the direction we've made them, and</li>
-         *    <li>it's easy to reverse the graph via the boost::reverse_graph if necessary, and</li>
-         *    <li>having two directions natively stored gives more flexibility to algorithm writers.</li>
-         *  </ul>
-         *
-         *  When a dominance graph is built from a control flow graph, the vertices of the dominance graph will correspond with
-         *  the vertices of the control flow graph.  That is, vertex V in the dominance graph points to the same basic block as
-         *  vertex V in the control flow graph.
-         *
-         *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
-         *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
-         *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
-         *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
-         *
-         *  @code
-         *  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-         *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
-         *  @endcode
-         */
-        typedef boost::adjacency_list<boost::setS,      /* edge storage */
-                                      boost::vecS,      /* vertex storage */
-                                      boost::bidirectionalS,
-                                      boost::property<boost::vertex_name_t, SgAsmBlock*>
-                                     > Graph;
-
-        /** Vector representation of the dominance relation.  The vector is indexed by the CFG vertex descriptor. For each CFG
-         *  vertex, idx, the value stored in the vector at index idx is the CFG vertex which is the dominator of vertex idx.
-         *  If vertex idx has no dominator then the value at index idx will be the null node.
-         *
-         *  @code
-         *  RelationMap<ControlFlow::Graph> idoms;
-         *  for (size_t idx=0; idx<idoms.size(); ++idx) {
-         *      if (idoms[idx]!=boost::graph_traits<ControlFlow::Graph>::null_vertex()) {
-         *          std::cout <<idoms[idx] <<" is the immediate dominator of " <<idx <<std::endl;
-         *      }
-         *  }
-         *  @endcode
-         */
-        template<class ControlFlowGraph>
-        struct RelationMap: public std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor> {
-        };
-
-
-
-        /**********************************************************************************************************************
-         *                                      Methods that operate on the AST
-         **********************************************************************************************************************/
-    public:
-
-        /** Clears immediate dominator pointers in a subtree.
-         *
-         *  Traverses the specified AST and clears the immediate dominator pointer in each SgAsmNode in the subtree.  The
-         *  traversal follows the tree, not the immediate dominator pointers.  Whether the algorithm follows the AST pointers
-         *  or the dominance pointers during traversal is irrelevant when dominance has been calculated over a single function
-         *  and specified AST to clear is that function since all immediate dominator pointers will point to other blocks
-         *  within the same function.  But it can make a difference in other use cases. */
-        void clear_ast(SgNode *ast);
-
-
-        /** Applies dominator information to the AST.
-         *
-         *  Just as the dominance graph can be built from the immediate dominator pointers in the AST, a immediate dominance
-         *  graph can be used to initialize the pointers in the AST.  The AST can be initialized either from a dominance graph
-         *  or the dominance relation map.
-         *
-         *  Blocks that have an immediate dominator will have their dominator pointer updated (see
-         *  SgAsmBlock::get_immediate_dominator()), but the pointer will not be set to null if the block has no
-         *  dominator. Therefore, it is probably wise to call clear_ast() before apply_to_ast().  The reason this was designed
-         *  like this is because it makes it possible to update just the subtree (e.g., SgAsmFunction) over which
-         *  dominance was computed even if the control flow graph covers more of the AST.
-         *
-         *  @{ */
-        template<class DominanceGraph>
-        void apply_to_ast(const DominanceGraph &idg);
-
-        template<class ControlFlowGraph>
-        void apply_to_ast(const ControlFlowGraph &cfg, const RelationMap<ControlFlowGraph> &relation_map);
-        /** @} */
-
-
-        /** Cache vertex descriptors in AST.
-         *
-         *  The vertices of a dominance graph are of type Vertex, and point at the basic blocks (SgAsmBlock) of the
-         *  AST. Although most graph algorithms will only need to map Vertex to SgAsmBlock, the inverse mapping is also
-         *  sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in the AST itself
-         *  attached to each SgAsmBlock.  Using an std::map requires an O(log N) lookup each time we need to get the vertex
-         *  descriptor from a block, while storing the vertex descriptor in the AST requires O(1) lookup time.
-         *
-         *  The vertex descriptors are available via SgAsmBlock::get_cached_vertex().  Other graph types (e.g., control flow
-         *  graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same underlying
-         *  type for dominance graph vertices. */
-        template<class DominanceGraph>
-        void cache_vertex_descriptors(const DominanceGraph&);
-
-
-        /** Checks that dominance relationships are consistent in an AST.
-         *
-         *  This method traverses the given AST to ensure that dominance relationships are consistent.  It checks the following
-         *  conditions:
-         *
-         *  <ul>
-         *    <li>The entry block of a function has no immediate dominator.</li>
-         *    <li>All non-entry blocks of a function have an immediate dominator.</li>
-         *    <li>If block D is the immediate dominator of block I, then D and I belong to the same function.</li>
-         *  </ul>
-         *
-         *  Specifically, this method does not check for wild immediate dominator pointers, such a pointers to blocks that have
-         *  been deleted.
-         *
-         *  Returns true if no problems were detected, false otherwise.  If the user supplies a pointer to a bad-blocks set,
-         *  then blocks where problems were detected will be added to the set.  The set is not cleared by this method. */
-        bool is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad_blocks=NULL);
-
-
-
-        /**********************************************************************************************************************
-         *                                      Methods that build relationships
-         **********************************************************************************************************************/
-    public:
-
-        /** Builds a relation map for immediate dominator.
-         *
-         *  Given a control flow graph (CFG) and a starting vertex within that graph, calculate the immediate dominator of each
-         *  vertex.  The relationship is returned through the @p idom argument, which is a vector indexed by CFG vertices
-         *  (which are just integers), and where each element is the CFG vertex which is the immediate dominator.  For vertices
-         *  that have no immediate dominator (e.g., function entry blocks or blocks that are not connected to the entry block
-         *  in the CFG), the stored value is the null vertex.  See RelationMap for details.
-         *
-         *  This method is intended to be the lowest level implementation for finding dominators; all other methods are built
-         *  upon this one.  This method uses an algorithm based on "A Simple, Fast Dominance Algorithm" by Keith
-         *  D. Cooper, Timothy J. Harvey, and Ken Kennedy at Rice University, Houston, Texas.  It has been extended in various
-         *  ways to simplify it and make it slightly faster.  Although run-time complexity is higher than the Lengauer-Tarjan
-         *  algorithm, the algorithm is much simpler, and for CFGs typically encountered in practice is faster than
-         *  Lengauer-Tarjan.
-         *
-         *  @{ */
-        template<class ControlFlowGraph>
-        RelationMap<ControlFlowGraph>
-        build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                     typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
-
-        template<class ControlFlowGraph>
-        void build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                          typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                          RelationMap<ControlFlowGraph> &idom/*out*/);
-        /** @} */
-
-
-        /** Builds a relation map for immediate post dominator.
-         *
-         *  Given a control flow graph (CFG) and a starting vertex within that graph, calculate the immediate post dominator of
-         *  each vertex.  The relationship is returned through the @p pdom argument, which is a vector indexed by CFG vertices
-         *  (which are just integers), and where each element is the CFG vertex which is the immediate post dominator.  For
-         *  vertices that have no immediate post dominator (e.g., function exit blocks or blocks that eventually exit the
-         *  function through multiple exit blocks), the stored value is the null vertex.  See RelationMap for details.
-         *
-         *  This method finds post dominators by first locating the function exit blocks via ControlFlow::return_blocks().  If
-         *  the exit block is not unique, then a temporary exit vertex is added to the CFG and the original exit blocks are
-         *  given control flow edges to this unique vertex.  The CFG is then reversed and build_idom_relation_from_cfg() is
-         *  called.  Finally, if a temporary unique exit vertex was added, it is removed from the result.  However, if a @p
-         *  stop vertex is specified then that vertex is used instead of looking for (or creating) a unique exit vertex.
-         *
-         *  @{ */
-        template<class ControlFlowGraph>
-        RelationMap<ControlFlowGraph>
-        build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
-
-        template<class ControlFlowGraph>
-        RelationMap<ControlFlowGraph>
-        build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop);
-
-        template<class ControlFlowGraph>
-        void build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                             typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                             RelationMap<ControlFlowGraph> &idom/*out*/);
-
-        template<class ControlFlowGraph>
-        void build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                             typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                             typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
-                                             RelationMap<ControlFlowGraph> &idom/*out*/);
-        /** @} */
-
-
-
-        /**********************************************************************************************************************
-         *                                      Methods that build graphs
-         **********************************************************************************************************************/
-    public:
-
-        /** Builds a dominance graph from a control flow graph.
-         *
-         *  This method traverses a given control flow graph (CFG) to build a graph where each vertex corresponds to a vertex
-         *  in the CFG, and each edge, (U,V), represents the fact that U is the immediate dominator of V.  This algorithm does
-         *  not use information stored in the SgAsmBlock nodes of the AST (specifically not the immediate dominator pointers)
-         *  and does not modify the AST.
-         *
-         *  See class documentation for a description of how dominance graph vertices correspond to CFG vertices.
-         *
-         *  @{ */
-        template<class DominanceGraph, class ControlFlowGraph>
-        DominanceGraph build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                 typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
-
-        template<class ControlFlowGraph, class DominanceGraph>
-        void build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                       typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                       DominanceGraph &dg/*out*/);
-        /** @} */
-
-
-        /** Build a post dominator graph.
-         *
-         *  The post dominator relation is like the immediate dominator relation except instead of considering the control flow
-         *  path from the entry block to the block in question, we consider the path from the block in question to the exit
-         *  block.  If every path from the block in question, B, to the exit block passes through vertex D, then D is is a post
-         *  dominator of B.  Immediate post dominance and strict post dominance are analogous to the (pre) dominance
-         *  definitions presented above.
-         *
-         *  ROSE does not create a unique basic block to serve as a function exit vertex of the CFG (such a block would be
-         *  empty of instructions and would have no virtual address, making it a bit problematic.  Furthermore, the function
-         *  may contain basic blocks whose successors are statically unknown (e.g., computed branches).  Therefore, this method
-         *  temporarily modifies the CFG (specifically, a copy thereof), if necessary, by adding a unique exit vertex and
-         *  adjusting all vertices identified by BinaryAnalysis::ControlFlow::return_blocks() so they point to the unique exit
-         *  vertex.  If the exit vertex was added, it will be removed (along with its edges) from the returned post dominator
-         *  graph.  Alternatively, an explicit @p stop vertex can be specified.
-         *
-         *  @{ */
-        template<class DominanceGraph, class ControlFlowGraph>
-        DominanceGraph build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
-
-        template<class DominanceGraph, class ControlFlowGraph>
-        DominanceGraph build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop);
-
-        template<class ControlFlowGraph, class DominanceGraph>
-        void build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                          typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                          DominanceGraph &pdg/*out*/);
-
-        template<class ControlFlowGraph, class DominanceGraph>
-        void build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                          typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                          typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
-                                          DominanceGraph &pdg/*out*/);
-        /** @} */
-
-
-
-        /**********************************************************************************************************************
-         *                                      Miscellaneous methods
-         **********************************************************************************************************************/
-    public:
-
-        /** Builds a dominance graph from a relation map.
-         *
-         *  Given a control flow graph (CFG) and a dominance relation map, build a dominance graph where each vertex of the
-         *  resulting dominance graph points to a basic block (SgAsmBlock) represented in the CFG, and each edge, (U,V),
-         *  represents the fact that U is the immediate dominator of V.
-         *
-         *  See class documentation for a description of how dominance graph vertices correspond to CFG vertices.
-         *
-         *  @{ */
-        template<class DominanceGraph, class ControlFlowGraph>
-        DominanceGraph build_graph_from_relation(const ControlFlowGraph &cfg,
-                                                 const RelationMap<ControlFlowGraph> &relmap);
-
-        template<class ControlFlowGraph, class DominanceGraph>
-        void build_graph_from_relation(const ControlFlowGraph &cfg,
-                                       const RelationMap<ControlFlowGraph> &relmap,
-                                       DominanceGraph &dg/*out*/);
-        /** @} */
-
-
-        /** Control debugging output.
-         *
-         *  If set to a non-null value, then some of the algorithms will produce debug traces on the specified file. */
-        void set_debug(FILE *debug) { this->debug = debug; }
-
-        /** Obtain debugging stream.
-         *
-         *  Returns the current debug stream that was last set by set_debug().  A null value indicates that debugging is
-         *  disabled. */
-        FILE *get_debug() const { return debug; }
-
-    protected:
-        FILE *debug;                    /**< Debugging stream, or null. */
+    /** Vector representation of the dominance relation.  The vector is indexed by the CFG vertex descriptor. For each CFG
+     *  vertex, idx, the value stored in the vector at index idx is the CFG vertex which is the dominator of vertex idx.
+     *  If vertex idx has no dominator then the value at index idx will be the null node.
+     *
+     *  @code
+     *  RelationMap<ControlFlow::Graph> idoms;
+     *  for (size_t idx=0; idx<idoms.size(); ++idx) {
+     *      if (idoms[idx]!=boost::graph_traits<ControlFlow::Graph>::null_vertex()) {
+     *          std::cout <<idoms[idx] <<" is the immediate dominator of " <<idx <<std::endl;
+     *      }
+     *  }
+     *  @endcode
+     */
+    template<class ControlFlowGraph>
+    struct RelationMap: public std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor> {
     };
-}
 
 
+
+    /**********************************************************************************************************************
+     *                                      Methods that operate on the AST
+     **********************************************************************************************************************/
+public:
+
+    /** Clears immediate dominator pointers in a subtree.
+     *
+     *  Traverses the specified AST and clears the immediate dominator pointer in each SgAsmNode in the subtree.  The
+     *  traversal follows the tree, not the immediate dominator pointers.  Whether the algorithm follows the AST pointers
+     *  or the dominance pointers during traversal is irrelevant when dominance has been calculated over a single function
+     *  and specified AST to clear is that function since all immediate dominator pointers will point to other blocks
+     *  within the same function.  But it can make a difference in other use cases. */
+    void clear_ast(SgNode *ast);
+
+
+    /** Applies dominator information to the AST.
+     *
+     *  Just as the dominance graph can be built from the immediate dominator pointers in the AST, a immediate dominance
+     *  graph can be used to initialize the pointers in the AST.  The AST can be initialized either from a dominance graph
+     *  or the dominance relation map.
+     *
+     *  Blocks that have an immediate dominator will have their dominator pointer updated (see
+     *  SgAsmBlock::get_immediate_dominator()), but the pointer will not be set to null if the block has no
+     *  dominator. Therefore, it is probably wise to call clear_ast() before apply_to_ast().  The reason this was designed
+     *  like this is because it makes it possible to update just the subtree (e.g., SgAsmFunction) over which
+     *  dominance was computed even if the control flow graph covers more of the AST.
+     *
+     *  @{ */
+    template<class DominanceGraph>
+    void apply_to_ast(const DominanceGraph &idg);
+
+    template<class ControlFlowGraph>
+    void apply_to_ast(const ControlFlowGraph &cfg, const RelationMap<ControlFlowGraph> &relation_map);
+    /** @} */
+
+
+    /** Cache vertex descriptors in AST.
+     *
+     *  The vertices of a dominance graph are of type Vertex, and point at the basic blocks (SgAsmBlock) of the
+     *  AST. Although most graph algorithms will only need to map Vertex to SgAsmBlock, the inverse mapping is also
+     *  sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in the AST itself
+     *  attached to each SgAsmBlock.  Using an std::map requires an O(log N) lookup each time we need to get the vertex
+     *  descriptor from a block, while storing the vertex descriptor in the AST requires O(1) lookup time.
+     *
+     *  The vertex descriptors are available via SgAsmBlock::get_cached_vertex().  Other graph types (e.g., control flow
+     *  graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same underlying
+     *  type for dominance graph vertices. */
+    template<class DominanceGraph>
+    void cache_vertex_descriptors(const DominanceGraph&);
+
+
+    /** Checks that dominance relationships are consistent in an AST.
+     *
+     *  This method traverses the given AST to ensure that dominance relationships are consistent.  It checks the following
+     *  conditions:
+     *
+     *  <ul>
+     *    <li>The entry block of a function has no immediate dominator.</li>
+     *    <li>All non-entry blocks of a function have an immediate dominator.</li>
+     *    <li>If block D is the immediate dominator of block I, then D and I belong to the same function.</li>
+     *  </ul>
+     *
+     *  Specifically, this method does not check for wild immediate dominator pointers, such a pointers to blocks that have
+     *  been deleted.
+     *
+     *  Returns true if no problems were detected, false otherwise.  If the user supplies a pointer to a bad-blocks set,
+     *  then blocks where problems were detected will be added to the set.  The set is not cleared by this method. */
+    bool is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad_blocks=NULL);
+
+
+
+    /**********************************************************************************************************************
+     *                                      Methods that build relationships
+     **********************************************************************************************************************/
+public:
+
+    /** Builds a relation map for immediate dominator.
+     *
+     *  Given a control flow graph (CFG) and a starting vertex within that graph, calculate the immediate dominator of each
+     *  vertex.  The relationship is returned through the @p idom argument, which is a vector indexed by CFG vertices
+     *  (which are just integers), and where each element is the CFG vertex which is the immediate dominator.  For vertices
+     *  that have no immediate dominator (e.g., function entry blocks or blocks that are not connected to the entry block
+     *  in the CFG), the stored value is the null vertex.  See RelationMap for details.
+     *
+     *  This method is intended to be the lowest level implementation for finding dominators; all other methods are built
+     *  upon this one.  This method uses an algorithm based on "A Simple, Fast Dominance Algorithm" by Keith
+     *  D. Cooper, Timothy J. Harvey, and Ken Kennedy at Rice University, Houston, Texas.  It has been extended in various
+     *  ways to simplify it and make it slightly faster.  Although run-time complexity is higher than the Lengauer-Tarjan
+     *  algorithm, the algorithm is much simpler, and for CFGs typically encountered in practice is faster than
+     *  Lengauer-Tarjan.
+     *
+     *  @{ */
+    template<class ControlFlowGraph>
+    RelationMap<ControlFlowGraph>
+    build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                 typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
+
+    template<class ControlFlowGraph>
+    void build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                      typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                      RelationMap<ControlFlowGraph> &idom/*out*/);
+    /** @} */
+
+
+    /** Builds a relation map for immediate post dominator.
+     *
+     *  Given a control flow graph (CFG) and a starting vertex within that graph, calculate the immediate post dominator of
+     *  each vertex.  The relationship is returned through the @p pdom argument, which is a vector indexed by CFG vertices
+     *  (which are just integers), and where each element is the CFG vertex which is the immediate post dominator.  For
+     *  vertices that have no immediate post dominator (e.g., function exit blocks or blocks that eventually exit the
+     *  function through multiple exit blocks), the stored value is the null vertex.  See RelationMap for details.
+     *
+     *  This method finds post dominators by first locating the function exit blocks via ControlFlow::return_blocks().  If
+     *  the exit block is not unique, then a temporary exit vertex is added to the CFG and the original exit blocks are
+     *  given control flow edges to this unique vertex.  The CFG is then reversed and build_idom_relation_from_cfg() is
+     *  called.  Finally, if a temporary unique exit vertex was added, it is removed from the result.  However, if a @p
+     *  stop vertex is specified then that vertex is used instead of looking for (or creating) a unique exit vertex.
+     *
+     *  @{ */
+    template<class ControlFlowGraph>
+    RelationMap<ControlFlowGraph>
+    build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
+
+    template<class ControlFlowGraph>
+    RelationMap<ControlFlowGraph>
+    build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop);
+
+    template<class ControlFlowGraph>
+    void build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                         typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                         RelationMap<ControlFlowGraph> &idom/*out*/);
+
+    template<class ControlFlowGraph>
+    void build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                         typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                         typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
+                                         RelationMap<ControlFlowGraph> &idom/*out*/);
+    /** @} */
+
+
+
+    /**********************************************************************************************************************
+     *                                      Methods that build graphs
+     **********************************************************************************************************************/
+public:
+
+    /** Builds a dominance graph from a control flow graph.
+     *
+     *  This method traverses a given control flow graph (CFG) to build a graph where each vertex corresponds to a vertex
+     *  in the CFG, and each edge, (U,V), represents the fact that U is the immediate dominator of V.  This algorithm does
+     *  not use information stored in the SgAsmBlock nodes of the AST (specifically not the immediate dominator pointers)
+     *  and does not modify the AST.
+     *
+     *  See class documentation for a description of how dominance graph vertices correspond to CFG vertices.
+     *
+     *  @{ */
+    template<class DominanceGraph, class ControlFlowGraph>
+    DominanceGraph build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                             typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
+
+    template<class ControlFlowGraph, class DominanceGraph>
+    void build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                   typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                   DominanceGraph &dg/*out*/);
+    /** @} */
+
+
+    /** Build a post dominator graph.
+     *
+     *  The post dominator relation is like the immediate dominator relation except instead of considering the control flow
+     *  path from the entry block to the block in question, we consider the path from the block in question to the exit
+     *  block.  If every path from the block in question, B, to the exit block passes through vertex D, then D is is a post
+     *  dominator of B.  Immediate post dominance and strict post dominance are analogous to the (pre) dominance
+     *  definitions presented above.
+     *
+     *  ROSE does not create a unique basic block to serve as a function exit vertex of the CFG (such a block would be empty of
+     *  instructions and would have no virtual address, making it a bit problematic.  Furthermore, the function may contain
+     *  basic blocks whose successors are statically unknown (e.g., computed branches).  Therefore, this method temporarily
+     *  modifies the CFG (specifically, a copy thereof), if necessary, by adding a unique exit vertex and adjusting all
+     *  vertices identified by rose::BinaryAnalysis::ControlFlow::return_blocks() so they point to the unique exit vertex.  If
+     *  the exit vertex was added, it will be removed (along with its edges) from the returned post dominator graph.
+     *  Alternatively, an explicit @p stop vertex can be specified.
+     *
+     *  @{ */
+    template<class DominanceGraph, class ControlFlowGraph>
+    DominanceGraph build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                                typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
+
+    template<class DominanceGraph, class ControlFlowGraph>
+    DominanceGraph build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                                typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                                typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop);
+
+    template<class ControlFlowGraph, class DominanceGraph>
+    void build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                      typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                      DominanceGraph &pdg/*out*/);
+
+    template<class ControlFlowGraph, class DominanceGraph>
+    void build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                      typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                      typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
+                                      DominanceGraph &pdg/*out*/);
+    /** @} */
+
+
+
+    /**********************************************************************************************************************
+     *                                      Miscellaneous methods
+     **********************************************************************************************************************/
+public:
+
+    /** Builds a dominance graph from a relation map.
+     *
+     *  Given a control flow graph (CFG) and a dominance relation map, build a dominance graph where each vertex of the
+     *  resulting dominance graph points to a basic block (SgAsmBlock) represented in the CFG, and each edge, (U,V),
+     *  represents the fact that U is the immediate dominator of V.
+     *
+     *  See class documentation for a description of how dominance graph vertices correspond to CFG vertices.
+     *
+     *  @{ */
+    template<class DominanceGraph, class ControlFlowGraph>
+    DominanceGraph build_graph_from_relation(const ControlFlowGraph &cfg,
+                                             const RelationMap<ControlFlowGraph> &relmap);
+
+    template<class ControlFlowGraph, class DominanceGraph>
+    void build_graph_from_relation(const ControlFlowGraph &cfg,
+                                   const RelationMap<ControlFlowGraph> &relmap,
+                                   DominanceGraph &dg/*out*/);
+    /** @} */
+
+
+    /** Control debugging output.
+     *
+     *  If set to a non-null value, then some of the algorithms will produce debug traces on the specified file. */
+    void set_debug(FILE *debug) { this->debug = debug; }
+
+    /** Obtain debugging stream.
+     *
+     *  Returns the current debug stream that was last set by set_debug().  A null value indicates that debugging is
+     *  disabled. */
+    FILE *get_debug() const { return debug; }
+
+protected:
+    FILE *debug;                    /**< Debugging stream, or null. */
+};
 
 /******************************************************************************************************************************
  *                              Function templates for methods that operate on the AST
@@ -410,10 +408,10 @@ namespace BinaryAnalysis {
 
 template<class DominanceGraph>
 void
-BinaryAnalysis::Dominance::apply_to_ast(const DominanceGraph &idg)
+Dominance::apply_to_ast(const DominanceGraph &idg)
 {
     if (debug)
-        fprintf(debug, "BinaryAnalysis::Dominance::apply_to_ast:\n");
+        fprintf(debug, "rose::BinaryAnalysis::Dominance::apply_to_ast:\n");
 
     typename boost::graph_traits<DominanceGraph>::edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end)=edges(idg); ei!=ei_end; ++ei) {
@@ -429,8 +427,8 @@ BinaryAnalysis::Dominance::apply_to_ast(const DominanceGraph &idg)
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::Dominance::apply_to_ast(const ControlFlowGraph &cfg,
-                                        const RelationMap<ControlFlowGraph> &idom)
+Dominance::apply_to_ast(const ControlFlowGraph &cfg,
+                        const RelationMap<ControlFlowGraph> &idom)
 {
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
 
@@ -447,7 +445,7 @@ BinaryAnalysis::Dominance::apply_to_ast(const ControlFlowGraph &cfg,
 
 template<class DominanceGraph>
 void
-BinaryAnalysis::Dominance::cache_vertex_descriptors(const DominanceGraph &dg)
+Dominance::cache_vertex_descriptors(const DominanceGraph &dg)
 {
     typename boost::graph_traits<DominanceGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(dg); vi!=vi_end; ++vi) {
@@ -464,9 +462,9 @@ BinaryAnalysis::Dominance::cache_vertex_descriptors(const DominanceGraph &dg)
 
 template<class ControlFlowGraph, class DominanceGraph>
 void
-BinaryAnalysis::Dominance::build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                     typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                     DominanceGraph &result)
+Dominance::build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                     typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                     DominanceGraph &result)
 {
     RelationMap<ControlFlowGraph> idoms;
     build_idom_relation_from_cfg(cfg, start, idoms);
@@ -475,8 +473,8 @@ BinaryAnalysis::Dominance::build_idom_graph_from_cfg(const ControlFlowGraph &cfg
 
 template<class DominanceGraph, class ControlFlowGraph>
 DominanceGraph
-BinaryAnalysis::Dominance::build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                     typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
+Dominance::build_idom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                     typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
 {
     DominanceGraph dg;
     build_idom_graph_from_cfg(cfg, start, dg);
@@ -484,9 +482,9 @@ BinaryAnalysis::Dominance::build_idom_graph_from_cfg(const ControlFlowGraph &cfg
 }
 
 template<class ControlFlowGraph>
-BinaryAnalysis::Dominance::RelationMap<ControlFlowGraph>
-BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
+Dominance::RelationMap<ControlFlowGraph>
+Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
 {
     RelationMap<ControlFlowGraph> idom;
     build_idom_relation_from_cfg(cfg, start, idom);
@@ -527,9 +525,9 @@ BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &
  */
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                        RelationMap<ControlFlowGraph> &result)
+Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                        RelationMap<ControlFlowGraph> &result)
 {
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
 
@@ -546,7 +544,7 @@ BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &
     };
 
     if (debug) {
-        fprintf(debug, "BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %zu\n", start);
+        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %zu\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
         SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
@@ -705,9 +703,9 @@ BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &
 
 template<class ControlFlowGraph, class DominanceGraph>
 void
-BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                        DominanceGraph &result)
+Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                        DominanceGraph &result)
 {
     RelationMap<ControlFlowGraph> pdoms;
     build_postdom_relation_from_cfg(cfg, start, pdoms);
@@ -716,10 +714,10 @@ BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &
 
 template<class ControlFlowGraph, class DominanceGraph>
 void
-BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
-                                                        DominanceGraph &result)
+Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
+                                        DominanceGraph &result)
 {
     RelationMap<ControlFlowGraph> pdoms;
     build_postdom_relation_from_cfg(cfg, start, stop, pdoms);
@@ -728,8 +726,8 @@ BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &
 
 template<class DominanceGraph, class ControlFlowGraph>
 DominanceGraph
-BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
+Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
 {
     DominanceGraph dg;
     build_postdom_graph_from_cfg(cfg, start, dg);
@@ -738,9 +736,9 @@ BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &
 
 template<class DominanceGraph, class ControlFlowGraph>
 DominanceGraph
-BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop)
+Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop)
 {
     DominanceGraph dg;
     build_postdom_graph_from_cfg(cfg, start, stop, dg);
@@ -748,9 +746,9 @@ BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &
 }
 
 template<class ControlFlowGraph>
-BinaryAnalysis::Dominance::RelationMap<ControlFlowGraph>
-BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
+Dominance::RelationMap<ControlFlowGraph>
+Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
 {
     RelationMap<ControlFlowGraph> pdom;
     build_postdom_relation_from_cfg(cfg, start, pdom);
@@ -758,10 +756,10 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
 }
 
 template<class ControlFlowGraph>
-BinaryAnalysis::Dominance::RelationMap<ControlFlowGraph>
-BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop)
+Dominance::RelationMap<ControlFlowGraph>
+Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop)
 {
     RelationMap<ControlFlowGraph> pdom;
     build_postdom_relation_from_cfg(cfg, start, stop, pdom);
@@ -770,10 +768,10 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
-                                                           RelationMap<ControlFlowGraph> &result)
+Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
+                                           RelationMap<ControlFlowGraph> &result)
 {
     /* Post dominance is the same as doing dominance, but on a reversed CFG, using the stop vertex as the starting point. */
     if (debug)
@@ -787,12 +785,12 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
-                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                                           RelationMap<ControlFlowGraph> &result)
+Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                           RelationMap<ControlFlowGraph> &result)
 {
     if (debug) {
-        fprintf(debug, "BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %zu\n", start);
+        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %zu\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
         SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
@@ -869,8 +867,8 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
 
 template<class DominanceGraph, class ControlFlowGraph>
 DominanceGraph
-BinaryAnalysis::Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
-                                                     const RelationMap<ControlFlowGraph> &relmap)
+Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
+                                     const RelationMap<ControlFlowGraph> &relmap)
 {
     DominanceGraph g;
     build_graph_from_relation(cfg, relmap, g);
@@ -879,15 +877,15 @@ BinaryAnalysis::Dominance::build_graph_from_relation(const ControlFlowGraph &cfg
 
 template<class ControlFlowGraph, class DominanceGraph>
 void
-BinaryAnalysis::Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
-                                                     const RelationMap<ControlFlowGraph> &relmap,
-                                                     DominanceGraph &dg/*out*/)
+Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
+                                     const RelationMap<ControlFlowGraph> &relmap,
+                                     DominanceGraph &dg/*out*/)
 {
     typedef typename boost::graph_traits<DominanceGraph>::vertex_descriptor D_Vertex;
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
 
     if (debug) {
-        fprintf(debug, "BinaryAnalysis::Dominance::build_graph_from_relation:\n");
+        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_graph_from_relation:\n");
         fprintf(debug, "  building from this relation:\n");
         for (size_t i=0; i<relmap.size(); i++) {
             if (relmap[i]==boost::graph_traits<ControlFlowGraph>::null_vertex()) {
@@ -916,5 +914,8 @@ BinaryAnalysis::Dominance::build_graph_from_relation(const ControlFlowGraph &cfg
         }
     }
 }
+
+} // namespace
+} // namespace
 
 #endif

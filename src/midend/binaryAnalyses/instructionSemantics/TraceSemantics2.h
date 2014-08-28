@@ -4,6 +4,7 @@
 #include "BaseSemantics2.h"
 #include "threadSupport.h"
 
+namespace rose {
 namespace BinaryAnalysis {                      // documented elsewhere
 namespace InstructionSemantics2 {               // documented elsewhere
 
@@ -284,6 +285,7 @@ public:
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond);
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

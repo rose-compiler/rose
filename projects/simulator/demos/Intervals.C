@@ -10,7 +10,8 @@
 #include "IntervalSemantics.h"
 #include "threadSupport.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 class IntervalAnalysis: public RSIM_Callbacks::InsnCallback {
 protected:

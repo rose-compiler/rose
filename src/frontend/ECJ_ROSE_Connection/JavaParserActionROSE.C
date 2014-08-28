@@ -1907,8 +1907,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
         printf(
             "Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = %s \n",
             Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer -> class_name().c_str());
-    }
 
+    }
     ::project = Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer;
     ROSE_ASSERT(::project != NULL);
 
@@ -3077,7 +3077,7 @@ cout.flush();
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_annotations, int num_statements, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, jclass, jsize num_annotations, jsize num_statements, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Entering  cactionMethodDeclarationEnd (method) for %d statements\n", num_statements);
 
@@ -5849,7 +5849,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, 
 
             cout << "Error: default reached in cactionPostfixExpressionEnd() operator_kind = " <<  operator_kind << endl;
             cout.flush();
-            binaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
+            unaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
     }
 
     // Mark this a a postfix operator
@@ -5897,7 +5897,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, j
 
             cout << "Error: default reached in cactionPrefixExpressionEnd() operator_kind = " <<  operator_kind << endl;
             cout.flush();
-            binaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
+            unaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
     }
 
     // Mark this a a prefix operator
@@ -6556,7 +6556,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jc
 
             cout << "Error: default reached in cactionUnaryExpressionEnd() operator_kind = " <<  operator_kind << endl;
             cout.flush();
-            binaryExpressionSupport<SgUnaryAddOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
+            unaryExpressionSupport<SgUnaryAddOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
     }
 
     setJavaSourcePosition((SgLocatedNode *) astJavaComponentStack.top(), env, jToken);

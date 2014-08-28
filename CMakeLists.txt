@@ -354,9 +354,13 @@ else()
   endif()
 endif()
 
-# Set ROSE_SHLIBPATH_VAR.  For now, it is just LD_LIBRARY_PATH.
-# LD_LIBRARY_PATH.
-set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+# Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.
+# Otherwise, it is just LD_LIBRARY_PATH.
+if(MSVC)
+  set(ROSE_SHLIBPATH_VAR "PATH")
+else()
+  set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+endif()
 
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX

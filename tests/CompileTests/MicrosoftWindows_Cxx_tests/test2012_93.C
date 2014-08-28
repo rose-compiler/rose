@@ -20,7 +20,7 @@ class X
    };
 #endif
 
-#if 0
+#if 1
 void
 set()
    {
