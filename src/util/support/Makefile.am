@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
+
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
@@ -14,7 +16,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = \
+pkginclude_HEADERS = \
    DAG.h               IteratorCompound.h  TreeImpl.h \
    BitVectorRepr.h   DirectedGraph.h     IteratorTmpl.h      PtrMap.h       union_find.h \
    VectorCommandOptions.h CommandOptions.h  DoublyLinkedList.h  LatticeElemList.h   PtrSet.h \

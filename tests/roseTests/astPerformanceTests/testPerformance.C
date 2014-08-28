@@ -4,6 +4,11 @@
 // Fix suggested by Brian White (to allow "sleep()" to be defined)
 // #include <unistd.h>
 
+#ifdef _MSC_VER
+     #include <Windows.h>
+     #define sleep Sleep
+#endif
+
 TimingPerformance timer ("ROSE Performance Tests: total execution time (sec) = ",true);
 
 void foo()

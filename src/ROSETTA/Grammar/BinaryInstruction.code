@@ -22,6 +22,10 @@ HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_START
 #include "InstructionEnumsMips.h"
 HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_END
 
+HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION_START
+#include "InstructionEnumsM68k.h"
+HEADER_BINARY_M68K_INSTRUCTION_PREDECLARATION_END
+
 HEADER_GENERIC_SECTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_GENERIC_SECTION_PREDECLARATION_END
@@ -35,6 +39,10 @@ HEADER_INTERPRETATION_PREDECLARATION_START
 class MemoryMap;
 class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
+
+HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
+#include <sawyer/BitVector.h>
+HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
 #include "MemoryMap.h"
@@ -58,30 +66,35 @@ HEADER_BINARY_END
 
 
 HEADER_INTERPRETATION_START
-	// NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
-	public:
-		SgAsmInterpretation()
-			: p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL),
-			  p_headers(NULL), p_global_block(NULL) {
-			ctor();
-             	}
-          	SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
-          	MemoryMap *get_map() const {return p_map;}
-          	void set_map(MemoryMap* m) {p_map=m;}
-		const RegisterDictionary *get_registers() const;
-		void set_registers(const RegisterDictionary*);
-		void set_coverageComputed(bool x) { coverageComputed = x; }
-		void set_percentageCoverage(double x) { percentageCoverage = x; }
+        // NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
+        public:
+                SgAsmInterpretation()
+                        : p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0),
+                          p_headers(NULL), p_global_block(NULL) {
+                        ctor();
+                }
+                SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
+                MemoryMap *get_map() const {return p_map;}
+                void set_map(MemoryMap* m) {p_map=m;}
+                const RegisterDictionary *get_registers() const;
+                void set_registers(const RegisterDictionary*);
+                void set_coverageComputed(bool x) { coverageComputed = x; }
+                void set_percentageCoverage(double x) { percentageCoverage = x; }
+                void insert_instructions(InstructionMap&/*in,out*/);
+                void erase_instructions(InstructionMap&/*in,out*/);
+                InstructionMap& get_instruction_map(bool recompute=false);
+                void set_instruction_map(const InstructionMap&);
 
-	private:
-		void ctor();
-          	MemoryMap *p_map;
-		const RegisterDictionary *p_registers;
-          	bool coverageComputed; // true iff percentageCoverage has been computed
+        private:
+                void ctor();
+                MemoryMap *p_map;
+                const RegisterDictionary *p_registers;
+                bool coverageComputed; // true iff percentageCoverage has been computed
+                mutable InstructionMap instruction_map; // cached instruction map
 
-	        //! The percentage of an interpretation where each section is marked as executable and identified for
-		//  disassembly into instructions.
-		double percentageCoverage;
+                //! The percentage of an interpretation where each section is marked as executable and identified for
+                //  disassembly into instructions.
+                double percentageCoverage;
 HEADER_INTERPRETATION_END
 
 
@@ -93,11 +106,13 @@ HEADER_BINARY_INSTRUCTION_START
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 void append_sources( SgAsmInstruction* instruction );
 
-		// These are documented in SgAsmInstruction.C
+                // These are documented in SgAsmInstruction.C
                 virtual bool terminates_basic_block(); /*subclasses must redefine*/
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
                 virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
-		virtual bool get_branch_target(rose_addr_t *target/*out*/);
+                bool is_first_in_block();
+                bool is_last_in_block();
+                virtual bool get_branch_target(rose_addr_t *target/*out*/);
                 virtual bool has_effect();
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
                                         bool relax_stack_semantics=false);
@@ -107,7 +122,7 @@ HEADER_BINARY_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool *complete,
-                                                             MemoryMap *initial_memory=NULL);
+                                                             const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
                 virtual bool is_unknown() const;
 HEADER_BINARY_INSTRUCTION_END
@@ -127,171 +142,70 @@ HEADER_BINARY_FILE_END
 
 
 
+HEADER_CONSTANT_EXPRESSION_START
+        public:
+                const Sawyer::Container::BitVector& get_bitVector() const { return p_bitVector; }
+                Sawyer::Container::BitVector& get_bitVector() { return p_bitVector; }
+                void set_bitVector(const Sawyer::Container::BitVector &bv) { p_bitVector = bv; }
+HEADER_CONSTANT_EXPRESSION_END
+
+
 
 HEADER_INTEGER_VALUE_EXPRESSION_START
         public:
-                explicit SgAsmIntegerValueExpression(uint64_t n, size_t nbits=64)
-                        : p_base_node(NULL), p_relative_value(n), p_significant_bits(nbits) {}
-                static uint64_t virtual_address(SgNode*);
+                SgAsmIntegerValueExpression(uint64_t n, SgAsmType *type);
+                SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type);
+                static uint64_t virtualAddress(SgNode*);
                 std::string get_label(bool quiet=false) const;
-                void set_significant_bits(size_t nbits);
-                size_t get_significant_bits() const;
-                void make_relative_to(SgNode *base_node);
-                uint64_t get_base_address() const;
-                uint64_t get_absolute_value(size_t nbits=0) const;
-                int64_t get_absolute_signed_value() const;
-                void set_absolute_value(uint64_t);
+                size_t get_significantBits() const;
+                void makeRelativeTo(SgNode *baseNode);
+                uint64_t get_baseAddress() const;
+                uint64_t get_absoluteValue(size_t nbits=0) const;
+                void set_absoluteValue(uint64_t);
+                int64_t get_signedValue() const;
+                int64_t get_relativeValue() const;
+                void set_relativeValue(int64_t v, size_t nbits=64);
+                uint64_t get_value() const { return get_absoluteValue(); }
+
+                // These are deprecated; use CamelCase versions instead [Robb P. Matzke 2014-07-21]
+                size_t get_significant_bits() const ROSE_DEPRECATED;
+                void make_relative_to(SgNode*) ROSE_DEPRECATED;
+                uint64_t get_base_address() const ROSE_DEPRECATED;
+                uint64_t get_absolute_value(size_t nbits=0) const ROSE_DEPRECATED;
+                void set_absolute_value(uint64_t) ROSE_DEPRECATED;
+                int64_t get_signed_value() const ROSE_DEPRECATED;
+                int64_t get_relative_value() const ROSE_DEPRECATED;
+                void set_relative_value(int64_t, size_t nbits=64) ROSE_DEPRECATED;
 HEADER_INTEGER_VALUE_EXPRESSION_END
 
 
 
 
-HEADER_BYTE_VALUE_EXPRESSION_START
+HEADER_FLOAT_VALUE_EXPRESSION_START
+        private:
+                // This node stores its primary representation of the value in the p_bitVector of a parent class.  However,
+                // since we often access the value as a native "double", and since converting to/from a bit vector is costly,
+                // we want to cache the native double value whenever we compute it.  ROSETTA does not need to be aware of the
+                // cached value since it can be recomputed from the bit vector, and in fact, ROSETTA can't handle cache data
+                // members because it doesn't understand "mutable".
+                mutable double p_nativeValue;
+                mutable bool p_nativeValueIsValid;
         public:
-		SgAsmByteValueExpression() { ctor(); }
-                explicit SgAsmByteValueExpression(uint8_t n) { ctor(n); }
-                void set_value(uint8_t);
-                uint8_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint8_t);
-HEADER_BYTE_VALUE_EXPRESSION_END
-SOURCE_BYTE_VALUE_EXPRESSION_START
-		void SgAsmByteValueExpression::ctor() {
-			set_significant_bits(8);
-			set_value(0);
-			set_type(SgAsmTypeByte::createType());
-		}
-		void SgAsmByteValueExpression::ctor(uint8_t n) {
-			set_significant_bits(8);
-			set_value(n);
-			set_type(SgAsmTypeByte::createType());
-		}
-SOURCE_BYTE_VALUE_EXPRESSION_END
+                SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
+                SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
+		SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
+                void set_nativeValue(double);
+                double get_nativeValue() const;
+                void updateBitVector();
+                void updateNativeValue() const;
+HEADER_FLOAT_VALUE_EXPRESSION_END
 
 
 
-
-
-HEADER_WORD_VALUE_EXPRESSION_START
+HEADER_EXPRESSION_START
         public:
-		SgAsmWordValueExpression() { ctor(); }
-                explicit SgAsmWordValueExpression(uint16_t n) { ctor(n); }
-                void set_value(uint16_t);
-                uint16_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint16_t);
-HEADER_WORD_VALUE_EXPRESSION_END
-SOURCE_WORD_VALUE_EXPRESSION_START
-		void SgAsmWordValueExpression::ctor() {
-			set_significant_bits(16);
-			set_value(0);
-			set_type(SgAsmTypeWord::createType());
-		}
-		void SgAsmWordValueExpression::ctor(uint16_t n) {
-			set_significant_bits(16);
-			set_value(n);
-			set_type(SgAsmTypeWord::createType());
-		}
-SOURCE_WORD_VALUE_EXPRESSION_END
-
-
-
-
-HEADER_DOUBLE_WORD_VALUE_EXPRESSION_START
-        public:
-		SgAsmDoubleWordValueExpression() { ctor(); }
-                explicit SgAsmDoubleWordValueExpression(uint32_t n) { ctor(n); }
-                void set_value(uint32_t);
-                uint32_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint32_t);
-HEADER_DOUBLE_WORD_VALUE_EXPRESSION_END
-SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_START
-		void SgAsmDoubleWordValueExpression::ctor() {
-			set_significant_bits(32);
-			set_value(0);
-			set_type(SgAsmTypeDoubleWord::createType());
-		}
-		void SgAsmDoubleWordValueExpression::ctor(uint32_t n) {
-			set_significant_bits(32);
-			set_value(n);
-			set_type(SgAsmTypeDoubleWord::createType());
-		}
-SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_END
-
-
-
-
-HEADER_QUAD_WORD_VALUE_EXPRESSION_START
-        public:
-		SgAsmQuadWordValueExpression() { ctor(); }
-                explicit SgAsmQuadWordValueExpression(uint64_t n) { ctor(n); }
-                void set_value(uint64_t);
-                uint64_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint64_t);
-HEADER_QUAD_WORD_VALUE_EXPRESSION_END
-SOURCE_QUAD_WORD_VALUE_EXPRESSION_START
-		void SgAsmQuadWordValueExpression::ctor() {
-			set_significant_bits(64);
-			set_value(0);
-			set_type(SgAsmTypeQuadWord::createType());
-		}
-		void SgAsmQuadWordValueExpression::ctor(uint64_t n) {
-			set_significant_bits(64);
-			set_value(n);
-			set_type(SgAsmTypeQuadWord::createType());
-		}
-SOURCE_QUAD_WORD_VALUE_EXPRESSION_END
-
-
-
-
-HEADER_SINGLE_FLOAT_VALUE_EXPRESSION_START
-	public:
-		SgAsmSingleFloatValueExpression() { ctor(); }
-		explicit SgAsmSingleFloatValueExpression(double v) { ctor(v); }
-	protected:
-		void ctor();
-		void ctor(double);
-HEADER_SINGLE_FLOAT_VALUE_EXPRESSION_END
-SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION_START
-		void SgAsmSingleFloatValueExpression::ctor() {
-			set_value(0.0);
-			set_type(SgAsmTypeSingleFloat::createType());
-		}
-		void SgAsmSingleFloatValueExpression::ctor(double v) {
-			set_value(v);
-			set_type(SgAsmTypeSingleFloat::createType());
-		}
-SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION_END
-
-
-
-
-HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION_START
-	public:
-		SgAsmDoubleFloatValueExpression() { ctor(); }
-		explicit SgAsmDoubleFloatValueExpression(double v) { ctor(v); }
-	protected:
-		void ctor();
-		void ctor(double);
-HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION_END
-SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_START
-		void SgAsmDoubleFloatValueExpression::ctor() {
-			set_value(0.0);
-			set_type(SgAsmTypeDoubleFloat::createType());
-		}
-		void SgAsmDoubleFloatValueExpression::ctor(double v) {
-			set_value(v);
-			set_type(SgAsmTypeDoubleFloat::createType());
-		}
-SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_END
-
+                size_t get_nBits() const;
+HEADER_EXPRESSION_END
 
 
 
@@ -343,12 +257,6 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 
           typedef struct stat fileDetails;
 
-          enum ByteOrder {
-              ORDER_UNSPECIFIED,
-              ORDER_LSB,                                          /* little-endian; least significant byte first */
-              ORDER_MSB,                                          /* big-endian; most significant byte first */
-             };
-    
           enum ExecFamily {
               FAMILY_UNSPECIFIED,
               FAMILY_DOS,                                         /* Microsoft DOS format */
@@ -603,89 +511,10 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
         static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
                             bool multiline=true);
 
-       /* Return byte order of caller */
-          static SgAsmExecutableFileFormat::ByteOrder host_order();
-
-       /* Swap (reverse) bytes taking care of sign extension */
-          static uint8_t swap_bytes(uint8_t n);
-          static uint16_t swap_bytes(uint16_t n);
-          static uint32_t swap_bytes(uint32_t n);
-          static uint64_t swap_bytes(uint64_t n);
-
-          static int8_t swap_bytes(int8_t n);
-          static int16_t swap_bytes(int16_t n);
-          static int32_t swap_bytes(int32_t n);
-          static int64_t swap_bytes(int64_t n);
-
-       /* Little-endian byte order conversions */
-          static uint8_t le_to_host(uint8_t n);
-          static uint16_t le_to_host(uint16_t n);
-          static uint32_t le_to_host(uint32_t n);
-          static uint64_t le_to_host(uint64_t n);
-
-          static int8_t le_to_host(int8_t n);
-          static int16_t le_to_host(int16_t n);
-          static int32_t le_to_host(int32_t n);
-          static int64_t le_to_host(int64_t n);
-
-          static void host_to_le(unsigned h, uint8_t *n);
-          static void host_to_le(unsigned h, uint16_t *n);
-          static void host_to_le(unsigned h, uint32_t *n);
-          static void host_to_le(rose_addr_t h, uint64_t *n);
-          static void host_to_le(rose_rva_t h, uint32_t *n);
-          static void host_to_le(rose_rva_t h, uint64_t *n);
-          static void host_to_le(int h, int8_t *n);
-          static void host_to_le(int h, int16_t *n);
-          static void host_to_le(int h, int32_t *n);
-          static void host_to_le(int64_t h, int64_t *n);
-
-       /* Big-endian byte order conversions */
-          static uint8_t be_to_host(uint8_t n);
-          static uint16_t be_to_host(uint16_t n);
-          static uint32_t be_to_host(uint32_t n);
-          static uint64_t be_to_host(uint64_t n);
-          static int8_t be_to_host(int8_t n);
-          static int16_t be_to_host(int16_t n);
-          static int32_t be_to_host(int32_t n);
-          static int64_t be_to_host(int64_t n);
-
-          static void host_to_be(unsigned h, uint8_t *n);
-          static void host_to_be(unsigned h, uint16_t *n);
-          static void host_to_be(unsigned h, uint32_t *n);
-          static void host_to_be(rose_addr_t h, uint64_t *n);
-          static void host_to_be(rose_rva_t h, uint32_t *n);
-          static void host_to_be(rose_rva_t h, uint64_t *n);
-          static void host_to_be(int h, int8_t *n);
-          static void host_to_be(int h, int16_t *n);
-          static void host_to_be(int h, int32_t *n);
-          static void host_to_be(int64_t h, int64_t *n);
-
-       /* Caller-specified byte order conversions */
-          static uint8_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint8_t n);
-          static uint16_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint16_t n);
-          static uint32_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint32_t n);
-          static uint64_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint64_t n);
-          static int8_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int8_t n);
-          static int16_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int16_t n);
-          static int32_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int32_t n);
-          static int64_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int64_t n);
-
-       // static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder, unsigned char h, unsigned char *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint8_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint16_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint32_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_addr_t h, uint64_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_rva_t h, uint64_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int8_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int64_t h, int64_t *np);
-
           static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
           static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
        /**alias for isa_to_string(InsSetArchitecture) */
           static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-          static std::string to_string(SgAsmExecutableFileFormat::ByteOrder);
           static std::string to_string(SgAsmExecutableFileFormat::ExecFamily);
           static std::string to_string(SgAsmExecutableFileFormat::ExecABI);
           static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose);
@@ -792,8 +621,8 @@ HEADER_GENERIC_SECTION_START
                 /* Accessors for private members */
                 SgAsmGenericString *get_name() const;           /* Same as standard ROSETTA accessor */
                 void set_name(SgAsmGenericString *s);           /* Like std accessor but sets parent of 's' */
-		std::string get_short_name() const;		/* Get the abbreviated name, or the real name */
-		void set_short_name(const std::string&);	/* Set the abbreviated name. */
+                std::string get_short_name() const;             /* Get the abbreviated name, or the real name */
+                void set_short_name(const std::string&);        /* Set the abbreviated name. */
 
                 /* Convenience functions */
                 Extent get_file_extent() const;                 /* Returns get_offset() and get_size() */
@@ -842,7 +671,7 @@ HEADER_GENERIC_HEADER_START
                 void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
 
                 /* Convenience functions */
-                SgAsmExecutableFileFormat::ByteOrder get_sex() const;
+                ByteOrder::Endianness get_sex() const;
                 size_t get_word_size() const;
 
                 /* Functions for sections */
@@ -875,8 +704,8 @@ HEADER_GENERIC_FILE_START
         public:
    // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
                 SgAsmGenericFile()
-                        : p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
-                          p_truncate_zeros(false), p_tracking_references(true), p_neuter(false)
+                        : p_unreferenced_cache(NULL), p_data_converter(NULL), p_dwarf_info(NULL), p_fd(-1), p_headers(NULL),
+                          p_holes(NULL), p_truncate_zeros(false), p_tracking_references(true), p_neuter(false)
                         {ctor();}
 
                 virtual ~SgAsmGenericFile();                            /* Destructor deletes children and unmaps/closes file */
@@ -1262,8 +1091,8 @@ HEADER_ELF_HEADER_START
 
         private:
                 void ctor();
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 HEADER_ELF_HEADER_END
 
 
@@ -1381,21 +1210,21 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 # pragma pack ()
 #endif
 
-                SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-                SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+                void *encode(ByteOrder::Endianness sex,
                         SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+                void *encode(ByteOrder::Endianness sex,
                         SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
                 void update_from_section(SgAsmElfSection*);
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
                 static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
         private:
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 
@@ -1637,14 +1466,14 @@ HEADER_ELF_RELOC_ENTRY_START
                         : p_r_offset(0), p_r_addend(0), p_sym(0), p_type(R_386_NONE)
                         {ctor(section);}
 
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
 
                 void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
@@ -1783,10 +1612,10 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                 explicit SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec)
                         : p_d_tag(DT_NULL), p_name(NULL)
                         {ctor(dynsec);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+                void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 static std::string to_string(SgAsmElfDynamicEntry::EntryType);
                 /*Override ROSETTA because set_name() needs to adjust parent pointer*/
@@ -1949,8 +1778,8 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_START
 
                 explicit SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *symver_defined)
                         {ctor(symver_defined);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverDefinedSection*);
@@ -1983,8 +1812,8 @@ HEADER_ELF_SYMVER_DEFINED_AUX_START
                                                   SgAsmElfSymverDefinedSection *symver_def_sec)
                         : p_name(NULL)
                         {ctor(symver_def_entry,symver_def_sec);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverDefinedEntry*,SgAsmElfSymverDefinedSection *symver_def_sec);
@@ -2034,8 +1863,8 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_START
                 explicit SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection *symver_needed)
                         : p_file_name(NULL)
                         {ctor(symver_needed);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverNeededSection*);
@@ -2071,8 +1900,8 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
                                         SgAsmElfSymverNeededSection *symver_needed_sec)
                         : p_name(NULL)
                         {ctor(symver_needed_entry,symver_needed_sec);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverNeededEntry*,SgAsmElfSymverNeededSection*);
@@ -2186,13 +2015,13 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 #endif
 
 
-                SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-                SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
                 void update_from_section(SgAsmElfSection*);
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
@@ -2200,8 +2029,8 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 
 
         private:
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
 HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
 
@@ -2286,10 +2115,10 @@ HEADER_ELF_SYMBOL_START
 
                 explicit SgAsmElfSymbol(SgAsmElfSymbolSection *symtab)
                         {ctor(symtab);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+                void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
                 void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*) const;
                 SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
@@ -3427,7 +3256,7 @@ HEADER_LE_FILE_HEADER_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
           void ctor(SgAsmGenericFile *f, rose_addr_t offset);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
+          void *encode(ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 HEADER_LE_FILE_HEADER_END
 
 
@@ -3539,15 +3368,15 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
 # pragma pack ()
 #endif
 
-          SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
+          SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
 
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
+          void *encode(ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
 
        // unsigned get_pageno() {return pageno;}
 
      private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
+          void ctor(ByteOrder::Endianness, const SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
 
        // unsigned    pageno;
        // unsigned    flags;
@@ -3580,13 +3409,13 @@ HEADER_LE_ENTRY_POINT_START
 # pragma pack ()
 #endif
 
-          SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
-          SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
+          SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
+          SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags);
 
-          rose_addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, rose_addr_t spos) const;
+          rose_addr_t unparse(std::ostream&, ByteOrder::Endianness, const SgAsmGenericSection*, rose_addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
+          void ctor(ByteOrder::Endianness, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
 
        // std::vector<LEEntryPoint> entries;
        // unsigned flags, objnum, entry_type, res1;
@@ -3651,17 +3480,17 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
                SF_IO_PRIV          = 0x00008000,   /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
              };
 
-          SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
+          SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
        // virtual ~LESectionTableEntry() {};
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
+          void *encode(ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, pagemap_index, pagemap_nentries, res1;
        // rose_addr_t      mapped_size, base_addr;
 
      private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
+          void ctor(ByteOrder::Endianness, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
 
 HEADER_LE_SECTION_TABLE_ENTRY_END
 
@@ -3785,9 +3614,10 @@ HEADER_DOS_EXTENDED_HEADER_END
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
                 virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) /*override*/;
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&,
+                                              rose_addr_t *target, rose_addr_t *ret) /*override*/;
                 virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) /*override*/;
-		virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
+                virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
                 virtual bool has_effect() /*override*/;
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
                                         bool relax_stack_semantics=false) /*override*/;
@@ -3797,7 +3627,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool* complete,
-                                                             MemoryMap *initial_memory=NULL) /*override*/;
+                                                             const MemoryMap *initial_memory=NULL) /*override*/;
                 virtual bool is_unknown() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
@@ -3822,15 +3652,35 @@ HEADER_BINARY_ARM_INSTRUCTION_END
 
 
 HEADER_BINARY_MIPS_INSTRUCTION_START
-	public:
+        public:
                 virtual bool terminates_basic_block() /*override*/;
-		virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
-			     		      rose_addr_t *target/*out*/) /*override*/;
-		virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
+                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual bool is_unknown() const /*override*/;
-		virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
 HEADER_BINARY_MIPS_INSTRUCTION_END
+
+
+HEADER_BINARY_M68K_INSTRUCTION_START
+        public:
+                virtual bool terminates_basic_block() /*override*/;
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
+                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
+                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
+                                                             bool* complete,
+                                                             const MemoryMap *initial_memory=NULL) /*override*/;
+                virtual bool is_unknown() const /*override*/;
+HEADER_BINARY_M68K_INSTRUCTION_END
+
+
+
+HEADER_BINARY_DECLARATION_START
+HEADER_BINARY_DECLARATION_END
 
 
 
@@ -3876,7 +3726,9 @@ HEADER_BINARY_BLOCK_START
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
         SgAsmFunction *get_enclosing_function() const;
-	bool has_instructions() const;
+        bool has_instructions() const;
+        bool is_basic_block() const { return has_instructions(); }
+        bool is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
 
         /** Returns a very short string describing the reason mask. */
         static std::string reason_key(const std::string &prefix="");
@@ -3901,13 +3753,13 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         void remove_children();
         SgAsmBlock *get_entry_block() const;
 
-	/** Whether a function returns. */
-	enum MayReturn {
-		RET_UNKNOWN,			/**< It is unknown whether this function ever returns or not. */
-		RET_NEVER,			/**< This function is known to never return. */
-		RET_SOMETIMES,			/**< This function may return or not, depending on how it is called. */
-		RET_ALWAYS,			/**< This function returns each time it is called. */
-	};
+        /** Whether a function returns. */
+        enum MayReturn {
+                RET_UNKNOWN,                    /**< It is unknown whether this function ever returns or not. */
+                RET_NEVER,                      /**< This function is known to never return. */
+                RET_SOMETIMES,                  /**< This function may return or not, depending on how it is called. */
+                RET_ALWAYS,                     /**< This function returns each time it is called. */
+        };
 
         /** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
          *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
@@ -3972,7 +3824,9 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                                                  *   might also be thunks, and functions that have this bit set might not
                                                  *   be a thunk.  The Partitioner::is_thunk() method will return true for
                                                  *   functions whose content looks like a thunk. */
-                FUNC_DEFAULT     = 0x6fff00ff,  /**< Default value for Partitioner class. */
+                FUNC_EXPORT      = 0x80000000,  /**< Exported function. These are the functions that appear in a PE export
+                                                 *   table. */
+                FUNC_DEFAULT     = 0xefff00ff,  /**< Default value for Partitioner class. */
 
                 /*========= Miscellaneous Reasons ===========================================================================
                  * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
@@ -4002,8 +3856,15 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 virtual bool operator()(SgNode*) = 0;
         };
 
-        /* Returns info about what addresses a function occupies. */
-        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL, NodeSelector *exclude=NULL);
+        /** Returns info about what addresses a function occupies. */
+        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+                NodeSelector *selector=NULL);
+
+        /** Computes the SHA1 message digest for the bytes of a function. Returns true if the SHA1 is available, false
+         *  if the message digest cannot be computed because the prerequisite gcrypt functions are not available. The
+         *  optional @p selector argument can be used to limit the digest to only certain nodes of the function; by default,
+         *  all instructions and static data are accumulated. */
+        bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
 
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {
@@ -4047,229 +3908,98 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 
+HEADER_BINARY_DATA_STRUCTURE_START
+          void append_declaration( SgAsmSynthesizedDeclaration* declaration );
+
+       // SgAsmSynthesizedDeclarationPtrList & get_declarationList();
+
+     protected:
+
+          SgAsmSynthesizedDeclarationPtrList p_declarationList;
+
+     public:
+HEADER_BINARY_DATA_STRUCTURE_END
+
+
+
+HEADER_TYPE_START
+        private:
+                static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;
+
+        public:
+                virtual void check() const;
+                virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+                virtual size_t get_nBits() const { abort(); return -1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+                virtual size_t get_nBytes() const;
+
+                template<class Type>                                    // Type is a subclass of SgAsmType
+                static Type* registerOrDelete(Type *toInsert) {
+                    ASSERT_not_null(toInsert);
+                    std::string key = toInsert->toString();
+                    Type *retval = dynamic_cast<Type*>(p_typeRegistry.insertMaybe(key, toInsert));
+                    ASSERT_not_null(retval);
+                    if (retval!=toInsert)
+                        delete toInsert;
+                    return retval;
+                }
+
+HEADER_TYPE_END
+
+
+HEADER_VECTOR_TYPE_START
+        public:
+                SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
+                size_t get_nElmts() const;
+                SgAsmType* get_elmtType() const;
+                virtual void check() const /*override*/;
+                virtual std::string toString() const /*override*/;
+                virtual size_t get_nBits() const /*override*/;
+HEADER_VECTOR_TYPE_END
+
+
+HEADER_SCALAR_TYPE_START
+        protected:
+                SgAsmScalarType(ByteOrder::Endianness, size_t nBits);
+        public:
+                virtual void check() const;
+                virtual std::string toString() const;
+                virtual size_t get_nBits() const /*override*/;
+                ByteOrder::Endianness get_minorOrder() const;
+                ByteOrder::Endianness get_majorOrder() const;
+                size_t get_majorNBytes() const;
+HEADER_SCALAR_TYPE_END
+
+
+
+HEADER_INTEGER_TYPE_START
+        public:
+                SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
+                virtual void check() const;
+                virtual std::string toString() const;
+                bool get_isSigned() const;
+HEADER_INTEGER_TYPE_END
+
+
+
+HEADER_FLOAT_TYPE_START
+        public:
+                SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
+                               size_t significandOffset, size_t significandNBits, size_t signBitOffset,
+                               size_t exponentOffset, size_t exponentNBits, uint64_t exponentBias);
+                virtual void check() const;
+                virtual std::string toString() const;
+                size_t get_significandOffset() const;
+                size_t get_significandNBits() const;
+                size_t get_signBitOffset() const;
+                size_t get_exponentOffset() const;
+                size_t get_exponentNBits() const;
+                uint64_t get_exponentBias() const;
+HEADER_FLOAT_TYPE_END
 
 
 
 
 
-
-
-HEADER_BINARY_TYPE_BYTE_START
-          static SgAsmTypeByte* createType();
-HEADER_BINARY_TYPE_BYTE_END
-
-HEADER_BINARY_TYPE_WORD_START
-          static SgAsmTypeWord* createType();
-HEADER_BINARY_TYPE_WORD_END
-
-HEADER_BINARY_TYPE_DOUBLE_WORD_START
-          static SgAsmTypeDoubleWord* createType();
-HEADER_BINARY_TYPE_DOUBLE_WORD_END
-
-HEADER_BINARY_TYPE_QUAD_WORD_START
-          static SgAsmTypeQuadWord* createType();
-HEADER_BINARY_TYPE_QUAD_WORD_END
-
-HEADER_BINARY_TYPE_DOUBLE_QUAD_WORD_START
-          static SgAsmTypeDoubleQuadWord* createType();
-HEADER_BINARY_TYPE_DOUBLE_QUAD_WORD_END
-
-HEADER_BINARY_TYPE_SINGLE_FLOAT_START
-          static SgAsmTypeSingleFloat* createType();
-HEADER_BINARY_TYPE_SINGLE_FLOAT_END
-
-HEADER_BINARY_TYPE_DOUBLE_FLOAT_START
-          static SgAsmTypeDoubleFloat* createType();
-HEADER_BINARY_TYPE_DOUBLE_FLOAT_END
-
-HEADER_BINARY_TYPE_VECTOR_START
-          static SgAsmTypeVector* createType(int elementCount, SgAsmType* elementType);
-HEADER_BINARY_TYPE_VECTOR_END
-
-HEADER_BINARY_TYPE_80bit_FLOAT_START
-          static SgAsmType80bitFloat* createType();
-HEADER_BINARY_TYPE_80bit_FLOAT_END
-
-HEADER_BINARY_TYPE_128bit_FLOAT_START
-          static SgAsmType128bitFloat* createType();
-HEADER_BINARY_TYPE_128bit_FLOAT_END
-
-
-
-HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
-
-       // DQ (10/28/2009): Added enum values to replace magin number vlues where will confusing in the source code.
-      /*! \brief Register names for lower byte registers. 
-       *  \deprecated Use dynamic values from the RegisterDictionary instead.
-       */
-          enum regnames8l_enum
-             {
-            // e_regname8l_error      =  0 /*! Register name: error */,
-               e_al                   =  0 /*! Register name: al    */,
-               e_cl                   =  1 /*! Register name: cl    */,
-               e_dl                   =  2 /*! Register name: dl    */,
-               e_bl                   =  3 /*! Register name: bl    */,
-               e_spl                  =  4 /*! Register name: spl   */,
-               e_bpl                  =  5 /*! Register name: bpl   */,
-               e_sil                  =  6 /*! Register name: sil   */,
-               e_dil                  =  7 /*! Register name: dil   */,
-               e_r8b                  =  8 /*! Register name: r8b   */,
-               e_r9b                  =  9 /*! Register name: r9b   */,
-               e_r10b                 = 10 /*! Register name: r10b  */,
-               e_r11b                 = 11 /*! Register name: r11b  */,
-               e_r12b                 = 12 /*! Register name: r12b  */,
-               e_r13b                 = 13 /*! Register name: r13b  */,
-               e_r14b                 = 14 /*! Register name: r14b  */,
-               e_r15b                 = 15 /*! Register name: r15b  */,
-               e_regname8l_last_value      /*! last value           */
-             };
-
-      /*! \brief Register names for high byte registers. 
-       *  \deprecated Use dynamic values from the RegisterDictionary instead.
-       */
-          enum regnames8h_enum
-             {
-            // e_regname8h_error      = 0 /*! Register name: error */,
-               e_ah                   = 0 /*! Register name: ah    */,
-               e_ch                   = 1 /*! Register name: ch    */,
-               e_dh                   = 2 /*! Register name: dh    */,
-               e_bh                   = 3 /*! Register name: bh    */,
-               e_regname8h_last_value     /*! last value           */
-             };
-
-      /*! \brief Register names for 16 bit width registers. 
-       *  \deprecated Use dynamic values from the RegisterDictionary instead.
-       */
-          enum regnames16_enum
-             {
-            // e_regname16_error      =  0 /*! Register name: error */,
-               e_ax                   =  0 /*! Register name: ax    */,
-               e_cx                   =  1 /*! Register name: cx    */,
-               e_dx                   =  2 /*! Register name: dx    */,
-               e_bx                   =  3 /*! Register name: bx    */,
-               e_sp                   =  4 /*! Register name: sp    */,
-               e_bp                   =  5 /*! Register name: bp    */,
-               e_si                   =  6 /*! Register name: si    */,
-               e_di                   =  7 /*! Register name: di    */,
-               e_r8w                  =  8 /*! Register name: r8w   */,
-               e_r9w                  =  9 /*! Register name: r9w   */,
-               e_r10w                 = 10 /*! Register name: r10w  */,
-               e_r11w                 = 11 /*! Register name: r11w  */,
-               e_r12w                 = 12 /*! Register name: r12w  */,
-               e_r13w                 = 13 /*! Register name: r13w  */,
-               e_r14w                 = 14 /*! Register name: r14w  */,
-               e_r15w                 = 15 /*! Register name: r15w  */,
-               e_regname16_last_value      /*! last value           */
-             };
-
-      /*! \brief Register names for 32 bit width registers. 
-       *  \deprecated Use dynamic values from the RegisterDictionary instead.
-       */
-          enum regnames32_enum
-             {
-            // e_regname32_error      =  0 /*! Register name: error */,
-               e_eax                  =  0 /*! Register name: eax   */,
-               e_ecx                  =  1 /*! Register name: ecx   */,
-               e_edx                  =  2 /*! Register name: edx   */,
-               e_ebx                  =  3 /*! Register name: ebx   */,
-               e_esp                  =  4 /*! Register name: esp   */,
-               e_ebp                  =  5 /*! Register name: ebp   */,
-               e_esi                  =  6 /*! Register name: esi   */,
-               e_edi                  =  7 /*! Register name: edi   */,
-               e_r8d                  =  8 /*! Register name: r8d   */,
-               e_r9d                  =  9 /*! Register name: r9d   */,
-               e_r10d                 = 10 /*! Register name: r10d  */,
-               e_r11d                 = 11 /*! Register name: r11d  */,
-               e_r12d                 = 12 /*! Register name: r12d  */,
-               e_r13d                 = 13 /*! Register name: r13d  */,
-               e_r14d                 = 14 /*! Register name: r14d  */,
-               e_r15d                 = 15 /*! Register name: r15d  */,
-               e_regname32_last_value      /*! last value           */
-             };
-
-      /*! \brief Register names for 64 bit width registers. 
-       *  \deprecated Use dynamic values from the RegisterDictionary instead.
-       */
-          enum regnames64_enum
-             {
-            // e_regname64_error      =  0 /*! Register name: error */,
-               e_rax                  =  0 /*! Register name: rax   */,
-               e_rcx                  =  1 /*! Register name: rcx   */,
-               e_rdx                  =  2 /*! Register name: rdx   */,
-               e_rbx                  =  3 /*! Register name: rbx   */,
-               e_rsp                  =  4 /*! Register name: rsp   */,
-               e_rbp                  =  5 /*! Register name: rbp   */,
-               e_rsi                  =  6 /*! Register name: rsi   */,
-               e_rdi                  =  7 /*! Register name: rdi   */,
-               e_r8                   =  8 /*! Register name: r8    */,
-               e_r9                   =  9 /*! Register name: r9    */,
-               e_r10                  = 10 /*! Register name: r10   */,
-               e_r11                  = 11 /*! Register name: r11   */,
-               e_r12                  = 12 /*! Register name: r12   */,
-               e_r13                  = 13 /*! Register name: r13   */,
-               e_r14                  = 14 /*! Register name: r14   */,
-               e_r15                  = 15 /*! Register name: r15   */,
-               e_regname64_last_value      /*! last value           */
-             };
-
-      /*! \brief Segment register names.
-       *  \deprecated Use dynamic values from the RegisterDictionary instead.
-       */
-          enum segregnames_enum
-             {
-            // e_segregnames_error    = 0 /*! Segment register name: error */,
-               e_es                   = 0 /*! Segment register name: es    */,
-               e_cs                   = 1 /*! Segment register name: cs    */,
-               e_ss                   = 2 /*! Segment register name: ss    */,
-               e_ds                   = 3 /*! Segment register name: ds    */,
-               e_fs                   = 4 /*! Segment register name: fs    */,
-               e_gs                   = 5 /*! Segment register name: gs    */,
-               e_segregnames_last_value     /*! last value           */
-             };
-
-      /*! Function to generate register string names for low byte registers.
-       *  \deprecated Use RegisterDictionary::lookup() instead.
-       */
-          std::string get_regnames8l(regnames8l_enum n);
-
-      /*! Function to generate register string names for high byte registers.
-       *  \deprecated Use RegisterDictionary::lookup() instead.
-       */
-          std::string get_regnames8h(regnames8h_enum n);
-
-      /*! Function to generate register string names for 16 bit width registers.
-       *  \deprecated Use RegisterDictionary::lookup() instead.
-       */
-          std::string get_regnames16(regnames16_enum n);
-
-      /*! Function to generate register string names for 32 bit width registers.
-       *  \deprecated Use RegisterDictionary::lookup() instead.
-       */
-          std::string get_regnames32(regnames32_enum n);
-
-      /*! Function to generate register string names for 64 bit width registers.
-       *  \deprecated Use RegisterDictionary::lookup() instead.
-       */
-          std::string get_regnames64(regnames64_enum n);
-
-      /*! Function to generate segment register string names registers.
-       *  \deprecated Use RegisterDictionary::lookup() instead.
-       */
-          std::string get_segregnames(segregnames_enum n);
-HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
-
-
-
-HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
-        enum arm_suffix_field_enum {
-                undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
-                c = 1, // control field mask bit
-                x = 2, // extension field mask bit
-                s = 4, // status field mask bit
-                f = 8, // flags field mask bit
-                last_position_in_suffix
-        };
-HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
@@ -4457,6 +4187,16 @@ SgAsmOperandList::append_operand( SgAsmExpression* operand )
 
 SOURCE_BINARY_OPERAND_LIST_END
 
+
+
+SOURCE_BINARY_DATA_STRUCTURE_START
+void
+SgAsmSynthesizedDataStructureDeclaration::append_declaration( SgAsmSynthesizedDeclaration* declaration )
+   {
+     p_declarationList.push_back(declaration);
+   }
+
+SOURCE_BINARY_DATA_STRUCTURE_END
 
 
 
@@ -4696,172 +4436,6 @@ SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
 SOURCE_BINARY_INSTRUCTION_END
 
 
-SOURCE_BINARY_TYPE_BYTE_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_BYTE_END
-
-SOURCE_BINARY_TYPE_WORD_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_WORD_END
-
-SOURCE_BINARY_TYPE_DOUBLE_WORD_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_DOUBLE_WORD_END
-
-SOURCE_BINARY_TYPE_QUAD_WORD_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_QUAD_WORD_END
-
-SOURCE_BINARY_TYPE_DOUBLE_QUAD_WORD_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_DOUBLE_QUAD_WORD_END
-
-SOURCE_BINARY_TYPE_SINGLE_FLOAT_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_SINGLE_FLOAT_END
-
-SOURCE_BINARY_TYPE_DOUBLE_FLOAT_START
-
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-
-SOURCE_BINARY_TYPE_DOUBLE_FLOAT_END
-
-
-SOURCE_BINARY_TYPE_80bit_FLOAT_START
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-       
-SOURCE_BINARY_TYPE_80bit_FLOAT_END
-
-
-SOURCE_BINARY_TYPE_128bit_FLOAT_START
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
-  }
-  return p_builtin_type;
-}
-       
-SOURCE_BINARY_TYPE_128bit_FLOAT_END
-
-
-SOURCE_BINARY_TYPE_VECTOR_START
-
-$CLASSNAME*
-$CLASSNAME::createType(int elementCount, SgAsmType* elementType)
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-  // This does not need to be saved during file I/O, so it doesn't need to be a
-  // class member
-     static std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*> cache;
-     std::pair<int, SgAsmType*> vectorInfo(elementCount, elementType);
-     std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*>::const_iterator i = cache.find(vectorInfo);
-     if (i != cache.end())
-        {
-          return i->second;
-        } 
-       else
-        {
-          SgAsmTypeVector* tv = new SgAsmTypeVector(elementCount, elementType);
-          cache.insert(std::make_pair(vectorInfo, tv));
-          return tv;
-        }
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-
-     return NULL;
-   }
-
-SOURCE_BINARY_TYPE_VECTOR_END
 
 
 
@@ -4869,61 +4443,6 @@ SOURCE_BINARY_TYPE_VECTOR_END
 
 
 
-SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
-std::string
-SgAsmx86RegisterReferenceExpression::get_regnames8l(regnames8l_enum n)
-   {
-     const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
-     ROSE_ASSERT(n >= 0);
-     ROSE_ASSERT(n < e_regname8l_last_value);
-     return regnames8l[n]; // offset to account for error value in enum
-   }
-
-std::string
-SgAsmx86RegisterReferenceExpression::get_regnames8h(regnames8h_enum n)
-   {
-     const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
-     ROSE_ASSERT(n >= 0);
-     ROSE_ASSERT(n < e_regname8h_last_value);
-     return regnames8h[n]; // offset to account for error value in enum
-   }
-
-std::string
-SgAsmx86RegisterReferenceExpression::get_regnames16(regnames16_enum n)
-   {
-     const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
-     ROSE_ASSERT(n >= 0);
-     ROSE_ASSERT(n < e_regname16_last_value);
-     return regnames16[n]; // offset to account for error value in enum
-   }
-
-std::string
-SgAsmx86RegisterReferenceExpression::get_regnames32(regnames32_enum n)
-   {
-     const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
-     ROSE_ASSERT(n >= 0);
-     ROSE_ASSERT(n < e_regname32_last_value);
-     return regnames32[n]; // offset to account for error value in enum
-   }
-
-std::string
-SgAsmx86RegisterReferenceExpression::get_regnames64(regnames64_enum n)
-   {
-     const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
-     ROSE_ASSERT(n >= 0);
-     ROSE_ASSERT(n < e_regname64_last_value);
-     return regnames64[n]; // offset to account for error value in enum
-   }
-
-std::string
-SgAsmx86RegisterReferenceExpression::get_segregnames(segregnames_enum n)
-   {
-     const char* segregnames[6] = {"es", "cs", "ss", "ds", "fs", "gs"};
-     ROSE_ASSERT(n >= 0);
-     ROSE_ASSERT(n < e_segregnames_last_value);
-     return segregnames[n]; // offset to account for error value in enum
-   }
-SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
@@ -4987,7 +4506,7 @@ SgAsmGenericHeader::format_name() const
      return "ASM_GENERIC_HEADER";
    }
 
-SgAsmGenericFormat::ByteOrder
+ByteOrder::Endianness
 SgAsmGenericHeader::get_sex() const
    {
      ROSE_ASSERT(p_exec_format != NULL);
@@ -5059,7 +4578,7 @@ SOURCE_ELF_STRING_SECTION_END
 
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5069,7 +4588,7 @@ SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::
 #endif
    }
 
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5127,7 +4646,7 @@ SOURCE_ELF_SECTION_END
 
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5137,7 +4656,7 @@ SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::
 #endif
    }
 
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5228,7 +4747,7 @@ SOURCE_NE_SECTION_TABLE_ENTRY_END
 
 
 SOURCE_LE_PAGE_TABLE_ENTRY_START
-SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
+SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
    : p_pageno(0), p_flags(0)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -5242,7 +4761,7 @@ SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrde
 SOURCE_LE_PAGE_TABLE_ENTRY_END
 
 SOURCE_LE_ENTRY_POINT_START
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
    : p_flags(0), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -5253,7 +4772,7 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, c
 #endif
    }
 
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags)
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags)
    : p_flags(flags), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
    }
@@ -5261,7 +4780,7 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, u
 SOURCE_LE_ENTRY_POINT_END
 
 SOURCE_LE_SECTION_TABLE_ENTRY_START
-SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
+SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);

@@ -219,7 +219,7 @@ std::string ToString(T t) {
 
   template <typename NodeT, typename EdgeT>
   class DfaToDotImpl {
-    multimap<SgNode*, NodeT> exploredNodes;
+    multimap<SgNode*, NodeT> exploredNodes; // One SgNode can have multiple CFG nodes of type NodeT.
     set<SgNode*> nodesPrinted;
     ostream& o;
     DefUseAnalysis* dfa;
@@ -236,17 +236,23 @@ std::string ToString(T t) {
   void DfaToDotImpl<NodeT, EdgeT>::explore(NodeT n) {
     ROSE_ASSERT (n.getNode());
     //std::cerr << n.toStringForDebugging() << std::endl;
+
+    // search through the multimap to make sure CFGNode is not visited before, if so,  return.
     pair<typename multimap<SgNode*, NodeT>::const_iterator,
       typename multimap<SgNode*, NodeT>::const_iterator> ip = exploredNodes.equal_range(n.getNode());
     for (typename multimap<SgNode*, NodeT>::const_iterator i = ip.first; i != ip.second; ++i) {
       if (i->second == n) return;
     }
+   // save visited CFG nodes into the multimap 
     exploredNodes.insert(make_pair(n.getNode(), n));
+
+    // explore out edges' targets
     vector<EdgeT> outEdges = n.outEdges();
     for (unsigned int i = 0; i < outEdges.size(); ++i) {
       ROSE_ASSERT (outEdges[i].source() == n);
       explore(outEdges[i].target());
     }
+    // explore in edges' targets
     vector<EdgeT> inEdges = n.inEdges();
     for (unsigned int i = 0; i < inEdges.size(); ++i) {
       ROSE_ASSERT (inEdges[i].target() == n);
@@ -304,10 +310,10 @@ std::string ToString(T t) {
   }
 
 
-  template std::ostream& dfaToDot(std::ostream&, std::string,
+  template ROSE_DLL_API std::ostream& dfaToDot(std::ostream&, std::string,
                                   std::vector <FilteredCFGNode<IsDFAFilter> >,
                                   DefUseAnalysis* dfa);
-  template std::ostream& dfaToDot(std::ostream&, std::string,
+  template ROSE_DLL_API std::ostream& dfaToDot(std::ostream&, std::string,
                                   std::vector <FilteredCFGNode<IsDFAFilter> >,
                                   DefUseAnalysis* dfa,
                                   LivenessAnalysis* live);

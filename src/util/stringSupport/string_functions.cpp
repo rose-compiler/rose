@@ -18,6 +18,7 @@
 #else
 #include <windows.h>
 #include "Shlwapi.h"
+#define snprintf _snprintf
 
 #endif
 #include <algorithm>
@@ -40,6 +41,7 @@
 
 #include "string_functions.h"
 
+#include <boost/foreach.hpp>
 // DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
 // #ifndef USE_ROSE
 #include <boost/lexical_cast.hpp>
@@ -47,6 +49,9 @@
 
 // DQ (9/29/2006): This is required for 64-bit g++ 3.4.4 compiler.
 #include <errno.h>
+
+// Needed for base64 functions
+#include "integerOps.h"
 
 // tps (11/10/2009): This include is needed in windows to find the realpath
 #if ROSE_MICROSOFT_OS
@@ -468,27 +473,136 @@ StringUtility::numberToString ( double x )
      return string(numberString);
    }
 
+#ifndef _MSC_VER
+// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
+// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
+// DQ (2/22/2014): Required code for GNU versions greater than 4.6.
 string
-StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
-{
-    std::string retval;
+StringUtility::numberToString ( __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     long long temp_x = (long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
 
-    assert(nbits>0 && nbits<=128);
+string
+StringUtility::numberToString ( unsigned __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     unsigned long long temp_x = (unsigned long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
+   #endif
+#endif
+
+std::string
+StringUtility::cEscape(const std::string &s) {
+    std::string result;
+    BOOST_FOREACH (char ch, s) {
+        switch (ch) {
+            case '\a':
+                result += "\\a";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\v':
+                result += "\\v";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            default:
+                if (isprint(ch)) {
+                    result += ch;
+                } else {
+                    char buf[8];
+                    sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                    result += buf;
+                }
+                break;
+        }
+    }
+    return result;
+}
+
+unsigned
+StringUtility::hexadecimalToInt(char ch) {
+    if (isxdigit(ch)) {
+        if (isdigit(ch))
+            return ch-'0';
+        if (isupper(ch))
+            return ch-'A'+10;
+        return ch-'a'+10;
+    }
+    return 0;
+}
+
+// DQ (2/23/2014): Fixed conflict in commit for 128 bit integer support.
+// string StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)
+std::string
+StringUtility::toHex2(uint64_t value, size_t nbits, bool show_unsigned_decimal, bool show_signed_decimal,
+                      uint64_t decimal_threshold)
+{
+    assert(nbits>0 && nbits<=8*sizeof value);
+    uint64_t sign_bit = ((uint64_t)1 << (nbits-1));
+
+    // Hexadecimal value
+    std::string retval;
     int nnibbles = (nbits+3)/4;
     char buf[64];
     snprintf(buf, sizeof buf, "0x%0*"PRIx64, nnibbles, value);
     buf[sizeof(buf)-1] = '\0';
     retval = buf;
 
-    if (nbits>=2 && is_signed && nbits<=(8*sizeof(value))) {
-        uint64_t signbit = (uint64_t)1 << (nbits-1);
-        uint64_t mask_lo = signbit - 1;                     // bits less significant than the sign bit
-        uint64_t mask_hi = ~(signbit | mask_lo);            // bits more significant than the sign bit
-        if (0!=(value & signbit) && 0!=(value & mask_lo) && 0==(value & mask_hi))
-            retval += "<-" + addrToString((~value+1) & mask_lo, nbits, false) + ">";
+    // unsigned decimal
+    bool showed_unsigned = false;
+    if (show_unsigned_decimal && value >= decimal_threshold) {
+        retval = appendAsmComment(retval, numberToString(value));
+        showed_unsigned = true;
     }
 
+    // signed decimal
+    if (show_signed_decimal) {
+        if (0 == (value & sign_bit)) {
+            // This is a positive value. Don't show it if we did already.
+            if (!showed_unsigned && value >= decimal_threshold)
+                retval = appendAsmComment(retval, numberToString(value));
+        } else {
+            // This is a negative value, so show it as negative.  We have to manually sign extend it first.
+            int64_t signed_value = (value | (-1ll & ~(sign_bit-1)));
+            retval = appendAsmComment(retval, numberToString(signed_value));
+        }
+    }
     return retval;
+}
+
+std::string
+StringUtility::signedToHex2(uint64_t value, size_t nbits)
+{
+    return toHex2(value, nbits, false, true);
+}
+
+std::string
+StringUtility::unsignedToHex2(uint64_t value, size_t nbits)
+{
+    return toHex2(value, nbits, true, false);
+}
+
+string
+StringUtility::addrToString(uint64_t value, size_t nbits)
+{
+    return toHex2(value, nbits, false, false);
 }
 
 string
@@ -1584,4 +1698,205 @@ StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad
         for (size_t i=0; i<abbr.size(); ++i)
             result += ".";
     }
+}
+
+std::string
+StringUtility::encode_base64(const std::vector<uint8_t> &data, bool do_pad)
+{
+    return encode_base64(&data[0], data.size(), do_pad);
+}
+
+std::string
+StringUtility::encode_base64(const uint8_t *data, size_t nbytes, bool do_pad)
+{
+    static const char *digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string s;
+    unsigned val = 0; // only low-order 24 bits used
+    for (size_t i=0; i<nbytes; ++i) {
+        switch (i%3) {
+            case 0:
+                val = IntegerOps::shiftLeft2<unsigned>(data[i], 16);
+                break;
+            case 1:
+                val |= IntegerOps::shiftLeft2<unsigned>(data[i], 8);
+                break;
+            case 2:
+                val |= data[i];
+                s += digits[IntegerOps::shiftRightLogical2(val, 18) & 0x3f];
+                s += digits[IntegerOps::shiftRightLogical2(val, 12) & 0x3f];
+                s += digits[IntegerOps::shiftRightLogical2(val, 6) & 0x3f];
+                s += digits[val & 0x3f];
+                break;
+        }
+    }
+    switch (nbytes % 3) {
+        case 0:
+            break;
+        case 1:
+            s += digits[IntegerOps::shiftRightLogical2(val, 18) & 0x3f];
+            s += digits[IntegerOps::shiftRightLogical2(val, 12) & 0x3f];
+            if (do_pad)
+                s += "==";
+            break;
+        case 2:
+            s += digits[IntegerOps::shiftRightLogical2(val, 18) & 0x3f];
+            s += digits[IntegerOps::shiftRightLogical2(val, 12) & 0x3f];
+            s += digits[IntegerOps::shiftRightLogical2(val, 6) & 0x3f];
+            if (do_pad)
+                s += "=";
+            break;
+    }
+    return s;
+}
+
+std::vector<uint8_t>
+StringUtility::decode_base64(const std::string &s)
+{
+    std::vector<uint8_t> retval;
+    retval.reserve((s.size()*3)/4+3);
+    unsigned val=0, ndigits=0;
+    for (size_t i=0; i<s.size(); ++i) {
+        unsigned digit;
+        if (s[i]>='A' && s[i]<='Z') {
+            digit = s[i]-'A';
+        } else if (s[i]>='a' && s[i]<='z') {
+            digit = s[i]-'a' + 26;
+        } else if (s[i]>='0' && s[i]<='9') {
+            digit = s[i]-'0' + 52;
+        } else if (s[i]=='+') {
+            digit = 62;
+        } else if (s[i]=='/') {
+            digit = 63;
+        } else {
+            continue;
+        }
+
+        // only reached for valid base64 characters
+        val |= IntegerOps::shiftLeft2(digit, 18-6*ndigits);
+        if (4==++ndigits) {
+            retval.push_back(IntegerOps::shiftRightLogical2(val, 16) & 0xff);
+            retval.push_back(IntegerOps::shiftRightLogical2(val, 8) & 0xff);
+            retval.push_back(val & 0xff);
+            val = ndigits = 0;
+        }
+    }
+
+    assert(0==ndigits || 2==ndigits || 3==ndigits);
+    if (ndigits>=2) {
+        retval.push_back(IntegerOps::shiftRightLogical2(val, 16) & 0xff);
+        if (ndigits==3)
+            retval.push_back(IntegerOps::shiftRightLogical2(val, 8) & 0xff);
+    }
+    return retval;
+}
+
+std::string
+StringUtility::join(const std::string &separator, char *strings[], size_t nstrings)
+{
+    return join_range(separator, strings, strings+nstrings);
+}
+
+std::string
+StringUtility::join(const std::string &separator, const char *strings[], size_t nstrings)
+{
+    return join_range(separator, strings, strings+nstrings);
+}
+
+std::vector<std::string>
+StringUtility::split(char separator, const std::string &str, size_t maxparts, bool trim_white_space)
+{
+    return split(std::string(1, separator), str, maxparts, trim_white_space);
+}
+
+std::vector<std::string>
+StringUtility::split(const std::string &separator, const std::string &str, size_t maxparts, bool trim_white_space)
+{
+    std::vector<std::string> retval;
+    if (0==maxparts || str.empty())
+        return retval;
+    if (separator.empty()) {
+        for (size_t i=0; i<str.size() && i<maxparts-1; ++i)
+            retval.push_back(str.substr(i, 1));
+        retval.push_back(str.substr(retval.size()));
+    } else {
+        size_t at = 0;
+        while (at<=str.size() && retval.size()+1<maxparts) {
+            if (at==str.size()) {
+                retval.push_back(""); // string ends with separator
+                break;
+            }
+            size_t sep_at = str.find(separator, at);
+            if (sep_at==std::string::npos) {
+                retval.push_back(str.substr(at));
+                at = str.size() + 1; // "+1" means string doesn't end with separator
+                break;
+            } else {
+                retval.push_back(str.substr(at, sep_at-at));
+                at = sep_at + separator.size();
+            }
+        }
+        if (at<str.size() && retval.size()<maxparts)
+            retval.push_back(str.substr(at));
+    }
+
+    if (trim_white_space) {
+        for (size_t i=0; i<retval.size(); ++i)
+            retval[i] = trim(retval[i]);
+    }
+    return retval;
+}
+
+std::string
+StringUtility::trim(const std::string &str, const std::string &strip, bool at_beginning, bool at_end)
+{
+    if (str.empty())
+        return str;
+    size_t first=0, last=str.size()-1;
+    if (at_beginning)
+        first = str.find_first_not_of(strip);
+    if (at_end && first!=std::string::npos)
+        last = str.find_last_not_of(strip);
+    if (first==std::string::npos || last==std::string::npos)
+        return "";
+    assert(last>=first);
+    return str.substr(first, last+1-first);
+}
+
+std::string
+StringUtility::untab(const std::string &str, size_t tabstops, size_t colnum)
+{
+    tabstops = std::max(tabstops, (size_t)1);
+    std::string retval;
+    for (size_t i=0; i<str.size(); ++i) {
+        switch (str[i]) {
+            case '\t': {
+                size_t nspc = tabstops - colnum % tabstops;
+                retval += std::string(nspc, ' ');
+                colnum += nspc;
+                break;
+            }
+            case '\n':
+            case '\r':
+                retval += str[i];
+                colnum = 0;
+                break;
+            default:
+                retval += str[i];
+                ++colnum;
+                break;
+        }
+    }
+    return retval;
+}
+
+std::string
+StringUtility::appendAsmComment(const std::string &s, const std::string &comment)
+{
+    if (comment.empty())
+        return s;
+    if (s.empty())
+        return "<" + comment + ">";
+    if (s[s.size()-1] == '>')
+        return s.substr(0, s.size()-1) + "," + comment + ">";
+    return s + "<" + comment + ">";
 }

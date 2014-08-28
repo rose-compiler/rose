@@ -6,6 +6,9 @@
 #include "InstructionEnumsMips.h"
 #include "sageBuilderAsm.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 class DisassemblerMips: public Disassembler {
 public:
     DisassemblerMips() { init(); }
@@ -15,7 +18,7 @@ public:
     virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) /*override*/;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
-     *  functions) will define a subclass whose operator() unparses a single instruction word and returns an
+     *  instructions) will define a subclass whose operator() unparses a single instruction word and returns an
      *  SgAsmMipsInstruction. These functors are allocated and inserted into a list. When an instruction word is to be
      *  disassembled, the list is scanned to find the first entry that matches, and then its operator() is invoked.  An entry
      *  matches if the instruction bits to be disassembled match the @p match data member after both are masked according to
@@ -61,52 +64,52 @@ public:
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL);
 
     /** Create a new general purpose register reference expression. */
-    SgAsmMipsRegisterReferenceExpression *makeRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeRegister(unsigned regnum);
 
     /** Create a new floating point register reference expression. */
-    SgAsmMipsRegisterReferenceExpression *makeFpRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeFpRegister(unsigned regnum);
 
     /** Create a new register reference for Coprocessor 0. */
-    SgAsmMipsRegisterReferenceExpression *makeCp0Register(unsigned regnum, unsigned sel);
+    SgAsmRegisterReferenceExpression *makeCp0Register(unsigned regnum, unsigned sel);
 
     /** Create a new register reference for Coprocessor 2. */
-    SgAsmMipsRegisterReferenceExpression *makeCp2Register(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeCp2Register(unsigned regnum);
 
     /** Create a new floating point condition flag register reference expression.  The return value is a reference to one of
      *  the bits from the FCSR register.  If @p cc is zero then bit 23 is referenced, otherwise bit 24+cc is referenced. The @p
      *  cc value must be zero through seven, inclusive. */
-    SgAsmMipsRegisterReferenceExpression *makeFpccRegister(unsigned cc);
+    SgAsmRegisterReferenceExpression *makeFpccRegister(unsigned cc);
 
     /** Create a new register reference for a COP2 condition code.  See COP2ConditionCode() in the MIPS reference manual. */
-    SgAsmMipsRegisterReferenceExpression *makeCp2ccRegister(unsigned cc);
+    SgAsmRegisterReferenceExpression *makeCp2ccRegister(unsigned cc);
 
     /** Create a new register reference for a hardware register. See the RDHWR instruction documentation. */
-    SgAsmMipsRegisterReferenceExpression *makeHwRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeHwRegister(unsigned regnum);
 
     /** Create a new register reference for a shadow GPR. */
-    SgAsmMipsRegisterReferenceExpression *makeShadowRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeShadowRegister(unsigned regnum);
 
     /** Create a new 8-bit value expression from an 8-bit value.  The @p bit_offset and @p nbits indicate where the value
      * originally came from in the instruction. */
-    SgAsmByteValueExpression *makeImmediate8(unsigned value, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeImmediate8(unsigned value, size_t bit_offset, size_t nbits);
 
     /** Create a new 16-bit value expression from a 16-bit value. The @p bit_offset and @p nbits indicate where the value
      *  originally came from in the instruction. */
-    SgAsmWordValueExpression *makeImmediate16(unsigned value, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeImmediate16(unsigned value, size_t bit_offset, size_t nbits);
 
     /** Create a new 32-bit value expression from a 32-bit value. The @p bit_offset and @p nbits indicate where the value
      *  originally came from in the instruction. */
-    SgAsmDoubleWordValueExpression *makeImmediate32(unsigned value, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeImmediate32(unsigned value, size_t bit_offset, size_t nbits);
 
     /** Create a 32-bit PC-relative branch target address from a 16-bit offset. The @p bit_offset and @p nbits indicate where
      *  the value originally came from in the instruction (usually 0 and 16, respectively). The return address is the
      *  address of the delay slot plus four times the signed @p offset16. */
-    SgAsmDoubleWordValueExpression *makeBranchTargetRelative(unsigned offset16, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeBranchTargetRelative(unsigned offset16, size_t bit_offset, size_t nbits);
 
     /** Create a 32-bit branch address from an instruction index value.  The returned value is the @p insn_index (@p nbits
      * wide) multiplied by four and then combined with the address of the delay slot.  They are combined such that the
      * low-order @p nbits+2 bits are from the product and the upper bits are from the delay slot address. */
-    SgAsmDoubleWordValueExpression *makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits);
+    SgAsmIntegerValueExpression *makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits);
 
     /** Build an expression for an offset from a register.  The return value is GPR[regnum]+signExtend(offset) expressed as an
      *  SgAsmBinaryAdd expression whose first operand is the register reference expression and second operand is the
@@ -132,5 +135,8 @@ protected:
     /** Address of instruction currently being disassembled. This is set each time disassembleOne() is called. */
     rose_addr_t insn_va;
 };
+
+} // namespace
+} // namespace
 
 #endif

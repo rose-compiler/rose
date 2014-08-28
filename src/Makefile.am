@@ -51,16 +51,20 @@ else
 endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseBinaryLibraries =						    \
-	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la  \
-	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la    \
-	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la  \
+   libroseBinaryLibraries =							\
+	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la	\
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
+	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
+	$(top_builddir)/src/frontend/Partitioner2/libPartitioner.la		\
 	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la
 else
-   libroseBinaryLibraries =						   \
-	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
-	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
+   libroseBinaryLibraries =							\
+	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
+	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
+	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la		\
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
+	$(top_builddir)/src/frontend/Partitioner2/libPartitioner.la
 endif
 
 libroseX10Libraries = frontend/X10_ROSE_Connection/libroseX10.la
@@ -101,6 +105,8 @@ libroseLibraries = \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
+   $(top_builddir)/src/util/libroseSaywer.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(libroseBinaryLibraries)
 else
 libroseLibraries = \
@@ -124,6 +130,8 @@ libroseLibraries = \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
+   $(top_builddir)/src/util/libroseSawyer.la \
+   $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 endif
@@ -135,7 +143,7 @@ endif
 EXTRA_DIST = CMakeLists.txt extra.docs
 
 # Header files that need to be included in the distribution
-include_HEADERS = \
+pkginclude_HEADERS = \
      rose.h \
      roseInternal.h \
      rose_msvc.h \

@@ -3,7 +3,9 @@
 #include <rose.h>
 //#include "interproceduralCFG.h"
 #include <string>
+#ifndef _MSC_VER
 #include <err.h>
+#endif
 #include "graphProcessing.h"
 #include "BinaryControlFlow.h"
 #include "BinaryLoader.h"
@@ -11,6 +13,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace rose;
 
 
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
@@ -54,7 +57,7 @@ int main(int argc, char *argv[]) {
         BinaryAnalysis::ControlFlow cfg_analyzer;
         BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
 
-        cfg_analyzer.build_cfg_from_ast(interps.back(), *cfg);
+        cfg_analyzer.build_block_cfg_from_ast(interps.back(), *cfg);
         std::ofstream mf;
         mf.open("analysis.dot");
         visitorTraversal* vis = new visitorTraversal;

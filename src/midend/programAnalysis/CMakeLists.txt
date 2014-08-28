@@ -16,12 +16,17 @@ add_subdirectory(valuePropagation)
 add_subdirectory(defUseAnalysis)
 add_subdirectory(dominanceAnalysis)
 add_subdirectory(staticInterproceduralSlicing)
+add_subdirectory(staticSingleAssignment)
 add_subdirectory(pointerAnal)
 add_subdirectory(annotationLanguageParser)
 add_subdirectory(sideEffectAnalysis)
 add_subdirectory(distributedMemoryAnalysis)
 add_subdirectory(graphAnalysis)
 add_subdirectory(variableRenaming)
+add_subdirectory(genericDataflow)
+add_subdirectory(dataflowAnalysis)
+add_subdirectory(ssaUnfilteredCfg)
+add_subdirectory(systemDependenceGraph)
 
 
 

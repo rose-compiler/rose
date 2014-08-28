@@ -15,6 +15,7 @@ check-local:
 	@echo "           Test use of GNU options ..."
 	@echo "#################################################"
 	@$(MAKE) testUseOfGnuOptions
+	@$(MAKE) test_minus_x_option
 	@echo "*****************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilerOptionTests/testGnuOptions: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************"
@@ -37,6 +38,9 @@ testUseOfGnuOptions: $(srcdir)/test-includeOption.C $(srcdir)/test-isystemOption
 test_skip_rose_option:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -isystem $(srcdir) -c $(srcdir)/test-isystemOption.C -rose:skip_rose
 	$(TEST_TRANSLATOR) -rose:C --edg:no_warnings --edg:restrict -w  -c $(top_srcdir)/tests/CompileTests/C_tests/test2006_135.c -rose:skip_rose
+
+test_minus_x_option:
+	$(TEST_TRANSLATOR) -c -x c /dev/null -rose:verbose 2
 
 
 EXTRA_DIST = $(TESTCODES) testOptions.h

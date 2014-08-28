@@ -10,6 +10,7 @@
 // Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory
 // Written by Adrian Prantl <adrian@llnl.gov>.
+// Several bugfixes & improvements (c) 2013 Adrian Prantl.
 //
 // UCRL-CODE-155962.
 // All rights reserved.
@@ -40,8 +41,8 @@ static int anim_i = 0;
 #endif
 
 ////////////////////////////////////////////////////////////////////////
-// Convenience loop macros for dealing with boost graphs
-// Hopefully, they increase the readability of the algorithms
+// Convenience loop macros for dealing with boost graphs.
+// Hopefully they increase the readability of the algorithms.
 ////////////////////////////////////////////////////////////////////////
 #define FOR_EACH_TRANSITION(TRANSITION)                              \
   for (TransitionGraph::const_iterator TRANSITION=transitionGraph.begin(); \
@@ -54,13 +55,13 @@ static int anim_i = 0;
        STATE != eStateSet.end();                                     \
        ++STATE, ++LABEL)
 
-#define FOR_EACH_STATE(STATE, LABEL)                    \
-  GraphTraits::vertex_iterator vi, vi_end;                \
+#define FOR_EACH_STATE(STATE, LABEL) {                    \
   Label LABEL;                                \
   const EState* STATE;                            \
+  GraphTraits::vertex_iterator vi, vi_end;                \
   for (tie(vi, vi_end) = vertices(g), LABEL=*vi, STATE=g[LABEL];    \
        vi != vi_end; ++vi,                        \
-       LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL])            \
+     LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL]) {
 
 #define END_FOR }}
 
@@ -83,14 +84,24 @@ static int anim_i = 0;
 /**
  * is there an edge v->v?
  */
-template<class Vertex, class Graph>
-bool selfcycle(Vertex v, Graph& g) {
+bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
   LTLGraphTraits::out_edge_iterator out_i, out_end;
   for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
-      LTLVertex succ = target(*out_i, g);
-      if (succ == v) 
-    return true;
+    LTLVertex succ = target(*out_i, g);
+    if (succ == v)
+      return true;
   }
+
+  return false;
+}
+bool selfcycle(Label v, BoostTransitionGraph& g) {
+  GraphTraits::out_edge_iterator out_i, out_end;
+  for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
+    Label succ = target(*out_i, g);
+    if (succ == v)
+      return true;
+  }
+
   return false;
 }
 
@@ -107,7 +118,7 @@ bool is_leaf(Vertex v, Graph& g) {
 /**
  * \return all predecessors of v
  */
-static 
+static
 LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   LTLWorklist preds;
   FOR_EACH_PREDECESSOR(pred, v, g) {
@@ -116,7 +127,24 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   return preds;
 }
 
+#if 0
+// not used anywere, generates warnings
+static AType::BoolLattice flip(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  if (b.isBot()) return Top();
+  return b;
+}
 
+static AType::BoolLattice raise(AType::BoolLattice b) {
+  if (b.isBot()) return Top();
+  return b;
+}
+
+static AType::BoolLattice lower(AType::BoolLattice b) {
+  if (b.isTop()) return Bot();
+  return b;
+}
+#endif
 
 /**
  * DOT visualization of the LTL Checker result
@@ -145,9 +173,9 @@ public:
     return node;
   }
   static string color(BoolLattice lval) {
-    if (lval.isTrue())  return  "color=limegreen";
-    if (lval.isFalse()) return  "color=crimson";
-    if (lval.isTop())   return  "color=red";
+    if (lval.isTrue())  return  "color=palegreen";
+    if (lval.isFalse()) return  "color=salmon";
+    if (lval.isTop())   return  "color=azure";
     if (lval.isBot())   return  "color=gainsboro";
     throw "error";
   }
@@ -171,6 +199,18 @@ public:
     int node = newNode(a);
     s<<node<<" ["<<color(state.valstack[e])<<",label=\"¬Input "<<string(1, expr->c)
      <<" = "<<state.valstack[e]<<"\"];\n    ";
+    return newAttr(node);
+  }
+  IAttr visit(True* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(state.valstack[e])<<",label=\"true\"];\n    ";
+    return newAttr(node);
+  }
+  IAttr visit(False* expr, IAttr a)  {
+    short e = expr->label;
+    int node = newNode(a);
+    s<<node<<" ["<<color(state.valstack[e])<<",label=\"false\"];\n    ";
     return newAttr(node);
   }
   IAttr visit(NegOutputSymbol* expr, IAttr a) {
@@ -290,13 +330,13 @@ vector< pair<int, int> > focus_history;
 struct VertexSorter {
   const LTLStateTransitionGraph& stg;
   VertexSorter(const LTLStateTransitionGraph& g) : stg(g) {}
-  bool operator() (LTLVertex a, LTLVertex b) { 
+  bool operator() (LTLVertex a, LTLVertex b) {
     return stg.g[a].estate->label() < stg.g[b].estate->label();
   }
 };
 
-string visualize(const LTLStateTransitionGraph& stg, const Expr& e, 
-         LTLVertex focus0=NULL, LTLVertex focus1=NULL, LTLVertex focus2=NULL) {
+string visualize(const LTLStateTransitionGraph& stg, const Expr& e,
+     LTLVertex focus0=NULL, LTLVertex focus1=NULL, LTLVertex focus2=NULL) {
   bool show_derivation = boolOptions["ltl-show-derivation"];
   stringstream s;
   s<<"digraph G {\n";
@@ -392,10 +432,9 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e,
 class UVerifier {
   EStateSet& eStateSet;
   deque<const EState*> endpoints;
-  Label start;
   unsigned short progress;
   const Formula& f;
-  
+
   /// To avoid recomputing I/O LTL-leafs, we keep track of common subexpressions
   vector< pair<LTL::NodeType, char> > stack_contents;
   VariableIdMapping::VariableIdSet input_vars;
@@ -404,8 +443,8 @@ public:
   LTLStateTransitionGraph stg;
 
   UVerifier(EStateSet& ess, BoostTransitionGraph& g,
-        Label start_label, Label max_label, const Formula& _f)
-    : eStateSet(ess), start(start_label), progress(0), f(_f) {
+    Label max_label, const Formula& _f)
+    : eStateSet(ess), progress(0), f(_f) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
 
@@ -422,9 +461,9 @@ public:
     for (tie(ei, ei_end) = edges(g); ei != ei_end; ++ei) {
       Label src = source(*ei, g);
       Label tgt = target(*ei, g);
-      add_edge(stg.vertex[LTLState(g[src], f.size())], 
-           stg.vertex[LTLState(g[tgt], f.size())], 
-           stg.g);
+      add_edge(stg.vertex[LTLState(g[src], f.size())],
+       stg.vertex[LTLState(g[tgt], f.size())],
+       stg.g);
     }
 
     // keep track of all endpoints
@@ -448,8 +487,8 @@ public:
    * otherwise create a new LTLVertex and add it to worklist
    */
   LTLVertex add_state_if_new(LTLState new_state,
-                 LTLStateTransitionGraph& stg,
-                 LTLWorklist& worklist) {
+         LTLStateTransitionGraph& stg,
+         LTLWorklist& worklist) {
     LTLVertex v;
     LTLStateMap::iterator i = stg.vertex.find(new_state);
     if (i == stg.vertex.end()) {
@@ -458,9 +497,9 @@ public:
     LTLState s = (*i).first;
     assert(! (s == new_state));
       }
-      FOR_EACH_VERTEX(x, stg.g) 
-    assert(!(stg.g[x] == new_state)); 
-      END_FOR
+      FOR_EACH_VERTEX(x, stg.g)
+    assert(!(stg.g[x] == new_state));
+      END_FOR;
 #endif
       // Create a new vertex
       v = add_vertex(stg.g);
@@ -470,9 +509,9 @@ public:
       //cerr<<"** added new node "<<v<<": "<<new_state<<endl;
     } else {
       v = (*i).second;
-
+      //#define MERGE_TOP_STATES
 #ifdef MERGE_TOP_STATES
-      if (new_state.val.isTrue() || new_state.val.isFalse()) {
+      if (new_state.top().isTrue() || new_state.top().isFalse()) {
     // If there is both A and !A, create a single A=Top instead
     LTLState neg_state = new_state;
     neg_state.val = !new_state.val;
@@ -481,7 +520,7 @@ public:
       LTLState top_state = new_state;
       top_state.val = Top();
       v = add_state_if_new(top_state, stg, worklist);
-
+      
       FOR_EACH_PREDECESSOR(pred, (*i).second, stg.g)
         add_edge(pred, v, stg.g);
       END_FOR;
@@ -489,7 +528,7 @@ public:
         add_edge(v, succ, stg.g);
       END_FOR;
       clear_vertex((*i).second, stg.g);
-      
+
       FOR_EACH_PREDECESSOR(pred, (*j).second, stg.g)
         add_edge(pred, v, stg.g);
       END_FOR;
@@ -497,7 +536,7 @@ public:
         add_edge(v, succ, stg.g);
       END_FOR;
       clear_vertex((*j).second, stg.g);
-      
+
       //cerr<<"** 3-way merged states "<<top_state<<endl;
     }
       }
@@ -518,12 +557,12 @@ public:
    *
    * transfer(a, next)
    */
-  void analyze()  {
+  void analyze(bool verbose)  {
     LTLWorklist worklist;
     unordered_set<LTLVertex> endpoints;
     boost::unordered_set< pair<LTLVertex, LTLVertex> > dead_edges;
 
-    // dumme exit state with all lattice values set to bot
+    // dummy exit state with all lattice values set to bot
     LTLState end_state(NULL, f.size());
 
     //cerr<<"\n-------------------------------------------"<<endl;
@@ -537,17 +576,28 @@ public:
       //size_t old = stg.vertex.size();
       stg.vertex[state] = v;
       //assert(stg.vertex.size()==old+1);
-   
+
       if (out_degree(v, stg.g) == 0) {
     //cerr<<"registered endpoint "<<stg.g[v]<<endl;
     endpoints.insert(v);
       }
 
       // scan the entire STG for input vars
-      updateInputVar(state.estate, input_vars);
+      if (degree(v, stg.g) != 0) {
+    assert(state.estate);
+    updateInputVar(state.estate, input_vars);
+      }
 
-      worklist.push(stg.vertex[state]);
     } END_FOR;
+    if (endpoints.empty()) {
+      FOR_EACH_VERTEX(v, stg.g) {
+      worklist.push(v);
+      } END_FOR;
+    } else {
+      for (unordered_set<LTLVertex>::iterator i = endpoints.begin();
+       i!= endpoints.end(); ++i) 
+    worklist.push(*i);
+    }
 
     //cerr<<stg.vertex.size()<<endl;
     //cerr<<num_vertices(stg.g)<<endl;
@@ -562,18 +612,18 @@ public:
       cerr<<worklist.size()<<"\r";
 #endif
       LTLVertex succ = worklist.pop();
-      bool verbose = false;
 
       // Endpoint handling
       if (is_leaf(succ, stg.g)) {
     if (endpoints.count(succ) == 0) {
       //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
       // Orphan: did it become an orphan because it was replaced by a new node?
+          // (technically, this is the inverse of an orphan: A parent without kids. A DINK?)
       FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
         FOR_EACH_SUCCESSOR(s, pred, stg.g)
           worklist.push(s);
         END_FOR;
-        // should be redundant: worklist.push(pred);
+        worklist.push(pred);
       } END_FOR;
       // Cut it off.
       clear_vertex(succ, stg.g);
@@ -582,12 +632,12 @@ public:
       // Real endpoint (ie. exit/assert)
       // Endpoints always receive a strong update, because there is no ambiguity
       LTLState old_state = stg.g[succ];
-      LTLState new_state = transfer(old_state, end_state, verbose, true);    
+      LTLState new_state = transfer(old_state, end_state, verbose, true);
       stg.g[succ] = new_state;
       stg.vertex[new_state] = succ;
     }
       }
-      
+
       // Store all successors in the temporary list vs because our
       // actions destroy the iterator
       LTLWorklist vs = predecessors(succ, stg.g);
@@ -600,10 +650,10 @@ public:
     //   verbose = true;
 
     if (verbose) {
-            cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
-        cerr<<"  in_degree = "<< in_degree(v, stg.g)<<endl;
-        cerr<<" out_degree = "<<out_degree(v, stg.g)<<endl;
-        }
+      cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+      cerr<<"  in_degree = "<< in_degree(v, stg.g)<<endl;
+      cerr<<" out_degree = "<<out_degree(v, stg.g)<<endl;
+    }
 
     // Always make a new state v', so we can calculate precise
     // results for both paths.  If a v' and v'' should later turn
@@ -611,7 +661,7 @@ public:
     LTLState old_state = stg.g[v];
     LTLState new_state = transfer(old_state, stg.g[succ], verbose, false);
     bool fixpoint = (new_state == old_state);
-    
+
     if (fixpoint) {
 
       if (verbose) cerr<<"reached fixpoint!"<<endl;
@@ -645,7 +695,7 @@ public:
       } else {
         add_edge(v_prime, succ, stg.g);
         //cerr<<v_prime<<" -> "<<succ<<endl;
-        
+
         // Cut off the old state
         remove_edge(v, succ, stg.g);
         dead_edges.insert(make_pair(v, succ));
@@ -669,31 +719,28 @@ public:
         FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
           worklist.push(v_succ);
         END_FOR;
-        // should be redundant: worklist.push(v);
+        // Add v to the worklist so it can be removed if it has no other successors any more.
+    worklist.push(v);
 
 #ifdef ANIM_OUTPUT
-    if (anim_i++ > ANIM_START) {
-    ofstream animfile;
-    stringstream fname;
-    fname << "ltl_anim_" << setw(3) << setfill('0') << anim_i << ".dot";
-    animfile.open(fname.str().c_str(), ios::out);
-    const Expr& e = f;
-    animfile << visualize(stg, e, v_prime, v, succ);
-    animfile.close(); 
-    cout<<"generated "<<fname.str()<<"."<<endl;
-    if (anim_i >= ANIM_END) exit(2);
-    }
+        if (anim_i++ > ANIM_START) {
+          ofstream animfile;
+          stringstream fname;
+          fname << "ltl_anim_" << setw(3) << setfill('0') << anim_i << ".dot";
+          animfile.open(fname.str().c_str(), ios::out);
+          const Expr& e = f;
+          animfile << visualize(stg, e, v_prime, v, succ);
+          animfile.close();
+          cout<<"generated "<<fname.str()<<"."<<endl;
+          if (anim_i >= ANIM_END) exit(2);
+        }
 #endif
-
-
       }
 #ifdef REDUCE_DEBUG
-          static int iteration=0;
-          if (++iteration == 500000) exit(2);
+      static int iteration=0;
+      if (++iteration == 500000) exit(2);
 #endif
-
     }
-
       }
     }
     /*
@@ -703,12 +750,12 @@ public:
       LTLState state = stg.g[v];
       // Pop arguments
       for (int i = 0; i<nargs; ++i)
-    state.valstack.pop_back(); 
+    state.valstack.pop_back();
 
       // Push result
       state.push(state.val);
       state.debug.push_back(state.val);
-      
+
       // Does this state coincide with an existing?
       LTLStateMap::iterator i = stg.vertex.find(state);
       if (i != stg.vertex.end()) {
@@ -729,11 +776,18 @@ public:
 
     } END_FOR;
     */
+
+    // This is a purely cosmetic change, since these states are unreachable.
+    FOR_EACH_VERTEX(v, stg.g)
+      if (is_leaf(v, stg.g) && !(endpoints.count(v) == 0))
+     clear_vertex(v, stg.g);
+    END_FOR;
+
     // remove orphaned vertices
     LTLWorklist orphans;
-    FOR_EACH_VERTEX(v, stg.g) 
+    FOR_EACH_VERTEX(v, stg.g)
       if (degree(v, stg.g) == 0) orphans.push(v);
-    END_FOR
+    END_FOR;
     while (!orphans.empty()) {
       LTLVertex v = orphans.pop();
       remove_vertex(v, stg.g);
@@ -759,14 +813,14 @@ public:
 
   struct LTLVisitor: public BottomUpVisitor {
     const LTLState& s;
-    const LTLState& succ; 
+    const LTLState& succ;
     const VariableIdMapping::VariableIdSet& input_vars;
     bool verbose;
     bool endpoint;
     LTLState result;
-    LTLVisitor(const LTLState& _s, const LTLState& _succ, 
-           bool _verbose, bool _endpoint, 
-           const VariableIdMapping::VariableIdSet& _input_vars)
+    LTLVisitor(const LTLState& _s, const LTLState& _succ,
+       bool _verbose, bool _endpoint,
+       const VariableIdMapping::VariableIdSet& _input_vars)
       : s(_s), succ(_succ),
     input_vars(_input_vars),
     verbose(_verbose), endpoint(_endpoint),
@@ -777,101 +831,102 @@ public:
       if ((a.isTrue() && b.isFalse()) || (b.isTrue() && a.isFalse())) return false;
       else return true;
     }
-   
+
     /// convert an integer 1..26 to an ASCII char value
     static inline char rersChar(char c) {
       return c+'A'-1;
     }
-   
-    /// return True iff that state is an Oc operation
+
+    /// return True iff that state is an Ic operation
     static BoolLattice isInputState(const EState* estate,
-                    const VariableIdMapping::VariableIdSet& input_vars,
-                    char c, BoolLattice succ_val) {
+            const VariableIdMapping::VariableIdSet& input_vars,
+            char c, BoolLattice succ_val) {
       if (input_vars.empty())
-        return Bot();
-   
+    return Bot();
+
       BoolLattice r = Bot();
+      assert(estate);
+      assert(estate->constraints());
+      ConstraintSet constraints = *estate->constraints();
+      for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
+    ivar != input_vars.end();
+    ++ivar) {
+    // main input variable
+    BoolLattice r1 = is_eq(constraints, *ivar, c);
+    assert(consistent(r, r1));
+    r = r1;
+      }
+
+      if (r.isBot())
+    return succ_val;
+      else
+    return r;
+    }
+
+    static BoolLattice is_eq(const ConstraintSet& constraints,
+           const VariableId& v,
+           char c) {
+      // var == c
+      ListOfAValue l = constraints.getEqVarConst(v);
+      for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+    if (lval->isConstInt()) {
+      // A=1, B=2
+      return c == rersChar(lval->getIntValue());
+    }
+      }
+      // var != c
+      l = constraints.getNeqVarConst(v);
+      for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+    if (lval->isConstInt()) {
+      if (c == rersChar(lval->getIntValue()))
+        return false;
+    }
+      }
+
+      // In ConstIntLattice, Top means ALL values
+      return Top();   // Bool Top, however, means UNKNOWN
+    }
+
+
+    // NOTE: This is extremely taylored to the RERS challenge benchmarks.
+    void visit(const InputSymbol* expr) {
+      BoolLattice succ_val = succ.valstack[expr->label];
+      BoolLattice old_val  = result.valstack[expr->label];
+      BoolLattice new_val = isInputState(s.estate, input_vars, expr->c, succ_val);
+      if (verbose) cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
+      result.valstack[expr->label] = new_val;
+    }
+
+    /// return True iff that state is an !Ic operation
+    static BoolLattice isNegInputState(const EState* estate,
+               const VariableIdMapping::VariableIdSet& input_vars,
+               char c, BoolLattice succ_val) {
+      if (input_vars.empty())
+    return Bot();
+
+      BoolLattice r = Bot();
+
+      //cerr<<"succ_val = "<<succ_val<<endl;
       assert(estate);
       assert(estate->constraints());
       ConstraintSet constraints = *estate->constraints();
       for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
         ivar != input_vars.end();
         ++ivar) {
-        // main input variable
-        BoolLattice r1 = is_eq(constraints, *ivar, c);
-        assert(consistent(r, r1));
-        r = r1;
+    // This will really only work with one input variable (that one may be aliased, though)
+    BoolLattice r1 = !is_eq(constraints, *ivar, c);
+    //cerr<<"r = "<<r<<endl;
+    //cerr<<"r1 = "<<r1<<endl;
+    assert(consistent(r, r1));
+    r = r1;
       }
-      if (r.isBot())
-        return succ_val;
-      else
-        return r;
-    }
-   
-    static BoolLattice is_eq(const ConstraintSet& constraints,
-                   const VariableId& v,
-                   char c) {
-      // var == c
-      ListOfAValue l = constraints.getEqVarConst(v);
-      for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-        if (lval->isConstInt()) {
-       // A=1, B=2
-       return c == rersChar(lval->getIntValue());
-        }
-      }
-      // var != c
-      l = constraints.getNeqVarConst(v);
-      for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-        if (lval->isConstInt()) {
-       return (c != rersChar(lval->getIntValue()));
-        }
-      }
-   
-      // In ConstIntLattice, Top means ALL values
-      return Top();   // Bool Top, however, means UNKNOWN
-    }
-   
 
-    // NOTE: This is extremely taylored to the RERS challenge benchmarks. 
-    void visit(const InputSymbol* expr) {
-      BoolLattice succ_val = succ.valstack[expr->label];
-      BoolLattice old_val  = result.valstack[expr->label];
-      BoolLattice new_val = isInputState(s.estate, input_vars, expr->c, succ_val);
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
-      if (verbose) cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
-      result.valstack[expr->label] = new_val;
-    }
-   
-    /// return True iff that state is an !Ic operation
-    static BoolLattice isNegInputState(const EState* estate,
-                       const VariableIdMapping::VariableIdSet& input_vars,
-                       char c, BoolLattice succ_val) {
-      if (input_vars.empty())
-        return Bot();
-   
-      BoolLattice r = Bot();
-   
-      //cerr<<"succ_val = "<<succ_val<<endl;
-      assert(estate);
-      assert(estate->constraints());
-      ConstraintSet constraints = *estate->constraints();
-      for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
-            ivar != input_vars.end();
-            ++ivar) {
-        // This will really only work with one input variable (that one may be aliased, though)
-        BoolLattice r1 = !is_eq(constraints, *ivar, c);
-        //cerr<<"r = "<<r<<endl;
-        //cerr<<"r1 = "<<r1<<endl;
-        assert(consistent(r, r1));
-        r = r1;
-      }
-   
       if (r.isBot())
-        return succ_val;
+     return succ_val;
       else
-        return r;
+    return r;
     }
-   
+
     // NOTE: This is extremely taylored to the RERS challenge benchmarks.
     void visit(const NegInputSymbol* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
@@ -881,38 +936,50 @@ public:
       if (verbose) cerr<<"  ¬I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     /// return True iff that state is an Oc operation
     static BoolLattice isOutputState(const EState* estate, char c, bool endpoint,
-                     BoolLattice succ_val) {
+             BoolLattice succ_val) {
       //cerr<<estate->io.toString()<<endl;
       switch (estate->io.op) {
       case InputOutput::STDOUT_CONST: {
-        const AType::ConstIntLattice& lval = estate->io.val;
-        //cerr<<lval.toString()<<endl;
-        assert(lval.isConstInt());
-        // U=21, Z=26
-        return c == rersChar(lval.getIntValue());
+    const AType::ConstIntLattice& lval = estate->io.val;
+    //cerr<<lval.toString()<<endl;
+    assert(lval.isConstInt());
+    // U=21, Z=26
+    return c == rersChar(lval.getIntValue());
       }
       case InputOutput::STDOUT_VAR: {
-        const PState& prop_state = *estate->pstate();
-        //cerr<<estate->toString()<<endl;
-        //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
-        assert(prop_state.varIsConst(estate->io.var));
-        AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
-        //cerr<<aval<<endl;
-        return c == rersChar(aval.getIntValue());
+    // output == c constraint?
+    const PState& prop_state = *estate->pstate();
+    //cerr<<estate->toString()<<endl;
+    //cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
+    if (prop_state.varIsConst(estate->io.var)) {
+      AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
+      //cerr<<aval<<endl;
+      return c == rersChar(aval.getIntValue());
+    }
+
+    // Is there an output != c constraint?
+    // var != c
+    ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
+    for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+      if (lval->isConstInt())
+        if (c == rersChar(lval->getIntValue()))
+          return false;
+    }
+
       }
       default:
     return false;
-        // Make sure that dead ends with no I/O show up as false
-        if (endpoint)
+    // Make sure that dead ends with no I/O show up as false
+    if (endpoint)
       return false;
-   
-        return succ_val;
+
+    return succ_val;
       }
     }
-   
+
     /**
      */
     void visit(const OutputSymbol* expr) {
@@ -921,47 +988,9 @@ public:
       BoolLattice new_val  = isOutputState(s.estate, expr->c, endpoint, succ_val);
       result.valstack[expr->label] = new_val;
       //cerr<<"  O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
-   
+
     }
-   
-   
-    /// return True iff that state is a !Oc operation
-    static BoolLattice isNegOutputState(const EState* estate, char c, bool endpoint,
-                    BoolLattice succ_val) {
-      switch (estate->io.op) {
-      case InputOutput::STDOUT_CONST: {
-        const AType::ConstIntLattice& lval = estate->io.val;
-        //cerr<<lval.toString()<<endl;
-        assert(lval.isConstInt());
-        // U=21, Z=26
-        return c != rersChar(lval.getIntValue());
-      }
-      case InputOutput::STDOUT_VAR: {
-        // is there an output != c constraint?
-   
-        // var != c
-        ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
-        for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-       if (lval->isConstInt())
-         if (c == rersChar(lval->getIntValue()))
-           return true;
-        }
-   
-        // output == c constraint?
-        const PState& prop_state = *estate->pstate();
-        assert(prop_state.varIsConst(estate->io.var));
-        AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
-        return c != rersChar(aval.getIntValue());
-      }
-      default:
-        return true;
-        if (endpoint)
-      return true;
-   
-        return succ_val;
-      }
-    }
-   
+
     /**
      * Negated version of OutputSymbol
      *
@@ -969,11 +998,24 @@ public:
     void visit(const NegOutputSymbol* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
-      BoolLattice new_val  = isNegOutputState(s.estate, expr->c, endpoint, succ_val);
+      BoolLattice new_val  = !isOutputState(s.estate, expr->c, endpoint, succ_val);
       if (verbose) cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
+    /**                                                                                                                                             * TRUE 
+     */
+    void visit(const True* expr) {
+      result.valstack[expr->label] = true;
+    }
+
+    /**                                                                                                                                             * FALSE 
+     */
+    void visit(const False* expr) {
+      result.valstack[expr->label] = false;
+    }
+
+
     /**
      * NOT
      */
@@ -982,11 +1024,10 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice new_val  = /*old_val.lub(*/!e1/*)*/;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     /**
      * X φ (next): φ has to hold after the next step
      *
@@ -996,11 +1037,10 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice new_val  = old_val.lub(succ_val);
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
-      if (verbose) cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;  
+      if (verbose) cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     /**
      * F φ (eventually): φ has to hold at some point in the future (or now)
      *
@@ -1009,12 +1049,16 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
+      // Use the neutral element instead of Bot.
+#ifdef INIT_TO_NEUTRAL_ELEMENT      
+      BoolLattice new_val  = /*old_val ||*/ e1 || (succ_val.isBot()?false:succ_val);
+#else
       BoolLattice new_val  = /*old_val ||*/ e1 || succ_val;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+#endif
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     /**
      * G φ (globally): φ has to hold always (including now)
      *
@@ -1023,33 +1067,32 @@ public:
      *
      * True, iff for each state we have TRUE
      */
-   
+
     void visit(const Globally* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
-      // TODO: I'm not sure about the correct way to combine old_val with the new one
-      // And my current intuition is that it is safe to ignore it, since it
-      // will be propagated back to this node, if we have a loop, anyway.
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      BoolLattice new_val = /*old_val &&*/ e1 && (succ_val.isBot()?true:succ_val);
+#else
       BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+#endif
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     void visit(const And* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
       BoolLattice new_val = /*old_val &&*/ e1 && e2;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  And(old="<<old_val
-                  <<", e1="<<e1<<", e2="<<e1
-                  <<", succ="<<succ_val<<") = "<<new_val<<endl;
+          <<", e1="<<e1<<", e2="<<e1
+          <<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     // Implementation status: DONE
     void visit(const Or* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
@@ -1057,13 +1100,12 @@ public:
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
       BoolLattice new_val = /*old_val ||*/ e1 || e2;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  Or(old="<<old_val
-                <<", e1="<<e1<<", e2="<<e1
-                <<", succ="<<succ_val<<") = "<<new_val<<endl;
+        <<", e1="<<e1<<", e2="<<e1
+        <<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     /**
      * φ U ψ (until): φ has to hold until ψ holds (which eventually occurs)
      *
@@ -1086,14 +1128,17 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && (succ_val.isBot()?true:succ_val)));
+#else
       BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+#endif
       if (verbose) cerr<<"  Until(old="<<old_val
-                <<", e1="<<e1<<", e2="<<e1
-                <<", succ="<<succ_val<<") = "<<new_val<<endl;
+        <<", e1="<<e1<<", e2="<<e1
+        <<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
-   
+
     /**
      * φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily occur)
      *
@@ -1111,9 +1156,10 @@ public:
      * Implementation status: DONE
      */
     void visit(const WeakUntil* expr) {
+      // Lowered in the parser.
       assert(false);
     }
-   
+
     /**
      * φ R ψ (release): φ has to hold until ψ held in the previous step.
      *
@@ -1126,11 +1172,14 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || (succ_val.isBot()?false:succ_val)));
+#else
       BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
+#endif
       if (verbose) cerr<<"  Release(old="<<old_val
-                <<", e1="<<e1<<", e2="<<e1
-                <<", succ="<<succ_val<<") = "<<new_val<<endl;
+        <<", e1="<<e1<<", e2="<<e1
+        <<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     };
   };
@@ -1151,11 +1200,15 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   }
   //cerr<<" finished labeling "<<flush;
 
+  // Do not add the start state.
+  const EState *start = transitionGraph.getStartEState();
+
   BoostTransitionGraph full_graph(ess.size());
   FOR_EACH_TRANSITION(t) {
     Label src = estate_label[((*t).source)];
     Label tgt = estate_label[((*t).target)];
-    add_edge(src, tgt, full_graph);
+    if ((*t).source != start)
+      add_edge(src, tgt, full_graph);
     full_graph[src] = (*t).source;
     full_graph[tgt] = (*t).target;
     //cerr<<src<<"("<<t->source<<") -- "<<tgt<<"("<<t->target<<")"<<endl;
@@ -1163,9 +1216,6 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     assert(full_graph[tgt]);
   }
   cerr<<"done"<<endl;
-  //start = estate_label[transitionGraph.begin()->source];
-  Transition st = transitionGraph.getStartTransition();
-  start = estate_label[st.source];
 
   // Optimization
   if(option_debug_mode==200) {
@@ -1177,16 +1227,16 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 
   if(boolOptions["post-collapse-stg"]) {
     // Optimization
-    start = collapse_transition_graph(full_graph, g);
+    collapse_transition_graph(full_graph, g);
 
   } else {
     g = full_graph;
   }
 
   if(option_debug_mode==201) {
-    FOR_EACH_STATE(state, label) {
+    FOR_EACH_STATE(state, label)
       cerr<<"DEBUG: "<<label<<": "<<state->toString()<<endl;
-    }
+    END_FOR;
   }
 }
 
@@ -1196,29 +1246,76 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
  *
  * Creates reduced_eStateSet
  */
-Label UChecker::collapse_transition_graph(BoostTransitionGraph& g, 
-                      BoostTransitionGraph& reduced) const {
+void UChecker::collapse_transition_graph(BoostTransitionGraph& g,
+                     BoostTransitionGraph& reduced) const {
   Label n = 0;
   vector<Label> renumbered(num_vertices(g));
+  bool isTree = boolOptions["eliminate-stg-back-edges"];
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
     assert(g[label]);
-    if (( in_degree(label, g) >= 1) && // keep start
-    (out_degree(label, g) >= 0) && // DO NOT keep exits
-    (g[label]->io.op == InputOutput::NONE ||
-     g[label]->io.op == InputOutput::FAILED_ASSERT)) {
+
+    // Completely eradicate error states. This is part of the RERS rules.
+    if (g[label]->io.op == InputOutput::STDERR_VAR ||
+    g[label]->io.op == InputOutput::STDERR_CONST ||
+    g[label]->io.op == InputOutput::FAILED_ASSERT) {
+      vector<Label> preds, succs;
+      GraphTraits::in_edge_iterator in_i, in_end;
+      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i)
+        preds.push_back(source(*in_i, g));
+
+      GraphTraits::out_edge_iterator out_i, out_end;
+      for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i)
+        succs.push_back(target(*out_i, g));
+      
+      clear_vertex(label, g);
+
+      while (!preds.empty()) {
+    // Remove all nodes that only lead to this error state.
+    Label v = preds.back(); preds.pop_back();
+    if (is_leaf(v, g)) {
+      for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i)
+        preds.push_back(source(*in_i, g));
+      for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i)
+        succs.push_back(target(*out_i, g));
+      clear_vertex(v, g);
+    }
+      } 
+      while (!succs.empty()) {
+    // Remove all nodes that only follow an error state.
+    Label v = succs.back(); succs.pop_back();
+    if (in_degree(v, g) == 0) {
+      for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i)
+        preds.push_back(source(*in_i, g));
+      for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i)
+        succs.push_back(target(*out_i, g));
+      clear_vertex(v, g);
+    }
+      }
+
+    }
+  } END_FOR;
+
+  FOR_EACH_STATE(state, label) {
+    //cerr<<label<<endl;
+    assert(g[label]);
+
+    if (!isTree && ( in_degree(label, g) >= 1) && // keep start
+      (out_degree(label, g) >= 0) && // DO NOT keep exits
+    (g[label]->io.op == InputOutput::NONE /*||
+                        g[label]->io.op == InputOutput::FAILED_ASSERT*/)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
-      GraphTraits::in_edge_iterator in_i, in_end;            
-      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { 
+      GraphTraits::in_edge_iterator in_i, in_end;
+      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) {
     Label pred = source(*in_i, g);
 
     GraphTraits::out_edge_iterator out_i, out_end;
     for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
       Label succ = target(*out_i, g);
-    
+
       //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
       add_edge(pred, succ, g);
     }
@@ -1227,13 +1324,13 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
       clear_vertex(label, g);
       // but don't remove_vertex(label, g), since we don't want the
       // boost graph to reassign numerical labels!
-    } else {
+    } else if (degree(label, g)) {
       //cerr<<"-- keeping "<<label<<": "<<g[label]->toString()<<endl;
       renumbered[label] = n++;
       add_vertex(reduced);
     }
     //cerr<<"-- done "<<endl<<endl;
-  }
+  } END_FOR;
 
   // Build a copy of the graph without the orphaned states
   //cerr<<"digraph g {"<<endl;
@@ -1251,8 +1348,6 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   //cerr<<"## done "<<endl<<endl;
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
-
-  return renumbered[start];
 }
 
 
@@ -1261,8 +1356,8 @@ UChecker::verify(const Formula& f)
 {
   // Verify!
   const Expr& e = f;
-  UVerifier v(eStateSet, g, start, num_vertices(g), f);
-  v.analyze();
+  UVerifier v(eStateSet, g, num_vertices(g), f);
+  v.analyze(boolOptions["ltl-verbose"]);
 
   // Visualization:
   bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;
@@ -1276,7 +1371,7 @@ UChecker::verify(const Formula& f)
     fname << "ltl_output_" << n++ << ".dot";
     myfile.open(fname.str().c_str(), ios::out);
     myfile << visualize(v.stg, e);
-    myfile.close(); 
+    myfile.close();
     cout<<"generated "<<fname.str()<<"."<<endl;
   }
 
@@ -1287,10 +1382,13 @@ UChecker::verify(const Formula& f)
     LTLState s = v.stg.g[lv];
     if (in_degree(lv, v.stg.g) == 0) {
       //cerr<<"Value at START = "<<s.top()<<endl;
+#ifdef INIT_TO_NEUTRAL_ELEMENT
+      b = b && lower(s.top());
+#else
       b = b && s.top();
+#endif
     }
   } END_FOR
   cerr<<"Number of LTL states: "<<num_vertices(v.stg.g)<<endl;
   return b;
 }
-

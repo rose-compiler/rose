@@ -1,129 +1,70 @@
 #ifndef ROSE_JAVA_SUPPORT
 #define ROSE_JAVA_SUPPORT
 
-extern int sg_file_count;
+#include "ecj.h"
 
+using namespace std;
+
+extern SgProject *project;
 extern SgGlobal *globalScope;
-extern SgClassType *ObjectClassType;
-extern SgClassType *StringClassType;
-extern SgClassType *ClassClassType;
+extern SgSourceFile *currentSourceFile;
 extern SgClassDefinition *ObjectClassDefinition;
-
-extern int initializerCount;
-
-// This is used for both Fortran and Java support to point to the current SgSourceFile.
-extern SgSourceFile *OpenFortranParser_globalFilePointer;
-
-#include "jni_JavaSourceCodePosition.h"
-#include "token.h"
 
 // Control output from Fortran parser
 #define DEBUG_JAVA_SUPPORT true
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
+// TODO: Remove this !!!
+//extern string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
+//extern string convertJavaStringValToUtf8(JNIEnv *env, const jstring &java_string);
+extern string javaStringToUtf8(const jstring &java_string);
 
-extern SgArrayType *getUniqueArrayType(SgType *, int);
-extern SgPointerType *getUniquePointerType(SgType *, int);
-extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgTemplateParameterPtrList &);
-extern SgJavaWildcardType *getUniqueWildcardUnbound();
-extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
-extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
+//extern SgArrayType *getUniqueArrayType(SgType *, int);
+//extern SgPointerType *getUniquePointerType(SgType *, int);
+//extern SgJavaParameterizedType *getUniqueParameterizedType(SgNamedType *, SgTemplateParameterPtrList *);
+//extern SgJavaWildcardType *getUniqueWildcardUnbound();
+//extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
+//extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
+//extern SgJavaQualifiedType *getUniqueQualifiedType(SgClassDeclaration *, SgType *, SgType *);
 
-using namespace std;
+string getExtensionNames(std::vector<SgNode *> &extension_list, SgClassDeclaration *class_declaration, bool has_super_class);
+
+//bool isVisibleSimpleTypeName(SgNamedType *);
+bool isConflictingType(string, SgClassType *);
+bool isImportedType(SgClassType *);
+bool isImportedTypeOnDemand(AstSgNodeListAttribute *, SgClassDefinition *, SgClassType *);
+
+bool mustBeFullyQualified(SgClassType *class_type);
+string markAndGetQualifiedTypeName(SgClassType *class_type);
+
+bool hasConflicts(SgClassDeclaration *class_declaration);
 
 string getPrimitiveTypeName(SgType *);
 string getWildcardTypeName(SgJavaWildcardType *);
-string getArrayTypeName(SgPointerType *);
-string getFullyQualifiedName(SgClassDefinition *);
-string getFullyQualifiedTypeName(SgClassType *);
-string getFullyQualifiedTypeName(SgJavaParameterizedType *);
+string getUnionTypeName(SgJavaUnionType *);
+string getParameters(SgJavaParameterizedType *);
+string getTypeName(SgClassType *class_type);
 string getTypeName(SgType *);
-
-string normalize(string str);
-
-//
-// Attribute used to construct array types.
-//
-class AstArrayTypeAttribute : public AstAttribute {
-public:
-    SgArrayType *arrayType;
-
-    AstArrayTypeAttribute(SgArrayType *array_type) : arrayType(array_type) {}
-
-    SgArrayType *getArrayType() { return arrayType; }
-};
-
+string getUnqualifiedTypeName(SgType *);
+string getFullyQualifiedTypeName(SgType *);
 
 //
-// Attribute used to construct pointer types.  These are not valid Java types. However,
-// they are required for multi-dimensional arrays in the Rose representation.
+// This class is kept here as documentation. IT is declared in:  ./src/midend/astProcessing/AstAttributeMechanism.h
 //
-class AstPointerTypeAttribute : public AstAttribute {
-public:
-    SgPointerType *pointerType;
-
-    AstPointerTypeAttribute(SgPointerType *pointer_type) : pointerType(pointer_type) {}
-
-    SgPointerType *getPointerType() { return pointerType; }
-};
-
-
+// class AstSgNodeListAttribute : public AstAttribute {
+//     std::vector<SgNode *> nodeList;
 //
-// Attribute used to construct parameterized types.
+//     public:
+//         std::vector<SgNode *> &getNodeList();
+//         void addNode(SgNode *);
+//         SgNode *getNode(int);
+//         void setNode(SgNode *, int);
+//         int size();
 //
-class AstParameterizedTypeAttribute : public AstAttribute {
-private:
-    SgClassType *rawType;
-    list<SgJavaParameterizedType *> parameterizedTypes;
-
-public:
-    AstParameterizedTypeAttribute(SgClassType *rawType_) : rawType(rawType_) {}
-
-    SgJavaParameterizedType *findOrInsertParameterizedType(SgTemplateParameterPtrList &newArgs) {
-        //
-        // Keep track of parameterized types in a table so as not to duplicate them.
-        //
-        for (list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
-            SgTemplateParameterList *type_arg_list = (*type_it) -> get_type_list();
-            if (type_arg_list) {
-                SgTemplateParameterPtrList args = type_arg_list -> get_args();
-                if (args.size() == newArgs.size()) {
-                    SgTemplateParameterPtrList::iterator arg_it = args.begin(),
-                                                         newArg_it = newArgs.begin();
-                    for (; arg_it != args.end(); arg_it++, newArg_it++) {
-                        SgType *type1 = (*arg_it) -> get_type(),
-                               *type2 = (*newArg_it) -> get_type();
-                        if (type1 != type2) {
-                            break;
-                        }
-                    }
-
-                    if (arg_it == args.end()) { // Found a match!
-                        return (*type_it);
-                    }
-                }
-            }
-        }
-
-        //
-        // This parameterized type does not yet exist. Create it, store it in the table and return it.
-        //
-        SgClassDeclaration *classDeclaration = isSgClassDeclaration(rawType -> getAssociatedDeclaration());
-        ROSE_ASSERT(classDeclaration != NULL);
-        SgTemplateParameterList *typeParameterList = new SgTemplateParameterList();
-        typeParameterList -> set_args(newArgs);
-        SgJavaParameterizedType *parameterizedType = new SgJavaParameterizedType(classDeclaration, rawType, typeParameterList);
-
-        ROSE_ASSERT(parameterizedType != NULL);
-        ROSE_ASSERT(parameterizedType -> get_raw_type() != NULL);
-        ROSE_ASSERT(parameterizedType -> get_type_list() != NULL);
-
-        parameterizedTypes.push_front(parameterizedType);
-
-        return parameterizedType;
-    }
-};
+//         AstSgNodeListAttribute();
+//         AstSgNodeListAttribute(std::vector<SgNode *> &);
+// };
 
 
 //
@@ -143,7 +84,9 @@ public:
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
         if (SgProject::get_verbose() > 0) {
-            cerr << "***Popping Component node " << n -> class_name() << endl;
+            cerr << "***Popping Component node ";
+            cerr << n -> class_name();
+            cerr << endl;
             cerr.flush();
         }
         pop_front();
@@ -176,7 +119,7 @@ public:
         SgNode *n = pop();
         if (! isSgExpression(n)) {
             cerr << "Invalid attempt to pop a Component node of type "
-                     << n -> class_name()
+                     << (isSgClassDefinition(n) ? isSgClassDefinition(n) -> get_qualified_name().getString() : n -> class_name())
                      << " as an SgExpression"
                      << endl;
             ROSE_ASSERT(false);
@@ -225,7 +168,7 @@ public:
 class ScopeStack : private list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
-if (isSgLocatedNode(n)) {
+if (isSgLocatedNode(n) && n != globalScope) {
 Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
 if (file_info == NULL)
 cout << "Null file_info found while pushing scope node " << n -> class_name() << endl;
@@ -236,7 +179,15 @@ cout << "file_info with null string found while pushing scope node " << n -> cla
 cout.flush();
 }
         if (SgProject::get_verbose() > 0) {
-            cerr << "***Pushing Stack node " << n -> class_name() << endl; 
+            cerr << "***Pushing Stack node ";
+            if (isSgClassDefinition(n))
+                 cerr << isSgClassDefinition(n) -> get_qualified_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else cerr << n -> class_name();
+            cerr << endl; 
             cerr.flush();
         }
         push_front(n);
@@ -245,7 +196,7 @@ cout.flush();
     SgScopeStatement *pop() {
         ROSE_ASSERT(size() > 0);
         SgScopeStatement *n = front();
-if (isSgLocatedNode(n)) {
+        if (isSgLocatedNode(n) && n != ::globalScope) {
 Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
 if (file_info == NULL)
 cout << "Null file_info found while popping scope node " << n -> class_name() << endl;
@@ -255,8 +206,16 @@ cout << "file_info with null string found while popping scope node " << n -> cla
 //cout << "file_info with file: " << file_info -> get_filenameString() << ", found while popping scope node " << n -> class_name() << endl;
 cout.flush();
 }
-        if (SgProject::get_verbose() > 0) {
-            cerr << "***Popping Stack node " << n -> class_name() << endl;
+       if (SgProject::get_verbose() > 0) {
+            cerr << "***Popping Stack node ";
+            if (isSgClassDefinition(n))
+                 cerr << isSgClassDefinition(n) -> get_qualified_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else if (isSgFunctionDefinition(n))
+                 cerr << isSgFunctionDefinition(n) -> get_declaration() -> get_name().getString();
+            else cerr << n -> class_name();
+            cerr << endl;
             cerr.flush();
         }
         pop_front();
@@ -296,10 +255,10 @@ cout.flush();
                      << endl;
             ROSE_ASSERT(false);
         }
-        else if (! isSgClassDefinition(n) -> attributeExists("namespace")) {
+        else if (! isSgJavaPackageDeclaration(isSgClassDefinition(n) -> get_declaration())) {
             cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
-                     << " without the attribute \"namespace\" as a package"
+                     << " as an SgJavaPackageDeclaration"
                      << endl;
             ROSE_ASSERT(false);
         }
@@ -467,44 +426,52 @@ extern ComponentStack astJavaComponentStack;
 // Global stack of scopes
 extern ScopeStack astJavaScopeStack;
 
-void setJavaSourcePosition(SgLocatedNode *locatedNode, JavaSourceCodePosition *posInfo);
+class Token_t;
+void setJavaSourcePosition(SgLocatedNode *locatedNode, Token_t *);
 void setJavaSourcePosition(SgLocatedNode *locatedNode, JNIEnv *env, jobject jToken);
-void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
+//void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 
 // *********************************************
 
-string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
-string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string);
-string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
-extern SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
+//SgClassDeclaration *buildDefiningClassDeclaration(SgClassDeclaration::class_types kind, SgName, SgScopeStatement *);
+SgJavaPackageDeclaration *buildPackageDeclaration(SgScopeStatement *, const SgName &, JNIEnv *, jobject);
+SgClassDefinition *findOrInsertPackage(SgScopeStatement *, const SgName &, JNIEnv *env, jobject loc);
+SgClassDefinition *findOrInsertPackage(SgName &, JNIEnv *env, jobject loc);
+SgJavaPackageDeclaration *findPackageDeclaration(SgName &);
 
 SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
-SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
-SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
-
-SgClassDeclaration *buildJavaClass (SgName className, SgScopeStatement *scope, JNIEnv *env, jobject jToken);
-
-SgVariableDeclaration *buildSimpleVariableDeclaration(const SgName &name, SgType *type);
+// TODO: Remove this !!!
+//SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
+//SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
+//SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
+//SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
 
 list<SgName> generateQualifierList (const SgName &classNameWithQualification);
 
 bool isCompatibleTypes(SgType *source, SgType *target);
 
+// TODO: Remove this !!!
 // It might be that this function should take a "const SgName &" instead of a "string".
-SgClassSymbol *lookupSymbolFromQualifiedName(string className);
+// SgClassSymbol *lookupSymbolFromQualifiedName(string className);
+
+//
+// This function is needed in order to bypass a serious bug in Rose.  See implementation for detail
+//
+SgClassSymbol *lookupClassSymbolInScope(SgScopeStatement *, const SgName &);
+
+void lookupLocalTypeSymbols(list<SgClassSymbol *> &, SgName &type_name);
 
 SgType *lookupTypeByName(SgName &packageName, SgName &typeName, int num_dimensions);
 
 //! Support to get current class scope.
 SgClassDefinition *getCurrentTypeDefinition();
 
-//! Support to get current class scope.
-SgFunctionDefinition *getCurrentMethodDefinition();
+// TODO: Remove this !!!
+//SgClassSymbol *lookupParameterTypeByName(const SgName &name);
 
 //! Support for identification of symbols using simple names in a given scope.
-SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
+SgClassSymbol *lookupUniqueSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
+void lookupAllSimpleNameTypesInClass(list<SgClassSymbol *>&, const SgName &name, SgClassDefinition *classDefinition);
 SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition);
 
 //! Support for identification of variable symbols using simple names.
@@ -513,8 +480,9 @@ SgVariableSymbol *lookupVariableByName(const SgName &name);
 //! Support for identification of label symbols using simple names.
 SgJavaLabelSymbol *lookupLabelByName(const SgName &name);
 
+// TODO: Remove this !!!
 //! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
-SgScopeStatement *get_scope_from_symbol(SgSymbol *returnSymbol);
+//SgScopeStatement *get_scope_from_symbol(SgSymbol *returnSymbol);
 
 // ***********************************************************
 //  Template Definitions (required to be in the header files)

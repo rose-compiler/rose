@@ -387,6 +387,6 @@ check-local: $(TEST_TARGETS)
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
-	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed) $(TEST_TARGETS:.passed=.out) $(TEST_TARGETS:.passed=.err)
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
 

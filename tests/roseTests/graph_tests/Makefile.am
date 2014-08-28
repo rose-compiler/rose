@@ -1,103 +1,163 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-
-##################################################################################
-# These are testcodes for testing the new Graph IR nodes in ROSE
-##################################################################################
+noinst_PROGRAMS =
+TEST_TARGETS =
+EXTRA_DIST =
 
 INCLUDES = $(ROSE_INCLUDES)
-
-# This is a shorted list that tests more quickly.
-TESTCODES_REQUIRED_TO_PASS = \
-   inputCode_main.C 
-
-TESTCODES_CURRENTLY_FAILING = 
-
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS)
-
-# QMTest allows both passing and failing tests.
-ALL_TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODES_CURRENTLY_FAILING)
-
-
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
-# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
-
-PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
-$(TEST_Objects):
-	echo "Copy the file to build a second one to main ..."
-	$(VALGRIND) ./graph_test_1 $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#------------------------------------------------------------------------------------------------------------------------
+# hash_multimap
 
-bin_PROGRAMS = hash_multimap graph_test_1 graph_test_2 graph_test_3 graph_test_4 graph_test_5 graph_test_6 
-
+noinst_PROGRAMS += hash_multimap
 hash_multimap_SOURCES = hash_multimap.C
+
+TEST_TARGETS += hash_multimap.passed
+hash_multimap.passed: hash_multimap
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/hash_multimap" \
+		$(TEST_EXIT_STATUS) $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# graph_test_1
+
+noinst_PROGRAMS += graph_test_1
 graph_test_1_SOURCES = graph_test_1.C
+
+graph_test_1_sage.passed: graph_test_1
+	@$(RTH_RUN)				\
+		USE_SUBDIR=yes			\
+		CMD="$(abspath $<) sage"	\
+		$(TEST_EXIT_STATUS) $@
+
+graph_test_1_sawyer.passed: graph_test_1
+	@$(RTH_RUN)				\
+		USE_SUBDIR=yes			\
+		CMD="$(abspath $<) sawyer"	\
+		$(TEST_EXIT_STATUS) $@
+
+TEST_TARGETS += graph_test_1_sage.passed graph_test_1_sawyer.passed
+
+#------------------------------------------------------------------------------------------------------------------------
+# graph_test_2
+
+noinst_PROGRAMS += graph_test_2
 graph_test_2_SOURCES = graph_test_2.C
+
+TEST_TARGETS += graph_test_2.passed
+graph_test_2.passed: graph_test_2
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_2" \
+		$(TEST_EXIT_STATUS) $@
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# graph_test_3
+
+noinst_PROGRAMS += graph_test_3
 graph_test_3_SOURCES = graph_test_3.C
+
+TEST_TARGETS += graph_test_3.passed
+graph_test_3.passed: graph_test_3
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_3" \
+		$(TEST_EXIT_STATUS) $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# graph_test_4
+
+noinst_PROGRAMS += graph_test_4
 graph_test_4_SOURCES = graph_test_4.C
+
+TEST_TARGETS += graph_test_4.passed
+EXTRA_DIST += inputCode_main.C
+graph_test_4.passed: inputCode_main.C graph_test_4
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_4 $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# graph_test_5
+
+noinst_PROGRAMS += graph_test_5
 graph_test_5_SOURCES = graph_test_5.C
+
+TEST_TARGETS += graph_test_5.passed
+EXTRA_DIST += inputCode_main.C
+graph_test_5.passed: inputCode_main.C graph_test_5
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_5 $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# graph_test_6
+
+noinst_PROGRAMS += graph_test_6 
 graph_test_6_SOURCES = graph_test_6.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += graph_test_6a.passed
+EXTRA_DIST += inputCode_main.C
+graph_test_6a.passed: inputCode_main.C graph_test_6
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 
-test_hash_multimap: hash_multimap
-	$(VALGRIND) ./hash_multimap
+TEST_TARGETS += graph_test_6b.passed
+graph_test_6b.passed: $(top_srcdir)/binaries/samples/x86-64-ctrlaltdel graph_test_6
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 
-test_1: graph_test_1
-	$(VALGRIND) ./graph_test_1
+TEST_TARGETS += graph_test_6c.passed
+graph_test_6c.passed: $(top_srcdir)/binaries/samples/pocketputty.exe graph_test_6
+	@$(RTH_RUN) \
+		DISABLED="not automatically tested by original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/graph_test_6 $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 
-test_2: graph_test_2
-	$(VALGRIND) ./graph_test_2
+#------------------------------------------------------------------------------------------------------------------------
+# qm.sh
 
-test_3: graph_test_3
-	$(VALGRIND) ./graph_test_3
+qm_script = $(abspath $(top_srcdir)/scripts/qm.sh)
+qm_specimens = inputCode_main.C
+qm_test_targets = $(addprefix qm_, $(addsuffix .passed, $(qm_specimens)))
+EXTRA_DIST += $(qm_specimens)
 
-test_4: graph_test_4
-	$(VALGRIND) ./graph_test_4 $(srcdir)/inputCode_main.C
+TEST_TARGETS += $(qm_test_targets)
+$(qm_test_targets): qm_%.passed: %
+	@$(RTH_RUN) \
+		DISABLED="commented out in original makefile" \
+		USE_SUBDIR=yes \
+		CMD="$(qm_script) f rose.RoseTest $$(pwd)/main NULL $(ROSE_FLAGS) -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 
-test_5: graph_test_5
-	$(VALGRIND) ./graph_test_5 $(srcdir)/inputCode_main.C
-
-test_6: graph_test_6
-	$(VALGRIND) ./graph_test_6 $(srcdir)/inputCode_main.C
-
-small_binary_test_6: graph_test_6
-	$(VALGRIND) ./graph_test_6 $(srcdir)/../Disassembler_tests/x86-64-ctrlaltdel
-
-large_binary_test_6: graph_test_6
-	$(VALGRIND) ./graph_test_6 $(srcdir)/../Disassembler_tests/pocketputty.exe
-
-
-QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
-
-# Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): graph_test_1 $(srcdir)/$(@:.qmt=.C)
-	@echo "Calling QMTEST_Objects rule: "
-#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/main NULL $(ROSE_FLAGS) -c $(srcdir)/tests/$(@:.qmt=.C)
-
-# Include makefile rules specific to QMTest
+QMTEST_Objects = $(qm_specimens:.C=.o)
 include $(top_srcdir)/config/QMTest_makefile.inc
 
-check-local:
-	@echo "Development tests for new graph IR nodes."
-#  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
-#	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "**********************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/graph_tests: make check rule complete (terminated normally) ******"
-	@echo "**********************************************************************************************"
+#------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
+
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot test200?_*.[cC]
-	rm -rf QMTest
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST += CMakeLists.txt

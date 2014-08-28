@@ -17,12 +17,23 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
   // AstTests::runAllTests(project);
 
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
-     generateDOT ( *project );
+  // generateDOT ( *project );
+     generateDOTforMultipleFile(*project);
 
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+
+#if 0
+  // DQ (8/20/2013): Added initial support for IR node specific DOT graphs.
+  // std::vector<VariantT> nodeKindList = {V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
+  // VariantT initializationArray[3] = {V_SgInitializedName,V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
+     VariantT initializationArray[3] = {V_SgDeclarationStatement,V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
+     std::vector<VariantT> nodeKindList(initializationArray, initializationArray+1);
+     intermediateRepresentationNodeGraph(project,nodeKindList);
+#endif
 
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);

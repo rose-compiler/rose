@@ -4,7 +4,7 @@
 #include "ReachingDefinition.h"
 #include "StmtInfoCollect.h"
 
-class DefUseChainNode : public MultiGraphElem
+class ROSE_DLL_API DefUseChainNode : public MultiGraphElem
 {
   bool isdef;
   AstNodePtr ref, stmt;
@@ -43,7 +43,7 @@ class DefUseChain
   Edge* CreateEdge( Node* n1, Node* n2)
     {
       Edge* e = new Edge(this);
-      AddEdge( n1, n2, e);
+      this->AddEdge( n1, n2, e);
       return e;
     }
   

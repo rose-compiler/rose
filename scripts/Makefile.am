@@ -37,7 +37,6 @@ distributedScripts =				 \
 	rth_run.pl				 \
 	rth_stats.pl				 \
 	runscript				 \
-	sample_binary_rules.pl			 \
 	shtool					 \
 	stringify.pl
 

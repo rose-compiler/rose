@@ -167,6 +167,11 @@ static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vecto
 static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
   SgNode* parent = n->get_parent();
+
+#if 0
+  printf ("In getNodeJustAfterInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
+#endif
+
   if (isSgFunctionParameterList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(parent);
     ROSE_ASSERT (decl);
@@ -196,10 +201,40 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
 static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
   SgNode* parent = n->get_parent();
   ROSE_ASSERT (parent);
+
+#if 0
+  printf ("In getNodeJustBeforeInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
+#endif
+
   if (isSgFunctionDefinition(n)) return CFGNode(0, 0); // Should not be used
   if (isSgCtorInitializerList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgCtorInitializerList(n)->get_parent());
     ROSE_ASSERT (decl);
+
+#if 0
+ // DQ (6/1/2014): This is part fo debugging fuse test2011_77.C (which appears to be mixing template functions into the virtual CFG).
+ // We might have the have Greg look into this directly.
+    printf ("In getNodeJustBeforeInContainer(): decl = %p decl->get_definingDeclaration() = %p \n",decl,decl->get_definingDeclaration());
+
+ // DQ (6/1/2014): We need the defining declaration (if there is one).
+    SgFunctionDeclaration* defining_decl = isSgFunctionDeclaration(decl->get_definingDeclaration());
+ // ROSE_ASSERT (decl);
+    if (defining_decl == NULL)
+       {
+         printf ("Note: In getNodeJustBeforeInContainer(): There is no associated defining declaration for the function, so there is no way to return a valid CFGNode \n");
+      // I think this is the next best thing to do.
+         return CFGNode(0, 0);
+       }
+
+    printf ("In getNodeJustBeforeInContainer(): decl is a SgFunctionDeclaration: return CFGNode(decl->get_definition(), 1); \n");
+    printf ("In getNodeJustBeforeInContainer(): decl->get_definition() = %p \n",decl->get_definition());
+#else
+    if (isSgTemplateMemberFunctionDeclaration(decl) != NULL)
+       {
+         printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
+       }
+#endif
+
     return CFGNode(decl->get_definition(), 1);
   }
   if (isSgFunctionParameterList(n)) {
@@ -266,7 +301,8 @@ std::vector<CFGEdge> SgGlobal::cfgInEdges(unsigned int idx) {
 
 unsigned int
 SgGlobal::cfgIndexForEnd() const {
-  return 0;
+//  return 0;
+  return this->get_declarations().size();
 }
 
 bool 
@@ -2993,6 +3029,54 @@ SgJavaInstanceOfOp::cfgInEdges(unsigned int idx) {
 }
 
 unsigned int
+SgJavaTypeExpression::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgJavaTypeExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgJavaTypeExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+unsigned int
+SgJavaAnnotation::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgJavaAnnotation::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgJavaAnnotation::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+unsigned int
 SgThrowOp::cfgIndexForEnd() const 
    {
      return (get_operand() == NULL) ? 0 : 1;
@@ -3131,6 +3215,33 @@ SgVarRefExp::cfgOutEdges(unsigned int idx)
 
 std::vector<CFGEdge>
 SgVarRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+unsigned int
+SgCompoundLiteralExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+std::vector<CFGEdge>
+SgCompoundLiteralExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+// DQ (9/4/2013): This designed similar to the version for SgVarRefExp (above).
+std::vector<CFGEdge>
+SgCompoundLiteralExp::cfgInEdges(unsigned int idx)
    {
      std::vector<CFGEdge> result;
      ROSE_ASSERT (idx == 0);
@@ -3877,6 +3988,30 @@ SgSuperExp::cfgInEdges(unsigned int idx)
      return result;
    }
 
+unsigned int
+SgClassExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgClassExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+  }
+
+std::vector<CFGEdge>
+SgClassExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 unsigned int SgInitializer::cfgIndexForEnd() const
    {
      return 1;
@@ -4046,6 +4181,15 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx) {
 
 std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
      std::vector<CFGEdge> result;
+
+  // DQ (6/1/2014): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
+#if 0
+     SgInitializedNamePtrList & ctorList = this->get_ctors();
+     printf ("In SgCtorInitializerList::cfgInEdges(idx = %u): this = %p ctorList.size() = %zu \n",idx,this,ctorList.size());
+#endif
+
      if (idx == 0) {
        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
      } else {
@@ -4952,6 +5096,32 @@ bool SgVarRefExp::isChildUsedAsLValue(const SgExpression* child) const
         return false;
 }
 
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+/*! std:2.5 par:5 */
+bool SgCompoundLiteralExp::isDefinable() const
+{
+        // if not constant
+        if (SageInterface::isConstType(get_type()))
+                return false;
+        // if it is protected, it is not definable
+        return true;
+}
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+/*! std:5.1 par:7,8 */
+bool SgCompoundLiteralExp::isLValue() const
+{
+        return true;
+}
+
+// DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
+bool SgCompoundLiteralExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+        ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgVarRefExp");
+        return false;
+}
+
+
 /*! std:5.16 par:4 */
 bool SgConditionalExp::isLValue() const
 {
@@ -5391,6 +5561,32 @@ SgAssertStmt::cfgInEdges(unsigned int idx) {
         }
         return result;
 }
+
+
+unsigned int
+SgTypeExpression::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgTypeExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgTypeExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 
 #endif
 

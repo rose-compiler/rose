@@ -18,6 +18,12 @@ Makefile.in
 /*.tar.gz
 /libltdl
 
+# Integrated Development Evironment files
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
 # /config/
 /config/config.guess
 /config/config.sub

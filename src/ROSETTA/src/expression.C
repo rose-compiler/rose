@@ -14,6 +14,12 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (VarRefExp,              "VarRefExp",              "VAR_REF" );
 
+  // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
+  // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
+  // be written to and can be unified where they are the same value.  Any expression can be placed into the
+  // list. C90 and C99 define writting to the compound literal as undefined behavior.
+     NEW_TERMINAL_MACRO (CompoundLiteralExp,        "CompoundLiteralExp",        "COMPOUND_LITERAL" );
+
   // DQ (12/30/2007): New IR node to support references to labels (much like references to variables 
   // for the VarRefExp, but with a internal pointer ot a SgLabelSymbol) This IR nodes will eventually 
   // be used in the C/C++ goto, but is introduced to hnadle references to labels in Fortran (e.g. format 
@@ -38,6 +44,23 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     NEW_TERMINAL_MACRO (JavaMarkerAnnotation,         "JavaMarkerAnnotation",         "JAVA_MARKER_ANNOTATION" );
+     NEW_TERMINAL_MACRO (JavaSingleMemberAnnotation,   "JavaSingleMemberAnnotation",   "JAVA_SINGLE_MEMBER_ANNOTATION" );
+     NEW_TERMINAL_MACRO (JavaNormalAnnotation,         "JavaNormalAnnotation",         "JAVA_NORMAL_ANNOTATION" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations (hierarchy).
+     NEW_NONTERMINAL_MACRO (JavaAnnotation,
+                            JavaMarkerAnnotation | JavaSingleMemberAnnotation | JavaNormalAnnotation,
+                            "JavaAnnotation","JAVA_ANNOTATION", false);
+
+     NEW_TERMINAL_MACRO (JavaTypeExpression, "JavaTypeExpression", "JAVA_TYPE_EXPRESSION");
+
+  // DQ (7/24/2014): C11 Generic macros requires additional IR support.  This IR node is likely to be
+  // similar to the SgJavaTypeExpression node and it might be that that IR node could be eliminated in 
+  // favor of this newer (more language independent) IR node.
+     NEW_TERMINAL_MACRO (TypeExpression, "TypeExpression", "TYPE_EXPRESSION");
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -60,6 +83,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (DeleteExp,              "DeleteExp",              "DELETE_OP" );
      NEW_TERMINAL_MACRO (ThisExp,                "ThisExp",                "THIS_NODE" );
      NEW_TERMINAL_MACRO (SuperExp,               "SuperExp",               "SUPER_NODE" );
+     NEW_TERMINAL_MACRO (ClassExp,               "ClassExp",               "CLASS_NODE" );
      NEW_TERMINAL_MACRO (RefExp,                 "RefExp",                 "TYPE_REF" );
      NEW_TERMINAL_MACRO (AggregateInitializer,   "AggregateInitializer",   "AGGREGATE_INIT" );
      NEW_TERMINAL_MACRO (CompoundInitializer,    "CompoundInitializer",    "COMPOUND_INIT" );
@@ -147,6 +171,12 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (FloatVal,               "FloatVal",               "FLOAT_VAL" );
      NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
      NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
+
+  // DQ (7/31/2014): Added support for C++11 nullptr constant value expression (using type nullptr_t).
+     NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
+
+  // DQ (8/8/2014): Added support for C++11 decltype which references a function parameter.
+     NEW_TERMINAL_MACRO (FunctionParameterRefExp, "FunctionParameterRefExp", "FUNCTION_PARAMETER_REF_EXP" );
 
   // DQ (11/28/2011): Adding support for template declarations in the AST.
      NEW_TERMINAL_MACRO (TemplateParameterVal,   "TemplateParameterVal",   "TEMPLATE_PARAMETER_VAL" );
@@ -265,12 +295,12 @@ Grammar::setUpExpressions ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
      NEW_NONTERMINAL_MACRO (BinaryOp,
-          ArrowExp       | DotExp           | DotStarOp       | ArrowStarOp      | EqualityOp    | LessThanOp     | 
-          GreaterThanOp  | NotEqualOp       | LessOrEqualOp   | GreaterOrEqualOp | AddOp         | SubtractOp     | 
-          MultiplyOp     | DivideOp         | IntegerDivideOp | ModOp            | AndOp         | OrOp           |
-          BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
-          PntrArrRefExp  | ScopeOp          | AssignOp        | ExponentiationOp | JavaUnsignedRshiftOp |
-          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp     |
+          ArrowExp       | DotExp           | DotStarOp           | ArrowStarOp      | EqualityOp           | LessThanOp     | 
+          GreaterThanOp  | NotEqualOp       | LessOrEqualOp       | GreaterOrEqualOp | AddOp                | SubtractOp     | 
+          MultiplyOp     | DivideOp         | IntegerDivideOp     | ModOp            | AndOp                | OrOp           |
+          BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
+          PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
+          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
           NonMembershipOp | IsOp            | IsNotOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
@@ -279,11 +309,11 @@ Grammar::setUpExpressions ()
           "NaryOp","NARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
-          BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
-          WcharVal       | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
-          LongIntVal     | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal      | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
-          TemplateParameterVal,
+          BoolValExp           | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
+          WcharVal             | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
+          LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
+          DoubleVal            | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
+          TemplateParameterVal | NullptrValExp,
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
@@ -304,6 +334,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (TypeTraitBuiltinOperator, "TypeTraitBuiltinOperator", "TYPE_TRAIT_BUILTIN_OPERATOR");
   // NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp | TypeTraitBuiltinOperator,"CallExpression","CALL_EXPRESSION", true);
 
+  // DQ (9/4/2013): Added compound literal support.
   // DQ (7/12/2013): Moved the TypeTraitBuiltinOperator to be derived from Expression.
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
@@ -317,10 +348,10 @@ Grammar::setUpExpressions ()
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
-          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
+          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-          TypeTraitBuiltinOperator,
-          "Expression","ExpressionTag", false);
+          TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
+          ClassExp | FunctionParameterRefExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -453,6 +484,21 @@ Grammar::setUpExpressions ()
      RefExp.excludeFunctionPrototype          ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      Initializer.excludeFunctionPrototype     ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
+  // DQ (8/6/2013): We need to implement this member function explicitly and cannot use the default implementation.
+     TemplateParameterVal.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Define the get_type meber function in the JavaAnnotation (default), but exclude it from the subtree.
+  // JavaAnnotation.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     JavaAnnotation.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+  // DQ (3/7/2014): We want to use the automatically generated access function instead (so I think I need to include this).
+     JavaTypeExpression.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     JavaTypeExpression.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     TypeExpression.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
   // This is the easiest solution, then where any post_construction_initialization() function
   // was ment to call the base class post_construction_initialization() function, we just do 
   // so directly in thederived class post_construction_initialization() function.
@@ -496,6 +542,9 @@ Grammar::setUpExpressions ()
   // function on certain types of expressions (because the type should be computed from the operands 
   // or the value types directly).
      VarRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
+     CompoundLiteralExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
      LabelRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -661,6 +710,7 @@ Grammar::setUpExpressions ()
      ExprListExp.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ValueExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      BoolValExp.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     NullptrValExp.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ShortVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      CharVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -679,9 +729,13 @@ Grammar::setUpExpressions ()
   // DQ (11/28/2011): Adding template declaration support to the AST.
      TemplateParameterVal.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+     FunctionParameterRefExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SuperExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ClassExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      RefExp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Initializer.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      TupleExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -726,6 +780,17 @@ Grammar::setUpExpressions ()
 
      CompoundAssignOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionSource             ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+     JavaTypeExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
   // DQ (2/1/2009: Added comment.
   // ***********************************************************
   //    This whole mechanism is not used presently.  Someone
@@ -749,6 +814,17 @@ Grammar::setUpExpressions ()
 
   // DQ (7/18/2011): What is the precedence of this operator?
      JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.editSubstitute             ( "PRECEDENCE_VALUE", "16" );
+     JavaMarkerAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
+     JavaSingleMemberAnnotation.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+     JavaNormalAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
+
+     JavaTypeExpression.editSubstitute         ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.editSubstitute         ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -845,6 +921,9 @@ Grammar::setUpExpressions ()
   // DQ (7/21/2006): Added support for GNU statement expression extension.
      StatementExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
      AsmOp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
+     FunctionParameterRefExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (not sure if these are correct values)
@@ -1200,6 +1279,25 @@ Grammar::setUpExpressions ()
      BoolValExp.setDataPrototype ( "int", "value", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/31/2014): Adding support for nullptr constant value expression.
+     NullptrValExp.setFunctionPrototype ( "HEADER_NULLPTR_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (7/31/2014): I don't think this need a value.
+  // NullptrValExp.setDataPrototype ( "SgNullptrType*", "value", "= 0",
+  //                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+     FunctionParameterRefExp.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
+     FunctionParameterRefExp.setDataPrototype ("int", "parameter_number", "= -1",
+                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionParameterRefExp.setDataPrototype ("int", "parameter_levels_up", "= -1",
+                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/8/2014): This is where we store the reference to the function parameter (likely a SgVarRefExp).
+  // This value is computed as part of the post-processing of the ROSE AST (using the parameter_number and 
+  // parameter_levels_up values.
+     FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      StringVal.setFunctionPrototype ( "HEADER_STRING_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (3/25/2006): We can have ROSETTA generate the constructor now that we use a C++ style std::string
@@ -1220,6 +1318,16 @@ Grammar::setUpExpressions ()
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (12/23/2007): Added support for distinguishing double quotes (permits use of sing, double, or un-quoted strings in the SgFormatItem object).
      StringVal.setDataPrototype ( "bool", "usesDoubleQuotes", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/13/2014): Added support for C++11 string types (16bit and 32bit character types for strings).
+     StringVal.setDataPrototype ( "bool", "is16bitString", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "bool", "is32bitString", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "bool", "isRawString", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "std::string", "raw_string_value", "= \"\"",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // URK (08/22/2006): Added string to hold source code constants of integer and character types precisely.
@@ -1340,9 +1448,13 @@ Grammar::setUpExpressions ()
   // DQ (11/28/2011): Adding template declaration support in the AST (see test2011_164.C).
      TemplateParameterVal.setFunctionPrototype ( "HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      TemplateParameterVal.setDataPrototype ( "int", "template_parameter_position", "= -1",
-                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateParameterVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
-                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/6/2013): Added explicit representation for type (required to disambiguate overloaded template functions.
+     TemplateParameterVal.setDataPrototype ( "SgType*", "valueType", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
@@ -1503,6 +1615,8 @@ Grammar::setUpExpressions ()
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AlignOfOp.setDataPrototype ( "SgType*", "operand_type", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  // DQ (3/7/2013): We should not store the type of operators but instead obtain it from the operand directly.
+  // I think that we are not using this data member.
      AlignOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
@@ -1533,6 +1647,39 @@ Grammar::setUpExpressions ()
      JavaInstanceOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionPrototype ( "HEADER_JAVA_ANNOTATION", "../Grammar/Expression.code" );
+  // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
+     JavaAnnotation.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+     JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
+     JavaTypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.setFunctionPrototype ( "HEADER_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+     TypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaSingleMemberAnnotation.setFunctionPrototype ( "HEADER_JAVA_SINGLE_MEMBER_ANNOTATION", "../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setDataPrototype ( "SgExpression*", "value", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaNormalAnnotation.setFunctionPrototype ( "HEADER_JAVA_NORMAL_ANNOTATION", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.setDataPrototype ( "SgJavaMemberValuePairPtrList", "value_pair_list", "",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaNormalAnnotation.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     JavaNormalAnnotation.editSubstitute   ( "LIST_NAME", "value_pair" );
+
+
+
      TypeIdOp.setFunctionPrototype ( "HEADER_TYPE_ID_OPERATOR", "../Grammar/Expression.code" );
      TypeIdOp.setDataPrototype ( "SgExpression*", "operand_expr"   , "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1541,8 +1688,8 @@ Grammar::setUpExpressions ()
   // DQ (1/14/2006): We should not store the type of unary operators but instead obtain it from the operand directly.
   // TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
-     TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
-            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  // TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (6/2/2011): Added support for name qualification.
      TypeIdOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
@@ -1746,10 +1893,16 @@ Grammar::setUpExpressions ()
      ThisExp.setDataPrototype     ( "int", "pobj_this", "= 0",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     SuperExp.setFunctionPrototype ( "HEADER_THIS_EXPRESSION", "../Grammar/Expression.code" );
+     SuperExp.setFunctionPrototype ( "HEADER_SUPER_EXPRESSION", "../Grammar/Expression.code" );
      SuperExp.setDataPrototype     ( "SgClassSymbol*", "class_symbol", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SuperExp.setDataPrototype     ( "int", "pobj_super", "= 0",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     ClassExp.setFunctionPrototype ( "HEADER_CLASS_EXPRESSION", "../Grammar/Expression.code" );
+     ClassExp.setDataPrototype     ( "SgClassSymbol*", "class_symbol", "= NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ClassExp.setDataPrototype     ( "int", "pobj_class", "= 0",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ScopeOp.setFunctionPrototype ( "HEADER_SCOPE_OPERATOR", "../Grammar/Expression.code" );
@@ -1778,6 +1931,29 @@ Grammar::setUpExpressions ()
 
      ConcatenationOp.setFunctionPrototype ( "HEADER_CONCATENATION_OPERATOR", "../Grammar/Expression.code" );
 
+  // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
+  // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
+  // be written to and can be unified where they are the same value.  Any expression can be placed into the
+  // list. C90 and C99 define writting to the compound literal as undefined behavior.
+     CompoundLiteralExp.setFunctionPrototype ( "HEADER_COMPOUND_LITERAL_EXPRESSION", "../Grammar/Expression.code" );
+#if 1
+  // DQ (9/4/2013): This better matches the concept of unnamed variable and folows the design of a variable reference.
+  // Note that a SgVariableSymbol is used which means that the declaration will be a SgInitializedName which will contain 
+  // a internally generated name used as a key to add the SgVariableSymbol to the symbol table.
+     CompoundLiteralExp.setDataPrototype ( "SgVariableSymbol*", "symbol", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (9/4/2013): I think this is not as good of an implementation, does not match concept of unnamed variable.
+     CompoundLiteralExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     CompoundLiteralExp.editSubstitute       ( "LIST_NAME", "initializer" );
+     CompoundLiteralExp.setDataPrototype     ( "SgExprListExp*", "initializer_list", "= NULL",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // CompoundLiteralExp.setDataPrototype     ( "SgType*", "compound_literal_type", "= NULL",
+  //                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     CompoundLiteralExp.setDataPrototype     ( "SgType*", "type", "= NULL",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      Initializer.setFunctionPrototype ( "HEADER_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      Initializer.setDataPrototype     ( "bool"               , "is_explicit_cast", "= true",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1803,6 +1979,33 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/1/2014): Added to support C++11 constexpr constructors that can generate an originalExpressionTree in ROSE.
+     AggregateInitializer.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // DQ (9/4/2013): This should be replaced by the use of SgCompoundLiteral since it is the concept trying to be expressed here
+  // but SgCompoundLiteral is derived from SgExpression, and there is no such thing as a CompoundInitializer.  This is
+  // a confusing topic and this IR nod represent partial support for where compound literals are used in initializers, but
+  // it is better to support a proper SgCompoundLiteral IR node (just being added today) since it can be used outside of 
+  // the concept of initialization.  This SgCompoundInitializer is not used in the new EDG/ROSE connection, and the use of 
+  // SgCompoundLiteral is being added currently.
   // TV (03/04/2012) Compound initializer: for OpenCL (Vector type initializer): float4 a = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
      CompoundInitializer.setFunctionPrototype ( "HEADER_COMPOUND_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      CompoundInitializer.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
@@ -2185,7 +2388,10 @@ Grammar::setUpExpressions ()
 #endif
 
      ExprListExp.setFunctionSource ( "SOURCE_EXPRESSION_LIST_EXPRESSION","../Grammar/Expression.code" );
+
      VarRefExp.setFunctionSource ( "SOURCE_VARIABLE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+     CompoundLiteralExp.setFunctionSource ( "SOURCE_COMPOUND_LITERAL_EXPRESSION","../Grammar/Expression.code" );
+
      LabelRefExp.setFunctionSource ( "SOURCE_LABEL_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      ClassNameRefExp.setFunctionSource ( "SOURCE_CLASS_NAME_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
 
@@ -2197,6 +2403,7 @@ Grammar::setUpExpressions ()
 
      ValueExp.setFunctionSource ( "SOURCE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      BoolValExp.setFunctionSource ( "SOURCE_BOOLEAN_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     NullptrValExp.setFunctionSource ( "SOURCE_NULLPTR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      StringVal.setFunctionSource ( "SOURCE_STRING_VALUE_EXPRESSION","../Grammar/Expression.code" );
      ShortVal.setFunctionSource ( "SOURCE_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CharVal.setFunctionSource ( "SOURCE_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -2216,6 +2423,9 @@ Grammar::setUpExpressions ()
 
   // DQ (11/28/2011): Adding support for template declarations in the AST.
      TemplateParameterVal.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+     FunctionParameterRefExp.setFunctionSource ( "SOURCE_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
@@ -2284,6 +2494,17 @@ Grammar::setUpExpressions ()
      AlignOfOp.setFunctionSource ( "SOURCE_ALIGN_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
+  // DQ (1/13/2014): Added Java support for Java annotations.
+     JavaAnnotation.setFunctionSource             ( "SOURCE_JAVA_ANNOTATION","../Grammar/Expression.code" );
+     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_JAVA_MARKER_ANNOTATION","../Grammar/Expression.code" );
+     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION","../Grammar/Expression.code" );
+     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_JAVA_NORMAL_ANNOTATION","../Grammar/Expression.code" );
+
+     JavaTypeExpression.setFunctionSource         ( "SOURCE_JAVA_TYPE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
+     TypeExpression.setFunctionSource             ( "SOURCE_TYPE_EXPRESSION","../Grammar/Expression.code" );
+
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
      UpcBlocksizeofExpression.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
@@ -2305,6 +2526,7 @@ Grammar::setUpExpressions ()
      DeleteExp.setFunctionSource ( "SOURCE_DELETE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      ThisExp.setFunctionSource ( "SOURCE_THIS_EXPRESSION","../Grammar/Expression.code" );
      SuperExp.setFunctionSource ( "SOURCE_SUPER_EXPRESSION","../Grammar/Expression.code" );
+     ClassExp.setFunctionSource ( "SOURCE_CLASS_EXPRESSION","../Grammar/Expression.code" );
      ScopeOp.setFunctionSource ( "SOURCE_SCOPE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AssignOp.setFunctionSource  ( "SOURCE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
@@ -2402,7 +2624,12 @@ Grammar::setUpExpressions ()
   // ***************************************
 
      ExprListExp.setFunctionSource            ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+
      VarRefExp.setFunctionSource              ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
+  // DQ (9/4/2013): This follows the design of CompoundLiteralExp to be similar to a variable reference.
+     CompoundLiteralExp.setFunctionSource     ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
      LabelRefExp.setFunctionSource            ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      FunctionRefExp.setFunctionSource         ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
@@ -2413,7 +2640,12 @@ Grammar::setUpExpressions ()
      TemplateMemberFunctionRefExp.setFunctionSource   ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      BoolValExp.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     NullptrValExp.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ShortVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+  // I think we need a custom get_type() function.
+  // FunctionParameterRefExp.setFunctionSource ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
   // DQ (8/17/2010): types for strings need to be handled using a lenght parameter to the SgTypeString::createType function.
   // For fortran the lenght can be specified as an expression, but for a literal it has to be a known value of an integer.
@@ -2436,13 +2668,17 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
 
+  // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
+  // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
+  // see test2013_303.C for an example.
   // DQ (11/28/2011): Adding template declaration support to the AST.
-     TemplateParameterVal.setFunctionSource   ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+  // TemplateParameterVal.setFunctionSource   ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
      UpcThreads.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UpcMythread.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
      BoolValExp.editSubstitute     ( "GENERIC_TYPE", "SgTypeBool" );
+     NullptrValExp.editSubstitute  ( "GENERIC_TYPE", "SgTypeNullptr" );
      StringVal.editSubstitute      ( "GENERIC_TYPE", "SgTypeString" );
      ShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeShort" );
 
@@ -2468,9 +2704,12 @@ Grammar::setUpExpressions ()
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
 
+  // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
+  // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
+  // see test2013_303.C for an example.
   // DQ (11/28/2011): Adding template declaration support to the AST.
   // TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTemplateType" );
-     TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTypeInt" );
+  // TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTypeInt" );
 
      UpcThreads.editSubstitute             ( "GENERIC_TYPE", "SgTypeInt" );
      UpcMythread.editSubstitute            ( "GENERIC_TYPE", "SgTypeInt" );
@@ -2509,6 +2748,7 @@ Grammar::setUpExpressions ()
 
      ThisExp.setFunctionSource             ( "SOURCE_GET_TYPE_THIS_EXPRESSION","../Grammar/Expression.code" );
      SuperExp.setFunctionSource            ( "SOURCE_GET_TYPE_SUPER_EXPRESSION","../Grammar/Expression.code" );
+     ClassExp.setFunctionSource            ( "SOURCE_GET_TYPE_CLASS_EXPRESSION","../Grammar/Expression.code" );
 
   // AssignInitializer.setFunctionSource   ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
   //                                              "../Grammar/Expression.code" );

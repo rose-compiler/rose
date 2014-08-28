@@ -1,8 +1,11 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+find_package(PNG)
+if (NOT PNG_FOUND)
+  add_definitions(-DHPDF_NOPNGLIB)
+endif()
 
 add_subdirectory(src)
-#add_subdirectory(include)
+add_subdirectory(include)
 
 
 ########### install files ###############
@@ -10,7 +13,3 @@ add_subdirectory(src)
 
 
 
-#original Makefile.am contents follow:
-
-#AUTOMAKE_OPTIONS=foreign no-dependencies
-#SUBDIRS=src include

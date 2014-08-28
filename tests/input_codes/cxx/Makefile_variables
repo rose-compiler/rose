@@ -1,6 +1,9 @@
 
 ROSE__CXX_TESTS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
-ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
+
+# DQ (5/26/2014): Separate out test2014_241.C from use in the normalization tests.
+# ROSE__CXX_TESTS = 
+ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test_CplusplusMacro_Cpp.C \
 	test2001_01.C \
 	test2001_02.C \
@@ -255,7 +258,6 @@ ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
 	test2005_39.C \
 	test2005_40.C \
 	test2005_41.C \
-	test2005_42.C \
 	test2005_43.C \
 	test2005_44.C \
 	test2005_45.C \
@@ -918,7 +920,6 @@ ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
 	test2012_87.C \
 	test2012_88.C \
 	test2012_89.C \
-	test2012_90.C \
 	test2012_91.C \
 	test2012_92.C \
 	test2012_93.C \
@@ -1141,7 +1142,6 @@ ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
 	test2013_59.C \
 	test2013_60.C \
 	test2013_61.C \
-	test2013_63.C \
 	test2013_64.C \
 	test2013_65.C \
 	test2013_66.C \
@@ -1307,19 +1307,34 @@ ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
 	test2013_230.C \
 	test2013_231.C \
 	test2013_232.C \
-	test2013_234.C \
 	test2013_237.C \
 	test2013_238.C \
 	test2013_239.C \
-	test2013_240.C \
-	test2013_241.C \
-	test2013_242.C \
 	test2013_243.C \
 	test2013_244.C \
-	test2013_246.C \
 	test2013_250.C \
 	test2013_251.C \
 	test2013_252.C \
+   test2013_300.C \
+   test2013_301.C \
+   test2013_302.C \
+   test2013_303.C \
+   test2013_304.C \
+   test2013_305.C \
+   test2013_306.C \
+   test2013_307.C \
+   test2013_308.C \
+   test2013_310.C \
+   test2013_311.C \
+   test2013_312.C \
+   test2013_313.C \
+   test2013_314.C \
+   test2013_315.C \
+   test2013_316.C \
+   test2013_317.C \
+   test2013_318.C \
+   test2013_319.C \
+   test2013_320.C \
 	test_int_lexemes.C \
 	test_int_lexemes_donot_pass.C \
 	test_simple_int.C \
@@ -1334,9 +1349,33 @@ ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
 	test2005_06.C \
 	test2005_08.C \
 	test2012_57.C \
-	test2012_59.C)
+	test2012_59.C \
+        test2013_milind_01.C 
 
-ROSE__CXX_TESTS__BOOST = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
+# ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
+
+ROSE__CXX_TESTS__BOOST = \
 	test2013_09.C \
-	test2013_235.C \
-	test2013_236.C)
+	test2013_236.C
+
+# DQ (3/25/2014): These work now with the GNU 4.7 and 4.8 compilers.
+# Previously the use if 128 bit integers was not supported in ROSE
+# and was a problem for these codes using the GNU 4.7 and 4.8 compilers.
+# if !ROSE_USE_EDG_VERSION_4_8
+# if !ROSE_USING_GCC_VERSION_LATER_4_6
+ROSE__CXX_TESTS_WITHOUT_2013_241 += \
+	test2005_42.C \
+	test2012_90.C \
+	test2013_63.C \
+	test2013_234.C \
+	test2013_240.C \
+	test2013_242.C \
+	test2013_246.C 
+
+# DQ (5/26/2014): Separate out test2014_241.C from use in the normalization tests.
+ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) \
+	test2013_241.C 
+
+ROSE__CXX_TESTS__BOOST += \
+	test2013_235.C 
+# endif

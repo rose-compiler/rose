@@ -173,17 +173,18 @@ main ( int argc, char* argv[] )
      generatePDF ( *project );
 #endif
 
-#if 1
-     printf ("Generate the dot output of the SAGE III AST \n");
+#if 0
+     if (project->get_verbose() > 0)
+          printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
 #endif
+#if 0
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 4000;
-#if 1
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 
 #if 1
-     if (project->get_verbose() >= 0)
+     if (project->get_verbose() > 0)
           printf ("\n\nRunning tests on the original AST (before copying) \n");
 
   // DQ (2/6/2004): These tests fail in Coco for test2004_14.C
@@ -215,7 +216,7 @@ main ( int argc, char* argv[] )
      SgProject* newProject = project;
 #endif
 
-#if 1
+#if 0
   // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
      if (project->get_verbose() > 0)
           printf ("\n\nOutput a graph of the whole AST \n");
@@ -238,7 +239,7 @@ main ( int argc, char* argv[] )
      AstTests::runAllTests(project);
 #if 1
   // DQ (10/19/2007): Turning this off allows for a lot of things to work great, but it is cheating :-).
-     if (project->get_verbose() >= 0)
+     if (project->get_verbose() > 0)
           printf ("\n\nRunning tests on the copy of the AST \n");
 
      AstTests::runAllTests(newProject);
@@ -298,6 +299,10 @@ main ( int argc, char* argv[] )
           printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
   // printf ("DONE: Generate the dot output of the SAGE III AST \n");
+#endif
+#if 0
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 5000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 
      if (project->get_verbose() > 0)

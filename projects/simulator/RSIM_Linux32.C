@@ -620,7 +620,7 @@ syscall_waitpid(RSIM_Thread *t, int callno)
         result = -errno;
     } else if (status_va) {
         uint32_t status_le;
-        SgAsmExecutableFileFormat::host_to_le(sys_status, &status_le);
+        ByteOrder::host_to_le(sys_status, &status_le);
         size_t nwritten = t->get_process()->mem_write(&status_le, status_va, 4);
         ROSE_ASSERT(4==nwritten);
     }
@@ -825,7 +825,7 @@ syscall_time(RSIM_Thread *t, int callno)
     time_t result = time(NULL);
     if (t->syscall_arg(0)) {
         uint32_t t_le;
-        SgAsmExecutableFileFormat::host_to_le(result, &t_le);
+        ByteOrder::host_to_le(result, &t_le);
         size_t nwritten = t->get_process()->mem_write(&t_le, t->syscall_arg(0), 4);
         ROSE_ASSERT(4==nwritten);
     }
@@ -1440,7 +1440,7 @@ syscall_ioctl(RSIM_Thread *t, int callno)
                 break;
             }
             uint32_t pgrp_le;
-            SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
+            ByteOrder::host_to_le(pgrp, &pgrp_le);
             size_t nwritten = t->get_process()->mem_write(&pgrp_le, t->syscall_arg(2), 4);
             ROSE_ASSERT(4==nwritten);
             t->syscall_return(pgrp);
@@ -1451,7 +1451,7 @@ syscall_ioctl(RSIM_Thread *t, int callno)
             uint32_t pgid_le;
             size_t nread = t->get_process()->mem_read(&pgid_le, t->syscall_arg(2), 4);
             ROSE_ASSERT(4==nread);
-            pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
+            pid_t pgid = ByteOrder::le_to_host(pgid_le);
             int result = tcsetpgrp(fd, pgid);
             if (-1==result)
                 result = -errno;
@@ -3527,21 +3527,21 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
             result = -EINVAL;
             break;
         }
-        std::pair<Extent, MemoryMap::Segment> me = t->get_process()->get_memory().at(shmaddr_va);
-        if (me.first.first()!=shmaddr_va ||
-            me.second.get_buffer_offset()!=0 ||
-            dynamic_cast<MemoryMap::AnonymousBuffer*>(me.second.get_buffer().get())) {
+        const MemoryMap::Segments::Node &me = t->get_process()->get_memory().at(shmaddr_va);
+        if (me.key().least()!=shmaddr_va ||
+            me.value().get_buffer_offset()!=0 ||
+            dynamic_cast<MemoryMap::AnonymousBuffer*>(me.value().get_buffer().get())) {
             result = -EINVAL;
             break;
         }
 
-        result = shmdt(me.second.get_buffer()->get_data_ptr());
+        result = shmdt(me.value().get_buffer()->get_data_ptr());
         if (-1==result) {
             result = -errno;
             break;
         }
 
-        t->get_process()->mem_unmap(me.first.first(), me.first.size(), t->tracing(TRACE_MMAP));
+        t->get_process()->mem_unmap(me.key().least(), me.key().size(), t->tracing(TRACE_MMAP));
         result = 0;
     } RTS_WRITE_END;
     t->syscall_return(result);
@@ -3763,7 +3763,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
         MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, ds.shm_segsz);
         MemoryMap::Segment sgmt(buffer, 0, perms, "shmat("+StringUtility::numberToString(shmid)+")");
-        t->get_process()->get_memory().insert(Extent(shmaddr, ds.shm_segsz), sgmt);
+        t->get_process()->get_memory().insert(AddressInterval::baseSize(shmaddr, ds.shm_segsz), sgmt);
 
         /* Return values */
         if (4!=t->get_process()->mem_write(&shmaddr, result_va, 4)) {
@@ -5300,7 +5300,7 @@ syscall_madvise(RSIM_Thread *t, int callno)
     /* If pages are unmapped, return -ENOMEM */
     ExtentMap mapped_mem;
     RTS_READ(t->get_process()->rwlock()) {
-        mapped_mem = t->get_process()->get_memory().va_extents();
+        mapped_mem = toExtentMap(t->get_process()->get_memory().va_extents());
     } RTS_READ_END;
     ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
     if (unmapped.size()>0) {

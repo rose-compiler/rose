@@ -42,4 +42,7 @@ set(roseBinaryFormats_SRC ${roseBinaryFormats_fileList_part0} )
 
 ########### install files ###############
 
-install(FILES  DataConversion.h IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(
+  FILES  DataConversion.h IntelPinSupport.h MemoryMap.h ByteOrder.h
+         SRecord.h WorkLists.h
+  DESTINATION include)

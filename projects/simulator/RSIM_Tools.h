@@ -235,7 +235,7 @@ public:
                         if (name.empty()) {
                             RTS_READ(process->rwlock()) {
                                 if (process->get_memory().exists(defn->get_entry_va())) {
-                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).second;
+                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).value();
                                     if (!sgmt.get_name().empty())
                                         name = "in " + sgmt.get_name();
                                 }
@@ -262,7 +262,7 @@ public:
             assert(top!=NULL);
             while (top->get_parent()) top = top->get_parent();
             m->multipart("FunctionIndex", "FunctionIndex triggered: showing all functions in the AST rooted at (%s*)%p\n",
-                         top?stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
+                         top?rose::stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
             m->more("    Key for reason(s) address is a suspected function:\n");
             m->more("      E = entry address         C = function call(*)      X = exception frame\n");
             m->more("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
@@ -345,7 +345,7 @@ public:
                             bp_not_pushed = true;
                         }
                     }
-                } catch (const Disassembler::Exception&) {
+                } catch (const rose::BinaryAnalysis::Disassembler::Exception&) {
                     /* ignored -- it just means the top of stack probably doesn't even point to executable memory */
                 }
                 args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC), "FunctionReporter: stack frames",
@@ -427,7 +427,7 @@ public:
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
-            std::string operation = stringifyMemoryMapProtection(args.how, "MM_PROT_");
+            std::string operation = rose::stringifyMemoryMapProtection(args.how, "MM_PROT_");
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
             mesg->mesg("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",
@@ -537,7 +537,7 @@ public:
             m->mesg("MemoryDisassembler triggered: disassembling now...");
             SgAsmBlock *block = args.thread->get_process()->disassemble();
             if (show)
-                AsmUnparser().unparse(std::cout, block);
+                rose::BinaryAnalysis::AsmUnparser().unparse(std::cout, block);
         }
         return enabled;
     }

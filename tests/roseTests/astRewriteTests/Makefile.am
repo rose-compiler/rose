@@ -1,229 +1,228 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-
-## The Rewrite Library should use its own template repository
-CXX_TEMPLATE_REPOSITORY_PATH = .
+noinst_PROGRAMS =
+noinst_HEADERS =
+TEST_TARGETS =
+EXTRA_DIST =
+MOSTLYCLEANFILES =
 
 INCLUDES = $(ROSE_INCLUDES)
-
-# Header files we DON'T want to have installed
-noinst_HEADERS = \
-     testNewRewrite.h
-
-clean-local:
-	rm -rf Templates.DB ii_files ti_files core *.dot *.pdf
-	rm -rf rose_inputProgram*.C \
-          rose_transformation_*.C *.C.pdf
-
-if ROSE_BUILD_OS_IS_CYGWIN
-
-TEST_EXECUTABLES = 
-
-else
-
-bin_PROGRAMS = \
-     testCommentInsertion \
-     testIncludeDirectiveInsertion \
-     testRewritePermutations \
-     testMidLevelInterface \
-     testRewriteReplacementPermutations \
-     testReplacementStatements \
-     testRemoveStatements \
-     testExample1 \
-     testDeclarationPrefixGeneration \
-     tauifyPreprocessor \
-     testTranslator2004_01
-
-## Add tests to be run by make check here:
-testCommentInsertion_SOURCES               = testCommentInsertion.C
-testIncludeDirectiveInsertion_SOURCES      = testIncludeDirectiveInsertion.C
-testMidLevelInterface_SOURCES              = testMidLevelInterface.C
-testRewritePermutations_SOURCES            = testNewRewrite.C testRewritePermutations.C
-testRewriteReplacementPermutations_SOURCES = testNewRewrite.C testRewriteReplacementPermutations.C
-testExample1_SOURCES                       = testExample1.C
-testDeclarationPrefixGeneration_SOURCES    = testDeclarationPrefixGeneration.C
-testReplacementStatements_SOURCES          = testReplacementStatements.C
-testRemoveStatements_SOURCES               = testRemoveStatements.C
-testTranslator2004_01_SOURCES              = testTranslator2004_01.C
-
-# DQ (10/18/2004): Switch to using multiple libs (since it is faster)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-testCommentInsertion_LDADD               = $(LDADD)
-testIncludeDirectiveInsertion_LDADD      = $(LDADD)
-testMidLevelInterface_LDADD              = $(LDADD)
-testRewritePermutations_LDADD            = $(LDADD)
-testRewriteReplacementPermutations_LDADD = $(LDADD)
-testExample1_LDADD                       = $(LDADD)
-testDeclarationPrefixGeneration_LDADD    = $(LDADD)
-testReplacementStatements_LDADD          = $(LDADD)
-testRemoveStatements_LDADD               = $(LDADD)
-testTranslator2004_01_LDADD              = $(LDADD)
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testCommentInsertion
+testCommentInsertion_SOURCES = testCommentInsertion.C
 
-# List of executables to build
-TEST_EXECUTABLES = FORCE_TEST_CODES_TO_RUN testRewriteReplacementPermutations testRewritePermutations HighLevelInterfaceTest MidLevelInterfaceTest IncludeDirectiveInsertion
+TEST_TARGETS += CommentInsertion.passed
+CommentInsertion.passed: inputProgram5.C testCommentInsertion
+	@$(RTH_RUN) \
+		DISABLED="commented out in the original makefile" \
+		CMD="./testCommentInsertion $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
+EXTRA_DIST += inputProgram5.C
+MOSTLYCLEANFILES += rose_inputProgram5.C
 endif
 
-TESTCODES = 
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testIncludeDirectiveInsertion
+testIncludeDirectiveInsertion_SOURCES = testIncludeDirectiveInsertion.C
 
-#     inputProgram1.C \
-#     inputProgram2.C \
-#     inputProgram3.C
+TEST_TARGETS += IncludeDirectiveInsertion.passed
+IncludeDirectiveInsertion.passed: inputProgram6.C testIncludeDirectiveInsertion
+	@$(RTH_RUN) \
+		CMD="./testIncludeDirectiveInsertion -rose:verbose 0 -I$(srcdir) $(TAU_INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
-# Build the list of object files
-TEST_Objects = ${TESTCODES:.C=.o}
+EXTRA_DIST += inputProgram6.C
+MOSTLYCLEANFILES += rose_inputProgram6.C rose_transformation_1_inputProgram6.C
+endif
 
-# ROSE_FLAGS = -rose:dot -rose:test 6 -rose:outputGrammarTreeFiles -rose:outputGrammarTreeFilesForHeaderFiles
-# ROSE_FLAGS = -rose:test 6
-# ROSE_FLAGS = -rose:verbose 4
-ROSE_FLAGS =
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testRewritePermutations
+noinst_HEADERS += testNewRewrite.h
+testRewritePermutations_SOURCES = testNewRewrite.C testRewritePermutations.C
 
-# This rule generates a dependency that forces the "make check" 
-# test to always compile the test code
-FORCE_TEST_CODES_TO_RUN:
+# broken: inputDeclarationTest.C is not in the ROSE source tree, so we can't have it as a dependency [RPM 2012-09-25]
+TEST_TARGETS += testAccumulatedAttribute.passed
+testAccumulatedAttribute.passed: testRewritePermutations
+	@$(RTH_RUN) \
+		DISABLED="AST rewrite mechanism still has a bug [DQ 8/6/2005]" \
+		CMD="./testRewritePermutations -rose:verbose 0 -E $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputDeclarationTest.C" \
+		$(TEST_EXIT_STATUS) $@
+#EXTRA_DIST += inputDeclarationTest.C
+MOSTLYCLEANFILES += rose_inputDeclarationTest.C
 
-$(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN \
-                 testRewriteReplacementPermutations \
-                 testRewritePermutations \
-                 HighLevelInterfaceTest \
-                 MidLevelInterfaceTest \
-                 CommentInsertion \
-                 IncludeDirectiveInsertion
+TEST_TARGETS += RewritePermutations.passed
+RewritePermutations.passed: inputProgram1.C testRewritePermutations
+	@$(RTH_RUN) \
+		DISABLED="commented out in the original makefile" \
+		CMD="./testRewritePermutations $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
-# DQ (12/5/2007): Skip these.
-# testRewritePermutations
+EXTRA_DIST += inputProgram1.C
+MOSTLYCLEANFILES += rose_inputProgram1.C
+endif
 
-# DQ (8/6/2005): Comment these out while we test other work
-# This test currently fails because the AST Rewrite Mechanism still has a bug. So skip this test.
-# This rule is run after automake's internal check rule (which we don't want to use)
-# check-local: FORCE_TEST_CODES_TO_RUN testRewriteReplacementPermutations testRewritePermutations HighLevelInterfaceTest MidLevelInterfaceTest IncludeDirectiveInsertion
-check-local: $(TEST_EXECUTABLES)
-	@echo "**************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/astRewriteTests: make check rule complete (terminated normally) ******"
-	@echo "**************************************************************************************************"
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testMidLevelInterface
+testMidLevelInterface_SOURCES = testMidLevelInterface.C
 
+TEST_TARGETS += localMidLevelInterfaceTest.passed
+midLevelInterface_includes = -I$(srcdir) -I/home/bmiller/SOFTWARE/tau-2.12.9/include $(INCLUDES)
+localMidLevelInterfaceTest.passed: inputProgram2.C testMidLevelInterface
+	@$(RTH_RUN) \
+		DISABLED="not executed in the original makefile" \
+		CMD="./testMidLevelInterface -rose:verbose 0 $(ROSE_FLAGS) $(midLevelInterface_includes) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
-#$(MAKE) $(TEST_Objects)
+EXTRA_DIST += inputProgram2.C
+MOSTLYCLEANFILES += rose_inputProgram2.C
+endif
 
-testAccumulatedAttribute: testRewritePermutations
-	./testRewritePermutations -rose:verbose 0 -E $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputDeclarationTest.C
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testRewriteReplacementPermutations
+testRewriteReplacementPermutations_SOURCES = testNewRewrite.C testRewriteReplacementPermutations.C
 
-testExamples: testExample1
-	./testExample1 $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputProgram1.C
+TEST_TARGETS += RewriteReplacementPermutations.passed
+RewriteReplacementPermutations.passed: inputProgram4.C testRewriteReplacementPermutations
+	@$(RTH_RUN) \
+		DISABLED="fails because the AST rewrite mechanism still has a bug [DQ 8/6/2005]" \
+		CMD="./testRewriteReplacementPermutations $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
-PrefixAndSuffixTest: testDeclarationPrefixGeneration
-	./testDeclarationPrefixGeneration $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/testDeclarationPrefixGeneration_testCode.C
+EXTRA_DIST += inputProgram4.C
+MOSTLYCLEANFILES += rose_inputProgram4.C
+endif
 
-PrefixAndSuffixTestNewEDGFrontEnd: testDeclarationPrefixGeneration
-	./testDeclarationPrefixGeneration -rose:test 2 $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/testDeclarationPrefixGeneration_testCode.C
-
-PrefixAndSuffixTestKCCFrontEnd: testDeclarationPrefixGeneration
-	./testDeclarationPrefixGeneration -rose:test 1 $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/testDeclarationPrefixGeneration_testCode.C
-
-# Make a special rule to compile the testMidLevelInterface.o file since we want it 
-# to depend upon some of the template files and this dependence can't be expressed 
-# within automake (or so it seems).
-#testMidLevelInterface.o: $(TemplateSourceFiles)
-#	@echo "removing the testMidLevelInterface.o file so it can be recompiled (to include modified template code) ..."
-#	rm -f testMidLevelInterface.o
-#	@echo "Explicitly recompiling the testMidLevelInterface.o file so it will include modified template code ..."
-#	$(CXXCOMPILE) -c -o testMidLevelInterface.o `test -f testMidLevelInterface.C || echo '$(srcdir)/'`testMidLevelInterface.C
-# testMidLevelInterface.o: $(TemplateSourceFiles)
-
-# Force the object file to be recompiles, not just the executable to be relinked
-# testDeclarationPrefixGeneration.o: \
-#     $(top_srcdir)/AstProcessingLib/AstReverseTraverseSourceSequence.h \
-#     $(top_srcdir)/AstProcessingLib/AstTraverseToRoot.h
-
-# Old way: VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=yes --error-limit=no --show-reachable=yes
-# VALGRIND_OPTIONS = 
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
-
-localMidLevelInterfaceTest: testMidLevelInterface
-	@echo "Running MidLevelInterface Test Code ..."
-	$(VALGRIND) ./testMidLevelInterface -rose:verbose 0 $(ROSE_FLAGS) -I$(srcdir) -I/home/bmiller/SOFTWARE/tau-2.12.9/include $(INCLUDES) -c $(srcdir)/inputProgram2.C
-	cp -rf rose_inputProgram2.C rose_inputProgram2-testMidLevelInterface.C
-	@echo "DONE: Running MidLevelInterface Test Code ..."
-
-HighLevelInterfaceTest: RewritePermutations RewriteReplacementPermutations
-MidLevelInterfaceTest: ReplaceStatements RemoveStatements
-
-RewritePermutations: testRewritePermutations
-	: remove this so that we can force the examples to be run
-#	$(VALGRIND) ./testRewritePermutations $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputProgram1.C
-#	cp -rf rose_inputProgram1.C rose_inputProgram1-testRewritePermutations.C
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testReplacementStatements
+testReplacementStatements_SOURCES = testReplacementStatements.C
 
 # DQ (7/19/2005): Uncommented so that we can test it with AST Merge mechanism and fix any other problems.
 # DQ (12/6/2004): Note current rewrite mechanism is not working  (even though other tests pass) because the scopes
 # of newly generated IR nodes fron the string based AST generation do not have scopes set correctly!
 # Also the EDG memory can not be freed for the rewrite system to work!
-ReplaceStatements: testReplacementStatements
-	: remove this so that we can force the examples to be run
-	@echo "Skipping ReplaceStatements test because it fails until we update scopes of statements added by rewrite system!"
-#	$(VALGRIND) ./testReplacementStatements $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputProgram2.C
-#	cp -rf rose_inputProgram2.C rose_inputProgram2-testReplacementStatements.C
+TEST_TARGETS += ReplaceStatements.passed
+ReplaceStatements.passed: inputProgram2.C testReplacementStatements
+	@$(RTH_RUN) \
+		DISABLED="fails until we update scopes of statements added by rewrite system [DQ 12/6/2004]" \
+		CMD="./testReplacementStatements $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
 
-RemoveStatements: testRemoveStatements
-	: remove this so that we can force the examples to be run
-#	./testRemoveStatements $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputProgram3.C
-#	cp -rf rose_inputProgram3.C rose_inputProgram3-testRemoveStatements.C
+EXTRA_DIST += inputProgram2.C
+MOSTLYCLEANFILES += rose_inputProgram2.C
+endif
 
-RewriteReplacementPermutations: testRewriteReplacementPermutations
-	: remove this so that we can force the examples to be run
-#	./testRewriteReplacementPermutations $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputProgram4.C
-#	cp -rf rose_inputProgram4.C rose_inputProgram4-testRewriteReplacementPermutations.C
-	echo "Commented out call to testRewriteReplacementPermutations ..."
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testRemoveStatements
+testRemoveStatements_SOURCES = testRemoveStatements.C
 
+TEST_TARGETS += RemoveStatements.passed
+RemoveStatements.passed: inputProgram3.C testRemoveStatements
+	@$(RTH_RUN) \
+		DISABLED="commented out in original makefile" \
+		CMD="./testRemoveStatements $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
+
+EXTRA_DIST += inputProgram3.C
+MOSTLYCLEANFILES += rose_inputProgram3.C
+endif
+
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testExample1
+testExample1_SOURCES = testExample1.C
+
+TEST_TARGETS += testExamples.passed
+testExamples.passed: inputProgram1.C testExample1
+	@$(RTH_RUN) \
+		DISABLED="not executed by the original makefile" \
+		CMD="./testExample1 $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
+
+EXTRA_DIST += inputProgram1.C
+MOSTLYCLEANFILES += rose_inputProgram1.C
+endif
+
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testDeclarationPrefixGeneration
+testDeclarationPrefixGeneration_SOURCES = testDeclarationPrefixGeneration.C
+
+TEST_TARGETS += PrefixAndSuffixTest.passed PrefixAndSuffixTestNewEDGFrontEnd.passed PrefixAndSuffixTestKCCFrontEnd.passed
+
+PrefixAndSuffixTest.passed: testDeclarationPrefixGeneration_testCode.C testDeclarationPrefixGeneration
+	@$(RTH_RUN) \
+		DISABLED="not executed by the original makefile" \
+		CMD="./testDeclarationPrefixGeneration $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
+PrefixAndSuffixTestNewEDGFrontEnd.passed: testDeclarationPrefixGeneration_testCode.C testDeclarationPrefixGeneration
+	@$(RTH_RUN) \
+		DISABLED="not executed by the original makefile" \
+		CMD="./testDeclarationPrefixGeneration -rose:test 2 $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
+PrefixAndSuffixTestKCCFrontEnd.passed: testDeclarationPrefixGeneration_testCode.C testDeclarationPrefixGeneration
+	@$(RTH_RUN) \
+		DISABLED="not executed by the original makefile" \
+		CMD="./testDeclarationPrefixGeneration -rose:test 1 $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
+
+EXTRA_DIST += testDeclarationPrefixGeneration_testCode.C
+MOSTLYCLEANFILES += rose_testDeclarationPrefixGeneration_testCode.C
+endif
+
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += tauifyPreprocessor
 tauifyPreprocessor_SOURCES = tauifyPreprocessor.C TauMidTraversal.h
-
-# Force tauifyPreprocessor.C to be recompiled when TauMidTraversal.h is modified
 tauifyPreprocessor.o : $(srcdir)/tauTestProgram.C TauMidTraversal.h
 
-testMillerBug: tauifyPreprocessor $(srcdir)/tauTestProgram.C $(srcdir)/TauMidTraversal.h
-	./tauifyPreprocessor $(INCLUDES) -c $(srcdir)/tauTestProgram.C
+TEST_TARGETS += testMillerBug.passed
+testMillerBug.passed: tauTestProgram.C TauMidTraversal.h tauifyPreprocessor
+	@$(RTH_RUN) \
+		DISABLED="not executed by the original makefile" \
+		CMD="./tauifyPreprocessor $(INCLUDES) -c $<" \
+		$(TEST_EXIT_STATUS) $@
+EXTRA_DIST += tauTestProgram.C
+MOSTLYCLEANFILES += rose_tauTestProgram.C
 
-CommentInsertion: testCommentInsertion $(srcdir)/testCommentInsertion.C
-	./testCommentInsertion $(INCLUDES) -c $(srcdir)/inputProgram5.C
+TEST_TARGETS += testTAU.passed
+testTAU.passed: $(srcdir)/tauExample.C
+	@$(RTH_RUN) \
+		DISABLED="not executed by the original makefile" \
+		CMD="g++ -I$(top_srcdir)/tutorial/TAU_INCLUDE_DIR $(TAU_INCLUDES) -o tauExample.o -c $<" \
+		$(TEST_EXIT_STATUS) $@
+EXTRA_DIST += tauExample.C
+MOSTLYCLEANFILES += rose_tauExample.C
+endif
 
-# TAU_INCLUDES = -I/home/dquinlan/TAU/tau-2.15.1/include
-TAU_INCLUDES = -I$(top_srcdir)/tutorial/TAU_INCLUDE_DIR
-IncludeDirectiveInsertion: testIncludeDirectiveInsertion $(srcdir)/testIncludeDirectiveInsertion.C
-	./testIncludeDirectiveInsertion -rose:verbose 0 -I$(srcdir) $(TAU_INCLUDES) -c $(srcdir)/inputProgram6.C
+EXTRA_DIST += tauProtos.h 
+#------------------------------------------------------------------------------------------------------------------------
+if !ROSE_BUILD_OS_IS_CYGWIN
+noinst_PROGRAMS += testTranslator2004_01
+testTranslator2004_01_SOURCES = testTranslator2004_01.C
 
-testTAU: $(srcdir)/tauExample.C
-	g++ $(TAU_INCLUDES) -o tauExample.o -c $(srcdir)/tauExample.C
+TEST_TARGETS += testTranslator2004_01.passed
+testTranslator2004_01.passed:
+	@$(RTH_RUN) \
+		DISABLED="not tested by the original makefile" \
+		CMD=false \
+		$(TEST_EXIT_STATUS) $@
+endif
 
-EXTRA_DIST = \
-     $(TESTCODES) \
-     inputProgram1.C \
-     inputProgram2.C \
-     inputProgram3.C \
-     inputProgram4.C \
-     inputProgram5.C \
-     inputProgram6.C \
-     tauTestProgram.C \
-     tauProtos.h
+#------------------------------------------------------------------------------------------------------------------------
+# Automake boilerplate
 
-clean_test:
-	rm -rf a.out testNewRewrite.o testRewritePermutations.o testRewriteReplacementPermutations.o testExample1.o testDeclarationPrefixGeneration.o
+check-local: $(TEST_TARGETS)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+clean-local:
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)

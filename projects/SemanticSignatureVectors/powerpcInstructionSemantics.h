@@ -1,8 +1,14 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NOTE: This project-specific implementation of PowerPC instruction semantics based on API1 of x86 instruction semantics
+//       served as a basis for the API2 PowerPC semantics.  The implementation here should be considered deprecated, even
+//       though it's used only by this project. It was apparently cut-n-pasted from the assemblyToSourceAst project
+//       anyway. [Robb P. Matzke 2013-05-24]
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 #define ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 
 //#include "rose.h"
-#include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -74,21 +80,13 @@ struct PowerpcInstructionSemantics {
            return readMemory<32>(readEffectiveAddress(e),policy.true_());
          }
 
-      case V_SgAsmByteValueExpression:
-      case V_SgAsmWordValueExpression:
-      case V_SgAsmDoubleWordValueExpression: {
-           uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
-           //std::cerr << "read32 of immediate, returning " << (val & 0xFFFFFFFFULL) << std::endl;
+      case V_SgAsmIntegerValueExpression: {
+           uint64_t val = isSgAsmIntegerValueExpression(e)->get_value();
            return number<32>(val & 0xFFFFFFFFULL);
       }
 
-      case V_SgAsmQuadWordValueExpression: {
-        uint64_t val = isSgAsmQuadWordValueExpression(e)->get_value();
-        return number<32>(val & 0xFFFFFFFFULL);
-      }
-
-      case V_SgAsmPowerpcRegisterReferenceExpression: {
-        SgAsmPowerpcRegisterReferenceExpression* ref = isSgAsmPowerpcRegisterReferenceExpression(e);
+      case V_SgAsmDirectRegisterExpression: {
+        SgAsmDirectRegisterExpression* ref = isSgAsmDirectRegisterExpression(e);
         ROSE_ASSERT(ref != NULL);
         switch(ref->get_descriptor().get_major())
            {
@@ -110,7 +108,7 @@ struct PowerpcInstructionSemantics {
              default:
                 {
                   fprintf(stderr, "Bad register class %s\n",
-                          stringifyX86RegisterClass(ref->get_descriptor().get_major(), "x86_regclass_").c_str());
+                          rose::stringifyX86RegisterClass(ref->get_descriptor().get_major(), "x86_regclass_").c_str());
                   abort();
                 }
            }
@@ -186,8 +184,8 @@ struct PowerpcInstructionSemantics {
         writeMemory<32>(readEffectiveAddress(e), value, policy.true_());
         break;
       }
-      case V_SgAsmPowerpcRegisterReferenceExpression: {
-        SgAsmPowerpcRegisterReferenceExpression* ref = isSgAsmPowerpcRegisterReferenceExpression(e);
+      case V_SgAsmDirectRegisterExpression: {
+        SgAsmDirectRegisterExpression* ref = isSgAsmDirectRegisterExpression(e);
         switch(ref->get_descriptor().get_major())
            {
              case powerpc_regclass_gpr:
@@ -208,7 +206,7 @@ struct PowerpcInstructionSemantics {
              default:
                 {
                     fprintf(stderr, "Bad register class %s\n",
-                            stringifyPowerpcRegisterClass(ref->get_descriptor().get_major()).c_str());
+                            rose::stringifyPowerpcRegisterClass(ref->get_descriptor().get_major()).c_str());
                   abort();
                 }
            }
@@ -355,11 +353,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            Word(32) RS = read32(operands[1]);
            Word(5) SH = extract<0, 5>(read32(operands[2]));
 
-           SgAsmByteValueExpression* MB = isSgAsmByteValueExpression(operands[3]);
+           SgAsmIntegerValueExpression* MB = isSgAsmIntegerValueExpression(operands[3]);
            ROSE_ASSERT(MB != NULL);
            int mb_value = MB->get_value();
 
-           SgAsmByteValueExpression* ME = isSgAsmByteValueExpression(operands[4]);
+           SgAsmIntegerValueExpression* ME = isSgAsmIntegerValueExpression(operands[4]);
            ROSE_ASSERT(ME != NULL);
 
            int me_value = ME->get_value();
@@ -378,11 +376,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            Word(32) RS = read32(operands[1]);
            Word(5) SH = extract<0, 5>(read32(operands[2]));
 
-           SgAsmByteValueExpression* MB = isSgAsmByteValueExpression(operands[3]);
+           SgAsmIntegerValueExpression* MB = isSgAsmIntegerValueExpression(operands[3]);
            ROSE_ASSERT(MB != NULL);
            int mb_value = MB->get_value();
 
-           SgAsmByteValueExpression* ME = isSgAsmByteValueExpression(operands[4]);
+           SgAsmIntegerValueExpression* ME = isSgAsmIntegerValueExpression(operands[4]);
            ROSE_ASSERT(ME != NULL);
 
            int me_value = ME->get_value();
@@ -403,11 +401,11 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            Word(32) RA = read32(operands[1]);
            Word(5) SH = extract<0, 5>(read32(operands[2]));
 
-           SgAsmByteValueExpression* MB = isSgAsmByteValueExpression(operands[3]);
+           SgAsmIntegerValueExpression* MB = isSgAsmIntegerValueExpression(operands[3]);
            ROSE_ASSERT(MB != NULL);
            int mb_value = MB->get_value();
 
-           SgAsmByteValueExpression* ME = isSgAsmByteValueExpression(operands[4]);
+           SgAsmIntegerValueExpression* ME = isSgAsmIntegerValueExpression(operands[4]);
            ROSE_ASSERT(ME != NULL);
 
            int me_value = ME->get_value();
@@ -764,7 +762,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
                                  number<3>(4),
                                  number<3>(2)));
 
-           SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
            ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(bf->get_descriptor().get_nbits()==4); /* a field rather than an individual bit */
@@ -802,7 +800,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
                                  number<3>(4),
                                  number<3>(2)));
 
-           SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
            ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(bf->get_descriptor().get_nbits()==4); /* a field rather than individual bit */
@@ -821,7 +819,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
       case powerpc_bc:
          {
            ROSE_ASSERT(operands.size() == 3);
-           SgAsmByteValueExpression* byteValue = isSgAsmByteValueExpression(operands[0]);
+           SgAsmIntegerValueExpression* byteValue = isSgAsmIntegerValueExpression(operands[0]);
            ROSE_ASSERT(byteValue != NULL);
            uint8_t boConstant = byteValue->get_value();
 
@@ -838,7 +836,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            Word(1) CTR_ok = BO_2 ? policy.true_() : BO_3 ? policy.equalToZero(policy.readSPR(powerpc_spr_ctr)) : policy.invert(policy.equalToZero(policy.readSPR(powerpc_spr_ctr)));
 
-           SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
+           SgAsmRegisterReferenceExpression* BI = isSgAsmRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
            ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(BI->get_descriptor().get_nbits()==1);
@@ -876,7 +874,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
       case powerpc_bclr:
          {
            ROSE_ASSERT(operands.size() == 3);
-           SgAsmByteValueExpression* byteValue = isSgAsmByteValueExpression(operands[0]);
+           SgAsmIntegerValueExpression* byteValue = isSgAsmIntegerValueExpression(operands[0]);
            ROSE_ASSERT(byteValue != NULL);
            uint8_t boConstant = byteValue->get_value();
 
@@ -893,7 +891,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            Word(1) CTR_ok = BO_2 ? policy.true_() : BO_3 ? policy.equalToZero(policy.readSPR(powerpc_spr_ctr)) : policy.invert(policy.equalToZero(policy.readSPR(powerpc_spr_ctr)));
 
-           SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
+           SgAsmRegisterReferenceExpression* BI = isSgAsmRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
            ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(BI->get_descriptor().get_nbits()==1);
@@ -931,7 +929,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
                                  number<3>(4),
                                  number<3>(2)));
 
-           SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
            ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(bf->get_descriptor().get_nbits()==1);
@@ -1009,7 +1007,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
                                  number<3>(4),
                                  number<3>(2)));
 
-           SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(bf != NULL);
            ROSE_ASSERT(bf->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(bf->get_descriptor().get_nbits()==4);
@@ -1132,14 +1130,14 @@ build_mask(uint8_t mb_value, uint8_t me_value)
       case powerpc_bcctr:
          {
            ROSE_ASSERT(operands.size() == 3);
-           SgAsmByteValueExpression* byteValue = isSgAsmByteValueExpression(operands[0]);
+           SgAsmIntegerValueExpression* byteValue = isSgAsmIntegerValueExpression(operands[0]);
            ROSE_ASSERT(byteValue != NULL);
            uint8_t boConstant = byteValue->get_value();
 
            bool BO_1 = boConstant & 0x8;
            bool BO_0 = boConstant & 0x10;
 
-           SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
+           SgAsmRegisterReferenceExpression* BI = isSgAsmRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
            ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(BI->get_descriptor().get_nbits()==1);
@@ -1158,14 +1156,14 @@ build_mask(uint8_t mb_value, uint8_t me_value)
       case powerpc_bcctrl:
          {
            ROSE_ASSERT(operands.size() == 3);
-           SgAsmByteValueExpression* byteValue = isSgAsmByteValueExpression(operands[0]);
+           SgAsmIntegerValueExpression* byteValue = isSgAsmIntegerValueExpression(operands[0]);
            ROSE_ASSERT(byteValue != NULL);
            uint8_t boConstant = byteValue->get_value();
 
            bool BO_1 = boConstant & 0x8;
            bool BO_0 = boConstant & 0x10;
 
-           SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
+           SgAsmRegisterReferenceExpression* BI = isSgAsmRegisterReferenceExpression(operands[1]);
            ROSE_ASSERT(BI != NULL);
            ROSE_ASSERT(BI->get_descriptor().get_major() == powerpc_regclass_cr);
            ROSE_ASSERT(BI->get_descriptor().get_nbits()==1);
@@ -1187,7 +1185,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
       case powerpc_sc:
          {
            ROSE_ASSERT(operands.size() == 1);
-           SgAsmByteValueExpression* bv = isSgAsmByteValueExpression(operands[0]);
+           SgAsmIntegerValueExpression* bv = isSgAsmIntegerValueExpression(operands[0]);
            ROSE_ASSERT (bv);
            policy.systemCall(bv->get_value());
            break;
@@ -1199,7 +1197,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            Word(32) effectiveAddress = readEffectiveAddress(operands[1]);
 
-           SgAsmPowerpcRegisterReferenceExpression* RS = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           SgAsmRegisterReferenceExpression* RS = isSgAsmRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(RS != NULL);
            ROSE_ASSERT(RS->get_descriptor().get_major() == powerpc_regclass_gpr);
 
@@ -1221,7 +1219,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            Word(32) effectiveAddress = readEffectiveAddress(operands[1]);
 
-           SgAsmPowerpcRegisterReferenceExpression* RT = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           SgAsmRegisterReferenceExpression* RT = isSgAsmRegisterReferenceExpression(operands[0]);
            ROSE_ASSERT(RT != NULL);
            ROSE_ASSERT(RT->get_descriptor().get_major() == powerpc_regclass_gpr);
 

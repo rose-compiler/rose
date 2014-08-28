@@ -41,8 +41,8 @@ public:
     /** Returns the strings associated with certain variables in the ".dynamic" section. */
     static void get_dynamic_vars(SgAsmGenericHeader*, std::string &rpath/*out*/, std::string &runpath/*out*/);
 
-    /** Perform relocation fixups. See super class. */
-    virtual void fixup(SgAsmInterpretation *interp);
+    // documented in superclass
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) /*override*/;
 
     /* FIXME: These should probably be in SgAsmElfSymver* classes instead. [RPM 2010-09-14] */
     /** Flags for version definitions and requirements. */
@@ -137,6 +137,12 @@ public:
         SgAsmElfSymverDefinedEntry* get_version_def() const {
             return p_version_def;
         }
+
+        /** Print used by operator<<. */
+        void print(std::ostream&) const;
+
+        /** Dump info like for SgAsm* objects. */
+        void dump(FILE*, const char *prefix, ssize_t idx) const;
     };
 
     /** An entry for a SymbolMap.  Each entry holds a list of related versioned symbols, the first of which is the base
@@ -173,6 +179,9 @@ public:
         /** Merge the versions from the specified entry into this entry. */
         void merge(const SymbolMapEntry&);
 
+        /** Print info about this symbol map entry. */
+        void dump(FILE*, const char *prefix) const ;
+
     private:
         const VersionedSymbol& get_base_version() const {
             ROSE_ASSERT(!p_versions.empty());
@@ -190,15 +199,23 @@ public:
          *  found.  The lookup is performed by enclosing the version string in parentheses (if the version is not empty) and
          *  appending it to the symbol name. */
         const SymbolMapEntry *lookup(std::string name, std::string version) const;
+
+        /** Print debugging information about this SymbolMap. */
+        void dump(FILE*, const char *prefix) const;
     };
 
     class SymverResolver {
     public:
-        SymverResolver(SgAsmGenericHeader *header) { ctor(header); }
+        SymverResolver(SgAsmGenericHeader *header) {
+            ctor(header);
+        }
 
         /** Returns the VersionedSymbol corresponding to the specified symbol. The specified symbol must be a member of the
          *  versioned symbol map (or an assertion fails). */
         VersionedSymbol get_versioned_symbol(SgAsmElfSymbol *symbol) const;
+
+        /** Print some info about the resolver. */
+        void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     private:
         /** Helper for constructors. */
@@ -235,6 +252,11 @@ public:
         VersionedSymbolMap p_versionedSymbolMap;
     };
 
+    /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
+     *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
+     *  pointer is returned if no suitable section can be found. */
+    virtual SgAsmGenericSection *find_section_by_preferred_va(SgAsmGenericHeader*, rose_addr_t va);
+
 protected:
     /** Returns mappable sections in a particular order.  Returns ELF Segments in the order they are defined in the segment
      *  table, followed by ELF Sections in the order they are defined in the section table but excluding those sections that
@@ -251,11 +273,6 @@ protected:
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
                                              ConflictResolution *resolve);
-
-    /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
-     *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
-     *  pointer is returned if no suitable section can be found. */
-    virtual SgAsmGenericSection *find_section_by_preferred_va(SgAsmGenericHeader*, rose_addr_t va);
 
     /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information
      *  about all the symbols that might be necessary during that process.  The symbol table describes one entire
@@ -383,5 +400,7 @@ protected:
      *  build_master_symbol_table() and used by various relocation fixups. */
     SymbolMap p_symbols;
 };
+
+std::ostream& operator<<(std::ostream&, const BinaryLoaderElf::VersionedSymbol&);
 
 #endif /*ROSE_BINARYLOADERELF_H*/

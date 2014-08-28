@@ -3,16 +3,16 @@
 
 #include "JavaSourceCodePosition.h"
 
+#include <string>
+
 class Token_t {
     private:
-        std::string text;
-        JavaSourceCodePosition * pos_info;
-        // I don't think I need the token type.
-        // int type;
+        std::string filename;
+        JavaSourceCodePosition *pos_info;
     public:
-        Token_t (std::string s, JavaSourceCodePosition * pos_info);
-        JavaSourceCodePosition * getSourcecodePosition();
-        std::string getText();
+        Token_t (std::string filename, JavaSourceCodePosition *pos_info);
+        JavaSourceCodePosition *getSourcecodePosition();
+        std::string getFileName();
 };
   
 #endif

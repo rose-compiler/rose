@@ -20,15 +20,12 @@ MyTraversal::visit(SgNode* astNode)
 {
     SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(astNode);
     if (fhdr) {
-        SgAsmExecutableFileFormat::ByteOrder oldsex = fhdr->get_sex();
-        SgAsmExecutableFileFormat::ByteOrder newsex = 
-            oldsex==SgAsmExecutableFileFormat::ORDER_LSB ?
-            SgAsmExecutableFileFormat::ORDER_MSB :
-            SgAsmExecutableFileFormat::ORDER_LSB;
+        ByteOrder::Endianness oldsex = fhdr->get_sex();
+        ByteOrder::Endianness newsex = oldsex==ByteOrder::ORDER_LSB ? ByteOrder::ORDER_MSB : ByteOrder::ORDER_LSB;
 
         printf("*** Changing ELF header byte order from %s to %s\n",
-               oldsex==SgAsmExecutableFileFormat::ORDER_LSB?"little endian":"big endian", 
-               newsex==SgAsmExecutableFileFormat::ORDER_LSB?"little endian":"big endian");
+               oldsex==ByteOrder::ORDER_LSB?"little endian":"big endian", 
+               newsex==ByteOrder::ORDER_LSB?"little endian":"big endian");
         
         fhdr->get_exec_format()->set_sex(newsex);
     }

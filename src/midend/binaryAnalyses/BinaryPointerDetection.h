@@ -2,10 +2,10 @@
 #define ROSE_BinaryPointerDetection_H
 
 #include "SymbolicSemantics.h"
-#include "WorkList.h"
+#include "WorkLists.h"
 #include "YicesSolver.h"
 
-// documented elsewhere
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Binary pointer analyses. Various analyses for pointer variables in binary specimens. */
@@ -24,10 +24,10 @@ enum PointerType {UNKNOWN_PTR=0x000,            /**< Pointer variable is of unkn
 template <
     template <size_t> class ValueType
     >
-class PointerDetectionState: public BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State<ValueType> {
+class PointerDetectionState: public InstructionSemantics::SymbolicSemantics::State<ValueType> {
 public:
-    typedef BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State<ValueType> Super;
-    typedef BinaryAnalysis::InstructionSemantics::SymbolicSemantics::MemoryCell<ValueType> MemoryCell;
+    typedef InstructionSemantics::SymbolicSemantics::State<ValueType> Super;
+    typedef InstructionSemantics::SymbolicSemantics::MemoryCell<ValueType> MemoryCell;
 
     PointerDetectionState() {}
 
@@ -37,7 +37,7 @@ public:
         SMTSolver *solver;
         MemoryCellComparator(const ValueType<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
         bool operator()(const MemoryCell &elmt) {
-            return elmt.address().get_expression()->equal_to(address.get_expression(), solver);
+            return elmt.address().get_expression()->must_equal(address.get_expression(), solver);
         }
     };
 
@@ -101,7 +101,7 @@ public:
     // change is made).  Returns 1 if the merge operation changes the first argument, zero if no change is made.
     template<size_t nBits>
     size_t merge_value(ValueType<nBits> &inout, const ValueType<nBits> &other, SMTSolver *smt_solver) {
-        if (inout.get_expression()->equal_to(other.get_expression(), smt_solver))
+        if (inout.get_expression()->must_equal(other.get_expression(), smt_solver))
             return 0;
         InsnSemanticsExpr::LeafNodePtr inout_leaf = inout.get_expression()->isLeafNode();
         if (inout_leaf && inout_leaf->is_variable())
@@ -138,8 +138,8 @@ public:
  *  method that takes a single rose_addr_t virtual address and returns  the instruction at that address.  The analysis is run
  *  by calling its analyze() method, after which results can be queried.
  *
- *  The pointer detection normally uses the BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType, but the user
- *  can specify any other compatible value type as a second template argument.
+ *  The pointer detection normally uses the rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType, but the
+ *  user can specify any other compatible value type as a second template argument.
  *
  *  @section Ex1 Example
  *
@@ -150,7 +150,7 @@ public:
  *  // RSIM_Process can be any class that provides a get_instruction() method. In this case
  *  // it is a class that comes from the binary simulator.   The thread->get_process() expression
  *  // returns an instance of the RSIM_Process class. 
- *  typedef BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process> PointerDetector;
+ *  typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process> PointerDetector;
  *  SMTSolver *smt_solver =  YicesSolver::available_linkage() ? new YicesSolver : NULL;
  *  PointerDetector analyzer(thread->get_process(), smt_solver);
  *
@@ -169,7 +169,7 @@ public:
  */
 template <
     class InstructionProvidor,
-    template <size_t> class ValueType = BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
+    template <size_t> class ValueType = InstructionSemantics::SymbolicSemantics::ValueType
     >
 class PointerDetection {
 public:
@@ -204,7 +204,7 @@ protected:
             SMTSolver *solver;
             Comparator(const ValueType<32> &addr, SMTSolver *solver=NULL): addr(addr), solver(solver) {}
             bool operator()(const Pointer &elmt) {
-                return elmt.address.get_expression()->equal_to(addr.get_expression(), solver);
+                return elmt.address.get_expression()->must_equal(addr.get_expression(), solver);
             }
         };
 
@@ -230,7 +230,7 @@ protected:
 
 protected:
     // Parent class of our own instruction semantics policy
-    typedef BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<PointerDetectionState, ValueType> SuperPolicy;
+    typedef InstructionSemantics::SymbolicSemantics::Policy<PointerDetectionState, ValueType> SuperPolicy;
 
     // Instruction semantics policy used internally by PointerDetection analysis. */
     class PointerDetectionPolicy: public SuperPolicy {
@@ -241,7 +241,7 @@ protected:
 
         // This is the set of all instructions that define addresses that are used to dereference memory through the DS register.
         // New instructions are added to this set as we discover them.
-        BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet *addr_definers;
+        InstructionSemantics::SymbolicSemantics::InsnSet *addr_definers;
 
         explicit PointerDetectionPolicy(PointerDetectionInfo *info, SMTSolver *solver=NULL, FILE *debug=NULL)
             : info(info), debug(debug) {
@@ -277,8 +277,8 @@ protected:
         // Remember the defining instructions.  The @p defs are the set of instructions that were used to define an expression
         // that is being dereferenced.  These instructions are added to this policy's list of instructions that define a
         // pointer value.
-        void mark_addr_definers(const BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet &defs, PointerType type) {
-            for (BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet::const_iterator di=defs.begin();
+        void mark_addr_definers(const InstructionSemantics::SymbolicSemantics::InsnSet &defs, PointerType type) {
+            for (InstructionSemantics::SymbolicSemantics::InsnSet::const_iterator di=defs.begin();
                  di!=defs.end(); ++di) {
                 if (debug)
                     fprintf(debug, " 0x%08"PRIx64, (*di)->get_address());
@@ -304,7 +304,7 @@ protected:
         //
         //   mov eax, DWORD PTR ds:[0x080c0338]
         void dereference(const ValueType<32> &addr, PointerType type, const std::string &desc) {
-            BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet defs = addr.get_defining_instructions();
+            InstructionSemantics::SymbolicSemantics::InsnSet defs = addr.get_defining_instructions();
             defs.erase(this->cur_insn); // see note above
             if (!defs.empty()) {
                 if (debug)
@@ -360,14 +360,14 @@ protected:
         // writes to the EIP register that are indicative of dereferencing a code pointer.
         template<size_t Len>
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
-            if (0==info->pass && !value.is_known() && reg.equal(this->findRegister("eip", 32))) {
+            if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
                 InsnSemanticsExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
                 if (inode!=NULL && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
                     inode->child(1)->is_known() && inode->child(2)->is_known()) {
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
                     // there is no code pointer involved here.
                 } else {
-                    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet defs = value.get_defining_instructions();
+                    InstructionSemantics::SymbolicSemantics::InsnSet defs = value.get_defining_instructions();
                     if (!defs.empty()) {
                         if (debug)
                             fprintf(debug, "PointerDetection:   EIP write depends on insn%s at", 1==defs.size()?"":"s");
@@ -389,7 +389,7 @@ protected:
 
 public:
     /** Binary instruction semantics used by this analysis. */
-    typedef BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<PointerDetectionPolicy, ValueType> Semantics;
+    typedef InstructionSemantics::X86InstructionSemantics<PointerDetectionPolicy, ValueType> Semantics;
 
     /** Machine state used by this analysis. */
     typedef std::map<rose_addr_t, PointerDetectionPolicy> StateMap;
@@ -429,7 +429,7 @@ public:
         bool retval = false;
         SMTSolver *solver = YicesSolver::available_linkage() ? new YicesSolver : NULL;
         for (typename Pointers::const_iterator pi=info.pointers.begin(); pi!=info.pointers.end() && !retval; ++pi)
-            retval = va.get_expression()->equal_to(pi->address.get_expression(), solver);
+            retval = va.get_expression()->must_equal(pi->address.get_expression(), solver);
         delete solver;
         return retval;
     }
@@ -445,7 +445,7 @@ public:
      * follow control flow outside @p addrspc.  If @p addrspc is empty then no control flow pruning is performed. */ 
     void analyze(rose_addr_t start_va, ExtentMap &addrspc) {
         if (debug) {
-            fprintf(debug, "BinaryAnalysis::PointerAnalysis::PointerDetection (a.k.a., PointerDetection): starting\n");
+            fprintf(debug, "rose::BinaryAnalysis::PointerAnalysis::PointerDetection (a.k.a., PointerDetection): starting\n");
             fprintf(debug, "PointerDetection: starting at 0x%08"PRIx64"\n", start_va);
             if (!addrspc.empty()) {
                 std::ostringstream ss; ss <<addrspc;
@@ -554,6 +554,7 @@ public:
     }
 };
 
+} // namespace
 } // namespace
 } // namespace
 

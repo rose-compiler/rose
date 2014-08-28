@@ -4,6 +4,40 @@
  * manage string table free lists, among other things. */
 
 #include "sage3basic.h"
+#include <boost/foreach.hpp>
+
+Extent toExtent(const AddressInterval &x) {
+    return x.isEmpty() ? Extent() : Extent::inin(x.least(), x.greatest());
+}
+
+AddressInterval toAddressInterval(const Extent &x) {
+    return x.empty() ? AddressInterval() : AddressInterval::hull(x.first(), x.last());
+}
+
+ExtentMap toExtentMap(const AddressIntervalSet &x) {
+    ExtentMap retval;
+    BOOST_FOREACH (const AddressInterval &interval, x.nodes())
+        retval.insert(toExtent(interval));
+    return retval;
+}
+
+AddressIntervalSet toAddressIntervalSet(const ExtentMap &x) {
+    AddressIntervalSet retval;
+    for (ExtentMap::const_iterator iter=x.begin(); iter!=x.end(); ++iter)
+        retval.insert(toAddressInterval(iter->first));
+    return retval;
+}
+
+std::ostream& operator<<(std::ostream &out, const AddressInterval &x) {
+    if (x.isEmpty()) {
+        out <<"empty";
+    } else if (x.isSingleton()) {
+        out <<StringUtility::addrToString(x.least());
+    } else {
+        out <<"[" <<StringUtility::addrToString(x.least()) <<"," <<StringUtility::addrToString(x.greatest()) <<"]";
+    }
+    return out;
+}
 
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:
@@ -130,6 +164,20 @@ ExtentMap::exists_all(ExtentPair what) const
     return true;
 }
 #endif
+
+void
+ExtentMap::dump_extents(std::ostream &o, const std::string &prefix, const std::string &label) const
+{
+    using namespace StringUtility;
+    size_t idx=0;
+    for (const_iterator i=begin(); i!=end(); ++i, ++idx) {
+        o <<prefix <<(label.empty()?std::string("Extent"):label) <<"[" <<idx <<"]"
+          <<" = offset " <<unsignedToHex(i->first.first())
+          <<" for " <<unsignedToHex(i->first.size()) <<(1==i->first.size()?" byte":" bytes")
+          <<" ending at " <<unsignedToHex(i->first.first() + i->first.size()) <<"\n";
+    }
+}
+    
 
 /** Print info about an extent map. This is a little different format than the ostream "<<" operator. */
 void

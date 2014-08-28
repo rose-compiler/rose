@@ -6,6 +6,13 @@
 
 #include <errno.h>
 
+#ifdef _MSC_VER
+#define strtoull _strtoui64
+#endif
+
+namespace rose {
+namespace BinaryAnalysis {
+
 using namespace InsnSemanticsExpr;
 
 void
@@ -48,6 +55,11 @@ YicesSolver::available_linkage()
 SMTSolver::Satisfiable
 YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 {
+    clear_evidence();
+    Satisfiable retval = trivially_satisfiable(exprs);
+    if (retval!=SAT_UNKNOWN)
+        return retval;
+
 #ifdef ROSE_HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
 
@@ -292,7 +304,7 @@ YicesSolver::out_define(std::ostream &o, const TreeNodePtr &tn, Definitions *def
             o <<"(define m" <<ln->get_name() <<"::(-> (bitvector 32) (bitvector " <<ln->get_nbits() <<")))\n";
         }
     } else if (in) {
-        for (size_t i=0; i<in->size(); i++)
+        for (size_t i=0; i<in->nchildren(); i++)
             out_define(o, in->child(i), defns);
     }
 }
@@ -319,12 +331,15 @@ YicesSolver::out_number(std::ostream &o, const TreeNodePtr &tn)
 void
 YicesSolver::out_expr(std::ostream &o, const TreeNodePtr &tn)
 {
-    using namespace InsnSemanticsExpr;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
-            o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+            if (ln->get_nbits() <= 64) {
+                o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+            } else {
+                o <<"0b" <<ln->get_bits().toBinary();
+            }
         } else if (ln->is_memory()) {
             o <<"m" <<ln->get_name();
         } else {
@@ -385,7 +400,7 @@ void
 YicesSolver::out_unary(std::ostream &o, const char *opname, const InternalNodePtr &in)
 {
     assert(opname && *opname);
-    assert(in && 1==in->size());
+    assert(in && 1==in->nchildren());
 
     o <<"(" <<opname <<" ";
     out_expr(o, in->child(0));
@@ -397,7 +412,7 @@ void
 YicesSolver::out_binary(std::ostream &o, const char *opname, const InternalNodePtr &in)
 {
     assert(opname && *opname);
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
 
     o <<"(" <<opname <<" ";
     out_expr(o, in->child(0));
@@ -419,7 +434,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const InternalNodeP
 void
 YicesSolver::out_ite(std::ostream &o, const InternalNodePtr &in)
 {
-    assert(in && 3==in->size());
+    assert(in && 3==in->nchildren());
     assert(in->child(0)->get_nbits()==1);
     o <<"(ite (=";
     out_expr(o, in->child(0));
@@ -437,14 +452,14 @@ void
 YicesSolver::out_la(std::ostream &o, const char *opname, const InternalNodePtr &in, bool identity_element)
 {
     assert(opname && *opname);
-    assert(in && in->size()>=1);
+    assert(in && in->nchildren()>=1);
 
-    for (size_t i=1; i<std::max((size_t)2, in->size()); i++)
+    for (size_t i=1; i<std::max((size_t)2, in->nchildren()); i++)
         o <<"(" <<opname <<" ";
     out_expr(o, in->child(0));
 
-    if (in->size()>1) {
-        for (size_t i=1; i<in->size(); i++) {
+    if (in->nchildren()>1) {
+        for (size_t i=1; i<in->nchildren(); i++) {
             o <<" ";
             out_expr(o, in->child(i));
             o <<")";
@@ -460,7 +475,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const InternalNodePtr &
 void
 YicesSolver::out_la(std::ostream &o, const char *opname, const InternalNodePtr &in)
 {
-    if (in->size()==1) {
+    if (in->nchildren()==1) {
         out_unary(o, opname, in);
     } else {
         out_la(o, opname, in, false);
@@ -471,7 +486,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const InternalNodePtr &
 void
 YicesSolver::out_extract(std::ostream &o, const InternalNodePtr &in)
 {
-    assert(in && 3==in->size());
+    assert(in && 3==in->nchildren());
     assert(in->child(0)->is_known());
     assert(in->child(1)->is_known());
     assert(in->child(0)->get_value() < in->child(1)->get_value());
@@ -488,7 +503,7 @@ YicesSolver::out_extract(std::ostream &o, const InternalNodePtr &in)
 void
 YicesSolver::out_sext(std::ostream &o, const InternalNodePtr &in)
 {
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices bv-sign-extend needs a number for the second operand*/
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
     size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
@@ -504,8 +519,7 @@ YicesSolver::out_sext(std::ostream &o, const InternalNodePtr &in)
 void
 YicesSolver::out_uext(std::ostream &o, const InternalNodePtr &in)
 {
-    using namespace InsnSemanticsExpr;
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
     size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
@@ -521,7 +535,7 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const InternalNodePt
                        bool newbits)
 {
     assert(opname && *opname);
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
 
     o <<"(" <<opname <<(newbits?"1":"0") <<" ";
@@ -541,7 +555,7 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const InternalNodePt
 void
 YicesSolver::out_asr(std::ostream &o, const InternalNodePtr &in)
 {
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     TreeNodePtr vector = in->child(1);
     uint64_t vector_size = vector->get_nbits();
     assert(in->child(0)->is_known());
@@ -569,7 +583,7 @@ YicesSolver::out_asr(std::ostream &o, const InternalNodePtr &in)
 void
 YicesSolver::out_zerop(std::ostream &o, const InternalNodePtr &in)
 {
-    assert(in && 1==in->size());
+    assert(in && 1==in->nchildren());
     o <<"(ite (= (mk-bv " <<in->child(0)->get_nbits() <<" 0) ";
     out_expr(o, in->child(0));
     o <<") 0b1 0b0)";
@@ -632,7 +646,7 @@ YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
             assert(bvtype);
             char name[64];
             snprintf(name, sizeof name, "v%"PRIu64, ln->get_name());
-            yices_var_decl vdecl = yices_mk_var_decl(context, name, bvtype);
+            yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(context, name, bvtype);
             assert(vdecl);
         }
     } else if (ln && ln->is_memory()) {
@@ -644,11 +658,11 @@ YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
             assert(ftype);
             char name[64];
             snprintf(name, sizeof name, "m%"PRIu64, ln->get_name());
-            yices_var_decl vdecl = yices_mk_var_decl(context, name, ftype);
+            yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(context, name, ftype);
             assert(vdecl);
         }
     } else if (in) {
-        for (size_t i=0; i<in->size(); i++)
+        for (size_t i=0; i<in->nchildren(); i++)
             ctx_define(in->child(i), defns);
     }
 }
@@ -671,12 +685,18 @@ yices_expr
 YicesSolver::ctx_expr(const TreeNodePtr &tn)
 {
     yices_expr retval = 0;
-    using namespace InsnSemanticsExpr;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
-            retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+            if (ln->get_nbits() <= 64) {
+                retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+            } else {
+                int tmp[ln->get_nbits()];
+                for (size_t i=0; i<ln->get_nbits(); ++i)
+                    tmp[i] = ln->get_bits().get(i) ? 1 : 0;
+                retval = yices_mk_bv_constant_from_array(context, ln->get_nbits(), tmp);
+            }
         } else {
             assert(ln->is_memory() || ln->is_variable());
             char name[64];
@@ -743,7 +763,7 @@ yices_expr
 YicesSolver::ctx_unary(UnaryAPI f, const InternalNodePtr &in)
 {
     assert(f);
-    assert(in && 1==in->size());
+    assert(in && 1==in->nchildren());
     yices_expr retval = (f)(context, ctx_expr(in->child(0)));
     assert(retval);
     return retval;
@@ -756,7 +776,7 @@ yices_expr
 YicesSolver::ctx_binary(BinaryAPI f, const InternalNodePtr &in)
 {
     assert(f);
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     yices_expr retval = (f)(context, ctx_expr(in->child(0)), ctx_expr(in->child(1)));
     assert(retval);
     return retval;
@@ -768,7 +788,7 @@ YicesSolver::ctx_binary(BinaryAPI f, const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_ite(const InternalNodePtr &in)
 {
-    assert(in && 3==in->size());
+    assert(in && 3==in->nchildren());
     assert(in->child(0)->get_nbits()==1);
     yices_expr cond = yices_mk_eq(context, ctx_expr(in->child(0)), yices_mk_bv_constant(context, 1, 1));
     yices_expr retval = yices_mk_ite(context, cond, ctx_expr(in->child(1)), ctx_expr(in->child(2)));
@@ -784,16 +804,16 @@ yices_expr
 YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in, bool identity)
 {
     assert(f);
-    assert(in && in->size()>=1);
+    assert(in && in->nchildren()>=1);
 
     yices_expr retval = ctx_expr(in->child(0));
 
-    for (size_t i=1; i<in->size(); i++) {
+    for (size_t i=1; i<in->nchildren(); i++) {
         retval = (f)(context, retval, ctx_expr(in->child(i)));
         assert(retval);
     }
     
-    if (1==in->size()) {
+    if (1==in->nchildren()) {
         yices_expr ident = yices_mk_bv_constant(context, 1, identity ? (uint64_t)(-1) : 0);
         retval = (f)(context, retval, ident);
         assert(retval);
@@ -808,13 +828,13 @@ yices_expr
 YicesSolver::ctx_la(NaryAPI f, const InternalNodePtr &in, bool identity)
 {
     assert(f);
-    assert(in && in->size()>=1);
-    yices_expr *operands = new yices_expr[in->size()];
-    for (size_t i=0; i<in->size(); i++) {
+    assert(in && in->nchildren()>=1);
+    yices_expr *operands = new yices_expr[in->nchildren()];
+    for (size_t i=0; i<in->nchildren(); i++) {
         operands[i] = ctx_expr(in->child(i));
         assert(operands[i]);
     }
-    yices_expr retval = (f)(context, operands, in->size());
+    yices_expr retval = (f)(context, operands, in->nchildren());
     assert(retval);
     delete[] operands;
     return retval;
@@ -825,7 +845,7 @@ YicesSolver::ctx_la(NaryAPI f, const InternalNodePtr &in, bool identity)
 yices_expr
 YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in)
 {
-    assert(in->size()>1);
+    assert(in->nchildren()>1);
     return ctx_la(f, in, false);
 }
 #endif
@@ -835,7 +855,7 @@ YicesSolver::ctx_la(BinaryAPI f, const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_extract(const InternalNodePtr &in)
 {
-    assert(in && 3==in->size());
+    assert(in && 3==in->nchildren());
     assert(in->child(0)->is_known());
     assert(in->child(1)->is_known());
     assert(in->child(0)->get_value() < in->child(1)->get_value());
@@ -854,7 +874,7 @@ YicesSolver::ctx_extract(const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_sext(const InternalNodePtr &in)
 {
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known());
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
     unsigned extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
@@ -872,7 +892,7 @@ YicesSolver::ctx_sext(const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_uext(const InternalNodePtr &in)
 {
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
     size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
@@ -889,7 +909,7 @@ YicesSolver::ctx_uext(const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_shift(ShiftAPI f, const InternalNodePtr &in)
 {
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
     unsigned shift_amount = in->child(0)->get_value();
     yices_expr retval = (f)(context, ctx_expr(in->child(1)), shift_amount);
@@ -911,7 +931,7 @@ YicesSolver::ctx_shift(ShiftAPI f, const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_asr(const InternalNodePtr &in)
 {
-    assert(in && 2==in->size());
+    assert(in && 2==in->nchildren());
     TreeNodePtr vector = in->child(1);
     unsigned vector_size = vector->get_nbits();
     assert(in->child(0)->is_known());
@@ -941,7 +961,7 @@ YicesSolver::ctx_asr(const InternalNodePtr &in)
 yices_expr
 YicesSolver::ctx_zerop(const InternalNodePtr &in)
 {
-    assert(in && 1==in->size());
+    assert(in && 1==in->nchildren());
     yices_expr retval = yices_mk_ite(context,
                                      yices_mk_eq(context, 
                                                  yices_mk_bv_constant(context, in->child(0)->get_nbits(), 0), 
@@ -1000,3 +1020,6 @@ YicesSolver::ctx_read(const InternalNodePtr &in)
     return retval;
 }
 #endif
+
+} // namespace
+} // namespace

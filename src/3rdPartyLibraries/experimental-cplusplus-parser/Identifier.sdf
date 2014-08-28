@@ -1,0 +1,21 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
+%% and extended with rules covering the GNU compiler extensions (superset)                          %%
+%% Version 1.2                                                                                      %%
+%% Author: Markus Schordan, 2013.                                                                   %%
+%% Copyright: Lawrence Livermore National Laboratory                                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+module Identifier
+
+exports
+
+sorts Identifier
+
+lexical syntax
+	[a-zA-Z\_][a-zA-Z\_0-9]* -> Identifier
+	"\\u" [a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9] -> Identifier
+	"\\U" [a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9] -> Identifier
+
+lexical restrictions
+	Identifier -/- [a-zA-Z\_0-9]

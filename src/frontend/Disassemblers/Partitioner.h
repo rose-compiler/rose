@@ -3,6 +3,16 @@
 
 #include "callbacks.h"
 #include "Disassembler.h"
+#include <sawyer/Optional.h>
+
+namespace rose {
+namespace BinaryAnalysis {
+
+
+#ifndef NAN
+#define INFINITY (DBL_MAX+DBL_MAX)
+#define NAN (INFINITY-INFINITY)
+#endif
 
 /** Partitions instructions into basic blocks and functions.
  *
@@ -139,7 +149,9 @@ protected:
         BasicBlock *bblock;                     /**< Block to which this instruction belongs, if any. */
 
         /* These methods are forwarded to the underlying instruction node for convenience. */
-        Disassembler::AddressSet get_successors(bool *complete) const { return node->get_successors(complete); }
+        Disassembler::AddressSet get_successors(bool *complete) const {
+            return node->get_successors(complete);
+        }
         rose_addr_t get_address() const { return node->get_address(); }
         size_t get_size() const { return node->get_size(); }
         bool terminates_basic_block() const { return node->terminates_basic_block(); }
@@ -160,6 +172,8 @@ protected:
     static SgAsmInstruction *isSgAsmInstruction(SgNode*);
     static SgAsmx86Instruction *isSgAsmx86Instruction(const Instruction*);
     static SgAsmx86Instruction *isSgAsmx86Instruction(SgNode*);
+    static SgAsmM68kInstruction *isSgAsmM68kInstruction(const Instruction*);
+    static SgAsmM68kInstruction *isSgAsmM68kInstruction(SgNode*);
     /** @} */
 
     /** Analysis that can be cached in a block. Some analyses are expensive enough that they should be cached in a block.
@@ -322,8 +336,12 @@ protected:
          *  function may be set if set in @p other, but it will never be cleared.  Returns @p this. */
         Function *init_properties(const Function &other);
 
-        /** Emit function property values. This is mostly for debugging.  If the file handle is null then nothing happens. */
-        void show_properties(FILE*) const;
+        /** Emit function property values. This is mostly for debugging. */
+        void show_properties(std::ostream&) const;
+
+        /** Return the pointer to the basic block at the entry address. Returns null if there is no basic block assigned
+         *  to this function at that address. */
+        BasicBlock *entry_basic_block() const;
 
     public:
         /* If you add more data members, also update detach_thunk() and/or init_properties() */
@@ -408,9 +426,10 @@ public:
 
     Partitioner()
         : aggregate_mean(NULL), aggregate_variance(NULL), code_criteria(NULL), disassembler(NULL), map(NULL),
-          func_heuristics(SgAsmFunction::FUNC_DEFAULT), debug(NULL), allow_discont_blocks(true)
+          func_heuristics(SgAsmFunction::FUNC_DEFAULT), allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
+    static void initDiagnostics();
 
     /*************************************************************************************************************************
      *                                              Accessors for Properties
@@ -468,16 +487,6 @@ public:
         return allow_discont_blocks;
     }
 
-    /** Sends diagnostics to the specified output stream. Null (the default) turns off debugging. */
-    void set_debug(FILE *f) {
-        debug = f;
-    }
-
-    /** Returns the file currently used for debugging; null implies no debugging. */
-    FILE *get_debug() const {
-        return debug;
-    }
-
     /** Accessors for the memory maps.
      *
      *  The first argument is usually the complete memory map.  It should define all memory that holds instructions, either
@@ -501,9 +510,12 @@ public:
     /** @} */
 
     /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
-     * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
-     * a null pointer for the file.  Progress report properties are class variables. */
-    void set_progress_reporting(FILE*, unsigned min_interval);
+     * (default is 10).  Progress reporting can be disabled by supplying a negative value. Progress report properties are class
+     * variables. */
+    void set_progress_reporting(double min_interval);
+
+    void update_progress(SgAsmBlock::Reason reason, size_t pass) const;
+    void update_progress() const;
 
     /*************************************************************************************************************************
      *                                                High-level Functions
@@ -596,6 +608,19 @@ public:
     /** Looks up a function by address.  Returns the function pointer if found, the null pointer if not found. */
     virtual Function* find_function(rose_addr_t entry_va);
 
+    /** Determines if address is used in a function.  An address is used if there is an instruction that is part of a basic
+     *  block, which is part of a function. */
+    virtual Function* find_function_containing_code(rose_addr_t va);
+
+    /** Determines if address is part of a function's data.  An address is part of a function's data if the address is part of
+     *  SgAsmStaticData node that belongs to a partitioner data block, that belongs to a function.  The pointer to the function
+     *  is returned for true, null for false. */
+    virtual Function* find_function_containing_data(rose_addr_t va);
+
+    /** Determines if address is part of a function.  Returns true if the address is the beginning of an instruction that
+     *  belongs to a function, or if it is any address inside data that belongs to a function. */
+    virtual Function* find_function_containing(rose_addr_t va);
+
     /** Builds the AST describing all the functions.
      *
      *  The return value is an SgAsmBlock node that points to a list of SgAsmFunction nodes (the functions), each of which
@@ -628,6 +653,13 @@ public:
      *  This method is called by build_ast(), but can also be called explicitly. Only pointers that are not already relative to
      *  some object are affected. */
     virtual void fixup_pointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
+
+    /** Called by frontend() to disassemble an entire interpretation. Disassembles the specified interpretation using
+     *  configuration settings from the ROSE command-line and then links the resulting SgAsmBlock into the AST.  The
+     *  disassembly is partitioner-driven.
+     *
+     *  See also: Disassembler::disassembleInterpratation(), which does Disassembler-driven disassembly. */
+    static void disassembleInterpretation(SgAsmInterpretation*);
 
     /**************************************************************************************************************************
      *                                  Range maps relating address ranges to objects
@@ -1397,11 +1429,26 @@ protected:
     static InstructionMap::const_iterator pattern2(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 
-    /** Matches after stack frame destruction. Matches "leave;ret" followed by one or more "nop" followed by a non-nop
+    /** Matches after stack frame destruction. Matches x86 "leave;ret" followed by one or more "nop" followed by a non-nop
      *  instruction and if matching, returns the iterator for the non-nop instruction. */
     static InstructionMap::const_iterator pattern3(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 #endif
+
+    /** Matches an x86 "enter xxxx, 0" instruction and creates a function at that address. */
+    static InstructionMap::const_iterator pattern4(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+    /** Matches an M68k "link a6, xxxx" instruction where xxxx is zero or negative and creates a function at that address. */
+    static InstructionMap::const_iterator pattern5(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+    /** Matches M68k "rts; (trapf)?; lea.l [a7+X], a7". X is an arbitrarily small-magnitude, negative number. The function
+     *  begins at the LEA instruction. */
+    static InstructionMap::const_iterator pattern6(const InstructionMap &insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions
@@ -1446,16 +1493,27 @@ public:
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
     virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
+    virtual void mark_export_entries(SgAsmGenericHeader*);      /**< Seeds functions for PE exports */
     virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /* Assign names to ELF PLT functions */
     virtual void name_import_entries(SgAsmGenericHeader*);      /* Assign names to PE import functions */
+    virtual void find_pe_iat_extents(SgAsmGenericHeader*);      /* Find addresses for all PE Import Address Tables */
 
     /** Adds extents for all defined functions.  Scans across all known functions and adds their extents to the specified
      *  RangeMap argument. Returns the sum of the return values from the single-function function_extent() method. */
     virtual size_t function_extent(FunctionRangeMap *extents);
+
+    /** Returns addresses that are not part of any function.  This is the complement of the set returned by @ref
+     *  function_extent. */
+    virtual ExtentMap unused_addresses();
+
+    /** Determines whether an address is part of any function.  Returns true if the address is part of an instruction that
+     *  belongs to a function, or part of a static data block that belongs to a function.  This isn't a very efficient function
+     *  the way it's currently implemented. */
+    bool is_used_address(rose_addr_t);
 
     /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
      *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
@@ -1498,18 +1556,15 @@ public:
      *  @code
      *     jmp DWORD PTR ds:[0x80496b0]        -> (x86)   returns 80496b0
      *     jmp QWORD PTR ds:[rip+0x200b52]     -> (amd64) returns 200b52 + address following instruction
+     *     jmp DWORD PTR ds:[ANY_GPR+0x18]     -> (x86)   returns offset+0x18
+     *     // anything else return zero
      *  @endcode
      *
      * We only handle instructions that appear as the first instruction in an ELF .plt entry. */
-    static rose_addr_t get_indirection_addr(SgAsmInstruction*);
+    static rose_addr_t get_indirection_addr(SgAsmInstruction*, rose_addr_t offset);
 
     /** Returns the integer value of a value expression since there's no virtual method for doing this. (FIXME) */
     static rose_addr_t value_of(SgAsmValueExpression*);
-
-    /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
-     *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
-     *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
-    void progress(FILE*, const char *fmt, ...) const __attribute__((format(printf, 3, 4)));
 
     /** Splits thunks off of the start of functions.  Splits as many thunks as possible from the front of all known functions.
      *  Returns the number of thunks split off from functions.  It's not important that this be done, but doing so results in
@@ -1523,6 +1578,20 @@ public:
      *  to the jumped-to function, and splits them into two functions. */
     virtual bool detach_thunk(Function*);
 
+    /** Returns true if the basic block is a PE dynamic linking thunk. If the argument is a basic block, then the only
+     *  requirement is that the basic block contains a single instruction, which in the case of x86, is an indirect JMP through
+     *  an Import Address Table. If the argument is a function, then the function must contain a single basic block which is a
+     *  dynamic linking thunk. The addresses of the IATs must have been previously initialized by pre_cfg() or other.
+     * @{ */
+    bool is_pe_dynlink_thunk(Instruction*);
+    bool is_pe_dynlink_thunk(BasicBlock*);
+    bool is_pe_dynlink_thunk(Function*);
+    /** @} */
+
+    /** Gives names to PE dynamic linking thunks if possible. The names come from the PE Import Table if an interpretation
+     *  is supplied as an argument. This also marks such functions as being thunks. */
+    void name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/);
+    
     /** Adjusts ownership of padding data blocks.  Each padding data block should be owned by the prior function in the address
      *  space.  This is normally the case, but when functions are moved around, split, etc., the padding data blocks can get
      *  mixed up.  This method puts them all back where they belong. */
@@ -1543,6 +1612,16 @@ public:
      *  map.  It is possible for the jump table to be discontiguous, but this is not usually the case.  If @p do_create is true
      *  then data blocks are created for the jump table and added to the basic block. */
     Disassembler::AddressSet discover_jump_table(BasicBlock *bb, bool do_create=true, ExtentMap *table_addresses=NULL);
+
+    /** Looks for functions that follow padding.  This method repeatedly looks for padding bytes and then tries to discover a
+     *  function immediately after those bytes by recursively disassembling and following the control flow graph.  Searching for
+     *  the padding and function discovery are interleaved: look for padding, discover function, repeat.  The supplied map is
+     *  used for searching, but the usual map is used for discovery. */
+    virtual void discover_post_padding_functions(const MemoryMap &map);
+
+    /** Return the next unused address.  Scans through the memory map starting at the specified address and returns the first
+     *  address found to be mapped but not belonging to any basic block or data block. Returns none on failure. */
+    virtual Sawyer::Optional<rose_addr_t> next_unused_address(const MemoryMap &map, rose_addr_t start_va);
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
@@ -1727,18 +1806,19 @@ public:
         IPDParser(Partitioner *p, const char *input, size_t len, const std::string &input_name="")
             : partitioner(p), input(input), len(len), input_name(input_name), at(0), cur_func(NULL), cur_block(NULL) {}
 
-        class Exception {                      /**< Exception thrown when something cannot be parsed. */
+        /** Exception thrown when something cannot be parsed. */
+        class Exception: public std::runtime_error {
         public:
             Exception(const std::string &mesg)
-                : lnum(0), mesg(mesg) {}
+                : std::runtime_error(mesg), lnum(0) {}
             Exception(const std::string &mesg, const std::string &name, unsigned lnum=0)
-                : name(name), lnum(lnum), mesg(mesg) {}
+                : std::runtime_error(mesg), name(name), lnum(lnum) {}
+            ~Exception() throw() {}
             std::string format() const;         /**< Format exception object into an error message; used by operator<<. */
             friend std::ostream& operator<<(std::ostream&, const Exception &e);
 
             std::string name;                   /**< Optional name of input */
             unsigned lnum;                      /**< Line number (1-origin); zero if unknown */
-            std::string mesg;                   /**< Error message. */
         };
 
         void parse();                           /**< Top-level parsing function. */
@@ -1799,6 +1879,7 @@ public:
     InstructionMap insns;                               /**< Instruction cache, filled in by user or populated by disassembler. */
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
     MemoryMap ro_map;                                   /**< The read-only parts of 'map', used for insn semantics mem reads. */
+    ExtentMap pe_iat_extents;                           /**< Virtual addresses for all PE Import Address Tables. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
     BasicBlocks basic_blocks;                           /**< All known basic blocks. */
@@ -1809,16 +1890,19 @@ public:
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunction::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
 
-    FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
+    static Sawyer::Message::Facility mlog;              /**< Logging facility for partitioners. */
     bool allow_discont_blocks;                          /**< Allow basic blocks to be discontiguous in virtual memory. */
     BlockConfigMap block_config;                        /**< IPD configuration info for basic blocks. */
 
-    static time_t progress_interval;                    /**< Minimum interval between progress reports. */
-    static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
-    static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
+    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
 
 public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
+
+} // namespace
+} // namespace
+
 
 #endif

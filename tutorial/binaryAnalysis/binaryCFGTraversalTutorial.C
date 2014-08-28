@@ -10,6 +10,7 @@
 using namespace std;
 // you need boost to put together the graph
 using namespace boost;
+using namespace rose;
 
 //renaming to Vertex and Edge to save space
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
         BinaryAnalysis::ControlFlow cfg_analyzer;
         BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
 
-        cfg_analyzer.build_cfg_from_ast(interps.back(), *cfg);
+        cfg_analyzer.build_block_cfg_from_ast(interps.back(), *cfg);
 //instantiating the graph visitor
         visitorTraversal* vis = new visitorTraversal;
 //setting object variables

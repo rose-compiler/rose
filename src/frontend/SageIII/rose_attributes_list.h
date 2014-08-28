@@ -74,7 +74,7 @@
 // using namespace std;
 #endif
 
-class PreprocessingInfo;
+class ROSE_DLL_API PreprocessingInfo;
 class ROSEAttributesList;
 //AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
 //to get this by a traversal of the AST
@@ -196,6 +196,14 @@ class  PreprocessingInfo
             //   '3' indicates that the following text comes from a system header file, so certain warnings should be supressed. 
             //   '4' indicates that the following text should be treated as being wrapped in an implicit 'extern "C"' block
                CpreprocessorCompilerGeneratedLinemarker,
+
+            // DQ (2/2/2014): permit raw text to be specified as a extremely simple way to add text to the unparsing of the AST.
+            // Note that it is the user's responcability to have the text be legal code.  Additionall any language constructs
+            // added using this mechanism will ot show up in the AST.  So it is not possible to reference functions (for example) 
+            // added using this mechanism to build function calls as transformation elsewhere in the code.  But one could add
+            // the function via AST transformations and the function body using a mechanism provided here and that would define
+            // a simple appoach to adding large complex functions for which it is impractical to build up an AST.
+               RawText,
 
                LastDirectiveType
              };
@@ -422,6 +430,14 @@ class  PreprocessingInfo
           void push_back_token_stream(token_type tok);
 
 #endif
+
+      // DQ (12/30/2013): Adding support to supress output of macros that are self-referential.
+      // e.g. "#define foo X->foo", which would be expanded a second time in the backend processing.
+      // Note that if we don't output the #define, then we still might have a problem if there was 
+      // code that depended upon a "#ifdef foo".  So this handling is not without some risk, but it
+      // always better to use the token stream unparsing for these cases.
+         bool isSelfReferential();
+         std::string getMacroName();
    };
 
 // DQ (10/15/2002) Changed list element from "PreprocessingInfo" to 
@@ -499,6 +515,9 @@ class ROSEAttributesList
           void deepClean(void);
           void clean(void);
 
+      // DQ (9/19/2013): generate the number associated with each position relative to the attached IR node.
+      // size_t numberByRelativePosition(PreprocessingInfo::RelativePositionType pos);
+
        // Access function for list
           std::vector<PreprocessingInfo*> & getList() { return attributeList; };
 
@@ -531,6 +550,9 @@ class ROSEAttributesList
 
        // DQ (12/15/2012): Added access function.
           std::set<int> & get_filenameIdSet();
+
+       // DQ (9/29/2013): Added to support adding processed CPP directives and comments as tokens to token list.
+          PreprocessingInfo* lastElement();
    };
 
 //

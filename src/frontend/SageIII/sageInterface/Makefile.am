@@ -2,6 +2,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+INCLUDES += $(JAVA_JVM_INCLUDE)
+endif
+
 noinst_LTLIBRARIES = libsageInterface.la
 libsageInterface_la_SOURCES      = \
      sageInterface.h \
@@ -26,7 +30,7 @@ endif
 libsageInterface_la_LIBADD       =
 libsageInterface_la_DEPENDENCIES =
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      sageInterface.h \
      sageBuilder.h \
      sageGeneric.h \
@@ -37,7 +41,7 @@ include_HEADERS = \
 #     loopHelpers.h
 
 # if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   include_HEADERS += \
+   pkginclude_HEADERS += \
      sageInterfaceAsm.h \
      sageBuilderAsm.h
 # endif

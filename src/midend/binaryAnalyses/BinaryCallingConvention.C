@@ -1,11 +1,13 @@
 #include "sage3basic.h"
+#include "threadSupport.h"  // for __attribute__ on Visual Studio
 #include "BinaryCallingConvention.h"
 #include "BinaryControlFlow.h"
 #include "FindRegisterDefs.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
-typedef BinaryAnalysis::ControlFlow::Graph CFG;
+typedef ControlFlow::Graph CFG;
 typedef boost::graph_traits<CFG>::vertex_descriptor CFGVertex;
 typedef FindRegisterDefs::Policy Policy;
 typedef X86InstructionSemantics<Policy, FindRegisterDefs::ValueType> Semantics;
@@ -35,8 +37,8 @@ solve_flow_equation_iteratively(SgAsmFunction *func)
 #if 1
     std::cerr <<"ROBB: solving flow equations for function " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
 #endif
-    BinaryAnalysis::ControlFlow cfg_analyzer;
-    CFG cfg = cfg_analyzer.build_cfg_from_ast<CFG>(func);
+    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
+    CFG cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(func);
 
     CFGVertex entry_vertex = 0;
     assert(get(boost::vertex_name, cfg, entry_vertex)==func->get_entry_block());

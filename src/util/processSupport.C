@@ -39,29 +39,26 @@ int systemFromVector(const vector<string>& argv) {
     return status;
   }
 #else
-    vector<const char*> argvC(argv.size() + 1);
-    for (size_t i = 0; i < argv.size(); ++i) {
-      argvC[i] = strdup(argv[i].c_str());
-    }
-    argvC.back() = NULL;
-//    execvp(argv[0].c_str(), (char* const*)&argvC[0]);
-//  assert(false);
+  std::string commandLine = argv[0];
+  for (size_t i = 1; i < argv.size(); ++i) {
+    commandLine += " " + argv[i];
+  }
 
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
-        ZeroMemory(&si,sizeof(si));
-        si.cb=sizeof(si);
-        ZeroMemory(&pi,sizeof(pi));
-        if(!CreateProcess(argv[0].c_str(),(char* )&argvC[0],0,0,0,0,0,0,&si,&pi)) {
-                // todo Windows: tps: Does not work right now. This is called when a generated program is compiled
-                //Could not start process;
-        printf ("Error: no MSVS implementation available. Final code not compiled for now. \n");
-// assert(false);
-        return 1;
-        }
-        WaitForSingleObject(pi.hProcess,INFINITE);
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+  ZeroMemory(&si,sizeof(si));
+  si.cb=sizeof(si);
+  ZeroMemory(&pi,sizeof(pi));
 
-  return 1;
+  if(!CreateProcess(NULL, (char*)commandLine.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+    printf ("Error running MSVS compiler.\n");
+    return 1;
+  }
+  
+  WaitForSingleObject(pi.hProcess,INFINITE);
+  unsigned long exitCode;
+  GetExitCodeProcess(pi.hProcess, &exitCode);
+  return exitCode;
 #endif
 }
 

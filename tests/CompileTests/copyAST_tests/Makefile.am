@@ -64,6 +64,8 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2007_47.C \
    copytest2007_49.C \
    copytest2007_50.C \
+   copytest2014_01.C \
+   copytest2014_02.C \
    copyExampleInput.C
 
 # DQ (6/22/2011): These fail the new name qualification support.
@@ -817,22 +819,33 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
+PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
+TEST_Sources = ${ALL_TESTCODES:.C=.C.passed}
 # TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.o}
 
 EXTRA_TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.o}
+EXTRA_TEST_Sources = ${EXTRA_ALL_TESTCODES:.C=.C.passed}
 
 # $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
 # $(TEST_Objects): copyExample
-$(TEST_Objects): copyExample 
-#	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
-	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) 
+# $(TEST_Objects): copyExample 
+##	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
+#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) 
+
+$(TEST_Sources): %.passed: ./copyExample 
+#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) 
+	@$(RTH_RUN) CMD="./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 # Use tests from the Cxx_tests directory
 # $(EXTRA_TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
-$(EXTRA_TEST_Objects): copyExample
-#	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+# $(EXTRA_TEST_Objects): copyExample
+##	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
+#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+
+$(EXTRA_TEST_Sources): %.passed: ./copyExample
+#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+	@$(RTH_RUN) CMD="./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -917,7 +930,8 @@ EXTRA_DIST = $(LONG_LIST_ALL_FILES)
 
 check-local:
 	@echo "Tests for AST Copy."
-	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Sources)
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -925,6 +939,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.C_copy_graph_old_nodes
 	rm -rf QMTest
+	rm -f *.passed *.failed *.err *.out
 
 distclean-local:
 	rm -rf Templates.DB *_copy_graph_old_nodes *.dot

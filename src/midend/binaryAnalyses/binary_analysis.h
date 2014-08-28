@@ -1,3 +1,28 @@
+// This entire file is deprecated.  Use the newer Binary*.h files in this directory instead.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include "integerOps.h"
 #include "x86InstructionSemantics.h"
 #include "Partitioner.h"
@@ -30,18 +55,24 @@ void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose
 /***************************************************************************************************
  * The goal of the function is to create a control flow graph where nodes are basic blocks.
  */
-SgIncidenceDirectedGraph* constructCFG_BB(SgAsmStatement* blocks, const Partitioner::BasicBlockStarts& bb_starts,const Disassembler::InstructionMap& instMap );
+SgIncidenceDirectedGraph* constructCFG_BB(SgAsmStatement* blocks,
+                                          const rose::BinaryAnalysis::Partitioner::BasicBlockStarts& bb_starts,
+                                          const rose::BinaryAnalysis::Disassembler::InstructionMap& instMap );
 
 /***************************************************************************************************
  * The goal of the function is to create a control flow graph.
  */
 SgIncidenceDirectedGraph* constructCFG( SgAsmInterpretation *interp );
-SgIncidenceDirectedGraph* constructCFG( const  Partitioner::FunctionStarts& func_starts, const Partitioner::BasicBlockStarts& bb_starts,const Disassembler::InstructionMap& instMap );
+SgIncidenceDirectedGraph* constructCFG(const rose::BinaryAnalysis::Partitioner::FunctionStarts& func_starts,
+                                       const rose::BinaryAnalysis::Partitioner::BasicBlockStarts& bb_starts,
+                                       const rose::BinaryAnalysis::Disassembler::InstructionMap& instMap);
 
 /****************************
  * The goal of this function is to create a binary control flow graph. It does this by construcing a CFG and then finding the
  * subset of the CFG that is a call graph.
  */
 SgIncidenceDirectedGraph* constructCallGraph( SgAsmInterpretation *interp );
-SgIncidenceDirectedGraph* constructCallGraph( const  Partitioner::FunctionStarts& func_starts,const Partitioner::BasicBlockStarts& bb_starts, const Disassembler::InstructionMap& instMap  );
+SgIncidenceDirectedGraph* constructCallGraph(const rose::BinaryAnalysis::Partitioner::FunctionStarts& func_starts,
+                                             const rose::BinaryAnalysis::Partitioner::BasicBlockStarts& bb_starts,
+                                             const rose::BinaryAnalysis::Disassembler::InstructionMap& instMap  );
 

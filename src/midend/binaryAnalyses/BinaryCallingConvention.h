@@ -211,10 +211,5 @@ public:
     BinaryCallingConvention::Convention *analyze_callee(SgAsmFunction*);
 
 };
-
-    
     
 #endif
-
-
-    

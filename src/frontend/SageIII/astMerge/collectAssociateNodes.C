@@ -298,7 +298,11 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (9/1/2012): Added more template support.
           case V_SgTemplateType:
 
+       // DQ (8/2/2014): Added C++11 SgDeclType support.
+          case V_SgDeclType:
+
        // These are primative types
+          case V_SgJavaWildcardType:
           case V_SgTypeBool:
           case V_SgTypeChar:
           case V_SgTypeComplex:
@@ -458,6 +462,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           return;
         }
 
+     if (isSgJavaMemberValuePair(node) != NULL)
+        {
+          return;
+        }
+
   // DQ (1/20/2007): Some IR nodes should force related nodes to be removed (SgFunctionSymbol IR nodes, etc.)
      switch(node->variantT())
         {
@@ -488,8 +497,13 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(functionType != NULL);
 #if 0
                printf ("addAssociatedNodes(): functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),SageInterface::get_name(functionDeclaration).c_str());
+               printf ("addAssociatedNodes(): functionDeclaration = %p firstNondefiningDeclaration = %p definingDeclaration = %p \n",functionDeclaration,functionDeclaration->get_firstNondefiningDeclaration(),functionDeclaration->get_definingDeclaration());
+#endif
+#if 0
                printf ("addAssociatedNodes(): functionDeclaration mangled name = %s matchingNodeInMergedAST = %p \n",functionDeclaration->get_mangled_name().str(),matchingNodeInMergedAST);
-            // functionDeclaration->get_startOfConstruct()->display("addAssociatedNodes(): functionDeclaration");
+#endif
+#if 0
+               functionDeclaration->get_startOfConstruct()->display("addAssociatedNodes(): functionDeclaration");
 #endif
                addAssociatedNodes(functionType,nodeList,markMemberNodesDefinedToBeDeleted);
 
@@ -790,9 +804,23 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     return;
                   }
                ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+            // DQ (3/2/2014): This might be a SgInitializedName that is a parameter to a non-defining 
+            // function declaration that was not deleted when we deleted the AST.  If so then this 
+            // will be NULL. See tests/roseTests/astSnippetTests/specimen2014_03.c.
                if (initializedName->get_scope()->get_symbol_table() == NULL)
                   {
                     printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                    printf ("initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+
+                 // DQ (3/2/2014): Check for a previously delete IR node as part of testing the snippet injection mechanism.
+                    if (initializedName->get_scope()->variantT() == V_SgNode)
+                       {
+                      // This is a previously deleted IR node and we need not track down associated node for it.
+                         printf ("Warning: This is a previously deleted IR node and we need not track down associated node for it (snippet injection support). \n");
+                         return;
+                       }
+
                     initializedName->get_file_info()->display("error: debug");
                   }
                ROSE_ASSERT(initializedName->get_scope()->get_symbol_table() != NULL);
@@ -1179,6 +1207,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (9/1/2012): The template class declaration is derived from the SgClassDeclaration.
           case V_SgTemplateClassDeclaration:
 
+          case V_SgJavaPackageDeclaration:
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
        // DQ (2/10/2007): Added case for SgTemplateInstantiationDecl
@@ -1979,6 +2008,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
        // DQ (4/16/2011): Added support for another IR node.
           case V_SgJavaImportStatement:
+          case V_SgJavaPackageStatement:
 
        // DQ (11/16/2007): Added support for another IR node.
           case V_SgFortranDo:
@@ -2036,6 +2066,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgNullifyStatement:
 
        // Ignore these scope statements since they are not yet shared
+          case V_SgScopeStatement:
           case V_SgBasicBlock:
           case V_SgNamespaceDefinitionStatement:
           case V_SgForStatement:
@@ -2098,6 +2129,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              }
 
        // Ignore these SgType cases since we handle types directly, via the addAssociatedNodes() function
+          case V_SgJavaWildcardType:
           case V_SgFunctionType:
           case V_SgMemberFunctionType:
           case V_SgTypeUnknown:

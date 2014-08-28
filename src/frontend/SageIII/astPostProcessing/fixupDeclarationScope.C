@@ -1,11 +1,13 @@
 #include "sage3basic.h"
 
 #include "fixupDeclarationScope.h"
+
+
 void fixupAstDeclarationScope( SgNode* node )
    {
   // This function was designed to fixup what I thought were inconsistancies in how the 
   // defining and some non-defining declarations associated with friend declarations had 
-  // their scope set.  I now this this was not a problem, but it is helpful to enforce the
+  // their scope set.  I now know this this was not a problem, but it is helpful to enforce the
   // consistancy.  It might also be useful to process declarations with scopes set to 
   // namespace definitions, so that the namespace definition can be normalized to be 
   // consistant across all of the different re-entrant namespace definitions.  This is 
@@ -54,11 +56,15 @@ void fixupAstDeclarationScope( SgNode* node )
                ROSE_ASSERT(associatedScope != NULL);
 
             // DQ (6/11/2013): This is triggered by namespace definition scopes that are different 
-            // due to re-entrant namespace declarations.  We should maybe fix this.
+            // due to re-entrant namespace declarations.  We should maybe be fix this.
                if (associatedScope != correctScope)
                   {
-                    printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
-                         *j,(*j)->class_name().c_str(),associatedScope,associatedScope->class_name().c_str(),correctScope,correctScope->class_name().c_str());
+                 // DQ (1/30/2014): Cleaning up some output spew.
+                    if (SgProject::get_verbose() > 0)
+                       {
+                         printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
+                              *j,(*j)->class_name().c_str(),associatedScope,associatedScope->class_name().c_str(),correctScope,correctScope->class_name().c_str());
+                       }
 #if 0
                     printf ("Make this an error for now! \n");
                     ROSE_ASSERT(false);
@@ -89,7 +95,7 @@ FixupAstDeclarationScope::visit ( SgNode* node )
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
      if (declaration != NULL)
         {
-          SgDeclarationStatement* definingDeclaration         = declaration->get_definingDeclaration();
+       // SgDeclarationStatement* definingDeclaration         = declaration->get_definingDeclaration();
           SgDeclarationStatement* firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
 
        // Note that these declarations don't follow the same rules (namely the get_firstNondefiningDeclaration() can be NULL).

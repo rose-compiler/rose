@@ -9,12 +9,15 @@
 #include "roseInternal.h"
 //#include "sage3.h"
 
-class AstDOTGeneration : public DOTGeneration<SgNode*>
+class ROSE_DLL_API AstDOTGeneration : public DOTGeneration<SgNode*>
    {
      public:
+         //traverse full AST , nodes which represent code from include files . name postfix does not need an ending "."
           void generate(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
           void generate(SgNode* node,  std::string filename, traversalType tt = TOPDOWNBOTTOMUP,std::string filenamePostfix = "");
+          // traverse the subtree of AST which represents the files specified on the command line
           void generateInputFiles(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
+          // only the nodes which represent code of the same file as the start node 
           void generateWithinFile(SgFile* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
 
           void writeIncidenceGraphToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename);
@@ -43,7 +46,7 @@ class AstDOTGeneration : public DOTGeneration<SgNode*>
 
 namespace AstDOTGenerationExtended_Defaults
    {
-     struct NamedExtraNodeInfo
+     struct ROSE_DLL_API NamedExtraNodeInfo
         {
 #if 1
        // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
@@ -124,7 +127,7 @@ namespace AstDOTGenerationExtended_Defaults
                 }
         };
 
-        struct LValueExtraNodeInfo
+        struct ROSE_DLL_API LValueExtraNodeInfo
         {
 #if 1
        // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
@@ -146,7 +149,7 @@ namespace AstDOTGenerationExtended_Defaults
 #endif
         };
 
-        struct TypeExtraNodeInfo
+        struct ROSE_DLL_API TypeExtraNodeInfo
         {
 #if 1
        // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).

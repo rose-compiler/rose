@@ -8,6 +8,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+namespace rose {
+namespace BinaryAnalysis {
+
 void
 AsmFunctionIndex::OutputCallback::set_prefix(const std::string &header, const std::string &separator, const std::string &data)
 {
@@ -86,7 +89,7 @@ AsmFunctionIndex::print(std::ostream &out) const
 size_t
 AsmFunctionIndex::Footnotes::add_footnote(const std::string &text)
 {
-    assert(!footnotes.empty()); // element zero is the title above the footnotes
+    ASSERT_forbid(footnotes.empty()); // element zero is the title above the footnotes
     footnotes.push_back(text);
     return footnotes.size()-1;
 }
@@ -94,14 +97,14 @@ AsmFunctionIndex::Footnotes::add_footnote(const std::string &text)
 void
 AsmFunctionIndex::Footnotes::change_footnote(size_t idx, const std::string &text)
 {
-    assert(idx>0 && idx<footnotes.size()); // footnotes[0] is the title above the footnotes
+    ASSERT_require(idx>0 && idx<footnotes.size()); // footnotes[0] is the title above the footnotes
     footnotes[idx] = text;
 }
 
 const std::string &
 AsmFunctionIndex::Footnotes::get_footnote(size_t idx) const
 {
-    assert(idx>0 && idx<footnotes.size()); // footnotes[0] is the title above the footnotes
+    ASSERT_require(idx>0 && idx<footnotes.size()); // footnotes[0] is the title above the footnotes
     return footnotes[idx];
 }
 
@@ -124,7 +127,7 @@ AsmFunctionIndex::Footnotes::set_footnote_title(const std::string &title)
 const std::string &
 AsmFunctionIndex::Footnotes::get_footnote_title() const
 {
-    assert(!footnotes.empty());
+    ASSERT_require(!footnotes.empty());
     return footnotes[0];
 }
 
@@ -321,3 +324,5 @@ AsmFunctionIndex::FootnotesCallback::operator()(bool enabled, const BeforeAfterA
     return enabled;
 }
 
+} // namespace
+} // namespace

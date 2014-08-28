@@ -1471,9 +1471,6 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //                 SgAsmUnaryArmSpecialRegisterList
      //             SgAsmMemoryReferenceExpression
      //             SgAsmRegisterReferenceExpression:
-     //                 SgAsmx86RegisterReferenceExpression
-     //                 SgAsmArmRegisterReferenceExpression
-     //                 SgAsmPowerpcRegisterReferenceExpression
      //             SgAsmControlFlagsExpression
      //             SgAsmCommonSubExpression
      //             SgAsmExprListExp
@@ -1487,6 +1484,7 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmTypeQuadWord
      //             SgAsmTypeDoubleQuadWord
      //             SgAsmType80bitFloat
+     //             SgAsmType96bitFloat
      //             SgAsmType128bitFloat
      //             SgAsmTypeSingleFloat
      //             SgAsmTypeDoubleFloat
@@ -3488,9 +3486,6 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //                 SgAsmUnaryArmSpecialRegisterList
      //             SgAsmMemoryReferenceExpression
      //             SgAsmRegisterReferenceExpression:
-     //                 SgAsmx86RegisterReferenceExpression
-     //                 SgAsmArmRegisterReferenceExpression
-     //                 SgAsmPowerpcRegisterReferenceExpression
      //             SgAsmControlFlagsExpression
      //             SgAsmCommonSubExpression
      //             SgAsmExprListExp
@@ -3504,6 +3499,7 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmTypeQuadWord
      //             SgAsmTypeDoubleQuadWord
      //             SgAsmType80bitFloat
+     //             SgAsmType96bitFloat
      //             SgAsmType128bitFloat
      //             SgAsmTypeSingleFloat
      //             SgAsmTypeDoubleFloat

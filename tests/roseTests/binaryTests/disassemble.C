@@ -4,183 +4,18 @@
  * buffers of machine instructions.  This test also does a variety of analyses and Robb uses it as a general tool and staging
  * area for testing new features before they're added to ROSE. */
 
-static const char *usage = "\
-Synopsis:\n\
-  %s [SWITCHES] CONTAINER_FILE\n\
-  %s [SWITCHES] --raw=ENTRIES RAW_FILE ADDRESS ...\n\
-  %s [SWITCHES] --raw=ENTRIES MEMORY_MAP.index\n\
-\n\
-Description:\n\
-  Disassembles machine instructions from a container such as ELF or PE, or from\n\
-  a raw buffer such as a memory dump.\n\
-\n\
-  --ast-dot\n\
-  --no-ast-dot\n\
-    Generate (or don't generate) GraphViz dot files for the entire AST. This\n\
-    switch is applicable only when the input file is a container such as ELF or\n\
-    PE.  The default is to not generate an AST dot file.\n\
-\n\
-  --cfg-dot\n\
-  --no-cfg-dot\n\
-    Generate (or don't generate) a GraphViz dot file containing the control flow\n\
-    graph of each function.  These files will be named \"x-FXXXXXXXX.dot\" where\n\
-    \"XXXXXXXX\" is a function entry address.  This switch also generates a\n\
-    function call graph with the name \"x-cg.dot\". These files can be converted\n\
-    to HTML with the generate_html script found in tests/roseTests/binaryTests.\n\
-    The default is to not generate these dot files.\n\
-\n\
-  --debug-disassembler\n\
-  --no-debug-disassembler\n\
-    Causes the disassembler to spew (or not) diagnostics to standard error.\n\
-    This is intended for ROSE developers. The default is to not spew.\n\
-\n\
-  --debug-loader\n\
-  --no-debug-loader\n\
-    Causes the loader/linker to spew (or not) diagnostics to standard error.\n\
-    This is intended for ROSE developers. The default is to not spew.\n\
-\n\
-  --debug-partitioner\n\
-  --no-debug-partitioner\n\
-    Causes the instruction partitioner to spew (or not) diagnostics to standard\n\
-    error.  This is intended for ROSE developers. The default is to not spew.\n\
-\n\
-  --debug\n\
-  --no-debug\n\
-    Convenience switch that turns on (or off) the --debug-disassembler,\n\
-    --debug-loader, and --debug-partitioner switches.\n\
-\n\
-  --disassemble\n\
-    Call the disassembler explicitly, using the instruction search flags\n\
-    specified with the -rose:disassembler_search switch.  Without this\n\
-    --disassemble switch, the disassembler is called by the instruction\n\
-    partitioner whenever the partitioner needs an instruction. When the\n\
-    partitioner drives the disassembly we might spend substantially less time\n\
-    disassembling, but fail to discover functions that are never statically\n\
-    called.\n\
-\n\
-  --dos\n\
-  --no-dos\n\
-    Normally, when the disassembler is invoked on a Windows PE or related\n\
-    container file it will ignore the DOS interpretation. This switch causes\n\
-    the disassembler to use (or not use) the DOS interpretation instead of the\n\
-    PE interpretation.\n\
-\n\
-  --dot\n\
-  --no-dot\n\
-    Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
-    --no-ast-dot and --no-cfg-dot).\n\
-\n\
-  --ipd=FILENAME\n\
-  --no-ipd\n\
-    Generate an IPD file from the disassembly results.  The IPD file can be\n\
-    modified by hand and then fed back into another disassembly with the\n\
-    \"-rose:partitioner_config FILENAME\" switch.\n\
-\n\
-  --linear\n\
-    Organized the output by address rather than hierarchically.  The output\n\
-    will be more like traditional disassemblers.\n\
-\n\
-  --omit-anon=SIZE\n\
-  --no-omit-anon\n\
-    If the memory being disassembled is anonymously mapped (contains all zero\n\
-    bytes), then the disassembler might spend substantial time creating code\n\
-    that's a single, large block of instructions.  This switch can be used to\n\
-    discard regions of memory that are anonymously mapped. Any distinct region\n\
-    larger than the specified size in kilobytes (1024 multiplier) will be\n\
-    unmapped before disassembly starts.  This filter does not remove neighboring\n\
-    regions which are individually smaller than the limit but whose combined size\n\
-    is larger.  The default is to omit anonymous regions larger than 8kB.\n\
-\n\
-  --protection=PROTBITS\n\
-    Normally the disassembler will only consider data in memory that has\n\
-    execute permission.  This switch allows the disassembler to use a\n\
-    different set of protection bits, all of which must be set on any memory\n\
-    which is being considered for disassembly.  The PROTBITS argument is one\n\
-    or more of the letters: r (read), w (write), or x (execute), or '-'\n\
-    (ignored). PROTBITS may be the word \"any\", which has the same effect as\n\
-    not supplying any letters after the equal sign.\n\
-\n\
-  --quiet\n\
-  --no-quiet\n\
-    Suppresses (or not) the instruction listing that is normally emitted to the\n\
-    standard output stream.  The default is to not suppress.\n\
-\n\
-  --raw=ENTRIES\n\
-    Indicates that the specified file(s) contains raw machine instructions\n\
-    rather than a binary container such as ELF or PE.  The ENTRIES argument\n\
-    is a comma-separated list of one or more virtual addresses that will be\n\
-    used to seed the recursive disassembler and instruction partitioner. The\n\
-    non-switch, positional arguments are either the name of an index file that\n\
-    was created by MemoryMap::dump() (see documentation for MemoryMap::load()\n\
-    for details about the file format), or pairs of file names and virtual\n\
-    addresses where the file contents are to be mapped.  The virtual addresses\n\
-    can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x'\n\
-    (execute) to specify mapping permissions other than the default read and\n\
-    execute permission.  By default, ROSE will only disassemble instructions\n\
-    appearing in parts of the memory address space containing execute\n\
-    permission.\n\
-\n\
-  --reassemble\n\
-  --no-reassemble\n\
-    Assemble (or not) each disassembled instruction and compare the generated\n\
-    machine code with the bytes originally disassembled.  This switch is\n\
-    intended mostly to check the consistency of the disassembler with the\n\
-    assembler.  The default is to not reassemble.\n\
-\n\
-  --show-bad\n\
-  --no-show-bad\n\
-    Show (or not) details about why instructions at certain addresses could not\n\
-    be disassembled.  The default is to not show these details.\n\
-\n\
-  --show-coverage\n\
-  --no-show-coverage\n\
-    Show (or not) what percent of the disassembly memory map was actually\n\
-    disassembled.  The default is to not show this information.\n\
-\n\
-  --show-extents\n\
-  --no-show-extents\n\
-    Show (or not) detailed information about what parts of the file were not\n\
-    disassembled.  The default is to not show these details.\n\
-\n\
-  --show-functions\n\
-  --no-show-functions\n\
-    Display (or not) a list of functions in tabular format.  The default is to\n\
-    not show this list.\n\
-\n\
-  --show-hashes\n\
-  --no-show-hashes\n\
-    Display (or not) SHA1 hashes for basic blocks and functions in the assembly\n\
-    listing. These hashes are based on basic block semantics.  The default is\n\
-    to not show these hashes in the listing. Regardless of this switch, the\n\
-    hashes still appear in the function listing (--show-functions) and the\n\
-    CFG dot files (--cfg-dot) if they can be computed.\n\
-\n\
-  --syscalls=linux32\n\
-  --syscalls=none\n\
-    Specifies how system calls are to be named in the disassembly output.\n\
-    The value \"linux32\" uses system call numbers and names for 32-bit Linux,\n\
-    while the value \"none\" means no attempt is made to determine system call\n\
-    names.\n\
-\n\
-\n\
-In addition to the above switches, this disassembler tool passes all other\n\
-switches to the underlying ROSE library's frontend() function if that function\n\
-is actually called.  Of particular note are the following. Documentation for\n\
-these switches can be obtained by specifying the \"--rose-help\" switch.\n\
-  -rose:disassembler_search FLAGS\n\
-  -rose:partitioner_search FLAGS\n\
-  -rose:partitioner_config IPD_FILE\n\
-";
-
 #include "rose.h"
 
 #define __STDC_FORMAT_MACROS
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
 #include <errno.h>
 #include <inttypes.h>
 #include <ostream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sawyer/CommandLine.h>
 
 #include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"
@@ -190,11 +25,58 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
+#include "DisassemblerArm.h"
+#include "DisassemblerPowerpc.h"
+#include "DisassemblerMips.h"
+#include "DisassemblerX86.h"
+#include "DisassemblerM68k.h"
+#include "Diagnostics.h"
 
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
+using namespace Sawyer::Message::Common;
+using namespace StringUtility;
+
+static Sawyer::Message::Facility mlog; // diagnostics at the tool level; initialization in main()
+
+enum DisassembleDriver { DDRIVE_PD, DDRIVE_DP, DDRIVE_D, DDRIVE_NONE };
+enum SyscallMethod { SYSCALL_NONE, SYSCALL_LINUX32 };
+
+/* Return a suitable disassembler by name. */
+static Disassembler *
+get_disassembler(const std::string &name)
+{
+    if (0==name.compare("list")) {
+        std::cout <<"recognized disassembler names are:\n"
+                  <<"  arm      - ARM\n"
+                  <<"  ppc      - PowerPC\n"
+                  <<"  mips     - MIPS\n"
+                  <<"  i386     - Intel x86 32-bit\n"
+                  <<"  amd64    - Intel x86 64-bit\n"
+                  <<"  m68k     - Motorola M68040\n"
+                  <<"  coldfire - Freescale ColdFire\n";
+        exit(0);
+    } else if (0==name.compare("arm")) {
+        return new DisassemblerArm();
+    } else if (0==name.compare("ppc")) {
+        return new DisassemblerPowerpc();
+    } else if (0==name.compare("mips")) {
+        return new DisassemblerMips();
+    } else if (0==name.compare("i386")) {
+        return new DisassemblerX86(4);
+    } else if (0==name.compare("amd64")) {
+        return new DisassemblerX86(8);
+    } else if (0==name.compare("m68k")) {
+        return new DisassemblerM68k(m68k_68040);
+    } else if (0==name.compare("coldfire")) {
+        return new DisassemblerM68k(m68k_freescale_emac);
+    } else {
+        return NULL;
+    }
+}
 
 /* Convert a SHA1 digest to a string. */
 std::string
@@ -228,7 +110,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     try {
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
-            ROSE_ASSERT(insn!=NULL);
+            ASSERT_not_null(insn);
             semantics.processInstruction(insn);
         }
     } catch (const Semantics::Exception&) {
@@ -245,7 +127,6 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     bool ignore_final_ip = true;
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
-        PartialSymbolicSemantics::RenameMap rmap;
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
     }
@@ -268,7 +149,7 @@ function_hash(SgAsmFunction *func, unsigned char digest[20])
     const SgAsmStatementPtrList &stmts = func->get_statementList();
     for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
         SgAsmBlock *bb = isSgAsmBlock(*si);
-        ROSE_ASSERT(bb!=NULL);
+        ASSERT_not_null2(bb, "SgAsmFunction should contain basic blocks");
         unsigned char bb_digest[20];
         if (block_hash(bb, bb_digest)) {
             std::string key = digest_to_str(bb_digest);
@@ -343,7 +224,7 @@ private:
         bool operator()(bool enabled, const BasicBlockArgs &args) {
             unsigned char sha1[20];
             if (enabled && block_hash(args.block, sha1))
-                args.output <<StringUtility::addrToString(args.block->get_address()) <<": " <<digest_to_str(sha1) <<"\n";
+                args.output <<addrToString(args.block->get_address()) <<": " <<digest_to_str(sha1) <<"\n";
             return enabled;
         }
     };
@@ -354,7 +235,7 @@ private:
         bool operator()(bool enabled, const FunctionArgs &args) {
             unsigned char sha1[20];
             if (enabled && function_hash(args.func, sha1)) {
-                args.output <<StringUtility::addrToString(args.func->get_entry_va())
+                args.output <<addrToString(args.func->get_entry_va())
                             <<": ============================ " <<digest_to_str(sha1) <<"\n";
             }
             return enabled;
@@ -370,8 +251,8 @@ private:
             if (enabled && insn && block && insn->get_kind()==x86_int) {
                 const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
                 SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
-                if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
-                    0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
+                if (expr && expr->variantT()==V_SgAsmIntegerValueExpression &&
+                    0x80==isSgAsmIntegerValueExpression(expr)->get_value()) {
 
                     const SgAsmStatementPtrList &stmts = block->get_statementList();
                     size_t int_n;
@@ -410,7 +291,7 @@ private:
             SgAsmBlock *idom = args.block->get_immediate_dominator();
             if (enabled && idom)
                 args.output <<args.unparser->line_prefix()
-                            <<"Dominator block: " <<StringUtility::addrToString(idom->get_address()) <<"\n";
+                            <<"Dominator block: " <<addrToString(idom->get_address()) <<"\n";
             return enabled;
         }
     };
@@ -459,7 +340,7 @@ function_url_attr(SgAsmFunction *func)
 /* Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
  * control flow edges within the function. */
 static std::string
-dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::ControlFlow::Graph &global_cfg,
+dump_function_node(std::ostream &sout, SgAsmFunction *func, rose::BinaryAnalysis::ControlFlow::Graph &global_cfg,
                    bool verbose) 
 {
     using namespace StringUtility;
@@ -484,7 +365,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                     } else {
                         semantics_seen.insert(sha1_str);
                     }
-                    args.output <<"B" <<StringUtility::addrToString(args.block->get_address()) <<" [ label=<<table border=\"0\"";
+                    args.output <<"B" <<addrToString(args.block->get_address()) <<" [ label=<<table border=\"0\"";
                     SgAsmFunction *func = args.block->get_enclosing_function();
                     if (func && args.block->get_address()==func->get_entry_va())
                         args.output <<" bgcolor=\"lightskyblue1\"";
@@ -505,7 +386,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                         bool is_noop = i<args.unparser->insn_is_noop.size() && args.unparser->insn_is_noop[i];
                         args.output <<"<tr>"
                                     <<"<td align=\"left\"" <<(is_noop?" bgcolor=\"gray50\"":"") <<">"
-                                    <<StringUtility::htmlEscape(ss.str())
+                                    <<htmlEscape(ss.str())
                                     <<"</td></tr>";
                     }
                 }
@@ -520,7 +401,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
                     SgAsmFunction *func = args.block->get_enclosing_function();
                     args.output <<"</table>>";
                     if (!args.block->get_successors_complete()) {
-                        assert(!args.block->get_statementList().empty());
+                        ASSERT_forbid2(args.block->get_statementList().empty(), "basic blocks should not be empty");
                         SgAsmInstruction *last_insn = isSgAsmInstruction(args.block->get_statementList().back());
                         if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
                             args.output <<", color=blue"; /*function return statement, not used as an unconditional branch*/
@@ -604,13 +485,13 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
          * non-fall-throughs are orange. We could have just as easily used Boost's depth_first_search(), but our nested loops
          * here allow us to short circuit the traversal and consider only the edges originating from blocks within this
          * function. */
-        boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+        boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
             SgAsmBlock *src_block = get(boost::vertex_name, global_cfg, *vi);
             SgAsmFunction *src_func = src_block->get_enclosing_function();
             if (src_func==func) {
                 rose_addr_t src_fallthrough_va = src_block->get_fallthrough_va();
-                boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
+                boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
                 for (boost::tie(ei, ei_end)=out_edges(*vi, global_cfg); ei!=ei_end; ++ei) {
                     SgAsmBlock *dst_block = get(boost::vertex_name, global_cfg, target(*ei, global_cfg));
                     SgAsmFunction *dst_func = dst_block->get_enclosing_function();
@@ -636,15 +517,15 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
  * out of the specified function. */
 static void
 dump_function_cfg(const std::string &fileprefix, SgAsmFunction *func,
-                  BinaryAnalysis::ControlFlow::Graph &global_cfg)
+                  rose::BinaryAnalysis::ControlFlow::Graph &global_cfg)
 {
     using namespace StringUtility;
 
     char func_node_name[64];
     sprintf(func_node_name, "F%08"PRIx64, func->get_entry_va());
-    fprintf(stderr, " %s", func_node_name);
+    mlog[TRACE] <<"dumping graphviz file for function " <<func_node_name <<"\n";
     FILE *out = fopen((fileprefix+"-"+func_node_name+".dot").c_str(), "w");
-    ROSE_ASSERT(out!=NULL);
+    ASSERT_not_null2(out, "cannot open file: " + fileprefix+"-"+func_node_name+".dot");
     std::stringstream sout;
     sout <<"digraph " <<func_node_name <<" {\n"
          <<"  node [ shape = box ];\n";
@@ -657,12 +538,12 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunction *func,
      * to either the entry node of another function or to the address of a block which has not been disassembled. The nodes
      * for the former case are collapsed function nodes with names beginning with "F"; while the latter case nodes have names
      * beginning with "B" and are shaded pink for higher visibility. */
-    boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+    boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *src_block = get(boost::vertex_name, global_cfg, *vi);
         SgAsmFunction *src_func = src_block->get_enclosing_function();
         if (src_func==func) {
-            boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
+            boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(*vi, global_cfg); ei!=ei_end; ++ei) {
                 SgAsmBlock *dst_block = get(boost::vertex_name, global_cfg, target(*ei, global_cfg));
                 SgAsmFunction *dst_func = dst_block->get_enclosing_function();
@@ -708,21 +589,21 @@ static void
 dump_CFG_CG(SgNode *ast)
 {
     using namespace StringUtility;
-    typedef BinaryAnalysis::ControlFlow::Graph CFG;
-    typedef BinaryAnalysis::FunctionCall::Graph CG;
+    typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
 
     /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
-    struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
-        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *block) {
-            SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
+    struct UnassignedBlockFilter: public rose::BinaryAnalysis::ControlFlow::VertexFilter {
+        bool operator()(rose::BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return !func || 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } unassigned_block_filter;
-    BinaryAnalysis::ControlFlow cfg_analyzer;
+    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
-    CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
+    CFG global_cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = SageInterface::getEnclosingNode<SgFile>(ast);
@@ -732,7 +613,7 @@ dump_CFG_CG(SgNode *ast)
     std::stringstream sout;
     sout <<"digraph callgraph {\n"
          <<"node [ shape = box ];\n";
-    CG cg = BinaryAnalysis::FunctionCall().build_cg_from_cfg<CG>(global_cfg);
+    CG cg = rose::BinaryAnalysis::FunctionCall().build_cg_from_cfg<CG>(global_cfg);
     {
         boost::graph_traits<CG>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
@@ -753,7 +634,7 @@ dump_CFG_CG(SgNode *ast)
     sout <<"}\n";
     {
         FILE *out = fopen((filename + "-cg.dot").c_str(), "w");
-        assert(out!=NULL);
+        ASSERT_not_null2(out, "cannot open file: " + filename + "-cg.dot");
         fputs(sout.str().c_str(), out);
         fclose(out);
     }
@@ -764,268 +645,574 @@ dump_CFG_CG(SgNode *ast)
         if (0 == ((*fi)->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
             dump_function_cfg(filename, *fi, global_cfg);
     }
-
-    fprintf(stderr, "\n");
 }
 
 /* Returns true for any anonymous memory region containing more than a certain size. */
 static rose_addr_t large_anonymous_region_limit = 8192;
 static struct LargeAnonymousRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
+    virtual bool operator()(const MemoryMap*, const AddressInterval &range, const MemoryMap::Segment &segment) {
         if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
-            fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                    range.first(), range.size(), range.last()+1);
+            mlog[INFO] <<"ignoring zero-mapped memory at va " + addrToString(range.least()) <<" + "
+                       <<addrToString(range.size()) <<" = " <<addrToString(range.greatest()+1) <<"\n";
             return true;
         }
         return false;
     }
 } large_anonymous_region_p;
 
+// A simple partitioner that creates a single function having all instructions.
+class SimplePartitioner: public Partitioner {
+protected:
+    rose_addr_t entry_va;
+    Function *function;
+
+public:
+    SimplePartitioner(rose_addr_t entry_va): entry_va(entry_va), function(NULL) {}
+
+    virtual void pre_cfg(SgAsmInterpretation *interp) /*override*/ {
+        function = add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT);
+    }
+
+    virtual void post_cfg(SgAsmInterpretation *interp) /*override*/ {}
+
+    // Organize instructions into basic blocks
+    virtual void analyze_cfg(SgAsmBlock::Reason reason) /*override*/ {
+        ASSERT_not_null(function);
+        bool changed = true;
+        for (size_t pass=0; changed; ++pass) {
+            changed = false;
+            for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                rose_addr_t va = ii->first;
+                Instruction *insn = ii->second;
+                if (!insn->bblock) {
+                    BasicBlock *bb = find_bb_starting(va);
+                    ASSERT_not_null(bb);
+                    append(function, bb, SgAsmBlock::BLK_USERDEF);
+                    changed = true;
+                }
+            }
+            if (pass>=100) {
+                mlog[ERROR] <<"too many passes through simple partitioner\n";
+                abort();
+            }
+        }
+    }
+};
+
+static SgAsmBlock *
+simple_partitioner(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns, MemoryMap *mmap=NULL)
+{
+    if (insns.empty())
+        return NULL;
+    rose_addr_t entry_va = insns.begin()->first;
+    SimplePartitioner sp(entry_va);
+    return sp.partition(interp, insns, mmap);
+}
+
+static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
+    cmdline.parser().emitDocumentationToPager();
+    exit(0);
+}
+
 int
 main(int argc, char *argv[]) 
 {
-    bool show_bad = false;
-    bool do_debug_disassembler=false, do_debug_partitioner=false, do_debug_loader=false;
-    bool do_reassemble = false;
-    bool do_ast_dot = false;
-    bool do_cfg_dot = false;
-    bool do_quiet = false;
-    bool do_dos = false;
-    bool do_show_extents = false;
-    bool do_show_coverage = false;
-    bool do_show_functions = false;
-    bool do_rose_help = false;
-    bool do_call_disassembler = false;
-    bool do_show_hashes = false;
-    bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
-    bool do_syscall_names = true;
-    bool do_linear = false;                     /* organized output linearly rather than hierarchically */
-    std::string do_generate_ipd;
-
-    Disassembler::AddressSet raw_entries;
-    MemoryMap raw_map;
-    unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
-    unsigned partitioner_search = SgAsmFunction::FUNC_DEFAULT;
-    char *partitioner_config = NULL;
-    unsigned protection = MemoryMap::MM_PROT_EXEC;
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Initialize ROSE and our own logging.  Our logging facility, "log", is tied into the librose logging facility so it
+     * can be controlled by the same command-line switches that control ROSE.
+     *------------------------------------------------------------------------------------------------------------------------*/
+    rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
+    mlog = Sawyer::Message::Facility("tool", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Parse and remove the command-line switches intended for this executable, but leave the switches we don't
-     * understand so they can be handled by ROSE if frontend() is called.
+     * Declare command-line switches.
      *------------------------------------------------------------------------------------------------------------------------*/
-    char **new_argv = (char**)calloc(argc+2, sizeof(char*));
-    int new_argc=0, nposargs=0;
-    char *arg0 = strrchr(argv[0], '/') ? strrchr(argv[0], '/')+1 : argv[0];
-    new_argv[new_argc++] = argv[0];
-    new_argv[new_argc++] = strdup("-rose:read_executable_file_format_only");
-    for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
-            fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
-            exit(1);
-        } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
-            do_ast_dot = true;
-        } else if (!strcmp(argv[i], "--no-ast-dot")) {
-            do_ast_dot = false;
-        } else if (!strcmp(argv[i], "--cfg-dot")) {             /* generate dot files for control flow graph of each function */
-            do_cfg_dot = true;
-        } else if (!strcmp(argv[i], "--no-cfg-dot")) {
-            do_cfg_dot = false;
-        } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
-            do_call_disassembler = true;
-        } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
-            do_ast_dot = true;
-            do_cfg_dot = true;
-        } else if (!strcmp(argv[i], "--no-dot")) {
-            do_ast_dot = false;
-            do_cfg_dot = false;
-        } else if (!strncmp(argv[i], "--ipd=", 6)) {
-            do_generate_ipd = argv[i]+6;
-        } else if (!strcmp(argv[i], "--no-ipd")) {
-            do_generate_ipd = "";
-        } else if (!strcmp(argv[i], "--dos")) {                 /* use MS-DOS header in preference to PE when both exist */
-            do_dos = true;
-        } else if (!strcmp(argv[i], "--no-dos")) {
-            do_dos = false;
-        } else if (!strcmp(argv[i], "-?") ||
-                   !strcmp(argv[i], "-help") ||
-                   !strcmp(argv[i], "--help")) {
-            printf(usage, arg0, arg0, arg0);
-            exit(0);
-        } else if (!strcmp(argv[i], "--linear")) {
-            do_linear = true;
-        } else if (!strncmp(argv[i], "--omit-anon=", 12)) {
+    typedef Sawyer::CommandLine::Switch Switch;
+    Sawyer::CommandLine::SwitchGroup switches;
+
+    bool do_ast_dot = false;
+    switches.insert(Switch("ast-dot")
+                    .intrinsicValue(true, do_ast_dot)
+                    .doc("Generate GraphViz dot files for the entire AST.  This switch is applicable only when the input "
+                         "file is a container such as ELF or PE.  The default is to not generate an AST dot file. Disabled "
+                         "by @s{no-ast-dot}."));
+    switches.insert(Switch("no-ast-dot")
+                    .key("ast-dot")
+                    .intrinsicValue(false, do_ast_dot)
+                    .hidden(true));
+
+    rose_addr_t rebase_va = (rose_addr_t)(-1);
+    switches.insert(Switch("base-va")
+                    .argument("addr", Sawyer::CommandLine::nonNegativeIntegerParser(rebase_va))
+                    .doc("Use the specified address as the base virtual address rather than the adress indicated in the "
+                         "file header."));
+
+    bool do_cfg_dot = false;
+    switches.insert(Switch("cfg-dot")
+                    .intrinsicValue(true, do_cfg_dot)
+                    .doc("Generate GraphViz dot file containing the control flow graph of each function.  These files will "
+                         "be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\" is a function entry address.  This switch also "
+                         "generates a function call graph with the name \"x-cg.dot\". These files can be converted to HTML "
+                         "with the generate_html script found in tests/roseTests/binaryTests. The default is to not generate "
+                         "these dot files.  This feature is disabled with @s{no-cfg-dot}."));
+    switches.insert(Switch("no-cfg-dot")
+                    .key("cfg-dot")
+                    .intrinsicValue(false, do_cfg_dot)
+                    .hidden(true));
+
+    DisassembleDriver do_disassemble = DDRIVE_PD;
+    switches.insert(Switch("disassemble")
+                    .argument("how", Sawyer::CommandLine::enumParser(do_disassemble)
+                              ->with("pd", DDRIVE_PD)
+                              ->with("dp", DDRIVE_DP)
+                              ->with("d", DDRIVE_D)
+                              ->with("none", DDRIVE_NONE),
+                              "dp")
+                    .doc("Determines the interrelationship between the disassembler and the paritioner. The @v{how} should "
+                         "be one of the following: \"pd\" runs the partitioner as the master driving the disassembler; "
+                         "\"dp\" runs the disassembler first and then hands the results to the partitioner; \"d\" runs only "
+                         "the disassembler and places all instructions in a single function; \"none\" skips both the "
+                         "disassembly and partitioner and is useful if all you want to do is parse the container."));
+
+    bool do_dos = false;
+    switches.insert(Switch("dos")
+                    .intrinsicValue(true, do_dos)
+                    .doc("Normally, when the disassembler is invoked on a Windows PE or related container file it will "
+                         "ignore the DOS interpretation. This switch causes the disassembler to use the DOS interpretation "
+                         "instead of the default PE interpretation. The @s{no-dos} switch disables this feature (i.e., uses "
+                         "the PE header)."));
+    switches.insert(Switch("no-dos")
+                    .key("dos")
+                    .intrinsicValue(false, do_dos)
+                    .hidden(true));
+
+    switches.insert(Switch("help", 'h')
+                    .action(Sawyer::CommandLine::userAction(showHelpAndExit))
+                    .doc("Shows this man page and then exits. See also, @s{rose-help}."));
+
+    std::string do_generate_ipd;
+    switches.insert(Switch("ipd")
+                    .argument("filename", Sawyer::CommandLine::anyParser(do_generate_ipd))
+                    .doc("Generate an IPD file from the disassembly results.  The IPD file can be modified by hand and then "
+                         "fed back into another disassembly with the \"-rose:partitioner_config @v{filename}\" switch.  The "
+                         "@s{no-ipd} disables this feature."));
+    switches.insert(Switch("no-ipd")
+                    .key("ipd")
+                    .intrinsicValue(std::string(), do_generate_ipd)
+                    .hidden(true));
+
+    std::string isa;
+    switches.insert(Switch("isa")
+                    .argument("architecture", Sawyer::CommandLine::anyParser(isa))
+                    .doc("Specify an instruction set architecture in order to choose a disassembler.  If an ISA is "
+                         "specified then it overrides the disassembler that would have been chosen based on the file format. "
+                         "Use \"@s{isa}=list\" to get a list of valid disassembler names."));
+    
+    bool do_linear = false;
+    switches.insert(Switch("linear")
+                    .intrinsicValue(true, do_linear)
+                    .doc("Causes output to be organized by address rather than hierarchically.  The output will be more "
+                         "like traditional disassemblers."));
+
+    std::vector<std::string> library_paths;
+    switches.insert(Switch("link")
+                    .argument("paths", Sawyer::CommandLine::listParser(Sawyer::CommandLine::anyParser(library_paths)))
+                    .explosiveLists(true)
+                    .doc("Specifies the directories in which to search for shared libraries.  If any directories are "
+                         "specified, then the main executable will be linked with its required dynamic libraries "
+                         "disassembling. This argument may appear more than once, or the individual paths may be separated "
+                         "from one another by colons."));
+                    
+    switches.insert(Switch("log", 'L')
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::mfacilities))
+                    .argument("logspec")
+                    .whichValue(Sawyer::CommandLine::SAVE_ALL)
+                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
+
+    rose_addr_t anon_pages = 8;
+    switches.insert(Switch("omit-anon")
+                    .argument("npages", Sawyer::CommandLine::nonNegativeIntegerParser(anon_pages))
+                    .doc("If the memory being disassembled is anonymously mapped (contains all zero bytes), then the "
+                         "disassembler might spend substantial time creating code that's a single, large block of "
+                         "instructions.  This switch can be used to discard regions of memory that are anonymously mapped. "
+                         "Any distinct region larger than the specified size in kilobytes (1024 multiplier) will be "
+                         "unmapped before disassembly starts.  This filter does not remove neighboring regions which are "
+                         "individually smaller than the limit but whose combined size is larger.  The default is to omit "
+                         "anonymous regions larger than " + numberToString(anon_pages) + "kB. Setting @v{npages} to zero "
+                         "prevents any pages from being unmapped."));
+
+    std::string protection_string = "x";
+    switches.insert(Switch("protection")
+                    .argument("rwx", Sawyer::CommandLine::anyParser(protection_string))
+                    .doc("Normally the disassembler will only consider data in memory that has execute permission.  This "
+                         "switch allows the disassembler to use a different set of protection bits, all of which must be "
+                         "set on any memory which is being considered for disassembly.  The @v{rwx} argument is one or more "
+                         "of the letters: r (read), w (write), or x (execute), or '-' (ignored). @v{rwx} may be the word "
+                         "\"any\", which has the same effect as not supplying any letters."));
+
+    bool do_quiet = false;
+    switches.insert(Switch("quiet")
+                    .intrinsicValue(true, do_quiet)
+                    .doc("Suppresses the instruction listing that is normally emitted to the standard output stream.  The "
+                         "default is to not suppress, which is also the result when the @s{no-quiet} switch is used."));
+    switches.insert(Switch("no-quiet")
+                    .key("quiet")
+                    .intrinsicValue(false, do_quiet)
+                    .hidden(true));
+
+    std::string raw_spec;
+    switches.insert(Switch("raw")
+                    .argument("entries", Sawyer::CommandLine::anyParser(raw_spec))
+                    .doc("Indicates that the specified file(s) contains raw machine instructions rather than a binary "
+                         "container such as ELF or PE.  The @v{entries} argument specifies virtual addresses where "
+                         "disassembly will be attempted. It is a comma-separated list of addresses or address ranges. An "
+                         "address range is a low and high address separated by a hyphen and the range includes both "
+                         "endpoints.  However, if the range is followed by a slash and an increment then assembly will be "
+                         "tried only at the low address and positive offsets from the low address in multiples of the "
+                         "increment.\n\n"
+                         "The non-switch, positional arguments are either the name of an index file that was created by "
+                         "MemoryMap::dump() (see documentation for MemoryMap::load() for details about the file format), or "
+                         "pairs of file names and virtual addresses where the file contents are to be mapped.  The virtual "
+                         "addresses can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x' (execute) to specify "
+                         "mapping permissions other than the default read and execute permission.  By default, ROSE will "
+                         "only disassemble instructions appearing in parts of the memory address space containing execute "
+                         "permission."));
+
+    bool do_reassemble = false;
+    switches.insert(Switch("reassemble")
+                    .intrinsicValue(true, do_reassemble)
+                    .doc("Assemble each disassembled instruction and compare the generated machine code with the bytes "
+                         "originally disassembled.  This switch is intended mostly to check the consistency of the "
+                         "disassembler with the assembler.  The default is to not reassemble. The @s{no-reassemble} switch "
+                         "disables this feature."));
+    switches.insert(Switch("no-reassemble")
+                    .key("reassemble")
+                    .intrinsicValue(false, do_reassemble)
+                    .hidden(true));
+
+    std::vector<rose_addr_t> reserved_vals;
+    switches.insert(Switch("reserve")
+                    .argument("addr/size",
+                              Sawyer::CommandLine::listParser(Sawyer::CommandLine::nonNegativeIntegerParser(reserved_vals)))
+                    .explosiveLists(true)
+                    .doc("Reserve the indicated virtual address range before attempting to load the specimen.  The memory is "
+                         "mapped with no access rights. This switch may appear multiple times to reserve discontiguous "
+                         "regions of the virtual address space."));
+    
+    bool do_rose_help = false;
+    switches.insert(Switch("rose-help")
+                    .intrinsicValue(true, do_rose_help)
+                    .doc("Show the ROSE library-recognized command-line switch documentation and exit."));
+
+    std::string disassembler_search_str;
+    switches.insert(Switch("rose:disassembler_search")
+                    .longPrefix("-")                    // librose uses hyphens to introduce named switches
+                    .argument("how", Sawyer::CommandLine::anyParser(disassembler_search_str))
+                    .doc("The argument for this switch is passed along to the ROSE library. See @s{rose-help} for details. "
+                         "The use of this switch may or may not have any effect depending on how this tool calls the "
+                         "disassembler."));
+
+    std::string partitioner_config;
+    switches.insert(Switch("rose:partitioner_config")
+                    .longPrefix("-")                    // librose uses hyphens to introduce named switches
+                    .argument("config", Sawyer::CommandLine::anyParser(partitioner_config))
+                    .doc("The argument for this switch is passed along to the ROSE library.  See @s{rose-help} for details. "
+                         "The use of this switch may or may not have any effect depending on how this tool calls the "
+                         "disassembler."));
+
+    std::string partitioner_search_str;
+    switches.insert(Switch("rose:partitioner_search")
+                    .longPrefix("-")                    // librose uses hyphens to introduce named switches
+                    .argument("how", Sawyer::CommandLine::anyParser(partitioner_search_str))
+                    .doc("The argument for this switch is passed along to the ROSE library. See @s{rose-help} for details. "
+                         "The use of this switch may or may not have any effect depending on how this tool calls the "
+                         "partitioner."));
+    
+    bool show_bad = false;
+    switches.insert(Switch("show-bad")
+                    .intrinsicValue(true, show_bad)
+                    .doc("Show details about why instructions at certain addresses could not be disassembled.  The default "
+                         "is to not show these details.  The @s{no-show-bad} switch disables this feature."));
+    switches.insert(Switch("no-show-bad")
+                    .key("show-bad")
+                    .intrinsicValue(true, show_bad)
+                    .hidden(true));
+
+    bool do_show_coverage = false;
+    switches.insert(Switch("show-coverage")
+                    .intrinsicValue(true, do_show_coverage)
+                    .doc("Show what percent of disassembly memory map was actually disassembled.  The default is to not show "
+                         "this information.  The @s{no-show-coverage} switch disables this feature."));
+    switches.insert(Switch("no-show-coverage")
+                    .key("show-coverage")
+                    .intrinsicValue(false, do_show_coverage)
+                    .hidden(true));
+
+    bool do_show_extents = false;
+    switches.insert(Switch("show-extents")
+                    .intrinsicValue(true, do_show_extents)
+                    .doc("Show detailed information about what parts of the file were accessed during container parsing "
+                         "and disassembly.  The default is to not show these details.  The @s{no-show-extents} switch "
+                         "disables this feature."));
+    switches.insert(Switch("no-show-extents")
+                    .key("show-extents")
+                    .intrinsicValue(false, do_show_extents)
+                    .hidden(true));
+
+    bool do_show_functions = false;
+    switches.insert(Switch("show-functions")
+                    .intrinsicValue(true, do_show_functions)
+                    .doc("Display a list of functions in tabular format.  The default is to not show this information. The "
+                         "@s{no-show-functions} switch disables this feature."));
+    switches.insert(Switch("no-show-functions")
+                    .key("show-functions")
+                    .intrinsicValue(false, do_show_functions)
+                    .hidden(true));
+
+    bool do_show_hashes = false;
+    switches.insert(Switch("show-hashes")
+                    .intrinsicValue(true, do_show_hashes)
+                    .doc("Display SHA1 hashes for basic blocks and functions in the assembly listing. These hashes are "
+                         "based on basic block semantics.  The default is to not show these hashes in the listing. "
+                         "Regardless of this switch, the hashes still appear in the function listing (@s{show-functions}) "
+                         "and the CFG dot files (@s{cfg-dot}) if they can be computed. The @s{no-show-hashes} switch "
+                         "disables this feature."));
+    switches.insert(Switch("no-show-hashes")
+                    .key("show-hashes")
+                    .intrinsicValue(false, do_show_hashes)
+                    .hidden(true));
+
+    SyscallMethod do_syscall_names = SYSCALL_LINUX32;
+    switches.insert(Switch("syscalls")
+                    .argument("method", Sawyer::CommandLine::enumParser(do_syscall_names)
+                              ->with("none", SYSCALL_NONE)
+                              ->with("linux32", SYSCALL_LINUX32))
+                    .doc("Specifies how system calls are to be named in the disassembly output. The value \"linux32\" uses "
+                         "system call numbers and names for 32-bit Linux, while the value \"none\" means no attempt is made "
+                         "to determine system call names."));
+
+    switches.insert(Switch("version", 'V')
+                    .action(Sawyer::CommandLine::showVersionAndExit(version_message(), 0))
+                    .doc("Shows version information for various ROSE components and then exits."));
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Parse the command-line.
+     *------------------------------------------------------------------------------------------------------------------------*/
+
+    Sawyer::CommandLine::Parser cmdline_parser;
+    cmdline_parser.errorStream(mlog[FATAL]);
+    cmdline_parser.purpose("disassemble binary specimens");
+    cmdline_parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
+    cmdline_parser.chapter(1, "ROSE Command-line Tools");
+    cmdline_parser.doc("Synopsis",
+                       "@prop{programName} [@v{tool_switches}] [-- @v{rose_switches}] @v{specimen}\n\n"
+                       "@prop{programName} @s{raw}... [@v{tool_switches}] [-- @v{rose_switches}] @v{map_file}\n\n"
+                       "@prop{programName} @s{raw}... [@v{tool_switches}] [-- @v{rose_switches}] @v{name_addr_pairs}...");
+    cmdline_parser.doc("Description",
+                       "Disassembles a binary specimen to produce a listing file.  If the \"--raw\" switch is supplied "
+                       "then the positional command-line arguments are either the name of a single memory-map dump, or "
+                       "pairs of file names and virtual addresses (see the @s{raw} switch for details).  When the "
+                       "@s{raw} switch is not specified, the command-line argument is the name of a specimen of a "
+                       "recognized file format such as ELF or PE.\n\n"
+                       "Because librose does not (yet) describe its command-line in terms that can be exported easily "
+                       "to command-line parsers, this tool requires that all tool-related switches appear before all "
+                       "librose switches, and that if rose-related switches are specified they are preceded by a \"--\" "
+                       "switch.  This helps detect misspelled switches that are intended for the tool; on the other "
+                       "hand, ROSE's frontend function does very minimal checking; @b{don't expect an error if you mistype "
+                       "a switch intended for frontend!}");
+    cmdline_parser.doc("Options",
+                       "These are the switches recognized by the @prop{programName} tool itself. Documentation for switches "
+                       "that can be passed to ROSE's frontend() function, if it's even called by this tool, is available "
+                       "from this tool's @s{rose-help} switch.");
+
+    Sawyer::CommandLine::ParserResult cmdline = cmdline_parser.with(switches).parse(argc, argv).apply();
+
+    // Some switches require some extra parsing...  We could have written specific parsers for these and called them from
+    // switch declarations above, but it's easier to just copy the code that previously existed...
+
+    if (do_rose_help) {
+        std::vector<std::string> args;
+        args.push_back(argv[0]);
+        args.push_back("--help");
+        frontend(args);
+        exit(0);
+    }
+
+    bool do_link = !library_paths.empty();
+
+    unsigned protection = MemoryMap::MM_PROT_EXEC;
+    if (!protection_string.empty()) {
+        protection = 0;
+        BOOST_FOREACH (char ch, protection_string) {
+            switch (ch) {
+                case 'r': protection |= MemoryMap::MM_PROT_READ;  break;
+                case 'w': protection |= MemoryMap::MM_PROT_WRITE; break;
+                case 'x': protection |= MemoryMap::MM_PROT_EXEC;  break;
+                case '-': break;
+                default:
+                    mlog[ERROR] <<"invalid --protection bit: " <<ch <<"\n";
+                    exit(1);
+            }
+        }
+    }
+    
+    bool do_rebase = rebase_va != (rose_addr_t)(-1);
+
+    Disassembler::AddressSet raw_entries;
+    if (!raw_spec.empty()) {
+        std::vector<std::string> parts = StringUtility::split(',', raw_spec, (size_t)(-1), true);
+        for (size_t i=0; i<parts.size(); ++i) {
+            // each part is: LO[-HI[/INC]]
             char *rest;
-            do_omit_anon = true;
-            large_anonymous_region_limit = 1024 * strtoull(argv[i]+12, &rest, 0);
-            if (rest && *rest) {
-                fprintf(stderr, "%s: invalid value for --omit-anon switch: %s\n", arg0, argv[i]+12);
+            const char *s = parts[i].c_str();
+            errno = 0;
+            rose_addr_t lo = strtoull(s, &rest, 0);
+            if (errno || rest==s) {
+                mlog[ERROR] <<"malformed --raw specification: " <<parts[i] <<"\n";
                 exit(1);
             }
-        } else if (!strcmp(argv[i], "--no-omit-anon")) {
-            do_omit_anon = false;
-        } else if (!strcmp(argv[i], "--protection=any")) {
-            protection = 0;
-        } else if (!strncmp(argv[i], "--protection=", 13)) {
-            protection = 0;
-            for (char *s=argv[i]+13; *s; s++) {
-                switch (*s) {
-                    case 'r': protection |= MemoryMap::MM_PROT_READ;  break;
-                    case 'w': protection |= MemoryMap::MM_PROT_WRITE; break;
-                    case 'x': protection |= MemoryMap::MM_PROT_EXEC;  break;
-                    case '-': break;
-                    default:
-                        fprintf(stderr, "%s: invalid --protection bit: %c\n", arg0, *s);
-                        exit(1);
-                }
-            }
-        } else if (!strcmp(argv[i], "--rose-help")) {
-            new_argv[new_argc++] = strdup("--help");
-            do_rose_help = true;
-        } else if (!strcmp(argv[i], "--skip-dos")) {
-            fprintf(stderr, "%s: --skip-dos has been replaced by --no-dos, which is now the default.\n", arg0);
-            do_dos = false;
-        } else if (!strcmp(argv[i], "--show-bad")) {            /* show details about failed disassembly or assembly */
-            show_bad = true;
-        } else if (!strcmp(argv[i], "--no-show-bad")) {
-            show_bad = false;
-        } else if (!strcmp(argv[i], "--show-coverage")) {       /* show disassembly coverage */
-            do_show_coverage = true;
-        } else if (!strcmp(argv[i], "--no-show-coverage")) {
-            do_show_coverage = false;
-        } else if (!strcmp(argv[i], "--show-functions")) {      /* show function summary */
-            do_show_functions = true;
-        } else if (!strcmp(argv[i], "--no-show-functions")) {
-            do_show_functions = false;
-        } else if (!strcmp(argv[i], "--show-extents")) {        /* show parts of file that were not disassembled */
-            do_show_extents = true;
-        } else if (!strcmp(argv[i], "--no-show-extents")) {
-            do_show_extents = false;
-        } else if (!strcmp(argv[i], "--show-hashes")) {         /* show SHA1 hashes in assembly listing */
-            do_show_hashes = true;
-        } else if (!strcmp(argv[i], "--no-show-hashes")) {
-            do_show_hashes = false;
-        } else if (!strcmp(argv[i], "--reassemble")) {          /* reassemble in order to test the assembler */
-            do_reassemble = true;
-        } else if (!strcmp(argv[i], "--no-reassemble")) {
-            do_reassemble = false;
-        } else if (!strcmp(argv[i], "--raw") || !strncmp(argv[i], "--raw=", 6)) {
-            char *s = !strncmp(argv[i], "--raw=", 6) ? argv[i]+6 : (i+1<argc ? argv[++i] : NULL);
-            if (!s || !*s) {
-                fprintf(stderr, "%s: raw entry address(es) expceted for --raw switch\n", arg0);
-                exit(1);
-            }
-            while (*s) {
-                char *rest;
+            rose_addr_t hi = lo, inc = 1;
+            if ('-'==*rest) {
+                s = rest+1;
                 errno = 0;
-                rose_addr_t raw_entry_va = strtoull(s, &rest, 0);
-                if (rest==s || errno!=0) {
-                    fprintf(stderr, "%s: raw entry address expected at: %s\n", arg0, s);
+                hi = strtoull(s, &rest, 0);
+                if (errno || rest==s || hi<lo) {
+                    mlog[ERROR] <<"malformed --raw specification: " <<parts[i] <<"\n";
                     exit(1);
                 }
-                raw_entries.insert(raw_entry_va);
-                if (','==*rest) rest++;
-                while (isspace(*rest)) rest++;
-                s = rest;
+                if ('/'==*rest) {
+                    s = rest+1;
+                    errno = 0;
+                    inc = strtoull(s, &rest, 0);
+                    if (errno || rest==s || 0==inc) {
+                        mlog[ERROR] <<"malformed --raw specification: " <<parts[i] <<"\n";
+                        exit(1);
+                    }
+                }
             }
-        } else if (!strcmp(argv[i], "--debug")) {               /* dump lots of debugging information */
-            do_debug_disassembler = true;
-            do_debug_loader = true;
-            do_debug_partitioner = true;
-        } else if (!strcmp(argv[i], "--no-debug")) {
-            do_debug_disassembler = false;
-            do_debug_loader = false;
-            do_debug_partitioner = false;
-        } else if (!strcmp(argv[i], "--debug-disassembler")) {
-            do_debug_disassembler = true;
-        } else if (!strcmp(argv[i], "--no-debug-disassembler")) {
-            do_debug_disassembler = false;
-        } else if (!strcmp(argv[i], "--debug-loader")) {
-            do_debug_loader = true;
-        } else if (!strcmp(argv[i], "--no-debug-loader")) {
-            do_debug_loader = false;
-        } else if (!strcmp(argv[i], "--debug-partitioner")) {
-            do_debug_partitioner = true;
-        } else if (!strcmp(argv[i], "--no-debug-partitioner")) {
-            do_debug_partitioner = false;
-        } else if (!strcmp(argv[i], "--quiet")) {               /* do not emit instructions to stdout */
-            do_quiet = true;
-        } else if (!strcmp(argv[i], "--no-quiet")) {
-            do_quiet = false;
-        } else if (!strncmp(argv[i], "--syscalls=", 11)) {
-            if (!strcmp(argv[i]+11, "linux32")) {
-                do_syscall_names = true;
-            } else if (!strcmp(argv[i]+11, "none")) {
-                do_syscall_names = false;
-            } else {
-                fprintf(stderr, "%s: bad value for --syscalls switch: %s\n", arg0, argv[i]+11);
+            if (*rest) {
+                mlog[ERROR] <<"malformed --raw specification: " <<parts[i] <<"\n";
                 exit(1);
             }
-        } else if (!strcmp(argv[i], "-rose:disassembler_search")) {
-            /* Keep track of disassembler search flags because we need them even if we don't invoke frontend(), but
-             * also pass them along to the frontend() call. */
-            ROSE_ASSERT(i+1<argc);
-            try {
-                disassembler_search = Disassembler::parse_switches(argv[i+1], disassembler_search);
-            } catch (const Disassembler::Exception &e) {
-                std::cerr <<"disassembler exception: " <<e <<"\n";
-                exit(1);
-            }
-            new_argv[new_argc++] = argv[i++];
-            new_argv[new_argc++] = argv[i];
-        } else if (!strcmp(argv[i], "-rose:partitioner_search")) {
-            /* Keep track of partitioner heuristics because we need them even if we don't invoke frontend(), but
-             * also pass them along to the frontend() call. */
-            ROSE_ASSERT(i+1<argc);
-            try {
-                partitioner_search = Partitioner::parse_switches(argv[i+1], partitioner_search);
-            } catch (const Partitioner::Exception &e) {
-                std::cerr <<"partitioner exception: " <<e <<"\n";
-                exit(1);
-            }
-            new_argv[new_argc++] = argv[i++];
-            new_argv[new_argc++] = argv[i];
-        } else if (!strcmp(argv[i], "-rose:partitioner_config")) {
-            /* Keep track of partitioner configuration file name because we need it even if we don't invoke frontend(), but
-             * also pass them along to the frontend() call. */
-            ROSE_ASSERT(i+1<argc);
-            partitioner_config = argv[i+1];
-            new_argv[new_argc++] = argv[i++];
-            new_argv[new_argc++] = argv[i];
-        } else if (i+2<argc && CommandlineProcessing::isOptionTakingThirdParameter(argv[i])) {
-            new_argv[new_argc++] = argv[i++];
-            new_argv[new_argc++] = argv[i++];
-            new_argv[new_argc++] = argv[i];
-        } else if (i+1<argc && CommandlineProcessing::isOptionTakingSecondParameter(argv[i])) {
-            new_argv[new_argc++] = argv[i++];
-            new_argv[new_argc++] = argv[i];
-        } else if (argv[i][0]=='-') {
-            new_argv[new_argc++] = argv[i];
-        } else if (!raw_entries.empty()) {
-            nposargs++;
-            char *raw_filename = argv[i];
-            char *extension = strrchr(raw_filename, '.');
-            if (extension && !strcmp(extension, ".index")) {
-                std::string basename(raw_filename, extension-raw_filename);
+            for (rose_addr_t va=lo; va<=hi; va+=inc)
+                raw_entries.insert(va);
+        }
+    }
+
+    AddressIntervalSet reserved;
+    if (!reserved_vals.empty()) {
+        if (reserved_vals.size() % 2) {
+            mlog[ERROR] <<"expected an even number of arguments for '--reserved' switch(es)\n";
+            exit(1);
+        }
+        for (size_t i=0; i<reserved_vals.size(); i+=2)
+            reserved.insert(AddressInterval::baseSize(reserved_vals[i], reserved_vals[i+1]));
+    }
+
+    unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
+    if (!disassembler_search_str.empty()) {
+        try {
+            disassembler_search = Disassembler::parse_switches(disassembler_search_str, disassembler_search);
+        } catch (const Disassembler::Exception &e) {
+            mlog[ERROR] <<"disassembler exception: " <<e <<"\n";
+            exit(1);
+        }
+    }
+
+    unsigned partitioner_search = SgAsmFunction::FUNC_DEFAULT;
+    if (!partitioner_search_str.empty()) {
+        try {
+            partitioner_search = Partitioner::parse_switches(partitioner_search_str, partitioner_search);
+        } catch (const Partitioner::Exception &e) {
+            mlog[ERROR] <<"partitioner exception: " <<e <<"\n";
+            exit(1);
+        }
+    }
+
+    Disassembler *disassembler = NULL;
+    if (!isa.empty()) {
+        disassembler = get_disassembler(isa);
+        if (!disassembler) {
+            mlog[ERROR] <<"invalid isa specified on command line: " <<isa <<"\n";
+            exit(1);
+        }
+    }
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Build the command-line for frontend().  Because librose doesn't describe its command-line with Sawyer::CommandLine,
+     * we're somewhat restricted in how we operate.  All tool switches must appear before all frontend() switches, and we must
+     * assume that all tool switches are spelled correctly (because we have no way to distinguish between a valid frontend()
+     * switch and a misspelled tool switch).  FIXME[Robb P. Matzke 2014-04-28]
+     *------------------------------------------------------------------------------------------------------------------------*/
+
+    std::vector<std::string> args = cmdline.unreachedArgs();
+    std::vector<std::string> frontend_args;
+    frontend_args.push_back(argv[0]);
+    frontend_args.push_back("-rose:binary");
+    frontend_args.push_back("-rose:read_executable_file_format_only");
+    if (!disassembler_search_str.empty()) {
+        frontend_args.push_back("-rose:disassembler_search");
+        frontend_args.push_back(disassembler_search_str);
+    }
+    if (!partitioner_config.empty()) {
+        frontend_args.push_back("-rose:partitioner_config");
+        frontend_args.push_back(partitioner_config);
+    }
+    if (!partitioner_search_str.empty()) {
+        frontend_args.push_back("-rose:partitioner_search");
+        frontend_args.push_back(partitioner_search_str);
+    }
+    size_t argno = 0;
+    for (/*void*/; argno<args.size() && !args[argno].empty() && '-'==args[argno][0]; ++argno) {
+        if (0==args[argno].compare("--")) {
+            ++argno;
+            break;
+        } else if (argno+2 < args.size() && CommandlineProcessing::isOptionTakingThirdParameter(args[argno])) {
+            frontend_args.push_back(args[argno++]);
+            frontend_args.push_back(args[argno++]);
+            frontend_args.push_back(args[argno]);
+        } else if (argno+1 < args.size() && CommandlineProcessing::isOptionTakingSecondParameter(args[argno])) {
+            frontend_args.push_back(args[argno++]);
+            frontend_args.push_back(args[argno]);
+        } else {
+            frontend_args.push_back(args[argno]);
+        }
+    }
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Everything that's left on the command-line is a non-switch program argument.
+     *------------------------------------------------------------------------------------------------------------------------*/
+
+    MemoryMap raw_map;
+    size_t nposargs = 0;
+    for (/*void*/; argno<args.size(); ++argno) {
+        if (!raw_spec.empty()) {
+            ++nposargs;
+            std::string raw_filename = args[argno];
+            if (boost::ends_with(raw_filename, ".index")) {
+                std::string basename = raw_filename.substr(0, raw_filename.size()-6);
                 try {
                     raw_map.load(basename);
                 } catch (const MemoryMap::Exception &e) {
-                    std::cerr <<e <<"\n";
+                    mlog[ERROR] <<e <<"\n";
                     exit(1);
                 }
             } else {
-                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine instructions
-                 * and the virtual address where those instructions are mapped.  The virtual address can be suffixed with any
-                 * combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when no suffix is present
-                 * is 'rx'. */
-                if (++i>=argc) {
-                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
+                /* The --raw command-line args come in pairs consisting of the file name containing the raw machine
+                 * instructions and the virtual address where those instructions are mapped.  The virtual address can be
+                 * suffixed with any combination of the characters 'r' (read), 'w' (write), and 'x' (execute). The default when
+                 * no suffix is present is 'rx'. */
+                if (++argno >= args.size()) {
+                    mlog[ERROR] <<"virtual address required for raw buffer " <<raw_filename <<"\n";
                     exit(1);
                 }
+                const char *s = args[argno].c_str();
                 char *suffix;
                 errno = 0;
-                rose_addr_t start_va = strtoull(argv[i], &suffix, 0);
-                if (suffix==argv[i] || errno) {
-                    fprintf(stderr, "%s: virtual address required for raw buffer %s\n", arg0, raw_filename);
+                rose_addr_t start_va = strtoull(s, &suffix, 0);
+                if (suffix==s || errno) {
+                    mlog[ERROR] <<"virtual address required for raw buffer " <<raw_filename <<"\n";
                     exit(1);
                 }
                 unsigned perm = 0;
@@ -1034,24 +1221,28 @@ main(int argc, char *argv[])
                         case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
                         case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
                         case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
-                        default: fprintf(stderr, "%s: invalid map permissions: %s\n", arg0, suffix-1); exit(1);
+                        default: mlog[ERROR] <<"invalid map permissions: " <<(suffix-1) <<"\n"; exit(1);
                     }
                 }
+                std::string base_name = StringUtility::stripPathFromFileName(raw_filename);
                 if (!perm) perm = MemoryMap::MM_PROT_RX;
-
-                MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(raw_filename);
-                raw_map.insert(Extent(start_va, buffer->size()),
-                               MemoryMap::Segment(buffer, 0, perm, raw_filename));
+                size_t raw_file_size = raw_map.insert_file(raw_filename, start_va, false, true, base_name);
+                raw_map.mprotect(AddressInterval::baseSize(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
             }
         } else {
             nposargs++;
-            new_argv[new_argc++] = argv[i];
+            frontend_args.push_back(args[argno]);
         }
     }
+
     if (0==nposargs && !do_rose_help) {
-        fprintf(stderr, "%s: incorrect usage; see --help for details.\n", arg0);
+        mlog[ERROR] <<"incorrect usage; see --help for details.\n";
         exit(1);
     }
+    if (do_rebase && !raw_entries.empty())
+        mlog[WARN] <<"--base-va ignored in raw buffer mode\n";
+    if (!reserved.isEmpty() && !raw_entries.empty())
+        mlog[WARN] <<"--reserve ignored in raw buffer mode\n";
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse, link, remap, relocate
@@ -1061,46 +1252,78 @@ main(int argc, char *argv[])
     SgAsmInterpretation *interp = NULL;         /* Interpretation to disassemble if not disassembling a raw buffer */
     if (raw_entries.empty()) {
         /* Choose a disassembler based on the SgAsmInterpretation that we're disassembling */
-        project = frontend(new_argc, new_argv); /*parse container but do not disassemble yet*/
+        project = frontend(frontend_args); /*parse container but do not disassemble yet*/
         std::vector<SgAsmInterpretation*> interps
             = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation);
 
         /* Use the last header if there's more than one. Windows files often have a DOS header first followed by another
          * header such as PE.  If the "--dos" command-line switch is present then use the first header instead. */
-        ROSE_ASSERT(!interps.empty());
+        ASSERT_forbid2(interps.empty(), "a binary specimen must have at least one SgAsmInterpretation");
         interp = do_dos ? interps.front() : interps.back();
 
         /* Clear the interpretation's memory map because frontend() may have already done the mapping. We want to re-do the
          * mapping here because we may want to see debugging output, etc. */
-        if (interp->get_map()!=NULL)
-            interp->get_map()->clear();
+        MemoryMap *map = interp->get_map();
+        if (map!=NULL) {
+            map->clear();
+        } else {
+            interp->set_map(map = new MemoryMap);
+        }
 
+        /* Adjust the base VA for the primary file header if requested. */
+        if (do_rebase) {
+            const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+            ASSERT_require2(1==hdrs.size(), "rebasing only works when the specimen has one file header");
+            hdrs[0]->set_base_va(rebase_va);
+        }
+
+        /* Reserve parts of the address space. */
+        BOOST_FOREACH (const AddressInterval &interval, reserved.nodes()) {
+            map->insert(interval, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(interval.size()),
+                                                     0, MemoryMap::MM_PROT_NONE, "reserved area"));
+        }
+
+        /* Run the loader */
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
-        if (do_debug_loader) loader->set_debug(stderr);
-        //loader->set_perform_dynamic_linking(true);
-        loader->set_perform_remap(true);
-        //loader->set_perform_relocations(true);
-        //loader->add_directory("/lib32");
         try {
-            loader->load(interp);
+            if (do_link) {
+                for (size_t i=0; i<library_paths.size(); ++i)
+                    loader->add_directory(library_paths[i]);
+                loader->link(interp);
+            }
+            loader->remap(interp);
+            if (do_link || !reserved.isEmpty()) {
+                BinaryLoader::FixupErrors errors;
+                loader->fixup(interp, &errors);
+                if (!errors.empty()) {
+                    mlog[WARN] <<"encountered " <<plural(errors.size(), "relocation fixup errors") <<"\n";
+                }
+            }
         } catch (const BinaryLoader::Exception &e) {
-            std::cerr <<arg0 <<": BinaryLoader exception: " <<e <<"\n";
+            mlog[ERROR] <<"BinaryLoader exception: " <<e <<"\n";
             exit(1);
         }
     }
-
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Choose a disassembler
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    Disassembler *disassembler = NULL;
-    if (!raw_entries.empty() && !do_rose_help) {
+    if (disassembler) {
+        // already chosen above
+    } else if (!raw_entries.empty() && !do_rose_help) {
         /* We don't have any information about the architecture, so assume the ROSE defaults (i386) */
-        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()))->clone();
+        disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
+        ASSERT_not_null(disassembler);
     } else {
-        disassembler = Disassembler::lookup(interp)->clone();
+        disassembler = Disassembler::lookup(interp);
+        if (!disassembler) {
+            mlog[ERROR] <<"no suitable disassembler found for interpretation\n";
+            exit(1);
+        }
     }
+    ASSERT_not_null(disassembler);
+    disassembler = disassembler->clone();
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Configure the disassembler and its partitioner.
@@ -1110,8 +1333,6 @@ main(int argc, char *argv[])
      * above, but they're also available via SgFile::get_disassemblerSearchHeuristics() if we called frontend(). */
     disassembler->set_search(disassembler_search);
     disassembler->set_alignment(1);      /*alignment for SEARCH_WORDS (default is four)*/
-    if (do_debug_disassembler)
-        disassembler->set_debug(stderr);
 
     /* What kind of memory can be disassembled, as specified by the --protection switch. */
     disassembler->set_protection(protection);
@@ -1122,13 +1343,11 @@ main(int argc, char *argv[])
      * frontend(). */
     Partitioner *partitioner = new Partitioner();
     partitioner->set_search(partitioner_search);
-    if (do_debug_partitioner)
-        partitioner->set_debug(stderr);
-    if (partitioner_config) {
+    if (!partitioner_config.empty()) {
         try {
             partitioner->load_config(partitioner_config);
         } catch (const Partitioner::IPDParser::Exception &e) {
-            std::cerr <<e <<"\n";
+            mlog[ERROR] <<e <<"\n";
             exit(1);
         }
     }
@@ -1142,21 +1361,22 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
 
     /* Note that if we using an active partitioner that calls the disassembler whenever an instruction is needed, then there's
-     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here. */
-    MemoryMap *map = NULL;
+     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here.  We make
+     * a copy of the MemoryMap because we might want to modify some of the permissions for disassembling; the new copy shares
+     * the data (but not meta-data) with the original MemoryMap. */
+    MemoryMap map;
     Disassembler::AddressSet worklist;
 
     if (!raw_entries.empty()) {
          /* We computed the memory map when we processed command-line arguments. */
-        map = &raw_map;
+        map = raw_map;
         for (Disassembler::AddressSet::iterator i=raw_entries.begin(); i!=raw_entries.end(); i++) {
             worklist.insert(*i);
             partitioner->add_function(*i, SgAsmFunction::FUNC_ENTRY_POINT, "entry_function");
         }
     } else {
-        map = interp->get_map();
-        assert(map!=NULL);
-
+        ASSERT_not_null2(interp->get_map(), "SgAsmInterpretation must have a memory map by now");
+        map = *interp->get_map();
 
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
@@ -1169,16 +1389,43 @@ main(int argc, char *argv[])
 
             /* Seed disassembler work list with addresses of function symbols if desired */
             if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
-                disassembler->search_function_symbols(&worklist, map, *hi);
+                disassembler->search_function_symbols(&worklist, &map, *hi);
         }
     }
 
     /* Should we filter away any anonymous regions? */
-    if (do_omit_anon>0)
-        map->prune(large_anonymous_region_p);
+    if (anon_pages > 0) {
+        large_anonymous_region_limit = anon_pages * 1024;
+        map.prune(large_anonymous_region_p);
+    }
 
-    printf("using this memory map for disassembly:\n");
-    map->dump(stdout, "    ");
+    /* If we did dynamic linking, then mark the ".got.plt" section as read-only.  This makes the disassembler treat it as
+     * constant data so that dynamically-linked function thunks get known successor information.  E.g., a thunk like this:
+     *     abort@plt:
+     *        jmp DWORD PTR ds:[0x080600f8<.got.plt+0x0c>]
+     * will have as its successor, the address stored at .got.plt+12.  If .got.plt had been left as read/write, then the
+     * disassembler must assume that the address at .got.plt+12 changes while the program runs, and therefore the successors of
+     * the JMP instruction are unknown. */
+    if (do_link) {
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            SgAsmGenericSectionPtrList sections = (*hi)->get_sections_by_name(".got.plt");      // ELF
+            SgAsmGenericSectionPtrList s2 = (*hi)->get_sections_by_name(".got");                // ELF
+            SgAsmGenericSectionPtrList s3 = (*hi)->get_sections_by_name(".import");             // PE
+            sections.insert(sections.end(), s2.begin(), s2.end());
+            sections.insert(sections.end(), s3.begin(), s3.end());
+            for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+                if ((*si)->is_mapped()) {
+                    AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
+                                                                          (*si)->get_mapped_size());
+                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                }
+            }
+        }
+    }
+
+    std::cout <<"using this memory map for disassembly:\n";
+    map.dump(std::cout, "    ");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Run the disassembler and partitioner
@@ -1188,21 +1435,25 @@ main(int argc, char *argv[])
     Disassembler::InstructionMap insns;
 
     try {
-        if (do_call_disassembler) {
-            insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
-            block = partitioner->partition(interp, insns, map);
-        } else {
-            block = partitioner->partition(interp, disassembler, map);
+        if (DDRIVE_PD==do_disassemble) {
+            block = partitioner->partition(interp, disassembler, &map);
             insns = partitioner->get_instructions();
             bad = partitioner->get_disassembler_errors();
+        } else if (DDRIVE_DP==do_disassemble || DDRIVE_D==do_disassemble) {
+            insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+            if (DDRIVE_DP==do_disassemble) {
+                block = partitioner->partition(interp, insns, &map);
+            } else {
+                block = simple_partitioner(interp, insns, &map);
+            }
         }
     } catch (const Partitioner::Exception &e) {
-        std::cerr <<"partitioner exception: " <<e <<"\n";
+        mlog[ERROR] <<"partitioner exception: " <<e <<"\n";
         exit(1);
     }
 
     /* Link instructions into AST if possible */
-    if (interp) {
+    if (interp && block) {
         interp->set_global_block(block);
         block->set_parent(interp);
     }
@@ -1210,29 +1461,29 @@ main(int argc, char *argv[])
 #if 1 /* TESTING NEW FEATURES [RPM 2011-05-23] */
     {
         struct CalculateDominance: public AstSimpleProcessing {
-            BinaryAnalysis::ControlFlow &cfg_analysis;
-            BinaryAnalysis::Dominance &dom_analysis;
-            CalculateDominance(BinaryAnalysis::ControlFlow &cfg_analysis,
-                               BinaryAnalysis::Dominance &dom_analysis)
+            rose::BinaryAnalysis::ControlFlow &cfg_analysis;
+            rose::BinaryAnalysis::Dominance &dom_analysis;
+            CalculateDominance(rose::BinaryAnalysis::ControlFlow &cfg_analysis,
+                               rose::BinaryAnalysis::Dominance &dom_analysis)
                 : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
                 {}
             void visit(SgNode *node) {
-                using namespace BinaryAnalysis;
+                using namespace rose::BinaryAnalysis;
                 typedef ControlFlow::Graph CFG;
                 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunction *func = isSgAsmFunction(node);
-                if (func) {
-                    CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
-                    CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
-                    assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
+                if (func && func->get_entry_block()) {
+                    CFG cfg = cfg_analysis.build_block_cfg_from_ast<CFG>(func);
+                    CFG_Vertex entry = 0; /* see build_block_cfg_from_ast() */
+                    ASSERT_require(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
                     dom_analysis.apply_to_ast(dg);
                 }
             }
         };
-        BinaryAnalysis::ControlFlow cfg_analysis;
-        BinaryAnalysis::Dominance   dom_analysis;
+        rose::BinaryAnalysis::ControlFlow cfg_analysis;
+        rose::BinaryAnalysis::Dominance   dom_analysis;
         //dom_analysis.set_debug(stderr);
         CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
     }
@@ -1243,16 +1494,16 @@ main(int argc, char *argv[])
          *       1. compute the CFG over that function
          *       2. calculate the DG with that CFG
          *       3. apply the DG to the AST */
-        BinaryAnalysis::ControlFlow cfg_analysis;
-        BinaryAnalysis::Dominance dom_analysis;
+        rose::BinaryAnalysis::ControlFlow cfg_analysis;
+        rose::BinaryAnalysis::Dominance dom_analysis;
         //dom_analysis.set_debug(stderr);
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(interp);
         for (size_t i=0; i<functions.size(); i++) {
             SgAsmFunction *func = functions[i];
-            BinaryAnalysis::ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
-            BinaryAnalysis::ControlFlow::Vertex start = (BinaryAnalysis::ControlFlow::Vertex)0;
-            assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, start);
+            rose::BinaryAnalysis::ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
+            rose::BinaryAnalysis::ControlFlow::Vertex start = (rose::BinaryAnalysis::ControlFlow::Vertex)0;
+            ASSERT_require(get(boost::vertex_name, cfg, start)==func->get_entry_block());
+            rose::BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, start);
             dom_analysis.clear_ast(func);
             dom_analysis.apply_to_ast(dg);
         }
@@ -1263,9 +1514,9 @@ main(int argc, char *argv[])
          *     1. Compute the CFG over the entire AST
          *     2. calculate the DG starting with the program entry point
          *     3. apply the DG to the AST */
-        BinaryAnalysis::ControlFlow cfg_analysis;
-        BinaryAnalysis::ControlFlow::Graph global_cfg = cfg_analysis.build_graph(interp);
-        BinaryAnalysis::Dominance dom_analysis;
+        rose::BinaryAnalysis::ControlFlow cfg_analysis;
+        rose::BinaryAnalysis::ControlFlow::Graph global_cfg = cfg_analysis.build_graph(interp);
+        rose::BinaryAnalysis::Dominance dom_analysis;
         dom_analysis.set_debug(stderr);
         cfg_analysis.cache_vertex_descriptors(global_cfg);
         dom_analysis.clear_ast(interp);
@@ -1274,10 +1525,10 @@ main(int argc, char *argv[])
             SgAsmFunction *func = functions[i];
             if (func->get_reason() & SgAsmFunction::FUNC_ENTRY_POINT) {
                 SgAsmBlock *block = func->get_entry_block();
-                assert(block!=NULL);
-                BinaryAnalysis::ControlFlow::Vertex start = block->get_cached_vertex();
-                assert(get(boost::vertex_name, global_cfg, start)==block);
-                BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(global_cfg, start);
+                ASSERT_not_null(block);
+                rose::BinaryAnalysis::ControlFlow::Vertex start = block->get_cached_vertex();
+                ASSERT_require(get(boost::vertex_name, global_cfg, start)==block);
+                rose::BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(global_cfg, start);
                 dom_analysis.apply_to_ast(dg);
             }
         }
@@ -1287,27 +1538,24 @@ main(int argc, char *argv[])
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/
-    printf("disassembled %zu instruction%s and %zu failure%s",
-           insns.size(), 1==insns.size()?"":"s", bad.size(), 1==bad.size()?"":"s");
+    mlog[INFO] <<"disassembled " <<plural(insns.size(), "instructions") <<" and " <<plural(bad.size(), "failures") <<"\n";
     if (!bad.empty()) {
-        if (show_bad) {
-            printf(":\n");
+        if (show_bad && mlog[INFO]) {
             for (Disassembler::BadMap::const_iterator bmi=bad.begin(); bmi!=bad.end(); ++bmi)
-                printf("    0x%08"PRIx64": %s\n", bmi->first, bmi->second.mesg.c_str());
+                mlog[INFO] <<"    " <<addrToString(bmi->first) <<": " <<bmi->second.what() <<"\n";
         } else {
-            printf(" (use --show-bad to see errors)\n");
+            mlog[INFO] <<"use --show-bad to see errors\n";
         }
-    } else {
-        printf("\n");
     }
 
-    if (do_show_functions)
+    if (do_show_functions && block)
         std::cout <<ShowFunctions(block);
 
-    if (!do_quiet) {
-        typedef BinaryAnalysis::ControlFlow::Graph CFG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(block);
+    if (!do_quiet && block) {
+        typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
+        CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
+        unparser.set_registers(disassembler->get_registers());
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
@@ -1330,17 +1578,17 @@ main(int argc, char *argv[])
      * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
-    if (do_show_extents || do_show_coverage) {
-        ExtentMap extents=map->va_extents();
+    if ((do_show_extents || do_show_coverage) && block) {
+        ExtentMap extents=toExtentMap(map.va_extents());
         size_t disassembled_map_size = extents.size();
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
             extents.erase(Extent((*ii)->get_address(), (*ii)->get_size()));
         size_t unused = extents.size();
-        if (do_show_extents && unused>0) {
-            printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
-            extents.dump_extents(stdout, "    ", NULL, 0);
+        if (do_show_extents && unused>0 && mlog[INFO]) {
+            mlog[INFO] <<"These addresses (" <<plural(unused, "bytes") <<") do not contain instructions:\n";
+            extents.dump_extents(mlog[INFO], "    ", "");
         }
 
         if (do_show_coverage && disassembled_map_size>0) {
@@ -1349,7 +1597,7 @@ main(int argc, char *argv[])
                 interp->set_percentageCoverage(disassembled_coverage);
                 interp->set_coverageComputed(true);
             }
-            printf("Disassembled coverage: %0.1f%%\n", disassembled_coverage);
+            mlog[INFO] <<"Disassembled coverage: " <<disassembled_coverage <<" percent\n";
         }
     }
 
@@ -1373,7 +1621,7 @@ main(int argc, char *argv[])
                     file->dump_all(true, ".dump");
             }
         };
-        printf("generating ASCII dump...\n");
+        mlog[INFO] <<"generating ASCII dump...\n";
         T1().traverse(project, preorder);
     }
 
@@ -1382,13 +1630,13 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
     
     if (do_ast_dot && project) {
-        printf("generating GraphViz dot files for the AST...\n");
+        mlog[INFO] <<"generating GraphViz dot files for the AST...\n";
         generateDOT(*project);
         //generateAstGraph(project, INT_MAX);
     }
         
-    if (do_cfg_dot) {
-        printf("generating GraphViz dot files for control flow graphs...\n");
+    if (do_cfg_dot && block) {
+        mlog[INFO] <<"generating GraphViz dot files for control flow graphs...\n";
         dump_CFG_CG(block);
     }
 
@@ -1407,7 +1655,7 @@ main(int argc, char *argv[])
         } else {
             asmb = Assembler::create(new SgAsmPEFileHeader(new SgAsmGenericFile()));
         }
-        ROSE_ASSERT(asmb!=NULL);
+        ASSERT_not_null2(asmb, "no appropriate assembler found");
         asmb->set_encoding_type(Assembler::ET_MATCHES);
 
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
@@ -1420,7 +1668,7 @@ main(int argc, char *argv[])
             } catch(const Assembler::Exception &e) {
                 assembly_failures++;
                 if (show_bad) {
-                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
+                    mlog[ERROR] <<"assembly failed at " + addrToString(insn->get_address()) <<": " <<e.what() <<"\n";
                     FILE *old_debug = asmb->get_debug();
                     asmb->set_debug(stderr);
                     try {
@@ -1433,11 +1681,10 @@ main(int argc, char *argv[])
             }
         }
         if (assembly_failures>0) {
-            printf("reassembly failed for %zu instruction%s.%s\n",
-                   assembly_failures, 1==assembly_failures?"":"s", 
-                   show_bad ? "" : " (use --show-bad to see details)");
+            mlog[WARN] <<"reassembly failed for " <<plural(assembly_failures, "instructions")
+                       <<(show_bad ? "" : " (use --show-bad to see details)") <<"\n";
         } else {
-            printf("reassembly succeeded for all instructions.\n");
+            mlog[INFO] <<"reassembly succeeded for all instructions.\n";
         }
         delete asmb;
         if (assembly_failures>0)
@@ -1448,9 +1695,9 @@ main(int argc, char *argv[])
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
     
-    size_t solver_ncalls = SMTSolver::get_class_stats().ncalls;
+    size_t solver_ncalls = rose::BinaryAnalysis::SMTSolver::get_class_stats().ncalls;
     if (solver_ncalls>0)
-        printf("SMT solver was called %zu time%s\n", solver_ncalls, 1==solver_ncalls?"":"s");
+        mlog[INFO] <<"SMT solver was called " <<plural(solver_ncalls, "times") <<"\n";
     return 0;
 }
 

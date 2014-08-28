@@ -95,6 +95,8 @@ namespace AutoParallelization
 
   bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
   {
+    if (project == NULL)
+      project = SageInterface::getProject();
     // Prepare def-use analysis
     if (defuse==NULL) 
     { 
@@ -265,7 +267,7 @@ namespace AutoParallelization
         SgNode* firstnode= edge.target().getNode();
         liveIns0 = liv->getIn(firstnode);
         if (enable_debug)
-          cout<<"Live-in variables for loop:"<<endl;
+          cout<<"Live-in variables for loop:"<<firstnode->get_file_info()->get_line()<<endl;
         for (std::vector<SgInitializedName*>::iterator iter = liveIns0.begin();
             iter!=liveIns0.end(); iter++)
         {
@@ -285,7 +287,7 @@ namespace AutoParallelization
         SgNode* firstnode= edge.target().getNode();
         liveOuts0 = liv->getIn(firstnode);
         if (enable_debug)
-          cout<<"Live-out variables for loop:"<<endl;
+          cout<<"Live-out variables for loop before line:"<<firstnode->get_file_info()->get_line()<< endl;
         for (std::vector<SgInitializedName*>::iterator iter = liveOuts0.begin();
             iter!=liveOuts0.end(); iter++)
         {
@@ -395,9 +397,13 @@ namespace AutoParallelization
   {
     ROSE_ASSERT(loop !=NULL);
     //Get the scope of the loop
+#if 0 // Liao, 6/27/2014. This is wrong. we can have an inner loop enclosed within an outer loop
+      // The inner loop's current scope is not the function body!
     SgScopeStatement* currentscope = isSgFunctionDeclaration(\
         SageInterface::getEnclosingFunctionDeclaration(loop))\
                                      ->get_definition()->get_body();
+#endif                                     
+    SgScopeStatement* currentscope = SageInterface::getEnclosingNode<SgScopeStatement> (loop, false);
     ROSE_ASSERT(currentscope != NULL);
 
     SgInitializedName* invarname = getLoopInvariant(loop);
@@ -560,7 +566,7 @@ namespace AutoParallelization
     //GetLiveVariables(sg_node,liveIns,liveOuts,true);
     // TODO Loop normalization messes up AST or 
     // the existing analysis can not be called multiple times
-    GetLiveVariables(sg_node,liveIns0,liveOuts0,false);
+    GetLiveVariables(sg_node,liveIns0,liveOuts0, false);
     // Remove loop invariant variable, which is always private 
     SgInitializedName* invarname = getLoopInvariant(sg_node);
     remove(liveIns0.begin(),liveIns0.end(),invarname);
@@ -570,9 +576,16 @@ namespace AutoParallelization
       firstprivateVars,reductionVars, reductionResults;
     // Only consider scalars for now
     CollectVisibleVaribles(sg_node,allVars,invariantVars,true);
+    sort(allVars.begin(), allVars.end());
     CollectVariablesWithDependence(sg_node,depgraph,depVars,true);
     if (enable_debug)
     {
+      cout<<"Debug after CollectVisibleVaribles ():"<<endl;
+      for (std::vector<SgInitializedName*>::iterator iter = allVars.begin(); iter!= allVars.end();iter++)
+      {
+        cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+      }
+ 
       cout<<"Debug after CollectVariablesWithDependence():"<<endl;
       for (std::vector<SgInitializedName*>::iterator iter = depVars.begin(); iter!= depVars.end();iter++)
       {
@@ -669,11 +682,17 @@ namespace AutoParallelization
     if(enable_debug)
       cout<<"Debug dump firstprivate:"<<endl;
       
-    std::vector<SgInitializedName*> temp2;
+    std::vector<SgInitializedName*> temp2, temp3;
     set_difference(liveIns0.begin(), liveIns0.end(), liveOuts0.begin(),liveOuts0.end(),
         inserter(temp2, temp2.begin()));
     set_difference(temp2.begin(), temp2.end(), depVars.begin(), depVars.end(),
-        inserter(firstprivateVars, firstprivateVars.begin()));
+        //inserter(firstprivateVars, firstprivateVars.begin()));
+        inserter(temp3, temp3.begin()));
+    // Liao 6/27/2014
+    // LiveIn only means may be used, not must be used, in the future. 
+    // some liveIn variables may not show up at all in the loop body we concern about
+    // So we have to intersect with visible variables to make sure we only put used variables into the firstprivate clause
+    set_intersection (temp3.begin(), temp3.end(), allVars.begin(), allVars.end(), inserter (firstprivateVars, firstprivateVars.begin()));
     for (std::vector<SgInitializedName*>::iterator iter = firstprivateVars.begin(); iter!= firstprivateVars.end();iter++) 
     {
        attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
@@ -1389,7 +1408,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, array_interface, annot);
     if (depgraph==NULL)
     {
-      cout<<"Warning: skipping a loop since failed to compute depgraph for it:"<<sg_node->unparseToString()<<endl;
+      cout<<"Warning: skipping a loop at line "<< sg_node->get_file_info()->get_line()<< " since failed to compute depgraph for it:"; 
+      //<<sg_node->unparseToString()<<endl;
       return false;
     }
 
@@ -1400,6 +1420,23 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     //OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
     OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(e_unknown, NULL, false);
     ROSE_ASSERT(omp_attribute != NULL);
+
+#if 0
+    if (enable_debug)
+    {
+      // write out dot graph of CFG with liveness analysis results
+      // TODO: make sure one copy for a single function , not every loop
+      string output_file_name = StringUtility::stripPathFromFileName(loop->get_file_info()->get_filenameString()) + "_" + 
+                     StringUtility::numberToString(loop->get_file_info()->get_line()) + ".dot";
+      std::ofstream f1(output_file_name.c_str());
+      std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
+      SgFunctionDeclaration* funcDecl = SageInterface::getEnclosingFunctionDeclaration (loop);
+      FilteredCFGNode<IsDFAFilter> rem_source = FilteredCFGNode<IsDFAFilter> ( funcDecl->cfgForEnd());
+      dfaFunctions.push_back(rem_source);
+      dfaToDot (f1, output_file_name, dfaFunctions, (DefUseAnalysis*)defuse, liv);
+      f1.close();
+    }
+#endif
     AutoScoping(sg_node, omp_attribute,depgraph);
 
     //X. Eliminate irrelevant dependence relations.

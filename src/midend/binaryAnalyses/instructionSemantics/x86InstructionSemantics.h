@@ -5,17 +5,25 @@
  * run automatically because it depends on setting up a slave machine who's architecture is what is being simulated by the
  * instruction semantics (not necessarily the same architecture that's running ROSE). */
 
-#include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include "integerOps.h"
 #include "AsmUnparser_compat.h" /* for unparseInstructionWithAddress() */
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
+
+static inline int numBytesInAsmType(SgAsmType* type) {
+    ASSERT_not_null(type);
+    return type->get_nBytes();
+}
+
 /* Returns the segment register corresponding to the specified register reference address expression. */
 static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferenceExpression* mr) {
     X86SegmentRegister segreg = x86_segreg_none;
-    SgAsmx86RegisterReferenceExpression* seg = isSgAsmx86RegisterReferenceExpression(mr->get_segment());
+    SgAsmRegisterReferenceExpression* seg = isSgAsmRegisterReferenceExpression(mr->get_segment());
     if (seg) {
         ROSE_ASSERT(seg->get_descriptor().get_major() == x86_regclass_segment);
         segreg = (X86SegmentRegister)(seg->get_descriptor().get_minor());
@@ -26,13 +34,10 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
     return segreg;
 }
 
-namespace BinaryAnalysis {
-    namespace InstructionSemantics {
-
 /** Translation class.  Translates x86 instructions to RISC-like operations and invokes those operations in the supplied
- *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. Apologies for
- *  the lack of documentation for this class.  You can at least find some examples in the semantics.C file of the
- *  tests/roseTests/binaryTests directory, among others. */
+ *  semantic policy (a template argument).  See the rose::BinaryAnalysis::InstructionSemantics name space for
+ *  details. Apologies for the lack of documentation for this class.  You can at least find some examples in the semantics.C
+ *  file of the tests/roseTests/binaryTests directory, among others. */
 template <typename Policy, template <size_t> class WordType>
 struct X86InstructionSemantics {
 #   ifdef Word
@@ -117,9 +122,8 @@ struct X86InstructionSemantics {
     /** Return the value of the memory pointed to by the SI register. */
     template<size_t N>
     WordType<8*N> stringop_load_si(SgAsmx86Instruction *insn, WordType<1> cond) {
-        return readMemory<8*N>((insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride()),
-                               readRegister<32>(REG_ESI),
-                               cond);
+        X86SegmentRegister segreg = insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride();
+        return readMemory<8*N>(segreg, readRegister<32>(REG_ESI), cond);
     }
 
     /** Return the value of memory pointed to by the DI register. */
@@ -503,15 +507,15 @@ struct X86InstructionSemantics {
     /* Returns an eight-bit value desribed by an instruction operand. */
     Word(8) read8(SgAsmExpression* e) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 return policy.readRegister<8>(rre->get_descriptor());
             }
             case V_SgAsmBinaryAdd: {
                 return policy.add(read8(isSgAsmBinaryAdd(e)->get_lhs()), read8(isSgAsmBinaryAdd(e)->get_rhs()));
             }
             case V_SgAsmBinaryMultiply: {
-                SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
+                SgAsmIntegerValueExpression* rhs = isSgAsmIntegerValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
                     throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
@@ -521,11 +525,8 @@ struct X86InstructionSemantics {
                 return readMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)),
                                      readEffectiveAddress(e), policy.true_());
             }
-            case V_SgAsmByteValueExpression:
-            case V_SgAsmWordValueExpression:
-            case V_SgAsmDoubleWordValueExpression:
-            case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
+            case V_SgAsmIntegerValueExpression: {
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signedValue();
                 return number<8>(val & 0xFFU);
             }
             default: {
@@ -538,15 +539,15 @@ struct X86InstructionSemantics {
     /* Returns a 16-bit value described by an instruction operand. */
     Word(16) read16(SgAsmExpression* e) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 return policy.readRegister<16>(rre->get_descriptor());
             }
             case V_SgAsmBinaryAdd: {
                 return policy.add(read16(isSgAsmBinaryAdd(e)->get_lhs()), read16(isSgAsmBinaryAdd(e)->get_rhs()));
             }
             case V_SgAsmBinaryMultiply: {
-                SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
+                SgAsmIntegerValueExpression* rhs = isSgAsmIntegerValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
                     throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
@@ -556,11 +557,8 @@ struct X86InstructionSemantics {
                 return readMemory<16>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)),
                                       readEffectiveAddress(e), policy.true_());
             }
-            case V_SgAsmByteValueExpression:
-            case V_SgAsmWordValueExpression:
-            case V_SgAsmDoubleWordValueExpression:
-            case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
+            case V_SgAsmIntegerValueExpression: {
+                uint64_t val = isSgAsmIntegerValueExpression(e)->get_signedValue();
                 return number<16>(val & 0xFFFFU);
             }
             default: {
@@ -573,15 +571,15 @@ struct X86InstructionSemantics {
     /* Returns a 32-bit value described by an instruction operand. */
     Word(32) read32(SgAsmExpression* e) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 return policy.readRegister<32>(rre->get_descriptor());
             }
             case V_SgAsmBinaryAdd: {
                 return policy.add(read32(isSgAsmBinaryAdd(e)->get_lhs()), read32(isSgAsmBinaryAdd(e)->get_rhs()));
             }
             case V_SgAsmBinaryMultiply: {
-                SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
+                SgAsmIntegerValueExpression* rhs = isSgAsmIntegerValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
                     throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
@@ -591,10 +589,7 @@ struct X86InstructionSemantics {
                 return readMemory<32>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)),
                                       readEffectiveAddress(e), policy.true_());
             }
-            case V_SgAsmByteValueExpression:
-            case V_SgAsmWordValueExpression:
-            case V_SgAsmDoubleWordValueExpression:
-            case V_SgAsmQuadWordValueExpression: {
+            case V_SgAsmIntegerValueExpression: {
                 uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
                 return number<32>(val & 0xFFFFFFFFU);
             }
@@ -608,8 +603,8 @@ struct X86InstructionSemantics {
     /* Writes the specified eight-bit value to the location specified by an instruction operand. */
     void write8(SgAsmExpression* e, const Word(8)& value) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 policy.writeRegister(rre->get_descriptor(), value);
                 break;
             }
@@ -628,8 +623,8 @@ struct X86InstructionSemantics {
     /* Writes the specified 16-bit value to the location specified by an instruction operand. */
     void write16(SgAsmExpression* e, const Word(16)& value) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 policy.writeRegister(rre->get_descriptor(), value);
                 break;
             }
@@ -648,8 +643,8 @@ struct X86InstructionSemantics {
     /* Writes the specified 32-bit value to the location specified by an instruction operand. */
     void write32(SgAsmExpression* e, const Word(32)& value) {
         switch (e->variantT()) {
-            case V_SgAsmx86RegisterReferenceExpression: {
-                SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
+            case V_SgAsmDirectRegisterExpression: {
+                SgAsmDirectRegisterExpression* rre = isSgAsmDirectRegisterExpression(e);
                 policy.writeRegister(rre->get_descriptor(), value);
                 break;
             }
@@ -1598,7 +1593,7 @@ struct X86InstructionSemantics {
                 writeRegister(REG_AF, undefined_<1>());
                 writeRegister(REG_PF, undefined_<1>());
                 
-                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmRegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
                     int numBytes = numBytesInAsmType(operands[1]->get_type());
@@ -1643,7 +1638,7 @@ struct X86InstructionSemantics {
                 writeRegister(REG_AF, undefined_<1>());
                 writeRegister(REG_PF, undefined_<1>());
                 
-                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmRegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
                     int numBytes = numBytesInAsmType(operands[1]->get_type());
@@ -1697,7 +1692,7 @@ struct X86InstructionSemantics {
                 writeRegister(REG_AF, undefined_<1>());
                 writeRegister(REG_PF, undefined_<1>());
                 
-                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmRegisterReferenceExpression(operands[1])) {
                     /* Special case allowing multi-word offsets into memory */
                     Word(32) addr = readEffectiveAddress(operands[0]);
                     int numBytes = numBytesInAsmType(operands[1]->get_type());
@@ -2415,7 +2410,7 @@ struct X86InstructionSemantics {
             case x86_int: {
                 if (operands.size()!=1)
                     throw Exception("instruction must have one operand", insn);
-                SgAsmByteValueExpression* bv = isSgAsmByteValueExpression(operands[0]);
+                SgAsmIntegerValueExpression* bv = isSgAsmIntegerValueExpression(operands[0]);
                 if (!bv)
                     throw Exception("operand must be a byte value expression", insn);
                 policy.interrupt(bv->get_value());
@@ -2548,6 +2543,8 @@ struct X86InstructionSemantics {
 
 #undef Word
         
-    } /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+
 #endif /* ROSE_X86INSTRUCTIONSEMANTICS_H */

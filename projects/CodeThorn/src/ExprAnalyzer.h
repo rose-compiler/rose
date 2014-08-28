@@ -17,6 +17,10 @@ using namespace std;
 
 namespace CodeThorn {
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class SingleEvalResult {
  public:
   EState estate;
@@ -27,6 +31,10 @@ class SingleEvalResult {
   bool isBot() {return result.isBot();}
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class SingleEvalResultConstInt {
  public:
   EState estate;
@@ -40,9 +48,14 @@ class SingleEvalResultConstInt {
   bool isBot() {return result.isBot();}
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class ExprAnalyzer {
  public:
-  SingleEvalResult eval(SgNode* node,EState estate);
+  ExprAnalyzer();
+  //SingleEvalResult eval(SgNode* node,EState estate);
   //! Evaluates an expression using ConstIntLattice and returns a list of all evaluation-results.
   //! There can be multiple results if one of the variables was bound to top as we generate
   //! two different states and corresponding constraints in this case, one representing the
@@ -55,10 +68,13 @@ class ExprAnalyzer {
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
+  void setSkipSelectedFunctionCalls(bool skip);
+  bool getSkipSelectedFunctionCalls();
  private:
   //! evaluates an expression (whithout maintaining state information)
-  AValue pureEvalConstInt(SgNode* node,EState& estate);
+  //AValue pureEvalConstInt(SgNode* node,EState& estate);
   VariableIdMapping* _variableIdMapping;
+  bool _skipSelectedFunctionCalls;
 };
 
 } // end of namespace CodeThorn

@@ -13,6 +13,7 @@
 #include <cctype>
 
 using namespace std;
+using namespace rose;
 using namespace VirtualBinCFG;
 
 #include "../RoseBin_FlowAnalysis.h"
@@ -515,7 +516,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
         //cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
         error=true;
       }
-      ROSE_ASSERT(hex_name==nameL);
+      //ROSE_ASSERT(hex_name==nameL);
     }
         if (!error)
     myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<

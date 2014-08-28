@@ -17,6 +17,10 @@
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 
+#ifndef TEST_AST_FILE_READ
+# error "absolute-path-for $ROSE_BLD/tests/testAstFileRead must be set on the g++ command-line"
+#endif
+
 using namespace std;
 using namespace boost;
 
@@ -25,7 +29,11 @@ class XTimer {
     public:
         XTimer() 
         {
+#if BOOST_VERSION >= 10500
+            xtime_get(&_start_time, boost::TIME_UTC_);
+#else
             xtime_get(&_start_time, boost::TIME_UTC);
+#endif
         }
 
         XTimer(const XTimer& other)
@@ -36,7 +44,11 @@ class XTimer {
         double elapsed() const 
         {
             boost::xtime now;
+#if BOOST_VERSION >= 10500
+            xtime_get(&now, boost::TIME_UTC_);
+#else
             xtime_get(&now, boost::TIME_UTC);
+#endif
             return boost::lexical_cast<double>(now.sec - _start_time.sec) + 
                 boost::lexical_cast<double>(now.nsec - _start_time.nsec) / 1000000000;
         }
@@ -166,7 +178,7 @@ void MergeAst(AstStorage* storage, int n = 2)
         //int nfile = filenames.size();
 
         // string arg = "./mergeAST ";
-        string args = "../../../tests/testAstFileRead ";
+        string args = TEST_AST_FILE_READ " ";
 
         for (size_t i = 0; i < filenames.size(); ++i)
         {

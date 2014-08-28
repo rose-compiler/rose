@@ -184,18 +184,17 @@ AC_SUBST(GCC_MINOR_VERSION)
 # *******************************************************
 # ROSE/projects directory compilation & testing
 # *******************************************************
-AC_MSG_CHECKING([if we should build & test the ROSE/projects directory])
-AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Disable compilation and testing of the ROSE/projects directory]),[],[enableval=yes])
-support_projects_directory=yes
-if test "x$enableval" = "xyes"; then
-   support_projects_directory=yes
-   AC_MSG_RESULT(enabled)
+ROSE_ARG_ENABLE(
+  [projects-directory],
+  [if we should enable the ROSE/projects directory],
+  [Toggle compilation and testing of the the ROSE/projects directory (disabled by default)],
+  [no])
+
+if test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"; then
    AC_DEFINE([ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT], [], [Build ROSE projects directory])
-else
-   support_projects_directory=no
-   AC_MSG_RESULT(disabled)
 fi
-AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$support_projects_directory" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"])
+
 # ****************************************************
 # ROSE/tests directory compilation & testing 
 # ****************************************************
@@ -228,6 +227,21 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
 # ************************************************************
+# Option to turn on a special mode of memory pools: no reuse of deleted memory. 
+# This is useful to track AST nodes during transformation, otherwise the same memory may be reused
+# by multiple different AST nodes. 
+# Liao 8/13/2014
+# ************************************************************
+
+AC_ARG_ENABLE(memoryPoolNoReuse, AS_HELP_STRING([--enable-memory-pool-no-reuse], [Enable special memory pool model: no reuse of deleted memory (default is to reuse memory)]))
+AM_CONDITIONAL(ROSE_USE_MEMORY_POOL_NO_REUSE, [test "x$enable_memory_pool_no_reuse" = xyes])
+if test "x$enable_memory_pool_no_reuse" = "xyes"; then
+  AC_MSG_WARN([Turn on a special mode in memory pools: no reuse of deleted memory blocks.])
+  AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
+fi
+
+
+# ************************************************************
 # Option to control the size of the generated files by ROSETTA
 # ************************************************************
 
@@ -235,7 +249,7 @@ AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_
 AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
-  AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
+  AC_MSG_WARN([Using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR.])
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
@@ -270,10 +284,12 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
 if test "x$enable_microsoft_extensions" = "xyes"; then
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
 else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
 # DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
@@ -290,8 +306,8 @@ AC_ARG_ENABLE(experimental_fortran_frontend,
     AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental frotran front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental frotran frontend])
+  AC_MSG_WARN([Using this mode enable experimental fortran front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
 fi
 
 # DQ (6/7/2013): Added support for debugging new Fortran front-end development.  
@@ -544,22 +560,12 @@ fi
 AC_C_BIGENDIAN
 AC_CHECK_HEADERS([byteswap.h machine/endian.h])
 
-# PKG_CHECK_MODULES([VALGRIND], [valgrind], [with_valgrind=yes; AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])], [with_valgrind=no])
-VALGRIND_BINARY=""
-AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that use Valgrind],
-            [AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])
-             if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
+ROSE_SUPPORT_VALGRIND
 
 AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default preprocessor],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], true, [Use Wave as default in ROSE])],
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
-
-# Don't set VALGRIND here because that turns on actually running valgrind in
-# many tests, as opposed to just having the path available for
-# uninitializedField_tests
-AC_SUBST(VALGRIND_BINARY)
-AM_CONDITIONAL(USE_VALGRIND, [test "x$VALGRIND_BINARY" != "x"])
 
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
@@ -670,6 +676,22 @@ AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 ROSE_SUPPORT_PYTHON
 
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
+
+AX_PYTHON_DEVEL([0.0.0], [3.0.0])
+PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
+PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
+PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
+
+
+if test "$PYTHON_VERSION_MAJOR_VERSION" -ge "2" && test "$PYTHON_VERSION_MINOR_VERSION" -ge "7"; then
+  approved_python_version=true
+elif  test "$PYTHON_VERSION_MAJOR_VERSION" -ge "3"; then
+  approved_python_version=true
+else
+  approved_python_version=false
+fi
+
+AM_CONDITIONAL(ROSE_APPROVED_PYTHON_VERSION, [$approved_python_version])
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -843,6 +865,8 @@ fi
 
 # Call supporting macro for Haskell
 ROSE_SUPPORT_HASKELL
+
+ROSE_SUPPORT_CUDA
 
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
@@ -1593,6 +1617,10 @@ AC_CHECK_TYPE(user_desc,
               [],
 	      [#include <asm/ldt.h>])
 
+# Check whether PostgreSQL is supported
+AC_CHECK_HEADERS([pqxx/version.hxx])
+AC_CHECK_LIB(pqxx, PQconnectdb)
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -1639,17 +1667,32 @@ echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # This list should be the same as in build (search for Makefile.in)
+
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
+src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
-
 
 # End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
@@ -1678,6 +1721,8 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/experimental-fortran-parser/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -1731,6 +1776,7 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
+src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
@@ -1796,22 +1842,27 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/Makefile
 src/roseExtensions/roseHPCToolkit/src/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
+src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
+projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryCloneDetection/semantic/Makefile
+projects/BinaryCloneDetection/syntactic/Makefile
+projects/BinaryCloneDetection/syntactic/gui/Makefile
+projects/BinaryCloneDetection/compression/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/ConstructNameSimilarityAnalysis/Makefile
 projects/CodeThorn/Makefile
 projects/CodeThorn/src/Makefile
-projects/CodeThorn/src/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -1826,7 +1877,11 @@ projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
+projects/EditDistanceMetric/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/fuse/Makefile
+projects/fuse/src/Makefile
+projects/fuse/tests/Makefile
 projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
@@ -1924,9 +1979,6 @@ projects/dataStructureGraphing/Makefile
 projects/extractMPISkeleton/Makefile
 projects/extractMPISkeleton/src/Makefile
 projects/extractMPISkeleton/tests/Makefile
-projects/haskellport/Makefile
-projects/haskellport/Setup.hs
-projects/haskellport/rose.cabal.in
 projects/highLevelGrammars/Makefile
 projects/interpreter/Makefile
 projects/javaport/Makefile
@@ -1960,6 +2012,7 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/StencilManyCore/Makefile
 projects/mint/Makefile
 projects/mint/src/Makefile
 projects/mint/tests/Makefile
@@ -1981,6 +2034,10 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/RoseBlockLevelTracing/Makefile
+projects/RoseBlockLevelTracing/src/Makefile
+projects/LineDeleter/Makefile
+projects/LineDeleter/src/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2013,10 +2070,16 @@ tests/CompileTests/ElsaTestCases/gnu/Makefile
 tests/CompileTests/ElsaTestCases/kandr/Makefile
 tests/CompileTests/ElsaTestCases/std/Makefile
 tests/CompileTests/C_tests/Makefile
+tests/CompileTests/MicrosoftWindows_C_tests/Makefile
+tests/CompileTests/C89_std_c89_tests/Makefile
 tests/CompileTests/C99_tests/Makefile
 tests/CompileTests/Java_tests/Makefile
+tests/CompileTests/Java_tests/unit_tests/Makefile
+tests/CompileTests/MicrosoftWindows_Java_tests/Makefile
 tests/CompileTests/Cxx_tests/Makefile
+tests/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
 tests/CompileTests/Cxx11_tests/Makefile
+tests/CompileTests/C11_tests/Makefile
 tests/CompileTests/C_subset_of_Cxx_tests/Makefile
 tests/CompileTests/Fortran_tests/Makefile
 tests/CompileTests/Fortran_tests/LANL_POP/Makefile
@@ -2024,12 +2087,12 @@ tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
 tests/CompileTests/Fortran_tests/experimental_frontend_tests/Makefile
-tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
+tests/CompileTests/FailSafe_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
 tests/CompileTests/OpenMP_tests/cvalidation/Makefile
@@ -2051,6 +2114,7 @@ tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
+tests/CompileTests/systemc_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2063,10 +2127,10 @@ tests/roseTests/astInterfaceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
-tests/roseTests/astOutliningTests/fortranTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
 tests/roseTests/astProcessingTests/Makefile
 tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astSnippetTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
@@ -2152,6 +2216,13 @@ demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
+
+# Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
+#projects/BinaryDataStructureRecognition/Makefile
+#projects/haskellport/Makefile
+#projects/haskellport/Setup.hs
+#projects/haskellport/rose.cabal.in
+#tests/CompileTests/CAF2_tests/Makefile
 
 dnl
 dnl Compass2
@@ -2304,6 +2375,18 @@ AC_CONFIG_COMMANDS([rose_paths.C], [[
 AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 	make rosePublicConfig.h
 ]])
+
+# [TOO1, 2014-04-22]
+# TODO: Re-enable once we phase out support for older version of Autotools.
+#       Specifically, Pontetec is using Autoconf 2.59 and Automake 1.9.6.
+# Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
+#AC_CONFIG_COMMANDS([absoluteNames],
+#[[
+#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#	find . -name Makefile | xargs sed -i~ \
+#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#]])
+
 
 
 # End macro ROSE_SUPPORT_ROSE_PART_7.

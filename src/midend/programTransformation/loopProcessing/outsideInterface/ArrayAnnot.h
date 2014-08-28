@@ -211,7 +211,7 @@ class ArrayModifyOpCollection : public OperatorAnnotCollection<ArrayModifyDescri
     }
 };
 
-class ArrayAnnotation 
+class ROSE_DLL_API ArrayAnnotation 
     : public FunctionSideEffectInterface,
       public FunctionAliasInterface
 {

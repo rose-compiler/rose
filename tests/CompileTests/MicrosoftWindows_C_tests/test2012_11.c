@@ -1,0 +1,4 @@
+union ZZZ
+   {
+     int a;
+   };

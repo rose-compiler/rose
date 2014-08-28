@@ -13,6 +13,8 @@ class SgAsmBlock;
 class SgAsmFunction;
 class SgAsmInterpretation;
 
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Unparses binary AST into text.
  *
@@ -256,10 +258,10 @@ public:
 
     /** Control Flow Graph type.  The unparser supports the standard binary control flow graph data type.  This could be
      *  templatized, but we're planning to move to a non-template graph type in the near future [RPM 2012-04-18]. */
-    typedef BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
     typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
     typedef std::map<SgAsmBlock*, CFG_Vertex> CFG_BlockMap;
-    typedef BinaryAnalysis::FunctionCall::Graph CG;
+    typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
     typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
     typedef std::map<SgAsmFunction*, CG_Vertex> CG_FunctionMap;
 
@@ -339,12 +341,12 @@ public:
          *         added to one of the function callback lists.</li>
          *  </ol>
          *  @{ */
-        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); }
-        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); }
-        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); }
-        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); }
-        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); }
-        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); }
+        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); return false; }
+        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); return false; }
+        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); return false; }
+        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); return false; }
+        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); return false; }
+        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); return false; }
         /** @} */
     };
 
@@ -849,6 +851,11 @@ public:
      *  unparsed.  In any case, a return value of zero means that nothing was unparsed and no output was produced. */
     virtual size_t unparse(std::ostream&, SgNode *ast);
 
+    /** Unparse part of the AST into a string.
+     *
+     * This is a wrapper around unparse() that returns a string rather than producing output on a stream. */
+    std::string to_string(SgNode *ast);
+
     /** Unparse a single node if possible.
      *
      *  Tries to unparse the given AST node directly, without traversing the AST to find a starting point.  This is basically a
@@ -880,7 +887,7 @@ public:
     /** Associates a control flow graph with this unparser.  If a control flow graph is present then certain output callbacks
      *  will be able to use that information.  For instance, the basicBlockPredecessors will emit a list of all the
      *  predecessors of a block.  Passing an empty graph will remove control flow information. */
-    void add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg);
+    void add_control_flow_graph(const rose::BinaryAnalysis::ControlFlow::Graph &cfg);
 
     /** Controls printing of skip/back messages during linear output.  Each callback that prints an object that occupies
      *  address space should call start_of_object() and end_of_object() before and after printing the object.  If output is
@@ -918,6 +925,15 @@ public:
     virtual std::string blank_prefix() const { return std::string(line_prefix().size(), ' '); }
     /** @} */
 
+    /** Called when an invalid register is encountered.  This function is called when a RegisterDescriptor is found that isn't
+     *  a member of the RegisterDictionary.  It should construct a string to describe the invalid register in the assembly
+     *  code, and may also optionally emit a diagnostic message. */
+    static std::string invalid_register(SgAsmInstruction*, const RegisterDescriptor&, const RegisterDictionary*);
+
+public:
+    static void initDiagnostics();                      /**< Initialize diagnostic messages subsystem. */
+    static Sawyer::Message::Facility mlog;              /**< Diagnostic messages. */
+
 protected:
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
@@ -949,7 +965,7 @@ protected:
      *  call 0x08042000<init>
      * @endcode
      *
-     * If the SgAsmDoubleWordValueExpression that represents the 0x08042000 is associated with the SgAsmFunction node for the
+     * If the SgAsmIntegerValueExpression that represents the 0x08042000 is associated with the SgAsmFunction node for the
      * "init" function, then the same output is generated when the LabelMap is not populated.  In fact, the new method can also
      * generate code like this, where the integer is an offset from the entry point:
      *
@@ -999,5 +1015,8 @@ protected:
         rose_addr_t address;            /**< Address to use when generating a prefix string. */
     } lineprefix;
 };
+
+} // namespace
+} // namespace
 
 #endif

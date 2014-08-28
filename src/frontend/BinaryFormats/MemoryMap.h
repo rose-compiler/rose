@@ -1,7 +1,9 @@
 #ifndef ROSE_MemoryMap_H
 #define ROSE_MemoryMap_H
 
+#include "ByteOrder.h"
 #include <boost/shared_ptr.hpp>
+#include <sawyer/Optional.h>
 
 /* Increase ADDR if necessary to make it a multiple of ALMNT */
 #define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
@@ -40,9 +42,9 @@
  *
  *  // Create the memory map.
  *  MemoryMap map;
- *  map.insert(Extent(0x08040000, file_buf->size()),
+ *  map.insert(AddressInterval::baseSize(0x08040000, file_buf->size()),
  *             MemoryMap::Segment(file_buf, 0, MemoryMap::MM_PROT_READ, "the file contents"));
- *  map.insert(Extent(0x08042000, data_buf->size()),
+ *  map.insert(AddressInterval::baseSize(0x08042000, data_buf->size()),
  *             MemoryMap::Segment(data_buf, 0, MemoryMap::MM_PROT_RW, "data overlay"));
  * @endcode
  *
@@ -56,14 +58,15 @@
  *  assert(nread==sizeof data);
  * @endcode
  *
- *  A MemoryMap is built on top of a RangeMap<Extent,Segment> and the map is available with via the segments() method.
- *  Therefore, all the usual RangeMap operations are available.  For instance, here's one way to determine if there's a large
- *  free area at 0xc0000000:
+ *  A MemoryMap is built on top of a Sawyer::Container::IntervalMap<AddressInterval,Segment> and the map is available with
+ *  via the segments() method. Therefore, all the usual IntervalMap operations are available.  For instance, here's one way
+ *  to determine if there's a large free area at 0xc0000000:
  *
  * @code
  *  // The set of addresses that are unmapped
- *  ExtentMap free_areas = map.segments().invert<ExtentMap>();
- *  bool b = free_areas.contains(Extent(0xc0000000,0x20000000));
+ *  AddressIntervalSet addresses = map.segments();                     // addresses in use
+ *  addresses.invert(AddressInterval::hull(0, (rose_addr_t)(-1)));  // addresses that are free
+ *  bool b = addresses.contains(AddressInterval::hull(0xc0000000,0x20000000));
  * @endcode
  */
 class MemoryMap {
@@ -78,7 +81,7 @@ public:
         MM_PROT_EXEC    = 0x00000004,    /**< Pages can be executed. */
 
         /* Protection convenience stuff */
-        MM_PROT_NONE    = 0x00000000,    /**< Pages cannot be accessed. */
+        MM_PROT_NONE    = 0x00000000,    /**< Pages cannot be accessed. */ // value must be zero
         MM_PROT_ANY     = 0x00000007,    /**< Any access. */
         MM_PROT_RW      = (MM_PROT_READ|MM_PROT_WRITE), /**< Read or write. */                  /*NO_STRINGIFY*/
         MM_PROT_RX      = (MM_PROT_READ|MM_PROT_EXEC),  /**< Read or execute. */                /*NO_STRINGIFY*/
@@ -225,6 +228,9 @@ public:
     public:
         virtual ~ByteBuffer() { delete[] p_data; }
 
+        /** Construct a buffer that initially contains all zero bytes. */
+        static BufferPtr create(size_t size);
+
         /** Construct from caller-supplied data.  The caller supplies a pointer to data allocated on the heap (with new) and
          *  the size of that data.  The new buffer object takes ownership of the data, which is deleted when the buffer object
          *  is destroyed. */
@@ -235,6 +241,7 @@ public:
         static BufferPtr create_from_file(const std::string &filename, size_t start_offset=0);
 
     protected:
+        ByteBuffer(size_t size): ExternBuffer(new uint8_t[size], size) { memset(p_data, 0, size); }
         ByteBuffer(uint8_t *data, size_t size): ExternBuffer(data, size) {}
     };
 
@@ -322,7 +329,7 @@ public:
          *
          *  If the @p first_bad_va pointer is non-null, then it will be initialized with the lowest address in @p range which
          *  is invalid.  The initialization only occurs when check() returns false. */
-        bool check(const Extent &range, rose_addr_t *first_bad_va=NULL) const;
+        bool check(const AddressInterval &range, rose_addr_t *first_bad_va=NULL) const;
 
         /** Mapping permissions.  The mapping permissions are a bit vector of MemoryMap::Protection bits.  These bits describe
          *  what operations can be performed on a segment's address space.  The set of operations can be further restricted by
@@ -345,7 +352,7 @@ public:
          *  within the range of virtual addresses represented by this segment.
          * @{ */
         rose_addr_t get_buffer_offset() const { return buffer_offset; }
-        rose_addr_t get_buffer_offset(const Extent &my_range, rose_addr_t va) const;
+        rose_addr_t get_buffer_offset(const AddressInterval &my_range, rose_addr_t va) const;
         void set_buffer_offset(rose_addr_t n);
         /** @} */
 
@@ -368,22 +375,14 @@ public:
         void set_name(const std::string &s) { name = s; }
         /** @} */
 
+        void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream&, const Segment&);
 
-    private:
         // Stuff for manipulating segment debug names
         typedef std::map<std::string, std::set<std::string> > NamePairings;
         void merge_names(const Segment &other);
         std::string get_name_pairings(NamePairings*) const;
         void set_name(const NamePairings&, const std::string &s1, const std::string &s2);
-
-        // The following methods are part of the RangeMap interface.  See documentation in RangeMap::RangeMapVoid.
-        friend class RangeMap<Extent, Segment>;
-        void removing(const Extent &range);
-        void truncate(const Extent &range, rose_addr_t new_end);
-        bool merge(const Extent &range, const Extent &other_range, const Segment &other_segment);
-        Segment split(const Extent &range, rose_addr_t new_end);
-        void print(std::ostream&) const;
 
     private:
         BufferPtr buffer;               /**< The buffer holding data for this segment. */
@@ -393,15 +392,22 @@ public:
         bool copy_on_write;             /**< Does the buffer need to be copied on the next write operation? */
     };
 
+    // See Sawyer::Container::MergePolicy
+    class SegmentMergePolicy {
+    public:
+        bool merge(const AddressInterval &leftInterval, Segment &leftValue,
+                   const AddressInterval &rightInterval, Segment &rightValue);
+        Segment split(const AddressInterval &interval, Segment &value, rose_addr_t splitPoint);
+        void truncate(const AddressInterval &interval, Segment &value, rose_addr_t splitPoint) {}
+    };
+    
     /**************************************************************************************************************************
      *                                  RangeMap-related things
      **************************************************************************************************************************/
 public:
-    typedef RangeMap<Extent, Segment> Segments;
-    typedef Segments::iterator iterator;
-    typedef Segments::const_iterator const_iterator;
-    typedef Segments::reverse_iterator reverse_iterator;
-    typedef Segments::const_reverse_iterator const_reverse_iterator;
+    typedef Sawyer::Container::IntervalMap<AddressInterval, Segment, SegmentMergePolicy> Segments;
+    typedef Segments::NodeIterator NodeIterator;
+    typedef Segments::ConstNodeIterator ConstNodeiterator;
 
     /**************************************************************************************************************************
      *                                  Visitors
@@ -411,7 +417,7 @@ public:
     class Visitor {
     public:
         virtual ~Visitor() {}
-        virtual bool operator()(const MemoryMap*, const Extent&, const Segment&) = 0;
+        virtual bool operator()(const MemoryMap*, const AddressInterval&, const Segment&) = 0;
     };
 
     /**************************************************************************************************************************
@@ -419,33 +425,33 @@ public:
      **************************************************************************************************************************/
 public:
     /** Exception for MemoryMap operations. */
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
-        Exception(const std::string &mesg, const MemoryMap *map): mesg(mesg), map(map) {}
-        virtual ~Exception() {}
+        Exception(const std::string &mesg, const MemoryMap *map): std::runtime_error(mesg), map(map) {}
+        virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
     public:
-        std::string mesg;               /**< Error message. Details of the exception. */
         const MemoryMap *map;           /**< Map that caused the exception if available, null otherwise. */
     };
 
     /** Exception for an inconsistent mapping. This exception occurs when an attemt is made to insert a new segment but the
-     *  address range of the new segment is alread defined by an existing segment.  The @p new_range and @p new_segment are
+     *  address range of the new segment is already defined by an existing segment.  The @p new_range and @p new_segment are
      *  information about the segment that was being inserted, and the @p old_range and @p old_segment is information about
      *  an existing segment that conflicts with the new one. */
     struct Inconsistent : public Exception {
         Inconsistent(const std::string &mesg, const MemoryMap *map,
-                     const Extent &new_range, const Segment &new_segment,
-                     const Extent &old_range, const Segment &old_segment)
+                     const AddressInterval &new_range, const Segment &new_segment,
+                     const AddressInterval &old_range, const Segment &old_segment)
             : Exception(mesg, map),
               new_range(new_range), old_range(old_range),
               new_segment(new_segment), old_segment(old_segment) {}
+        virtual ~Inconsistent() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const Inconsistent&);
-        Extent new_range, old_range;
+        AddressInterval new_range, old_range;
         Segment new_segment, old_segment;
     };
 
@@ -453,6 +459,7 @@ public:
     struct NotMapped : public Exception {
         NotMapped(const std::string &mesg, const MemoryMap *map, rose_addr_t va)
             : Exception(mesg, map), va(va) {}
+        virtual ~NotMapped() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const NotMapped&);
         rose_addr_t va;
@@ -462,6 +469,7 @@ public:
     struct NoFreeSpace : public Exception {
         NoFreeSpace(const std::string &mesg, const MemoryMap *map, size_t size)
             : Exception(mesg, map), size(size) {}
+        virtual ~NoFreeSpace() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const NoFreeSpace&);
         size_t size;
@@ -471,6 +479,7 @@ public:
     struct SyntaxError: public Exception {
         SyntaxError(const std::string &mesg, const MemoryMap *map, const std::string &filename, unsigned linenum, int colnum=-1)
             : Exception(mesg, map), filename(filename), linenum(linenum), colnum(colnum) {}
+        virtual ~SyntaxError() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const SyntaxError&);
         std::string filename;                   /**< Name of index file where error occurred. */
@@ -483,13 +492,16 @@ public:
      **************************************************************************************************************************/
 
     /** Constructs an empty memory map. */
-    MemoryMap() {}
+    MemoryMap(): sex(ByteOrder::ORDER_UNSPECIFIED) {}
 
     /** Shallow copy constructor.  The new memory map describes the same mapping and points to shared copies of the underlying
      *  data.  In other words, changing the mapping of one map (clear(), insert(), erase()) does not change the mapping of the
      *  other, but changing the data (write()) in one map changes it in the other.  See also init(), which takes an argument
      *  describing how to copy. */
-    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW) { init(other, copy_level); }
+    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW)
+        : sex(ByteOrder::ORDER_UNSPECIFIED) {
+        init(other, copy_level);
+    }
 
     /** Initialize this memory map with info from another.  This map is first cleared and then initialized with a copy of the
      *  @p source map.  A reference to this map is returned for convenience since init is often used in conjunction with
@@ -498,10 +510,23 @@ public:
 
     /** Determines if a memory map is empty.  Returns true if this memory map contains no mappings. Returns false if at least
      *  one address is mapped. */
-    bool empty() const { return p_segments.empty(); }
+    bool empty() const { return p_segments.isEmpty(); }
 
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
+
+    /** Number of bytes mapped. */
+    size_t size() const;
+
+    /** Minimum and maximum addresses that are mapped.  This should only be called if @ref empty returns false. */
+    AddressInterval hull() const;
+
+    /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
+     *  The default byte order is little-endian.
+     * @{ */
+    ByteOrder::Endianness get_byte_order() const { return sex; }
+    void set_byte_order(ByteOrder::Endianness order) { sex = order; }
+     /** @} */
 
     /** Define a new area of memory.  The @p segment is copied into the memory map and the reference count for the Buffer to
      *  which it points (if any) is incremented.  A check is performed to ensure that the @p range and @p segment are
@@ -511,16 +536,30 @@ public:
      *  If the @p range overlaps with existing segments and @p erase_prior is set (the default), then the overlapping parts of
      *  the virtual address space are first removed from the mapping.  Otherwise an overlap throws a MemoryMap::Inconsistent
      *  exception.   If an exception is thrown, then the memory map is not changed. */
-    void insert(const Extent &range, const Segment &segment, bool erase_prior=true);
+    void insert(const AddressInterval &range, const Segment &segment, bool erase_prior=true);
+
+    /** Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
+     *  creates a new MmapBuffer and inserts it into the mapping. Returns the size of the file mapping. */
+    size_t insert_file(const std::string &filename, rose_addr_t va, bool writable=false, bool erase_prior=true,
+                       const std::string &sgmtname="");
 
     /** Determines whether a virtual address is defined.  Returns true if the specified virtual address (or all addresses in a
      *  range of addresses) are defined, false otherwise.  An address is defined if it is associated with a Segment.  If @p
-     *  required_perms is non-zero, then the address (or all addresses in the range) must be mapped with at least those
-     *  permission bits.
+     *  requiredPerms is non-zero, then the address (or all addresses in the range) must be mapped with at least those
+     *  permission bits.  Similarly, @p prohibitedPerms indicates permissions that are prohibited.
      * @{ */
-    bool exists(rose_addr_t va, unsigned required_perms=0) const { return exists(Extent(va), required_perms); }
-    bool exists(Extent range, unsigned required_perms=0) const;
+    bool exists(rose_addr_t va, unsigned requiredPerms=0, unsigned prohibitedPerms=0) const {
+        return exists(AddressInterval(va), requiredPerms, prohibitedPerms);
+    }
+    bool exists(AddressInterval range, unsigned requiredPerms=0, unsigned prohibitedPerms=0) const;
     /** @} */
+
+    /** Returns the next valid address.
+     *
+     *  Returns the next mapped address greater than or equal to @p va and having all of the required permissions and none of
+     *  the prohibited permissions.  If no permissions are specified then the address need only be mapped.  Returns nothing if
+     *  there is no valid address greater than or equal to @p va. */
+    Sawyer::Optional<rose_addr_t> next(rose_addr_t va, unsigned requiredPerms=0, unsigned prohibitedPerms=0) const;
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
      *  necessarily need to correspond to a similar add() call; for instance, it's possible to add a large address space and
@@ -528,7 +567,7 @@ public:
      *
      *  It is not an error to erase parts of the virtual address space that are not defined.  Note that it is more efficient to
      *  call clear() than to erase the entire virtual address space. */
-    void erase(const Extent &range);
+    void erase(const AddressInterval &range);
 
     /** Erase a single extent from a memory map.  Erasing by range is more efficient (O(ln N) vs O(N)) but sometimes it's more
      *  convenient to erase a single segment when we don't know it's range. */
@@ -537,7 +576,7 @@ public:
     /** Get information about an address.  The return value is a pair containing the range of virtual addresses in the
      *  segment and a copy of the Segment object.  If the value is not found, then a RangeMap::NotMapped exception is thrown.
      *  See also, exists(). */
-    std::pair<Extent, Segment> at(rose_addr_t va) const;
+    const Segments::Node& at(rose_addr_t va) const;
 
     /** Search for free space in the mapping.  This is done by looking for the lowest possible address not less than @p
      *  start_va and with the specified alignment where there are at least @p size free bytes. Throws a MemoryMap::NoFreeSpace
@@ -559,56 +598,126 @@ public:
 
     /** Removes segments based on permissions.  Keeps segments that have any of the required bits and none of the
      *  prohibited bits.   No bits are required if @p required is zero. */
-    void prune(unsigned required, unsigned prohibited=MM_PROT_NONE);
+    void prune(unsigned requiredPerms, unsigned prohibitedPerms=0);
+
+    /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
+    void erase_zeros(size_t minsize);
 
     /** List of map segments. */
     const Segments &segments() const { return p_segments; }
 
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
-     *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
-     *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
-     *  than the number of  bytes desired if the mapping does not include part of the address space requested or part of the
-     *  address space does not have MM_PROT_READ permission (or the specified permissions). The @p dst_buf bytes that do not
-     *  correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized.
+     *  virtual address space to copy begins at @p startVa and continues for @p desired bytes. The data is copied into the
+     *  beginning of the @p dstBuf buffer. The return value is the number of bytes that were copied, which might be fewer than
+     *  the number of bytes desired if the mapping does not include part of the address space requested or part of the address
+     *  space does not have the permission restrictions indicated by @p requiredPerms and @p prohibitedPerms. The @p dstBuf
+     *  bytes that do not correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always
+     *  initialized.
      *
-     *  If @p dst_buf is the null pointer then this method only measures how many bytes could have been read.
+     *  If @p dstBuf is the null pointer then this method only measures how many bytes could have been read.
      *
      *  The read() and read1() methods behave identically except read1() restricts the readable area to be from a single
      *  segment. Thus, read1() may return fewer bytes than read().
      *
      * @{ */
-    size_t read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
-    size_t read1(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    size_t read(void *dstBuf, rose_addr_t startVa, size_t desired,
+                unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+    size_t read1(void *dstBuf, rose_addr_t startVa, size_t desired,
+                 unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
     /** @} */
 
-    /** Reads data from a memory map.  Reads data beginning at the @p start_va virtual address in the memory map and continuing
+    /** Reads data from a memory map.  Reads data beginning at the @p startVa virtual address in the memory map and continuing
      *  for up to @p desired bytes, returning the result as an SgUnsignedCharList.  The read may be shorter than requested if
      *  we reach a point in the memory map that is not defined or which does not have the requested permissions.  The size of
      *  the return value indicates that number of bytes that were read (i.e., the return value is not zero-filled). */
-    SgUnsignedCharList read(rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+    SgUnsignedCharList read(rose_addr_t startVa, size_t desired,
+                            unsigned requiredPerms=MM_PROT_READ, unsigned ProhibitedPerms=MM_PROT_NONE) const;
+
+    /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p startVa in the memory map and
+     *  continuing until one of the following conditions:
+     *    <ul>
+     *      <li>The return value contains the @p desired number of characters.</li>
+     *      <li>The next character to be read is a NUL character.</li>
+     *      <li>A @p validChar function is specified but the next character causes it to return zero.</li>
+     *      <li>An @p invalidChar function is specified and the next character causes it to return non-zero.</li>
+     *    </ul>
+     *
+     *  The @p validChar and @p invalidChar take an integer argument and return an integer value so that the C character
+     *  classification functions from <ctype.h> can be used directly. */
+    std::string read_string(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
+                            unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
-     *  aborted early if a segment lacks the MM_PROT_WRITE bit (or specified bits) or its buffer is marked as read-only.  The
-     *  return value is the number of bytes copied.
+     *  aborted early if a segment lacks any required permissions or has any prohibited permissions.  The return value is the
+     *  number of bytes copied.
      *
-     *  If @p src_buf is the null pointer then this method only measures how many bytes could have been written.
+     *  If @p srcBuf is the null pointer then this method only measures how many bytes could have been written.
      *
      *  The write() and write1() methods behave identically, except write1() restricts the operation to a single segment. Thus,
      *  write1() may write fewer bytes than write().
      *
      *  @{ */
-    size_t write(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
-    size_t write1(const void *src_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_WRITE);
+    size_t write(const void *srcBuf, rose_addr_t startVa, size_t desired,
+                 unsigned requiredPerms=MM_PROT_WRITE, unsigned prohibitedPerms=MM_PROT_NONE);
+    size_t write1(const void *srcBuf, rose_addr_t startVa, size_t desired,
+                  unsigned requiredPerms=MM_PROT_WRITE, unsigned prohibitedPerms=MM_PROT_NONE);
     /** @} */
 
+    /** Reads backward through a memory map.  Reads as much data as possible, but not more than specified, such that the last
+     *  byte read is one prior to the specified address.  The buffer is filled so that the byte read at the lowest address is
+     *  at the first position in the buffer.  For instance, a <code>readBackward(buf, 0x1000, 16)</code> will read 16 bytes
+     *  from addresses 0x0ff0 (inclusive) through 0x1000 (exclusive) such that <code>buf[0]</code> contains the byte from
+     *  address 0x0ff0 and <code>buf[15]</code> contains the byte from address 0x0fff.  If, while scanning backward from the
+     *  specified address, a location is encountered that cannot be read (i.e., not mapped, or wrong permissions) then the read
+     *  will be truncated. For instance, in the previous example if only addresses 0x0ff8 and above are mapped, then the call
+     *  will return eight rather than 16, and <code>buf[0]</code> will contain the byte from 0x0ff8 through <code>buf[7]</code>
+     *  containing the byte from 0x0fff.
+     *
+     *  The version with the "1" suffix, like @ref read1 and @ref write1, will refuse to cross a segment boundary when scanning
+     *  backward. Crossing the boundary from the exclusive specified address to the highest address read is not counted,
+     *  therefore a read1 and a readBackward1 always read the same number of bytes when given the same limits.
+     *
+     *  If the buffer is the null pointer then nothing is actually read, but the return value is the same as if a buffer had
+     *  been present.  This is useful for counting how far back we could have read.
+     *
+     *  @{ */
+    size_t readBackward(void *dstBuf, rose_addr_t endVa, size_t desired,
+                        unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+    size_t readBackward1(void *dstBuf, rose_addr_t endVa, size_t desired,
+                         unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+    /** @} */
+
+    /** Searches for a prefix.
+     *
+     *  Reads bytes from the specified address and matches them against a search vector, returning the number of bytes that
+     *  matched. */
+    size_t match_bytes(rose_addr_t startVa, const std::vector<uint8_t> &bytesToFind,
+                       unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+
+    /** Search for a byte sequence.
+     *
+     *  Searches for the first occurrence of the specified bytes anywhere completely contained within the specified limits.
+     *  The bytes must appear in the order they are specified.  Returns the address of the start of the sequence if found, or
+     *  none if not found. */
+    Sawyer::Optional<rose_addr_t> find_sequence(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                                unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+
+    /** Search for any byte.
+     *
+     *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
+     *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
+     *  method returns none. */
+    Sawyer::Optional<rose_addr_t> find_any(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                           unsigned requiredPerms=MM_PROT_READ, unsigned prohibitedPerms=MM_PROT_NONE) const;
+
     /** Returns just the virtual address extents for a memory map. */
-    ExtentMap va_extents() const;
+    AddressIntervalSet va_extents() const;
 
     /** Sets protection bits for the specified address range.  The entire address range must already be mapped, but if @p
      *  relax is set then no exception is thrown if part of the range is not mapped (that part is just ignored).  This
      *  operation is somewhat like the POSIX mprotect() function. */
-    void mprotect(Extent range, unsigned perms, bool relax=false);
+    void mprotect(AddressInterval range, unsigned perms, bool relax=false);
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output.
@@ -654,6 +763,7 @@ public:
      **************************************************************************************************************************/
 protected:
     Segments p_segments;
+    ByteOrder::Endianness sex;
 };
 
 #endif

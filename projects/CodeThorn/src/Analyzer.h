@@ -22,6 +22,7 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
+#include "ReachabilityResults.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -35,6 +36,10 @@ namespace CodeThorn {
 #define DEBUGPRINT_STATEMOD 0x4
 #define DEBUGPRINT_INFO 0x8
   
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
   class AstNodeInfo : public AstAttribute {
   public:
   AstNodeInfo():label(0),initialLabel(0){}
@@ -54,7 +59,12 @@ namespace CodeThorn {
   };
 
   typedef list<const EState*> EStateWorkList;
+  enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
   class Analyzer {
     friend class Visualizer;
 
@@ -83,14 +93,27 @@ namespace CodeThorn {
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
     bool isLTLRelevantLabel(Label label);
+    bool isStdIOLabel(Label label);
+    bool isStartLabel(Label label);
     set<const EState*> nonLTLRelevantEStates();
     bool isTerminationRelevantLabel(Label label);
     
-    // 5 experimental functions
+    // 6 experimental functions
+    // reduces all states different to stdin and stdout.
+    void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
+    void semanticEliminationOfTransitions();
+    int semanticEliminationOfSelfInInTransitions();
+    // eliminates only input states
+    int semanticEliminationOfDeadStates();
+    int semanticFusionOfInInTransitions();
+    // requires semantically reduced STG
+    int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
+    // this function requires that no LTL graph is computed
+    void deleteNonRelevantEStates();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -111,18 +134,27 @@ namespace CodeThorn {
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
-    
+    string generateSpotSTG();
+  private:
+    void generateSpotTransition(stringstream& ss, const Transition& t);
+  public:
     //! requires init
     void runSolver1();
     void runSolver2();
-    
+    void runSolver3();
+    void runSolver4();
+    void runSolver();
     //! The analyzer requires a CFAnalyzer to obtain the ICFG.
     void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
     CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
     
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    Labeler* getLabeler() const { return cfanalyzer->getLabeler(); }
+    IOLabeler* getLabeler() const {
+      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
+      ROSE_ASSERT(ioLabeler);
+      return ioLabeler;
+    }
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
     EStateSet* getEStateSet() { return &estateSet; }
@@ -157,18 +189,24 @@ namespace CodeThorn {
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
-      assert(labelName.size()>0);
+      //assert(labelName.size()>0);
       return labelName;
+    }
+    bool isCppLabeledAssertLabel(Label lab) {
+      return labelNameOfAssertLabel(lab).size()>0;
     }
     
     InputOutput::OpType ioOp(const EState* estate) const;
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
+    void setSolver(int solver) { _solver=solver; ROSE_ASSERT(_solver>=1 && _solver<=4);}
+    int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
     string _csv_assert_live_file; // to become private
@@ -178,7 +216,18 @@ namespace CodeThorn {
     // only used temporarily for binary-binding prototype
     map<string,VariableId> globalVarName2VarIdMapping;
     vector<bool> binaryBindingAssert;
-    
+    void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
+    void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    bool isIncompleteSTGReady();
+    ReachabilityResults reachabilityResults;
+    int reachabilityAssertCode(const EState* currentEStatePtr);
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
+    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
+    void setSkipSelectedFunctionCalls(bool defer) {
+      _skipSelectedFunctionCalls=true; 
+      exprAnalyzer.setSkipSelectedFunctionCalls(true);
+    }
+    ExprAnalyzer* getExprAnalyzer();
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
@@ -194,6 +243,13 @@ namespace CodeThorn {
     int _ltlVerifier;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
+    int _solver;
+    AnalyzerMode _analyzerMode;
+    set<const EState*> _newNodesToFold;
+    size_t _maxTransitions;
+    bool _treatStdErrLikeFailedAssert;
+    ExplorationMode _explorationMode;
+    bool _skipSelectedFunctionCalls;
   };
   
 } // end of namespace CodeThorn

@@ -7,9 +7,12 @@ HEADER_NODE_PREDECLARATION_START
 //#include "sage3basic.h"
 #include "setup.h"
 #include "rangemap.h"
+#include "Map.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <sawyer/Interval.h>
+#include <sawyer/IntervalSet.h>
 
 #include "Cxx_Grammar.h"
 
@@ -32,27 +35,25 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
-/* This is similar to rose_addr_t except instead of representing any kind of address (file offset, virtual address, relative
- * virtual address, etc.) it represents only a relative virtual address. The only significant difference between storing
- * a relative virtual address (RVA) in a rose_addr_t and a rose_rva_t is that the latter allows the address to be associated
- * with an SgAsmGenericSection so that if the section address (mapped_rva) is changed then all rose_rva_t objects bound to
- * that section are also automatically adjusted. */
+// This is all documented in Rva.C since doxygen can't pick of documentation from this file.
 class rose_rva_t {
 	public:
-		rose_rva_t() : addr(0), section(0) {}
-		rose_rva_t(const rose_rva_t &rva) : addr(rva.addr), section(rva.section) {}
-		rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
-		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
+		rose_rva_t();
+		rose_rva_t(const rose_rva_t&);
+		rose_rva_t operator=(const rose_rva_t&);
+		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
+		static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
+		bool is_bound() const;
 		rose_addr_t get_rva() const;
-		rose_addr_t get_va() const;
-		rose_addr_t get_rel() const;	/* returns address relative to linked section */
-		rose_addr_t get_rel(SgAsmGenericSection*); /*returns address relative to specified section*/
 		rose_rva_t& set_rva(rose_addr_t rva);
 		SgAsmGenericSection *get_section() const;
 		rose_rva_t& set_section(SgAsmGenericSection *section);
 		rose_rva_t& bind(SgAsmGenericHeader*);
-		std::string to_string() const;
+		rose_addr_t get_va() const;
+		rose_addr_t get_rel() const;
+		rose_addr_t get_rel(SgAsmGenericSection*);
 		void increment(rose_addr_t amount);
+		std::string to_string() const;
 	private:
 		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
 		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
@@ -75,12 +76,21 @@ bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
 #endif
 
+/** An interval of virtual addresses. */
+typedef Sawyer::Container::Interval<rose_addr_t> AddressInterval;
+std::ostream& operator<<(std::ostream&, const AddressInterval&);
+
+/** A set of virtual addresses. This is optimized for cases when many addresses are contiguous. */
+typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
+
+// deprecated. Use AddressInterval instead for all new code.
 typedef Range<rose_addr_t> Extent;
 
 /** Specialized printing for ROSE addresses. */
 template<>
 void Range<rose_addr_t>::print(std::ostream &o) const;
 
+// deprecated. Use AddressSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
 public:
 	ExtentMap(): RangeMap<Extent>() {}
@@ -92,9 +102,15 @@ public:
 	void allocate_at(const Extent &request);
 	Extent allocate_best_fit(const rose_addr_t size);
 	Extent allocate_first_fit(const rose_addr_t size);
+	void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
 	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
+// deprecated. Conversion functions, to be deleted when the old types are no longer needed.
+Extent toExtent(const AddressInterval&);
+AddressInterval toAddressInterval(const Extent&);
+ExtentMap toExtentMap(const AddressIntervalSet&);
+AddressIntervalSet toAddressIntervalSet(const ExtentMap&);
 
 // #ifndef ROSE_USE_SWIG_SUPPORT
 
@@ -115,6 +131,7 @@ struct HexdumpFormat {
     /* Settings for numeric output of bytes */
     bool show_numeric;		/**< Show numeric format of bytes (default true). */
     const char *numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
+    std::map<unsigned char,std::string> numeric_fmt_special; /**< Special formatting for certain values. */
     const char *numeric_sep;    /**< String to print between numeric values (default " "). */
     bool pad_numeric;           /**< Pad numeric part of output with spaces for partial final line (default true). */
 
@@ -146,6 +163,9 @@ public:
     unsigned get_major() const {
         return majr;
     }
+    bool is_valid() const {
+        return nbits!=0;
+    }
     RegisterDescriptor &set_major(unsigned majr) {
         this->majr = majr;
         return *this;
@@ -171,9 +191,9 @@ public:
         this->nbits = nbits;
         return *this;
     }
-    bool equal(const RegisterDescriptor &other) const {
-	return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
-    }
+    bool operator<(const RegisterDescriptor &other) const;
+    bool operator==(const RegisterDescriptor &other) const;
+    bool operator!=(const RegisterDescriptor &other) const;
     void print(std::ostream &o) const {
 	o <<"{" <<majr <<"," <<minr <<"," <<offset <<"," <<nbits <<"}";
     }
@@ -185,6 +205,9 @@ private:
     unsigned offset;	/** Low-bit offset within the physical register. */
     unsigned nbits;	/** Number of bits referenced by this descriptor. */
 };
+
+/** Mapping from instruction virtual address to instruction. */
+typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
 
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
@@ -454,6 +477,10 @@ typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 typedef Rose_STL_Container<SgAsmIntegerValueExpression*> SgAsmIntegerValuePtrList;
 typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 
+// DQ (3/15/2007): Added support for binaries.
+typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
+typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
+
 // JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmx86Instruction*> SgAsmx86InstructionPtrList;
 // JJW (3/21/2008): Added support for containers of Arm instructions
@@ -549,7 +576,7 @@ typedef Rose_STL_Container<SgModuleStatement*> SgModuleStatementPtrList;
 typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
 
 // TOO1 (5/16/2013)
-typedef Rose_STL_Container<SgJavaPackageStatement*> SgJavaPackageStatementPtrList;
+typedef Rose_STL_Container<SgJavaPackageDeclaration*> SgJavaPackageDeclarationPtrList;
 
 // DQ (6/12/2013): Added to support use in Java support (in SgSourceFile).
 typedef Rose_STL_Container<SgJavaImportStatement*> SgJavaImportStatementPtrList;
@@ -587,6 +614,36 @@ typedef SgOmpClausePtrList*                SgOmpClausePtrListPtr;
 typedef Rose_STL_Container<SgOmpSectionStatement*>   SgOmpSectionStatementPtrList;
 typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrListPtr;
 
+// DQ (1/13/2014): Added support for Java annotations.
+typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
+typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
+
+// DQ (3/6/2014): Added support for Untyped IR nodes.
+class SgUntypedInitializedName;
+typedef Rose_STL_Container<SgUntypedInitializedName*> SgUntypedInitializedNamePtrList;
+typedef SgUntypedInitializedNamePtrList*              SgUntypedInitializedNamePtrListPtr;
+
+class SgUntypedStatement;
+typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;
+typedef SgUntypedStatementPtrList*              SgUntypedStatementPtrListPtr;
+
+class SgUntypedDeclarationStatement;
+typedef Rose_STL_Container<SgUntypedDeclarationStatement*> SgUntypedDeclarationStatementPtrList;
+typedef SgUntypedDeclarationStatementPtrList*              SgUntypedDeclarationStatementPtrListPtr;
+
+class SgUntypedFunctionDeclaration;
+typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
+typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
+
+class SgAsmRegisterReferenceExpression;
+typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
+typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
+
+
+// DQ (10/28/2013): Forward declaration for new token unparsing support.
+class TokenStreamSequenceToNodeMapping;
+class FrontierNode;
+class PreviousAndNextNodeData;
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
@@ -1377,12 +1434,12 @@ class ROSE_VisitorPattern;
 // typedef SgMangledNameList*                  SgMangledNameListPtr;
 
 // DQ (12/23/2005): support for traversal of AST using visitor pattern
-void traverseMemoryPoolNodes          ( ROSE_VisitTraversal & traversal );
-void traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor );
+ROSE_DLL_API void traverseMemoryPoolNodes          ( ROSE_VisitTraversal & traversal );
+ROSE_DLL_API void traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor );
 
 // DQ (2/9/2006): Added to support traversal over single representative of each IR node
 // This traversal helps support intrnal tools that call static member functions.
-void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
+ROSE_DLL_API void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
 
 // DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
 // using values that overflow signed values of int.
@@ -1390,12 +1447,12 @@ void traverseRepresentativeNodes ( ROSE_VisitTraversal & traversal );
 // computation is done based on the memory pools (so it is exact).
 // int numberOfNodes();
 // int memoryUsage();
-size_t numberOfNodes();
-size_t memoryUsage();
+ROSE_DLL_API size_t numberOfNodes();
+ROSE_DLL_API size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
 //     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)
-std::string globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+ROSE_DLL_API std::string globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL );
 
 // MS 2002: global type
 /*! \brief Access to C++ Run Time Information (RTI)
@@ -1538,7 +1595,7 @@ class SgShallowCopy : public SgCopyHelp
 \internal The name of this class should perhaps be changed to reflect that it is a "deep" copy.
 
  */
-class SgTreeCopy : public SgCopyHelp
+class ROSE_DLL_API SgTreeCopy : public SgCopyHelp
    {
      public:
 #if 0
@@ -1796,6 +1853,13 @@ HEADER_START
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForNames();
 
+      /*! \brief Access function for name qualification support (for names).
+
+          This qualified name is stored with reference to where the name is used (as required) instead
+          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
+       */
+          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
+
       /*! \brief Access function for name qualification support (for type).
 
           This qualified name is stored with reference to where the type is used (as required) instead
@@ -1803,13 +1867,6 @@ HEADER_START
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
-
-      /*! \brief Access function for name qualification support (for names).
-
-          This qualified name is stored with reference to where the name is used (as required) instead
-          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
-       */
-          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
 
       /*! \brief Access function for name qualification support (for type).
 
@@ -2100,7 +2157,7 @@ HEADER_END
 
 HEADER_IS_CLASSNAME_START
      // the generated cast function
-     // friend $CLASSNAME* is$CLASSNAME ( SgNode* s );
+     // friend ROSE_DLL_API $CLASSNAME* is$CLASSNAME ( SgNode* s );
 
           typedef $BASECLASS base_node_type;
 HEADER_IS_CLASSNAME_END
@@ -2150,6 +2207,19 @@ void Range<rose_addr_t>::print(std::ostream &o) const
         o <<buf;
     }
 }
+
+// This resolves a linker error when building ROSE with Visual Studio.
+// If the above function is not called within the same file, the compiler
+// fails to generate the symbol.
+#ifdef _MSC_VER
+namespace {
+void instantiate_range_print_msvc()
+{
+  static Range<rose_addr_t> g;
+  g.print(std::cout);
+}
+}
+#endif
 
 // Support for global function type symbol table (moved to be static data pointer)
 // DQ (1/31/2006): Modified to build all types in the memory pools
@@ -2934,16 +3004,3 @@ $CLASSNAME::error()
 #endif
 
 SOURCE_ERROR_FUNCTION_END
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -18,11 +18,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
-SUBDIRS = \
-	x10_tests
+
+# DQ (7/28/2014): Moved this to aver the C and C++ language tests.
+# SUBDIRS = x10_tests
+SUBDIRS = 
 
 if ROSE_USE_CLANG_FRONTEND
    SUBDIRS += C_tests
+   SUBDIRS += C89_std_c89_tests
    SUBDIRS += C_subset_of_Cxx_tests
    SUBDIRS += CudaTests
    SUBDIRS += OpenClTests
@@ -31,17 +34,14 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += \
-      C_tests Cxx_tests Cxx11_tests C_subset_of_Cxx_tests C99_tests UPC_tests
+   SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
 endif
 endif
 
-# DQ (11/3/2011): For now we don't want to worry about these tests with the EDG 4.3 based support in ROSE.
-if !ROSE_USE_EDG_VERSION_4_4
-# DQ (7/25/2010): Put these tests after the most basic tests that users expect ROSE to pass (C,C++,C99, etc.).
-if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-SUBDIRS += OpenMP_tests
-endif
+# DQ (7/28/2014): Moved to after the C and C++ langauge tests.
+SUBDIRS += x10_tests
+
+SUBDIRS += OpenMP_tests FailSafe_tests
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -51,7 +51,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   SUBDIRS += Java_tests 
+   SUBDIRS += Java_tests MicrosoftWindows_Java_tests
 endif
 
 # DQ (10/19/2010): Moved basic languge test to the front of the list.
@@ -73,7 +73,7 @@ if !USING_XTENSA_BACKEND_COMPILER
 endif
 endif
 
-# end of !ROSE_USE_EDG_VERSION_4_4
+# end of !ROSE_USE_CLANG_FRONTEND
 endif
 
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
@@ -85,8 +85,11 @@ SUBDIRS += CudaTests
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
 SUBDIRS += frontend_integration
 
+# DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
+SUBDIRS += systemc_tests
+
 # end of ROSE_USE_CLANG_FRONTEND
-endif
+# endif
 
 check-local:
 	@echo "*************************************************************************************"

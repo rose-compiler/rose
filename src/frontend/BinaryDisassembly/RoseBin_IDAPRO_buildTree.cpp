@@ -12,17 +12,18 @@ using namespace std;
 
 using namespace RoseBin_Def;
 
-SgAsmType* getRegisterType(const RegisterDescriptor &rdesc) {
-        SgAsmType* type = NULL;
-        switch(rdesc.get_nbits()) {
-                case 8:  type = SgAsmTypeByte::createType(); break;
-                case 16: type = SgAsmTypeWord::createType(); break;
-                case 32: type = SgAsmTypeDoubleWord::createType(); break; 
-                case 64: type = SgAsmTypeQuadWord::createType(); break; 
-                default:
-                        ROSE_ASSERT(false);
-        }
-        return type;
+SgAsmType*
+getRegisterType(const RegisterDescriptor &rdesc) {
+    SgAsmType* type = NULL;
+    switch(rdesc.get_nbits()) {
+        case 8:  type = SageBuilderAsm::buildTypeX86Byte(); break;
+        case 16: type = SageBuilderAsm::buildTypeX86Word(); break;
+        case 32: type = SageBuilderAsm::buildTypeX86DoubleWord(); break; 
+        case 64: type = SageBuilderAsm::buildTypeX86QuadWord(); break; 
+        default:
+            ASSERT_not_reachable("nbits="+StringUtility::numberToString(rdesc.get_nbits()));
+    }
+    return type;
 }
 
 /****************************************************
@@ -72,8 +73,8 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       RegisterDescriptor regDesc;
       resolveRegisterX86(symbol, &regDesc);
       if (isSgAsmMemoryReferenceExpression(child)) {
-        binNode = new SgAsmx86RegisterReferenceExpression(regDesc);
-        isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
+        binNode = new SgAsmDirectRegisterExpression(regDesc);
+        isSgAsmRegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
         isSgAsmMemoryReferenceExpression(child)->set_segment(binNode);
         binNode->set_parent(child);
         binNode=child;
@@ -83,41 +84,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
         // do nothing
         // if we have a jump case, we have a value only and no RegRef
       }
-#if 0
-      // resolve the register information
-      if (RoseAssemblyLanguage==x86) {
-        SgAsmRegisterReferenceExpression::x86_register_enum registerSg = 
-          SgAsmRegisterReferenceExpression::undefined_general_register;
-        SgAsmRegisterReferenceExpression::x86_position_in_register_enum regSize =  
-          SgAsmRegisterReferenceExpression::undefined_position_in_register;
-        resolveRegisterX86(symbol, &registerSg, &regSize);
-        //      binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-        binNode = new SgAsmRegisterReferenceExpression();
-        (isSgAsmRegisterReferenceExpression(binNode))->set_x86_register_code(registerSg);
-        (isSgAsmRegisterReferenceExpression(binNode))->set_x86_position_in_register_code(regSize);
-      } else if (RoseAssemblyLanguage==arm) {
-        SgAsmRegisterReferenceExpression::arm_register_enum registerSg = 
-          SgAsmRegisterReferenceExpression::undefined_arm_register;
-        SgAsmRegisterReferenceExpression::arm_position_in_register_enum regSize =  
-          SgAsmRegisterReferenceExpression::undefined_arm_position_in_register;
-        resolveRegisterX86(symbol, &registerSg, &regSize);
-        //      binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-        binNode = new SgAsmRegisterReferenceExpression();
-        (isSgAsmRegisterReferenceExpression(binNode))->set_arm_register_code(registerSg);
-        (isSgAsmRegisterReferenceExpression(binNode))->set_arm_position_in_register_code(regSize);
-      }
-      // the child could be the expression to an address,  e.g. ss:[ebp]
-      
-      // todo : dont know how to change this right now. Affected by AST structure change
-      //isSgAsmRegisterReferenceExpression(binNode)->set_segment(child); 
-      rememberOffset = isSgAsmRegisterReferenceExpression(binNode);
-      if (child==NULL) {
-        cerr << "adding no child to RegisterReference " << endl;
-      }
-      child->set_parent(binNode);
-#endif
-    }
-    else if (expt->symbol=="+") {
+    } else if (expt->symbol=="+") {
       list<SgAsmExpression*>::iterator childList = children->begin();
       int count=0;
       if (children->size()==1) {
@@ -125,12 +92,6 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
         SgAsmExpression* child = *(children->begin());
         if (child) {
           binNode = child;
-          // child->set_parent(previousExp);
-          // if (isSgAsmMemoryReferenceExpression(previousExp)) 
-          //   isSgAsmMemoryReferenceExpression(previousExp)->set_address(child);
-          // changed on 16Jan08
-          //if (isSgAsmRegisterReferenceExpression(previousExp))
-          //  isSgAsmRegisterReferenceExpression(previousExp)->set_offset(child);
         }
       } else {
         binNode = new SgAsmBinaryAdd();        
@@ -195,7 +156,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       // the child is another expression, like +, - , ...
       ROSE_ASSERT(child);
       binNode = new SgAsmMemoryReferenceExpression();
-      isSgAsmMemoryReferenceExpression(binNode)->set_type(SgAsmTypeQuadWord::createType());
+      isSgAsmMemoryReferenceExpression(binNode)->set_type(SageBuilderAsm::buildTypeX86QuadWord());
       ROSE_ASSERT (binNode->get_type());
 
       isSgAsmMemoryReferenceExpression(binNode)->set_address(child);
@@ -212,15 +173,15 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       if (isSgAsmMemoryReferenceExpression(binNode)) {
         SgAsmMemoryReferenceExpression* memRefT = isSgAsmMemoryReferenceExpression(binNode);
         if (expt->symbol=="b1") 
-          memRefT->set_type(SgAsmTypeByte::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86Byte());
         else if (expt->symbol=="b2") 
-          memRefT->set_type(SgAsmTypeWord::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86Word());
         else if (expt->symbol=="b4") 
-          memRefT->set_type(SgAsmTypeDoubleWord::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86DoubleWord());
         else if (expt->symbol=="b6") 
-          memRefT->set_type(SgAsmTypeByte::createType()); // FIXME
+            memRefT->set_type(SageBuilderAsm::buildTypeX86Byte()); // FIXME
         else if (expt->symbol=="b8") 
-          memRefT->set_type(SgAsmTypeQuadWord::createType());
+            memRefT->set_type(SageBuilderAsm::buildTypeX86QuadWord());
         ROSE_ASSERT (memRefT->get_type());
       } 
     }
@@ -228,8 +189,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
     else {
       cerr << "ERROR:: FIXME:: symbol not resolved " << expt->symbol << endl;
       // temp solution for arm. tps (09/17/07)
-      binNode = new SgAsmByteValueExpression();
-      isSgAsmByteValueExpression(binNode)->set_value('5'); // ascii for 5
+      binNode = SageBuilderAsm::buildValueU8('5'); // ascii for 5
 
       //      exit(0);
     }
@@ -244,35 +204,28 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
     if (typeOfOperand=="WORD") typeOfOperand="DWORD";
 
     if (typeOfOperand=="BYTE") {
-      binNode = new SgAsmByteValueExpression();
-      isSgAsmByteValueExpression(binNode)->set_value(expt->immediate);
+        binNode = SageBuilderAsm::buildValueX86Byte(expt->immediate);
     } else 
       if (typeOfOperand=="WORD") {
-        binNode = new SgAsmWordValueExpression();
-        isSgAsmWordValueExpression(binNode)->set_value(expt->immediate);
+        binNode = SageBuilderAsm::buildValueX86Word(expt->immediate);
       } else 
         if (typeOfOperand=="DWORD") {
-          binNode = new SgAsmDoubleWordValueExpression();
-          isSgAsmDoubleWordValueExpression(binNode)->set_value(expt->immediate);
+          binNode = SageBuilderAsm::buildValueX86DWord(expt->immediate);
         } else
           if (typeOfOperand=="QWORD") {
-            binNode = new SgAsmQuadWordValueExpression();
-            isSgAsmQuadWordValueExpression(binNode)->set_value(expt->immediate);
+            binNode = SageBuilderAsm::buildValueX86QWord(expt->immediate);
           } else 
             if (typeOfOperand=="SFLOAT") {
-              binNode = new SgAsmSingleFloatValueExpression();
-              isSgAsmQuadWordValueExpression(binNode)->set_value(expt->immediate);
+                binNode = SageBuilderAsm::buildValueX86Float32(expt->immediate);
             } else 
               if (typeOfOperand=="DFLOAT") {
-                binNode = new SgAsmDoubleFloatValueExpression();
-                isSgAsmQuadWordValueExpression(binNode)->set_value(expt->immediate);
+                binNode = SageBuilderAsm::buildValueX86QWord(expt->immediate);
               } else {
                 cerr << "ERROR :: unhandled type of value: " << typeOfOperand << " val: " << 
                   RoseBin_support::ToString(expt->immediate) << endl;
                 //              exit(0);
                 // creating defualt for now
-                binNode = new SgAsmDoubleWordValueExpression();
-                isSgAsmDoubleWordValueExpression(binNode)->set_value(expt->immediate);
+                binNode = SageBuilderAsm::buildValueX86DWord(expt->immediate);
               }
     
     if (RoseBin_support::DEBUG_MODE())
@@ -290,16 +243,14 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       string symbol = RoseBin_support::str_to_upper(expt->symbol);
       
       resolveRegisterX86(symbol, &regDesc);
-      //binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-      binNode = new SgAsmx86RegisterReferenceExpression(regDesc);
-      isSgAsmx86RegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
+      binNode = new SgAsmDirectRegisterExpression(regDesc);
+      isSgAsmRegisterReferenceExpression(binNode)->set_type(getRegisterType(regDesc));
     } else if (RoseAssemblyLanguage==arm) {
       RegisterDescriptor regDesc;
       string symbol = RoseBin_support::str_to_upper(expt->symbol);
       
       resolveRegisterX86(symbol, &regDesc);
-      //      binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
-      binNode = new SgAsmArmRegisterReferenceExpression(regDesc);
+      binNode = new SgAsmDirectRegisterExpression(regDesc);
       // todo : find out types for ARM
     }
   } else {

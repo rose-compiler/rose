@@ -6,6 +6,8 @@
 #include "rose.h"
 #include "Debugger.h"
 
+using namespace rose::BinaryAnalysis;
+
 int main(int argc, char *argv[]) {
     std::ios_base::sync_with_stdio(true);
     std::string hostname = "localhost";
@@ -45,7 +47,7 @@ int main(int argc, char *argv[]) {
     assert(disassembler!=NULL);
 
     fprintf(stderr, "Setting break points...\n");
-    int status = dbg.setbp(0, 0xffffffff);
+    int status __attribute__((unused)) = dbg.setbp(0, 0xffffffff);
     assert(status>=0);
 
     fprintf(stderr, "Starting executable...\n");

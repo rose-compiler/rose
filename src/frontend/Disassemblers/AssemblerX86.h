@@ -37,8 +37,8 @@ public:
     virtual SgUnsignedCharList assembleOne(SgAsmInstruction*);
     
     /** Causes the assembler to honor (if true) or disregard (if false) the data types of operands when assembling. For
-     *  instance, when honoring operand data types, if an operand is of type SgAsmWordValueExpression then the assembler will
-     *  attempt to encode it as four bytes even if its value could be encoded as a single byte. This is turned on
+     *  instance, when honoring operand data types, if an operand is a 32-bit SgAsmIntegerValueExpression then the assembler
+     *  will attempt to encode it as four bytes even if its value could be encoded as a single byte. This is turned on
      *  automatically if the Assembler::set_encoding_type() is set to Assembler::ET_MATCHES, but can also be turned on
      *  independently. */
     void set_honor_operand_types(bool b) {
@@ -446,8 +446,8 @@ private:
      *  BASE_REG and INDEX_REG are optional register reference expressions and SCALE and DISPLACEMENT are optional value
      *  expressions. */
     static MemoryReferencePattern parse_memref(SgAsmInstruction *insn, SgAsmMemoryReferenceExpression *expr,
-                                               SgAsmx86RegisterReferenceExpression **base_reg/*out*/,
-                                               SgAsmx86RegisterReferenceExpression **index_reg/*out*/,
+                                               SgAsmRegisterReferenceExpression **base_reg/*out*/,
+                                               SgAsmRegisterReferenceExpression **index_reg/*out*/,
                                                SgAsmValueExpression **scale/*out*/, SgAsmValueExpression **displacement/*out*/);
 
     /** Builds the ModR/M byte, SIB byte. Also adjusts the REX prefix byte and returns any displacement value. */

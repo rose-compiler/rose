@@ -1,0 +1,1113 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
+%% and extended with rules covering the GNU compiler extensions (superset)                          %%
+%% Version: 1.2                                                                                     %%
+%% Author: Markus Schordan, 2013.                                                                   %%
+%% Copyright: Lawrence Livermore National Laboratory                                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+module Main
+
+imports
+Identifier Literal CppLayout
+
+exports
+context-free start-symbols Translation-unit
+
+sorts
+Abstract-declarator
+Abstract-pack-declarator
+Access-specifier
+Additive-expression
+Alias-declaration
+Alignment-specifier
+And-expression
+Asm-definition
+Assignment-expression
+Assignment-operator
+Attribute
+Attribute-argument-clause
+Attribute-declaration
+Attribute-list
+Attribute-namespace
+Attribute-scoped-token
+Attribute-specifier
+Attribute-specifier-seq
+Attribute-token
+Balanced-token
+Balanced-token-seq
+Base-clause
+Base-specifier
+Base-specifier-list
+Base-type-specifier
+Block-declaration
+Braced-init-list
+Brace-or-equal-initializer
+Capture
+Capture-default
+Capture-list
+Cast-expression
+Class-head
+Class-head-name
+Class-key
+Class-name
+Class-or-decltype
+Class-specifier
+Class-virt-specifier
+Compound-statement
+Condition
+Conditional-expression
+Constant-expression
+Conversion-declarator
+Conversion-function-id
+Conversion-type-id
+Ctor-initializer
+Cv-qualifier
+Cv-qualifier-seq
+Declaration
+Declaration-seq
+Declaration-statement
+Declarator
+Declarator-id
+Decl-specifier
+Decl-specifier-seq
+Decltype-specifier
+Delete-expression
+Dynamic-exception-specification
+Elaborated-type-specifier
+Empty-declaration
+Enum-base
+Enumerator
+Enumerator-definition
+Enumerator-list
+Enum-head
+Enum-key
+Enum-name
+Enum-specifier
+Equality-expression
+Exception-declaration
+Exception-specification
+Exclusive-or-expression
+Explicit-instantiation
+Explicit-specialization
+Expression
+Expression-list
+Expression-statement
+Extension-namespace-definition
+For-init-statement
+For-range-declaration
+For-range-initializer
+Function-body
+Function-definition
+Function-specifier
+Function-try-block
+GNU-asm-def
+GNU-asm-definition
+GNU-asm-extension
+GNU-attribute
+GNU-attribute-exp
+GNU-attribute-exp-list
+GNU-attribute-list
+GNU-builtin-arg
+GNU-builtin-arg-list
+GNU-builtin-function-call-expression
+GNU-elaborated-template
+GNU-extension
+GNU-realimag-operator
+GNU-restrict
+GNU-statement-expression
+GNU-ternary-decl-op
+GNU-typeof-extension
+Handler
+Handler-seq
+Id-expression
+Inclusive-or-expression
+Init-capture
+Init-declarator
+Init-declarator-list
+Initializer
+Initializer-clause
+Initializer-list
+Iteration-statement
+Jump-statement
+Labeled-statement
+Lambda-capture
+Lambda-declarator
+Lambda-expression
+Lambda-introducer
+Linkage-specification
+Literal-operator-id
+Logical-and-expression
+Logical-or-expression
+Member-declaration
+Member-declarator
+Member-declarator-list
+Member-specification
+Mem-initializer
+Mem-initializer-id
+Mem-initializer-list
+Multiplicative-expression
+Named-namespace-definition
+Namespace-alias
+Namespace-alias-definition
+Namespace-body
+Namespace-definition
+Namespace-name
+Nested-name-specifier
+New-declarator
+New-expression
+New-initializer
+New-placement
+New-type-id
+Noexcept-expression
+Noexcept-specification
+Noptr-abstract-declarator
+Noptr-abstract-pack-declarator
+Noptr-declarator
+Noptr-new-declarator
+Opaque-enum-declaration
+Operator
+Operator-function-id
+Original-namespace-definition
+Original-namespace-name
+Parameter-declaration
+Parameter-declaration-clause
+Parameter-declaration-list
+Parameters-and-qualifiers
+Pm-expression
+Postfix-expression
+Pragma-line
+Primary-expression
+Pseudo-destructor-name
+Ptr-abstract-declarator
+Ptr-declarator
+Ptr-operator
+Pure-specifier
+Qualified-id
+Qualified-namespace-specifier
+Ref-qualifier
+Relational-expression
+Selection-statement
+Shift-expression
+Simple-capture
+Simple-declaration
+Simple-template-id
+Simple-type-specifier
+Statement
+Statement-seq
+Static-assert-declaration
+Storage-class-specifier
+Template-argument
+Template-argument-list
+Template-declaration
+Template-id
+Template-name
+Template-parameter
+Template-parameter-list
+Throw-expression
+Trailing-return-type
+Trailing-type-specifier
+Trailing-type-specifier-seq
+Translation-unit
+Try-block
+Typedef-name
+Type-id
+Type-id-list
+Type-name
+Typename-specifier
+Type-parameter
+Type-specifier
+Type-specifier-seq
+Unary-expression
+Unary-operator
+Unnamed-namespace-definition
+Unqualified-id
+Using-declaration
+Using-directive
+Virt-specifier
+Virt-specifier-seq
+
+
+context-free syntax
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.1 Keywords [gram.key]                                                                            %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% New context-dependent keywords are introduced into a program by typedef (7.1.3), namespace (7.3.1),
+%% class (clause 9), enumeration (7.2), and template (clause 14) declarations.
+
+Identifier 				-> Typedef-name  
+
+Original-namespace-name			-> Namespace-name
+%%Namespace-alias			-> Namespace-name  %% redundant
+
+Identifier 				-> Original-namespace-name
+
+Identifier 				-> Namespace-alias
+
+Identifier				-> Class-name
+Simple-template-id			-> Class-name
+
+Identifier				-> Enum-name
+
+Identifier				-> Template-name
+
+%% Note that a typedef-name naming a class is also a class-name (9.1).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.2 Lexical conventions [gram.lex]                                                                 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%					(see additional SDF files Literal.sdf, Identifier.sdf)
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.3 Basic Concepts [gram.basic]                                                                    %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Declaration-seq? 			-> Translation-unit
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.4 Expressions [gram.expr]                                                                        %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Literal 				-> Primary-expression
+"this" 					-> Primary-expression
+"(" Expression ")" 			-> Primary-expression
+Id-expression 				-> Primary-expression
+Lambda-expression 			-> Primary-expression
+
+Unqualified-id 				-> Id-expression
+Qualified-id 				-> Id-expression
+
+Identifier 				-> Unqualified-id
+Operator-function-id 			-> Unqualified-id
+Conversion-function-id 			-> Unqualified-id
+"~" Class-name 				-> Unqualified-id
+"~" Decltype-specifier			-> Unqualified-id
+Template-id 				-> Unqualified-id
+
+Nested-name-specifier "template"? Unqualified-id -> Qualified-id
+"::" Identifier 			-> Qualified-id
+"::" Operator-function-id 		-> Qualified-id
+"::" Literal-operator-id  		-> Qualified-id
+"::" Template-id 			-> Qualified-id
+
+"::"                                    -> Nested-name-specifier
+Type-name "::"			        -> Nested-name-specifier
+Namespace-name "::" 		        -> Nested-name-specifier
+Decltype-specifier "::"			-> Nested-name-specifier
+Nested-name-specifier Identifier "::"	-> Nested-name-specifier
+Nested-name-specifier "template"? Simple-template-id "::" -> Nested-name-specifier
+
+Lambda-introducer Lambda-declarator? Compound-statement -> Lambda-expression
+
+"[" Lambda-capture? "]"				-> Lambda-introducer
+
+Capture-default					-> Lambda-capture
+Capture-list					-> Lambda-capture
+Capture-default "," Capture-list		-> Lambda-capture
+
+"&" 						-> Capture-default
+"="						-> Capture-default
+
+Capture "..."?					-> Capture-list
+Capture-list "," Capture "..."?			-> Capture-list
+
+Simple-capture                                  -> Capture
+Init-capture					-> Capture
+
+Identifier					-> Simple-capture
+"&" Identifier					-> Simple-capture
+"this"						-> Simple-capture
+
+Identifier Initializer				-> Init-capture
+"&" Identifier Initializer			-> Init-capture
+
+"(" Parameter-declaration-clause ")" "mutable"? Exception-specification? Attribute-specifier-seq? Trailing-return-type? -> Lambda-declarator
+
+Primary-expression				-> Postfix-expression
+Postfix-expression "[" Expression "]"		-> Postfix-expression
+Postfix-expression "[" Braced-init-list "]"	-> Postfix-expression
+Postfix-expression "(" Expression-list? ")"	-> Postfix-expression
+Simple-type-specifier "(" Expression-list? ")"	-> Postfix-expression
+Typename-specifier "(" Expression-list? ")"	-> Postfix-expression
+Simple-type-specifier Braced-init-list		-> Postfix-expression
+Typename-specifier Braced-init-list		-> Postfix-expression
+Postfix-expression "." "template"? Id-expression -> Postfix-expression
+Postfix-expression "->" "template"? Id-expression -> Postfix-expression
+Postfix-expression "." Pseudo-destructor-name	-> Postfix-expression
+Postfix-expression "->" Pseudo-destructor-name	-> Postfix-expression
+Postfix-expression "++"				-> Postfix-expression
+Postfix-expression "--"				-> Postfix-expression
+"dynamic_cast" "<" Type-id ">" "(" Expression ")" -> Postfix-expression
+"static_cast" "<" Type-id ">" "(" Expression ")" -> Postfix-expression
+"reinterpret_cast" "<" Type-id ">" "(" Expression ")" -> Postfix-expression
+"const_cast" "<" Type-id ">" "(" Expression ")" -> Postfix-expression
+"typeid" "(" Expression ")"			-> Postfix-expression
+"typeid" "(" Type-id ")"			-> Postfix-expression
+
+Initializer-list				-> Expression-list
+
+"::"? Nested-name-specifier? Type-name "::" "~" Type-name 			-> Pseudo-destructor-name
+"::"? Nested-name-specifier "template" Simple-template-id "::" "~" Type-name 	-> Pseudo-destructor-name
+"::"? Nested-name-specifier? "~" Type-name					-> Pseudo-destructor-name
+"~" Decltype-specifier 								-> Pseudo-destructor-name
+
+Postfix-expression				-> Unary-expression
+"++" Cast-expression				-> Unary-expression
+"--" Cast-expression				-> Unary-expression
+Unary-operator Cast-expression			-> Unary-expression
+"sizeof" Unary-expression			-> Unary-expression
+"sizeof" "(" Type-id ")"			-> Unary-expression
+"sizeof" "..." "(" Identifier ")"		-> Unary-expression
+"alignof" "(" Type-id ")"			-> Unary-expression
+New-expression					-> Unary-expression
+Delete-expression				-> Unary-expression
+GNU-builtin-function-call-expression		-> Unary-expression	%% GNU-extension
+GNU-extension					-> Unary-expression	%% GNU-extension
+GNU-realimag-operator Cast-expression 		-> Unary-expression	%% GNU-extension
+Cast-expression Braced-init-list		-> Unary-expression	%% GNU-extension? (test2005_202.C)
+
+"*"	-> Unary-operator
+"&" 	-> Unary-operator
+"+" 	-> Unary-operator
+"-" 	-> Unary-operator
+"!" 	-> Unary-operator
+"~" 	-> Unary-operator
+
+"::"? "new" New-placement? New-type-id New-initializer?		-> New-expression
+"::"? "new" New-placement? "(" Type-id ")" New-initializer?	-> New-expression
+
+"(" Expression-list ")"				-> New-placement
+
+Type-specifier-seq New-declarator? 		-> New-type-id
+
+Ptr-operator New-declarator?			-> New-declarator
+Noptr-new-declarator				-> New-declarator
+
+"[" Expression "]" Attribute-specifier-seq?					-> Noptr-new-declarator
+Noptr-new-declarator "[" Constant-expression "]" Attribute-specifier-seq?	-> Noptr-new-declarator
+
+"(" Expression-list? ")" 			-> New-initializer
+Braced-init-list 				-> New-initializer
+
+"::"? "delete" Cast-expression			-> Delete-expression
+"::"? "delete" "[" "]" Cast-expression		-> Delete-expression
+
+"noexcept" "(" Expression ")"			-> Noexcept-expression
+
+Unary-expression				-> Cast-expression
+"(" Type-id ")" Cast-expression			-> Cast-expression
+"(" "struct" Identifier ")"			-> Cast-expression  %% GNU C/C++? (see test2005_202.C)
+"(" Type-id "[" "]" ")"				-> Cast-expression  %% GNU C/C++? (see test2013_253.C)
+GNU-extension? Cast-expression 			-> Cast-expression  
+GNU-extension "(" Expression ")" Cast-expression-> Cast-expression
+GNU-statement-expression 	                -> Cast-expression
+
+GNU-extension? "(" Compound-statement ")" Cast-expression 	-> GNU-statement-expression
+
+Cast-expression						-> Pm-expression
+Pm-expression ".*" Cast-expression			-> Pm-expression
+Pm-expression "->*" Cast-expression			-> Pm-expression
+
+Pm-expression -> Multiplicative-expression
+Multiplicative-expression "*" Pm-expression 		-> Multiplicative-expression
+Multiplicative-expression "/" Pm-expression 		-> Multiplicative-expression
+Multiplicative-expression "%" Pm-expression		-> Multiplicative-expression
+
+Multiplicative-expression				-> Additive-expression
+Additive-expression "+" Multiplicative-expression 	-> Additive-expression
+Additive-expression "-" Multiplicative-expression 	-> Additive-expression
+
+
+Additive-expression					-> Shift-expression
+Shift-expression "<<" Additive-expression		-> Shift-expression
+Shift-expression ">>" Additive-expression		-> Shift-expression
+
+Shift-expression					-> Relational-expression
+Relational-expression "<" Shift-expression		-> Relational-expression
+Relational-expression ">" Shift-expression		-> Relational-expression
+Relational-expression "<=" Shift-expression		-> Relational-expression
+Relational-expression ">=" Shift-expression		-> Relational-expression
+
+Relational-expression					-> Equality-expression
+Equality-expression "==" Relational-expression		-> Equality-expression
+Equality-expression "!=" Relational-expression		-> Equality-expression
+
+Equality-expression					-> And-expression
+And-expression "&" Equality-expression			-> And-expression
+
+And-expression						-> Exclusive-or-expression
+Exclusive-or-expression "^" And-expression		-> Exclusive-or-expression
+
+Exclusive-or-expression					-> Inclusive-or-expression
+Inclusive-or-expression "|" Exclusive-or-expression	-> Inclusive-or-expression
+
+Inclusive-or-expression					-> Logical-and-expression
+Logical-and-expression "&&" Inclusive-or-expression 	-> Logical-and-expression
+
+Logical-and-expression 					-> Logical-or-expression
+Logical-or-expression "||" Logical-and-expression 	-> Logical-or-expression
+
+Logical-or-expression						-> Conditional-expression
+Logical-or-expression "?" Expression ":" Assignment-expression 	-> Conditional-expression
+
+Conditional-expression						-> Assignment-expression
+Logical-or-expression Assignment-operator Initializer-clause 	-> Assignment-expression
+Throw-expression						-> Assignment-expression
+
+"=" 	-> Assignment-operator
+"*=" 	-> Assignment-operator
+"/=" 	-> Assignment-operator
+"%=" 	-> Assignment-operator
+"+=" 	-> Assignment-operator
+"-=" 	-> Assignment-operator
+">>=" 	-> Assignment-operator
+"<<=" 	-> Assignment-operator
+"&=" 	-> Assignment-operator
+"^=" 	-> Assignment-operator
+"|=" 	-> Assignment-operator
+
+Assignment-expression					-> Expression
+Expression "," Assignment-expression 			-> Expression
+Compound-statement 					-> Expression %% GNU StatementExpression
+
+Conditional-expression					-> Constant-expression
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.5 Statements [gram.stmt]                                                                         %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Labeled-statement					-> Statement
+Attribute-specifier-seq? Expression-statement		-> Statement
+Attribute-specifier-seq? Compound-statement		-> Statement
+Attribute-specifier-seq? Selection-statement		-> Statement
+Attribute-specifier-seq? Iteration-statement		-> Statement
+Attribute-specifier-seq? Jump-statement			-> Statement
+Declaration-statement					-> Statement
+Attribute-specifier-seq? Try-block			-> Statement
+
+Attribute-specifier-seq? Identifier ":" Statement						-> Labeled-statement
+Attribute-specifier-seq? "case" Constant-expression ":" Statement				-> Labeled-statement
+Attribute-specifier-seq? "default" ":" Statement						-> Labeled-statement
+Attribute-specifier-seq? "case" Constant-expression "..." Constant-expression ":" Statement	-> Labeled-statement %% GNU-extension
+
+Expression? ";"						-> Expression-statement
+
+"{" Statement-seq? "}"					-> Compound-statement
+
+Statement						-> Statement-seq
+Statement-seq Statement					-> Statement-seq
+
+"if" "(" Condition ")" Statement			-> Selection-statement
+"if" "(" Condition ")" Statement "else" Statement 	-> Selection-statement
+"switch" "(" Condition ")" Statement			-> Selection-statement
+
+Expression									-> Condition
+Attribute-specifier-seq? Decl-specifier-seq Declarator "=" Initializer-clause	-> Condition
+Attribute-specifier-seq? Decl-specifier-seq Declarator Braced-init-list		-> Condition
+
+"while" "(" Condition ")" Statement						-> Iteration-statement
+"do" Statement "while" "(" Expression ")" ";"					-> Iteration-statement
+"for" "(" For-init-statement Condition? ";" Expression? ")" Statement		-> Iteration-statement
+"for" "(" For-range-declaration ":" For-range-initializer ")" Statement		-> Iteration-statement
+
+Expression-statement					-> For-init-statement
+Simple-declaration					-> For-init-statement
+
+Attribute-specifier-seq? Decl-specifier-seq Declarator	-> For-range-declaration
+
+Expression 						-> For-range-initializer
+Braced-init-list					-> For-range-initializer
+
+"break" ";"						-> Jump-statement
+"continue" ";" 						-> Jump-statement
+"return" Expression? ";" 				-> Jump-statement
+"return" Braced-init-list ";" 				-> Jump-statement
+"goto" Identifier ";" 					-> Jump-statement
+
+Block-declaration 					-> Declaration-statement
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.6 Declarations [gram.dcl]                                                                        %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Pragma-line? Declaration			-> Declaration-seq  %% reasonable pragma location 1 (of 2)
+Declaration-seq Declaration 			-> Declaration-seq
+
+Block-declaration				-> Declaration
+Function-definition 				-> Declaration
+Template-declaration 				-> Declaration
+Explicit-instantiation 				-> Declaration
+Explicit-specialization 			-> Declaration
+Linkage-specification 				-> Declaration
+Namespace-definition 				-> Declaration
+Empty-declaration 				-> Declaration
+Attribute-declaration 				-> Declaration
+
+
+Simple-declaration 				-> Block-declaration
+Asm-definition 					-> Block-declaration
+Namespace-alias-definition 			-> Block-declaration
+Using-declaration 				-> Block-declaration
+Using-directive 				-> Block-declaration
+Static-assert-declaration 			-> Block-declaration
+Alias-declaration 				-> Block-declaration
+Opaque-enum-declaration 			-> Block-declaration
+Pragma-line					-> Block-declaration  %% reasonable pragma location 2 (of 2)
+
+"using" Identifier Attribute-specifier-seq? "=" Type-id ";"		-> Alias-declaration
+
+Decl-specifier-seq? Init-declarator-list? ";"				-> Simple-declaration
+Attribute-specifier-seq Decl-specifier-seq? Init-declarator-list ";"	-> Simple-declaration
+GNU-ternary-decl-op ";"							-> Simple-declaration
+
+Type-specifier Expression "?" Expression? ":" Expression -> GNU-ternary-decl-op  %% added to support GNU-extension
+
+"static_assert" "(" Constant-expression "," String-literal ")" ";" -> Static-assert-declaration
+
+";" 						-> Empty-declaration
+
+Attribute-specifier-seq ";" 			-> Attribute-declaration
+
+Storage-class-specifier 			-> Decl-specifier
+Type-specifier 					-> Decl-specifier
+Function-specifier 				-> Decl-specifier
+"friend" 					-> Decl-specifier
+"typedef" GNU-typeof-extension?			-> Decl-specifier
+"constexpr" 					-> Decl-specifier
+%%Alignment-specifier 				-> Decl-specifier  %% DROPPED IN C++11?
+
+Decl-specifier Attribute-specifier-seq? 	-> Decl-specifier-seq
+GNU-attribute? (Decl-specifier GNU-attribute?)+ -> Decl-specifier-seq
+
+"register" 					-> Storage-class-specifier
+"static" GNU-typeof-extension?			-> Storage-class-specifier
+"thread_local"					-> Storage-class-specifier
+"extern"					-> Storage-class-specifier
+"mutable"					-> Storage-class-specifier
+
+"inline"					-> Function-specifier
+"virtual"					-> Function-specifier
+"explicit"					-> Function-specifier
+
+Trailing-type-specifier 			-> Type-specifier
+Class-specifier					-> Type-specifier
+Enum-specifier					-> Type-specifier
+
+Simple-type-specifier GNU-attribute?		-> Trailing-type-specifier
+Elaborated-type-specifier			-> Trailing-type-specifier
+Typename-specifier				-> Trailing-type-specifier
+Cv-qualifier					-> Trailing-type-specifier
+
+Type-specifier Attribute-specifier-seq?		-> Type-specifier-seq
+Type-specifier Type-specifier-seq		-> Type-specifier-seq
+
+Trailing-type-specifier Attribute-specifier-seq? 	-> Trailing-type-specifier-seq
+Trailing-type-specifier Trailing-type-specifier-seq	-> Trailing-type-specifier-seq
+
+Nested-name-specifier? Type-name			-> Simple-type-specifier
+Nested-name-specifier "template" Simple-template-id 	-> Simple-type-specifier
+"char" 							-> Simple-type-specifier
+"char16_t"						-> Simple-type-specifier
+"char32_t"						-> Simple-type-specifier
+"wchar_t"						-> Simple-type-specifier
+"bool"							-> Simple-type-specifier
+"short"							-> Simple-type-specifier
+"int"							-> Simple-type-specifier
+"long"							-> Simple-type-specifier
+"signed"						-> Simple-type-specifier
+"unsigned"						-> Simple-type-specifier
+"float"							-> Simple-type-specifier
+"double"						-> Simple-type-specifier
+"void"							-> Simple-type-specifier
+"auto"							-> Simple-type-specifier
+Decltype-specifier					-> Simple-type-specifier
+
+Class-name 						-> Type-name
+Enum-name						-> Type-name
+Typedef-name						-> Type-name
+Simple-template-id					-> Type-name
+
+"decltype" "(" Expression ")"				-> Decltype-specifier
+"decltype" "(" "auto" ")"				-> Decltype-specifier
+
+Class-key Attribute-specifier-seq? Nested-name-specifier? Identifier 	-> Elaborated-type-specifier
+Class-key Nested-name-specifier? "template"? Simple-template-id 	-> Elaborated-type-specifier
+"enum" Nested-name-specifier? Identifier				-> Elaborated-type-specifier
+
+%% Identifier						-> Enum-name  %% used twice in the C++11 standard grammar (see above)
+
+Enum-head "{" Enumerator-list? "}"			-> Enum-specifier
+Enum-head "{" Enumerator-list "," "}"			-> Enum-specifier
+
+Enum-key Attribute-specifier-seq? Identifier? Enum-base? 		-> Enum-head
+Enum-key Attribute-specifier-seq? Nested-name-specifier Identifier	-> Enum-head
+Enum-base?								-> Enum-head
+
+Enum-key Attribute-specifier-seq? Identifier Enum-base? ";" -> Opaque-enum-declaration
+
+
+"enum" 							-> Enum-key
+"enum" "class" 						-> Enum-key
+"enum" "struct"						-> Enum-key
+
+":" Type-specifier-seq					-> Enum-base
+
+Enumerator-definition					-> Enumerator-list
+Enumerator-list "," Enumerator-definition		-> Enumerator-list
+
+Enumerator						-> Enumerator-definition
+Enumerator "=" Constant-expression			-> Enumerator-definition
+
+Identifier 						-> Enumerator
+
+%% Original-namespace-name				-> Namespace-name  %% used twice in the C++11 standard grammar (see above)
+%% Namespace-alias					-> Namespace-name  %% used twice in the C++11 standard grammar (see above)
+
+%% Identifier 						-> Original-namespace-name  %% used twice in the C++11 standard grammar (see above)
+
+Named-namespace-definition				-> Namespace-definition
+Unnamed-namespace-definition				-> Namespace-definition
+
+Original-namespace-definition				-> Named-namespace-definition
+Extension-namespace-definition				-> Named-namespace-definition
+
+"inline"? "namespace" Identifier GNU-attribute? "{" Namespace-body "}" -> Original-namespace-definition
+
+"inline"? "namespace" Original-namespace-name "{" Namespace-body "}" -> Extension-namespace-definition
+
+"inline"? "namespace" "{" Namespace-body "}" 		-> Unnamed-namespace-definition
+
+Declaration-seq? 					-> Namespace-body
+
+%%Identifier 						-> Namespace-alias  %% used twice in the C++11 standard grammar (see above)
+
+"namespace" Identifier "=" Qualified-namespace-specifier ";" 	-> Namespace-alias-definition
+
+Nested-name-specifier? Namespace-name 				-> Qualified-namespace-specifier
+
+"using" "typename"? Nested-name-specifier Unqualified-id ";" 	-> Using-declaration
+"using" "::" Unqualified-id ";" -> Using-declaration
+
+Attribute-specifier-seq? "using" "namespace" Nested-name-specifier? Namespace-name ";" -> Using-directive
+
+%%"asm" "(" String-literal ")" ";" 			-> Asm-definition %% STD C++11
+GNU-asm-definition ";" 					-> Asm-definition %% GNU-extended asm
+("asm"|"__asm__") ("volatile"|"__volatile__")? "(" GNU-asm-extension ")" -> GNU-asm-definition
+
+
+"extern" String-literal GNU-typeof-extension? "{" Declaration-seq? "}"	-> Linkage-specification
+"extern" String-literal GNU-typeof-extension? Declaration		-> Linkage-specification
+
+Attribute-specifier-seq? Attribute-specifier		-> Attribute-specifier-seq
+
+"[" "[" Attribute-list "]" "]"				-> Attribute-specifier
+Alignment-specifier					-> Attribute-specifier
+
+"alignas" "(" Type-id "..."? ")" 			-> Alignment-specifier
+"alignas" "(" Assignment-expression ")" 		-> Alignment-specifier
+
+Attribute? 						-> Attribute-list
+Attribute-list "," Attribute? 				-> Attribute-list
+Attribute "..."						-> Attribute-list
+Attribute-list "," Attribute "..."			-> Attribute-list
+		
+Attribute-token Attribute-argument-clause?		-> Attribute
+
+Identifier						-> Attribute-token
+Attribute-scoped-token					-> Attribute-token
+
+Attribute-namespace "::" Identifier			-> Attribute-scoped-token
+
+Identifier						-> Attribute-namespace
+
+"(" Balanced-token-seq ")" 				-> Attribute-argument-clause
+
+Balanced-token? 					-> Balanced-token-seq
+Balanced-token-seq Balanced-token			-> Balanced-token-seq
+
+
+"(" Balanced-token-seq ")" 				-> Balanced-token
+"[" Balanced-token-seq "]" 				-> Balanced-token
+"{" Balanced-token-seq "}" 				-> Balanced-token
+%% or ( any token other than a parenthesis, a bracket, or a brace )
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.7 Declarators [gram.decl]                                                                        %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Init-declarator								-> Init-declarator-list
+Init-declarator-list "," Init-declarator 				-> Init-declarator-list
+
+Declarator GNU-attribute-list? GNU-asm-definition? Initializer?			-> Init-declarator
+
+Ptr-declarator								-> Declarator
+Noptr-declarator Parameters-and-qualifiers Trailing-return-type 	-> Declarator
+
+Noptr-declarator							-> Ptr-declarator
+Ptr-operator GNU-restrict? Ptr-declarator				-> Ptr-declarator
+
+GNU-attribute? Declarator-id Attribute-specifier-seq?			-> Noptr-declarator
+Noptr-declarator Parameters-and-qualifiers				-> Noptr-declarator
+Noptr-declarator "[" Expression? "]" Attribute-specifier-seq? 	        -> Noptr-declarator
+"(" Ptr-declarator ")"							-> Noptr-declarator
+
+"(" Parameter-declaration-clause ")" Cv-qualifier-seq? 			-> Parameters-and-qualifiers
+Ref-qualifier? Exception-specification?	Attribute-specifier-seq?	-> Parameters-and-qualifiers
+
+
+"->" Trailing-type-specifier-seq Abstract-declarator? 			-> Trailing-return-type
+
+"*" Attribute-specifier-seq? Cv-qualifier-seq?				-> Ptr-operator
+"&" Attribute-specifier-seq?						-> Ptr-operator
+"&&"  Attribute-specifier-seq?						-> Ptr-operator
+Nested-name-specifier "*" Attribute-specifier-seq? Cv-qualifier-seq? 	-> Ptr-operator
+
+Cv-qualifier Cv-qualifier-seq? 		-> Cv-qualifier-seq
+
+"const"					-> Cv-qualifier
+"__const"                               -> Cv-qualifier %% GNU-extension
+"volatile"				-> Cv-qualifier
+
+"&"					-> Ref-qualifier
+"&&"					-> Ref-qualifier
+
+"..."? Id-expression			-> Declarator-id
+Nested-name-specifier? Class-name	-> Declarator-id
+
+Type-specifier-seq Abstract-declarator? -> Type-id
+
+Ptr-abstract-declarator 							-> Abstract-declarator
+Noptr-abstract-declarator? Parameters-and-qualifiers Trailing-return-type 	-> Abstract-declarator
+Abstract-pack-declarator							-> Abstract-declarator
+
+Noptr-abstract-declarator 							-> Ptr-abstract-declarator
+Ptr-operator Ptr-abstract-declarator? 						-> Ptr-abstract-declarator
+
+Noptr-abstract-declarator? Parameters-and-qualifiers				-> Noptr-abstract-declarator
+Noptr-abstract-declarator? "[" Constant-expression? "]" Attribute-specifier-seq?-> Noptr-abstract-declarator
+"(" Ptr-abstract-declarator ")" 						-> Noptr-abstract-declarator
+
+Noptr-abstract-pack-declarator 							-> Abstract-pack-declarator
+Ptr-operator Abstract-pack-declarator?	 					-> Abstract-pack-declarator
+
+Noptr-abstract-pack-declarator Parameters-and-qualifiers				-> Noptr-abstract-pack-declarator
+Noptr-abstract-pack-declarator "[" Constant-expression? "]" Attribute-specifier-seq? 	-> Noptr-abstract-pack-declarator
+"..."											-> Noptr-abstract-pack-declarator
+
+Parameter-declaration-list? "..."?						-> Parameter-declaration-clause
+Parameter-declaration-list "," "..."						-> Parameter-declaration-clause
+
+Parameter-declaration GNU-attribute?						-> Parameter-declaration-list
+Parameter-declaration-list "," Parameter-declaration				-> Parameter-declaration-list
+
+Decl-specifier-seq Declarator GNU-attribute? 					-> Parameter-declaration
+Decl-specifier-seq Declarator "=" Assignment-expression 			-> Parameter-declaration
+Decl-specifier-seq Abstract-declarator?						-> Parameter-declaration
+Decl-specifier-seq Abstract-declarator? "=" Assignment-expression		-> Parameter-declaration
+
+
+Attribute-specifier-seq? Decl-specifier-seq? Declarator Virt-specifier-seq? Function-body -> Function-definition
+
+Ctor-initializer? Compound-statement 		-> Function-body
+Function-try-block 				-> Function-body
+"=" "default" ";" 				-> Function-body
+"=" "delete" ";" 				-> Function-body
+
+Brace-or-equal-initializer			-> Initializer
+"(" Expression-list ")"				-> Initializer
+
+"=" Initializer-clause				-> Brace-or-equal-initializer
+Braced-init-list 				-> Brace-or-equal-initializer
+
+Assignment-expression 				-> Initializer-clause
+Braced-init-list 				-> Initializer-clause
+
+Initializer-clause "..."? 			-> Initializer-list
+Initializer-list "," Initializer-clause "..."? 	-> Initializer-list
+
+"{" Initializer-list ","? "}" 			-> Braced-init-list
+"{" "}" 					-> Braced-init-list
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  A.8 Classes [gram.class]                                                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+Identifier					-> Class-name
+Simple-template-id				-> Class-name
+
+Class-head "{" Member-specification? "}"	-> Class-specifier
+
+Class-key Attribute-specifier-seq? Class-head-name Class-virt-specifier? Base-clause? -> Class-head
+Class-key Attribute-specifier-seq? Base-clause? -> Class-head
+
+
+Nested-name-specifier? Class-name 	-> Class-head-name
+
+"final" 				-> Class-virt-specifier
+
+"class" 				-> Class-key
+"struct"				-> Class-key
+"union"					-> Class-key
+
+Member-declaration Member-specification? -> Member-specification
+Access-specifier ":" Member-specification? -> Member-specification
+
+Member-specification? 			-> Access-specifier
+
+Attribute-specifier-seq?  Decl-specifier-seq? Member-declarator-list? ";" 	-> Member-declaration
+Function-definition ";"? 							-> Member-declaration
+Using-declaration 								-> Member-declaration
+Static-assert-declaration 							-> Member-declaration
+Template-declaration 								-> Member-declaration
+Alias-declaration 								-> Member-declaration
+
+Member-declarator 						-> Member-declarator-list
+Member-declarator-list "," Member-declarator 			-> Member-declarator-list
+
+Declarator Virt-specifier-seq? Pure-specifier? 			-> Member-declarator
+Declarator Brace-or-equal-initializer? 				-> Member-declarator
+Identifier? Attribute-specifier-seq? ":" Constant-expression 	-> Member-declarator
+
+Virt-specifier							-> Virt-specifier-seq
+Virt-specifier-seq Virt-specifier				-> Virt-specifier-seq
+
+"override"							-> Virt-specifier
+"final"								-> Virt-specifier
+
+"=" "0"								-> Pure-specifier
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  A.9 Derived classes [gram.derived]                                                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+":" Base-specifier-list -> Base-clause
+
+Base-specifier "..."? -> Base-specifier-list
+Base-specifier-list "," Base-specifier "..."? -> Base-specifier-list
+
+Attribute-specifier-seq? Base-type-specifier -> Base-specifier
+Attribute-specifier-seq? "virtual" Access-specifier? Base-type-specifier -> Base-specifier
+Attribute-specifier-seq? Access-specifier "virtual"? Base-type-specifier -> Base-specifier
+
+Nested-name-specifier? Class-name -> Class-or-decltype
+Decltype-specifier -> Class-or-decltype
+
+Class-or-decltype -> Base-type-specifier
+
+"private" 	-> Access-specifier
+"protected" 	-> Access-specifier
+"public"	-> Access-specifier
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%  A.10 Special member functions [gram.special]                                                      %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+"operator" Conversion-type-id			-> Conversion-function-id
+
+Type-specifier-seq Conversion-declarator?	-> Conversion-type-id
+
+Ptr-operator Conversion-declarator?		-> Conversion-declarator
+
+":" Mem-initializer-list 			-> Ctor-initializer
+
+Mem-initializer "..."? 				-> Mem-initializer-list
+Mem-initializer "," Mem-initializer-list "..."? -> Mem-initializer-list
+
+Mem-initializer-id "(" Expression-list? ")" 	-> Mem-initializer
+Mem-initializer-id Braced-init-list		-> Mem-initializer
+
+Class-or-decltype 				-> Mem-initializer-id
+Identifier 					-> Mem-initializer-id
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.11 Overloading [gram.over]                                                                       %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+"operator" Operator -> Operator-function-id
+
+"new" -> Operator
+"delete" -> Operator
+"new" "[" "]" -> Operator
+"delete" "[" "]" -> Operator
+"+" -> Operator
+"-" -> Operator
+"*" -> Operator
+"/" -> Operator
+"%" -> Operator
+"^" -> Operator
+"&" -> Operator
+"|" -> Operator
+"~" -> Operator
+"!" -> Operator
+"=" -> Operator
+"<" -> Operator
+">" -> Operator
+"+=" -> Operator
+"-=" -> Operator
+"*=" -> Operator
+"/=" -> Operator
+"%=" -> Operator
+"^=" -> Operator
+"&=" -> Operator
+"|=" -> Operator
+"<<" -> Operator
+">>" -> Operator
+">>=" -> Operator
+"<<=" -> Operator
+"==" -> Operator
+"!=" -> Operator
+"<=" -> Operator
+">=" -> Operator
+"&&" -> Operator
+"||" -> Operator
+"++" -> Operator
+"--" -> Operator
+"," -> Operator
+"->*" -> Operator
+"->" -> Operator
+"()" -> Operator
+"[]" -> Operator
+
+"operator" String-literal Identifier -> Literal-operator-id
+%%"operator" User-defined-string-literal
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.12 Templates [gram.temp]                                                                         %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+"template" "<" Template-parameter-list ">" Declaration 	-> Template-declaration
+
+Template-parameter 					-> Template-parameter-list
+Template-parameter-list "," Template-parameter 		-> Template-parameter-list
+
+Type-parameter 						-> Template-parameter
+Parameter-declaration 					-> Template-parameter
+
+"class" "..."? Identifier? 				-> Type-parameter
+"class" Identifier? "=" Type-id 			-> Type-parameter
+"typename" "..."? Identifier? 				-> Type-parameter
+"typename" Identifier? "=" Type-id 			-> Type-parameter
+"template" "<" Template-parameter-list ">" "class" "..."? Identifier? 		 -> Type-parameter
+"template" "<" Template-parameter-list ">" "class" Identifier? "=" Id-expression -> Type-parameter
+
+GNU-elaborated-template? Template-name "<" Template-argument-list? ">" 		-> Simple-template-id
+
+Simple-template-id -> Template-id
+Operator-function-id "<" Template-argument-list? ">" 	-> Template-id
+Literal-operator-id "<" Template-argument-list? ">" 	-> Template-id
+
+Identifier 						-> Template-name
+
+Template-argument "..."? 				-> Template-argument-list
+Template-argument-list "," Template-argument "..."? 	-> Template-argument-list
+
+Constant-expression 					-> Template-argument
+Type-id 						-> Template-argument
+Id-expression 						-> Template-argument
+
+"typename" Nested-name-specifier Identifier 			-> Typename-specifier
+"typename" Nested-name-specifier "template"? Simple-template-id -> Typename-specifier
+
+"extern"? "template" Declaration -> Explicit-instantiation
+
+"template" "<" ">" Declaration -> Explicit-specialization
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A.13 Exception handling [gram.except]                                                              %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+"try" Compound-statement Handler-seq					-> Try-block
+
+"try" Ctor-initializer? Compound-statement Handler-seq			-> Function-try-block
+
+Handler Handler-seq?							-> Handler-seq
+
+"catch" "(" Exception-declaration ")" Compound-statement		-> Handler
+
+Attribute-specifier-seq? Type-specifier-seq Declarator			-> Exception-declaration
+Attribute-specifier-seq? Type-specifier-seq Abstract-declarator? 	-> Exception-declaration
+"..." -> Exception-declaration
+
+"throw" GNU-attribute? Assignment-expression? 	-> Throw-expression
+
+Dynamic-exception-specification			-> Exception-specification 
+Noexcept-specification 				-> Exception-specification 
+
+"throw" "(" Type-id-list? ")" GNU-attribute? 	-> Dynamic-exception-specification
+
+Type-id "..."? 					-> Type-id-list
+Type-id-list "," Type-id "..."? 		-> Type-id-list
+
+"noexcept" "(" Constant-expression ")"		-> Noexcept-specification
+"noexcept" 					-> Noexcept-specification
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% GNU extensions                                                                                     %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+"__restrict__" 						-> GNU-restrict 
+"__restrict" 						-> GNU-restrict 
+
+GNU-attribute GNU-attribute*				-> GNU-attribute-list  %% required for C header files
+
+"__attribute__" "(" "(" GNU-attribute-exp-list ")" ")" 	-> GNU-attribute
+"__attribute__" "(" "(" ")" ")"				-> GNU-attribute
+"__attribute__" "(" "(" "__unused__" ")" ")"		-> GNU-attribute
+
+GNU-attribute-exp ("," GNU-attribute-exp)* 		-> GNU-attribute-exp-list
+
+Expression 						-> GNU-attribute-exp  %% for arithmetic expressions (can be refined)
+Single-string-literal					-> GNU-attribute-exp
+"__visibility__" "(" GNU-attribute-exp-list ")" 	-> GNU-attribute-exp
+GNU-attribute-exp "(" GNU-attribute-exp-list ")" 	-> GNU-attribute-exp
+
+"__typeof__" "(" Expression ")" 			-> GNU-typeof-extension
+"__typeof" "(" Expression ")" 				-> GNU-typeof-extension
+
+"__extension__" "(" Type-id ")" 			-> GNU-extension
+"__extension__" "(" Expression ")"		 	-> GNU-extension
+
+"(" "__extension__" "(" Compound-statement ")" ")" ";" 	-> GNU-extension  %% Declaration with GNU StatementExpression
+
+("__builtin_va_start"|"__builtin_va_arg") "(" GNU-builtin-arg-list? ")" -> GNU-builtin-function-call-expression
+
+GNU-builtin-arg 					-> GNU-builtin-arg-list
+(GNU-builtin-arg-list "," GNU-builtin-arg)*		-> GNU-builtin-arg-list
+
+Parameter-declaration 					-> GNU-builtin-arg
+Expression 						-> GNU-builtin-arg
+
+"__real__" 						-> GNU-realimag-operator
+"__imag__" 						-> GNU-realimag-operator
+
+((String-literal | GNU-asm-def|"::"|":") ","?)+	        -> GNU-asm-extension
+"(" Expression ")" 					-> GNU-asm-def
+"[" Identifier "]"					-> GNU-asm-def
+
+Nested-name-specifier "template" 			-> GNU-elaborated-template
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PRAGMA                                                                                             %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+lexical syntax
+"#pragma" ~[\n]* [\n] -> Pragma-line

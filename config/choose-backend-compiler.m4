@@ -205,6 +205,26 @@ dnl build using ROSE)
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_LATER_4_4, [test "x$gfortran_version_later_4_4" = "xyes"])
 
+# DQ (8/15/2014): GNU GCC 4.4 starts more complex Microsoft C++ support.
+  gcc_version_later_4_4=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "4"; then
+        echo "Note: we have identified version 4.4+ of gcc!"
+        gcc_version_later_4_4=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_4, [test "x$gcc_version_later_4_4" = "xyes"])
+
+# DQ (8/15/2014): Added for more complete support of GNU GCC.
+  gcc_version_later_4_5=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "5"; then
+        echo "Note: we have identified version 4.5+ of gcc!"
+        gcc_version_later_4_5=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_5, [test "x$gcc_version_later_4_5" = "xyes"])
+
 # Phlin (8/22/2012): GNU GCC 4.6 starts AVX support.
   gcc_version_later_4_6=no
   if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
@@ -214,6 +234,36 @@ dnl build using ROSE)
      fi
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_6, [test "x$gcc_version_later_4_6" = "xyes"])
+
+# DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
+  gcc_version_later_4_8=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
+        echo "Note: we have identified version 4.8+ of gcc!"
+        gcc_version_later_4_8=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_8, [test "x$gcc_version_later_4_8" = "xyes"])
+
+# DQ (8/15/2014): Added for more complete support of GNU GCC.
+  gcc_version_later_4_7=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "7"; then
+        echo "Note: we have identified version 4.7+ of gcc!"
+        gcc_version_later_4_7=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_7, [test "x$gcc_version_later_4_7" = "xyes"])
+
+# DQ (7/28/2014): GNU GCC 4.9 adds more C11 support (we need this to control what tests are run).
+  gcc_version_later_4_9=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "9"; then
+        echo "Note: we have identified version 4.9+ of gcc!"
+        gcc_version_later_4_9=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_9, [test "x$gcc_version_later_4_9" = "xyes"])
 
 # echo "Exiting after test of backend version number support ..."
 # exit 1
@@ -340,6 +390,122 @@ if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
 else
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
 fi
+
+
+# AC_LANG_PUSH(C)
+echo "build input file for backend compiler"
+echo 'int main(int argc, char** argv){ asm("nop");}' > conftest_asm.c
+cat conftest_asm.c
+
+echo "run backend compiler on input file: $BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c"
+# Handle the 3 cases of true false and cross-compilation
+# AC_TRY_RUN(`$BACKEND_C_COMPILER -c conftest_asm.c`,asm_ok=yes,asm_ok=no,asm_ok=no)
+# AC_TRY_RUN(conftest_asm.c,asm_ok=yes,asm_ok=no,asm_ok=no)
+# ac_compiler_gnu="$BACKEND_C_COMPILER -Werror=implicit-function-declaration"
+# AC_TRY_RUN([int main(){ __asm__("nop");}],asm_ok=yes,asm_ok=no,asm_ok=no)
+# AC_TRY_COMPILE([],[asm("nop");],asm_ok=yes,asm_ok=no)
+# asm_ok=eval($BACKEND_C_COMPILER -Werror=implicit-function-declaration -c conftest_asm.c)
+# if test `$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c`; then
+$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c
+status=$?
+echo "status = $status"
+if test "x$status" = "x0"; then
+# zero exit code
+echo "false case: set asm_ok=yes"
+asm_ok=yes
+AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_ASM],[1],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+else
+# non-zero exit code
+echo "true case: set asm_ok=no"
+asm_ok=no
+fi
+
+AC_MSG_CHECKING(does the backend C compiler ($BACKEND_C_COMPILER) support asm statements)
+AC_MSG_RESULT($asm_ok)
+# AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_SUPPORTS_ASM],test "x$asm_ok" = "xyes",[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+# AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_ASM],[test "x$asm_ok" = "xyes"],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+# AC_LANG_POP(C)
+
+# echo "exiting as a test of asm!"
+# exit 1
+
+# AC_LANG_PUSH(C)
+echo "build input file for backend compiler"
+echo 'int main(int argc, char** argv){ __asm__("nop");}' > conftest_undescore_asm.c
+cat conftest_undescore_asm.c
+
+echo "run backend compiler on input file: $BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_undescore_asm.c"
+# Handle the 3 cases of true false and cross-compilation
+# AC_TRY_RUN(`$BACKEND_C_COMPILER -c conftest_undescore_asm.c`,underscore_asm_ok=yes,underscore_asm_ok=no,underscore_asm_ok=no)
+# ac_compiler_gnu="$BACKEND_C_COMPILER -Werror=implicit-function-declaration"
+# AC_TRY_COMPILE([],[int main(int,char**){ __asm__("nop");}],underscore_asm_ok=yes,underscore_asm_ok=no)
+# AC_TRY_COMPILE([],[__asm__("nop");],underscore_asm_ok=yes,underscore_asm_ok=no)
+# if test `$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_undescore_asm.c`; then
+$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_undescore_asm.c
+status=$?
+echo "status = $status"
+if test "x$status" = "x0"; then
+# zero exit code
+echo "false case: set underscore_asm_ok=yes"
+underscore_asm_ok=yes
+AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM],[1],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+else
+# non-zero exit code
+echo "true case: set underscore_asm_ok=no"
+underscore_asm_ok=no
+fi
+
+AC_MSG_CHECKING(does the backend C compiler ($BACKEND_C_COMPILER) support __asm__ statements)
+AC_MSG_RESULT($underscore_asm_ok)
+# AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM],test "x$underscore_asm_ok" = "xyes",[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+# AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM],[test "x$underscore_asm_ok" = "xyes"],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+# AC_LANG_POP(C)
+
+
+
+# Also need to test: asm(".symver ff_av_gettime,av_gettime@LIBAVFORMAT_54") which fails better when used with 4.2.4 compiler.
+# This test fails for both 4.4 and 4.2 compilers where as the tests above pass for 4.2 and fails for 4.4 compilers.
+# The error message is also different for this example using a longer string than thge example above.
+# AC_LANG_PUSH(C)
+echo "build input file for backend compiler"
+echo 'asm(".symver ff_av_gettime,av_gettime@LIBAVFORMAT_54");' > conftest_long_string_asm.c
+cat conftest_long_string_asm.c
+
+echo "run backend compiler on input file: $BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_long_string_asm.c"
+# Handle the 3 cases of true false and cross-compilation
+# AC_TRY_RUN(`$BACKEND_C_COMPILER -c conftest_asm.c`,asm_ok=yes,asm_ok=no,asm_ok=no)
+# AC_TRY_RUN(conftest_asm.c,asm_ok=yes,asm_ok=no,asm_ok=no)
+# ac_compiler_gnu="$BACKEND_C_COMPILER -Werror=implicit-function-declaration"
+# AC_TRY_RUN([int main(){ __asm__("nop");}],asm_ok=yes,asm_ok=no,asm_ok=no)
+# AC_TRY_COMPILE([],[asm("nop");],asm_ok=yes,asm_ok=no)
+# asm_ok=eval($BACKEND_C_COMPILER -Werror=implicit-function-declaration -c conftest_asm.c)
+# if test `$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c`; then
+$BACKEND_C_COMPILER -std=c99 -c conftest_long_string_asm.c
+status=$?
+echo "status = $status"
+if test "x$status" = "x0"; then
+# zero exit code
+echo "false case: set long_string_asm_ok=yes"
+long_string_asm_ok=yes
+AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM],[1],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+else
+# non-zero exit code
+echo "true case: set long_string_asm_ok=no"
+long_string_asm_ok=no
+fi
+
+AC_MSG_CHECKING(does the backend C compiler ($BACKEND_C_COMPILER) support asm statements)
+AC_MSG_RESULT($long_string_asm_ok)
+# AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_SUPPORTS_ASM],test "x$asm_ok" = "xyes",[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+# AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_ASM],[test "x$asm_ok" = "xyes"],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
+# AC_LANG_POP(C)
+
+# echo "exiting as a test of asm!"
+# exit 1
+
+
+# echo "exiting as a test of __asm__!"
+# exit 1
 
 ###################################################################################################
 ])

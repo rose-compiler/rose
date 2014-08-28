@@ -43,17 +43,8 @@ int runECJ (int argc, char **argv);
 // #define OVERWRITE_LD_LIBRARY_PATH 1
 #define OVERWRITE_LD_LIBRARY_PATH 1
 
-// DQ (8/15/2011): Moved to openJavaParser_main.C to
-// separate the work on Java from the rest of ROSE and support the ROSE
-// configuration language only options.
-// DQ (10/21/2010): If Fortran is being supported then there will
-// be a definition of this pointer there.  Note that we currently
-// use only one pointer so that we can simplify how the JVM support 
-// is used for either Fortran or Java language support.
-#ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-SgSourceFile *OpenFortranParser_globalFilePointer = NULL;
-#endif
-
+// TODO: Remove this !!!
+/*
 // DQ (8/15/2011): These functions were moved to openJavaParser_main.C to
 // separate the work on Java from the rest of ROSE and support the ROSE
 // configuration language only options.
@@ -71,7 +62,7 @@ SgScopeStatement *getTopOfJavaScopeStack() {
 
     return topOfStack;
 }
-
+*/
 
 
 /* DQ (8/16/2007): This is what we want ROSE to call so that we can run the Java based OpenJavaParser from C++. */
@@ -90,7 +81,15 @@ int openJavaParser_main(int argc, char **argv) {
 
     /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
     // string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
+    #ifdef USE_CMAKE
+        #ifdef _MSC_VER
+        string new_value = findRoseSupportPathFromBuild("bin", "bin");
+        #else
+        string new_value = findRoseSupportPathFromBuild("lib", "lib");
+        #endif
+    #else
     string new_value = findRoseSupportPathFromBuild("src/frontend/ECJ_ROSE_Connection/.libs", "lib");
+    #endif
 
     // This does not help or hurt.
     // new_value += ":" + findRoseSupportPathFromBuild("src/3rdPartyLibraries/java-parser", "lib");
@@ -101,7 +100,13 @@ int openJavaParser_main(int argc, char **argv) {
 
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
+    #ifdef _MSC_VER
+    new_value += ";";
+    new_value += old_value;
+    int env_status = _putenv_s(ROSE_SHLIBPATH_VAR, new_value.c_str());
+    #else
     int env_status = setenv(ROSE_SHLIBPATH_VAR,new_value.c_str(),overwrite);
+    #endif
     assert(env_status == 0);
 #endif
 
@@ -133,7 +138,11 @@ int openJavaParser_main(int argc, char **argv) {
     // DQ (9/9/2011): Note that old_value can be NULL and if so then we don't want it to be dereferenced.
     // env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
     if (old_value != NULL)
+        #ifdef _MSC_VER
+        env_status = _putenv_s(ROSE_SHLIBPATH_VAR,old_value);
+        #else
         env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+        #endif
 
     assert(env_status == 0);
 #endif
@@ -148,7 +157,7 @@ int runECJ (int argc, char **argv) {
     int retval= 0;
     /* start/find the Java VM with ofp method loaded,run ofp on the args */
     retval = jvm_ecj_processing(argc, argv);
-  
+
     return retval;
 }
 

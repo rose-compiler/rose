@@ -1,6 +1,9 @@
 #include "sage3basic.h"
 #include "Partitioner.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 
 //class IpdUnparsser: public AsmUnparser {
 //protected:
@@ -45,7 +48,7 @@ Partitioner::IPDParser::unparse(std::ostream &output, SgNode *ast)
                     const SgAsmIntegerValuePtrList &succs = blk->get_successors();
                     for (size_t i=0; i<succs.size(); ++i) {
                         SgAsmIntegerValueExpression *iv = succs[i];
-                        output <<"      " <<StringUtility::addrToString(iv->get_absolute_value())
+                        output <<"      " <<StringUtility::addrToString(iv->get_absoluteValue())
                                <<(i+1<succs.size()?",":"");
                         std::string label = iv->get_label();
                         if (!label.empty())
@@ -72,5 +75,9 @@ Partitioner::IPDParser::unparse(std::ostream &output, SgNode *ast)
         }
     };
 
-    T1(output).traverse(ast);
+    if (ast)
+        T1(output).traverse(ast);
 }
+
+} // namespace
+} // namespace

@@ -6,6 +6,9 @@
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /* See header file for full documentation. */
 
 /* References:
@@ -21,15 +24,15 @@
 
 // These are macros to make them look like constants while they are really
 // function calls
-#define BYTET (SgAsmTypeByte::createType())
-#define WORDT (SgAsmTypeWord::createType())
-#define DWORDT (SgAsmTypeDoubleWord::createType())
-#define QWORDT (SgAsmTypeQuadWord::createType())
-#define FLOATT (SgAsmTypeSingleFloat::createType())
-#define DOUBLET (SgAsmTypeDoubleFloat::createType())
-#define V2DWORDT (SgAsmTypeVector::createType(2, DWORDT))
-#define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
-#define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
+#define BYTET (SageBuilderAsm::buildTypeU8())
+#define WORDT (SageBuilderAsm::buildTypeU16())
+#define DWORDT (SageBuilderAsm::buildTypeU32())
+#define QWORDT (SageBuilderAsm::buildTypeU64())
+#define FLOATT (SageBuilderAsm::buildIeee754Binary32())
+#define DOUBLET (SageBuilderAsm::buildIeee754Binary64())
+#define V2DWORDT (SageBuilderAsm::buildTypeVector(2, DWORDT))
+#define V2FLOATT (SageBuilderAsm::buildTypeVector(2, FLOATT))
+#define V2DOUBLET (SageBuilderAsm::buildTypeVector(2, DOUBLET))
 
 bool
 DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
@@ -43,8 +46,9 @@ DisassemblerPowerpc::init()
 {
     set_wordsize(4);
     set_alignment(4);
-    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
+    REG_IP = *get_registers()->lookup("iar");
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
@@ -65,7 +69,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, 
     /* Disassemble the instruction */
     startInstruction(start_va, c);
     SgAsmPowerpcInstruction *insn = disassemble(); /*throws an exception on error*/
-    ROSE_ASSERT(insn);
+    ASSERT_not_null(insn);
 
     /* Note successors if necessary */
     if (successors) {
@@ -112,10 +116,10 @@ DisassemblerPowerpc::fld() const {
 #define MAKE_INSN5(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4(Mne, Op1, Op2, Op3, Op4), (Op5)))
 #define MAKE_INSN5_RC(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4_RC(Mne, Op1, Op2, Op3, Op4), (Op5)))
 
-SgAsmQuadWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerPowerpc::makeBranchTarget ( uint64_t targetAddr ) const
 {
-    return SageBuilderAsm::makeQWordValue(targetAddr);
+    return SageBuilderAsm::buildValueU64(targetAddr);
 }
 
 SgAsmPowerpcInstruction *
@@ -124,7 +128,7 @@ DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std:
 {
     // Constructor: SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
     SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, mnemonic, kind);
-    ROSE_ASSERT (instruction);
+    ASSERT_not_null(instruction);
 
     if (mnemonic.size() >= 7 && mnemonic.substr(mnemonic.size() - 7) == "_record") {
         instruction->set_mnemonic(mnemonic.substr(0, mnemonic.size() - 7) + ".");
@@ -159,7 +163,7 @@ DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std:
  * register), but users should not assume that this is always the case. They can assume that unrelated registers (e.g., "r0"
  * and "r1") have descriptors that map to non-overlapping areas of the descriptor address space {major,minor,offset,size} while
  * related registers (e.g., "spr8" and "lr") map to overlapping areas of the descriptor address space. */
-SgAsmPowerpcRegisterReferenceExpression*
+SgAsmRegisterReferenceExpression*
 DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number,
                                   PowerpcConditionRegisterAccessGranularity cr_granularity) const
 {
@@ -239,17 +243,17 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             throw ExceptionPowerpc("not a real register", this);
         /* Don't add a "default" or else we won't get compiler warnings if a new class is defined. */
     }
-    ROSE_ASSERT(!name.empty());
+    ASSERT_forbid(name.empty());
 
     /* Obtain a register descriptor from the dictionary */
-    ROSE_ASSERT(get_registers()!=NULL);
+    ASSERT_not_null(get_registers());
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     if (!rdesc)
         throw ExceptionPowerpc("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name(), this);
     
     /* Construct the return value */
-    SgAsmPowerpcRegisterReferenceExpression *rre = new SgAsmPowerpcRegisterReferenceExpression(*rdesc);
-    ROSE_ASSERT(rre);
+    SgAsmRegisterReferenceExpression *rre = new SgAsmDirectRegisterExpression(*rdesc);
+    ASSERT_not_null(rre);
     return rre;
 }
 
@@ -285,7 +289,7 @@ DisassemblerPowerpc::disassemble()
                     instruction = decode_X_formInstruction_00();
                   }
 
-               ROSE_ASSERT(instruction != NULL);
+               ASSERT_not_null(instruction);
                break;
              }
 
@@ -392,7 +396,7 @@ DisassemblerPowerpc::disassemble()
                     instruction = decode_X_formInstruction_3F(); // Also includes XFL form
                   }
 
-               ROSE_ASSERT(instruction != NULL);
+               ASSERT_not_null(instruction);
                break;
              }
 
@@ -400,12 +404,11 @@ DisassemblerPowerpc::disassemble()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Primary opcode not handled yet: primaryOpcode = %d \n", primaryOpcode);
-               throw ExceptionPowerpc("illegal primary opcode", this, 26);
+               throw ExceptionPowerpc("illegal primary opcode: "+StringUtility::addrToString(primaryOpcode), this, 26);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
    
@@ -426,7 +429,7 @@ DisassemblerPowerpc::decode_I_formInstruction()
                     targetBranchAddress += ip;
                   }
 
-               SgAsmQuadWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+               SgAsmIntegerValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
 
                if (AA() == 0)
                   {
@@ -461,12 +464,11 @@ DisassemblerPowerpc::decode_I_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: I-Form primaryOpcode = %d (illegal instruction)\n", primaryOpcode);
-               throw ExceptionPowerpc("invaild I-Form primary opcode", this);
+               throw ExceptionPowerpc("invaild I-Form primary opcode: " + StringUtility::addrToString(primaryOpcode), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -493,7 +495,7 @@ DisassemblerPowerpc::decode_B_formInstruction()
                     targetBranchAddress += ip;
                   }
 
-               SgAsmQuadWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+               SgAsmIntegerValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
 
                if (LK() == 0)
                   {
@@ -525,12 +527,11 @@ DisassemblerPowerpc::decode_B_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: B-Form primaryOpcode = %d not handled!\n", primaryOpcode);
-               throw ExceptionPowerpc("invalid B-Form primary opcode", this);
+               throw ExceptionPowerpc("invalid B-Form primary opcode: " + StringUtility::addrToString(primaryOpcode), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -539,9 +540,9 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 {
      SgAsmPowerpcInstruction* instruction = NULL;
 
-  // The primaryOpcode 
+  // The primaryOpcode
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT(primaryOpcode == 0x11);
+     ASSERT_always_require(primaryOpcode == 0x11);
 
   // Get bit 30, 1 bit as the reserved flag
      uint8_t constantOneOpcode = (insn >> 1) & 0x1;
@@ -554,7 +555,7 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 
      instruction = MAKE_INSN1(sc, LEV());
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -569,9 +570,9 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
 {
      SgAsmPowerpcInstruction* instruction = NULL;
 
-  // The primaryOpcode 
+  // The primaryOpcode
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT (primaryOpcode == 0x1F);
+     ASSERT_always_require(primaryOpcode == 0x1F);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -743,7 +744,6 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
 
                  // See note on page 124 of User Instruction Set Architecture version 2.02
                     throw ExceptionPowerpc("mtocrf is an old form of the mtcrf instruction", this);
-                    ROSE_ASSERT(false);
                   }
                break;
              }
@@ -752,12 +752,11 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 1F xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 1F xoOpcode not handled", this, 1);
+               throw ExceptionPowerpc("X-Form 1F xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), this, 1);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -768,7 +767,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT (primaryOpcode == 0x3F);
+     ASSERT_always_require(primaryOpcode == 0x3F);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -797,12 +796,11 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 3F xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 3F xoOpcode not handled", this, 1);
+               throw ExceptionPowerpc("X-Form 3F xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), this, 1);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -837,12 +835,11 @@ DisassemblerPowerpc::decode_X_formInstruction_00()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 00 xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 00 xoOpcode not handled", this, 1);
+               throw ExceptionPowerpc("X-Form 00 xoOpcode not handled: " + StringUtility::addrToString(xoOpcode), this, 1);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -853,7 +850,7 @@ DisassemblerPowerpc::decode_XL_formInstruction()
 
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
-     ROSE_ASSERT(primaryOpcode == 0x13);
+     ASSERT_always_require(primaryOpcode == 0x13);
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -903,12 +900,11 @@ DisassemblerPowerpc::decode_XL_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: XL-Form xoOpcode = %d not handled!\n", xoOpcode);
-               throw ExceptionPowerpc("invalid XL-Form opcode", this);
+               throw ExceptionPowerpc("invalid XL-Form opcode: " + StringUtility::addrToString(xoOpcode), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -952,12 +948,11 @@ DisassemblerPowerpc::decode_A_formInstruction_00()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -986,12 +981,11 @@ DisassemblerPowerpc::decode_A_formInstruction_04()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -1017,12 +1011,11 @@ DisassemblerPowerpc::decode_A_formInstruction_3B()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -1055,12 +1048,11 @@ DisassemblerPowerpc::decode_A_formInstruction_3F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               throw ExceptionPowerpc("invalid A-Form opcode", this);
+               throw ExceptionPowerpc("invalid A-Form opcode: " + StringUtility::addrToString(int(fld<26, 30>())), this);
              }
         }
 
-     ROSE_ASSERT(instruction != NULL);
+     ASSERT_not_null(instruction);
      return instruction;
 }
 
@@ -1075,3 +1067,6 @@ DisassemblerPowerpc::decode_MDS_formInstruction()
 {
     throw ExceptionPowerpc("MDS-Form instructions not implemented yet", this);
 }
+
+} // namespace
+} // namespace

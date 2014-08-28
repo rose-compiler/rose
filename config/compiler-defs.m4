@@ -53,7 +53,13 @@ dnl predefined by a specific compiler
              ;;
 
   # Support for Intel icc as a backend for compiling ROSE generated code
-    icpc|icc)
+  # DQ (3/14/2014): Added support for mpi specific versions (suggested by Jeff).
+  # icpc|icc)
+    icpc|icc|mpiicpc|mpiicc)
+           # DQ (3/8/2014): Adding version number support for Intel compiler.
+             BACKEND_INTEL_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+             BACKEND_INTEL_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+             BACKEND_INTEL_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
 
              tmpFile="/tmp/tmpICCMacroExtraction`uname -n`$$.C"
              echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
@@ -67,12 +73,19 @@ dnl predefined by a specific compiler
                     tmp_macro="$tmp_macro, \"$macro_i\""
                     echo " tmp_macro  $tmp_macro"
                  done
+
+           # DQ (4/4/2014): Commented this out again, we need this to get the /usr/include/math.h to be included 
+           # by the #include_next directive in the Intel specific math.h, plus I think we support throw options better now.
+           # The problem is demonstrated in test2014_36.C where M_PI is not defined because the #include_next is not 
+           # processed to bring in the /usr/include/math.h file that is included using the #include_next directive.
+           # Note that ${tmp_macro} starts with a comma, so I have padded the start of the macroString with -D__ROSE_DUMMY_FIRST_MACRO__.
            # macroString=" -D__PURE_INTEL_C99_HEADERS__ ${tmp_macro} --preinclude rose_edg_macros_and_functions_required_for_icc.h "
            # DQ (1/9/2010): I put this back and commented out the problem directly in the UPC file: lock.upc directly.
            # DQ (1/9/2010): This causes an error in math.h with an inconstant use of __THROW with the declaration of "abs()".
            #   from math.h _LIBIMF_EXT _LIBIMF_INT   _LIBIMF_PUBAPI abs( _LIBIMF_INT __x );
            # macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
-             macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+           # macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+             macroString="{ \"-D__ROSE_DUMMY_FIRST_MACRO__\" ${tmp_macro}"
 
            # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code this was not required; and was simpler).
            # if test x$enable_new_edg_interface = xyes; then
@@ -154,7 +167,7 @@ dnl predefined by a specific compiler
 # This is now setup in a separate macro and can be specified on the command line
 # AC_DEFINE_UNQUOTED(CXX_COMPILER_NAME, "$CXX")
 
-# DQ (1/9/2010): Detec the type of compiler being used. This is used to add the
+# DQ (1/9/2010): Detect the type of compiler being used. This is used to add the
 # library libimf with libm to support use of the Intel compiler.  I have added
 # AM conditional for GNu just for completeness.
   AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
@@ -207,11 +220,13 @@ dnl predefined by a specific compiler
 
   if test "x$compilerVendorName" = xIntel; then
    # using_intel_compiler=true
-     AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+   # AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+     AC_DEFINE([BACKEND_CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
   fi
   if test "x$compilerVendorName" = xGNU; then
    # using_gnu_compiler=true
-     AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+   # AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+     AC_DEFINE([BACKEND_CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
   fi
 # AC_DEFINE([CXX_IS_INTEL_COMPILER],test "x$compilerVendorName" = xIntel,[Is this an Intel compiler being used to compile ROSE.])
 # AC_DEFINE([CXX_IS_INTEL_COMPILER],[`test $using_intel_compiler`],[Is this an Intel compiler being used to compile ROSE.])

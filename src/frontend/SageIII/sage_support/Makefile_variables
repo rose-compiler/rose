@@ -2,10 +2,12 @@
 
 fSageSupport_la_sources=\
 	$(fSageSupportPath)/sage_support.cpp \
+	$(fSageSupportPath)/keep_going.cpp \
 	$(fSageSupportPath)/cmdline.cpp
 
 fSageSupport_includeHeaders=\
 	$(fSageSupportPath)/sage_support.h \
+	$(fSageSupportPath)/keep_going.h \
 	$(fSageSupportPath)/cmdline.h
 
 # DQ (3/13/2010):

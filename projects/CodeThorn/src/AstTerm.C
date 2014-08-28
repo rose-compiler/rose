@@ -11,7 +11,11 @@
 
 using namespace CodeThorn;
 
-std::string nodeTypeName(SgNode* node) {
+/*! 
+ *  \author    Markus Schordan
+ *  \date      2012
+ */
+std::string CodeThorn::nodeTypeName(SgNode* node) {
   if(node==0) {
     return "null";
   } else {
@@ -23,7 +27,7 @@ std::string nodeTypeName(SgNode* node) {
   }
 }
 
-std::string astTermToMultiLineString(SgNode* node,int tab, int pos) {
+std::string CodeThorn::astTermToMultiLineString(SgNode* node,int tab, int pos) {
   std::string tabstring;
   for(int t=0;t<pos;t++) tabstring+=" ";
 
@@ -50,7 +54,7 @@ std::string astTermToMultiLineString(SgNode* node,int tab, int pos) {
   return s;
 }
 
-std::string astTermWithNullValuesToString(SgNode* node) {
+std::string CodeThorn::astTermWithNullValuesToString(SgNode* node) {
   if(node==0)
     return "null";
   std::string s=nodeTypeName(node);
@@ -67,7 +71,7 @@ std::string astTermWithNullValuesToString(SgNode* node) {
   return s;
 }
 
-std::string pointerExprToString(SgNode* node) {
+std::string CodeThorn::pointerExprToString(SgNode* node) {
   // MS: TODO: type check is required to ensure the expression is indeed a pointer expression
   // e.g. for return 0 it produces "null" even if the integer 0 is returned.
 #if 0
@@ -153,10 +157,10 @@ std::string pointerExprToString(SgNode* node) {
   return s;
 }
 
-std::string astTermWithoutNullValuesToDot(SgNode* root) {
+std::string CodeThorn::astTermWithoutNullValuesToDot(SgNode* root) {
   RoseAst ast(root);
   std::stringstream ss;
-  ss << "digraph G {\n";
+  ss << "digraph G {\n ordering=out;\n";
   for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     ss << "\"" << *i <<"\""<< "[label=\"" << nodeTypeName(*i)<< "\"];"<<std::endl;
     if(*i!=root) {
@@ -167,7 +171,7 @@ std::string astTermWithoutNullValuesToDot(SgNode* root) {
   return ss.str();
 }
 
-std::string functionAstTermsWithNullValuesToDot(SgNode* root) {
+std::string CodeThorn::functionAstTermsWithNullValuesToDot(SgNode* root) {
   RoseAst ast(root);
   string fragments;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -178,22 +182,22 @@ std::string functionAstTermsWithNullValuesToDot(SgNode* root) {
   return dotFragmentToDot(fragments);
 }
 
-std::string dotFragmentToDot(string fragment) {
+std::string CodeThorn::dotFragmentToDot(string fragment) {
   std::stringstream ss;
-  ss << "digraph G {\n";
+  ss << "digraph G {\n ordering=out;\n";
   ss << fragment;
   ss<<"}\n";
   return ss.str();
 }
-std::string astTermWithNullValuesToDot(SgNode* root) {
+std::string CodeThorn::astTermWithNullValuesToDot(SgNode* root) {
   std::stringstream ss;
-  ss << "digraph G {\n";
+  ss << "digraph G {\n ordering=out;\n";
   ss << astTermWithNullValuesToDotFragment(root);
   ss<<"}\n";
   return ss.str();
 }
 
-std::string astTermWithNullValuesToDotFragment(SgNode* root) {
+std::string CodeThorn::astTermWithNullValuesToDotFragment(SgNode* root) {
   RoseAst ast(root);
   std::stringstream ss;
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
@@ -214,11 +218,12 @@ std::string astTermWithNullValuesToDotFragment(SgNode* root) {
   return ss.str();
 }
 
-std::string astTermToDot(RoseAst::iterator start, RoseAst::iterator end) {
+std::string CodeThorn::astTermToDot(RoseAst::iterator start, RoseAst::iterator end) {
   std::stringstream ss;
   SgNode* root=*start;
   long int visitCnt=1;
   ss << "digraph G {\n";
+  ss << "ordering=out;";
   std::string prevNode="";
   for(RoseAst::iterator i=start;i!=end;++i) {
     ss << "\"" << i.current_node_id() <<"\""<< "[label=\"" << visitCnt++ << ":";

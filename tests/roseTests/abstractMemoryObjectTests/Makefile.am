@@ -1,81 +1,74 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+noinst_PROGRAMS =
+EXTRA_DIST =
+TEST_TARGETS =
 
-SUBDIRS= .
-#if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#SUBDIRS += fortran
-#endif
-
-# Default header file search path
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)
-memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-indexSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-ObjSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) # contributed by Sriram
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# Put test codes without main() entry here
-C_TESTCODES_REQUIRED_TO_COMPILE =  \
-     struct_simplest.c \
-     expression.c \
-     function.c \
-     array.c \
-     array2.c \
-     arrayDereferencing.c
+#------------------------------------------------------------------------------------------------------------------------
+# memObjectGenerator
 
-CXX_TESTCODES_REQUIRED_TO_COMPILE = \
-     test_2011_08_15.cpp \
-     test_2011_08_26.cpp \
-     pointer.cpp \
-     labeledAggregate.cpp
-
-TESTCODE_CURRENTLY_FAILING = 
-
-ALL_TESTCODES = \
-	$(C_TESTCODES_REQUIRED_TO_COMPILE) \
-	$(CXX_TESTCODES_REQUIRED_TO_COMPILE) \
-	$(TESTCODE_CURRENTLY_FAILING)
-
-#TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
-#TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
-
-noinst_PROGRAMS = memObjectGenerator indexSetTest ObjSetTest
+noinst_PROGRAMS += memObjectGenerator
 memObjectGenerator_SOURCES = memObjectGenerator.C
+memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+memObjectGenerator_specimens =			\
+	struct_simplest.c 			\
+	expression.c				\
+	function.c				\
+	array.c					\
+	array2.c				\
+	arrayDereferencing.c			\
+	test_2011_08_15.cpp			\
+	test_2011_08_26.cpp			\
+	pointer.cpp				\
+	labeledAggregate.cpp
+
+EXTRA_DIST += $(memObjectGenerator_specimens)
+
+memObjectGenerator_test_targets = $(addprefix memObjectGenerator_, $(addsuffix .passed, $(memObjectGenerator_specimens)))
+TEST_TARGETS += $(memObjectGenerator_test_targets)
+$(memObjectGenerator_test_targets): memObjectGenerator_%.passed: % memObjectGenerator
+	@$(RTH_RUN) \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/memObjectGenerator -g --edg:no_warnings -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# indexSetTest
+
+noinst_PROGRAMS += indexSetTest
 indexSetTest_SOURCES = indexSetTest.C
+indexSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+TEST_TARGETS += indexSetTest.passed
+indexSetTest.passed: indexSetTest
+	@$(RTH_RUN) \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/indexSetTest" \
+		$(TEST_EXIT_STATUS) $@
+
+#------------------------------------------------------------------------------------------------------------------------
+# ObjSetTest;  contributed by Sriram
+
+noinst_PROGRAMS += ObjSetTest
 ObjSetTest_SOURCES = ObjSetTest.C ObjSetPtr.h
+ObjSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-# this flag is used for the long list of CXX test files
-TEST_FLAGS = $(TEST_INCLUDES) -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
+EXTRA_DIST += array2.c
+TEST_TARGETS += ObjSetTest.passed
+ObjSetTest.passed: array2.c ObjSetTest
+	@$(RTH_RUN) \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/ObjSetTest -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 
-PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_COMPILE:.c=.o)
-PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_COMPILE:.cpp=.o)
+#------------------------------------------------------------------------------------------------------------------------
+# automake boilerplate
 
-# rules to build .o from .c for OpenMP test codes
-$(PASSING_C_TEST_Objects): %.o: %.c memObjectGenerator
-	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $< &>$(@:.o=.out)
-
-
-$(PASSING_CXX_TEST_Objects): %.o: %.cpp memObjectGenerator
-	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $< &>$(@:.o=.out)
-
-
-check-local: memObjectGenerator indexSetTest ObjSetTest
-	@echo "Test for Abstrace Memory Object Interface."
-	@echo "***************** Testing C input *******************"
-	$(MAKE) $(PASSING_C_TEST_Objects)
-	@echo "***************** Testing C++ input ******************"
-	$(MAKE) $(PASSING_CXX_TEST_Objects)
-	@echo "***************** Testing IndexSet  ******************"
-	./indexSetTest
-	@echo "***************** Testing wrapper set******************"
-	./ObjSetTest -c $(srcdir)/array2.c 
-	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/abstractMemoryObjectTests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out 
-
-EXTRA_DIST =  $(ALL_TESTCODES)
-
-CLEANFILES = 
-
-
-
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)

@@ -751,13 +751,13 @@ FAIL_WITH_EDG_47_AND_GCC_4_2_4_NOT_GCC_4_4_5 = \
  test2005_133.C
 
 TEST_INCLUDES = \
-	-I$(top_srcdir)/tests/CompileTests/A++Code \
-	-I$(top_srcdir)/tests/CompileTests/C_tests \
-	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
+	-I$(abs_top_srcdir)/tests/CompileTests/A++Code \
+	-I$(abs_top_srcdir)/tests/CompileTests/C_tests \
+	-I$(abs_top_srcdir)/tests/CompileTests/Cxx_tests 
 
 .PHONY: TEST_C
 TEST_C: 
-	@cp -f $(top_srcdir)/tests/CompileTests/C_tests/*.c . 
+	@cp -f $(abs_top_srcdir)/tests/CompileTests/C_tests/*.c . 
 	@$(MAKE) $(C_TESTCODES_REQUIRED_TO_PASS)
 	@rm -f *.c
 
@@ -767,21 +767,21 @@ $(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 
 .PHONY: TEST_CXX
 TEST_CXX:
-	@cp -f $(top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
+	@cp -f $(abs_top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
 	@$(MAKE) $(CXX_TESTCODES_REQUIRED_TO_PASS)
 	@rm -f *.C
 
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
-	
+
 
 check-local:
 	@$(MAKE) TEST_C
 	@$(MAKE) TEST_CXX
-	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
-	@echo "*********************************************************************************************************"
+	@echo "***********************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/staticSingleAssignmentTests: make check rule complete (terminated normally) ******"
+	@echo "***********************************************************************************************************************************"
 
 clean-local:
 	rm -f *.o *.c *.C

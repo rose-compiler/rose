@@ -80,18 +80,18 @@ void
 PreOrderTraversal<TreeNode>::
 traverse(TreeNode node) {
   typename PreOrderTraversal<TreeNode>::ChildrenContainer c;
-  if(isNullNode(node)) {
-    if(!skipNode(node)) {
+  if(this->isNullNode(node)) {
+    if(!this->skipNode(node)) {
       nullNodeVisit();
     }
     return;
   } else {
-    if(!skipNode(node)) {
+    if(!this->skipNode(node)) {
       preOrderVisit(node);
     }
   }
-  if(!skipSubTreeOfNode(node)) {
-    setChildrenContainer(node,c);
+  if(!this->skipSubTreeOfNode(node)) {
+    this->setChildrenContainer(node,c);
     for(typename PreOrderTraversal<TreeNode>::ChildrenContainer::iterator iter=c.begin(); iter!=c.end(); iter++) {
       traverse(*iter);
     }
@@ -150,23 +150,23 @@ void
 PrePostOrderTraversal<TreeNode>::
 traverse(TreeNode node) {
   typename PrePostOrderTraversal<TreeNode>::ChildrenContainer c;
-  if(isNullNode(node)) {
-    if(!skipNode(node)) {
+  if(this->isNullNode(node)) {
+    if(!this->skipNode(node)) {
       nullNodeVisit();
     }
     return;
   } else {
-    if(!skipNode(node)) {
+    if(!this->skipNode(node)) {
       preOrderVisit(node);
     }
   }
-  if(!skipSubTreeOfNode(node)) {
-    setChildrenContainer(node,c);
+  if(!this->skipSubTreeOfNode(node)) {
+    this->setChildrenContainer(node,c);
     for(typename PrePostOrderTraversal<TreeNode>::ChildrenContainer::iterator iter=c.begin();iter!=c.end();iter++) {
       traverse(*iter);
     }
   }
-  if(!skipNode(node)) {
+  if(!this->skipNode(node)) {
     postOrderVisit(node);
   }
 }

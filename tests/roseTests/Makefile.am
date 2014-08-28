@@ -1,35 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS =  \
-#      PHPTests \
-#      astFileIOTests \
-#      astInliningTests \
-#      astInterfaceTests \
-#      astMergeTests \
-#      astOutliningTests \
-#      astPerformanceTests \
-#      astProcessingTests \
-#      astQueryTests \
-#      astRewriteTests \
-#      astSymbolTableTests \
-#      astTokenStreamTests \
-#      binaryTests \
-#      loopProcessingTests \
-#      ompLoweringTests \
-#      programAnalysisTests \
-#      programTransformationTests \
-#      roseHPCToolkitTests \
-#      utilTests \
-#      fileLocation_tests \
-#      graph_tests \
-#      mergeTraversal_tests
-
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astMergeTests astPerformanceTests \
-              astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
+              astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
 	      astLValueTests abstractMemoryObjectTests
@@ -46,6 +22,7 @@ if !USING_XTENSA_BACKEND_COMPILER
 if !ROSE_USE_INSURE
    SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
 endif
+# DQ (1/28/2014): Commented out astFileIO tests (now uncommented).
    SUBDIRS += astFileIOTests 
 if !ROSE_USE_INSURE
    SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
@@ -63,9 +40,10 @@ if !ROSE_USE_INSURE
 # to compile with Insure++ (it hangs for Hudson, but I can't reproduce the problem locally).
 # This was not a problem the second time that Insure++ compiled ROSE.
 
+# DQ (8/23/2013): This is a part of SUBDIRS above and is redundant here.
 # DQ (9/2/2011): utilTests has C++ specific tests.
 # SUBDIRS += roseHPCToolkitTests utilTests
-  SUBDIRS += roseHPCToolkitTests
+# SUBDIRS += roseHPCToolkitTests
 
 # DQ (9/2/2011): Only run these tests if C or C++ is supported.
 #if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
@@ -79,8 +57,3 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    SUBDIRS += binaryTests
 endif
 endif
-
-check-local:
-	@echo "**********************************************************************************"
-	@echo "****** ROSE/tests/roseTests: make check rule complete (terminated normally) ******"
-	@echo "**********************************************************************************"

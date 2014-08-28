@@ -89,4 +89,13 @@ file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstru
 
 ########### install files ###############
 
-install(FILES  $(BINARY_DISASSEMBLY_HEADER_FILES) DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES
+    armInstructionEnum.h AST_BIN_Traversal.h MyAstAttribute.h
+    powerpcInstructionEnum.h powerpcInstructionProperties.h readTicl.h
+    RoseBin_abstract.h RoseBin_buildTree.h RoseBin_file.h
+    RoseBin_IDAPRO_branchGraph.h RoseBin_IDAPRO_buildTree.h
+    RoseBin_IDAPRO_callGraph.h RoseBin_IDAPRO_exprTree.h
+    RoseBin_IDAPRO_substTree.h RoseBin_support.h RoseFile.h
+    RoseObj.h x86InstructionProperties.h
+  DESTINATION include)
+

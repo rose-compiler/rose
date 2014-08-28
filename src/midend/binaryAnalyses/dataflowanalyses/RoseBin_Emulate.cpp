@@ -248,7 +248,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 
 
   int counter=0;
-  SgAsmx86RegisterReferenceExpression* refExpr =NULL;
+  SgAsmRegisterReferenceExpression* refExpr =NULL;
   std::pair<X86RegisterClass, int>  code ;
   RoseBin_support::X86PositionInRegister pos ;
 
@@ -262,7 +262,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     //string result = unparser->resolveOperand(expr,&type);
     if (counter==0) {
       // left hand side *************************************************************
-      refExpr = isSgAsmx86RegisterReferenceExpression(expr);
+      refExpr = isSgAsmRegisterReferenceExpression(expr);
 
       // check what it could be
       // ******** 1. its a RegisterReferenceExpression on the left side
@@ -304,7 +304,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     } else {
       // right hand side ************************************************************
       SgAsmValueExpression* valExp = isSgAsmValueExpression(expr);
-      SgAsmx86RegisterReferenceExpression* refExprR = isSgAsmx86RegisterReferenceExpression(expr);
+      SgAsmRegisterReferenceExpression* refExprR = isSgAsmRegisterReferenceExpression(expr);
       uint8_t b_val=0xF;
       uint16_t w_val=0xFF;
       uint32_t dw_val=0xFFFF;

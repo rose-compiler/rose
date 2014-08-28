@@ -22,6 +22,7 @@ void foo()
      av_rescale_q((AVRational){55, 66});
 
   // This needs to have its class definition output.
+  // if ( (((union ABC { int __in; int __i; }) { .__in = 42 }).__i) == 0)
      if ( (((union ABC { int __in; int __i; }) { .__in = 42 }).__i) == 0)
         {
         }

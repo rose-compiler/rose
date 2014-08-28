@@ -2,53 +2,21 @@
 
 #include "DisassemblerMips.h"
 #include "integerOps.h"
+#include "Diagnostics.h"
+
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace IntegerOps;
+using namespace Diagnostics;
 
 class DisassemblerMips;
 
-
-/** Create a bit mask. The returned mask will have all bits from @p lobit through @p hibit (inclusive) set, and all other bits
- *  are clear. */
 template<size_t lobit, size_t hibit>
-static unsigned
-mask_for()
+static unsigned mask_for()
 {
-    assert(hibit<32);
-    assert(hibit>=lobit);
-    return IntegerOps::shiftLeft<32>(IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value, lobit);
+    return genMask<unsigned>(lobit, hibit);
 }
-
-/** Create a shifted value. The return value is created by shifting @p value to the specified position in the result. Other
- *  bits of the return value are clear. The @p hibit is specified so that we can check at run-time that a valid value was
- *  specified (i.e., the value isn't too wide). */
-template<size_t lobit, size_t hibit>
-static unsigned
-shift_to(unsigned value)
-{
-    assert(hibit<32);
-    assert(hibit>=lobit);
-    assert(0==(value & ~IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value));
-    return IntegerOps::shiftLeft<32>(value & IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value, lobit);
-}
-
-/** Extract bits from a value.  Bits @p lobit through @p hibit, inclusive, are right shifted into the result and higher-order
- *  bits of the result are cleared. */
-template<size_t lobit, size_t hibit>
-static unsigned
-extract(unsigned bits)
-{
-    assert(hibit<32);
-    assert(hibit>=lobit);
-    return IntegerOps::shiftRightLogical<32>(bits, lobit) & IntegerOps::GenMask<unsigned, 1+hibit-lobit>::value;
-}
-
-/** Determines if one bitmask is a subset of another.  Returns true if the bits set in the first argument form a subset of the
- *  bits set in the second argument. */
-static bool
-bitmask_subset(unsigned m1, unsigned m2)
-{
-    return 0 == (~m1 & m2); // m2 must not contain bits that are not in m1
-}
-
 
 // These simple little functions operate on certain bits of an instruction and are used commonly throughout the
 // disassembler. The functions whose name begins with "m" are for creating bit masks; those beginning with "s" are for setting
@@ -95,19 +63,15 @@ static unsigned gIM(unsigned insn_bits) { return extract< 0, 15>(insn_bits); }
 //    32 -- word                (ROSE "DoubleWord")
 //    64 -- double word         (ROSE "QuadWord")
 //
-// FIXME: ROSE's original type names were created back when ROSE only had an x86 disassembler. They will eventually be changed
-// to more agnostic terms when they appear in general contexts (e.g., "SgAsmTypeDoubleWord", used throughout ROSE and not just
-// in the x86 disassembler, might be renamed "SgAsmTypeBitvec32", "SgAsmTypeInteger32", and "SgAsmTypeUnsigned32"). [Robb
-// P. Matzke 2013-02-08]
-static SgAsmType *type_B8()  { return SgAsmTypeByte::createType(); }
-static SgAsmType *type_B16() { return SgAsmTypeWord::createType(); }
-static SgAsmType *type_B32() { return SgAsmTypeDoubleWord::createType(); }
-static SgAsmType *type_B64() { return SgAsmTypeQuadWord::createType(); }
-static SgAsmType *type_I8()  { return SgAsmTypeByte::createType(); }
-static SgAsmType *type_I16() { return SgAsmTypeWord::createType(); }
-static SgAsmType *type_I32() { return SgAsmTypeDoubleWord::createType(); }
-static SgAsmType *type_U8()  { return SgAsmTypeByte::createType(); }
-static SgAsmType *type_U16() { return SgAsmTypeWord::createType(); }
+static SgAsmType *type_B8()  { return SageBuilderAsm::buildTypeU8(); }
+static SgAsmType *type_B16() { return SageBuilderAsm::buildTypeU16(); }
+static SgAsmType *type_B32() { return SageBuilderAsm::buildTypeU32(); }
+static SgAsmType *type_B64() { return SageBuilderAsm::buildTypeU64(); }
+static SgAsmType *type_I8()  { return SageBuilderAsm::buildTypeI8(); }
+static SgAsmType *type_I16() { return SageBuilderAsm::buildTypeI16(); }
+static SgAsmType *type_I32() { return SageBuilderAsm::buildTypeI32(); }
+static SgAsmType *type_U8()  { return SageBuilderAsm::buildTypeU8(); }
+static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16(); }
 
 /*****************************************************************************************************************************/
 
@@ -133,7 +97,7 @@ DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-02-13]*/
     unsigned insn_bits = SgAsmExecutableFileFormat::le_to_host(insn_disk);
 #else
-    unsigned insn_bits = SgAsmExecutableFileFormat::be_to_host(insn_disk);
+    unsigned insn_bits = ByteOrder::be_to_host(insn_disk);
 #endif
     SgAsmMipsInstruction *insn = disassemble_insn(insn_bits);
     if (!insn)
@@ -171,11 +135,12 @@ DisassemblerMips::makeInstruction(MipsInstructionKind kind, const std::string &m
 
     /* If any operand is null, then the following operands must also be null because analysis assumes that the operand vector
      * indices correspond to argument positions and don't expect null-padding in the vector. */
-    ROSE_ASSERT((!op1 && !op2 && !op3 && !op4) ||
-                ( op1 && !op2 && !op3 && !op4) ||
-                ( op1 &&  op2 && !op3 && !op4) ||
-                ( op1 &&  op2 &&  op3 && !op4) ||
-                ( op1 &&  op2 &&  op3 &&  op4));
+    ASSERT_require2((!op1 && !op2 && !op3 && !op4) ||
+                    ( op1 && !op2 && !op3 && !op4) ||
+                    ( op1 &&  op2 && !op3 && !op4) ||
+                    ( op1 &&  op2 &&  op3 && !op4) ||
+                    ( op1 &&  op2 &&  op3 &&  op4),
+                    "if an operand is null then the following operands must be null");
 
     if (op1)
         SageBuilderAsm::appendOperand(insn, op1);
@@ -189,31 +154,31 @@ DisassemblerMips::makeInstruction(MipsInstructionKind kind, const std::string &m
     return insn;
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeRegister(unsigned regnum)
 {
     std::string regname = "r" + StringUtility::numberToString(regnum);
     const RegisterDescriptor *regdesc = get_registers()->lookup(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
-    return new SgAsmMipsRegisterReferenceExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(*regdesc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpRegister(unsigned regnum)
 {
     std::string regname = "f" + StringUtility::numberToString(regnum);
     const RegisterDescriptor *regdesc = get_registers()->lookup(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
-    return new SgAsmMipsRegisterReferenceExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(*regdesc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeCp0Register(unsigned regnum, unsigned sel)
 {
-    assert(regnum<32);
-    assert(sel<8);
+    ASSERT_require(regnum<32);
+    ASSERT_require(sel<8);
     std::string s;
     switch (regnum) {
         case 0:
@@ -440,133 +405,140 @@ DisassemblerMips::makeCp0Register(unsigned regnum, unsigned sel)
     const RegisterDescriptor *regdesc = get_registers()->lookup(s);
     if (!regdesc)
         throw Exception("no such register: " + s);
-    return new SgAsmMipsRegisterReferenceExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(*regdesc);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpccRegister(unsigned cc)
 {
-    assert(cc<=7);
+    ASSERT_require(cc<=7);
     const RegisterDescriptor *regdesc = get_registers()->lookup("fscr");
     if (!regdesc)
         throw Exception("no such register: fcsr");
     RegisterDescriptor r(regdesc->get_major(), regdesc->get_minor(), cc?24+cc:23, 1);
-    return new SgAsmMipsRegisterReferenceExpression(r);
+    return new SgAsmDirectRegisterExpression(r);
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeCp2Register(unsigned regnum)
 {
     // Coprocessor 2 is implementation defined. We're assuming 32 individual 32-bit registers numbered 0-31.
-    assert(regnum<32);
-    return new SgAsmMipsRegisterReferenceExpression(RegisterDescriptor(mips_regclass_cp2gpr, regnum, 0, 32));
+    ASSERT_require(regnum<32);
+    return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_cp2gpr, regnum, 0, 32));
 }
     
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeCp2ccRegister(unsigned regnum)
 {
     // Coprocessor 2 is implementation defined. We're assuming 32 individual 32-bit registers numbered 0-31.
-    assert(regnum<32);
-    return new SgAsmMipsRegisterReferenceExpression(RegisterDescriptor(mips_regclass_cp2spr, regnum, 0, 32));
+    ASSERT_require(regnum<32);
+    return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_cp2spr, regnum, 0, 32));
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeHwRegister(unsigned cc)
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb Matzke 2014-01-27]");
+    return NULL;
 }
 
-SgAsmMipsRegisterReferenceExpression *
+SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeShadowRegister(unsigned cc)
 {
-    assert(!"FIXME");
-    abort();
+    // Get the general purpose register
+    SgAsmRegisterReferenceExpression *regref = makeRegister(cc);
+    ASSERT_not_null(regref);
+
+    // Turn it into a shadow register
+    RegisterDescriptor desc = regref->get_descriptor();
+    desc.set_major(mips_regclass_sgpr);
+    regref->set_descriptor(desc);
+    return regref;
 }
 
-SgAsmByteValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate8(unsigned value, size_t bit_offset, size_t nbits)
 {
-    assert(0==(value & ~0xff));
-    SgAsmByteValueExpression *retval = new SgAsmByteValueExpression(value);
+    ASSERT_require(0==(value & ~0xff));
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU8(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate16(unsigned value, size_t bit_offset, size_t nbits)
 {
-    assert(0==(value & ~0xffff));
-    SgAsmWordValueExpression *retval = new SgAsmWordValueExpression(value);
+    ASSERT_require(0==(value & ~0xffff));
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU16(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeImmediate32(unsigned value, size_t bit_offset, size_t nbits)
 {
-    assert(0==(value & ~0xffffffffull));
-    SgAsmDoubleWordValueExpression *retval = new SgAsmDoubleWordValueExpression(value);
+    ASSERT_require(0==(value & ~0xffffffffull));
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU32(value);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeBranchTargetRelative(unsigned pc_offset, size_t bit_offset, size_t nbits)
 {
-    assert(0==(pc_offset & ~0xffff));
-    pc_offset = IntegerOps::shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
-    pc_offset = IntegerOps::signExtend<18, 32>(pc_offset);      // offsets are signed
-    unsigned target = (get_ip() + 4 + pc_offset) & IntegerOps::GenMask<unsigned, 32>::value; // measured from next instruction
-    SgAsmDoubleWordValueExpression *retval = new SgAsmDoubleWordValueExpression(target);
+    ASSERT_require(0==(pc_offset & ~0xffff));
+    pc_offset = shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
+    pc_offset = signExtend<18, 32>(pc_offset);      // offsets are signed
+    unsigned target = (get_ip() + 4 + pc_offset) & GenMask<unsigned, 32>::value; // measured from next instruction
+    SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU32(target);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(nbits);
     return retval;
 }
 
-SgAsmDoubleWordValueExpression *
+SgAsmIntegerValueExpression *
 DisassemblerMips::makeBranchTargetAbsolute(unsigned insn_index, size_t bit_offset, size_t nbits)
 {
-    assert(nbits>0);
-    assert(bit_offset+nbits+2<=32);
-    assert(0==(insn_index & ~IntegerOps::genMask<uint64_t>(nbits)));
+    ASSERT_require(nbits>0);
+    ASSERT_require(bit_offset+nbits+2<=32);
+    ASSERT_require(0==(insn_index & ~genMask<uint64_t>(nbits)));
     unsigned lo_nbits = nbits+2;        // number of bits coming from instr_index after multiplying by four
-    unsigned lo_mask = IntegerOps::genMask<uint64_t>(lo_nbits);
-    unsigned lo_target = IntegerOps::shiftLeft<32>(insn_index, 2) & lo_mask;
+    unsigned lo_mask = genMask<uint64_t>(lo_nbits);
+    unsigned lo_target = shiftLeft<32>(insn_index, 2) & lo_mask;
     unsigned hi_target = (get_ip() + 4) & ~lo_mask;
     unsigned target = hi_target | lo_target;
-    return new SgAsmDoubleWordValueExpression(target);
+    return SageBuilderAsm::buildValueU32(target);
 }
 
 SgAsmBinaryAdd *
 DisassemblerMips::makeRegisterOffset(unsigned gprnum, unsigned offset16)
 {
-    SgAsmMipsRegisterReferenceExpression *regref = makeRegister(gprnum);
-    assert(0==(offset16 & ~0xffff));
-    unsigned offset32 = IntegerOps::signExtend<16, 32>(offset16);
-    SgAsmDoubleWordValueExpression *offset = new SgAsmDoubleWordValueExpression(offset32);
-    SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(regref, offset);
+    SgAsmRegisterReferenceExpression *regref = makeRegister(gprnum);
+    ASSERT_require(0==(offset16 & ~0xffff));
+    unsigned offset32 = signExtend<16, 32>(offset16);
+    SgAsmIntegerValueExpression *offset = SageBuilderAsm::buildValueU32(offset32);
+    SgAsmBinaryAdd *retval = SageBuilderAsm::buildAddExpression(regref, offset);
     return retval;
 }
 
 SgAsmBinaryAdd *
 DisassemblerMips::makeRegisterIndexed(unsigned base_gprnum, unsigned index_gprnum)
 {
-    SgAsmMipsRegisterReferenceExpression *base_reg = makeRegister(base_gprnum);
-    SgAsmMipsRegisterReferenceExpression *index_reg = makeRegister(index_gprnum);
-    SgAsmBinaryAdd *retval = SageBuilderAsm::makeAdd(base_reg, index_reg);
+    SgAsmRegisterReferenceExpression *base_reg = makeRegister(base_gprnum);
+    SgAsmRegisterReferenceExpression *index_reg = makeRegister(index_gprnum);
+    SgAsmBinaryAdd *retval = SageBuilderAsm::buildAddExpression(base_reg, index_reg);
     return retval;
 }
 
 SgAsmMemoryReferenceExpression *
 DisassemblerMips::makeMemoryReference(SgAsmExpression *addr, SgAsmType *type)
 {
-    assert(addr!=NULL);
-    assert(type!=NULL);
-    return SageBuilderAsm::makeMemoryReference(addr, NULL, type);
+    ASSERT_not_null(addr);
+    ASSERT_not_null(type);
+    return SageBuilderAsm::buildMemoryReferenceExpression(addr, NULL, type);
 }
 
 DisassemblerMips::Mips32 *
@@ -594,9 +566,9 @@ DisassemblerMips::find_idis(unsigned insn_bits)
 void
 DisassemblerMips::insert_idis(Mips32 *idis, bool replace)
 {
-    assert(idis!=NULL);
-    assert(idis->mask!=0);
-    assert((idis->match & ~idis->mask)==0);
+    ASSERT_not_null(idis);
+    ASSERT_require(idis->mask!=0);
+    ASSERT_require((idis->match & ~idis->mask)==0);
     bool inserted = false;
     for (size_t i=0; i<idis_table.size(); ++i) {
         if (replace && !inserted &&
@@ -608,12 +580,12 @@ DisassemblerMips::insert_idis(Mips32 *idis, bool replace)
                    (bitmask_subset(idis_table[i]->mask, idis->mask) &&
                     idis_table[i]->match == (idis->match & idis_table[i]->mask))) {
             // Inserting this instruction-specific disassembler would cause an ambiguity in the table.
-            std::cerr <<"DisassemblerMips::insert_idis: insertion key"
-                      <<" mask=" <<StringUtility::addrToString(idis->mask)
-                      <<" match=" <<StringUtility::addrToString(idis->match)
-                      <<" conflicts with existing key"
-                      <<" mask=" <<StringUtility::addrToString(idis_table[i]->mask)
-                      <<" match="<<StringUtility::addrToString(idis_table[i]->match) <<"\n";
+            mlog[DEBUG] <<"DisassemblerMips::insert_idis: insertion key"
+                        <<" mask=" <<StringUtility::addrToString(idis->mask)
+                        <<" match=" <<StringUtility::addrToString(idis->match)
+                        <<" conflicts with existing key"
+                        <<" mask=" <<StringUtility::addrToString(idis_table[i]->mask)
+                        <<" match="<<StringUtility::addrToString(idis_table[i]->match) <<"\n";
             throw Exception("insert_idis() would cause an ambiguity in the MIPS instruction disassembly table");
         }
     }
@@ -1082,7 +1054,7 @@ static struct Mips32_c_cond_s: Mips32 {
             case 13: kind = mips_c_nge_s;  mnemonic = "c.nge.s";  break;
             case 14: kind = mips_c_le_s;   mnemonic = "c.le.s";   break;
             case 15: kind = mips_c_ngt_s;  mnemonic = "c.ngt.s";  break;
-            default: assert(!"invalid condition"); abort();
+            default: ASSERT_not_reachable("invalid condition " + StringUtility::numberToString(condition));
         }
         return d->makeInstruction(kind, mnemonic,
                                   d->makeFpccRegister(cc), d->makeFpRegister(gR2(ib)), d->makeFpRegister(gR1(ib)));
@@ -1118,7 +1090,7 @@ static struct Mips32_c_cond_d: Mips32 {
             case 13: kind = mips_c_nge_d;  mnemonic = "c.nge.d";  break;
             case 14: kind = mips_c_le_d;   mnemonic = "c.le.d";   break;
             case 15: kind = mips_c_ngt_d;  mnemonic = "c.ngt.d";  break;
-            default: assert(!"invalid condition"); abort();
+            default: ASSERT_not_reachable("invalid condition " + StringUtility::numberToString(condition));
         }
         return d->makeInstruction(kind, mnemonic,
                                   d->makeFpccRegister(cc), d->makeFpRegister(gR2(ib)), d->makeFpRegister(gR1(ib)));
@@ -1154,7 +1126,7 @@ static struct Mips32_c_cond_ps: Mips32 {
             case 13: kind = mips_c_nge_ps;  mnemonic = "c.nge.ps";  break;
             case 14: kind = mips_c_le_ps;   mnemonic = "c.le.ps";   break;
             case 15: kind = mips_c_ngt_ps;  mnemonic = "c.ngt.ps";  break;
-            default: assert(!"invalid condition"); abort();
+            default: ASSERT_not_reachable("invalid condition " + StringUtility::numberToString(condition));
         }
         return d->makeInstruction(kind, mnemonic,
                                   d->makeFpccRegister(cc), d->makeFpRegister(gR2(ib)), d->makeFpRegister(gR1(ib)));
@@ -1694,7 +1666,7 @@ static struct Mips32_lbe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(054),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lbe, "lbe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I8()));
@@ -1717,7 +1689,7 @@ static struct Mips32_lbue: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(050),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lbue, "lbue",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_U8()));
@@ -1772,7 +1744,7 @@ static struct Mips32_lhe: Mips32 {
                          sOP(037)|shift_to<6, 6>(1)|sFN(055),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lhe, "lhe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I16()));
@@ -1795,7 +1767,7 @@ static struct Mips32_lhue: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(051),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lhue, "lhue",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_U16()));
@@ -1818,7 +1790,7 @@ static struct Mips32_lle: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(056),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lle, "lle",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -1883,7 +1855,7 @@ static struct Mips32_lwe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(057),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lwe, "lwe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -1906,7 +1878,7 @@ static struct Mips32_lwle: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(031),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lwle, "lwle",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -1929,7 +1901,7 @@ static struct Mips32_lwre: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(032),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_lwre, "lwre",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -2690,7 +2662,7 @@ static struct Mips32_prefe: Mips32 {
                            sOP(037)|shift_to<6, 6>(0)|sFN(043),
                            mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         return d->makeInstruction(mips_prefe, "prefe",
                                   d->makeImmediate8(gR1(ib), 16, 5), d->makeRegisterOffset(gR0(ib), offset16));
     }
@@ -2877,7 +2849,7 @@ static struct Mips32_sbe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(034),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_sbe, "sbe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B8()));
@@ -2900,7 +2872,7 @@ static struct Mips32_sce: Mips32 {
                          sOP(047)|shift_to<6, 6>(0)|sFN(036),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_sce, "sce",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_I32()));
@@ -2977,7 +2949,7 @@ static struct Mips32_she: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(035),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_she, "she",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B16()));
@@ -3221,7 +3193,7 @@ static struct Mips32_swe: Mips32 {
                          sOP(037)|shift_to<6, 6>(0)|sFN(037),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_swe, "swe",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B32()));
@@ -3244,7 +3216,7 @@ static struct Mips32_swle: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(041),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_swle, "swle",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B32()));
@@ -3267,7 +3239,7 @@ static struct Mips32_swre: Mips32 {
                           sOP(037)|shift_to<6, 6>(0)|sFN(042),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
     SgAsmMipsInstruction *operator()(D *d, unsigned ib) {
-        unsigned offset16 = IntegerOps::signExtend<9, 16>(extract<7, 15>(ib));
+        unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(gR0(ib), offset16);
         return d->makeInstruction(mips_swre, "swre",
                                   d->makeRegister(gR1(ib)), d->makeMemoryReference(addr, type_B32()));
@@ -3622,9 +3594,12 @@ void
 DisassemblerMips::init()
 {
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
+    REG_IP = *get_registers()->lookup("pc");
+    REG_SP = *get_registers()->lookup("sp");
+
     set_wordsize(4);
     set_alignment(4);
-    set_sex(SgAsmExecutableFileFormat::ORDER_MSB);
+    set_sex(ByteOrder::ORDER_MSB);
 
     insert_idis(&mips32_abs_s);
     insert_idis(&mips32_abs_d);
@@ -3891,3 +3866,6 @@ DisassemblerMips::init()
 //   024 = W    word fixed point
 //   025 = L    long fixed point
 //   026 = PS   pair of single precision
+
+} // namespace
+} // namespace

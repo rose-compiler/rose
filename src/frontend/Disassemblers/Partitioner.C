@@ -2,17 +2,30 @@
  * necessary SgAsmBlock and SgAsmFunction IR nodes from this information. */
 #include "sage3basic.h"
 
+#include "Diagnostics.h"
 #include "Partitioner.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
-#include "PartialSymbolicSemantics.h"
+#include "BinaryLoader.h"
+#include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
+
+#include "PartialSymbolicSemantics2.h"
+#include "DispatcherX86.h"
 
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <sawyer/Optional.h>
+#include <sawyer/ProgressBar.h>
 #include <stdarg.h>
+
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
+using namespace StringUtility;
 
 /* See header file for full documentation. */
 
@@ -20,6 +33,18 @@ std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
 {
     e.print(o);
     return o;
+}
+
+Sawyer::Message::Facility Partitioner::mlog;
+
+// class method
+void Partitioner::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Partitioner", Diagnostics::destination);
+        Diagnostics::mfacilities.insert(mlog);
+    }
 }
 
 /* class method */
@@ -50,42 +75,73 @@ Partitioner::isSgAsmx86Instruction(SgNode *node)
     return ::isSgAsmx86Instruction(node);
 }
 
+/* class method */
+SgAsmM68kInstruction *
+Partitioner::isSgAsmM68kInstruction(const Instruction *insn)
+{
+    return insn ? isSgAsmM68kInstruction(insn->node) : NULL;
+}
+
+/* class method */
+SgAsmM68kInstruction *
+Partitioner::isSgAsmM68kInstruction(SgNode *node)
+{
+    return ::isSgAsmM68kInstruction(node);
+}
+
 /* Progress report class variables. */
-time_t Partitioner::progress_interval = 10;
-time_t Partitioner::progress_time = 0;
-FILE *Partitioner::progress_file = stderr;
+double Partitioner::progress_interval = 10.0;
+double Partitioner::progress_time = 0.0;
 
 /* Set progress reporting values. */
 void
-Partitioner::set_progress_reporting(FILE *output, unsigned min_interval)
+Partitioner::set_progress_reporting(double min_interval)
 {
-    progress_file = output;
     progress_interval = min_interval;
 }
 
 /* Produce a progress report if enabled. */
 void
-Partitioner::progress(FILE *debug, const char *fmt, ...) const
+Partitioner::update_progress(SgAsmBlock::Reason reason, size_t pass) const
 {
-    time_t now = time(NULL);
-
-    if (0==progress_time)
-        progress_time = now;
-
-    if (progress_file!=NULL && now-progress_time >= progress_interval) {
-        progress_time = now;
-        va_list ap;
-        va_start(ap, fmt);
-        vfprintf(progress_file, fmt, ap);
-        va_end(ap);
+    if (progress_interval>=0 && mlog[INFO]) {
+        double curtime = Sawyer::Message::now();
+        if (curtime - progress_time >= progress_interval) {
+            mlog[INFO] <<"starting " <<stringifySgAsmBlockReason(reason, "BLK_") <<" pass " <<pass
+                       <<": " <<StringUtility::plural(functions.size(), "functions")
+                       <<", " <<StringUtility::plural(insns.size(), "instructions")
+                       <<", " <<StringUtility::plural(basic_blocks.size(), "blocks")
+                       <<"\n";
+            progress_time = curtime;
+        }
     }
+}
 
-    if (debug!=NULL) {
-        va_list ap;
-        va_start(ap, fmt);
-        vfprintf(debug, fmt, ap);
-        va_end(ap);
+struct ProgressSuffix {
+    const Partitioner *p;
+    ProgressSuffix(): p(NULL) {}
+    ProgressSuffix(const Partitioner *p): p(p) {}
+    void print(std::ostream &o) const {
+        if (p!=NULL) {
+            o <<(1==p->basic_blocks.size() ? " block" : " blocks");// label for value printed by ProgressBar
+            o <<" " <<StringUtility::plural(p->functions.size(), "functions");
+        }
     }
+};
+
+std::ostream& operator<<(std::ostream &o, const ProgressSuffix &suffix) {
+    suffix.print(o);
+    return o;
+}
+
+void
+Partitioner::update_progress() const
+{
+    static Sawyer::ProgressBar<size_t, ProgressSuffix> *progressBar = NULL;
+    if (!progressBar)
+        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[INFO], "");
+    progressBar->suffix(ProgressSuffix(this));
+    progressBar->value(basic_blocks.size());
 }
 
 /* Parse argument for "-rose:partitioner_search" command-line swich. */
@@ -127,6 +183,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
             bits = SgAsmFunction::FUNC_IMPORT;
+        } else if (word=="export") {
+            bits = SgAsmFunction::FUNC_EXPORT;
         } else if (word=="symbol") {
             bits = SgAsmFunction::FUNC_SYMBOL;
         } else if (word=="pattern") {
@@ -190,7 +248,7 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
 Disassembler::AddressSet
 Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace BinaryAnalysis::InstructionSemantics2;
 
     /* Do some cheap up-front checks. */
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
@@ -204,18 +262,16 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
         return Disassembler::AddressSet(); // no indirection
 
     /* Evaluate the basic block semantically to get an expression for the final EIP. */
-    typedef PartialSymbolicSemantics::ValueType<32> RegisterValueType;
-    typedef PartialSymbolicSemantics::Policy<> Policy;
-    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
-    Policy policy;
-    policy.set_map(&ro_map);
-    Semantics semantics(policy);
+    const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64(); // compatible w/ older x86 models
+    const RegisterDescriptor *REG_EIP = regdict->lookup("eip");
+    PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+    ops->set_memory_map(&ro_map);
     try {
         for (size_t i=0; i<bb->insns.size(); ++i) {
             insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
-            assert(insn_x86); // we know we're in a basic block of x86 instructions already
-            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
-            semantics.processInstruction(insn_x86);
+            ASSERT_not_null(insn_x86); // we know we're in a basic block of x86 instructions already
+            dispatcher->processInstruction(insn_x86);
         }
     } catch (...) {
         return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
@@ -227,15 +283,17 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
      * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
      * stack), so we also skip over any memory whose address is known. */
     Disassembler::AddressSet successors;
-    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
-    size_t entry_size = 4; // FIXME: bytes per jump table entry
-    if (!eip.is_known()) {
-        for (Policy::StateType::Memory::iterator mi=policy.get_state().memory.begin(); mi!=policy.get_state().memory.end(); ++mi) {
-            if (mi->get_data()==eip && !mi->get_address().is_known()) {
-                rose_addr_t base_va = mi->get_address().offset;
+    BaseSemantics::SValuePtr eip = ops->readRegister(*REG_EIP);
+    static const size_t entry_size = 4; // FIXME: bytes per jump table entry
+    uint8_t *buf = new uint8_t[entry_size];
+    if (!eip->is_number()) {
+        BaseSemantics::MemoryCellListPtr mem = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
+        for (BaseSemantics::MemoryCellList::CellList::iterator mi=mem->get_cells().begin(); mi!=mem->get_cells().end(); ++mi) {
+            BaseSemantics::MemoryCellPtr cell = *mi;
+            if (cell->get_address()->is_number() && cell->get_value()->must_equal(eip)) {
+                rose_addr_t base_va = cell->get_address()->get_number();
                 size_t nentries = 0;
                 while (1) {
-                    uint8_t buf[entry_size];
                     size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
                     if (nread!=entry_size)
                         break;
@@ -254,12 +312,12 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                         DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
                         append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
                     }
-                    if (debug)
-                        fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+                    mlog[TRACE] <<"[jump table at " <<addrToString(base_va) <<"+" <<nentries <<"*" <<entry_size <<"]";
                 }
             }
         }
     }
+    delete [] buf;
     return successors;
 }
 
@@ -269,7 +327,8 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
 void
 Partitioner::update_analyses(BasicBlock *bb)
 {
-    assert(bb!=NULL && !bb->insns.empty());
+    ASSERT_not_null(bb);
+    ASSERT_forbid(bb->insns.empty());
     if (bb->valid_cache()) return;
 
     /* Successor analysis. */
@@ -288,10 +347,43 @@ Partitioner::update_analyses(BasicBlock *bb)
         Disassembler::AddressSet table_entries = discover_jump_table(bb, true, &table_extent);
         if (!table_entries.empty()) {
             bb->cache.sucs.insert(table_entries.begin(), table_entries.end());
-            if (debug) {
-                std::ostringstream ss;
-                ss <<"[jump table at " <<table_extent <<"]";
-                fprintf(debug, "%s", ss.str().c_str());
+            mlog[TRACE] <<"[jump table at " <<table_extent <<"]";
+        }
+    }
+
+    // Remove successors for certain kinds of indirect calls (calls made through a register or memory).  If this is an indirect
+    // call, then scan through the successors and remove some.  Each successor will be in one of the following categories:
+    //   1. a mapped address at which we can make an instruction                                [keep the successor]
+    //   2. a mapped address at which we cannot make an instruction, e.g., illegal opcode       [erase the successor]
+    //   3. an address which is not mapped, but which might be mapped in the future             [keep the successor]
+    //   4. a non-address, e.g., an "ordinal" from a PE Import Address Table                    [erase the successor]
+    //
+    // For instance, the x86 PE code "call ds:[IAT+X]" is a call to an imported function.  If the dynamic linker hasn't run or
+    // been simulated yet, then the Import Address Table entry [IAT+X] could be either an address that isn't mapped, or a
+    // non-address "ordinal". We want to erase successors that are ordinals or other garbage, but keep those that are
+    // addresses. We keep even the unmapped addresses because the Partitioner might not have the whole picture right now (the
+    // usr might run the Partitioner, then simulate dynamic linking, then run another Partitioner on the libraries, then join
+    // things together into one large control flow graph).  It's not generally possible to distinguish between ordinals and
+    // addresses, but we can use the fact that ordinals are table indices and are therefore probably relatively small.  We also
+    // look for indirect calls through registers so that we can support things like "mov edi, ds:[IAT+X]; ...; call edi"
+    if (SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn())) {
+        static const rose_addr_t largest_ordinal = 10000;               // arbitrary
+        bool is_call = last_insn->get_kind() == x86_call || last_insn->get_kind() == x86_farcall;
+        const SgAsmExpressionPtrList &operands = last_insn->get_operandList()->get_operands();
+        if (is_call && 1==operands.size() &&
+            (isSgAsmRegisterReferenceExpression(operands[0]) || isSgAsmMemoryReferenceExpression(operands[0])) &&
+            bb->cache.sucs.size() > 0) {
+            for (Disassembler::AddressSet::iterator si=bb->cache.sucs.begin(); si!=bb->cache.sucs.end(); /*void*/) {
+                rose_addr_t successor_va = *si;
+                if (find_instruction(successor_va)) {                   // category 1
+                    ++si;                            
+                } else if (map->exists(successor_va)) {                 // category 2
+                    bb->cache.sucs.erase(si++);
+                } else if (successor_va > largest_ordinal) {            // category 3
+                    ++si;
+                } else {                                                // category 4
+                    bb->cache.sucs.erase(si++);
+                }
             }
         }
     }
@@ -302,7 +394,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * to the fall-through address is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
-    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va);
+    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va, NULL);
     if (looks_like_call && target_va!=fallthrough_va) {
         bb->cache.is_function_call = true;
         bb->cache.call_target = target_va;
@@ -354,8 +446,9 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
 
     /* Run non-local analyses if necessary. These are never cached here in this block. */
 
-    /* If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
-     * successor. */
+    // If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
+    // successor.  In fact, since most calls may return, assume that this call also may return unless we already know there's a
+    // function there and we haven't yet proven that it may return.
     if (bb->cache.is_function_call) {
         rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
         rose_addr_t call_target_va = call_target(bb);
@@ -363,15 +456,27 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
             Instruction *target_insn = find_instruction(call_target_va, true);
             BasicBlock *target_bb = target_insn ? find_bb_starting(call_target_va, false) : NULL;
             if (!target_insn) {
-                /* We know the call target, but could not obtain an instruction there.  The target might be a dynamically
-                 * linked function that isn't mapped yet.  Assume it returns. */
+                // We know the call target, but could not obtain an instruction there.  The target might be a dynamically
+                // linked function that isn't mapped yet.  Assume it may return since most of them can.
                 retval.insert(fall_through_va);
-            } else if (target_bb && target_bb->function && target_bb->function->possible_may_return()) {
-                /* There's a function at the call target and that function might return. */
+            } else if (target_bb && target_bb->function) {
+                // There is a basic block at the call target and the block belongs to a function already. This call may
+                // return if the target function may return
+                if (target_bb->function->possible_may_return())
+                    retval.insert(fall_through_va);
+            } else if (target_bb) {
+                // There is a basic block at the call target but it hasn't been assigned to a function yet. Assume that it can
+                // return since most calls can.
+                retval.insert(fall_through_va);
+            } else {
+                // We were able to disassemble an instruction at the call target, but no basic block exists there yet. Assume
+                // that the call may return since most calls can.
+                assert(target_insn);
+                assert(!target_bb);                     
                 retval.insert(fall_through_va);
             }
         } else {
-            retval.insert(fall_through_va); /*true 99% of the time*/
+            retval.insert(fall_through_va);             // most calls may return, so assume this one can
         }
     }
 
@@ -420,25 +525,16 @@ Partitioner::pops_return_address(rose_addr_t va)
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), orig_retaddr, policy.true_());
         Semantics semantics(policy);
 
-#if 0
-        fputs("Partitioner::pops_return_address:\n", stderr);
-#endif
         try {
             for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 if (!insn) return false;
                 if (insn==last_insn && insn->get_kind()==x86_ret) break;
                 semantics.processInstruction(insn);
-#if 0
-                std::ostringstream s;
-                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
-                  <<policy.get_state()
-                fputs(s.str().c_str(), stderr);
-#endif
             }
             on_stack = policy.on_stack(orig_retaddr);
-            if (!on_stack && debug)
-                fprintf(debug, "[B%08"PRIx64"#%zu discards return address]", va, bb->insns.size());
+            if (!on_stack)
+                mlog[TRACE] <<"[B" <<addrToString(va) <<"#" <<bb->insns.size() <<" discards return address]";
         } catch (const Semantics::Exception&) {
             /*void*/
         } catch (const Policy::Exception&) {
@@ -464,7 +560,7 @@ Partitioner::pops_return_address(rose_addr_t va)
 rose_addr_t
 Partitioner::BasicBlock::address() const
 {
-    assert(!insns.empty());
+    ASSERT_forbid(insns.empty());
     return insns.front()->get_address();
 }
 
@@ -473,7 +569,7 @@ Partitioner::BasicBlock::address() const
 rose_addr_t
 Partitioner::DataBlock::address() const
 {
-    assert(!nodes.empty());
+    ASSERT_forbid(nodes.empty());
     return nodes.front()->get_address();
 }
 
@@ -494,7 +590,7 @@ Partitioner::effective_function(DataBlock *dblock)
 Partitioner::Instruction *
 Partitioner::BasicBlock::last_insn() const
 {
-    assert(insns.size()>0);
+    ASSERT_forbid(insns.empty());
     return insns.back();
 }
 
@@ -568,15 +664,19 @@ Partitioner::Function::promote_may_return(SgAsmFunction::MayReturn new_value) {
 }
 
 void
-Partitioner::Function::show_properties(FILE *debug) const
+Partitioner::Function::show_properties(std::ostream &o) const
 {
-    if (debug) {
-        std::string may_return_str = stringifySgAsmFunctionMayReturn(get_may_return(), "RET_");
-        for (size_t i=0; i<may_return_str.size(); ++i)
-            may_return_str[i] = tolower(may_return_str[i]);
-        fprintf(debug, "{nbblocks=%zu, ndblocks=%zu, may-return=%s}",
-                basic_blocks.size(), data_blocks.size(), may_return_str.c_str());
-    }
+    std::string may_return_str = stringifySgAsmFunctionMayReturn(get_may_return(), "RET_");
+    for (size_t i=0; i<may_return_str.size(); ++i)
+        may_return_str[i] = tolower(may_return_str[i]);
+    o <<"{nbblocks=" <<basic_blocks.size() <<", ndblocks=" <<data_blocks.size() <<", " <<may_return_str;
+}
+
+Partitioner::BasicBlock *
+Partitioner::Function::entry_basic_block() const
+{
+    BasicBlocks::const_iterator bi=basic_blocks.find(entry_va);
+    return bi==basic_blocks.end() ? NULL : bi->second;
 }
 
 /* Return partitioner to initial state */
@@ -658,18 +758,18 @@ Partitioner::load_config(const std::string &filename) {
 void
 Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 {
-    assert(bb);
-    assert(bb==find_bb_containing(va));
+    ASSERT_not_null(bb);
+    ASSERT_require(bb==find_bb_containing(va));
 
     /* Find the cut point in the instruction vector. I.e., the first instruction to remove from the vector. */
     InstructionVector::iterator cut = bb->insns.begin();
     while (cut!=bb->insns.end() && (*cut)->get_address()!=va) ++cut;
-    assert(cut!=bb->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
+    ASSERT_require(cut!=bb->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
 
     /* Remove instructions (from the cut point and beyond) and all the data blocks. */
     for (InstructionVector::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
         Instruction *insn = *ii;
-        assert(insn->bblock==bb);
+        ASSERT_require(insn->bblock==bb);
         insn->bblock = NULL;
     }
     if (cut!=bb->insns.end()) {
@@ -682,9 +782,9 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 void
 Partitioner::append(BasicBlock* bb, Instruction* insn)
 {
-    assert(bb);
-    assert(insn);
-    assert(NULL==insn->bblock); /* insn must not have already belonged to a basic block */
+    ASSERT_not_null(bb);
+    ASSERT_not_null(insn);
+    ASSERT_require2(NULL==insn->bblock, "instruction must not have already belonged to a basic block");
     insn->bblock = bb;
     bb->insns.push_back(insn);
 }
@@ -701,8 +801,8 @@ Partitioner::append(BasicBlock* bb, Instruction* insn)
 void
 Partitioner::append(BasicBlock *bb, DataBlock *db, unsigned reason)
 {
-    assert(bb!=NULL);
-    assert(db!=NULL);
+    ASSERT_not_null(bb);
+    ASSERT_not_null(db);
     db->reason |= reason;
 
     if (db->basic_block!=NULL)
@@ -726,8 +826,8 @@ Partitioner::append(BasicBlock *bb, DataBlock *db, unsigned reason)
 void
 Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=false*/)
 {
-    assert(f);
-    assert(bb);
+    ASSERT_not_null(f);
+    ASSERT_not_null(bb);
 
     if (keep)
         f->heads.insert(bb->address());
@@ -736,7 +836,7 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
     if (bb->function==f)
         return;
 
-    assert(bb->function==NULL);
+    ASSERT_require(bb->function==NULL);
     bb->function = f;
     f->basic_blocks[bb->address()] = bb;
 
@@ -763,8 +863,8 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
 void
 Partitioner::append(Function *func, DataBlock *block, unsigned reason, bool force)
 {
-    assert(func);
-    assert(block);
+    ASSERT_not_null(func);
+    ASSERT_not_null(block);
 
     if (force) {
         if (block->function)
@@ -777,7 +877,7 @@ Partitioner::append(Function *func, DataBlock *block, unsigned reason, bool forc
     if (block->function==func)
         return;
 
-    assert(block->function==NULL);
+    ASSERT_require(block->function==NULL);
     block->function = func;
     func->data_blocks[block->address()] = block;
 }
@@ -787,9 +887,9 @@ Partitioner::append(Function *func, DataBlock *block, unsigned reason, bool forc
 void
 Partitioner::remove(Function* f, BasicBlock* bb)
 {
-    assert(f);
-    assert(bb);
-    assert(bb->function==f);
+    ASSERT_not_null(f);
+    ASSERT_not_null(bb);
+    ASSERT_require(bb->function==f);
     bb->function = NULL;
     f->basic_blocks.erase(bb->address());
 }
@@ -800,9 +900,9 @@ Partitioner::remove(Function* f, BasicBlock* bb)
 void
 Partitioner::remove(Function *f, DataBlock *db)
 {
-    assert(f);
-    assert(db);
-    assert(db->function==f);
+    ASSERT_not_null(f);
+    ASSERT_not_null(db);
+    ASSERT_require(db->function==f);
     db->function = NULL;
     f->data_blocks.erase(db->address());
 }
@@ -812,7 +912,7 @@ Partitioner::remove(Function *f, DataBlock *db)
 void
 Partitioner::remove(BasicBlock *bb, DataBlock *db)
 {
-    assert(bb!=NULL);
+    ASSERT_not_null(bb);
     if (db && db->basic_block==bb) {
         bb->data_blocks.erase(db);
         db->basic_block = NULL;
@@ -845,12 +945,12 @@ Partitioner::BasicBlock *
 Partitioner::discard(BasicBlock *bb)
 {
     if (bb) {
-        assert(NULL==bb->function);
+        ASSERT_require(NULL==bb->function);
 
         /* Remove instructions from the block, returning them to the (implied) list of free instructions. */
         for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             Instruction *insn = *ii;
-            assert(insn->bblock==bb);
+            ASSERT_require(insn->bblock==bb);
             insn->bblock = NULL;
         }
 
@@ -908,6 +1008,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         return NULL;
     if (!create || insn->bblock!=NULL)
         return insn->bblock;
+    update_progress();
     BasicBlock *bb = insn->bblock;
     if (!bb) {
         bb = new BasicBlock;
@@ -958,14 +1059,13 @@ Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
         return bb;
     if (!create)
         return NULL;
-    if (debug)
-        fprintf(debug, "[split from B%08"PRIx64"#%zu]", bb->address(), bb->insns.size());
+    mlog[TRACE] <<"[split from B" <<addrToString(bb->address()) <<"#" <<bb->insns.size() <<"]";
     if (bb->function!=NULL)
         bb->function->pending = true;
     truncate(bb, va);
     bb = find_bb_containing(va);
-    assert(bb!=NULL);
-    assert(va==bb->address());
+    ASSERT_not_null(bb);
+    ASSERT_require(va==bb->address());
     return bb;
 }
 
@@ -978,10 +1078,10 @@ Partitioner::canonic_block(rose_addr_t va)
     for (size_t i=0; i<100; i++) {
         BasicBlock *bb = find_bb_starting(va, false);
         if (!bb || !bb->cache.alias_for) return va;
-        if (debug) fprintf(debug, "[B%08"PRIx64"->B%08"PRIx64"]", va, bb->cache.alias_for);
+        mlog[TRACE] <<"[B" <<addrToString(va) <<"->B" <<addrToString(bb->cache.alias_for) <<"]";
         va = bb->cache.alias_for;
     }
-    assert(!"possible alias loop");
+    ASSERT_not_reachable("possible alias loop");
     return va;
 }
 
@@ -1005,7 +1105,7 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
         functions[entry_va] = f;
     } else {
         f = fi->second;
-        assert(f->entry_va==entry_va);
+        ASSERT_require(f->entry_va==entry_va);
         if (reasons & SgAsmFunction::FUNC_MISCMASK)
             f->reason &= ~SgAsmFunction::FUNC_MISCMASK;
         f->reason |= reasons;
@@ -1045,45 +1145,44 @@ Partitioner::mark_ipd_configuration()
             /* "Execute" the program that will detect successors. We do this by interpreting the basic block to initialize
              * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
              * program, extracting return values from memory, and unloading the program. */
-            bool debug = false;
             char block_name_str[64];
             sprintf(block_name_str, "B%08"PRIx64, va);
             std::string block_name = block_name_str;
-            if (debug) fprintf(stderr, "running successors program for %s\n", block_name_str);
+            mlog[DEBUG] << "running successors program for " <<block_name_str <<"\n";
 
             // FIXME: Use a copy (COW) version of the map so we don't need to modify the real map and so that the simulated
             // program can't accidentally modify the stuff being disassembled. [RPM 2012-05-07]
             MemoryMap *map = get_map();
-            assert(map!=NULL);
+            ASSERT_not_null(map);
             typedef PartialSymbolicSemantics::Policy<> Policy;
             typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);
             Semantics semantics(policy);
 
-            if (debug) fprintf(stderr, "  running semantics for the basic block...\n");
+            mlog[DEBUG] <<"  running semantics for the basic block...\n";
             for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
-                assert(insn!=NULL);
+                ASSERT_not_null(insn);
                 semantics.processInstruction(insn);
             }
 
             /* Load the program. Keep at least one unmapped byte between the program text, stack, and svec areas in order to
              * help with debugging. */
-            if (debug) fprintf(stderr, "  loading the program...\n");
+            mlog[DEBUG] <<"  loading the program...\n";
 
             /* Load the instructions to execute */
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
             MemoryMap::Segment text_sgmt(MemoryMap::ExternBuffer::create(&(bconf->sucs_program[0]), bconf->sucs_program.size()),
                                          0, MemoryMap::MM_PROT_RX, block_name + " successors program text");
-            map->insert(Extent(text_va, bconf->sucs_program.size()), text_sgmt);
+            map->insert(AddressInterval::baseSize(text_va, bconf->sucs_program.size()), text_sgmt);
 
             /* Create a stack */
             static const size_t stack_size = 8192;
             rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
             MemoryMap::Segment stack_sgmt(MemoryMap::AnonymousBuffer::create(stack_size), 0,
                                           MemoryMap::MM_PROT_RW, block_name + " successors stack");
-            map->insert(Extent(stack_va, stack_size), stack_sgmt);
+            map->insert(AddressInterval::baseSize(stack_va, stack_size), stack_sgmt);
             rose_addr_t stack_ptr = stack_va + stack_size;
 
             /* Create an area for the returned vector of successors */
@@ -1091,20 +1190,20 @@ Partitioner::mark_ipd_configuration()
             rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
             MemoryMap::Segment svec_sgmt(MemoryMap::AnonymousBuffer::create(svec_size), 0,
                                          MemoryMap::MM_PROT_RW, block_name + " successors vector");
-            map->insert(Extent(svec_va, svec_size), svec_sgmt);
+            map->insert(AddressInterval::baseSize(svec_va, svec_size), svec_sgmt);
 
             /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
              * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
              * We'll use the first byte past the end of the successor program, which gives the added benefit that the
              * successor program doesn't actually have to even return -- it can just fall off the end. */
             rose_addr_t return_va = text_va + bconf->sucs_program.size();
-            if (debug) {
-                fprintf(stderr, "    memory map after program is loaded:\n");
-                map->dump(stderr, "      ");
+            if (mlog[DEBUG]) {
+                mlog[DEBUG] <<"    memory map after program is loaded:\n";
+                map->dump(mlog[DEBUG], "      ");
             }
 
             /* Push arguments onto the stack in reverse order. */
-            if (debug) fprintf(stderr, "  setting up the call frame...\n");
+            mlog[DEBUG] <<"  setting up the call frame...\n";
 
             /* old stack pointer */
             stack_ptr -= 4;
@@ -1141,48 +1240,48 @@ Partitioner::mark_ipd_configuration()
             policy.writeRegister("esp", policy.number<32>(stack_ptr));
 
             /* Interpret the program */
-            if (debug) fprintf(stderr, "  running the program...\n");
+            mlog[DEBUG] <<"  running the program...\n";
             Disassembler *disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
-            assert(disassembler!=NULL);
+            ASSERT_not_null(disassembler);
             policy.writeRegister("eip", policy.number<32>(text_va));
             while (1) {
                 rose_addr_t ip = policy.readRegister<32>("eip").known_value();
                 if (ip==return_va) break;
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
-                if (debug) fprintf(stderr, "    0x%08"PRIx64": %s\n", ip, insn?unparseInstruction(insn).c_str():"<null>");
-                assert(insn!=NULL);
+                mlog[DEBUG] <<"    " <<addrToString(ip) <<": " <<(insn?unparseInstruction(insn):std::string("<null>")) <<"\n";
+                ASSERT_not_null(insn);
                 semantics.processInstruction(insn);
-                assert(policy.readRegister<32>("eip").is_known());
+                ASSERT_require(policy.readRegister<32>("eip").is_known());
                 SageInterface::deleteAST(insn);
             }
 
             /* Extract the list of successors. The number of successors is the first element of the list. */
-            if (debug) fprintf(stderr, "  extracting program return values...\n");
+            mlog[DEBUG] <<"  extracting program return values...\n";
             PartialSymbolicSemantics::ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va),
                                                                                   policy.true_());
-            assert(nsucs.is_known());
-            if (debug) fprintf(stderr, "    number of successors: %"PRId64"\n", nsucs.known_value());
-            assert(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
+            ASSERT_require(nsucs.is_known());
+            mlog[DEBUG] <<"    number of successors: " <<nsucs.known_value() <<"\n";
+            ASSERT_require(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
             for (size_t i=0; i<nsucs.known_value(); i++) {
                 PartialSymbolicSemantics::ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss,
                                                                                        policy.number<32>(svec_va+4+i*4),
                                                                                        policy.true_());
                 if (suc_va.is_known()) {
-                    if (debug) fprintf(stderr, "    #%zu: 0x%08"PRIx64"\n", i, suc_va.known_value());
+                    mlog[DEBUG] <<"    #" <<i <<": " <<addrToString(suc_va.known_value()) <<"\n";
                     bb->cache.sucs.insert(suc_va.known_value());
                 } else {
-                    if (debug) fprintf(stderr, "    #%zu: unknown\n", i);
+                    mlog[DEBUG] <<"    #" <<i <<": unknown\n";
                     bb->cache.sucs_complete = false;
                 }
             }
 
             /* Unmap the program */
-            if (debug) fprintf(stderr, "  unmapping the program...\n");
+            mlog[DEBUG] <<"  unmapping the program...\n";
             map->erase(text_sgmt);
             map->erase(stack_sgmt);
             map->erase(svec_sgmt);
 
-            if (debug) fprintf(stderr, "  done.\n");
+            mlog[DEBUG] <<"  done.\n";
         }
     }
 }
@@ -1191,7 +1290,15 @@ Partitioner::mark_ipd_configuration()
 void
 Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
 {
+    assert(fhdr!=NULL);
     SgRVAList entries = fhdr->get_entry_rvas();
+
+    // Libraries don't have entry addresses
+    if ((entries.empty() || (1==entries.size() && 0==entries[0].get_rva())) &&
+        SgAsmExecutableFileFormat::PURPOSE_LIBRARY==fhdr->get_exec_format()->get_purpose()) {
+        return;
+    }
+
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
         if (find_instruction(entry_va))
@@ -1261,7 +1368,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         if (!insn_x86) continue;
 
-        rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
+        rose_addr_t gotplt_va = get_indirection_addr(insn_x86, elf->get_base_va()+gotplt->get_mapped_preferred_rva());
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size()) {
             continue; /* jump is not indirect through the .got.plt section */
@@ -1328,13 +1435,21 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
             if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
                 symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
                 symbol->get_value()!=0) {
-                rose_addr_t value = symbol->get_value();
-                if (find_instruction(value))
-                    add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
-
-                /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
-                 * the value is used directly (the above code handled that case). */
+                rose_addr_t value = fhdr->get_base_va() + symbol->get_value();
                 SgAsmGenericSection *section = symbol->get_bound();
+
+                // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
+                // different address than it expected to be mapped, then adjust the symbol's value by the same amount.
+                rose_addr_t va_1 = value;
+                if (section!=NULL && section->is_mapped() &&
+                    section->get_mapped_preferred_va()!=section->get_mapped_actual_va()) {
+                    va_1 += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                }
+                if (find_instruction(va_1))
+                    add_function(va_1, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
+
+                // Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
+                // the value is used directly (the above code handled that case). */
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_mapped_actual_va();
                 if (find_instruction(value))
@@ -1344,7 +1459,24 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
     }
 }
 
-/* Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
+/* Adds PE exports as function entry points. */
+void
+Partitioner::mark_export_entries(SgAsmGenericHeader *fhdr)
+{
+    SgAsmGenericSectionList *sections = fhdr->get_sections();
+    for (size_t i=0; i<sections->get_sections().size(); ++i) {
+        if (SgAsmPEExportSection *export_section = isSgAsmPEExportSection(sections->get_sections()[i])) {
+            const SgAsmPEExportEntryPtrList &exports = export_section->get_exports()->get_exports();
+            for (SgAsmPEExportEntryPtrList::const_iterator ei=exports.begin(); ei!=exports.end(); ++ei) {
+                rose_addr_t va = (*ei)->get_export_rva().get_va();
+                if (find_instruction(va))
+                    add_function(va, SgAsmFunction::FUNC_EXPORT, (*ei)->get_name()->get_string());
+            }
+        }
+    }
+}
+
+/* Tries to match x86 "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1359,12 +1491,12 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=2)
             break;
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_di)
             break;
-        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        rre = isSgAsmRegisterReferenceExpression(opands[1]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_di)
@@ -1383,7 +1515,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=1)
             return insns.end();
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
@@ -1402,12 +1534,12 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
         if (opands.size()!=2)
             return insns.end();
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
             return insns.end();
-        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        rre = isSgAsmRegisterReferenceExpression(opands[1]);
         if (!rre ||
             rre->get_descriptor().get_major()!=x86_regclass_gpr ||
             rre->get_descriptor().get_minor()!=x86_gpr_sp)
@@ -1420,7 +1552,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
 }
 
 #if 0 /*commented out in Partitioner::mark_func_patterns()*/
-/* Tries to match "nop;nop;nop" followed by something that's not a nop. */
+/* Tries to match x86 "nop;nop;nop" followed by something that's not a nop. */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1450,7 +1582,7 @@ Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterato
 #endif
 
 #if 0 /* commented out in Partitioner::mark_func_patterns() */
-/* Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop */
+/* Tries to match x86 "leave;ret" followed by one or more "nop" followed by a non-nop */
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
@@ -1490,17 +1622,138 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 }
 #endif
 
-/** Seeds functions according to instruction patterns.  Note that this pattern matcher only looks at existing instructions--it
- *  does not actively disassemble new instructions.  In other words, this matcher is intended mostly for passive-mode
- *  partitioners where the disassembler has already disassembled everything it can. */
+// class method: Matches an x86 "ENTER xxxx, 0" instruction.
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern4(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(first->second);
+    if (!insn || insn->get_kind()!=x86_enter)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (args.size()!=2)
+        return insns.end();
+    SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
+    if (!arg || 0!=arg->get_absoluteValue())
+        return insns.end();
+
+    for (size_t i=0; i<insn->get_size(); ++i)
+        exclude.insert(insn->get_address() + i);
+    return first;
+}
+
+// class method: tries to match m68k "link.w a6, IMM16" where IMM16 is zero or negative
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern5(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_link)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    if (args.size()!=2)
+        return insns.end();
+    SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+    SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[1]);
+    if (!rre || !ival)
+        return insns.end();
+    RegisterDescriptor reg = rre->get_descriptor();
+    if (reg.get_major()!=m68k_regclass_addr || reg.get_minor()!=6/*link register*/)
+        return insns.end();
+    int64_t displacement = ival->get_signedValue();
+    if (displacement>0)
+        return insns.end();
+
+    for (size_t i=0; i<insn->get_size(); ++i)
+        exclude.insert(insn->get_address() + i);
+    return first;
+}
+
+// class method: tries to match m68k instructions: "rts; (trapf)?; lea.l [a7-X], a7"
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern6(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
+{
+    // rts
+    SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_rts)
+        return insns.end();
+    ++first;
+
+    // trapf (padding)
+    insn = isSgAsmM68kInstruction(first->second);
+    if (insn && insn->get_kind()==m68k_trapf)
+        ++first;
+
+    // leal. [a7-X], a7
+    insn = isSgAsmM68kInstruction(first->second);
+    if (!insn || insn->get_kind()!=m68k_lea || insn->get_operandList()->get_operands().size()!=2)
+        return insns.end();
+    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+    SgAsmBinaryAdd *sum = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
+    SgAsmDirectRegisterExpression *reg1 = sum ? isSgAsmDirectRegisterExpression(sum->get_lhs()) : NULL;
+    SgAsmIntegerValueExpression *addend = sum ? isSgAsmIntegerValueExpression(sum->get_rhs()) : NULL;
+    SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(args[1]);
+    if (!reg1 || reg1->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
+        !reg2 || reg2->get_descriptor()!=RegisterDescriptor(m68k_regclass_addr, 7, 0, 32) ||
+        !addend || addend->get_signedValue()>0 || addend->get_signedValue()<4096 /*arbitrary*/)
+        return insns.end();
+
+    return first;                                       // the LEA instruction is the start of a function
+}
+
+/** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
+ *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
+ *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
+ *  works whether or not instructions are available. */
 void
 Partitioner::mark_func_patterns()
 {
+    // Create functions when we see certain patterns of bytes
+    struct T1: ByteRangeCallback {
+        Partitioner *p;
+        T1(Partitioner *p): p(p) {}
+        virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+            ASSERT_not_null(args.restrict_map);
+            uint8_t buf[4096];
+            if (enabled) {
+                rose_addr_t va = args.range.first();
+                while (va<=args.range.last()) {
+                    size_t nbytes = std::min(args.range.last()+1-va, (rose_addr_t)sizeof buf);
+                    size_t nread = args.restrict_map->read(buf, va, nbytes);
+                    for (size_t i=0; i<nread; ++i) {
+                        if (i+5<nread &&                                // x86:
+                            0x8b==buf[i+0] && 0xff==buf[i+1] &&         //   mov edi, edi
+                            0x55==buf[i+2] &&                           //   push ebp
+                            0x8b==buf[i+4] && 0xec==buf[i+5]) {         //   mov ebp, esp
+                            p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
+                            i += 4;
+                        } else if (i+3<nread &&                         // x86:
+                                   0x55==buf[i+0] &&                    //   push ebp
+                                   0x8b==buf[i+1] && 0xec==buf[i+2]) {  //   mov ebp, esp
+                            p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
+                            i += 2;
+                        }
+                    }
+                    va += nread;
+                }
+            }
+            return enabled;
+        }
+    } t1(this);
+    MemoryMap *mm = get_map();
+    if (mm)
+        scan_unassigned_bytes(&t1, mm);
+
+    // Create functions when we see certain patterns of instructions. Note that this will only work if we've already
+    // disassembled the instructions.
     Disassembler::AddressSet exclude;
     InstructionMap::const_iterator found;
 
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        if (exclude.find(ii->first)==exclude.end() && (found=pattern1(insns, ii, exclude))!=insns.end())
+        if (exclude.find(ii->first)==exclude.end() &&
+            ((found=pattern1(insns, ii, exclude))!=insns.end() ||
+             (found=pattern4(insns, ii, exclude))!=insns.end() ||
+             (found=pattern5(insns, ii, exclude))!=insns.end() ||
+             (found=pattern6(insns, ii, exclude))!=insns.end()))
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
@@ -1527,7 +1780,7 @@ Partitioner::mark_call_insns()
         std::vector<SgAsmInstruction*> iv;
         iv.push_back(ii->second->node);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->node->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
+        if (ii->second->node->is_function_call(iv, &target_va, NULL) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
@@ -1600,8 +1853,8 @@ Partitioner::scan_interfunc_insns(InsnRangeCallbacks &cblist)
                     return true;
                 BasicBlock *bb_lt = args.partitioner->find_bb_containing(args.insn_prev->get_address(), false);
                 BasicBlock *bb_rt = args.partitioner->find_bb_containing(args.insn_end->get_address(), false);
-                assert(bb_lt && bb_lt->function); // because we're invoked from scan_unassigned_insns
-                assert(bb_rt && bb_rt->function); // ditto
+                ASSERT_require(bb_lt && bb_lt->function); // because we're invoked from scan_unassigned_insns
+                ASSERT_require(bb_rt && bb_rt->function); // ditto
                 enabled = bb_lt->function != bb_rt->function;
             }
             return enabled;
@@ -1627,8 +1880,8 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
                     return false;
                 BasicBlock *bb_lt = args.partitioner->find_bb_containing(args.insn_prev->get_address(), false);
                 BasicBlock *bb_rt = args.partitioner->find_bb_containing(args.insn_end->get_address(), false);
-                assert(bb_lt && bb_lt->function); // because we're invoked from scan_unassigned_insns
-                assert(bb_rt && bb_rt->function); // ditto
+                ASSERT_require(bb_lt && bb_lt->function); // because we're invoked from scan_unassigned_insns
+                ASSERT_require(bb_rt && bb_rt->function); // ditto
                 enabled = bb_lt->function == bb_rt->function;
             }
             return enabled;
@@ -1652,8 +1905,12 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict_map)
-        unassigned.erase_ranges(restrict_map->va_extents().invert<ExtentMap>());
+    if (restrict_map) {
+        AddressIntervalSet nonmappedAddrs = restrict_map->va_extents();
+        nonmappedAddrs.invert(AddressInterval::hull(0, (rose_addr_t)(-1)));
+        ExtentMap toRemove = toExtentMap(nonmappedAddrs);
+        unassigned.erase_ranges(toRemove);
+    }
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
@@ -1729,6 +1986,8 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
 bool
 Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
 {
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::FindDataPadding");
     if (!enabled)
         return false;
     Partitioner *p = args.partitioner;
@@ -1750,7 +2009,7 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
     if (prev==args.ranges.end())
         return true;
     Function *func = prev->second.get();
-    assert(func!=NULL);
+    ASSERT_not_null(func);
 
     /* Do we need to be contiguous with a following function?  This only checks whether the incoming range ends at the
      * beginning of a function.  We'll check below whether a padding sequence also ends at the end of this range. */
@@ -1783,7 +2042,7 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
             return true;
         for (size_t pi=0; pi<patterns.size(); ++pi) {
             size_t psize = patterns[pi].size();
-            assert(psize>0);
+            ASSERT_require(psize>0);
             size_t nrep = 0;
             for (size_t offset=range.first()-args.range.first();
                  offset+psize<=buf.size() && nrep<maximum_nrep;
@@ -1794,14 +2053,14 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
             if (nrep>0 && nrep>=minimum_nrep && (!ends_contiguously || nrep*psize==range.size())) {
                 /* Found a matching repeated pattern.  Add data block to function. */
                 DataBlock *dblock = p->find_db_starting(range.first(), nrep*psize);
-                assert(dblock!=NULL);
+                ASSERT_not_null(dblock);
                 p->append(func, dblock, SgAsmBlock::BLK_PADDING);
                 ++nblocks;
                 ++nfound;
-                if (p->debug) {
+                if (trace) {
                     if (1==nblocks)
-                        fprintf(p->debug, "Partitioner::FindDataPadding for F%08"PRIx64": added", func->entry_va);
-                    fprintf(p->debug, " D%08"PRIx64, range.first());
+                        trace <<"FindDataPadding for F" <<addrToString(func->entry_va) <<": added";
+                    trace <<" D" <<addrToString(range.first());
                 }
                 range.first(range.first()+nrep*psize-1); // will be incremented after break
                 break;
@@ -1810,8 +2069,8 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
         if (!range.empty())
             range.first(range.first()+1);
     }
-    if (p->debug && nblocks>0)
-        fprintf(p->debug, "\n");
+    if (trace && nblocks>0)
+        trace <<"\n";
 
     return true;
 }
@@ -1830,7 +2089,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
     if (prev==args.ranges.end())
         return true;
     Function *func = prev->second.get();
-    assert(func!=NULL);
+    ASSERT_not_null(func);
 
     /* Don't append data to non-functions. */
     if (0!=(func->reason & excluded_reasons))
@@ -1848,12 +2107,11 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
 
     /* Create a data block and add it to the previous function. */
     DataBlock *dblock = p->find_db_starting(args.range.first(), args.range.size());
-    assert(dblock!=NULL);
+    ASSERT_not_null(dblock);
     p->append(func, dblock, SgAsmBlock::BLK_FINDDATA);
     ++nfound;
-    if (p->debug)
-        fprintf(p->debug, "Partitioner::FindData: for F%08"PRIx64": added D%08"PRIx64"\n",
-                func->entry_va, args.range.first());
+    mlog[TRACE] <<"FindData: for F" <<addrToString(func->entry_va) <<": added D" <<addrToString(args.range.first()) <<"\n";
+
     return true;
 }
 
@@ -1862,13 +2120,16 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
 bool
 Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 {
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::FindInsnPadding");
+
     if (!enabled)
         return false;
     if (!args.insn_prev)
         return true;
-    assert(args.ninsns>0);
-    assert(args.insn_prev!=NULL);
-    assert(args.insn_begin!=NULL);
+    ASSERT_require(args.ninsns>0);
+    ASSERT_not_null(args.insn_prev);
+    ASSERT_not_null(args.insn_begin);
 
     if (begins_contiguously &&
         args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_size())
@@ -1880,7 +2141,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
     Function *prev_func = NULL;
     {
         BasicBlock *last_block = p->find_bb_containing(args.insn_prev->get_address(), false);
-        assert(last_block!=NULL);
+        ASSERT_not_null(last_block);
         prev_func = last_block->function;
     }
 
@@ -1893,7 +2154,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 
         /* Does this instruction match? */
         bool matches = false;
-        assert(insn!=NULL); // callback is being invoked over instructions
+        ASSERT_not_null(insn); // callback is being invoked over instructions
         BasicBlock *bb = p->find_bb_containing(va, false);
         if (bb && bb->function)
             break; // insn is already assigned to a function
@@ -1950,37 +2211,32 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
          * entry point.  This is especially true for padding like x86 INT3 instructions, which have no known CFG successors and
          * occupy singleton basic blocks. */
         ++nfound;
-        assert(!padding.empty());
+        ASSERT_forbid(padding.empty());
         if (add_as_data) {
-            assert(prev_func!=NULL);
+            ASSERT_not_null(prev_func);
             rose_addr_t begin_va = padding.front()->get_address();
             rose_addr_t end_va = padding.back()->get_address() + padding.back()->get_size();
-            assert(end_va>begin_va);
+            ASSERT_require(end_va>begin_va);
             size_t size = end_va - begin_va;
             DataBlock *dblock = p->find_db_starting(begin_va, size);
-            assert(dblock!=NULL);
+            ASSERT_not_null(dblock);
             p->append(prev_func, dblock, SgAsmBlock::BLK_PADDING);
             for (size_t i=0; i<padding.size(); i++)
                 p->discard(padding[i]);
-            if (p->debug)
-                fprintf(p->debug, "Partitioner::FindInsnPadding: for F%08"PRIx64": added D%08"PRIx64"\n",
-                        prev_func->entry_va, begin_va);
+            trace <<"for F" <<addrToString(prev_func->entry_va) <<": added D" <<addrToString(begin_va) <<"\n";
         } else {
             Function *new_func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_PADDING);
             p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
             p->find_bb_starting(va); // split last block if necessary
-            if (p->debug)
-                fprintf(p->debug, "Partitioner::FindInsnPadding: for F%08"PRIx64": added", new_func->entry_va);
+            trace <<"for F" <<addrToString(new_func->entry_va) <<": added";
             for (size_t i=0; i<padding.size(); i++) {
                 BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
                 if (bb && !bb->function) {
                     p->append(new_func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
-                    if (p->debug)
-                        fprintf(p->debug, " B%08"PRIx64"#%zu", bb->address(), bb->insns.size());
+                    trace <<" B" <<addrToString(bb->address()) <<"#" <<bb->insns.size();
                 }
             }
-            if (p->debug)
-                fprintf(p->debug, "\n");
+            trace <<"\n";
         }
 
         retval = padding.size()!=args.ninsns; // allow other callbacks to run only if we didn't suck up all the instructions
@@ -2023,7 +2279,7 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
     }
 
     SgUnsignedCharList raw_bytes = map->read(start_va, size, MemoryMap::MM_PROT_NONE);
-    assert(raw_bytes.size()==size);
+    ASSERT_require(raw_bytes.size()==size);
     SgAsmStaticData *datum = new SgAsmStaticData;
     datum->set_address(start_va);
     datum->set_raw_bytes(raw_bytes);
@@ -2128,7 +2384,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
     rose_addr_t next_va = 0;
     for (size_t i=0; i<args.ninsns; i++, va=next_va) {
         Instruction *insn = p->find_instruction(va);
-        assert(insn);
+        ASSERT_not_null(insn);
         next_va = va + insn->get_size();
 
         /* Instruction must be an x86 JMP */
@@ -2159,14 +2415,13 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
          * we already checked that its only successor is another function. */
         if (!bb)
             bb = p->find_bb_starting(va);
-        assert(bb!=NULL);
-        assert(1==bb->insns.size());
+        ASSERT_not_null(bb);
+        ASSERT_require(1==bb->insns.size());
         Function *thunk = p->add_function(va, SgAsmFunction::FUNC_THUNK);
         p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
         ++nfound;
 
-        if (p->debug)
-            fprintf(p->debug, "Partitioner::FindThunks: found F%08"PRIx64"\n", va);
+        mlog[TRACE] <<"FindThunks: found F" <<addrToString(va) <<"\n";
     }
 
     return true;
@@ -2204,8 +2459,7 @@ Partitioner::FindInterPadFunctions::operator()(bool enabled, const Args &args)
     p->append(new_func, next_dblock, SgAsmBlock::BLK_PADDING, true/*force*/);
     ++nfound;
 
-    if (p->debug)
-        fprintf(p->debug, "Partitioner::FindInterPadFunctions: added F%08"PRIx64"\n", new_func->entry_va);
+    mlog[TRACE] <<"FindInterPadFunctions: added F" <<addrToString(new_func->entry_va) <<"\n";
     return true;
 }
 
@@ -2243,7 +2497,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
             }
             if (!bb)
                 bb = p->find_bb_starting(va);
-            assert(bb!=NULL);
+            ASSERT_not_null(bb);
 
             if (validate_targets) {
                 /* Find successors of the JMP instruction. */
@@ -2279,8 +2533,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
                 BasicBlock *bb = p->find_bb_starting(ii->first);
                 p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
                 ++nfound;
-                if (p->debug)
-                    fprintf(p->debug, "Partitioner::FindThunkTable: thunk F%08"PRIx64"\n", thunk->entry_va);
+                mlog[TRACE] <<"FindThunkTable: thunk F" <<addrToString(thunk->entry_va) <<"\n";
             }
         }
 
@@ -2299,7 +2552,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
 bool
 Partitioner::is_thunk(Function *func)
 {
-    assert(func);
+    ASSERT_not_null(func);
     if (1!=func->basic_blocks.size())
         return false;
 
@@ -2333,6 +2586,9 @@ Partitioner::is_thunk(Function *func)
 bool
 Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
 {
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::FindPostFunctionInsns");
+
     if (!enabled)
         return false;
     if (!args.insn_prev || args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_size())
@@ -2350,12 +2606,12 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
     rose_addr_t va = args.insn_begin->get_address();
     for (size_t i=0; i<args.ninsns; i++) {
         bb = p->find_bb_containing(va);
-        assert(bb!=NULL); // because we know va is an instruction
+        ASSERT_not_null(bb); // because we know va is an instruction
         if (!bb->function) {
-            if (p->debug) {
+            if (trace) {
                 if (0==nadded)
-                    fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                fprintf(p->debug, " B%08"PRIx64"#%zu", bb->address(), bb->insns.size());
+                    trace <<"for F" <<addrToString(func->entry_va) <<": added";
+                trace <<" B" <<addrToString(bb->address()) <<"#" <<bb->insns.size();
             }
             p->append(func, bb, SgAsmBlock::BLK_POSTFUNC, true/*head of CFG subgraph*/);
             func->pending = true;
@@ -2364,11 +2620,11 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
         }
 
         Instruction *insn = p->find_instruction(va);
-        assert(insn!=NULL);
+        ASSERT_not_null(insn);
         va += insn->get_size();
     }
-    if (p->debug && nadded)
-        fprintf(p->debug, "\n");
+    if (nadded)
+        trace <<"\n";
 
     return true;
 }
@@ -2379,14 +2635,8 @@ Partitioner::value_of(SgAsmValueExpression *e)
 {
     if (!e) {
         return 0;
-    } else if (isSgAsmByteValueExpression(e)) {
-        return isSgAsmByteValueExpression(e)->get_value();
-    } else if (isSgAsmWordValueExpression(e)) {
-        return isSgAsmWordValueExpression(e)->get_value();
-    } else if (isSgAsmDoubleWordValueExpression(e)) {
-        return isSgAsmDoubleWordValueExpression(e)->get_value();
-    } else if (isSgAsmQuadWordValueExpression(e)) {
-        return isSgAsmQuadWordValueExpression(e)->get_value();
+    } else if (isSgAsmIntegerValueExpression(e)) {
+        return isSgAsmIntegerValueExpression(e)->get_value();
     } else {
         return 0;
     }
@@ -2394,7 +2644,7 @@ Partitioner::value_of(SgAsmValueExpression *e)
 
 /* class method */
 rose_addr_t
-Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
+Partitioner::get_indirection_addr(SgAsmInstruction *g_insn, rose_addr_t offset)
 {
     rose_addr_t retval = 0;
 
@@ -2411,10 +2661,14 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
     SgAsmExpression *mref_addr = mref->get_address();
     if (isSgAsmBinaryExpression(mref_addr)) {
         SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
-        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
+        SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mref_bin->get_lhs());
         SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
-        if (reg->get_descriptor().get_major()==x86_regclass_ip && val!=NULL) {
-            retval = value_of(val) + insn->get_address() + insn->get_size();
+        if (reg!=NULL && val!=NULL) {
+            if (reg->get_descriptor().get_major()==x86_regclass_ip) {
+                retval = value_of(val) + insn->get_address() + insn->get_size();
+            } else if (reg->get_descriptor().get_major()==x86_regclass_gpr) {
+                retval = value_of(val) + offset;
+            }
         }
     } else if (isSgAsmValueExpression(mref_addr)) {
         retval = value_of(isSgAsmValueExpression(mref_addr));
@@ -2472,8 +2726,8 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
         /* The target in the ".plt" section will be an indirect (through the .got.plt section) jump to the actual dynamically
          * linked function (or to the dynamic linker itself). The .got.plt address is what we're really interested in. */
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
-        assert(insn_x86!=NULL);
-        rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
+        ASSERT_not_null(insn_x86);
+        rose_addr_t gotplt_va = get_indirection_addr(insn_x86, elf->get_base_va() + gotplt->get_mapped_preferred_rva());
 
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
@@ -2489,7 +2743,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
                     SgAsmElfRelocEntry *rel = entries->get_entries()[ei];
                     if (rel->get_r_offset()==gotplt_va) {
                         unsigned long symbol_idx = rel->get_sym();
-                        assert(symbol_idx < symbols->get_symbols().size());
+                        ASSERT_require(symbol_idx < symbols->get_symbols().size());
                         SgAsmElfSymbol *symbol = symbols->get_symbols()[symbol_idx];
                         fi->second->name = symbol->get_name()->get_string() + "@plt";
                     }
@@ -2559,8 +2813,18 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
         if (found==imports.index.end())
             continue;
         func->name = found->second + "@import";
-        if (debug)
-            fprintf(debug, "Partitioner::name_import_entries: F%08"PRIx64": named \"%s\"\n", func->entry_va, func->name.c_str());
+        mlog[TRACE] <<"name_import_entries: F" <<addrToString(func->entry_va) <<": named \"" <<func->name <<"\"\n";
+    }
+}
+
+/** Find the addresses for all PE Import Address Tables. Adds them to Partitioner::pe_iat_extents. */
+void
+Partitioner::find_pe_iat_extents(SgAsmGenericHeader *hdr)
+{
+    SgAsmGenericSectionPtrList iat_sections = hdr->get_sections_by_name("Import Address Table");
+    for (size_t i=0; i<iat_sections.size(); ++i) {
+        if (-1==iat_sections[i]->get_id() && iat_sections[i]->is_mapped())
+            pe_iat_extents.insert(Extent(iat_sections[i]->get_mapped_actual_va(), iat_sections[i]->get_mapped_size()));
     }
 }
 
@@ -2568,16 +2832,15 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    if (debug) {
-        fprintf(debug, "Function reasons referenced by Partitioner debugging output:\n%s",
-                SgAsmFunction::reason_key("  ").c_str());
-    }
+    mlog[TRACE] <<"function reasons referenced by Partitioner debugging output:\n"
+                <<SgAsmFunction::reason_key("  ");
 
     mark_ipd_configuration();   /*seed partitioner based on IPD configuration information*/
 
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
+            find_pe_iat_extents(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_ENTRY_POINT)
                 mark_entry_targets(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_EH_FRAME)
@@ -2586,12 +2849,16 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
                 mark_func_symbols(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_IMPORT)
                 mark_elf_plt_entries(headers[i]);
+            if (func_heuristics & SgAsmFunction::FUNC_EXPORT)
+                mark_export_entries(headers[i]);
         }
     }
     if (func_heuristics & SgAsmFunction::FUNC_PATTERN)
         mark_func_patterns();
     if (func_heuristics & SgAsmFunction::FUNC_CALL_INSN)
         mark_call_insns();
+
+    
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
     if (func_heuristics & SgAsmFunction::FUNC_USERDEF) {
@@ -2631,44 +2898,43 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 void
 Partitioner::discover_first_block(Function *func)
 {
-    if (debug) {
-        fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64" ",
-                SgAsmFunction::reason_str(true, func->reason).c_str(),
-                func->entry_va, func->name.c_str(), func->entry_va);
-    }
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::discover_first_block");
+
+    trace <<"1st block " <<SgAsmFunction::reason_str(true, func->reason)
+          <<" F" <<addrToString(func->entry_va) <<" \"" <<func->name <<"\": B" <<addrToString(func->entry_va) <<" ";
     BasicBlock *bb = find_bb_containing(func->entry_va);
 
     /* If this function's entry block collides with some other function, then truncate that other function's block and
      * subsume part of it into this function. Mark the other function as pending because its block may have new
      * successors now. */
     if (bb && func->entry_va!=bb->address()) {
-        assert(bb->function!=func);
-        if (debug) fprintf(debug, "[split from B%08"PRIx64, bb->address());
+        ASSERT_require(bb->function!=func);
+        trace <<"[split from B" <<addrToString(bb->address());
         if (bb->function) {
-            if (debug) fprintf(debug, " in F%08"PRIx64" \"%s\"", bb->address(), bb->function->name.c_str());
+            trace <<" in F" <<addrToString(bb->address()) <<" \"" <<bb->function->name <<"\"";
             bb->function->pending = true;
         }
-        if (debug) fprintf(debug, "] ");
+        trace <<"] ";
         truncate(bb, func->entry_va);
         bb = find_bb_containing(func->entry_va);
-        assert(bb!=NULL);
-        assert(func->entry_va==bb->address());
+        ASSERT_not_null(bb);
+        ASSERT_require(func->entry_va==bb->address());
     } else if (bb && bb->function!=NULL && bb->function!=func) {
-        if (debug) fprintf(debug, "[removing B%08"PRIx64" from F%08"PRIx64"]", func->entry_va, bb->function->entry_va);
+        trace <<"[removing B" <<addrToString(func->entry_va) <<" from F" <<addrToString(bb->function->entry_va) <<"]";
         bb->function->pending = true;
         remove(bb->function, bb);
     }
 
     if (bb) {
         append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
-        if (debug)
-            fprintf(debug, "#%zu ", bb->insns.size());
-    } else if (debug) {
-        fprintf(debug, "no instruction at function entry address ");
+        trace <<"#" <<bb->insns.size() <<" ";
+    } else {
+        trace <<"no instruction at function entry address ";
     }
-    if (debug) {
-        func->show_properties(debug);
-        fputc('\n', debug);
+    if (trace) {
+        func->show_properties(trace);
+        trace <<"\n";
     }
 }
 
@@ -2679,7 +2945,10 @@ Partitioner::discover_first_block(Function *func)
 void
 Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
 {
-    if (debug) fprintf(debug, " B%08"PRIx64, va);
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::discover_blocks");
+    trace <<" B" <<addrToString(va);
+
     Instruction *insn = find_instruction(va);
     if (!insn) return; /* No instruction at this address. */
     rose_addr_t target_va = NO_TARGET; /*target of function call instructions (e.g., x86 CALL and FARCALL)*/
@@ -2689,20 +2958,20 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
      * previous pass since we would have called discover_first_block() by now for any such functions. */
     Functions::iterator fi = functions.find(va);
     if (fi!=functions.end() && fi->second!=f) {
-        if (debug) fprintf(debug, "[entry \"%s\"]", fi->second->name.c_str());
+        trace <<"[entry \"" <<fi->second->name <<"\"]";
         return;
     }
 
     /* Find basic block at address, creating it if necessary. */
     BasicBlock *bb = find_bb_starting(va);
-    assert(bb!=NULL);
-    if (debug) fprintf(debug, "#%zu", bb->insns.size());
+    ASSERT_not_null(bb);
+    trace <<"#" <<bb->insns.size();
 
     /* If the current function has been somehow marked as pending then we might as well give up discovering its blocks because
      * some of its blocks' successors may have changed.  This can happen, for instance, if the create_bb() called above had to
      * split one of this function's blocks. */
     if (f->pending) {
-        if (debug) fprintf(debug, " abandon");
+        trace <<" abandon";
         throw AbandonFunctionDiscovery();
     }
 
@@ -2715,7 +2984,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
     if (bb->function && bb->function!=f) {
         if (va==bb->function->entry_va) {
             /* This is a call to some other existing function. Do not add it to the current function. */
-            if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
+            trace <<"[entry \"" <<bb->function->name <<"\"]";
         } else {
             /* This block belongs internally to some other function. Since ROSE requires that blocks be owned by exactly one
              * function (the function/block relationship is an edge in the abstract syntax tree), we have to remove this block
@@ -2747,17 +3016,17 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
              *     assume the block in conflict really is in conflict and we'll create a FUNC_GRAPH function. */
             if (functions.find(va)==functions.end() && !bb->function->pending) {
                 add_function(va, SgAsmFunction::FUNC_GRAPH);
-                if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
-            } else if (debug) {
-                fprintf(debug, "[possible conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+                trace <<"[conflict F" <<addrToString(bb->function->entry_va) <<" \"" <<bb->function->name <<"\"]";
+            } else {
+                trace <<"[possible conflict F" <<addrToString(bb->function->entry_va) <<" \"" <<bb->function->name <<"\"]";
             }
             bb->function->pending = f->pending = true;
-            if (debug) fprintf(debug, " abandon");
+            trace <<" abandon";
             throw AbandonFunctionDiscovery();
         }
     } else if ((target_va=call_target(bb))!=NO_TARGET) {
         /* Call to a known target */
-        if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
+        trace <<"[call F" <<addrToString(target_va) <<"]";
 
         append(f, bb, reason);
         BasicBlock *target_bb = find_bb_containing(target_va);
@@ -2804,16 +3073,40 @@ Partitioner::discover_blocks(Function *f, unsigned reason)
         discover_blocks(f, *hi, reason);
 }
 
+bool
+Partitioner::is_pe_dynlink_thunk(Instruction *insn)
+{
+    SgAsmx86Instruction *insn_x86 = insn ? isSgAsmx86Instruction(insn->node) : NULL;
+    if (!insn_x86 || x86_jmp!=insn_x86->get_kind() || insn_x86->get_operandList()->get_operands().size()!=1)
+        return false; // not a thunk: wrong instruction
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
+    SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
+    if (!addr)
+        return false; // not a dynamic linking thunk: wrong addressing mode
+    return pe_iat_extents.contains(Extent(addr->get_absoluteValue(), 4));
+}
+
+bool
+Partitioner::is_pe_dynlink_thunk(BasicBlock *bb)
+{
+    return bb && bb->insns.size()==1 && is_pe_dynlink_thunk(bb->insns.front());
+}
+
+bool
+Partitioner::is_pe_dynlink_thunk(Function *func)
+{
+    return func && func->basic_blocks.size()==1 && is_pe_dynlink_thunk(func->entry_basic_block());
+}
+
 void
 Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 {
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::analyze_cfg");
+    
     for (size_t pass=1; true; pass++) {
-        if (debug) fprintf(debug, "\n========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        progress(debug, "Partitioner: starting %s pass %zu: "
-                 "%zu function%s, %zu insn%s, %zu block%s\n",
-                 stringifySgAsmBlockReason(reason, "BLK_").c_str(), pass,
-                 functions.size(), 1==functions.size()?"":"s", insns.size(), 1==insns.size()?"":"s",
-                 basic_blocks.size(), 1==basic_blocks.size()?"":"s");
+        trace <<"========== Partitioner::analyze_cfg() pass " <<pass <<" ==========\n";
+        update_progress(reason, pass);
 
         /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
@@ -2842,17 +3135,16 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                      *        RET
                      */
                     bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
-                    if (debug) {
-                        fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n",
-                                bb->function->entry_va, bb->address());
-                    }
+                    trace <<"  function F" <<addrToString(bb->function->entry_va)
+                          <<" may return by virtue of call fall-through at B" <<addrToString(bb->address()) <<"\n";
                 }
             } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && succs_complete) {
                 for (Disassembler::AddressSet::iterator si=succs.begin();
                      si!=succs.end() && !bb->function->possible_may_return();
                      ++si) {
-                    if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                        target_bb->function && target_bb->function!=bb->function &&
+                    target_va = *si;
+                    target_bb = target_va!=0 ? find_bb_starting(target_va, false) : NULL;
+                    if (target_bb && target_bb->function && target_bb->function!=bb->function &&
                         target_va==target_bb->function->entry_va && target_bb->function->possible_may_return()) {
                         /* The block bb isn't a function call, but branches to the entry point of another function.  If that
                          * function returns then so does this one.  This handles situations like:
@@ -2866,19 +3158,28 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                          * won't change regardless of whether the "called" function returns (i.e., the return is to the caller
                          * of function_A, not to function_A itself. */
                         bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
-                        if (debug) {
-                            fprintf(debug, "  F%08"PRIx64" may return by virtue of branching to function F%08"PRIx64
-                                    " which may return\n", bb->function->entry_va, target_bb->function->entry_va);
-                        }
+                        trace <<"  F" <<addrToString(bb->function->entry_va)
+                              <<" may return by virtue of branching to function F" <<addrToString(target_bb->function->entry_va)
+                              <<" which may return\n";
                     }
                 }
             } else if (!bb->function->possible_may_return() && !is_function_call(bb, NULL) && !succs_complete) {
                 /* If the basic block's successor is not known, then we must assume that it branches to something that could
                  * return. */
                 bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
-                if (debug) {
-                    fprintf(debug, "  F%08"PRIx64" may return by virtue of incomplete successors\n",
-                            bb->function->entry_va);
+                trace <<"  F" <<addrToString(bb->function->entry_va) <<" may return by virtue of incomplete successors\n";
+            }
+
+            // PE dynamic linking thunks are typically placed in the .text section and consist of an indirect jump through one
+            // of the import address tables.  If we didn't dynamically link in ROSE, then the IATs probably don't hold valid
+            // function addresses, in which case we can't determine if the thunk returns.  Therefore, when this situation
+            // happens, we assume that the imported function returns.
+            if (!bb->function->possible_may_return() && is_pe_dynlink_thunk(bb->function)) {
+                bool invalid_callee_va = !succs_complete;
+                for (Disassembler::AddressSet::iterator si=succs.begin(); !invalid_callee_va && si!=succs.end(); ++si)
+                    invalid_callee_va = NULL==find_instruction(*si);
+                if (invalid_callee_va) {// otherwise we can just analyze the linked-in code
+                    bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                 }
             }
         }
@@ -2888,14 +3189,13 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             Function *func = fi->second;
             if (func->changed_may_return() && func->possible_may_return()) {
-                if (debug)
-                    fprintf(debug, "%s F%08"PRIx64, might_now_return.empty()?"newly returning functions:":"", func->entry_va);
+                trace <<(might_now_return.empty()?"newly returning functions:":"") <<" F" <<addrToString(func->entry_va);
                 might_now_return.insert(func->entry_va);
                 func->commit_may_return();
             }
         }
-        if (debug && !might_now_return.empty())
-            fprintf(debug, "\n");
+        if (!might_now_return.empty())
+            trace <<"\n";
 
         /* If we previously thought a function didn't return, but now we think it might return, we need to mark as pending all
          * callers if the return address in that caller isn't already part of the caller function.   There's no need to do this
@@ -2917,13 +3217,13 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                             BasicBlock *return_bb = find_bb_starting(return_va, false); // do not create the block
                             if (return_bb && return_bb->function!=bb->function) {
                                 bb->function->pending = true;
-                                if (debug) {
+                                if (trace) {
                                     Function *called_func = find_function(*si); // don't call this unless debugging (performance)
-                                    assert(called_func!=NULL);
-                                    fprintf(debug,
-                                            "newreturn %s F%08"PRIx64" \"%s\" returns to B%08"PRIx64" in F%08"PRIx64"\n",
-                                            SgAsmFunction::reason_str(true, called_func->reason).c_str(), called_func->entry_va,
-                                            called_func->name.c_str(), return_bb->address(), bb->function->entry_va);
+                                    ASSERT_not_null(called_func);
+                                    trace <<"newreturn " <<SgAsmFunction::reason_str(true, called_func->reason)
+                                          <<" F" <<addrToString(called_func->entry_va) <<" \"" <<called_func->name <<"\""
+                                          <<" returns to B" <<addrToString(return_bb->address())
+                                          <<" in F" <<addrToString(bb->function->entry_va) <<"\n";
                                 }
                             }
                         }
@@ -2935,7 +3235,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         /* Get a list of functions we need to analyze because they're marked as pending. */
         std::vector<Function*> pending;
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            assert(fi->second->entry_va==fi->first);
+            ASSERT_require(fi->second->entry_va==fi->first);
             if (fi->second->pending) {
                 fi->second->clear_basic_blocks();
                 fi->second->pending = false; /*might be set back to true by discover_blocks() in loop below*/
@@ -2944,8 +3244,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         }
 
         if (pending.size()==0) {
-            if (debug)
-                fprintf(debug, "finished for %s", stringifySgAsmBlockReason(reason, "BLK_").c_str());
+            trace <<"finished for " <<stringifySgAsmBlockReason(reason, "BLK_");
             break;
         }
 
@@ -2955,20 +3254,17 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 
         /* (Re)discover each function's blocks starting with the function entry point */
         for (size_t i=0; i<pending.size(); ++i) {
-            if (debug) {
-                fprintf(debug, "analyzing %s F%08"PRIx64" \"%s\" pass %zu: ",
-                        SgAsmFunction::reason_str(true, pending[i]->reason).c_str(),
-                        pending[i]->entry_va, pending[i]->name.c_str(), pass);
-            }
+            trace <<"analyzing " <<SgAsmFunction::reason_str(true, pending[i]->reason)
+                  <<" F" <<addrToString(pending[i]->entry_va) <<" \"" <<pending[i]->name <<"\" pass " <<pass <<": ";
             try {
                 discover_blocks(pending[i], reason);
             } catch (const AbandonFunctionDiscovery&) {
                 /* thrown when discover_blocks() decides it needs to start over on a function */
             }
-            if (debug) {
-                fputc(' ', debug);
-                pending[i]->show_properties(debug);
-                fputc('\n', debug);
+            if (trace) {
+                trace <<" ";
+                pending[i]->show_properties(trace);
+                trace <<"\n";
             }
         }
     }
@@ -3015,6 +3311,14 @@ Partitioner::detach_thunk(Function *func)
         second_va = *(succs.begin());
     }
 
+    /* The JMP target must be an instruction in the same function. */
+    if (BasicBlock *target_bb = find_bb_containing(second_va)) {
+        if (target_bb->function!=func)
+            return false;
+    } else {
+        return false;
+    }
+
     /* Don't split the function if the first instruction is a successor of any of the function's blocks. */
     for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
         BasicBlock *bb = bi->second;
@@ -3024,9 +3328,8 @@ Partitioner::detach_thunk(Function *func)
     }
 
     /* Create a new function to hold everything but the entry instruction */
-    if (debug)
-        fprintf(debug, "Partitioner::detach_thunk: detaching thunk F%08"PRIx64" from body F%08"PRIx64"\n",
-                func->entry_va, second_va);
+    mlog[TRACE] <<"detach_thunk: detaching thunk F" <<addrToString(func->entry_va)
+                <<" from body F" <<addrToString(second_va) <<"\n";
     Function *new_func = add_function(second_va, func->reason);
     new_func->name = func->name;
     new_func->set_may_return(func->get_may_return());
@@ -3045,20 +3348,21 @@ Partitioner::detach_thunk(Function *func)
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
             BasicBlock *new_bb = find_bb_starting(second_va);
+            assert(new_bb!=NULL);
             if (new_bb->function==func) {
                 remove(func, new_bb);
                 append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
             } else if (new_bb->function==new_func) {
                 /*void*/
             } else {
-                assert(NULL==new_bb->function);
+                ASSERT_require(NULL==new_bb->function);
                 append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
             }
             append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
         } else {
             BasicBlock *bb = bi->second;
             if (bb->function!=new_func) {
-                assert(bb->function==func);
+                ASSERT_require(bb->function==func);
                 remove(func, bb);
                 append(new_func, bb, bb->reason);
             }
@@ -3103,6 +3407,9 @@ Partitioner::adjust_padding()
 void
 Partitioner::merge_function_fragments()
 {
+    Stream trace(mlog[TRACE]);
+    trace.facilityName("Partitioner::merge_function_fragments");
+
     // Find connected components of the control flow graph, but only considering function fragments.  We do this in a single
     // pass, and at the end of this loop each function fragment, F, will have group number group_number[traversal_number[F]].
     typedef std::map<Function*, size_t> TravNumMap;
@@ -3152,15 +3459,6 @@ Partitioner::merge_function_fragments()
             fragment_index[gnum].push_back(fi->second);
         }
     }
-#if 0 /* DEBUGGING [RPM 2012-04-18] */
-    fprintf(stderr, "Partitioner::merge_function_fragments: fragment index: \n");
-    for (size_t gnum=0; gnum<fragment_index.size(); gnum++) {
-        fprintf(stderr, "  group-%zu:", gnum);
-        for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi)
-            fprintf(stderr, " F%08"PRIx64, (*fi)->entry_va);
-        fprintf(stderr, "\n");
-    }
-#endif
             
     /* Find the non-fragment predecessors of each fragment group. A fragment group can be merged into another function only if
      * the fragment group has a single predecessor. */
@@ -3194,25 +3492,19 @@ Partitioner::merge_function_fragments()
     }
 
     /* Merge functions */
-    if (debug)
-        fprintf(debug, "Partitioner::merge_function_fragments...\n");
     for (size_t gnum=0; gnum<fragment_index.size(); ++gnum) {
         if (parent[gnum]!=NULL && !fragment_index[gnum].empty()) {
-            if (debug) {
-                fprintf(debug, "fragments %s F%08"PRIx64" \"%s\" merging",
-                        SgAsmFunction::reason_str(true, parent[gnum]->reason).c_str(),
-                        parent[gnum]->entry_va, parent[gnum]->name.c_str());
-            }
+            trace <<"fragments " <<SgAsmFunction::reason_str(true, parent[gnum]->reason)
+                  <<" F" <<addrToString(parent[gnum]->entry_va) <<" \"" <<parent[gnum]->name <<"\" merging";
             for (std::vector<Function*>::iterator fi=fragment_index[gnum].begin(); fi!=fragment_index[gnum].end(); ++fi) {
-                if (debug)
-                    fprintf(debug, " F0x%08"PRIx64, (*fi)->entry_va);
+                trace <<" F" <<addrToString((*fi)->entry_va);
                 merge_functions(parent[gnum], *fi); *fi = NULL;
                 parent[gnum]->reason &= ~SgAsmFunction::FUNC_GRAPH;
             }
-            if (debug) {
-                fputc(' ', debug);
-                parent[gnum]->show_properties(debug);
-                fputc('\n', debug);
+            if (trace) {
+                trace <<" ";
+                parent[gnum]->show_properties(trace);
+                trace <<"\n";
             }
         }
     }
@@ -3241,6 +3533,219 @@ Partitioner::merge_functions(Function *parent, Function *other)
     delete other;
 }
 
+/** Mark PE dynamic linking thunks as thunks and give them a name if possible. */
+void
+Partitioner::name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/)
+{
+    // AST visitor finds PE Import Items and adds their address/name pair to a map.
+    struct AddrName: AstSimpleProcessing {
+        typedef std::map<rose_addr_t, std::string> NameMap;
+        NameMap names;
+        SgAsmGenericHeader *hdr;
+        AddrName(SgAsmInterpretation *interp) {
+            if (interp) {
+                const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+                for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
+                    hdr = *hi;
+                    traverse(hdr, preorder);
+                }
+            }
+        }
+        void visit(SgNode *node) {
+            if (SgAsmPEImportItem *import_item = isSgAsmPEImportItem(node)) {
+                std::string name = import_item->get_name()->get_string();
+                if (!name.empty() && !import_item->get_by_ordinal()) {
+                    // Add a name for both the absolute virtual address and the relative virtual address. The IAT will contain
+                    // relative addresses unless BinaryLoader applied fixups.
+                    rose_addr_t va = import_item->get_hintname_rva().get_va();
+                    names[va] = name;
+                    rose_addr_t rva = va - hdr->get_base_va();
+                    names[rva] = name;
+                }
+            }
+        }
+        std::string operator()(rose_addr_t va) const {
+            NameMap::const_iterator found = names.find(va);
+            return found==names.end() ? std::string() : found->second;
+        }
+    } names(interp);
+
+    // Identify PE dynamic linking thunks and give them the name of the imported function to which they branch.  FIXME: we
+    // might want to change the name slightly because otherwise the thunk will have the same name as the linked-in function
+    // if/after BinaryLoader does the linking.  In contrast, the ELF executables typically place their dynamic linking
+    // thunks in a ".plt" section (Procedure Lookup Table) and we name the thunks so that if the linked-in function is
+    // named "printf", the thunk is named "printf@plt".
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        Function *func = fi->second;
+        if (is_pe_dynlink_thunk(func)) {
+            func->reason |= SgAsmFunction::FUNC_THUNK;
+            if (func->name.empty()) {
+                BasicBlock *bb = func->entry_basic_block();
+                bool complete;
+                Disassembler::AddressSet succs = successors(bb, &complete);
+                if (complete && 1==succs.size())
+                    func->name = names(*succs.begin());
+            }
+        }
+    }
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing_code(rose_addr_t va)
+{
+    if (Instruction *insn = find_instruction(va, false  /* do not create */)) {
+        if (insn->bblock)
+            return insn->bblock->function;
+    }
+    return NULL;
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing_data(rose_addr_t va)
+{
+    DataRangeMap dblock_ranges;
+    datablock_extent(&dblock_ranges /*out*/); // FIXME[Robb P. Matzke 2014-04-11]: this is not particularly fast
+    DataRangeMap::iterator found = dblock_ranges.find(va);
+    if (found!=dblock_ranges.end()) {
+        DataBlock *dblock = found->second.get();
+        return dblock->function;
+    }
+    return NULL;
+}
+
+Partitioner::Function *
+Partitioner::find_function_containing(rose_addr_t va)
+{
+    if (Function *func = find_function_containing_code(va))
+        return func;
+    return find_function_containing_data(va);
+}
+
+ExtentMap
+Partitioner::unused_addresses()
+{
+    FunctionRangeMap used_addresses;
+    function_extent(&used_addresses /*out*/);
+    return used_addresses.invert<ExtentMap>();
+}
+
+bool
+Partitioner::is_used_address(rose_addr_t va)
+{
+    FunctionRangeMap used_addresses;
+    function_extent(&used_addresses /*out*/);
+    return used_addresses.find(va) != used_addresses.end();
+}
+
+Sawyer::Optional<rose_addr_t>
+Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
+{
+    Sawyer::Nothing NOT_FOUND;
+    ExtentMap unused = unused_addresses();              // all unused addresses regardless of whether they're mapped
+
+    while (1) {
+        // get the next unused virtual address, but it might not be mapped
+        ExtentMap::iterator ui = unused.lower_bound(start_va);
+        if (ui==unused.end())
+            return NOT_FOUND;
+        rose_addr_t unused_va = std::max(start_va, ui->first.first());
+
+        // get the next mapped address, but it might not be unused
+        rose_addr_t mapped_unused_va;
+        if (!map.next(unused_va).assignTo(mapped_unused_va))
+            return NOT_FOUND;                           // no higher mapped address
+        if (unused.contains(Extent(mapped_unused_va)))
+            return mapped_unused_va;                    // found
+
+        // try again at a higher address
+        start_va = mapped_unused_va + 1;
+        if (start_va==0)
+            return NOT_FOUND;                           // overflow
+    }
+}
+
+void
+Partitioner::discover_post_padding_functions(const MemoryMap &map)
+{
+    Stream debug = mlog[DEBUG];
+    if (map.empty())
+        return;
+
+    std::vector<uint8_t> padding_bytes;
+    padding_bytes.push_back(0x90);                      // x86 NOP
+    padding_bytes.push_back(0xcc);                      // x86 INT3
+    padding_bytes.push_back(0);                         // zero padding
+
+    debug <<"discover_post_padding_functions()\n";
+
+    rose_addr_t next_va = map.hull().least();           // first address in the map
+    while (1) {
+        debug <<"  current position is " <<addrToString(next_va) <<"\n";
+
+        // Find an address that is mapped but not part of any function.
+        rose_addr_t unused_va;
+        if (!next_unused_address(map, next_va).assignTo(unused_va))
+            break;
+        debug <<"  next unused address is " <<addrToString(unused_va) <<"\n";
+
+        // Find the next occurrence of padding bytes.
+        Extent search_limits = Extent::inin(unused_va, map.hull().greatest());
+        rose_addr_t padding_va;
+        if (!map.find_any(search_limits, padding_bytes).assignTo(padding_va))
+            break;
+
+        // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).
+        rose_addr_t candidate_va = padding_va;
+        while (1) {
+            uint8_t byte;
+            if (1!=map.read1(&byte, candidate_va, 1) ||
+                std::find(padding_bytes.begin(), padding_bytes.end(), byte)==padding_bytes.end())
+                break;
+            ++candidate_va;
+        }
+        rose_addr_t npadding = candidate_va - padding_va;
+        next_va = candidate_va + 1;                     // for next time through this loop
+        debug <<"  address after padding is " <<addrToString(candidate_va) <<"\n"
+              <<"  number of padding bytes is " <<npadding <<"\n";
+
+        // Only consider this to be padding if we found some minimum number of padding bytes.
+        if (npadding < 5)                               // arbitrary
+            continue;
+
+        // Make sure we found padding and that the address after the padding is not already part of some function
+        if (candidate_va<=padding_va || is_used_address(candidate_va))
+            continue;
+
+        // Look at the next few bytes and do some simple tests to see if this looks like code or data.
+        if (NULL==find_instruction(candidate_va))
+            continue;                                   // can't be a function if there's no instruction
+        uint8_t buf[64];                                // arbitrary
+        size_t nread = map.read(buf, candidate_va, sizeof buf);
+        if (nread < 5)                                  // arbitrary
+            continue;                                   // too small to be a function
+        size_t nzeros = 0, nprint = 0;
+        for (size_t i=0; i<nread; ++i) {
+            if (buf[i]==0)
+                ++nzeros;
+            if (isprint(buf[i]))
+                ++nprint;
+        }
+        if ((double)nzeros / nread > 0.5)               // arbitrary
+            continue;                                   // probably data since there are so many zero bytes
+        if ((double)nprint / nread > 0.8)               // arbitrary
+            continue;                                   // looks like ASCII data
+        debug <<"  discovering function at " <<addrToString(candidate_va) <<"\n"
+              <<"    nread=" <<nread <<", nzeros=" <<nzeros <<", nprint=" <<nprint <<"\n";
+
+        // Mark the candidate address as a function entry point and discover the basic blocks for this function.
+        mlog[TRACE] <<"Partitioner::discover_post_padding_functions: candidate function at "
+                    <<addrToString(candidate_va) <<"\n";
+        add_function(candidate_va, SgAsmFunction::FUNC_INTERPADFUNC);
+        analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+    }
+    debug <<"  discover_post_padding_functions analysis has completed\n";
+}
+    
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
@@ -3249,12 +3754,8 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     clear_aggregate_statistics();
     RegionStats *mean = aggregate_statistics();
     RegionStats *variance = get_aggregate_variance();
-    if (debug) {
-        std::ostringstream s;
-        s <<"=== Mean ===\n" <<*mean <<"\n"
-          <<"=== Variance ===\n" <<*variance <<"\n";
-        fputs(s.str().c_str(), debug);
-    }
+    mlog[TRACE] <<"=== Mean ===\n" <<*mean <<"\n"
+                <<"=== Variance ===\n" <<*variance <<"\n";
 
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
     MemoryMap exe_map = *map;
@@ -3269,6 +3770,14 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         fff.threshold = 0; // treat all intra-function regions as code
         scan_unassigned_bytes(&fff, &exe_map);
     }
+
+#if 0 // [Robb P. Matzke 2014-04-29]: experimental, slow, heuristic, and a bit too greedy, but perhaps more accurate
+    // Try to discover a function at each inter-function padding pattern, but interleave the discovery with the search. Each
+    // time we find padding we will discover that function (by following its control flow graph) before we search for another
+    // inter-function padding pattern.
+    if (func_heuristics & SgAsmFunction::FUNC_PADDING)
+        discover_post_padding_functions(exe_map);
+#endif
 
     /* Detect inter-function padding */
     if (func_heuristics & SgAsmFunction::FUNC_PADDING) {
@@ -3357,6 +3866,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
+        name_pe_dynlink_thunks(interp);
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
@@ -3373,10 +3883,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
             bb->reason |= SgAsmBlock::BLK_CFGHEAD;
     }
 
-    progress(debug,
-             "Partitioner completed: %zu function%s, %zu insn%s, %zu block%s\n",
-             functions.size(), 1==functions.size()?"":"s", insns.size(), 1==insns.size()?"":"s",
-             basic_blocks.size(), 1==basic_blocks.size()?"":"s");
+    mlog[INFO] <<"completed " <<StringUtility::plural(functions.size(), "functions")
+               <<", " <<StringUtility::plural(insns.size(), "instructions")
+               <<", " <<StringUtility::plural(basic_blocks.size(), "blocks") <<"\n";
 }
 
 size_t
@@ -3593,10 +4102,10 @@ Partitioner::fixup_cfg_edges(SgNode *ast)
             if (block) {
                 for (size_t i=0; i<block->get_successors().size(); i++) {
                     SgAsmIntegerValueExpression *target = block->get_successors()[i];
-                    if (target && NULL==target->get_base_node()) {
-                        BlockMap::const_iterator bi=block_map.find(target->get_absolute_value());
+                    if (target && NULL==target->get_baseNode()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_absoluteValue());
                         if (bi!=block_map.end())
-                            target->make_relative_to(bi->second);
+                            target->makeRelativeTo(bi->second);
                     }
                 }
             }
@@ -3647,9 +4156,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
 
                 /* Don't monkey with constants that are already relative to some other node.  These are things that have been
                  * already fixed up by other methods. */
-                if (ival->get_base_node()!=NULL)
+                if (ival->get_baseNode()!=NULL)
                     return;
-                rose_addr_t va = ival->get_absolute_value();
+                rose_addr_t va = ival->get_absoluteValue();
 
                 /* If this constant is a code pointer, then make the pointer relative to the instruction it points to.  If that
                  * instruction is the entry instruction of a function, then point to the function instead.  A value is
@@ -3661,9 +4170,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                     0==(target_insn->bblock->function->reason & SgAsmFunction::FUNC_LEFTOVERS)) {
                     SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn->node);
                     if (target_func && target_func->get_entry_va()==target_insn->get_address()) {
-                        ival->make_relative_to(target_func);
+                        ival->makeRelativeTo(target_func);
                     } else {
-                        ival->make_relative_to(target_insn->node);
+                        ival->makeRelativeTo(target_insn->node);
                     }
                     return;
                 }
@@ -3675,7 +4184,7 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                     for (size_t i=0; i<dblock->nodes.size(); ++i) {
                         SgAsmStaticData *sd = dblock->nodes[i];
                         if (va>=sd->get_address() && va<sd->get_address()+sd->get_size()) {
-                            ival->make_relative_to(sd);
+                            ival->makeRelativeTo(sd);
                             return;
                         }
                     }
@@ -3683,9 +4192,9 @@ Partitioner::fixup_pointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/)
                 
                 /* If this constant points into a non-executable data segment, then make the pointer relative to that data
                  * segment. */
-                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absolute_value());
+                SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mapped_sections, ival->get_absoluteValue());
                 if (section && !section->get_mapped_xperm()) {
-                    ival->make_relative_to(section);
+                    ival->makeRelativeTo(section);
                     return;
                 }
             }
@@ -3728,7 +4237,7 @@ Partitioner::build_ast(SgAsmInterpretation *interp/*=NULL*/)
                 size_t size = ii->second->get_size();
                 if (!existing.contains(Extent(va, size))) {
                     BasicBlock *bb = find_bb_containing(ii->first);
-                    assert(bb!=NULL);
+                    ASSERT_not_null(bb);
                     if (!bb->function) {
                         if (!catchall)
                             catchall = add_function(ii->first, SgAsmFunction::FUNC_LEFTOVERS, "***uncategorized blocks***");
@@ -3768,8 +4277,7 @@ SgAsmFunction *
 Partitioner::build_ast(Function* f)
 {
     if (f->basic_blocks.empty()) {
-        if (debug)
-            fprintf(debug, "function F%08"PRIx64" \"%s\" has no basic blocks!\n", f->entry_va, f->name.c_str());
+        mlog[TRACE] <<"function F" <<addrToString(f->entry_va) <<" \"" <<f->name <<"\" has no basic blocks!\n";
         return NULL;
     }
 
@@ -3799,7 +4307,7 @@ Partitioner::build_ast(Function* f)
 
     for (DataBlocks::iterator di=f->data_blocks.begin(); di!=f->data_blocks.end(); ++di) {
         DataBlock *dblock = di->second;
-        assert(dblock->function==f);
+        ASSERT_require(dblock->function==f);
         my_data_blocks.insert(dblock);
     }
 
@@ -3861,7 +4369,7 @@ Partitioner::build_ast(BasicBlock* block)
     bool complete;
     Disassembler::AddressSet successor_addrs = successors(block, &complete);
     for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si) {
-        SgAsmIntegerValueExpression *value = new SgAsmIntegerValueExpression(*si);
+        SgAsmIntegerValueExpression *value = SageBuilderAsm::buildValueU64(*si);
         value->set_parent(retval);
         retval->get_successors().push_back(value);
     }
@@ -3880,7 +4388,7 @@ Partitioner::build_ast(DataBlock *block)
 
     for (std::vector<SgAsmStaticData*>::const_iterator ni=block->nodes.begin(); ni!=block->nodes.end(); ++ni) {
         retval->get_statementList().push_back(*ni);
-        assert(NULL==(*ni)->get_parent());
+        ASSERT_require(NULL==(*ni)->get_parent());
         (*ni)->set_parent(retval);
     }
     return retval;
@@ -3919,9 +4427,9 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
 SgAsmBlock *
 Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, MemoryMap *m)
 {
-    assert(d!=NULL);
+    ASSERT_not_null(d);
     disassembler = d;
-    assert(m!=NULL);
+    ASSERT_not_null(m);
     set_map(m);
     pre_cfg(interp);
     analyze_cfg(SgAsmBlock::BLK_GRAPH1);
@@ -3947,6 +4455,68 @@ Partitioner::get_instructions() const
         retval.insert(std::make_pair(ii->first, insn));
     }
     return retval;
+}
+
+// class method
+void
+Partitioner::disassembleInterpretation(SgAsmInterpretation *interp)
+{
+    assert(interp!=NULL);
+    if (interp->get_global_block())
+        return;
+
+    // Map segments into virtual memory if this hasn't been done yet
+    MemoryMap *map = interp->get_map();
+    if (map==NULL) {
+        map = new MemoryMap;
+        interp->set_map(map);
+        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        loader->remap(interp);
+    }
+
+    // Obtain a disassembler based on the type of file we're disassembling and configure it according to the
+    // -rose:disassembler_search switches stored in the enclosing SgFile node.
+    Disassembler *disassembler = Disassembler::lookup(interp);
+    if (!disassembler)
+        throw std::runtime_error("no valid disassembler for this interpretation");
+    disassembler = disassembler->clone();               // so we can change settings without affecting the registry
+    SgFile *file = SageInterface::getEnclosingNode<SgFile>(interp);
+    assert(file!=NULL);
+    disassembler->set_search(file->get_disassemblerSearchHeuristics());
+
+    // Obtain a partitioner to organize instructions into basic blocks and basic blocks into functions.
+    Partitioner *partitioner = new Partitioner();
+    partitioner->set_search(file->get_partitionerSearchHeuristics());
+    partitioner->load_config(file->get_partitionerConfigurationFileName());
+
+    // Decide what to disassemble. Include at least the entry addresses.
+    Disassembler::AddressSet worklist;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
+        for (size_t i=0; i<entry_rvalist.size(); ++i) {
+            rose_addr_t entry_va = (*hi)->get_base_va() + entry_rvalist[i].get_rva();
+            worklist.insert(entry_va);
+        }
+        if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
+            disassembler->search_function_symbols(&worklist, map, *hi);
+    }
+
+    // Run the disassembler first to populate the instruction map for the partitioner. This will allow the partitioner to do
+    // pattern recognition to find function boundaries if desired.
+    Disassembler::BadMap errors;
+    Disassembler::InstructionMap insns = disassembler->disassembleBuffer(map, worklist, NULL, &errors);
+    partitioner->add_instructions(insns);
+
+    // Organize the instructions into basic blocks and functions. This will call the disassembler to get any additional
+    // instructions that are needed (the partitioner does deeper analysis than the disassembler).
+    if (SgAsmBlock *block = partitioner->partition(interp, disassembler, map)) {
+        interp->set_global_block(block);
+        block->set_parent(interp);
+    }
+
+    delete partitioner;
+    delete disassembler;
 }
 
 /* FIXME: Deprecated 2010-01-01 */
@@ -4012,3 +4582,6 @@ Partitioner::detectFunctions(SgAsmInterpretation*, const Disassembler::Instructi
         retval.insert(std::make_pair(fi->first, FunctionStart(fi->second->reason, fi->second->name)));
     return retval;
 }
+
+} // namespace
+} // namespace

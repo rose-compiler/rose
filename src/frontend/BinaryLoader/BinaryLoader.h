@@ -1,6 +1,8 @@
 #ifndef ROSE_BINARYLOADER_H
 #define ROSE_BINARYLOADER_H
 
+#include "sawyer/Message.h"
+
 /** Base class for loading a static or dynamic object.
  *
  *  The BinaryLoader class is the base class that defines the public interface and provides generic implementations for
@@ -70,14 +72,11 @@ public:
      *======================================================================================================================== */
 public:
     /** Base class for exceptions thrown by loaders. */
-    class Exception {
+    class Exception: public std::runtime_error {
     public:
-        Exception(const std::string &reason)
-            : mesg(reason)
-            {}
+        Exception(const std::string &reason): std::runtime_error(reason) {}
         void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
-        std::string mesg;
     };
 
 
@@ -87,17 +86,20 @@ public:
      *======================================================================================================================== */
 public:
     BinaryLoader()
-        : debug(NULL), p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
+        : p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
         { init(); }
 
     BinaryLoader(const BinaryLoader &other)
-        : debug(other.debug), p_perform_dynamic_linking(other.p_perform_dynamic_linking),
+        : p_perform_dynamic_linking(other.p_perform_dynamic_linking),
           p_perform_remap(other.p_perform_remap), p_perform_relocations(other.p_perform_relocations) {
         preloads = other.preloads;
         directories = other.directories;
     }
 
     virtual ~BinaryLoader(){}
+
+    /** Initialize diagnostic streams for binary loaders. */
+    static void initDiagnostics();
 
 private:
     /** Initialize the class. Register built-in loaders. */
@@ -169,15 +171,9 @@ public:
     /** Returns whether this loader will perform the relocation step. See also, set_perform_relocations(). */
     bool get_perform_relocations() const { return p_perform_relocations; }
 
-    /** Set whether this loader will emit diagnostics for debugging. If the specified file is non-null then diagnostic output
-     *  is sent to that file; otherwise diagnostic output is disabled. */
-    void set_debug(FILE *f) { debug = f; }
-
-    /** Returns whether this loader will emit diagnostics for debugging. See also, set_debug(). */
-    FILE *get_debug() const { return debug; }
 
 
-
+    
     /*========================================================================================================================
      * Searching for shared objects
      *======================================================================================================================== */
@@ -197,9 +193,18 @@ public:
 
     /** Adds a directory to the list of directories searched for libraries.  This is similar to the LD_LIBRARY_PATH
      *  environment variable of the ld-linux.so dynamic loader (see the ld.so man page). ROSE searches for libraries in
-     *  directories in the order that directories were added. */
+     *  directories in the order that directories were added.
+     *
+     *  See also, StringUtility::splitStringIntoStrings(). */
     void add_directory(const std::string &dirname) {
         directories.push_back(dirname);
+    }
+
+    /** Adds directories to the list of directories searched for libraries. This is similar to the LD_LIBRARY_PATH
+     *  environment variable of the ld-linux.so dynamic loader (see the ld.so man page). ROSE searches for libraries in
+     *  directories in the order that directories were added. */
+    void add_directories(const std::vector<std::string> &dirnames) {
+        directories.insert(directories.end(), dirnames.begin(), dirnames.end());
     }
 
     /** Returns the list of shared object search directories. */
@@ -265,9 +270,12 @@ public:
      *  This method throws a BinaryLoader::Exception if an error occurs. */
     virtual void remap(SgAsmInterpretation *interp);
 
-    /** Performs relocation fixups on the specified interpretation. This should be called after sections are mapped into
-     *  memory by remap(). Throws a BinaryLoader::Exception if an error occurs. */
-    virtual void fixup(SgAsmInterpretation *interp);
+    typedef std::vector<Exception> FixupErrors;
+
+    /** Performs relocation fixups on the specified interpretation. This should be called after sections are mapped into memory
+     *  by remap().  If an error occurs, then this function either throws the error (BinaryLoader::Exception) or appends it to
+     *  the @p errors container (if @p errors is non-null). */
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL);
 
     /*========================================================================================================================
      * Supporting types and functions
@@ -395,15 +403,17 @@ public:
 
 
     /*========================================================================================================================
-     * Private stuff
+     * Data members
      *======================================================================================================================== */
+public:
+    static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
+
 private: 
     void init();                                        /**< Further initializations in a *.C file. */
 
     static std::vector<BinaryLoader*> loaders;          /**< List of loader subclasses. */
     std::vector<std::string> preloads;                  /**< Libraries that should be pre-loaded. */
     std::vector<std::string> directories;               /**< Directories to search for libraries with relative names. */
-    FILE *debug;                                        /**< Stream where diagnostics are sent; null to disable them. */
 
     bool p_perform_dynamic_linking;
     bool p_perform_remap;

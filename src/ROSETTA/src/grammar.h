@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #if !ROSE_MICROSOFT_OS
 #include <dirent.h>
-#include </usr/include/sys/file.h>
 #include <unistd.h>
 #endif
 #include <assert.h>
@@ -497,10 +496,10 @@ class Grammar
           // MS: build a Latex output that shows the abstract Cpp grammar
           GrammarSynthesizedAttribute CreateGrammarDotString(Terminal* grammarnode,
                                                                std::vector<GrammarSynthesizedAttribute> v);
-          GrammarSynthesizedAttribute CreateGrammarLatexString(Terminal* grammarnode,
+          GrammarSynthesizedAttribute CreateAbstractTreeGrammarString(Terminal* grammarnode,
                                                                std::vector<GrammarSynthesizedAttribute> v);
           void buildGrammarDotFile(Terminal* rootNode, std::ostream& GrammarDotFile);
-          void buildGrammarLatexFile(Terminal* rootNode, std::ostream& GrammarLatexFile);
+          void buildAbstractTreeGrammarFile(Terminal* rootNode, std::ostream& AbstractTreeGrammarFile);
 
           // MS: generate source for implementation of the RTI interface
           GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
@@ -539,6 +538,23 @@ class Grammar
 
      // PC: build ReferenceToPointerHandler and related classes
      std::string buildReferenceToPointerHandlerCode();
+
+     // Milind Chabbi(8/28/2013): Performance refactoring.
+     // Support for table-driven SgXXX node castability.
+
+     // Generates a table (classHierarchyCatTable) populated with information
+     // about whether a given SgXXX node can be casted to a SgYYY node.
+     // The technique has constant lookup time.
+     std::string generateClassHierarchyCastTable();
+
+     // Populates the classHierarchyCastTable with all the types that can be casted to terminal type
+     void buildClassHierarchyCastTable(Terminal * terminal, std::vector<Terminal*> & myParentsDescendents);
+
+     // Gets the number of rows in classHierarchyCastTable
+     size_t getRowsInClassHierarchyCastTable();
+
+     // Gets the number of columns in classHierarchyCastTable
+     size_t getColumnsInClassHierarchyCastTable();
 
          //AS: build the function to get the class hierarchy subtree 
      std::string buildClassHierarchySubTreeFunction();
@@ -585,7 +601,7 @@ class Grammar
        std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
        std::set<std::string> traversedTerminals;
        GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
-       bool isAbstractGrammarSymbol(std::string);
+       bool isAbstractTreeGrammarSymbol(std::string);
 
    // JH (01/13/2006) Added to build code for ast file IO
       public:

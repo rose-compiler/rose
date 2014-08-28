@@ -1,6 +1,11 @@
+#include "rose.h"
+#include "keep_going.h"
+
 #include <assert.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <sys/types.h> //getpid()
+#include <unistd.h>    //getpid()
 
 #include <fstream>
 #include <iostream>
@@ -13,8 +18,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-
-#include "rose.h"
+#include <boost/interprocess/sync/file_lock.hpp>
 
 static void
 ShowUsage(std::string program_name);
@@ -38,18 +42,18 @@ AppendToFile(const std::string& filename, const std::string& msg);
  * @returns A map of all filenames expected to fail.
  */
 std::map<std::string, std::string>
-CreateExpectedFailuresMap(const std::string& filename);
-
-sigjmp_buf rose__midend_mark;
-static void HandleMidendSignal(int sig);
+CreateExpectationsMap(const std::string& filename);
 
 int
 main(int argc, char * argv[])
 {
-  std::string report_filename("rose-file_errors.txt");
-  std::string expectations_filename;
+  bool verbose = false;
+  bool enable_ast_tests = false;
+  std::string report_filename__fail("rose-failed_files.txt");
+  std::string report_filename__pass("rose-passed_files.txt");
+  std::string expectations_filename__fail("");
+  std::string expectations_filename__pass("");
   std::string path_prefix;
-  bool        verbose;
 
   std::string program_name(argv[0]);
 
@@ -58,10 +62,14 @@ main(int argc, char * argv[])
   rose_cmdline.push_back("-rose:keep_going");
 
   {// CLI
-      std::string cli_report = "--report=";
-      std::string cli_expectations = "--expectations=";
-      std::string cli_strip_path_prefix = "--strip-path-prefix=";
-      std::string cli_verbose = "--verbose";
+      std::string cli_report                = "--report="; // deprecated 2013-11-2
+      std::string cli_report__fail          = "--report-fail=";
+      std::string cli_report__pass          = "--report-pass=";
+      std::string cli_expectations__fail    = "--expected-failures=";
+      std::string cli_expectations__pass    = "--expected-passes=";
+      std::string cli_strip_path_prefix     = "--strip-path-prefix=";
+      std::string cli_enable_ast_tests      = "--enable-ast-tests";
+      std::string cli_verbose               = "--verbose";
 
       for (int ii = 1; ii < argc; ++ii)
       {
@@ -93,33 +101,97 @@ main(int argc, char * argv[])
               }
               else
               {
-                  report_filename = arg;
+                  report_filename__fail = arg + "-fail";
+                  report_filename__pass = arg + "-pass";
               }
           }
-          // --expectations
-          else if (arg.find(cli_expectations) == 0)
+          // --report-fail=<filename>
+          else if (arg.find(cli_report__fail) == 0)
           {
-              arg.replace(0, cli_expectations.length(), "");
+              arg.replace(0, cli_report__fail.length(), "");
               if (arg.empty())
               {
                   std::cerr
                       << "[ERROR] "
                       << "[" << program_name << "] "
-                      << "--expectations requires an argument, see --help"
+                      << "--report-fail requires an argument, see --help"
                       << std::endl;
                   return 1;
               }
               else
               {
-                  expectations_filename = arg;
-                  if (!boost::filesystem::exists(expectations_filename))
+                  report_filename__fail = arg;
+              }
+          }
+          // --report-pass=<filename>
+          else if (arg.find(cli_report__pass) == 0)
+          {
+              arg.replace(0, cli_report__pass.length(), "");
+              if (arg.empty())
+              {
+                  std::cerr
+                      << "[ERROR] "
+                      << "[" << program_name << "] "
+                      << "--report-pass requires an argument, see --help"
+                      << std::endl;
+                  return 1;
+              }
+              else
+              {
+                  report_filename__pass = arg;
+              }
+          }
+          // --expected-failures
+          else if (arg.find(cli_expectations__fail) == 0)
+          {
+              arg.replace(0, cli_expectations__fail.length(), "");
+              if (arg.empty())
+              {
+                  std::cerr
+                      << "[ERROR] "
+                      << "[" << program_name << "] "
+                      << "--expected-failures requires an argument, see --help"
+                      << std::endl;
+                  return 1;
+              }
+              else
+              {
+                  expectations_filename__fail = arg;
+                  if (!boost::filesystem::exists(expectations_filename__fail))
                   {
                       std::cerr
                           << "[FATAL] "
-                          << "Expectations file does not exist: "
-                          << expectations_filename
+                          << "Expected failures file does not exist: "
+                          << expectations_filename__fail
                           << std::endl;
-                      abort();
+                      exit(1);
+                  }
+              }
+          }
+          // --expected-passes
+          else if (arg.find(cli_expectations__pass) == 0)
+          {
+              arg.replace(0, cli_expectations__pass.length(), "");
+              if (arg.empty())
+              {
+                  std::cerr
+                      << "[ERROR] "
+                      << "[" << program_name << "] "
+                      << "--expected-passes requires an argument, see --help"
+                      << std::endl;
+                  return 1;
+              }
+              else
+              {
+                  expectations_filename__pass = arg;
+                  if (!boost::filesystem::exists(expectations_filename__pass))
+                  {
+                      std::cerr
+                          << "[FATAL] "
+                          << "expected passes file does not exist: "
+                          << expectations_filename__pass
+                          << std::endl;
+                      exit(1);
                   }
               }
           }
@@ -141,6 +213,11 @@ main(int argc, char * argv[])
                   path_prefix = arg;
               }
           }
+          // --enable-ast-tests
+          else if (arg.find(cli_enable_ast_tests) == 0)
+          {
+              enable_ast_tests = true;
+          }
           else
           {
               rose_cmdline.push_back(arg);
@@ -159,25 +236,28 @@ main(int argc, char * argv[])
   // Build the AST used by ROSE
   SgProject* project = frontend(rose_cmdline);
 
-  struct sigaction act;
-  act.sa_handler = HandleMidendSignal;
-  sigemptyset(&act.sa_mask);
-  act.sa_flags = 0;
-  sigaction(SIGSEGV, &act, 0);
-  sigaction(SIGABRT, &act, 0);
-
-  if (sigsetjmp(rose__midend_mark, 0) == -1)
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
   {
       std::cout
-          << "[WARN] Ignoring midend failure "
-          << " as directed by -rose:keep_going"
+          << "[WARN] "
+          << "Configured to keep going after catching a signal in the Midend"
           << std::endl;
-      project->set_midendErrorCode(-1);
+      project->set_midendErrorCode(100);
   }
   else
   {
-      // Run internal consistency tests on AST
-      AstTests::runAllTests(project);
+      if (enable_ast_tests)
+      {
+          // Run internal consistency tests on AST
+          AstTests::runAllTests(project);
+      }
+      else
+      {
+          std::cout
+              << "[INFO] "
+              << "Skipping AST consistency tests; turn them on with '--enable-ast-tests'"
+              << std::endl;
+      }
   }
 
   // Insert your own manipulation of the AST here...
@@ -190,55 +270,66 @@ main(int argc, char * argv[])
   BOOST_FOREACH(SgFile* file, files_with_errors)
   {
       std::string filename = file->getFileName();
-      filename = StripPrefix(path_prefix, filename);
+                  filename = StripPrefix(path_prefix, filename);
 
       if (verbose)
       {
           std::cout
               << "[ERROR] "
               << "ROSE encountered an error while processing this file: "
-              << "'" << filename << "'"
+              << "'" << path_prefix << filename << "'"
+              << std::endl;
+      }
+
+      // <file> <frontend> <unparser> <backend>
+      std::stringstream ss;
+      ss << filename << " "
+         << file->get_frontendErrorCode() << " "
+         << file->get_javacErrorCode() << " "
+         << file->get_unparserErrorCode() << " "
+         << file->get_backendCompilerErrorCode() << " "
+         << file->get_unparsedFileFailedCompilation();
+
+      AppendToFile(report_filename__fail, ss.str());
+  }
+
+  // Report successes
+  SgFilePtrList files_without_errors = project->get_files_without_errors();
+  BOOST_FOREACH(SgFile* file, files_without_errors)
+  {
+      std::string filename = file->getFileName();
+                  filename = StripPrefix(path_prefix, filename);
+
+      if (verbose)
+      {
+          std::cout
+              << "[INFO] "
+              << "ROSE successfully compiled this file: "
+              << "'" << path_prefix << filename << "'"
               << std::endl;
       }
 
       std::stringstream ss;
-      ss
-          //<< "[ERROR] "
-          //<< "ROSE encountered an error while processing this file: "
-          //<< "'" << filename << "'";
-          << filename;
+      ss << filename;
 
-      AppendToFile(report_filename, ss.str());
+      AppendToFile(report_filename__pass, ss.str());
   }
 
-  if (verbose)
-  {
-      // Report successes
-      SgFilePtrList files_without_errors = project->get_files_without_errors();
-      std::cout
-          << "[INFO] "
-          << "ROSE successfully compiled "
-          << "'" << files_without_errors.size() << "' "
-          << "files"
-          << std::endl;
-      BOOST_FOREACH(SgFile* file, files_without_errors)
-      {
-          std::string filename = file->getFileName();
-          filename = StripPrefix(path_prefix, filename);
-
-          std::cout
-              << "[INFO] "
-              << "ROSE successfully compiled this file: "
-              << "'" << filename << "'"
-              << std::endl;
-      }
-  }
-
-  if (!expectations_filename.empty())
+  if (!expectations_filename__fail.empty())
   {
       std::map<std::string, std::string> expected_failures =
-          CreateExpectedFailuresMap(expectations_filename);
-      assert(expected_failures.empty() == false);
+          CreateExpectationsMap(expectations_filename__fail);
+
+      // TOO1 (3/5/2014): Only works if all files are processed by this single commandline.
+      //if(files_with_errors.size() != expected_failures.size())
+      //{
+      //    std::cerr
+      //        << "[FATAL] "
+      //        << "Expected '" << expected_failures.size() << "' failures, but "
+      //        << "encountered '" << files_with_errors.size() << "' failures"
+      //        << std::endl;
+      //    exit(1);
+      //}
 
       BOOST_FOREACH(SgFile* file, files_with_errors)
       {
@@ -251,10 +342,10 @@ main(int argc, char * argv[])
           {
               std::cerr
                   << "[FATAL] "
-                  << "Unexpected failure for file: "
-                  << "'" << filename << "'"
+                  << "File failed unexpectedly: "
+                  << "'" << path_prefix << filename << "'"
                   << std::endl;
-              abort();
+              exit(1);
           }
           else
           {
@@ -262,8 +353,54 @@ main(int argc, char * argv[])
               {
                   std::cout
                       << "[INFO] "
-                      << "Expected failure for file: "
-                      << "'" << filename << "'"
+                      << "File failed as expected: "
+                      << "'" << path_prefix << filename << "'"
+                      << std::endl;
+              }
+          }
+      }
+  }
+
+  if (!expectations_filename__pass.empty())
+  {
+      std::map<std::string, std::string> expected_passes =
+          CreateExpectationsMap(expectations_filename__pass);
+
+      // TOO1 (3/5/2014): Only works if all files are processed by this single commandline.
+      //
+      //if(files_without_errors.size() != expected_passes.size())
+      //{
+      //    std::cerr
+      //        << "[FATAL] "
+      //        << "Expected '" << expected_passes.size() << "' passes, but "
+      //        << "encountered '" << files_without_errors.size() << "' passes"
+      //        << std::endl;
+      //    exit(1);
+      //}
+
+      BOOST_FOREACH(SgFile* file, files_without_errors)
+      {
+          std::string filename = file->getFileName();
+          filename = StripPrefix(path_prefix, filename);
+
+          std::map<std::string, std::string>::iterator it =
+              expected_passes.find(filename);
+          if (it == expected_passes.end())
+          {
+              std::cerr
+                  << "[WARN] "
+                  << "File passed unexpectedly: "
+                  << "'" << path_prefix << filename << "'"
+                  << std::endl;
+          }
+          else
+          {
+              if (verbose)
+              {
+                  std::cout
+                      << "[INFO] "
+                      << "File passed as expected: "
+                      << "'" << path_prefix << filename << "'"
                       << std::endl;
               }
           }
@@ -279,9 +416,13 @@ ShowUsage(std::string program_name)
   std::cerr
     << "Usage: " << program_name << " [--help] [ROSE Commandline]\n"
     << "Options:\n"
-    << "  --report=<filename>             File to write error report\n"
-    << "  --expectations=<filename>       File containing filenames that are expected to fail\n"
+    << "  --report-pass=<filename>        File to write report of passes\n"
+    << "  --report-fail=<filename>        File to write report of failurest\n"
+    << "  --expected-failures=<filename>  File containing filenames that are expected to fail\n"
+    << "  --expected-passes=<filename>    File containing filenames that are expected to pass\n"
     << "  --strip-path-prefix=<filename>  Normalize filenames by stripping this path prefix from them\n"
+    << "\n"
+    << "  --enable-ast-tests              Enables the internal ROSE AST consistency tests\n"
     << "\n"
     << "  -h,--help                       Show this help message\n"
     << "  --verbose                       Enables debugging output, e.g. outputs successful files\n"
@@ -319,11 +460,82 @@ GetTimestamp(const std::string& format)
   return ss.str();
 }
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <utime.h>
+
+#include <iostream>
+#include <string>
+
+#include <cstdlib>
+
+// http://chris-sharpe.blogspot.com/2013/05/better-than-systemtouch.html
+void touch(const std::string& pathname)
+{
+    int fd = open(pathname.c_str(),
+                  O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK,
+                  0666);
+    if (fd<0) // Couldn't open that path.
+    {
+        std::cerr
+            << __PRETTY_FUNCTION__
+            << ": Couldn't open() path \""
+            << pathname
+            << "\"\n";
+        return;
+    }
+
+    int rc = utime(pathname.c_str(), 0);
+
+    if (rc)
+    {
+        std::cerr
+            << __PRETTY_FUNCTION__
+            << ": Couldn't utime() path \""
+            << pathname
+            << "\"\n";
+        return;
+    }
+    std::clog
+        << __PRETTY_FUNCTION__
+        << ": Completed touch() on path \""
+        << pathname
+        << "\"\n";
+}
+
 
 void
 AppendToFile(const std::string& filename, const std::string& msg)
 {
+  touch(filename);
+
+  boost::interprocess::file_lock flock;
+  try
+  {
+      boost::interprocess::file_lock* flock_tmp =
+          new boost::interprocess::file_lock(filename.c_str());
+      flock.swap(*flock_tmp);
+      delete flock_tmp;
+      flock.lock();
+  }
+  catch (boost::interprocess::interprocess_exception &ex)
+  {
+      std::cout << ex.what() << std::endl;
+
+      std::cerr
+          << "[FATAL] "
+          << "Couldn't lock "
+          << "'" << filename << "'"
+          << std::endl;
+
+      exit(1);
+  }
+
   std::ofstream fout(filename.c_str(), std::ios::app);
+
   if(!fout.is_open())
   {
       std::cerr
@@ -331,21 +543,24 @@ AppendToFile(const std::string& filename, const std::string& msg)
           << "Couldn't open "
           << "'" << filename << "'"
           << std::endl;
-      abort();
+      flock.unlock();
+      exit(1);
   }
 
   fout
-      //<< "[" << GetTimestamp() << "] "
+      << GetTimestamp()  << " "
+      << getpid() << " "
       << msg
       << std::endl;
 
   fout.close();
+  flock.unlock();
 }
 
 std::map<std::string, std::string>
-CreateExpectedFailuresMap(const std::string& filename)
+CreateExpectationsMap(const std::string& filename)
 {
-  std::map<std::string, std::string> expected_failures;
+  std::map<std::string, std::string> expectations;
 
   std::ifstream fin(filename.c_str());
   if(!fin.is_open())
@@ -355,7 +570,7 @@ CreateExpectedFailuresMap(const std::string& filename)
           << "Couldn't open "
           << "'" << filename << "'"
           << std::endl;
-      abort();
+      exit(1);
   }
   else
   {
@@ -363,17 +578,15 @@ CreateExpectedFailuresMap(const std::string& filename)
       while (fin.good())
       {
           getline (fin, line);
-          expected_failures[line] = line;
+          if (line.size() > 1)
+          {
+              expectations[line] = line;
+          }
       }
   }
 
   fin.close();
 
-  return expected_failures;
+  return expectations;
 }
 
-static void HandleMidendSignal(int sig)
-{
-  std::cout << "[WARN] Caught midend signal='" << sig << "'" << std::endl;
-  siglongjmp(rose__midend_mark, -1);
-}

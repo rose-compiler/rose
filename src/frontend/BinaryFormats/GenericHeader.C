@@ -3,6 +3,9 @@
  * header (e.g., Microsoft Windows files have both a DOS header and a PE header). */
 
 #include "sage3basic.h"
+#include "stringify.h"
+
+using namespace rose;
 
 /** Constructor.
  *  Headers (SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link between this new
@@ -311,7 +314,8 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     ROSE_ASSERT(p_exec_format != NULL);
     p_exec_format->dump(f, p, -1);
 
-    fprintf(f, "%s%-*s = 0x%x\n", p, w, "ins_arch", p_isa);
+    fprintf(f, "%s%-*s = 0x%x (%s)\n", p, w, "ins_arch",
+            p_isa, stringifySgAsmExecutableFileFormatInsSetArchitecture(p_isa).c_str());
 
     fprintf(f, "%s%-*s = \"", p, w, "magic");
     for (size_t i = 0; i < p_magic.size(); i++) {
