@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QString>
 
-
+#include "sage3basic.h"
 #include "NewAstProcessing.h"
 
 class SgNode;

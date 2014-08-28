@@ -676,6 +676,7 @@ int
 GetPrecedence(int variant)
    {
      ROSE_ASSERT(!"Deprecated. Use UnparseLanguageIndependentConstructs::getPrecedence instead");
+     return -1;
    }
 
 //-----------------------------------------------------------------------------------
@@ -687,6 +688,7 @@ GetPrecedence(int variant)
 int GetAssociativity(int variant)
    {
        ROSE_ASSERT(!"Deprecated. Use UnparseLanguageIndependentConstructs::getAssociativity instead");
+       return 0;
    }
 
 
@@ -701,6 +703,7 @@ int GetAssociativity(int variant)
 bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
    {
        ROSE_ASSERT(!"deprecated. use UnparseLanguageIndependentConstructs::requiresParentheses instead");
+       return false;
    }
 
 //-----------------------------------------------------------------------------------
@@ -1305,12 +1308,17 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_parent());
                if (templateClassInstatiationDefn != NULL)
                   {
+                 // DQ (4/6/2014): This happens when a member function template in embedded in a class
+                 // template and thus there is not an associated template for the member function separate
+                 // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
+#if 0
                     printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
 
                  // DQ (8/8/2012): This is a valid branch, commented out assert(false).
                  // DQ (8/2/2012): This branch should not be possible so assert false as a test (note that test2005_139.C will demonstrate this branch).
-                    printf ("Error: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
+                    printf ("Warning: Rare case: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
                  // ROSE_ASSERT(false);
+#endif
                   }
                  else
                   {
@@ -1355,6 +1363,10 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #endif
 #endif
 
+#if 0
+     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): TOP \n");
+#endif
+
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
 
   // DQ (2/4/2006): Moved output of "friend" keywork inside of test for SgFunctionDeclaration
@@ -1387,6 +1399,20 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      if (functionDeclaration != NULL)
         {
+       // curprint("/* printSpecifier2 */ ");
+
+       // DQ (7/26/2014): Added support to output the C11 _Noreturn keyword.
+          if (functionDeclaration->get_using_C11_Noreturn_keyword() == true)
+             {
+               curprint("_Noreturn ");
+             }
+
+       // DQ (8/1/2014): Added support to output the constexpr keyword.
+          if (functionDeclaration->get_is_constexpr() == true)
+             {
+               curprint("constexpr ");
+             }
+
        // DQ (2/4/2006): Template specialization declarations (forward declaration) can't have some modified output
           bool isDeclarationOfTemplateSpecialization = false;
           SgDeclarationStatement::template_specialization_enum specializationEnumValue = functionDeclaration->get_specialization();
@@ -1429,7 +1455,19 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // if (!info.SkipFunctionDefinition())
           if (functionDeclaration->get_functionModifier().isInline())
              {
-               curprint( "inline ");
+            // DQ (9/25/2013): Check if this is a C file using -std=c89, and if so then unparse "__inline__" instead of "inline".
+            // curprint( "inline ");
+               SgFile* file = TransformationSupport::getFile(functionDeclaration);
+               ROSE_ASSERT(file != NULL);
+               if (file->get_C89_only() == true && file->get_C89_gnu_only() == false)
+                  {
+                 // DQ (9/25/2013): This is what is required when using -std=c89 (the default for GNU gcc is -std=gnu89).
+                    curprint( "__inline__ ");
+                  }
+                 else
+                  {
+                    curprint( "inline ");
+                  }
              }
 
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
@@ -1469,15 +1507,30 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              }
           if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeHint())
              {
+#if 0
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
             // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+#endif
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
              }
           if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeReq())
              {
+#if 0
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
             // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+#endif
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
+             }
+        }
+
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (8/1/2014): Added support to output the constexpr keyword.
+          if (variableDeclaration->get_is_constexpr() == true)
+             {
+               curprint("constexpr ");
              }
         }
 
@@ -1563,6 +1616,167 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
         {
           curprint( "extern __device__ __shared__ ");
         }
+
+
+#if 0
+    align( # )
+    allocate(" segname ")
+    appdomain
+    code_seg(" segname ")
+    deprecated
+    dllimport
+    dllexport
+    jitintrinsic
+    naked
+    noalias
+    noinline
+#endif
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_align())
+        {
+          curprint("__declspec(align(4)) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_allocate())
+        {
+          curprint("__declspec(allocate(\"unknown_allocate_name\")) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_appdomain())
+        {
+          curprint("__declspec(appdomain) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_code_seg())
+        {
+          curprint("__declspec(code_seg(\"unknown_code_seg_name\")) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_deprecated())
+        {
+          curprint("__declspec(deprecated) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_dllimport())
+        {
+          curprint("__declspec(dllimport) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_dllexport())
+        {
+          curprint("__declspec(dllexport) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_jitintrinsic())
+        {
+          curprint("__declspec(jitintrinsic) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_naked())
+        {
+          curprint("__declspec(naked) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_noalias())
+        {
+          curprint("__declspec(noalias) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_noinline())
+        {
+          curprint("__declspec(noinline) ");
+        }
+
+#if 0
+    noreturn
+    nothrow
+    novtable
+    process
+    property( {get=get_func_name|,put=put_func_name})
+    restrict
+    safebuffers
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_noreturn())
+        {
+          curprint("__declspec(noreturn) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_nothrow())
+        {
+          curprint("__declspec(nothrow) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_novtable())
+        {
+          curprint("__declspec(novtable) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_process())
+        {
+          curprint("__declspec(process) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_property())
+        {
+       // curprint("__declspec(property( {get=get_func_name|,put=put_func_name})) ");
+          curprint("__declspec(property(\"");
+
+          string get_function_name         = decl_stmt->get_declarationModifier().get_microsoft_property_get_function_name();
+          bool get_function_name_non_empty = get_function_name.empty();
+          string put_function_name         = decl_stmt->get_declarationModifier().get_microsoft_property_put_function_name();
+          bool put_function_name_non_empty = put_function_name.empty();
+
+          if (get_function_name_non_empty == false)
+             {
+               curprint("get=");
+               curprint(get_function_name);
+             }
+
+          if (get_function_name_non_empty == false && put_function_name_non_empty == false)
+             {
+               curprint(", ");
+             }
+
+          if (put_function_name_non_empty == false)
+             {
+               curprint("put=");
+               curprint(put_function_name);
+             }
+
+          curprint("\")) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_restrict())
+        {
+          curprint("__declspec(restrict) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_safebuffers())
+        {
+          curprint("__declspec(safebuffers) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_selectany())
+        {
+          curprint("__declspec(selectany) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_thread())
+        {
+          curprint("__declspec(thread) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_uuid())
+        {
+       // curprint("__declspec(uuid(\" ComObjectGUID \")) ");
+          curprint("__declspec(uuid(\"");
+          curprint(decl_stmt->get_declarationModifier().get_microsoft_uuid_string());
+          curprint("\")) ");
+        }
    }
 
 
@@ -1582,21 +1796,152 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
 
+  // DQ (9/16/2013): FIXME: __section__, __cleanup__, __init_priority__ are not yet implemented.
+
 #if 0
-     printf ("Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",initializedName,initializedName->class_name().c_str(),SageInterface::get_name(initializedName).c_str());
+     printf ("In printAttributes(SgInitializedName*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",initializedName,initializedName->class_name().c_str(),SageInterface::get_name(initializedName).c_str());
 #endif
 
-     short alignmentValue = initializedName->get_gnu_attribute_alignment();
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeUsed() == true)
+        {
+          curprint( " __attribute__((used)) ");
+        }
+     
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeUnused() == true)
+        {
+          curprint( " __attribute__((unused)) ");
+        }
+     
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeWeak() == true)
+        {
+          curprint( " __attribute__((weak)) ");
+        }
+     
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeDeprecated() == true)
+        {
+          curprint( " __attribute__((deprecated)) ");
+        }
+     
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeNoCommon() == true)
+        {
+          curprint( " __attribute__((noCommon)) ");
+        }
+     
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeTransparentUnion() == true)
+        {
+          curprint( " __attribute__((transparent_union)) ");
+        }
+     
+  // DQ (9/16/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributeWeakReference() == true)
+        {
+          curprint( " __attribute__((weak_reference)) ");
+        }
+
+  // DQ (1/18/2014): Adding support for GNU specific noreturn attribute for variable 
+  // (only applies to variable that are of function pointer type).
+     if (initializedName->isGnuAttributeNoReturn() == true)
+        {
+          curprint(" __attribute__((noreturn)) ");
+#if 0
+          printf ("Detected initializedName->isGnuAttributeNoReturn() == true: (not implemented) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if 0
+  // DQ (12/31/2013): This is now handled by the new printAttributesForType() function.
+  // DQ (12/30/2013): Added support for more GNU attributes.
+     if (initializedName->isGnuAttributePacked() == true)
+        {
+          curprint(" /* from printAttributes(SgInitializedName*) */ __attribute__((packed)) ");
+        }
+#endif
 
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
-     if (alignmentValue >= 0)
+     short alignmentValue = initializedName->get_gnu_attribute_alignment();
+
+  // DQ (7/26/2014): Adding support for _Alignas keyword.
+     bool using_Alignas_keyword = (initializedName->get_using_C11_Alignas_keyword() == true);
+
+  // if (alignmentValue >= 0)
+     if (alignmentValue >= 0 && using_Alignas_keyword == false)
         {
+#if 0
+          curprint(" /* alignment attribute on SgInitializedName */ ");
+#endif
+       // DQ (7/26/2014): Fixed error in using "align" (mistake), changed to "aligned".
        // curprint( " __attribute__((align(N)))");
-           curprint( " __attribute__((align(");
-           curprint(StringUtility::numberToString((int)alignmentValue));
-           curprint(")))");
+       // curprint( " __attribute__((align(");
+          curprint( " __attribute__((aligned(");
+          curprint(StringUtility::numberToString((int)alignmentValue));
+          curprint("))) ");
         }
    }
+
+
+void
+Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+   {
+  // DQ (12/31/2013): Added support for missing attributes on types within declarations (in unparsed code).
+
+     ROSE_ASSERT(decl_stmt != NULL);
+
+#if 0
+     printf ("In printAttributesForType(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+#endif
+
+#if 0
+     printf ("Exiting as a test of attribute(__noreturn__) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (12/18/2013): Added support for output of packed attribute (see test2013_104.c 
+       // (required after variable) and test2013_113.c (required after type and before variable)).
+          if (decl_stmt->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+             {
+            // curprint(" /* from printAttributesForType(SgDeclarationStatement*) */ __attribute__((packed))");
+               curprint(" __attribute__((packed))");
+             }
+        }
+
+  // DQ (1/6/2014): Added support for specification of noreturn (function type) attribute.
+  // This is one of two place where the attribute may be used (after the function declaration)
+  // and after the function pointer function parameter in a function's parameter list.
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
+     if (functionDeclaration != NULL)
+        {
+       // DQ (7/26/2014): Fixed for better handling of C11 _Noreturn keyword.
+       // if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true)
+          if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeNoReturn() == true && functionDeclaration->get_using_C11_Noreturn_keyword() == false)
+             {
+               curprint(" __attribute__((noreturn))");
+             }
+
+       // DQ (2/7/2014): attribute set using: decl->get_functionModifier().set_gnu_attribute_named_alias(alias_name);
+          if (functionDeclaration->get_functionModifier().get_gnu_attribute_named_alias().empty() == false)
+             {
+               string alias = functionDeclaration->get_functionModifier().get_gnu_attribute_named_alias();
+#if 0
+               printf ("Detected alias attribute: alias = %s \n",alias.c_str());
+#endif
+            // curprint(" __attribute__((noreturn))");
+               curprint(" __attribute__((alias(\"");
+               curprint(alias);
+               curprint("\")))");
+             }
+        }
+   }
+
 
 void
 Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
@@ -1604,10 +1949,17 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
 
+     ROSE_ASSERT(decl_stmt != NULL);
+
+#if 0
+     printf ("In printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+     curprint("\n/* START printAttributes(SgDeclarationStatement*) */\n ");
+#endif
+
 #if 0
      if (isSgVariableDeclaration(decl_stmt) != NULL)
         {
-          printf ("Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+          printf ("In printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
           decl_stmt->get_declarationModifier().display("Unparse_MOD_SAGE::printAttributes(): declarationModifier");
         }
 #endif
@@ -1620,17 +1972,56 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      short alignmentValue = decl_stmt->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
 
+#if 0
+     printf ("In printAttributes(SgDeclarationStatement*): alignmentValue = %d \n",(int)alignmentValue);
+#endif
+
   // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
      if (alignmentValue >= 0)
         {
-       // curprint( " __attribute__((align(N)))");
-           curprint( " __attribute__((align(");
-           curprint(StringUtility::numberToString((int)alignmentValue));
-           curprint(")))");
+#if 0
+          curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
+#endif
+       // DQ (7/26/2014): Fixed error in using "align" (mistake), changed to "aligned".
+       // curprint(" __attribute__((align(N)))");
+       // curprint(" __attribute__((align(");
+          curprint(" __attribute__((aligned(");
+          curprint(StringUtility::numberToString((int)alignmentValue));
+          curprint(")))");
+        }
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (12/18/2013): Added support for output of packed attribute (see test2013_104.c).
+#if 0
+          if (decl_stmt->get_declarationModifier().get_typeModifier().isGnuAttributePacked() == true)
+             {
+               curprint(" /* from printAttributes(SgDeclarationStatement*) */ __attribute__((packed))");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#else
+       // DQ (12/31/2013): Note that we need to look at the SgInitializedName in the variable declaration, since
+       // we use the type modifier on the declaration to set the attributes for the type (not the variable).
+          SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
+          ROSE_ASSERT(initializedName != NULL);
+          initializedName->isGnuAttributePacked();
+          if (initializedName->isGnuAttributePacked() == true)
+             {
+            // curprint(" /* from printAttributes(SgDeclarationStatement*) triggered from SgInitializedName */ __attribute__((packed))");
+               curprint(" __attribute__((packed))");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
         }
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
-
      if (functionDeclaration != NULL)
         {
 #if 0
@@ -1686,7 +2077,9 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
              {
                curprint( " __attribute__((used))");
              }
-
+#if 0
+          printf ("In printAttributes(SgDeclarationStatement*): functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() = %s \n",functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() ? "true" : "false");
+#endif
           if (functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() == true)
              {
                curprint( " __attribute__((deprecated))");
@@ -1731,9 +2124,114 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
              {
                curprint( " __attribute__((weakref))");
              }
+
+       // DQ (1/5/2014): Adding support for gnu visibility attributes.
+       // Set using: decl->get_declarationModifier().set_gnu_attribute_visability(get_ELF_visibility_attribute(rout->ELF_visibility, &rout->source_corresp));
+          SgDeclarationModifier::gnu_declaration_visability_enum visibility = functionDeclaration->get_declarationModifier().get_gnu_attribute_visability();
+          if (visibility != SgDeclarationModifier::e_unspecified_visibility)
+             {
+#if 0
+               printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified \n");
+#endif
+               string s;
+               switch (visibility)
+                  {
+                 // DQ (1/10/2014): This appears to be a common setting, but it is an error in later versions of gcc to output this specification.
+                    case SgDeclarationModifier::e_unknown_visibility: s = "(\"unknown\")";
+                       {
+#if 0
+                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: unknown visibility setting (supressed) \n");
+#endif
+                      // ROSE_ASSERT(false);
+                         break;
+                       }
+
+                    case SgDeclarationModifier::e_error_visibility:   s = "(\"error\")";
+                       {
+                         printf ("In printAttributes(SgDeclarationStatement*): gnu visibility attribute was specified: error visibility setting (supressed) \n");
+                      // ROSE_ASSERT(false);
+                         break;
+                       }
+
+                    case SgDeclarationModifier::e_unspecified_visibility: s = "(\"xxx\")"; break;
+                       {
+                         printf ("unspecified visibility (trapped) (supressed) \n");
+                         ROSE_ASSERT(false);
+                         break;
+                       }
+
+                    case SgDeclarationModifier::e_hidden_visibility:      s = "(\"hidden\")";    break;
+                    case SgDeclarationModifier::e_protected_visibility:   s = "(\"protected\")"; break;
+                    case SgDeclarationModifier::e_internal_visibility:    s = "(\"internal\")";  break;
+
+                    case SgDeclarationModifier::e_default_visibility:     s = "(\"default\")";   break;
+
+                    default:
+                         printf ("ERROR: In printAttributes(SgDeclarationStatement*): Bad visibility specification: visibility = %d \n", visibility);
+                         ROSE_ASSERT(false);
+                  }
+
+            // DQ (1/10/2014): Note that later versions of gcc will report use of "unknown" and "error" as an error.
+               if (visibility != SgDeclarationModifier::e_unknown_visibility && 
+                   visibility != SgDeclarationModifier::e_error_visibility   && 
+                   visibility != SgDeclarationModifier::e_unspecified_visibility)
+                  {
+                 // curprint(" __attribute__((visibility%s))",s.c_str());
+                    curprint(" __attribute__((visibility");
+                    curprint(s);
+                    curprint("))");
+                  }
+             }
+#if 0
+#if 0
+          printf ("In printAttributes(SgDeclarationStatement*): Look for the gnu_regnum_attribute and process it if it is non-zero: gnu_regnum_attribute = %d \n",functionDeclaration->get_gnu_regnum_attribute());
+#endif
+       // DQ (1/19/2014): Adding support for gnu attribute regnum to support use in Valgrind application.
+          int gnu_regnum_value = functionDeclaration->get_gnu_regnum_attribute();
+          if (gnu_regnum_value > 0)
+             {
+               string s = StringUtility::numberToString(gnu_regnum_value);
+               curprint(" __attribute__((regnum(");
+               curprint(s);
+               curprint(")))");
+             }
+#endif
         }
+
+#if 0
+     printf ("Leaving printAttributes(SgDeclarationStatement*): Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+     curprint("\n/* END printAttributes(SgDeclarationStatement*) */\n ");
+#endif
    }
 
+
+void
+Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+   {
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
+     if (functionDeclaration != NULL)
+        {
+       // DQ (1/19/2014): Add support for prefix attributes.
+#if 0
+          printf ("In printPrefixAttributes(SgDeclarationStatement*): function = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+          printf ("In printPrefixAttributes(SgDeclarationStatement*): Look for the gnu_regparm_attribute and process it if it is non-zero: gnu_regparm_attribute = %d \n",functionDeclaration->get_gnu_regparm_attribute());
+#endif
+       // DQ (1/19/2014): Adding support for gnu attribute regnum to support use in Valgrind application.
+          int gnu_regparm_value = functionDeclaration->get_gnu_regparm_attribute();
+          if (gnu_regparm_value > 0)
+             {
+               string s = StringUtility::numberToString(gnu_regparm_value);
+#if 0
+               printf ("Output __attribute__((regparm(%s))) for function = %p = %s = %s \n",s.c_str(),functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+               curprint(" __attribute__((regparm(");
+               curprint(s);
+
+            // Add trailing space since this is for a prefixed attribute.
+               curprint("))) ");
+             }
+        }
+   }
 
 
 #if 0

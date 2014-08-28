@@ -22,19 +22,19 @@ libroseBinaryFormats_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryFormats_la_SOURCES =											\
       $(INTEL_PIN_SUPPORT)												\
-      DataConversion.C ExtentMap.C Hexdump.C MemoryMap.C Rva.C								\
+      ByteOrder.C DataConversion.C ExtentMap.C Hexdump.C MemoryMap.C Rva.C						\
       GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C		\
       PeExport.C PeFileHeader.C PeImportDirectory.C PeImportItem.C							\
       PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C					\
       ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C	\
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C						\
-      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C
+      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C SRecord.C
 else
    libroseBinaryFormats_la_SOURCES = dummyFunctions.C
    libroseBinaryFormats_la_DEPENDENCIES += dummyFunctions.C
 endif
 
-include_HEADERS = DataConversion.h IntelPinSupport.h MemoryMap.h WorkList.h
+pkginclude_HEADERS = ByteOrder.h DataConversion.h IntelPinSupport.h MemoryMap.h SRecord.h WorkLists.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = CMakeLists.txt IntelPinSupport.C

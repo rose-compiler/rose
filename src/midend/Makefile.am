@@ -11,12 +11,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 include $(srcdir)/abstractHandle/Makefile_variables
+include $(srcdir)/abstractLayer/Makefile_variables
 include $(srcdir)/abstractMemoryObject/Makefile_variables
 include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/astProcessing/Makefile_variables
 include $(srcdir)/astMatching/Makefile_variables
 include $(srcdir)/astRewriteMechanism/Makefile_variables
 include $(srcdir)/astQuery/Makefile_variables
+include $(srcdir)/astSnippet/Makefile_variables
 include $(srcdir)/astUtil/Makefile_variables
 include $(srcdir)/astUtil/annotation/Makefile_variables
 include $(srcdir)/astUtil/astInterface/Makefile_variables
@@ -31,6 +33,7 @@ include $(srcdir)/programTransformation/implicitCodeGeneration/Makefile_variable
 include $(srcdir)/programTransformation/astInlining/Makefile_variables
 include $(srcdir)/programTransformation/astOutlining/Makefile_variables
 include $(srcdir)/programTransformation/ompLowering/Makefile_variables
+include $(srcdir)/programTransformation/transformationTracking/Makefile_variables
 
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
@@ -39,12 +42,14 @@ include $(srcdir)/programTransformation/ompLowering/Makefile_variables
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mAbstractHandlePath=abstractHandle#
+mAbstractLayerPath=abstractLayer#
 mAbstractMemoryObjectPath=abstractMemoryObject#
 mAstDiagnosticsPath=astDiagnostics#
 mAstProcessingPath=astProcessing#
 mAstMatchingPath=astMatching#
 mAstRewriteMechanismPath=astRewriteMechanism#
 mAstQueryPath=astQuery#
+mAstSnippetPath=astSnippet#
 mAstUtilPath=astUtil#
 mProgramTransformationPath=programTransformation#
 
@@ -86,15 +91,17 @@ noinst_LTLIBRARIES=\
 lib_LTLIBRARIES=\
 	$(mProgramTransformation_lib_ltlibraries)
 
-BUILT_SOURCES = $(mAstMatching_BUILT_SOURCES)
+BUILT_SOURCES = $(mAstMatching_built_sources)
 
 libmidend_la_SOURCES=\
 	$(mAbstractHandle_la_sources) \
+	$(mAbstractLayer_la_sources) \
 	$(mAbstractMemoryObject_la_sources) \
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
 	$(mAstMatching_la_sources) \
-	$(mAstQuery_la_sources)
+	$(mAstQuery_la_sources) \
+	$(mAstSnippet_la_sources)
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libmidend_la_SOURCES+=\
 	$(mAstRewriteMechanism_la_sources) \
@@ -110,14 +117,16 @@ libmidend_la_LIBADD=\
 libmidend_la_DEPENDENCIES=\
 	$(mAstQuery_la_dependencies)
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 	$(mAbstractHandle_includeHeaders) \
+	$(mAbstractLayer_includeHeaders) \
 	$(mAbstractMemoryObject_includeHeaders) \
 	$(mAstDiagnostics_includeHeaders) \
 	$(mAstProcessing_includeHeaders) \
 	$(mAstMatching_includeHeaders) \
 	$(mAstRewriteMechanism_includeHeaders) \
 	$(mAstQuery_includeHeaders) \
+	$(mAstSnippet_includeHeaders) \
 	$(mAstUtil_includeHeaders) \
 	$(mProgramTransformation_includeHeaders)
 
@@ -128,6 +137,7 @@ include_HEADERS = \
 EXTRA_DIST = \
 	CMakeLists.txt \
 	$(mAbstractHandle_extraDist) \
+	$(mAbstractLayer_extraDist) \
 	$(mAbstractMemoryObject_extraDist) \
 	$(mAstDiagnostics_extraDist) \
 	$(mAstProcessing_extraDist) \
@@ -139,6 +149,7 @@ EXTRA_DIST = \
 
 clean-local:
 	$(mAbstractHandle_cleanLocal)
+	$(mAbstractLayer_cleanLocal)
 	$(mAbstractMemoryObject_cleanLocal)
 	$(mAstDiagnostics_cleanLocal)
 	$(mAstProcessing_cleanLocal)

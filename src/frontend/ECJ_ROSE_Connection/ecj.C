@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "jserver.h"
 #include "ecj.h"
 
 using std::string;
 using namespace std;
+using namespace Rose::Frontend::Java::Ecj;
 
 static jmethodID jofp_get_method(int, const char*, const char*);
 
@@ -68,29 +68,34 @@ static int jofp_invoke(int argc, char **argv) {
     if (fileName == NULL || args == NULL || type == NULL) jserver_handleException(); 
 
     // tps : this code is more transparent and easier to read
-    jclass cls = jserver_FindClass("JavaTraversal");
-    if (cls == NULL) {
+    Rose::Frontend::Java::Ecj::currentJavaTraversalClass = jserver_FindClass("JavaTraversal");
+    if (Rose::Frontend::Java::Ecj::currentJavaTraversalClass == NULL) {
         fprintf(stderr,
                 "[ERROR] "
                 "Caught a JServer exception in the ECJ_ROSE_Connection.\n");
         jserver_handleException();
         throw std::runtime_error("[ECJ_ROSE_Connection] JServer Exception");
     }
-    jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
-    JNIEnv* env = getEnv();
+    Rose::Frontend::Java::Ecj::currentEnvironment = getEnv();
+    Rose::Frontend::Java::Ecj::mainMethod = jserver_GetMethodID(STATIC_METHOD, Rose::Frontend::Java::Ecj::currentJavaTraversalClass, "main",  "([Ljava/lang/String;)V");
+    Rose::Frontend::Java::Ecj::hasConflictsMethod = jofp_get_method(STATIC_METHOD, "hasConflicts", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z");
+    Rose::Frontend::Java::Ecj::getTempDirectoryMethod = jofp_get_method(STATIC_METHOD, "getTempDirectory", "()Ljava/lang/String;");
+    Rose::Frontend::Java::Ecj::createTempFileMethod = jofp_get_method(STATIC_METHOD, "createTempFile", "(Ljava/lang/String;)Ljava/lang/String;");
+    Rose::Frontend::Java::Ecj::createTempNamedFileMethod = jofp_get_method(STATIC_METHOD, "createTempNamedFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    Rose::Frontend::Java::Ecj::createTempNamedDirectoryMethod = jofp_get_method(STATIC_METHOD, "createTempNamedDirectory", "(Ljava/lang/String;)V");
 
-    (*env).CallStaticVoidMethod(cls, mainMethod,args);
-    if (env->ExceptionOccurred()) {
+    (*Rose::Frontend::Java::Ecj::currentEnvironment).CallStaticVoidMethod(Rose::Frontend::Java::Ecj::currentJavaTraversalClass, mainMethod, args);
+    if (Rose::Frontend::Java::Ecj::currentEnvironment -> ExceptionOccurred()) {
         fprintf(stderr,
                "[ERROR] "
                "Caught a JNI exception in the ECJ_ROSE_Connection.\n");
-        env->ExceptionDescribe();
-        env->ExceptionClear();
+        Rose::Frontend::Java::Ecj::currentEnvironment -> ExceptionDescribe();
+        Rose::Frontend::Java::Ecj::currentEnvironment -> ExceptionClear();
         throw std::runtime_error("[ECJ_ROSE_Connection] JNI Exception");
     }
 
     jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
-    retval = (*env).CallBooleanMethod(cls, errorMethod);
+    retval = (*Rose::Frontend::Java::Ecj::currentEnvironment).CallBooleanMethod(Rose::Frontend::Java::Ecj::currentJavaTraversalClass, errorMethod);
     if (retval != 0) {
         fprintf(stderr,
                 "[ECJ_ROSE_Connection] [ERROR] JNI-C++ exception\n");
@@ -153,3 +158,4 @@ static jmethodID jofp_get_error_method() {
         errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
     return errorMethod;
 }
+

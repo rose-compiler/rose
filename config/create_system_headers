@@ -64,7 +64,7 @@ process_headers()
   else
     echo "$src_dir needs to be copied and modified"
     find "$src_dir/." -type d -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|mkdir -p '$target_dir/\\1'|p" | sh -s
-    find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s
+    find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s --force '&' '$target_dir/\\1'|p" | sh -s
   # find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s &
     echo "Done copying"
     # Find the special-case files to process
@@ -198,9 +198,11 @@ fi
   # Support for compiling ROSE with GNU g++ compiler
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
-    g++*|gcc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
+  # g++*|gcc*|cc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
+    g++*|gcc*|cc*|icpc|mpiicpc|icc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
          case "$compilerName" in
-           gcc*|icc|mpicc|xt-xcc)
+         # gcc*|cc*|icc|mpicc|xt-xcc)
+           gcc*|cc*|icc|mpicc|mpiicc|xt-xcc)
               is_C_compiler="yes"
               language="c"
               ;;
@@ -213,10 +215,25 @@ fi
          tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
          "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
          sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+
+         echo "******************************************************"
+         echo "******************************************************"
+         cat "$tmpFile"
+         echo "******************************************************"
+         echo "******************************************************"
+       # echo "Modified rose_edg_required_macros_and_functions.h file"
+       # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+       # echo "******************************************************"
+       # echo "******************************************************"
+
          rm "$tmpFile"
 
        # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
          echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+
+       # echo "Exiting as a test!"
+       # exit 1
+
          ;;
 
   # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"

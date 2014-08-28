@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
         BinaryAnalysis::ControlFlow cfg_analyzer;
         BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
 
-        cfg_analyzer.build_cfg_from_ast(interps.back(), *cfg);
+        cfg_analyzer.build_block_cfg_from_ast(interps.back(), *cfg);
         std::ofstream mf;
         mf.open("analysis.dot");
         /* Declaring the visitorTraversal */

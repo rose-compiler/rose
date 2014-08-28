@@ -73,16 +73,21 @@ ROSE_MAINPAGE_DOCUMENTATION = $(top_builddir)/rose.docs
 $(ROSE_MAINPAGE_DOCUMENTATION): $(top_srcdir)/rose.docs.in
 	cd $(top_builddir); $(MAKE) rose.docs
 
+# DQ (1/27/2014): Add simple makefile rule to run doxygen to generate ROSE API docs.
+doxygen_docs: rose.cfg AvailableDocumentation.docs
+	doxygen rose.cfg
+
 # A more complex dependence is defined that requires the sage.tag file
 $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 	doxygen rose.cfg
 
+# DQ (3/4/2014): This is a redundant makefile rule (mistake).
 # DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
-doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
-	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
-	doxygen rose.cfg || exit 1
-	echo "Doxygen generated documentation terminated normally."
+#doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+#	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
+#	doxygen rose.cfg || exit 1
+#	echo "Doxygen generated documentation terminated normally."
 
 # We can't specify the source directory to latex so we have to build
 # links to the files in the source directory.  Other ideas?
@@ -181,8 +186,8 @@ if !OS_MACOSX
 	@echo "Skipping doxygen processing of roseQtWidgets.doxygen (failing in OSX)"
 #	doxygen roseQtWidgets.doxygen
 endif
-
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) $(HASKELLPORT_APIDOCS) RoseQtDoc
+# Liao, 2014/1/10, comment out $(HASKELLPORT_APIDOCS) to migrate to EDG 4.7 based rose
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -201,8 +206,8 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
 	cp -f $(AUTOTUNING_MANUAL) ROSE_WebPages/
 	cp -f $(QROSE_MANUAL) ROSE_WebPages/
-	mkdir -p ROSE_WebPages/ROSE_HaskellAPI
-	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
+#	mkdir -p ROSE_WebPages/ROSE_HaskellAPI
+#	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -fr $(srcdir)/powerpoints ROSE_WebPages/

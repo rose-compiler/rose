@@ -21,7 +21,6 @@ endif
 TARGET_OFP_SOURCE_FILES = token.c jni_token_funcs.c c_actions_jni.c
 
 extract_rose_required_ofp_source_files: token.c
-	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
 
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 OFP_SOURCE_FILES = \
@@ -47,7 +46,7 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
 # DQ (10/17/2010): This is the better way to control this.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
-   include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+   pkginclude_HEADERS = ActionEnums.h token.h FortranParserAction.h
 endif
 
 OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/fortran-parser

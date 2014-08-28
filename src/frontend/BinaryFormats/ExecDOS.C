@@ -27,7 +27,7 @@ SgAsmDOSFileHeader::ctor()
     ROSE_ASSERT(p_exec_format!=NULL);
     p_exec_format->set_family(FAMILY_DOS);
     p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ORDER_LSB);
+    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
     p_exec_format->set_abi(ABI_MSDOS);
     p_exec_format->set_abi_version(0);
     p_exec_format->set_word_size(2);
@@ -78,21 +78,21 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
         throw FormatError("Bad DOS magic number");
     
     /* Decode file format */
-    ROSE_ASSERT(ORDER_LSB==p_exec_format->get_sex());
-    p_e_last_page_size    = le_to_host(disk.e_last_page_size);
-    p_e_total_pages       = le_to_host(disk.e_total_pages);
-    p_e_nrelocs           = le_to_host(disk.e_nrelocs);
-    p_e_header_paragraphs = le_to_host(disk.e_header_paragraphs);
-    p_e_minalloc          = le_to_host(disk.e_minalloc);
-    p_e_maxalloc          = le_to_host(disk.e_maxalloc);
-    p_e_ss                = le_to_host(disk.e_ss);
-    p_e_sp                = le_to_host(disk.e_sp);
-    p_e_cksum             = le_to_host(disk.e_cksum);
-    p_e_ip                = le_to_host(disk.e_ip);
-    p_e_cs                = le_to_host(disk.e_cs);
-    p_e_relocs_offset     = le_to_host(disk.e_relocs_offset);
-    p_e_overlay           = le_to_host(disk.e_overlay);
-    p_e_res1              = le_to_host(disk.e_res1);
+    ROSE_ASSERT(ByteOrder::ORDER_LSB==p_exec_format->get_sex());
+    p_e_last_page_size    = ByteOrder::le_to_host(disk.e_last_page_size);
+    p_e_total_pages       = ByteOrder::le_to_host(disk.e_total_pages);
+    p_e_nrelocs           = ByteOrder::le_to_host(disk.e_nrelocs);
+    p_e_header_paragraphs = ByteOrder::le_to_host(disk.e_header_paragraphs);
+    p_e_minalloc          = ByteOrder::le_to_host(disk.e_minalloc);
+    p_e_maxalloc          = ByteOrder::le_to_host(disk.e_maxalloc);
+    p_e_ss                = ByteOrder::le_to_host(disk.e_ss);
+    p_e_sp                = ByteOrder::le_to_host(disk.e_sp);
+    p_e_cksum             = ByteOrder::le_to_host(disk.e_cksum);
+    p_e_ip                = ByteOrder::le_to_host(disk.e_ip);
+    p_e_cs                = ByteOrder::le_to_host(disk.e_cs);
+    p_e_relocs_offset     = ByteOrder::le_to_host(disk.e_relocs_offset);
+    p_e_overlay           = ByteOrder::le_to_host(disk.e_overlay);
+    p_e_res1              = ByteOrder::le_to_host(disk.e_res1);
 
     /* Magic number */
     p_magic.clear();
@@ -117,7 +117,7 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
 
     /* Entry point */
     p_base_va = 0;
-    add_entry_rva(le_to_host(disk.e_ip));
+    add_entry_rva(ByteOrder::le_to_host(disk.e_ip));
 
     return this;
 }
@@ -149,20 +149,20 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-    host_to_le(p_e_last_page_size,     &(disk->e_last_page_size));
-    host_to_le(p_e_total_pages,        &(disk->e_total_pages));
-    host_to_le(p_e_nrelocs,            &(disk->e_nrelocs));
-    host_to_le(p_e_header_paragraphs,  &(disk->e_header_paragraphs));
-    host_to_le(p_e_minalloc,           &(disk->e_minalloc));
-    host_to_le(p_e_maxalloc,           &(disk->e_maxalloc));
-    host_to_le(p_e_ss,                 &(disk->e_ss));
-    host_to_le(p_e_sp,                 &(disk->e_sp));
-    host_to_le(p_e_cksum,              &(disk->e_cksum));
-    host_to_le(p_e_ip,                 &(disk->e_ip));
-    host_to_le(p_e_cs,                 &(disk->e_cs));
-    host_to_le(p_e_relocs_offset,      &(disk->e_relocs_offset));
-    host_to_le(p_e_overlay,            &(disk->e_overlay));
-    host_to_le(p_e_res1,               &(disk->e_res1));
+    ByteOrder::host_to_le(p_e_last_page_size,     &(disk->e_last_page_size));
+    ByteOrder::host_to_le(p_e_total_pages,        &(disk->e_total_pages));
+    ByteOrder::host_to_le(p_e_nrelocs,            &(disk->e_nrelocs));
+    ByteOrder::host_to_le(p_e_header_paragraphs,  &(disk->e_header_paragraphs));
+    ByteOrder::host_to_le(p_e_minalloc,           &(disk->e_minalloc));
+    ByteOrder::host_to_le(p_e_maxalloc,           &(disk->e_maxalloc));
+    ByteOrder::host_to_le(p_e_ss,                 &(disk->e_ss));
+    ByteOrder::host_to_le(p_e_sp,                 &(disk->e_sp));
+    ByteOrder::host_to_le(p_e_cksum,              &(disk->e_cksum));
+    ByteOrder::host_to_le(p_e_ip,                 &(disk->e_ip));
+    ByteOrder::host_to_le(p_e_cs,                 &(disk->e_cs));
+    ByteOrder::host_to_le(p_e_relocs_offset,      &(disk->e_relocs_offset));
+    ByteOrder::host_to_le(p_e_overlay,            &(disk->e_overlay));
+    ByteOrder::host_to_le(p_e_res1,               &(disk->e_res1));
     return disk;
 }
 
@@ -342,16 +342,16 @@ SgAsmDOSExtendedHeader::parse()
 
     /* Decode file format */
     ROSE_ASSERT(get_header()!=NULL); /*should be the DOS File Header*/
-    ROSE_ASSERT(ORDER_LSB==get_header()->get_sex());
-    p_e_res1              = le_to_host(disk.e_res1);
-    p_e_oemid             = le_to_host(disk.e_oemid);
-    p_e_oeminfo           = le_to_host(disk.e_oeminfo);
-    p_e_res2              = le_to_host(disk.e_res2);
-    p_e_res3              = le_to_host(disk.e_res3);
-    p_e_res4              = le_to_host(disk.e_res4);
-    p_e_res5              = le_to_host(disk.e_res5);
-    p_e_res6              = le_to_host(disk.e_res6);
-    p_e_lfanew            = le_to_host(disk.e_lfanew);
+    ROSE_ASSERT(ByteOrder::ORDER_LSB==get_header()->get_sex());
+    p_e_res1              = ByteOrder::le_to_host(disk.e_res1);
+    p_e_oemid             = ByteOrder::le_to_host(disk.e_oemid);
+    p_e_oeminfo           = ByteOrder::le_to_host(disk.e_oeminfo);
+    p_e_res2              = ByteOrder::le_to_host(disk.e_res2);
+    p_e_res3              = ByteOrder::le_to_host(disk.e_res3);
+    p_e_res4              = ByteOrder::le_to_host(disk.e_res4);
+    p_e_res5              = ByteOrder::le_to_host(disk.e_res5);
+    p_e_res6              = ByteOrder::le_to_host(disk.e_res6);
+    p_e_lfanew            = ByteOrder::le_to_host(disk.e_lfanew);
 
     return this;
 }
@@ -360,15 +360,15 @@ SgAsmDOSExtendedHeader::parse()
 void *
 SgAsmDOSExtendedHeader::encode(DOSExtendedHeader_disk *disk) const
 {
-    host_to_le(p_e_res1,     &(disk->e_res1));
-    host_to_le(p_e_oemid,    &(disk->e_oemid));
-    host_to_le(p_e_oeminfo,  &(disk->e_oeminfo));
-    host_to_le(p_e_res2,     &(disk->e_res2));
-    host_to_le(p_e_res3,     &(disk->e_res3));
-    host_to_le(p_e_res4,     &(disk->e_res4));
-    host_to_le(p_e_res5,     &(disk->e_res5));
-    host_to_le(p_e_res6,     &(disk->e_res6));
-    host_to_le(p_e_lfanew,   &(disk->e_lfanew));
+    ByteOrder::host_to_le(p_e_res1,     &(disk->e_res1));
+    ByteOrder::host_to_le(p_e_oemid,    &(disk->e_oemid));
+    ByteOrder::host_to_le(p_e_oeminfo,  &(disk->e_oeminfo));
+    ByteOrder::host_to_le(p_e_res2,     &(disk->e_res2));
+    ByteOrder::host_to_le(p_e_res3,     &(disk->e_res3));
+    ByteOrder::host_to_le(p_e_res4,     &(disk->e_res4));
+    ByteOrder::host_to_le(p_e_res5,     &(disk->e_res5));
+    ByteOrder::host_to_le(p_e_res6,     &(disk->e_res6));
+    ByteOrder::host_to_le(p_e_lfanew,   &(disk->e_lfanew));
     return disk;
 }
 

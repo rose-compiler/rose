@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include "pre.h"
+#include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
 
 
 // DQ (8/1/2005): test use of new static function to create 
@@ -15,6 +16,7 @@
 
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"
+#include "inliner.h"
 
 using namespace SageInterface;
 // void FixSgTree(SgNode*);

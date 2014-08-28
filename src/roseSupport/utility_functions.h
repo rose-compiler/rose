@@ -36,7 +36,7 @@ ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool fr
 // SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
 // called explicitly for each SgFile object.  See tutorial/selectedFileTranslation.C for example.
 SgProject* frontendShell ( int argc, char** argv);
-SgProject* frontendShell ( const std::vector<std::string>& argv);
+ROSE_DLL_API SgProject* frontendShell ( const std::vector<std::string>& argv);
 
 // DQ (3/18/2006): Modified backend function interface to permit handling of user specified
 // objects to control the formatting of code generation and the use of alternative code generation
@@ -47,7 +47,7 @@ ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatH
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
-int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
+ROSE_DLL_API int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
 
 // DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
 // compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
@@ -55,28 +55,28 @@ int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_wit
 // this backend permits an intermediate test of robustness where the code that we generate might
 // be generated incorrectly (usually with missing name qualification as required for a specific 
 // backend (vendor) compiler).
-int backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project );
+ROSE_DLL_API int backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project );
 
 //QY: new back end that performs only source-to-source translations 
 // of the original file. Furthermore, statements are copied from 
 // the original file if they are not changed
-int copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL );
+ROSE_DLL_API int copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL );
 
 // int globalBackendErrorCode  = 0;
 // int backend ( const SgProject & project, int & errorCode = globalBackendErrorCode);
 // SgProject & frontend ( int argc, char * argv[] );
 
-void generatePDF ( const SgProject & project );
-void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
+ROSE_DLL_API void generatePDF ( const SgProject & project );
+ROSE_DLL_API void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
 
 // DQ (9/1/2008): Added function to generate the compete AST when specificed with multiple files 
 // on the command line.  This is the older default behavior of generateDOT (from last year, or so).
-void generateDOT_withIncludes   ( const SgProject & project, std::string filenamePostfix = "" );
-void generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix = "" );
+ROSE_DLL_API void generateDOT_withIncludes   ( const SgProject & project, std::string filenamePostfix = "" );
+ROSE_DLL_API void generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix = "" );
 
 // DQ (6/14/2007): Support for whole AST graphs output with attributes (types, symbols, all edges, etc.)
 // We define a default value for the maximum graph size (number of nodes).
-void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::string filenameSuffix = "" );
+ROSE_DLL_API void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::string filenameSuffix = "" );
 // void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix = "", CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags = NULL)
 
 // output of EDG AST (useful for debugging connection to SAGE)
@@ -143,13 +143,13 @@ namespace ROSE
           int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
           bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
 
-          std::string getWorkingDirectory (); //! get the current directory
-          std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
+          ROSE_DLL_API std::string getWorkingDirectory (); //! get the current directory
+          ROSE_DLL_API std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 
           std::string getFileNameWithoutPath ( SgStatement* statementPointer );
-          std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
+          ROSE_DLL_API std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
 
-          std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
+          ROSE_DLL_API std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 
        // DQ (9/8/2008): This is removed since it is redundant with the version in StringUtility.
        // std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
@@ -165,7 +165,7 @@ namespace ROSE
 
           SgName concatenate ( const SgName & X, const SgName & Y );
 
-          void usage (int status);
+          ROSE_DLL_API void usage (int status);
 
           void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
 
@@ -173,7 +173,21 @@ namespace ROSE
           SgStatement* getPreviousStatement ( SgStatement *targetStatement );
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
+       // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
+          extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
+
+       // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
+       // extern std::vector<FrontierNode*> frontierNodes;
+          extern std::map<SgStatement*,FrontierNode*> frontierNodes;
+
+       // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
+          extern std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap;
+
+       // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
+          extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
+          extern std::set<int> redundantTokenEndingsSet;
    };
+
 
 // endif for ifndef SWIG
 #endif

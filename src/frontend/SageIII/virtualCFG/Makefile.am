@@ -32,7 +32,7 @@ libvirtualCFG_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
 # DQ (10/29/2010): virtualBinCFG.h must be released as a header file since the function 
 # declarations in SgAsmStatement require it in the generated Cxx_Grammar.h file.
-include_HEADERS = \
+pkginclude_HEADERS = \
      virtualCFG.h \
      virtualBinCFG.h \
      cfgToDot.h \

@@ -1,0 +1,44 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% C++11/GNU SDF Grammar. Following the C++ ISO/IEC JTC1 SC22 WG21 N3690 working draft (2013-05-15) %%
+%% and extended with rules covering the GNU compiler extensions (superset)                          %%
+%% Version: 1.2                                                                                     %%
+%% Author: Markus Schordan, 2013.                                                                   %%
+%% Copyright: Lawrence Livermore National Laboratory                                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+module FloatingLiteral
+exports
+  sorts
+    Floating-literal
+  
+  lexical syntax
+    Floating-numeral [fFdD]?       	-> Floating-literal
+    [0-9]+                      	-> Floating-literal {reject}
+
+  lexical restrictions
+    Floating-literal -/- [fFdD]
+
+  sorts
+    Exponent-part
+    Floating-numeral
+    Floating-suffix
+    Fractional-constant
+    Signed-integer
+
+  lexical syntax
+    Fractional-constant Exponent-part? Floating-suffix? -> Floating-numeral
+
+    [0-9]+ "." [0-9]+   -> Fractional-constant
+    [0-9]+ "."          -> Fractional-constant
+           "." [0-9]+   -> Fractional-constant
+
+    [eE] Signed-integer -> Exponent-part
+    
+    [\+\-]? [0-9]+      -> Signed-integer
+    [fFlL]              -> Floating-suffix
+
+
+  lexical restrictions
+    Fractional-constant  -/- [0-9]
+    Exponent-part -/- [0-9]

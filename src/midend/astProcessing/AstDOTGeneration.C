@@ -8,6 +8,7 @@
 
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
+#include "transformationTracking.h"
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -34,7 +35,7 @@ AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, stri
      this->filenamePostfix=filenamePostfix;
      DOTInheritedAttribute ia;
      traverse(node,ia);
-     string filename2=string("./")+filename+"."+filenamePostfix+"dot";
+     string filename2=string("./")+filename+"."+filenamePostfix+".dot";
      dotrep.writeToFileAsGraph(filename2);
    }
 
@@ -133,123 +134,129 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
      return ia;
    }
 
-#if 1
 
 void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
-{
+   {
   //*****
   // Nodes and edges can be annotated with additional information. This information is in
   // the form of additional nodes and edges. These is added to the output on a per-node basis.
 
+  // DQ (11/17/2013): Added assertion.
+     ROSE_ASSERT(node != NULL);
+
+#if 1
+     printf ("In AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
   // DQ (7/4/2008): Support for edges specified in AST attributes
-  AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
-  if (astAttributeContainer != NULL)
-  {
-    // Loop over all the attributes at this IR node
-    for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
-    {
-      // std::string name = i->first;
-      AstAttribute* attribute = i->second;
-      ROSE_ASSERT(attribute != NULL);
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+       // Loop over all the attributes at this IR node
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
 
-      // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
-      // printf ("Calling attribute->additionalNodeInfo() \n");
-      std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
-      // printf ("nodeList.size() = %lu \n",nodeList.size());
+            // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
+#if 1
+               printf ("Calling attribute->additionalNodeInfo() \n");
+#endif
+               std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
+#if 1
+               printf ("nodeList.size() = %lu \n",nodeList.size());
+#endif
+               for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
+                  {
+                    SgNode* nodePtr   = i_node->nodePtr;
+                    string nodelabel  = i_node->label;
+                    string nodeoption = i_node->options;
+#if 1
+                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
+#endif
+                 // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
+                 // dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
+                    dotrep.addNode( nodePtr, nodelabel, nodeoption );
+                  }
+#if 1
+               printf ("Calling attribute->additionalEdgeInfo() \n");
+#endif
+               std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
+#if 1
+               printf ("edgeList.size() = %lu \n",edgeList.size());
+#endif
+               for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
+                  {
+                    string edgelabel  = i_edge->label;
+                    string edgeoption = i_edge->options;
+#if 1
+                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
+#endif
+                    dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
+                  }
+             }
+        }
+#if 1
+     printf ("Leaving AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+   }
 
-      for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
-      {
-        SgNode* nodePtr   = i_node->nodePtr;
-        string nodelabel  = i_node->label;
-        string nodeoption = i_node->options;
-        // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
-        // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
-//        dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
-        dotrep.addNode( nodePtr, nodelabel, nodeoption );
-
-      }
-
-      // printf ("Calling attribute->additionalEdgeInfo() \n");
-      std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
-      // printf ("edgeList.size() = %lu \n",edgeList.size());
-      for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
-      {
-        string edgelabel  = i_edge->label;
-        string edgeoption = i_edge->options;
-        // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
-        dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
-      }
-    }
-  }
-}
 
 void
 AstDOTGeneration::writeIncidenceGraphToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename)
-{
+   {
+  // Output all nodes
+     rose_graph_integer_node_hash_map & nodes = graph->get_node_index_to_node_map ();
 
-  //Output all nodes
-  rose_graph_integer_node_hash_map & nodes =
-    graph->get_node_index_to_node_map ();
+     for( rose_graph_integer_node_hash_map::iterator it = nodes.begin(); it != nodes.end(); ++it )
+        {
+          SgGraphNode* node = it->second;
 
+          if( commentOutNodeInGraph(node) == false )
+             {
+               string nodeoption;
+               string nodelabel=string("\\n")+node->get_name();
 
-  for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
-      it != nodes.end(); ++it )
-  {
-    SgGraphNode* node = it->second;
+               nodelabel += additionalNodeInfo(node);
 
-    if( commentOutNodeInGraph(node) == false )
-    {
-      string nodeoption;
-      string nodelabel=string("\\n")+node->get_name();
+               string additionalOptions = additionalNodeOptions(node);
 
-      nodelabel += additionalNodeInfo(node);
+               string x;
+               string y;
+               x += additionalOptions;
 
-      string additionalOptions = additionalNodeOptions(node);
+               nodeoption += additionalOptions;
 
-      string x;
-      string y;
-      x += additionalOptions;
+            // dotrep.addNode(node,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
+               dotrep.addNode(node,nodelabel,nodeoption);
 
-      nodeoption += additionalOptions;
+               addAdditionalNodesAndEdges(node);
+             }
+        }
 
-     //dotrep.addNode(node,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
-      dotrep.addNode(node,nodelabel,nodeoption);
+  // Output edges
+     rose_graph_integer_edge_hash_multimap & outEdges = graph->get_node_index_to_edge_multimap_edgesOut ();
 
-      addAdditionalNodesAndEdges(node);
+     for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin(); outEdgeIt != outEdges.end(); ++outEdgeIt )
+        {
+       // if(debug) std::cerr << " add edge from node ... " << std::endl; // debug
+          SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
+          ROSE_ASSERT(graphEdge!=NULL);
 
-    };
-  }
+          if ( commentOutNodeInGraph(graphEdge) == false )
+             {
+               string edgelabel=string("\\n")+graphEdge->get_name();
 
-  //Output edges
-  rose_graph_integer_edge_hash_multimap & outEdges
-    = graph->get_node_index_to_edge_multimap_edgesOut ();
+               string edgeoption = additionalEdgeOptions(graphEdge->get_from(),graphEdge->get_to(),edgelabel);
+               dotrep.addEdge(graphEdge->get_from(),edgelabel,graphEdge->get_to(),edgeoption + "dir=forward");
+               addAdditionalNodesAndEdges(graphEdge);
+             }
 
+        }
 
-  for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin();
-      outEdgeIt != outEdges.end(); ++outEdgeIt )
-  {
-    //if(debug) std::cerr << " add edge from node ... " << std::endl; // debug
-    SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
-    ROSE_ASSERT(graphEdge!=NULL);
-
-    if( commentOutNodeInGraph(graphEdge) == false )
-    {
-
-      string edgelabel=string("\\n")+graphEdge->get_name();
-
-      string edgeoption = additionalEdgeOptions(graphEdge->get_from(),graphEdge->get_to(),edgelabel);
-      dotrep.addEdge(graphEdge->get_from(),edgelabel,graphEdge->get_to(),edgeoption + "dir=forward");
-      addAdditionalNodesAndEdges(graphEdge);
-
-    }
-
-  }
-
-  dotrep.writeToFileAsGraph(filename);
-
-}
-
-#endif
+     dotrep.writeToFileAsGraph(filename);
+   }
 
 
 DOTSynthesizedAttribute
@@ -331,10 +338,35 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (varRefExp != NULL)
         {
           SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (variableSymbol == NULL)
+             {
+               printf ("WARNING: variableSymbol == NULL: varRefExp = %p \n",varRefExp);
+             }
           ROSE_ASSERT(variableSymbol != NULL);
-          string name = variableSymbol->get_name();
+
+          string name = "unknown";
+          if (variableSymbol != NULL)
+             {
+               name = variableSymbol->get_name();
+             }
           nodelabel += string("\\n name = ") + name;
         }
+
+#if 0
+  // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
+  // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
+  // I need this for debugging, but I think we might not want this to be used all of the time.
+     SgExpression* expression = isSgExpression(node);
+     if (expression != NULL)
+        {
+          SgType* type = expression->get_type();
+          ROSE_ASSERT(type != NULL);
+          string unparsedTypeString = type->unparseToString();
+          nodelabel += string("\\n type = ") + unparsedTypeString;
+        }
+#endif
 
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
@@ -657,7 +689,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                     printf ("Proposed (generated) filename is too long, shortened to: %s \n",generatedProjectName.c_str());
                   }
 
-               string filename = string("./") + generatedProjectName + ".dot";
+               string filename = string("./") + generatedProjectName + "." + filenamePostfix + ".dot";
 
             // printf ("generated filename for dot file (from SgProject) = %s \n",filename.c_str());
                if ( SgProject::get_verbose() >= 1 )
@@ -739,6 +771,190 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
    }
 
 
+static std::string 
+generateFileLineColumnString (Sg_File_Info* fileInfo)
+   {
+  // DQ (9/1/2013): Adding source position information for DOT output.
+     string ss;
+
+     ROSE_ASSERT(fileInfo != NULL);
+     string file = fileInfo->get_filename();
+     file = ROSE::stripPathFromFileName(file);
+
+     int line    = fileInfo->get_line();
+     int column  = fileInfo->get_col();
+
+     ss += file;
+
+  // DQ (9/1/2013): When ROSE is optimized, this will be output as "::" the output of the line and column integers
+  // is optimized away (GNU 4.2.4).  To fix this call to string functions to convert integers to strings explicitly.
+     ss += ":";
+     ss += StringUtility::numberToString(line);
+     ss += ":";
+     ss += StringUtility::numberToString(column);
+     ss += "\\n";
+
+     return ss;
+   }
+
+static std::string
+sourcePositionInformation (SgNode* node)
+   {
+  // DQ (8/31/2013): Adding source position information for DOT output.
+     string ss;
+
+     SgLocatedNode* locatedNode = isSgLocatedNode(node);
+     if (locatedNode != NULL)
+        {
+          Sg_File_Info* fileInfo = locatedNode->get_file_info();
+          if (fileInfo != NULL)
+             {
+               bool hasSpecialMode = false;
+               if (fileInfo->isCompilerGenerated() == true)
+                  {
+                    ss += "compiler generated\\n";
+                    hasSpecialMode = true;
+                  }
+                 else
+                  {
+                    if (fileInfo->isFrontendSpecific() == true)
+                       {
+                         ss += "front-end specific\\n";
+                         hasSpecialMode = true;
+                       }
+                      else
+                       {
+                         if (fileInfo->isTransformation() == true)
+                            {
+                              ss += "is part of transformation\\n";
+                              hasSpecialMode = true;
+                            }
+                           else
+                            {
+                           // ss += "???\\n";
+                            }
+                       }
+                  }
+
+               if (hasSpecialMode == true)
+                  {
+                    if (fileInfo->isOutputInCodeGeneration() == true)
+                       {
+                         ss += "IS output in generated code\\n";
+                       }
+                      else
+                       {
+                         ss += "is NOT output in generated code\\n";
+                       }
+                  }
+                 else
+                  {
+                 // DQ (9/1/2013): Name a few cases were we want to output the end of the IR node construct's source position range.
+                 // bool outputEndOfConstruct = (isSgAggregateInitializer(node) != NULL || isSgScopeStatement(node) != NULL);
+                    bool outputEndOfConstruct = true; // (isSgAggregateInitializer(node) != NULL || isSgStatement(node) != NULL);
+
+                    if (outputEndOfConstruct == true)
+                       {
+                      // Output the end of the range represented by the IR node's source position.
+                         ss += generateFileLineColumnString(locatedNode->get_startOfConstruct());
+                         ss += generateFileLineColumnString(locatedNode->get_endOfConstruct());
+                       }
+                      else
+                       {
+                      // For an SgStatement this is the startOfConstruct, but for an SgExpression this is the operator position (or sometimes equal to the startOfConstruct).
+                         ss += generateFileLineColumnString(fileInfo);
+                       }
+                  }
+             }
+            else
+             {
+               ss += "no source position available\\n";
+             }
+        }
+       else
+        {
+       // DQ (9/1/2013): We could handle the source position of some other IR nodes (e.g. output name of the file for SgFile).
+          SgFile* file = isSgFile(node);
+          if (file != NULL)
+             {
+               ROSE_ASSERT(file->get_file_info() != NULL);
+               ss += generateFileLineColumnString(file->get_file_info());
+             }
+        }
+
+     return ss;
+   }
+
+
+// DQ (9/19/2013): generate the number associated with each position relative to the attached IR node.
+static size_t
+numberByRelativePosition(AttachedPreprocessingInfoType* commentsAndCppDirectives, PreprocessingInfo::RelativePositionType pos)
+   {
+     size_t returnValue = 0;
+
+     for (vector<PreprocessingInfo*>::iterator i = commentsAndCppDirectives->begin(); i != commentsAndCppDirectives->end(); i++)
+        {
+          if ( (*i)->getRelativePosition() == pos )
+             {
+               returnValue++;
+             }
+        }
+
+     return returnValue;
+   }
+
+
+static std::string
+commentAndCppInformation (SgNode* node)
+   {
+  // DQ (8/31/2013): Adding source position information for DOT output.
+     string ss;
+
+     SgLocatedNode* locatedNode = isSgLocatedNode(node);
+     if (locatedNode != NULL)
+        {
+          AttachedPreprocessingInfoType* commentsAndCppDirectives = locatedNode->getAttachedPreprocessingInfo();
+          size_t numberofCommentsAndCppDirectives = 0;
+          if (commentsAndCppDirectives != NULL)
+             {
+               numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+               if (numberofCommentsAndCppDirectives >= 0)
+                  {
+                 // ss = string("comments = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
+                    ss += string("comments/directives (before) = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::before)) + "\\n";
+                    ss += string("comments/directives (inside) = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::inside)) + "\\n";
+                    ss += string("comments/directives (after)  = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::after)) + "\\n";
+                  }
+             }
+        }
+
+#if 0
+       else
+        {
+       // DQ (9/1/2013): We could handle the source position of some other IR nodes (e.g. output name of the file for SgFile).
+          SgFile* file = isSgFile(node);
+          if (file != NULL)
+             {
+            // ROSE_ASSERT(file->get_file_info() != NULL);
+            // ss += generateFileLineColumnString(file->get_file_info());
+               AttachedPreprocessingInfoType* commentsAndCppDirectives = file->getAttachedPreprocessingInfo();
+               size_t numberofCommentsAndCppDirectives = 0;
+               if (commentsAndCppDirectives != NULL)
+                  {
+                    numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+                    if (numberofCommentsAndCppDirectives > 0)
+                       {
+                         ss = string("comments = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
+                       }
+                  }
+             }
+        }
+#endif
+
+     return ss;
+   }
+
+
 // To improve the default output add additional information here
 // Note you need to add "\\n" for newline
 string
@@ -750,10 +966,16 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
   // print number of max successors (= container size)
      AstSuccessorsSelectors::SuccessorsContainer c;
      AstSuccessorsSelectors::selectDefaultSuccessors(node,c);
-     ss << c.size() << "\\n";
+     ss <<"child_count:"<< c.size() << "\\n";
 
   // add memory location of node to dot output
      ss << node << "\\n";
+
+  // DQ (8/31/2013): Added more information about the IR node to the dot graph.
+     ss << sourcePositionInformation(node);
+
+  // DQ (9/19/2013): Added more information about the IR node to the dot graph (comments and C preprocessor directive information).
+     ss << commentAndCppInformation(node);
 
   // DQ (7/4/2008): Added support for output of information about attributes
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
@@ -774,7 +996,9 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
           ss << "\\n";
           ss << "\\n";
         }
-
+     // Liao, 4/3/2014  display Unique ID for some nodes
+     if (TransformationTracking::getId(node) != 0)
+       ss <<"ID:"<<TransformationTracking::getId(node)<<"\\n";
      return ss.str();
    }
 
@@ -816,6 +1040,9 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
+#if 0
+          printf ("In AstDOTGeneration::additionalNodeOptions(): astAttributeContainer = %p for node = %p = %s \n",astAttributeContainer,node,node->class_name().c_str());
+#endif
           for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
              {
             // std::string name = i->first;
@@ -824,6 +1051,12 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
 
                ss << attribute->additionalNodeOptions();
              }
+        }
+       else
+        {
+#if 0
+          printf ("In AstDOTGeneration::additionalNodeOptions(): astAttributeContainer == NULL for node = %p = %s \n",node,node->class_name().c_str());
+#endif
         }
 
      return ss.str();

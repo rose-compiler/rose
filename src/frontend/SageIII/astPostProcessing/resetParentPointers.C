@@ -632,19 +632,37 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                case SgTemplateArgument::nontype_argument:
                   {
                  // These can be boolean or integer values, for example.
-                    ROSE_ASSERT((*i)->get_expression() != NULL);
-                    SgExpression* argumentExpression = (*i)->get_expression();
-#if 0
-                    printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",
-                         argumentExpression,argumentExpression->sage_class_name());
-#endif
-                    if (argumentExpression->get_parent() == NULL)
+
+                 // DQ (8/13/2013): Added support for nontype template arguments to be either an expression
+                 // (SgExpression) or a variable declaration (SgInitializedName)
+                 // ROSE_ASSERT((*i)->get_expression() != NULL);
+                    if ((*i)->get_expression() != NULL)
                        {
-#if DEBUG_PARENT_INITIALIZATION
-                         printf ("Setting parent in SgTemplateArgument::nontype_argument = %p = %s \n",
-                              argumentExpression,argumentExpression->sage_class_name());
+                         ROSE_ASSERT((*i)->get_initializedName() == NULL);
+                         SgExpression* argumentExpression = (*i)->get_expression();
+#if 0
+                         printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",argumentExpression,argumentExpression->class_name().c_str());
 #endif
-                         argumentExpression->set_parent(*i);
+                         if (argumentExpression->get_parent() == NULL)
+                            {
+#if DEBUG_PARENT_INITIALIZATION
+                               printf ("Setting parent in SgTemplateArgument::nontype_argument = %p = %s \n",argumentExpression,argumentExpression->class_name().c_str());
+#endif
+                              argumentExpression->set_parent(*i);
+                            }
+                       }
+                      else
+                       {
+                         ROSE_ASSERT((*i)->get_initializedName() != NULL);
+                         SgInitializedName* argumentInitializedName = (*i)->get_initializedName();
+
+                         if (argumentInitializedName->get_parent() == NULL)
+                            {
+#if DEBUG_PARENT_INITIALIZATION
+                               printf ("Setting parent in SgTemplateArgument::nontype_argument = %p = %s \n",argumentInitializedName,argumentInitializedName->class_name().c_str());
+#endif
+                              argumentInitializedName->set_parent(*i);
+                            }
                        }
 
                  // printf ("Error: SgTemplateArgument::nontype_argument not implemented \n");
@@ -659,6 +677,14 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                  // to a shared SgTemplateDeclaration. So there is nothing to do here.
 
                  // printf ("Error: resetParentPointersInTemplateArgumentList() SgTemplateArgument::template_template_argument case not implemented \n");
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
+
+            // DQ (2/10/2014): Added this case to avoid compiler warning (I think there is nothing to do here).
+               case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+                 // printf ("Error: resetParentPointersInTemplateArgumentList() SgTemplateArgument::start_of_pack_expansion_argument case not implemented \n");
                  // ROSE_ASSERT(false);
                     break;
                   }
@@ -685,7 +711,15 @@ ResetParentPointers::evaluateInheritedAttribute (
 
 #if 0
      printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->sage_class_name());
-
+#endif
+#if 0
+  // ROSE_ASSERT(node->get_file_info() != NULL);
+     if (node->get_file_info() != NULL)
+        {
+          node->get_file_info()->display("ResetParentPointers::evaluateInheritedAttribute: debug");
+        }
+#endif
+#if 0
      if (isSgTryStmt(node) != NULL)
         {
           printf ("\n\n################ FOUND TRY STATEMENT ##################### \n\n\n");
@@ -1006,8 +1040,18 @@ ResetParentPointers::evaluateInheritedAttribute (
                     ROSE_ASSERT(variableRefExpression != NULL);
 
                     SgVariableSymbol *variableSymbol = variableRefExpression->get_symbol();
+
+                    if (variableSymbol == NULL)
+                       {
+                         printf ("WARNING: variableSymbol == NULL: variableRefExpression = %p \n",variableRefExpression);
+                       }
                     ROSE_ASSERT(variableSymbol != NULL);
 
+                 // DQ (1/1/2014): I think we may have to allow this for cases such as that in test2014_01.c
+                 // But I would prefer to have a sysmbol always built so that ROSE had a consistant representation.
+                 // Initially we want to allow this so that we can get the graph of the AST so that I can understand the problem better.
+                    if (variableSymbol != NULL)
+                       {
                  // This is bit confusing since what is returned is the SgInitializedName and NOT a declaration!
                     SgInitializedName *initializedName = variableSymbol->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
@@ -1026,6 +1070,8 @@ ResetParentPointers::evaluateInheritedAttribute (
                          initializedName->set_parent(variableRefExpression);
                        }
                     ROSE_ASSERT(initializedName->get_parent() != NULL);
+                       }
+
                     break;
                   }
 
@@ -1340,8 +1386,24 @@ ResetParentPointers::evaluateInheritedAttribute (
                        }
                       else
                        {
+                      // DQ (2/9/2014): This was an error, but it only shows up in the use of the GNU 4.6 header files 
+                      // (and it is not clear that it should be an error).  So output a message as we debug this issue.
+                         if (declaration->get_parent() != directive)
+                            {
+#if 0
+                              printf ("Error: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
+                              printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
+                              printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
+                              declaration->get_file_info()->display("location of problem code: declaration: debug");
+                              directive->get_file_info()->display("location of problem code: directive: debug");
+#else
+                           // DQ (5/19/2014): Make this a warning for now; it does not appear to be a problem.
+                              printf ("Warning: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
+#endif
+                            }
+
                       // DQ (3/15/2006): Why is it an error to have this be a valid pointer?  The parent should be the directive, I think.
-                         ROSE_ASSERT(declaration->get_parent() == directive);
+                      // ROSE_ASSERT(declaration->get_parent() == directive);
 #if 0
                          printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
                          printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());

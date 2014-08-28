@@ -1,10 +1,10 @@
 #include <string>
 #include "JavaSourceCodePosition.h"
 
-JavaSourceCodePosition::JavaSourceCodePosition(int line_start, int line_end ) : line_number_start(line_start),
-                                                                                line_number_end(line_end),
-                                                                                column_number_start(0),
-                                                                                column_number_end(0) 
+JavaSourceCodePosition::JavaSourceCodePosition(int line_start, int line_end )  : line_number_start(line_start),
+                                                                                 line_number_end(line_end),
+                                                                                 column_number_start(0),
+                                                                                 column_number_end(0) 
 {
     // Nothing to do here!
 }

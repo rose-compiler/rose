@@ -381,9 +381,15 @@ class AbstractInterfaceNodeCollection : public InterfaceTypedefs
   // DQ (9/4/2005): When compiling with g++ 3.4.x this can't be protected (I think)
   // protected:
      public:
-       InterfaceTypedefs::Preamble;
+
+       // DQ (7/25/2014): Remove warning from GNU 4.8 compiler.
+       // InterfaceTypedefs::Preamble;
+          using InterfaceTypedefs::Preamble;
+
      public:
-        InterfaceTypedefs::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG;
+       // DQ (7/25/2014): Remove warning from GNU 4.8 compiler.
+       // InterfaceTypedefs::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG;
+          using InterfaceTypedefs::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG;
 
        // Used by MidLevel and High Level Interface as a base class to make enum values 
        // easly available without the class specifiers. (E.g. LocalScope instead of 
@@ -571,7 +577,7 @@ class MidLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection<M
                            IntermediateFileStringPositionEnum filePosition );
    };
 
-class HighLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection<HighLevelCollectionTypedefs>
+class ROSE_DLL_API HighLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection<HighLevelCollectionTypedefs>
    {
      public:
        // Constants used to dimension arrays (read only constants) and simplify the code

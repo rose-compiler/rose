@@ -1648,44 +1648,20 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmCommonSubExpression>(*n));
         break;
 
-      case V_SgAsmx86RegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmx86RegisterReferenceExpression>(*n));
+      case V_SgAsmDirectRegisterExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDirectRegisterExpression>(*n));
         break;
 
-      case V_SgAsmArmRegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmArmRegisterReferenceExpression>(*n));
+      case V_SgAsmIndirectRegisterExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIndirectRegisterExpression>(*n));
         break;
 
-      case V_SgAsmPowerpcRegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmPowerpcRegisterReferenceExpression>(*n));
+      case V_SgAsmIntegerValueExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerValueExpression>(*n));
         break;
-
-      case V_SgAsmRegisterReferenceExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmRegisterReferenceExpression>(*n));
-        break;
-
-      case V_SgAsmByteValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmByteValueExpression>(*n));
-        break;
-
-      case V_SgAsmWordValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmWordValueExpression>(*n));
-        break;
-
-      case V_SgAsmDoubleWordValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDoubleWordValueExpression>(*n));
-        break;
-
-      case V_SgAsmQuadWordValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmQuadWordValueExpression>(*n));
-        break;
-
-      case V_SgAsmSingleFloatValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmSingleFloatValueExpression>(*n));
-        break;
-
-      case V_SgAsmDoubleFloatValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDoubleFloatValueExpression>(*n));
+    
+      case V_SgAsmFloatValueExpression:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatValueExpression>(*n));
         break;
 
       case V_SgAsmValueExpression:
@@ -1700,44 +1676,20 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmExpression>(*n));
         break;
 
-      case V_SgAsmTypeByte:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeByte>(*n));
+      case V_SgAsmIntegerType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmIntegerType>(*n));
         break;
 
-      case V_SgAsmTypeWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeWord>(*n));
+      case V_SgAsmFloatType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmFloatType>(*n));
         break;
 
-      case V_SgAsmTypeDoubleWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeDoubleWord>(*n));
+      case V_SgAsmScalarType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmScalarType>(*n));
         break;
 
-      case V_SgAsmTypeQuadWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeQuadWord>(*n));
-        break;
-
-      case V_SgAsmTypeDoubleQuadWord:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeDoubleQuadWord>(*n));
-        break;
-
-      case V_SgAsmTypeSingleFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeSingleFloat>(*n));
-        break;
-
-      case V_SgAsmTypeDoubleFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeDoubleFloat>(*n));
-        break;
-
-      case V_SgAsmType80bitFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType80bitFloat>(*n));
-        break;
-
-      case V_SgAsmType128bitFloat:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmType128bitFloat>(*n));
-        break;
-
-      case V_SgAsmTypeVector:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmTypeVector>(*n));
+      case V_SgAsmVectorType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmVectorType>(*n));
         break;
 
       case V_SgAsmType:

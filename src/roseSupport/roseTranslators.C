@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 #include "Cxx_Grammar.h"
 #include <roseTranslators.h>
+#include "transformationTracking.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -75,6 +76,8 @@ void CppToPdfTranslator::backend() {
 //! the tool cpp2dot uses this preprocessor
 void CppToDotTranslator::backend() {
   AstDOTGeneration astdotgen;
+  // Liao, 3/26/2014. Assign Unique Integer ID for all located nodes
+  TransformationTracking::registerAstSubtreeIds (getAstRoot());
   // we should only generate one file (not all five) and process
   // the rose command line (right now tools/cpp2ps does that)
   astdotgen.generateInputFiles(getAstRoot());

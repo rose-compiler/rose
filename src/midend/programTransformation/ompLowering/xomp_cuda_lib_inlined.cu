@@ -3,6 +3,11 @@ CUDA and/or nvcc does not have linker for device code.
 We have to put some common device functions into this file.
 So the generated CUDA file can include the functions as inlined functions.
 
+TODO: extend to support 3-D mapping case, which should be trivial based on 2-D implementation
+
+Modified: 
+*Liao, 7/10/2013, extend reduction support for 2-D mapping
+
 Liao 2/11/2013
 */
 
@@ -12,29 +17,34 @@ Liao 2/11/2013
     At the block level, we just simply add them all to be the block level negative values
 */
 /* we have to encode the type into function name since C function signature does not include parameter list! */
+/* grid_level_results: across blocks, each block has a result inside this array of size = gridDim.x * gridDim.y */
 #define XOMP_INNER_BLOCK_REDUCTION_DEF(dtype) \
 __device__ void xomp_inner_block_reduction_##dtype(dtype local_value, dtype * grid_level_results, int reduction_op) \
 { \
-  /* __shared__ float* sdata[gridDim.x]; not compilable */ \
+  /* To speedup reduction, we transfer local_value to a shared data within the block */ \
+  /* __shared__ float* sdata[blockDim.x * blockDim.y * blockDim.z]; not compilable */ \
   /* block size of data, size is specified by the kernel launch parameter (3rd one) */ \
   /* shared data has to have different names for different types. Cannot reuse name across types. */ \
   extern __shared__ dtype sdata_##dtype[];  \
-  sdata_##dtype[threadIdx.x] = local_value;  \
+  /* map 2-D threads into a 1-D shared data: linearization */ \
+  int ii = threadIdx.x*blockDim.y + threadIdx.y; \
+  sdata_##dtype[ii] = local_value;  \
   __syncthreads(); \
-  /* blockDim.x is the block size */ \
-  int isEvenSize = (blockDim.x % 2 ==0); \
+  /* nn: the block size, number of threads per block */ \
+  int nn = blockDim.x* blockDim.y ; \
+  int isEvenSize = (nn % 2 ==0); \
   /* contiguous range pattern: half folding and add */ \
-  for(int offset = blockDim.x / 2; \
+  for(int offset = nn / 2; \
       offset > 0;    /* folding and add */ \
       offset >>= 1) /* offset shrinks half each time */ \
   { \
-    if(threadIdx.x < offset)  \
+    if(ii < offset)  \
     { \
       /* add a partial sum upstream to our own */ \
       switch (reduction_op){ \
         case XOMP_REDUCTION_PLUS: \
         case XOMP_REDUCTION_MINUS: \
-            sdata_##dtype[threadIdx.x] += sdata_##dtype[threadIdx.x + offset]; \
+            sdata_##dtype[ii] += sdata_##dtype[ii + offset]; \
             break; \
          /*  TODO add support for more operations*/ \
          default:  \
@@ -47,7 +57,7 @@ __device__ void xomp_inner_block_reduction_##dtype(dtype local_value, dtype * gr
       } /* end switch */ \
     } \
     /* remember to handle the left element */ \
-    if ((threadIdx.x == 0) && !isEvenSize) \
+    if ((ii == 0) && !isEvenSize) \
     { \
       switch (reduction_op){ \
         case XOMP_REDUCTION_PLUS: \
@@ -68,10 +78,10 @@ __device__ void xomp_inner_block_reduction_##dtype(dtype local_value, dtype * gr
     /* MUST wait until all threads in the block have updated their partial sums */ \
     __syncthreads(); /* sync after each folding */ \
   } \
-  /* thread 0 writes the final result to the partial sum of this thread block */ \
-  if(threadIdx.x == 0) \
+  /* thread (0,0,0) writes the partial sum of this thread block to grid level results (linearized also)*/ \
+  if(ii == 0) \
   { \
-    grid_level_results[blockIdx.x] = sdata_##dtype[0]; \
+    grid_level_results[blockIdx.x*gridDim.y + blockIdx.y] = sdata_##dtype[0]; \
   } \
 }
 
@@ -86,6 +96,10 @@ XOMP_INNER_BLOCK_REDUCTION_DEF(double)
 // input upper bound is inclusive (loop normalized with <= or >=)
 // output n_upper is also inclusive 
 // stride is positive for incremental, negative for decremental iteration space
+// Updated on 8/29/2013 Liao
+// It turns out that evenly dividing up iteration space for GPU threads is not optimal.
+// Each thread may touch a large range (chunk) of data elements , which has low memory access efficiency (cannot be coalesced)
+// A better solution is to use round -robin scheduling, similar to the static scheduling with chunk size 1 in regular OpenMP CPU threads loops
 __device__ void XOMP_cuda_loop_default_internal(int lower, int upper, int stride, int _p_num_threads, int _p_thread_id, long* n_lower, long* n_upper)
 {
   int _p_lower;
@@ -182,6 +196,139 @@ __device__ void XOMP_accelerator_loop_default(int lower, int upper, int stride, 
 
  /* now focus on the bounds of the current thread of the current block */
   XOMP_cuda_loop_default_internal (lower_for_block, upper_for_block, stride, blockDim.x, threadIdx.x, n_lower, n_upper);
+}
+
+/*
+_p_num_threads: number of threads of the thread team participating the scheduling
+_p_thread_id: the current thread's id within the current team
+
+  lb and up are inclusive bounds (after normalization)
+Return the adjusted numbers including:
+  loop_chunk_size: the real chunk size considering original chunksize and step
+  loop_sched_index: the lower bound for current thread
+  loop_stride: the total stride for one round of scheduling of all threads
+*/
+__device__ void XOMP_static_sched_init(int lb, int up, int step, int orig_chunk_size, int _p_num_threads, int _p_thread_id, \
+              int * loop_chunk_size, int * loop_sched_index, int * loop_stride)
+{   
+    int nthds = _p_num_threads;
+
+    if (nthds == 1) { // single thread case
+      *loop_sched_index = lb;
+      //loop_end = up;
+      *loop_chunk_size = orig_chunk_size * step;
+      *loop_stride = (*loop_chunk_size) * nthds;
+      return;
+    }
+
+    *loop_chunk_size = orig_chunk_size * step;
+    *loop_sched_index = lb + (*loop_chunk_size)* _p_thread_id;
+    *loop_stride = (*loop_chunk_size) * nthds;
+    //int loop_end = up;
+//    int is_last = 0;
+}
+
+/*
+Using current thread ID (_p_thread_id) and team size (_p_num_threads), calculate lb and ub for the current thread
+for the round robin scheduling with lower (loop_sched_index), upper (loop_end) , stride (loop_stride), and chunk size (loop_chunk_size)
+*/
+__device__ int XOMP_static_sched_next(
+    int* loop_sched_index , int loop_end, int orig_step, int loop_stride, int loop_chunk_size,
+    int _p_num_threads, int _p_thread_id,
+    int *lb,int *ub)
+{   
+    int b,e;
+    b = *loop_sched_index;
+  //The code logic is original for exclusive upper bound!!
+  // But in ROSE, we normalize all loops to be inclusive bounds. So we have to ajust them in the functions, instead of during transformation.
+  //
+  // 1. adjust the original loop end from inclusive to be exclusive. 
+    if (orig_step >0)
+       loop_end ++; // expect the user code will use the upper bound as an inclusive one, so minus one in advance
+    else
+       loop_end --;
+
+    if (_p_num_threads == 1) { /* not in parallel */
+        e = loop_end;
+        if(b == e) return 0;
+        *lb = b;
+        *ub = e;
+        *loop_sched_index = e;
+#if 1 // need to adjust here!
+    if (orig_step >0)
+       *ub --; // expect the user code will use the upper bound as an inclusive one, so minus one in advance
+    else
+       *ub ++;
+#endif
+        return 1;
+    } // thread team has 1 thread only
+
+    *loop_sched_index += loop_stride;
+
+    e = b + loop_chunk_size;
+#if 1 // must timely adjust e here !!
+    if (orig_step >0)
+       e --; // expect the user code will use the upper bound as an inclusive one, so minus one in advance
+    else
+       e ++;
+#endif
+
+    if(loop_chunk_size > 0){
+        if(b >= loop_end) return 0;
+        if(e >= loop_end){
+            e = loop_end;
+//            tp->is_last = 1;
+        }
+    } else {
+
+        if(b <= loop_end) return 0;
+#if 0 // too late to adjust, e is already used before!!
+        if(e <= tp->loop_end){
+            e = tp->loop_end;
+            tp->is_last = 1;
+        }
+#endif
+    }
+    *lb = b;
+    *ub = e;
+   return 1;
+}
+
+// A wrapper function for  blockDim.x * blockIdx.x + threadIdx.x
+// Essentially we just hide CUDA variables (blockDim.x etc) inside this function
+// since there are three dimensions x, y, z. we use dimension_no to indicate which dimension is requested.
+// dimension_no start from 1 to 3, corresponding to x, y, z dimensions.
+__device__ int getLoopIndexFromCUDAVariables(int dimension_no)
+{
+  if (dimension_no == 1)
+   return blockDim.x * blockIdx.x + threadIdx.x;
+  else if (dimension_no == 2)
+   return blockDim.y * blockIdx.y + threadIdx.y;
+  else if (dimension_no == 3)
+   return blockDim.z * blockIdx.z + threadIdx.z;
+  else
+  {
+    //printf("getLoopIndexFromCUDAVariables() accept a parameter of range from 1 to 3 only\n");
+    //assert (false);
+  }
+   return -1; 
+}
+
+// A wrapper function for gridDim.x * blockDim.x, to hide CUDA variables gridDim.x and blockDim.x.
+__device__ int getCUDABlockThreadCount(int dimension_no)
+{
+   if (dimension_no == 1)
+   return gridDim.x * blockDim.x;
+  else if (dimension_no == 2)
+   return gridDim.y * blockDim.y;
+  else if (dimension_no == 3)
+   return gridDim.z * blockDim.z;
+  else
+  {
+    //printf("getCUDABlockThreadCount() accept a parameter of range from 1 to 3 only\n");
+    //assert (false);
+  }
+   return -1; 
 }
 
 

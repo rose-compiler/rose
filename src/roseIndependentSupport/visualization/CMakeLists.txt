@@ -17,7 +17,7 @@ add_executable(dotgl ${dotgl_SRCS})
 
 target_link_libraries(dotgl ${KDE4_KDECORE_LIBS})
 
-install(TARGETS dotgl ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS dotgl DESTINATION bin)
 
 
 ########### install files ###############

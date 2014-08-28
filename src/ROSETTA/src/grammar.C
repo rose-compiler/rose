@@ -2240,11 +2240,32 @@ Grammar::buildForwardDeclarations ()
      returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
 
      returnString.push_back(StringUtility::StringWithLineNumber("\n\n#include \"rosedll.h\"\n", "" /* "<unknown>" */, 1));
+     // Milind Chabbi (8/28/2013): Performance refactoring: make rose_ClassHierarchyCastTable accessible for IS_SgXXX_FAST_MACRO()s
+     size_t maxRows= getRowsInClassHierarchyCastTable();
+     size_t maxCols = getColumnsInClassHierarchyCastTable();
+     string externDeclarationForClassHierarchyCastTable = "\nextern const uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] ;\n";
+     returnString.push_back(StringUtility::StringWithLineNumber(externDeclarationForClassHierarchyCastTable, "", 1));
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
           string className = terminalList[i]->name;
           returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API "+className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
           returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
+          // Milind Chabbi (8/28/2013): Performance refactoring. 
+          // Providing additional MACRO for each isSgXXX() function.
+          // One can substitue each isSgXXX() function with IS_SgXXX_FAST_MACRO() function.
+          // Being a macro, IS_SgXXX_FAST_MACRO() is unsafe and should be used with care. 
+          // Using IS_SgXXX_FAST_MACRO() with side effect expressions. e.g., IS_SgXXX_FAST_MACRO(*it++) will cause undefined effects.
+          // However, it can be used safely for side effect free expressions e.g., IS_SgXXX_FAST_MACRO(node) and this will improve performance.
+          // A good use case of using IS_SgXXX_FAST_MACRO() is in places where isSgXXX() is very heavily used. 
+          // Substituting all isSgXXX() with IS_SgXXX_FAST_MACRO() worked fine for entire of rose but failed in unsafe uses in tests e.g. src/optimizer/programAnalysis/StencilAnalysis.C
+          string fromVariantString = "(node)->variantT()";
+          string toVariantString = className +"::static_variant";
+          string toVariantBytePositionString = toVariantString + " >> 3";
+          string toVariantbitMaskPositionString =  "(1 << (" +  toVariantString + " & 7))";
+          string rose_ClassHierarchyCastTableAccessString = " (rose_ClassHierarchyCastTable[" + fromVariantString + "][" + toVariantBytePositionString + "] & " + toVariantbitMaskPositionString   + ")";
+          returnString.push_back(StringUtility::StringWithLineNumber("#define IS_" + className + "_FAST_MACRO(node) ( (node) ? ((" + rose_ClassHierarchyCastTableAccessString + ") ? ((" + className + "*) (node)) : NULL) : NULL)", "" /* "<downcast MACRO for " + className + ">" */, 1));
+          // One can replace all isSgXXX() with IS_SgXXX_FAST_MACRO() by enabling the line below. This exists for possible future use.
+          //returnString.push_back(StringUtility::StringWithLineNumber("#define is" + className + "(node) IS_" + className + "_FAST_MACRO(node)", "" /* "<MACRO replacement for " + className + ">" */, 1));
         }
 
   // printf ("In Grammar::buildForwardDeclarations (): returnString = \n%s\n",returnString.c_str());
@@ -2397,6 +2418,119 @@ Grammar::buildVariantEnums() {
   return s;
 }
 
+// Milind Chabbi (8/28/2013): Performance refactoring
+// classHierarchyCastTable is a table where each row represents a SgXXX node and each column represents
+// if the node can be dynamically casted to the other SgXXX node.
+// Sample classHierarchyCastTable 
+//                   | SgNode | SgStatement | SgBreakStmt |
+// --------------------------------------------------------
+// SgNode            | true   |  false      | false       |
+// SgStatement       | true   |  true       | false       |
+// SgBreakStmt       | true   |  true       | true        |
+// --------------------------------------------------------
+// The table, however, instead of storing booleans, is represented using bits in a byte.
+
+
+static uint8_t ** classHierarchyCastTable;
+
+// Set the correct bit in classHierarchyCastTable correspinding to the given row and column
+static void SetBitInClassHierarchyCastTable(size_t row, size_t col){
+    size_t bytePosition = col  >> 3;
+    uint8_t bitPosition = col & 7;
+    classHierarchyCastTable[row][bytePosition] |=  (1 << bitPosition);
+}
+
+// Get the correct bit value from classHierarchyCastTable correspinding to the given row and column
+static bool GetBitInClassHierarchyCastTable(size_t row, size_t col){
+    size_t bytePosition = col  >> 3;
+    size_t bitMask = 1 << (col & 7);
+    bool val = classHierarchyCastTable[row][bytePosition] &  bitMask;
+    return val;
+}
+
+// Gets the number of rows in classHierarchyCastTable
+size_t Grammar::getRowsInClassHierarchyCastTable(){
+    return this->astVariantToNodeMap.rbegin()->first;
+}
+
+// Gets the number of columns in classHierarchyCastTable
+size_t Grammar::getColumnsInClassHierarchyCastTable(){
+    return (this->astVariantToNodeMap.rbegin()->first / 8) + 1;
+}
+
+
+// Generates a table (classHierarchyCatTable) populated with information
+// about whether a given SgXXX node can be casted to other SgYYY node.
+// The technique has constant lookup time.
+string
+Grammar::generateClassHierarchyCastTable() {
+    // First allocate the classHierarchyCastTable table
+    size_t maxRows = getRowsInClassHierarchyCastTable();
+    size_t maxCols = getColumnsInClassHierarchyCastTable();
+    classHierarchyCastTable = new uint8_t* [maxRows];
+    for(size_t i = 0 ; i < maxRows; i++){
+        classHierarchyCastTable[i] = new uint8_t[maxCols]();
+    }
+
+    // Populate classHierarchyCastTable by visiting the Sg node tree
+    vector<Terminal*> myParentsDescendents;
+    buildClassHierarchyCastTable(getRootOfGrammar(), myParentsDescendents);
+    
+    // Output the table as a constant in the generated code
+    string s="\nconst uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] = {";
+    bool outerLoopFirst = true;
+    for(size_t i = 0 ; i < maxRows; i++) {
+        if(!outerLoopFirst) {
+            s += ",";
+        } else {
+            outerLoopFirst = false;
+        }
+        bool innerLoopFirst = true;
+        for(size_t j = 0 ; j < maxCols; j++) {
+            if (innerLoopFirst){
+                s +=  "{";
+                innerLoopFirst = false;
+            } else {
+                s += ",";
+            }
+            s += StringUtility::numberToString(classHierarchyCastTable[i][j]);
+        }
+        s += "}\n";
+    }
+    s += "};\n";
+
+    for(size_t i = 0 ; i < maxRows; i++){
+        delete [] classHierarchyCastTable[i]; 
+    }
+    delete []classHierarchyCastTable;
+
+    return s;
+}
+
+// Populates the classHierarchyCastTable with all the types that can be casted to terminal type
+void Grammar::buildClassHierarchyCastTable(Terminal * terminal, vector<Terminal*> & myParentsDescendents) {
+    // obtain the immediate derived classes of the given terminal.
+    vector<Terminal*> myImmediateDescendents = terminal->subclasses;
+    vector<Terminal*> myDescendents ;
+   
+    // recur on the immediate derived classes to obtain the entire class hierarchy rooted at the given node. 
+    for(vector<Terminal*>::iterator it = myImmediateDescendents.begin(), e = myImmediateDescendents.end(); it != e; it++){
+        buildClassHierarchyCastTable(*it, myDescendents);
+    }
+    
+    // add self to the vector
+    myDescendents.push_back(terminal);
+    
+    size_t toVariant= getVariantForTerminal(*terminal);
+    
+    // Set the bits in classHierarchyCastTable indicating all derived types in this subtree can be casted to the type of the terminal.
+    for(vector<Terminal*>::iterator it = myDescendents.begin(), e = myDescendents.end(); it != e; it++){
+        size_t fromVariant= getVariantForTerminal(*(*it));
+        SetBitInClassHierarchyCastTable(fromVariant, toVariant);
+    }
+    // return the list of all types rooted at this subtree to the caller
+    myParentsDescendents.insert(myParentsDescendents.end(), myDescendents.begin(), myDescendents.end());
+}
 
 // AS: new automatically generated variant. Replaces variant().
 // used in variantT()
@@ -2411,6 +2545,13 @@ Grammar::buildClassHierarchySubTreeFunction() {
   s+="switch(v){\n ";
   unsigned int i;
   for (i=0; i < terminalList.size(); i++) {
+    // Chabbi & TV : This generated function is causing a lot of ICACHE misses
+    // This optimization generates case labels iff needed and rest all fall into "default"
+    // TODO: A better way to generate switch case statements is to put common case in the top
+    // and put less common into a nested switch inside the default.
+    if (terminalList[i]->subclasses.empty())
+        continue;
+ 
     s+="case " + string("V_")+string(terminalList[i]->name)+":\n";
 
         s+="{\n";
@@ -2639,7 +2780,7 @@ Grammar::buildCode ()
      ROSE_ArrayGrammarHeaderFile << buildStorageClassDeclarations();
 
      ROSE_ArrayGrammarHeaderFile << "\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "ROSE_DLL_API std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
 
   // DQ (12/6/2003): Added output function for SgBitVector objects
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::vector<bool>&);\n\n";
@@ -2904,6 +3045,8 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
 
      ROSE_returnClassHierarchySubTreeSourceFile << buildClassHierarchySubTreeFunction();
+     // Include the classHierarchyCastTable in the file for fast casting between compatible types
+     ROSE_returnClassHierarchySubTreeSourceFile << generateClassHierarchyCastTable();
      cout << "DONE: buildClassHierarchySubTreeFunction()" << endl;
      ROSE_returnClassHierarchySubTreeSourceFile.close();
 
@@ -3041,16 +3184,20 @@ Grammar::buildCode ()
      ROSE_treeTraversalClassHeaderFile <<  naiveTraverseGrammar(*rootNode, &Grammar::EnumStringForNode);
      cout << "finished." << endl;
 
-  // MS: not really needed because of typeid(node).name()
-  // MS: generation of VariantName Strings
+  // --------------------------------------------
+  // generate code for variantT enum names
+  // --------------------------------------------
      string variantEnumNamesFileName = string(getGrammarName())+"VariantEnumNames.C";
      ofstream variantEnumNamesFile(string(target_directory+"/"+variantEnumNamesFileName).c_str());
      ROSE_ASSERT(variantEnumNamesFile.good() == true);     
      string  variantEnumNames=buildVariantEnumNames();
 
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
-     variantEnumNamesFile << "\n const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
+     variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
 
+  // --------------------------------------------
+  // generate code for RTI support
+  // --------------------------------------------
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
      StringUtility::FileWithLineNumbers rtiFile;
      rtiFile << includeHeaderString;
@@ -3072,6 +3219,19 @@ Grammar::buildCode ()
      ROSE_TransformationSupportFile << transformationSupportString;
      ROSE_TransformationSupportFile.close();
 #endif
+
+  // ---------------------------------------------------------------------------
+  // generate grammar representations (from class hierarchy and node attributes)
+  // ---------------------------------------------------------------------------
+     // MS: 2002: Generate the grammar that defines the set of all ASTs as dot and latex file
+     ofstream GrammarDotFile("grammar.dot");
+     ROSE_ASSERT (GrammarDotFile.good());
+     buildGrammarDotFile(rootNode, GrammarDotFile);
+     cout << "DONE: buildGrammarDotFile" << endl;
+     ofstream AbstractTreeGrammarFile("generated_abstractcppgrammar.atg");
+     ROSE_ASSERT (AbstractTreeGrammarFile.good());
+     buildAbstractTreeGrammarFile(rootNode, AbstractTreeGrammarFile);
+     cout << "DONE: buildAbstractTreeGrammarFile" << endl;
 
 #if 1
    // JH (01/18/2006)
@@ -3158,7 +3318,7 @@ Grammar::buildCode ()
      ofstream ROSE_outputClassesAndFieldsSourceFile(string(target_directory+"/"+outputClassesAndFieldsSourceFileName).c_str());
      ROSE_ASSERT (ROSE_outputClassesAndFieldsSourceFile.good() == true);
 
-     printf ("Calling outputClassesAndFields() \n");
+     printf ("Building OutputClassesAndFields() \n");
   // outputClassesAndFields ( *rootNode, ROSE_outputClassesAndFieldsSourceFile);
      ROSE_outputClassesAndFieldsSourceFile << outputClassesAndFields ( *rootNode );
 #endif
@@ -3189,7 +3349,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
    // possibly other pointers to containers.
    // if( (stype.find("*") == string::npos) // not found, not a pointer
    // && (stype.find("List") == stype.size()-4) ) // postfix
-      if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
+   // MS 2013: fixed: Pointers to containers are not containers but singleDataMembers instead)
+   //   if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
+      if (isSTLContainer(stype.c_str())) {
         info.numContainerMembers++;
       } else {
         info.numSingleDataMembers++;
@@ -3213,7 +3375,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
     std::string nodeName = grammarnode->getName();
 
  // DQ (2/7/2011): Added message to report which nodes are in violation of ROSETTA rules.
-    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s \n",nodeName.c_str());
+    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
 
  // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
  // Liao I made more exceptions for some OpenMP specific nodes for now
@@ -3237,6 +3399,8 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   }
   return info;
 }
+
+#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //
@@ -3569,9 +3733,12 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                               outputFile << "case " << StringUtility::numberToString(counter++) << ": "
                                          << "return compute_classDefinition();\n";
                             }
-                         else
+                           else
                             {
-                              outputFile << "case " << StringUtility::numberToString(counter++) << ": " << "return p_" << memberVariableName << ";\n";
+                           // DQ (4/22/2014): Added code to allow valgrind to detect unitialized variables.
+                           // outputFile << "case " << StringUtility::numberToString(counter++) << ": " << "return p_" << memberVariableName << ";\n";
+                              outputFile << "case " << StringUtility::numberToString(counter++) << ": " 
+                                         << "ROSE_ASSERT(p_" << memberVariableName << " == NULL || p_" << memberVariableName << " != NULL); return p_" << memberVariableName << ";\n";
                             }
                        }
                  // Reaching the default case is an error.
@@ -3735,7 +3902,7 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
        // GB (09/25/2007): Added implementations for the new methods get_numberOfTraversalSuccessors, get_traversalSuccessorByIndex, and get_childIndex.
           outputFile << "size_t\n" << node.getName() << "::get_numberOfTraversalSuccessors() {\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
-                     << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
+                     << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  this = \" << this << \" = \" << this->sage_class_name() << endl;\n"
                      << "cerr << \"Aborting ...\" << endl;\n"
                      << "ROSE_ASSERT(false);\n"
                      << "return 42;\n }\n\n";

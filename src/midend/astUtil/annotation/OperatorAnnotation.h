@@ -41,7 +41,7 @@ class OperatorAnnotCollection
        && !fa.IsFunctionDefinition(exp,&fname,&args,0,0, &params))
         return false;
     std::string sig = OperatorDeclaration::get_signiture(fa, fname, params);
-    if (known_type( sig, desc)) {
+    if (this->known_type( sig, desc)) {
        if (argp != 0)
           *argp = args;
        if (desc != 0 && replpar) {
@@ -56,7 +56,7 @@ class OperatorAnnotCollection
   }
 };
 
-class OperatorInlineAnnotation
+class ROSE_DLL_API OperatorInlineAnnotation
 : public OperatorAnnotCollection<OperatorInlineDescriptor>
 {
   virtual bool read_annot_name( const std::string& annotName) const
@@ -104,7 +104,7 @@ class OperatorReadInfoCollection
       OperatorAnnotCollection<OperatorSideEffectDescriptor>::Dump();
     }
 };
-class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
+class ROSE_DLL_API OperatorSideEffectAnnotation : public FunctionSideEffectInterface
 {
   OperatorModInfoCollection modInfo;
   OperatorReadInfoCollection readInfo;

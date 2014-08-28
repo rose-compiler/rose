@@ -800,6 +800,10 @@ Terminal::evaluateType(std::string& varTypeString)
        {
           returnType = SKIP_TYPE;
        }
+     else if (varTypeString == "Sawyer::Container::BitVector")
+       {
+         returnType = BIT_VECTOR;
+       }
   // This might change, as soon as the enum types have a common name style ...
      else  if (
                  ( varTypeString == "SgUnaryOp::Sgop_mode" ) ||
@@ -859,12 +863,13 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "PowerpcSpecialPurposeRegister" ) ||
                  ( varTypeString == "PowerpcTimeBaseRegister" ) ||
                  ( varTypeString == "MipsInstructionKind") ||
+                 ( varTypeString == "M68kInstructionKind") ||
+                 ( varTypeString == "ByteOrder::Endianness" ) ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||
                  ( varTypeString == "SgAsmGenericFormat::InsSetArchitecture" ) ||
                  ( varTypeString == "SgAsmGenericFormat::ExecFamily" ) ||
                  ( varTypeString == "SgAsmGenericFormat::ExecPurpose" ) ||
-                 ( varTypeString == "SgAsmGenericFormat::ByteOrder" ) ||
                  ( varTypeString == "SgAsmGenericFormat::ExecABI" ) ||
                  ( varTypeString == "SgAsmGenericSymbol::SymbolDefState" ) ||
                  ( varTypeString == "SgAsmGenericSymbol::SymbolBinding" ) ||
@@ -883,6 +888,9 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
                  ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
                  ( varTypeString == "SgAsmFunction::MayReturn") ||
+              // DQ (11/26/2013): Added to support use of enums from SgToken class.
+                 ( varTypeString == "SgToken::ROSE_Fortran_Operators" ) ||
+                 ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||
                  false 
               )
        {

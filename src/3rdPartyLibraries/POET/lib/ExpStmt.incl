@@ -1,0 +1,373 @@
+include utils.incl
+<*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*>
+
+<*******
+parsing of floating point numbers
+********>
+
+<code FLOAT2 pars=(val:INT) parse=""> .@val@ </code>
+<code FLOAT1 pars=(val:INT) parse=""> @val@. </code>
+<code FLOAT3 pars=(content: (INT CODE.FLOAT2)|(CODE.FLOAT1 INT)) 
+            parse="" > @content@ </code>
+<code FLOAT4 pars=(base: FLOAT3, expo: (("e"|"E") INT)) 
+             parse=""> @base expo@ </code>
+<code FLOAT pars=(content: (FLOAT4|FLOAT3|FLOAT2|FLOAT1)) rebuild=content 
+            match=FLOAT4|FLOAT3|FLOAT2|FLOAT1 > @content@ </code>
+
+<*******
+Type Processing
+********>
+<code TAG pars=(tag:STRING,t)> @t@ </code>
+<code PtrType pars=(base) /> 
+<code RefType pars=(base) /> 
+<code ArrayType pars=(base, dim) /> 
+<code FunctionType pars=(params,return) /> 
+
+<xform C_RebuildType pars=(base, annot)>
+switch (annot)
+{
+case (first rest) : C_RebuildType( C_RebuildType(base, first), rest)
+case "" : base
+case "*" : PtrType#base
+case "&" : RefType#base
+case "const" : CODE.ConstType#base
+case "restrict" : CODE.RestrictType#base
+case "register" : RegisterType#base
+case CODE.ArrayAnnot#(dim,init): (dim=="")? base : ArrayType#(base, dim)
+case CODE.VarInit: base
+}
+</xform>
+
+<********
+ Similar to using EXP for expressions, 
+  the standard code template name for statements. 
+ syntax need to be defined by respective languages
+********>
+<code Stmt/>
+<code Assign pars=(lhs,rhs)/>
+<code ExpStmt pars=(exp:EXP) 
+         rebuild=(exp = REBUILD(exp); (exp=="")? "" : ExpStmt#(exp)) />
+
+<********
+macros for parsing/building expressions 
+Redefine for different languages
+*********>
+
+<define PARSE_BOP CODE.Bop/>
+<define PARSE_UOP CODE.Uop/>
+<define PARSE_CALL CODE.FunctionCall/>
+<define PARSE_ARRAY CODE.ArrayAccess/>
+<define BUILD_BOP XFORM.BuildBop/>
+<define BUILD_UOP XFORM.BuildUop/>
+
+<define EXP_BOP (("+" "-") ("*" "/"))/>
+<define EXP_UOP ("-")/>
+<define EXP_BASE INT|CODE.FLOAT />
+
+<********
+Setup unparsing of Expressions
+********>
+<define EXP_PREC  MAP{}/>  <<* precedence not defined
+<xform EVAL_EXP_PREC pars=(input) opType=GLOBAL.EXP_BOP >
+   precMap=GLOBAL.EXP_PREC;
+   for ( (i = 1; p_op = opType) ; p_op != ""; (p_op=cdr p_op; i=i+1))
+   {
+   for (p_op2 = car p_op; p_op2 != ""; p_op2 = cdr p_op2)
+     precMap[car p_op2] = i;
+   }
+   input
+</xform>
+
+<define PREP EVAL_EXP_PREC/>
+
+<*********************************************
+rebuild/Parse/Unparse functions for Expressions
+*********************************************>
+
+<code OP pars=(content) /> <<* used to annotate an arbitrary operator
+<code MIN pars=(first,second)/> 
+<code MAX pars=(first,second)/> 
+<define NEED_MIN_MAX MIN|MAX />
+
+<code Uop pars=(op, opd) >
+@op@@opd@
+</code>
+
+<code Bop pars=(op, opd1, opd2) 
+           match=XFORM.MatchBop rebuild=(XFORM.RebuildBop(op,opd1,opd2)) > 
+@
+if (op=="+" && opd2 : Uop#("-",_)) { op="-"; Uop#(_,opd2)=opd2; }
+p1=(opd1:INT|ID|(_)...)?100:0; 
+p2=(opd2:INT|ID|(_)...)?100:0; 
+p=GLOBAL.EXP_PREC[op];
+if ( opd1:Bop#(op1,_,_)) p1=GLOBAL.EXP_PREC[op1];
+if (opd2 : Bop#(op2,_,_)) { p2=GLOBAL.EXP_PREC[op2]; }
+((p1<p)?("("opd1")"):opd1)
+op
+((p2<=p)?("("opd2")"):opd2)
+@
+</code>
+
+<xform BuildBop pars=(op,opd1,opd2) > Bop#(op,opd1,opd2) </xform>
+<xform BuildUop pars=(op,opd) > Uop#(op,opd) </xform>
+<xform EvalCall pars=(op,opd)/> 
+
+<code FunctionCall pars=(function:ID, args : CODE.ExpList) 
+                rebuild= (EvalCall(function,args)) > 
+@function@(@args@) 
+</code>
+<code ArrayAccess pars=(array,subscript)/>  
+
+<code ExpList parse=LIST(EXP,",") />
+<code StmtList parse=LIST(Stmt,"\n") />
+
+<********************************************
+ rewrite $exp$ to be _div * factor + _mod. 
+e.g., Mod(a*b+c, b) = (a,c)
+**********************************************>  
+<xform IntDiv pars=(exp, div) output=(_quotiant,_remainder)/>
+
+<********************************************
+ evaluate boolean expressions
+**********************************************>  
+<xform EvalBoolOr pars=(first,second) or="||" not="!"/>
+<xform EvalBoolAnd pars=(first,second) not="!" and="&&"/>
+<xform EvalBoolNot pars=(input) not="!"/>
+<********************************************
+ Build a list of expressions by applying $op$
+   to each element in the two input lists 
+**********************************************>  
+<xform Build_listExp pars=(op, list1, list2)/>
+
+<********************************************
+Reduce a list of expressions to a single one
+by applying $op$ to all elements in the list 
+if (reverse==1) build exp in reverse order of opds
+**********************************************>  
+<xform Reduce_listExp pars=(op, opds) reverse=0/>
+
+
+<******************************************
+    Routine implementations 
+*******************************************>
+
+<xform EvalCall pars=(op,opd)>
+ len=LEN(opd);
+ ismin = ("min"^len); 
+ ismax = ("max"^len); 
+ switch (op) {
+ case ismin: op=MIN;
+ case ismax : op=MAX;
+ default: RETURN (CODE.FunctionCall#(op,opd));
+ }
+ res=RebuildBop(op,car(opd), car(cdr(opd)));
+ for (p=cdr(cdr(opd)); p != ""; p = cdr(p)) {
+   res = RebuildBop(op,res,car(p));
+ }
+ res
+</xform>
+
+<xform MatchBop pars=(lhs,rhs)>
+if ( lhs : rhs) { TRUE }
+else if ( (lhs[0] : ("+"|"*"|MIN|MAX)) &&   
+         ((lhs[0], lhs[2], lhs[1]) : rhs)) { TRUE }
+else { FALSE }
+</xform>
+
+<xform IntDiv pars=(exp, div) output=(_quotiant,_remainder)>
+if (exp : INT && div : INT) { (exp / div, exp % div) }
+else if (div == 1) { (exp,0) }
+else 
+switch (exp) {
+  case Uop#("-", arg) : res1 = IntDiv(arg,div); (-res1[0], -res1[1]) 
+  case (Bop#("+", opd1, opd2)) : 
+           res1 = IntDiv(opd1, div); 
+           res2 = IntDiv(opd2, div);
+           (res1[0] + res2[0], res1[1] + res2[1])
+  case (Bop#("*", opd1, opd2) ):
+           (opd1 == div)? (opd2,0)
+           : (opd2 == div)? (opd1, 0)
+           : (0, exp)
+  case div : (1,0)
+  default: (0,exp)
+}
+</xform>
+
+<xform EvalBoolAnd pars=(first,second) not="!" and="&&" or="||">
+(first == second)? first
+:(first==FALSE || second==FALSE)? FALSE
+:(second==TRUE)? first
+:(first==TRUE)? second
+:(second : Uop#(not, first))? FALSE
+:(first : Uop#(not, second))? FALSE
+:(second : Bop#(or,first,rest))? second
+:(second : Bop#(or,Uop#(not,first),rest))? rest
+: Bop#(and, first, second)
+</xform>
+
+<xform EvalBoolOr pars=(first,second) not="!" or="||">
+ (first == second)? first
+:(first==TRUE || second==TRUE)? TRUE
+:(second==FALSE)? first
+:(first==FALSE)? second
+:(second : Uop#(not, first))? TRUE
+:(first : Uop#(not, second))? TRUE
+: Bop#(or, first, second)
+</xform>
+
+<xform EvalBoolNot pars=(input) not="!">
+ (input : Uop#(not, opd))? opd : Uop#(not,input)
+</xform>
+
+<xform RebuildUminus pars=(input)>
+  (input : INT)?  (-input)
+: (input : Uop#("-",exp))? exp
+: (input : Bop#("+", opd1, opd2))?  
+     Bop#("+",RebuildUminus(opd1),RebuildUminus(opd2))
+: Uop#("-",input)
+</xform>
+
+<xform RebuildPlus  pars=(lhs,rhs) >
+ ((lhs : INT) && (rhs : INT))? lhs + rhs
+: (lhs : MIN#(d1,d2))? MIN#(RebuildPlus(d1,rhs),RebuildPlus(d2,rhs))
+: (lhs : MAX#(d1,d2))? MAX#(RebuildPlus(d1,rhs),RebuildPlus(d2,rhs))
+: (rhs : MIN#(d1,d2))? MIN#(RebuildPlus(lhs,d1),RebuildPlus(lhs,d2))
+: (rhs : MAX#(d1,d2))? MAX#(RebuildPlus(lhs,d1),RebuildPlus(lhs,d2))
+: (rhs : INT)? (
+     (rhs == 0)? lhs 
+   : (lhs : Bop#("+", opd1, opd2))?
+         ( (opd1 : INT)? RebuildPlus((opd1+rhs), opd2) : Bop#("+",rhs, lhs) )
+   : Bop#("+",rhs, lhs)
+ )
+: (lhs : INT)? RebuildPlus(rhs, lhs) 
+: (lhs : Bop#("+",lopd1, lopd2))? (
+   (rhs : Bop#("+",ropd1,ropd2))?  (
+       for ( (cur=ropd1; r = lhs); cur;
+           (ropd2: Bop#("+",(CLEAR ncur), (CLEAR nopd2)))? 
+                 (cur=ncur;ropd2=nopd2):(cur=ropd2;ropd2=""))  
+          { r = RebuildPlus(r,cur); }
+       r
+    )
+   : (   
+      for ( (cur=lopd1; r = ""; found=0; nrhs = RebuildUminus rhs); cur;
+           (lopd2 : Bop#("+",(CLEAR ncur), (CLEAR nopd2)))? (cur=ncur;lopd2=nopd2):(cur=lopd2;lopd2="") ) {
+          if (cur == nrhs) found=1;
+          else r= BuildList(cur,r);
+      }
+      (!found)? Bop#("+",rhs,lhs) 
+      : (r == "")? 0
+      : ( for (( r1=car(r); pr = cdr(r)); pr != ""; pr=cdr(pr))
+             r1 = Bop#("+",car(pr), r1); 
+          r1 )
+   )
+)
+: (rhs : Bop#("+",_,_))? RebuildPlus(rhs,lhs)
+: (lhs == (RebuildUminus rhs))?  0
+: Bop#("+",lhs,rhs) 
+</xform> 
+
+<xform RebuildExp pars=(exp) />
+<xform RebuildBop pars=(op,lhs,rhs)>
+  switch (op) 
+  {
+   case "+": { RebuildPlus(lhs,rhs) }
+   case "-": { RebuildPlus(lhs,RebuildUminus rhs) }
+   case "*": 
+            ((lhs : INT) && (rhs : INT))? lhs * rhs 
+          : (lhs == 0 || rhs == 0)? 0
+          : (lhs==1)?  rhs 
+          : (rhs==1)?  lhs
+          : (lhs : Bop#("+", lopd1, lopd2))? (lopd1 * rhs + lopd2 * rhs)
+          : (rhs : Bop#("+", ropd1, ropd2))? (lhs * ropd1 + lhs * ropd2)
+          : (lhs : Bop#("/",1,lhs1))? Bop#("/", rhs, lhs1)
+          : (rhs : Bop#("/",1,rhs1))? Bop#("/", lhs, rhs1)
+          : (rhs : INT)? Bop#("*",rhs,lhs)
+          : Bop#("*",lhs, rhs)
+   case "/": 
+           ((lhs : INT) && (rhs : INT))? lhs / rhs
+         : (lhs==0)? 0
+         : (rhs==1)? lhs
+         : ((rhs : INT) && (lhs : Bop#("*",lhs1,lhs2)) && (lhs1 : INT))?
+                RebuildExp((lhs1/rhs) *  lhs2)
+         :  Bop#("/",lhs, rhs)
+   case  "%":
+        ((lhs : INT) && (rhs : INT))? lhs % rhs
+         : (rhs==1)? 0
+         : Bop#("%",lhs, rhs) 
+   case MIN:
+       (lhs=="")? rhs : (rhs=="")? lhs
+       :(((cur=lhs - rhs)) : INT)? ((cur <= 0)? lhs : rhs) : MIN#(lhs,rhs) 
+   case MAX:
+       (lhs=="")? rhs : (rhs=="")? lhs
+       :(((cur=lhs - rhs)) : INT)? ((cur <= 0)? rhs : lhs) : MAX#(lhs,rhs) 
+   default: Bop#(op, lhs,rhs)
+ }
+</xform>
+
+<xform RebuildExp pars=(exp) >
+if (exp : Bop#(op, lhs, rhs))
+   { RebuildBop(op,lhs,rhs) }
+else  if (exp : Uop#(op,opd))
+{
+   switch (op) 
+   {
+    case "-" : RebuildUminus(opd)
+    default: Uop#(op, opd)
+   }
+}
+else { exp }
+</xform>
+
+<xform Build_listExp pars=(op, list1, list2)>
+(list1 : (first1 rest1))? (
+  (list2 : (first2 rest2))? 
+     RebuildExp(BUILD_BOP(op,first1,first2)) :: Build_listExp(op,rest1, rest2)
+  :  RebuildExp(BUILD_BOP(op,first1,list2)) :: rest1
+)
+: (RebuildExp(BUILD_BOP(op,list1,list2)))
+</xform>
+
+<xform Reduce_listExp pars=(op, opds) reverse=0>
+if (!reverse)
+    opds = ReverseList(opds);
+res = car opds;
+for (p_opds = cdr opds; p_opds != ""; p_opds = cdr p_opds)
+  res = RebuildExp(BUILD_BOP(op, res, car p_opds));
+res
+</xform>
+
+<xform Break_plus pars=(term, exp)>
+  (term == exp)? (1 0)
+: (exp : Bop#("*",opd1,opd2))? 
+ (  (opd1 == term)? (opd2 0) 
+  : (opd2 == term)? (opd1 0)
+  : (0,exp)  )
+: (exp : Bop#("+",opd1,opd2))? 
+   Build_listExp("+", BK_plus(term,opd1), BK_plus(term,opd2))
+: (0 exp)
+</xform>
