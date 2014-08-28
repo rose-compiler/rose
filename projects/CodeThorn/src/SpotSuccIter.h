@@ -23,7 +23,7 @@ namespace CodeThorn {
   class SpotSuccIter : public spot::tgba_succ_iterator {
   public:
     SpotSuccIter(TransitionGraph& tg, const EState& state,
-		    const std::map<int, int>& propNum2DictNum, std::set<int> propNumbers);
+		    const std::map<int, int>& propNum2DictNum, std::set<int> inVars , std::set<int> outVars);
     void first();  //sets the iterator to the first successor
     void next();
     bool done() const;
@@ -37,6 +37,9 @@ namespace CodeThorn {
   private:
     // generates the condition necessary to traverse the transition to current state
     bdd generateSpotTransition(const Transition& t) const;
+    // generates a boolean conjunction of non-negated variables with the remaining
+    // elements of the alphabet as negated variables.
+    bdd conjunctivePredicate(std::set<int> nonNegated, std::set<int> alphabet) const;
 
     // the CodeThorn TransitionGraph on which the LTL formulae are tested
     TransitionGraph& stg;
@@ -46,8 +49,9 @@ namespace CodeThorn {
     TransitionPtrSet outEdges;
     //the iterator over outgoing transitions
     TransitionPtrSet::const_iterator iter;
-    //a set of atomic propositions containing all possible input and output values (int representation)
-    std::set<int> propNums;
+    //sets of atomic propositions containing all possible input/output values (int representation)
+    std::set<int> ltlInVars;
+    std::set<int> ltlOutVars;
   };
 }
 

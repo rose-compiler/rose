@@ -13,6 +13,10 @@
 #include "Miscellaneous.h"
 #include "AnalysisAbstractionLayer.h"
 
+#include <boost/bind.hpp>
+
+#include "Timer.h"
+
 using namespace CodeThorn;
 
 #include "CollectionOperators.h"
@@ -1739,15 +1743,115 @@ void Analyzer::pruneLeavesRec() {
   }
 }
 
+bool Analyzer::indegreeTimesOutdegreeLessThan(const EState* a, const EState* b) {
+  return ( (transitionGraph.inEdges(a).size() * transitionGraph.outEdges(a).size()) <
+             (transitionGraph.inEdges(b).size() * transitionGraph.outEdges(b).size()) );
+}
+
 void Analyzer::removeNonIOStates() {
   EStatePtrSet states=transitionGraph.estateSet();
-  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+  if (states.size() == 0) {
+    cout << "STATUS: the transition system used as a model is empty, could not reduce states to I/O." << endl;
+    return;
+  }
+  // sort EStates so that those with minimal (indegree * outdegree) come first
+  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
+  worklist->sort(boost::bind(&CodeThorn::Analyzer::indegreeTimesOutdegreeLessThan,this,_1,_2));
+  int totalStates=states.size();
+  int statesVisited =0;
+  // iterate over all states, reduce those that are neither the start state nor standard input / output
+  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
     if(! ((*i) == transitionGraph.getStartEState()) ) {
       if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO()) ) {
 	transitionGraph.reduceEState2(*i);
       }
     }
+    statesVisited++;
+    //display current progress
+    if (statesVisited % 2500 == 0) {
+      double progress = ((double) statesVisited / (double) totalStates) * 100;
+      cout << setiosflags(ios_base::fixed) << setiosflags(ios_base::showpoint);
+      cout << "STATUS: "<<statesVisited<<" out of "<<totalStates<<" states visited for reduction to I/O. ("<<setprecision(2)<<progress<<setprecision(6)<<"%)"<<endl;
+      cout << resetiosflags(ios_base::fixed) << resetiosflags(ios_base::showpoint);
+    }
   }
+}
+
+void Analyzer::reduceGraphInOutWorklistOnly() {
+  // 1.) worklist_reduce <- list of startState and all input/output states
+  std::list<const EState*> worklist_reduce;
+  EStatePtrSet states=transitionGraph.estateSet();
+  if (states.size() == 0) {
+    cout << "STATUS: the transition system used as a model is empty, could not reduce states to I/O." << endl;
+    return;
+  }
+  worklist_reduce.push_back(transitionGraph.getStartEState());
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    if ( (*i)->io.isStdInIO() || (*i)->io.isStdOutIO() ) {
+      worklist_reduce.push_back(*i);
+    }
+  }
+  // 2.) for each state in worklist_reduce: insert startState/I/O/worklist transitions into list of new transitions ("newTransitions").
+  std::list<Transition*> newTransitions;
+  for(std::list<const EState*>::iterator i=worklist_reduce.begin();i!=worklist_reduce.end();++i) {
+    boost::unordered_set<Transition*>* someNewTransitions = transitionsToInOutAndWorklist(*i);
+    newTransitions.insert(newTransitions.begin(), someNewTransitions->begin(), someNewTransitions->end());
+  }
+  // 3.) remove all old transitions
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    transitionGraph.eliminateEState(*i);
+  }
+  // 4.) add newTransitions
+  //cout << "DEBUG: number of new shortcut transitions to be added: " << newTransitions.size() << endl;
+  for(std::list<Transition*>::iterator i=newTransitions.begin();i!=newTransitions.end();++i) {
+    transitionGraph.add(**i);
+    //cout << "DEBUG: added " << (*i)->toString() << endl;
+  }
+}
+
+
+boost::unordered_set<Transition*>* Analyzer::transitionsToInOutAndWorklist( const EState* startState) {
+  // initialize result set and visited set (the latter for cycle checks)
+  boost::unordered_set<Transition*>* result = new boost::unordered_set<Transition*>();
+  boost::unordered_set<const EState*>* visited = new boost::unordered_set<const EState*>();
+  // start the recursive function from initState's successors, therefore with a minimum distance of one from initState. 
+  // Simplifies the detection of allowed self-edges.
+  EStatePtrSet succOfInitState = transitionGraph.succ(startState);
+  for(EStatePtrSet::iterator i=succOfInitState.begin();i!=succOfInitState.end();++i) {
+    boost::unordered_set<Transition*>* tempResult = new boost::unordered_set<Transition*>();
+    tempResult = transitionsToInOutAndWorklist((*i), startState, result, visited);
+    result->insert(tempResult->begin(), tempResult->end());
+    tempResult = NULL;
+  }
+  delete visited;
+  visited = NULL;
+  return result;
+}
+                                                            
+
+boost::unordered_set<Transition*>* Analyzer::transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
+                                                                  boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited) {
+  //cycle check
+  if (visited->count(currentState)) {
+    return results;  //currentState already visited, do nothing
+  } 
+  visited->insert(currentState);
+  //base case
+  // add a new transition if the current state is either input, output (as long as the start state is not output)
+  // or a leaf which is not a failing assertion
+  if( currentState->io.isStdInIO() || (!startState->io.isStdOutIO() && currentState->io.isStdOutIO())  
+          || (transitionGraph.succ(currentState).size() == 0 && !currentState->io.isFailedAssertIO())) {
+    Edge* newEdge = new Edge(startState->label(),EDGE_PATH,currentState->label());
+    Transition* newTransition = new Transition(startState, *newEdge, currentState);
+    results->insert(newTransition);
+  } else {
+    //recursively collect the resulting transitions
+    EStatePtrSet nextStates = transitionGraph.succ(currentState);
+    for(EStatePtrSet::iterator i=nextStates.begin();i!=nextStates.end();++i) {
+      transitionsToInOutAndWorklist((*i), startState, results, visited);
+    }
+  }
+  return results;
 }
 
 void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
@@ -2361,6 +2465,15 @@ void Analyzer::runSolver5() {
   set_finished(workVector,true);
   //omp_set_dynamic(0);     // Explicitly disable dynamic teams
   omp_set_num_threads(workers);
+
+  bool ioReductionActive = false;
+  unsigned int ioReductionThreshold = 0;
+  unsigned int estatesLastReduction = 0;
+  if(args.count("io-reduction")) {
+    ioReductionActive = true;
+    ioReductionThreshold = args["io-reduction"].as<int>(); 
+  }
+
 #ifdef RERS_SPECIALIZATION  
   //initialize the global variable arrays in the linked binary version of the RERS problem
   if(boolOptions["rers-binary"]) {
@@ -2377,6 +2490,18 @@ void Analyzer::runSolver5() {
       if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
         printStatusMessage(true);
         prevStateSetSize=estateSet.size();
+      }
+      //perform reduction to I/O/worklist states only if specified threshold was reached
+      if (ioReductionActive) {
+#pragma omp critical
+        {
+          if (estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
+            //int beforeReduction = estateSet.size();
+            reduceGraphInOutWorklistOnly();
+            estatesLastReduction = estateSet.size();
+            cout << "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << transitionGraph.size() << endl;
+          }
+        }
       }
       //cerr<<threadNum<<";";
       if(isEmptyWorkList()||isIncompleteSTGReady()) {

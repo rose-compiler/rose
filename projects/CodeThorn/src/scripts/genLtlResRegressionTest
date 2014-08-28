@@ -49,7 +49,7 @@ eval echo "Generating RERS LTL results for \${P${1}}${VERSION} with $NUMTHREADS 
 echo ".________________________."
 echo "| start running CodeThorn|"
 echo "*~~~~~~~~~~~~~~~~~~~~~~~~*"
-eval $BUILDDIR/codethorn ${PROBLEMDIR}/\${P${1}}${VERSION}${PROBLEM_MC}.c --edg:no_warnings --threads=${NUMTHREADS} --input-values=${INPUT_VALUES} ${LTL_ALPHABET} --rersmode=yes --check-ltl="$SRCDIR/tests/rers/${LTLS}" --csv-spot-ltl="${MC_LOG_DIR}/\${P${1}}${VERSION}_ltl_results${MC}.csv"
+eval $BUILDDIR/codethorn ${PROBLEMDIR}/\${P${1}}${VERSION}${PROBLEM_MC}.c --edg:no_warnings --threads=${NUMTHREADS} --input-values=${INPUT_VALUES} ${LTL_ALPHABET} --rersmode=yes --check-ltl="$SRCDIR/tests/rers/${LTLS}" --csv-spot-ltl="${MC_LOG_DIR}/\${P${1}}${VERSION}_ltl_results${MC}.csv" --with-counterexamples=no
 echo ".___________________________."
 echo "| finished running CodeThorn|"
 echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
