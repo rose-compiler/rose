@@ -411,19 +411,19 @@ std::string SpotConnection::filterRunInputOnly(std::string spotRun) {
   result += "[";
   for (std::list<std::string>::iterator i = inputPrefix.begin(); i != inputPrefix.end() ; ++i) {
     if (i != inputPrefix.begin()) {
-      result += ",";
+      result += ";";
     }
     result += (*i);
   }
   result += "]";
-  result += "(";
+  result += "([";
   for (std::list<std::string>::iterator i = inputCycle.begin(); i != inputCycle.end() ; ++i) {
     if (i != inputCycle.begin()) {
-      result += ",";
+      result += ";";
     }
     result += (*i);
   }
-  result += ")*";
+  result += "])*";
   return result;
   //cout << "DEBUG: result in function: " << result  << endl;
 }

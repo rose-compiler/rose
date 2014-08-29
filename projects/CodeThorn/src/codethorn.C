@@ -1506,7 +1506,7 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
-  boolOptions.registerOption("with-counterexamples",true);
+  boolOptions.registerOption("with-counterexamples",false);
 
   boolOptions.processOptions();
 
@@ -1829,8 +1829,8 @@ int main( int argc, char * argv[] ) {
 #endif
 
   cout << "=============================================================="<<endl;
-
-    analyzer.reachabilityResults.printResults();
+  bool withCe = boolOptions["with-counterexamples"];
+  analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
 #if 0
   // TODO: reachability in presence of semantic folding
   if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
@@ -1841,7 +1841,7 @@ int main( int argc, char * argv[] ) {
 #endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
-    analyzer.reachabilityResults.writeFile(filename.c_str());
+    analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
     cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
 #if 0  //result tables of different sizes are now handled by the PropertyValueTable object itself
     switch(resultsFormat) {
@@ -1926,7 +1926,8 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["std-io-only"]) {
     cout << "STATUS: bypassing all non standard I/O states."<<endl;
     timer.start();
-    analyzer.removeNonIOStates();
+    //analyzer.removeNonIOStates();  //old version, works correclty but takes far too long
+    analyzer.reduceGraphInOutWorklistOnly();
     stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
   }
 
@@ -1974,7 +1975,7 @@ int main( int argc, char * argv[] ) {
     SpotConnection spotConnection(ltl_filename);
     spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample);
     PropertyValueTable* ltlResults = spotConnection.getLtlResults();
-    ltlResults->printLtlResults();
+    ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
     cout << "=============================================================="<<endl;
     ltlResults->printResultsStatistics();
     cout << "=============================================================="<<endl;

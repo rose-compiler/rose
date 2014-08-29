@@ -68,7 +68,6 @@ void PropertyValueTable::strictUpdatePropertyValue(size_t num, PropertyValue val
 
 void PropertyValueTable::strictUpdateCounterexample(size_t num, string ce) {
   assert(num>=0 && num<_propertyValueTable.size());
-  assert(getPropertyValue(num) == PROPERTY_VALUE_NO);
   if(_counterexamples[num]=="") {
     _counterexamples[num] = ce;
   } else {
@@ -160,7 +159,10 @@ void PropertyValueTable::writeFile(const char* filename, bool onlyyesno, int off
     if(onlyyesno && (_propertyValueTable[i]!=PROPERTY_VALUE_YES && _propertyValueTable[i]!=PROPERTY_VALUE_NO))
       continue;
     myfile<<i+offset<<","<<reachToString(_propertyValueTable[i]);
-    if (withCounterexamples && _propertyValueTable[i]== PROPERTY_VALUE_NO) {myfile<<","<<_counterexamples[i];}
+    if (withCounterexamples && 
+       	    (_propertyValueTable[i]== PROPERTY_VALUE_NO || _propertyValueTable[i]== PROPERTY_VALUE_YES) ) {
+      myfile<<","<<_counterexamples[i];
+    }
     myfile<<endl;
   }
   myfile.close();
@@ -204,7 +206,12 @@ void PropertyValueTable::printResults(string yesAnswer, string noAnswer, string 
     cout<<color("white")<<propertyName<<i<<": ";
     switch(_propertyValueTable[i]) {
     case PROPERTY_VALUE_UNKNOWN: cout <<color("magenta")<<"UNKNOWN"; break; 
-    case PROPERTY_VALUE_YES: cout <<color("green")<< yesAnswer; break;
+    case PROPERTY_VALUE_YES:
+      {
+      cout <<color("green")<< yesAnswer;
+      if(withCounterexample) {cout << "   " << _counterexamples[i];}
+      }
+      break;
     case PROPERTY_VALUE_NO:
       {
       cout  <<color("cyan")<<noAnswer;
