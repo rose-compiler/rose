@@ -20,6 +20,7 @@
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 
 
 // FIXME[Robb P. Matzke 2014-08-24]: These matchers still need to be implemented:
@@ -32,6 +33,11 @@
  | FindThunkTables        | find long sequences of JMP instructions                   |
  | FindPostFunctionInsns  |                                                           |
  */
+
+// FIXME[Robb P. Matzke 2014-08-28]: SgAsmInstruction::is_function_call repeats most of the instruction semantics that occur in
+// the partitioner and is called when the partitioner semantics failed or were disabled.  Therefore, turning off semantics in
+// the partitioner actually makes the partitioner run slower than normal (because is_function_call is stateless), but if you
+// comment out the semantics inside is_function_call then the speed increase is huge.
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
@@ -77,9 +83,11 @@ static const rose_addr_t NO_ADDRESS(-1);
 struct Settings {
     std::string isaName;                                // instruction set architecture name
     rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
+    size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
     bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
+    bool findFunctionPadding;                           // look for pre-entry-point padding?
     bool findSwitchCases;                               // search for C-like "switch" statement cases
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
@@ -91,9 +99,10 @@ struct Settings {
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(NO_ADDRESS), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findSwitchCases(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
-          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doShowStats(false), doListUnused(false) {}
+        : mapVa(NO_ADDRESS), deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
+          findFunctionPadding(true), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
+          doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
+          doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -152,6 +161,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("allow-discontiguous-blocks")
                .intrinsicValue(false, settings.allowDiscontiguousBlocks)
                .hidden(true));
+    dis.insert(Switch("find-function-padding")
+               .intrinsicValue(true, settings.findFunctionPadding)
+               .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
+                    "lowest address of a function and attach them to the function as static data.  The "
+                    "@s{no-find-function-padding} switch turns this off.  The default is to " +
+                    std::string(settings.findFunctionPadding?"":"not ") + "search for padding."));
+    dis.insert(Switch("no-find-function-padding")
+               .key("find-function-padding")
+               .intrinsicValue(false, settings.findFunctionPadding)
+               .hidden(true));
     dis.insert(Switch("follow-ghost-edges")
                .intrinsicValue(true, settings.followGhostEdges)
                .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -190,6 +209,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("intra-function-data")
                .intrinsicValue(false, settings.intraFunctionData)
                .hidden(true));
+    dis.insert(Switch("remove-zeros")
+               .argument("size", nonNegativeIntegerParser(settings.deExecuteZeros), "128")
+               .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
+                    "switch argument is the minimum number of consecutive zeros that will trigger the removal, and "
+                    "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
+                    "all, this tool assumes a value of " + StringUtility::plural(settings.deExecuteZeros, "bytes") + "."));
 
     // Switches for output
     SwitchGroup out;
@@ -269,6 +294,53 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Map-adjusting functions
+//
+// These functions make adjustments to the memory map before any disassembly even starts.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Removes execute permission any time we find at least some number of consecutive executable zero bytes.
+static void
+deExecuteZeros(MemoryMap &map /*in,out*/, const size_t threshold) {
+    if (0==threshold)
+        return;
+    rose_addr_t va = 0;
+    AddressInterval zeros;
+    while (map.next(va, MemoryMap::MM_PROT_EXEC).assignTo(va)) {
+        uint8_t buf[4096];
+        size_t nRead = map.read(buf, va, sizeof buf, MemoryMap::MM_PROT_EXEC);
+        size_t firstZero = 0;
+        while (firstZero < nRead) {
+            while (firstZero<nRead && buf[firstZero]!=0) ++firstZero;
+            if (firstZero < nRead) {
+                size_t nZeros = 1;
+                while (firstZero+nZeros < nRead && buf[firstZero+nZeros]==0) ++nZeros;
+
+                if (zeros.isEmpty()) {
+                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
+                } else if (zeros.greatest()+1 == va+firstZero) {
+                    zeros = AddressInterval::baseSize(zeros.least(), zeros.size()+nZeros);
+                } else {
+                    if (zeros.size() >= threshold) {
+                        P2::mlog[INFO] <<"removing execute permission for " <<StringUtility::plural(zeros.size(), "zeros")
+                                       <<" at " <<StringUtility::addrToString(zeros.least()) <<"\n";
+                        map.mmodify(zeros, MemoryMap::MM_PROT_NONE, MemoryMap::MM_PROT_EXEC);
+                    }
+                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
+                }
+
+                firstZero += nZeros+1;
+            }
+        }
+        va += nRead;
+    }
+    if (zeros.size()>=threshold) {
+        P2::mlog[INFO] <<"removing execute permission for " <<StringUtility::plural(zeros.size(), "zeros")
+                       <<" at " <<StringUtility::addrToString(zeros.least()) <<"\n";
+        map.mmodify(zeros, MemoryMap::MM_PROT_NONE, MemoryMap::MM_PROT_EXEC);
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Callbacks
@@ -414,7 +486,7 @@ markEntryFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
             BOOST_FOREACH (const rose_rva_t &rva, fileHeader->get_entry_rvas()) {
                 rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
-                partitioner.attachOrMergeFunction(P2::Function::instance(va));
+                partitioner.attachOrMergeFunction(P2::Function::instance(va, SgAsmFunction::FUNC_ENTRY_POINT));
             }
         }
     }
@@ -700,6 +772,20 @@ int main(int argc, char *argv[]) {
     }
     disassembler->set_progress_reporting(-1.0);         // turn it off
 
+#if 0 // [Robb P. Matzke 2014-08-29]
+    // Remove execute permission from all segments of memory except those with ".text" as part of their name.
+    BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
+        if (!boost::contains(node.value().get_name(), ".text")) {
+            std::cerr <<"ROBB: removing execute from " <<node.value().get_name() <<"\n";
+            unsigned newPerms = node.value().get_mapperms() & ~MemoryMap::MM_PROT_EXEC;
+            map.mprotect(node.key(), newPerms);
+        }
+    }
+#endif
+
+    deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
+
+
     // Some analyses need to know what part of the address space is being disassembled.
     AddressIntervalSet executableSpace;
     BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
@@ -738,11 +824,12 @@ int main(int argc, char *argv[]) {
     // is a bit wonky won't get assigned any basic blocks (other than the entry blocks we just added above).
     rose_addr_t prologueVa = 0;
     partitioner.memoryMap().dump(std::cout);
-    while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa)) /*void*/;
+    while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa /*in,out*/)) /*void*/;
     findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
     if (settings.findDeadCode)
         findDeadCode(partitioner);                      // find unreachable code and add it to functions
-    findFunctionPadding(partitioner);                   // find function alignment padding before entry points
+    if (settings.findFunctionPadding)
+        findFunctionPadding(partitioner);               // find function alignment padding before entry points
     if (settings.intraFunctionData)
         findIntraFunctionData(partitioner, executableSpace); // find data areas that are enclosed by functions
     
