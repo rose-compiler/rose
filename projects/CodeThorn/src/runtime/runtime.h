@@ -52,7 +52,13 @@ class RunTimeSystem {
  public:
   void init_stack_info(); // must be called to initialize run-time-system
   void print_stack_info();
-  bool is_stack_ptr(void *ptr);
+  inline bool is_stack_ptr(void *ptr) {
+    bool is_stack_ptr= ((uintptr_t) ptr >= (uintptr_t) prog_stack_bottom
+			&& (uintptr_t) ptr <= (uintptr_t) prog_stack_local);
+    //cout<<"DEBUG: is_stack_ptr("<<ptr<<"):"<<is_stack_ptr<<endl;
+    return is_stack_ptr;
+  }
+
 
  private:
   enum BuiltInType {
