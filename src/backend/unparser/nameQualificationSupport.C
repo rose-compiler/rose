@@ -3669,6 +3669,24 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           printf ("Case of SgFunctionParameterList: functionParameterList = %p \n",functionParameterList);
 #endif
           SgScopeStatement* currentScope = SageInterface::getScope(functionParameterList);
+
+       // DQ (8/29/2014): This is a result of a transformation in the tutorial (codeCoverage.C) that does not appear to be implemeting a transformation correctly.
+          if (currentScope == NULL)
+             {
+               printf ("Error: currentScope == NULL: functionParameterList = %p \n",functionParameterList);
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionParameterList->get_parent());
+               ROSE_ASSERT(functionDeclaration != NULL);
+               printf ("Error: currentScope == NULL: functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+               ROSE_ASSERT(functionDeclaration->get_file_info() != NULL);
+               functionDeclaration->get_file_info()->display("Error: currentScope == NULL: functionParameterList->get_parent(): debug");
+               SgScopeStatement* temp_scope = SageInterface::getScope(functionDeclaration);
+               ROSE_ASSERT(temp_scope != NULL);
+
+            // DQ (8/29/2014): It appears that we can't ask the SgFunctionParameterList for it's scope, but we can find the SgFunctionDeclaration from the parent and ask it; so this should be fixed.
+               currentScope = temp_scope;
+
+               printf ("It appears that in the case of a transforamtion, we can't always ask the SgFunctionParameterList for it's scope, but we can find the SgFunctionDeclaration from the parent and ask it; so this should be fixed. \n");
+             }
           ROSE_ASSERT(currentScope != NULL);
 
        // DQ (8/24/2014): This should be the same scope as what is in the inherited attribute, I think.
