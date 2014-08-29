@@ -10,7 +10,7 @@
 
 #include "rose.h"
 #include "compass2/compass.h"
-#include "CodeThorn/src/AstMatching.h"
+#include "AstMatching.h"
 
 using std::string;
 using namespace StringUtility;
@@ -100,7 +100,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
       
       // perform AST matching here
-      CodeThorn::AstMatching match_func_decl;
+      AstMatching match_func_decl;
       MatchResult result_func_decl = match_func_decl.performMatching
 	("$r = SgFunctionDeclaration", sageProject);
       std::map<string, bool> has_prototype;

@@ -8,14 +8,13 @@
 #include <fstream>
 #include "rose.h"
 #include "string_functions.h"
-#include "CodeThorn/src/AstMatching.h"
+#include "AstMatching.h"
 
 #include <boost/foreach.hpp>
 
 #include "compass2/compass.h"
 
 using namespace StringUtility;
-using namespace CodeThorn;
 using std::string;
 
 extern const Compass::Checker* const floatingPointExactComparisonChecker;

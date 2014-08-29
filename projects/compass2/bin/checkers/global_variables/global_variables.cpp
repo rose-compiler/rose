@@ -7,12 +7,11 @@
 #include "rose.h"
 #include "compass2/compass.h"
 #include <boost/foreach.hpp>
-#include "CodeThorn/src/AstMatching.h"
+#include "AstMatching.h"
 
 
 using std::string;
 using namespace StringUtility;
-using namespace CodeThorn;
 
 extern const Compass::Checker* const globalVariablesChecker;
 

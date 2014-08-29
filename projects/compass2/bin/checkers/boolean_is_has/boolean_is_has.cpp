@@ -11,7 +11,7 @@
 
 #include "rose.h"
 #include "compass2/compass.h"
-#include "CodeThorn/src/AstMatching.h"
+#include "AstMatching.h"
 
 using std::string;
 using namespace StringUtility;
@@ -101,7 +101,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
       
       // perform AST matching here
-      CodeThorn::AstMatching function_decls;
+      AstMatching function_decls;
       MatchResult func_matches = function_decls.performMatching("$r = SgFunctionDeclaration", sageProject);
       BOOST_FOREACH(SingleMatchVarBindings match, func_matches)
 	{
@@ -113,7 +113,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 	    }
 	}
       
-      CodeThorn::AstMatching var_init;
+      AstMatching var_init;
       MatchResult var_matches = var_init.performMatching("$r = SgInitializedName", sageProject);
       BOOST_FOREACH(SingleMatchVarBindings match, var_matches)
 	{

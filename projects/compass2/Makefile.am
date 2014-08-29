@@ -42,12 +42,6 @@ libcompass2_la_SOURCES=\
 libcompass2_la_include_HEADERS=\
 	compass.h
 
-BUILT_SOURCES = generate-VariableIdMapping.h
-
-generate-VariableIdMapping.h:
-	make varwatch -C $(top_builddir)/projects/CodeThorn/src
-
-
 
 # ------------------------------------------------------------------------------
 #  Compass2 main executable
@@ -95,8 +89,7 @@ bin_compass2_LDADD=\
 	bin/checkers/asynchronous_signal_handler/libasynchronoussignalhandler.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
-	$(ROSE_LIBS) \
-	$(top_builddir)/projects/CodeThorn/src/VariableIdMapping.o
+	$(ROSE_LIBS)
 
 
 # ------------------------------------------------------------------------------

@@ -8,13 +8,12 @@
 #include <boost/foreach.hpp>
 
 #include "rose.h"
-#include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/VariableIdMapping.h"
+#include "AstMatching.h"
+#include "VariableIdMapping.h"
 #include "compass2/compass.h"
 
 using std::string;
 using namespace StringUtility;
-using namespace CodeThorn;
 
 extern const Compass::Checker* const allocateAndFreeInTheSameModuleChecker;
 

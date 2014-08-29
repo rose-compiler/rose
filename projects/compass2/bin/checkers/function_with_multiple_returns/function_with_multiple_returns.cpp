@@ -13,7 +13,7 @@
 #include <boost/foreach.hpp>
 
 #include "rose.h"
-#include "CodeThorn/src/AstMatching.h"
+#include "AstMatching.h"
 #include "CodeThorn/src/AstTerm.h"
 #include "compass2/compass.h"
 
@@ -36,10 +36,10 @@ namespace CompassAnalyses
    */
   namespace FunctionWithMultipleReturns
   {
-    extern const string checker_name;
-    extern const string short_description;
-    extern const string long_description;
-    extern string source_directory;
+    extern const std::string checker_name;
+    extern const std::string short_description;
+    extern const std::string long_description;
+    extern std::string source_directory;
 
     /**
      * \brief Specificaiton of checker results.
@@ -76,11 +76,11 @@ namespace CompassAnalyses
 {
   namespace FunctionWithMultipleReturns
   {
-    const string checker_name = "FunctionWithMultipleReturns";
-    const string short_description = "Function with multiple returns detected";
-    const string long_description =
+    const std::string checker_name = "FunctionWithMultipleReturns";
+    const std::string short_description = "Function with multiple returns detected";
+    const std::string long_description =
         "This analysis looks for functions with multiple returns";
-    string source_directory = "/";
+    std::string source_directory = "/";
   }
 }
 
@@ -120,7 +120,7 @@ static void run(Compass::Parameters parameters, Compass::OutputObject* output)
 {
   // We only care about source code in the user's space, not,
   // for example, Boost or system files.
-  string target_directory = parameters["general::target_directory"].front();
+  std::string target_directory = parameters["general::target_directory"].front();
   CompassAnalyses::FunctionWithMultipleReturns::source_directory.assign(
       target_directory);
 
@@ -129,7 +129,7 @@ static void run(Compass::Parameters parameters, Compass::OutputObject* output)
   SgNode* root_node = (SgNode*) sageProject;
 
   // 1. Search for all SgFunctionDeclarations
-  CodeThorn::AstMatching function_matcher;
+  AstMatching function_matcher;
   MatchResult function_matches = function_matcher
       .performMatching("$r = SgFunctionDefinition", root_node);
 
@@ -138,7 +138,7 @@ static void run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
     SgNode* function = matched_function["$r"];
 
-    CodeThorn::AstMatching return_matcher;
+    AstMatching return_matcher;
     MatchResult return_matches = return_matcher
         .performMatching("$r = SgReturnStmt", function);
 

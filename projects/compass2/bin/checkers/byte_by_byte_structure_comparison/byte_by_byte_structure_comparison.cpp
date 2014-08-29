@@ -8,7 +8,7 @@
 
 #include "rose.h"
 #include "compass2/compass.h"
-#include "CodeThorn/src/AstMatching.h"
+#include "AstMatching.h"
 
 using std::string;
 using namespace StringUtility;
@@ -98,13 +98,13 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
       
       // perform AST matching here
-      CodeThorn::AstMatching match_functions;
+      AstMatching match_functions;
       MatchResult result_functions =
 	match_functions.performMatching("$r = SgFunctionCallExp(SgFunctionRefExp,SgExprListExp(_,_,_))", sageProject);
       BOOST_FOREACH(SingleMatchVarBindings match, result_functions)
 	{
 	  SgFunctionCallExp* function_call = (SgFunctionCallExp*)match["$r"];
-	  CodeThorn::AstMatching match_vars;
+	  AstMatching match_vars;
 	  MatchResult result_vars;
 	  if ("memcmp" == function_call->getAssociatedFunctionDeclaration()->get_name().getString())
 	    result_vars = match_vars.performMatching("$s = SgVarRefExp", function_call);

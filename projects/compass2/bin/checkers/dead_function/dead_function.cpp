@@ -8,12 +8,11 @@
 
 #include "rose.h"
 #include "compass2/compass.h"
-#include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/SgNodeHelper.h"
+#include "AstMatching.h"
+#include "SgNodeHelper.h"
 
 using std::string;
 using namespace StringUtility;
-using namespace CodeThorn;
 
 extern const Compass::Checker* const deadFunctionChecker;
 
