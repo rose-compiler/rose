@@ -149,6 +149,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_115.C \
    test2014_116.C \
    test2014_117.C \
+   test2014_118.C \
+   test2014_119.C \
    test2014_120.C \
    test2014_121.C \
    test2014_122.C \
@@ -192,6 +194,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_162.C \
    test2014_163.C \
    test2014_165.C \
+   test2014_166.C \
+   test2014_167.C \
+   test2014_168.C \
+   test2014_169.C \
+   test2014_170.C \
+   test2014_171.C \
    lulesh.C \
    luleshTALC.C
 
@@ -204,8 +212,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
   test2014_78.C 
 endif
 
-# DQ (8/24/2014): This pass outside of Jenkins but fail for Jenkins 
-# since the location of boost is not specified for the test codes.
+# DQ (8/24/2014): This passes outside of Jenkins (boost foreach test codes) but 
+# fails for Jenkins since the location of boost is not specified for the test codes.
+#  test2014_103.C
 #  test2014_104.C 
 #  test2014_105.C 
 #  test2014_106.C 
@@ -260,10 +269,7 @@ TESTS_NOT_PASSING = \
    test2014_164.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
-#  test2014_103.C 
 #  test2014_113.C 
-#  test2014_118.C 
-#  test2014_119.C 
 
 # DQ (7/3/2014): This C++ language feature is only properly supported in EDG version 4.9
 if ROSE_USE_EDG_VERSION_4_9

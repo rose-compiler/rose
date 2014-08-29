@@ -333,14 +333,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + initializedName->get_name();
         }
 
-  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+  // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.
      SgIntVal* intValue = isSgIntVal(node);
      if (intValue != NULL)
         {
           nodelabel += string("\\n value = ") + StringUtility::numberToString(intValue->get_value());
         }
 
-  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+  // DQ (4/6/2011): Added support for output of the name associated with SgVarRefExp IR nodes.
      SgVarRefExp* varRefExp = isSgVarRefExp(node);
      if (varRefExp != NULL)
         {
@@ -357,6 +357,48 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           if (variableSymbol != NULL)
              {
                name = variableSymbol->get_name();
+             }
+          nodelabel += string("\\n name = ") + name;
+        }
+
+  // DQ (8/28/2014): Added support for output of the name for functions IR nodes.
+     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node);
+     if (functionRefExp != NULL)
+        {
+          SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (functionSymbol == NULL)
+             {
+               printf ("WARNING: functionSymbol == NULL: functionRefExp = %p \n",functionRefExp);
+             }
+          ROSE_ASSERT(functionSymbol != NULL);
+
+          string name = "unknown";
+          if (functionSymbol != NULL)
+             {
+               name = functionSymbol->get_name();
+             }
+          nodelabel += string("\\n name = ") + name;
+        }
+
+  // DQ (8/28/2014): Added support for output of the name for functions IR nodes.
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(node);
+     if (memberFunctionRefExp != NULL)
+        {
+          SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (memberFunctionSymbol == NULL)
+             {
+               printf ("WARNING: memberFunctionSymbol == NULL: memberFunctionRefExp = %p \n",memberFunctionRefExp);
+             }
+          ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+          string name = "unknown";
+          if (memberFunctionSymbol != NULL)
+             {
+               name = memberFunctionSymbol->get_name();
              }
           nodelabel += string("\\n name = ") + name;
         }

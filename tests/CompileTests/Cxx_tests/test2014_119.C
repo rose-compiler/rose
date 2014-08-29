@@ -29,6 +29,8 @@ std::auto_ptr<MatOpCommand> parseCleanCommand()
      double min_volume_fraction;
   // Bug: this unparses to be:
   // return ((std::auto_ptr< MatOpCommand > ::auto_ptr((new CleanMatOpCommand (min_volume_fraction))) . operator std::auto_ptr_ref<<unnamed>::MatOpCommand>()));
+  // and should be:
+  // return std::auto_ptr<MatOpCommand>(new CleanMatOpCommand(min_volume_fraction));
      return std::auto_ptr<MatOpCommand>(new CleanMatOpCommand(min_volume_fraction));
    }
 }
