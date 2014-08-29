@@ -5637,6 +5637,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                break;
              }
 
+       // DQ (8/29/2014): Added support for SgAggregateInitializer (failed in tutorial examples).
+          case V_SgAggregateInitializer:
+
        // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
           case V_SgTemplateParameterVal:   // return 0;
 

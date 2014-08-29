@@ -144,7 +144,7 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
   // DQ (11/17/2013): Added assertion.
      ROSE_ASSERT(node != NULL);
 
-#if 1
+#if 0
      printf ("In AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
@@ -160,11 +160,11 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
                ROSE_ASSERT(attribute != NULL);
 
             // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
-#if 1
+#if 0
                printf ("Calling attribute->additionalNodeInfo() \n");
 #endif
                std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
-#if 1
+#if 0
                printf ("nodeList.size() = %lu \n",nodeList.size());
 #endif
                for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
@@ -172,32 +172,32 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
                     SgNode* nodePtr   = i_node->nodePtr;
                     string nodelabel  = i_node->label;
                     string nodeoption = i_node->options;
-#if 1
+#if 0
                     printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
 #endif
                  // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
                  // dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
                     dotrep.addNode( nodePtr, nodelabel, nodeoption );
                   }
-#if 1
+#if 0
                printf ("Calling attribute->additionalEdgeInfo() \n");
 #endif
                std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
-#if 1
+#if 0
                printf ("edgeList.size() = %lu \n",edgeList.size());
 #endif
                for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
                   {
                     string edgelabel  = i_edge->label;
                     string edgeoption = i_edge->options;
-#if 1
+#if 0
                     printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
 #endif
                     dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
                   }
              }
         }
-#if 1
+#if 0
      printf ("Leaving AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
    }
@@ -361,7 +361,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n name = ") + name;
         }
 
-  // DQ (8/28/2014): Added support for output of the name for functions IR nodes.
+  // DQ (8/28/2014): Added support for output of the name for function IR nodes.
      SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node);
      if (functionRefExp != NULL)
         {
@@ -382,7 +382,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n name = ") + name;
         }
 
-  // DQ (8/28/2014): Added support for output of the name for functions IR nodes.
+  // DQ (8/28/2014): Added support for output of the name for member function IR nodes.
      SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(node);
      if (memberFunctionRefExp != NULL)
         {
