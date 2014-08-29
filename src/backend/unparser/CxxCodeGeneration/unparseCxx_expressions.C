@@ -202,8 +202,6 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
    }
 
 
-
-
 // DQ (8/11/2014): Added more general support for function parameter expressions (required for C++11 support).
 void
 Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgUnparse_Info& info)
@@ -1830,6 +1828,21 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      if (functionCallExp != NULL)
         {
           uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
+#if 0
+       // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
+       // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
+       // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
+       // output, except that this is more complex for the non-operator syntax unparsing (I think).
+
+          SgFunctionSymbol* functionSymbol = func_ref->get_symbol();
+          ROSE_ASSERT(functionSymbol != NULL);
+          SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+          ROSE_ASSERT(functionDeclaration != NULL);
+#endif
+#if 0
+          printf ("Exiting as a tesxt! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
@@ -2292,6 +2305,44 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         {
           uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
           is_compiler_generated = functionCallExp->isCompilerGenerated();
+
+#if 0
+       // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
+       // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
+       // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
+       // output, except that this is more complex for the non-operator syntax unparsing (I think).
+
+          SgFunctionSymbol* functionSymbol = mfunc_ref->get_symbol();
+          ROSE_ASSERT(functionSymbol != NULL);
+          SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+          ROSE_ASSERT(functionDeclaration != NULL);
+          SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+          ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+          if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
+             {
+#if 0
+               printf ("Detected a conversion operator! \n");
+#endif
+            // Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
+               uses_operator_syntax = true;
+               if (is_compiler_generated == true)
+                  {
+#if 0
+                    printf ("Detected is_compiler_generated == true for conversion operator! \n");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
         }
 
      SgExpression* binary_op = isSgExpression(mfunc_ref->get_parent());
@@ -3566,10 +3617,10 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      bool needSquareBrackets = false;
 
 #if 0
-     curprint       ("/* func_call->get_function()                   = " + func_call->get_function()->class_name() + " */\n ");
-     curprint(string("/* func_call->get_uses_operator_syntax()       = ") + ((func_call->get_uses_operator_syntax() == true) ? "true" : "false") + " */\n ");
-     curprint(string("/* unp->opt.get_overload_opt()                 = ") + ((unp->opt.get_overload_opt() == true) ? "true" : "false") + " */\n ");
-  // curprint("/* isBinaryOperator(func_call->get_function()) = " + ((unp->u_sage->isBinaryOperator(func_call->get_function()) == true) ? "true" : "false") + " */\n ");
+     curprint       ("/* func_call->get_function()                   = " + func_call->get_function()->class_name() + " */\n");
+     curprint(string("/* func_call->get_uses_operator_syntax()       = ") + ((func_call->get_uses_operator_syntax() == true) ? "true" : "false") + " */\n");
+     curprint(string("/* unp->opt.get_overload_opt()                 = ") + ((unp->opt.get_overload_opt() == true) ? "true" : "false") + " */\n");
+  // curprint("/* isBinaryOperator(func_call->get_function()) = " + ((unp->u_sage->isBinaryOperator(func_call->get_function()) == true) ? "true" : "false") + " */\n");
 #endif
 
   // DQ (4/8/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
@@ -3578,8 +3629,8 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      bool uses_operator_syntax = func_call->get_uses_operator_syntax();
 
 #if 0
-     printf ("In Unparse_ExprStmt::unparseFuncCall(): uses_operator_syntax = %s \n",uses_operator_syntax == true ? "true" : "false");
-     curprint(string("/* In unparseFuncCall(): uses_operator_syntax     = ") + (uses_operator_syntax ? "true" : "false") + " */\n ");
+     printf ("In Unparse_ExprStmt::unparseFuncCall(): (before test for conversion operator) uses_operator_syntax = %s \n",uses_operator_syntax == true ? "true" : "false");
+     curprint(string("/* In unparseFuncCall(): (before test for conversion operator) uses_operator_syntax     = ") + (uses_operator_syntax ? "true" : "false") + " */\n");
 #endif
 
 #if 0
@@ -3594,6 +3645,68 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #if 0
      printf ("func_call->get_function() = %p = %s \n",func_call->get_function(),func_call->get_function()->class_name().c_str());
 #endif
+
+     bool suppress_implicit_conversion_operator = false;
+
+     SgDotExp* dotExp = isSgDotExp(func_call->get_function());
+     if (dotExp != NULL)
+        {
+          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+          if (memberFunctionRefExp != NULL)
+             {
+            // Operator syntax inplies output of generated code as of "B b; b.A::operator+(b);" instead of "B b; b+b;"
+            // For conversion operators the form would be "B b; return b.operator A();" instead of "B b; return A(b);"
+
+            // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the operator syntax of a user-defined conversion operator.
+            // So we have to detect such operators and then detect if they are implicit then mark them to use the operator 
+            // syntax plus supress them from being output.  We might alternatively go directly to supressing them from being
+            // output, except that this is might be more complex for the operator syntax unparsing (I think).
+
+               SgFunctionSymbol* functionSymbol = memberFunctionRefExp->get_symbol();
+               ROSE_ASSERT(functionSymbol != NULL);
+               SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+               ROSE_ASSERT(functionDeclaration != NULL);
+            // SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+            // ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+               bool is_compiler_generated = func_call->isCompilerGenerated();
+
+            // If operator form is specified then turn it off.
+            // if (uses_operator_syntax == true)
+                  {
+                    if (functionDeclaration->get_specialFunctionModifier().isConversion() == true)
+                       {
+#if 0
+                         printf ("In Unparse_ExprStmt::unparseFuncCall(): Detected a conversion operator! \n");
+#endif
+                      // DQ (8/28/2014): Force output of generated code using the operator syntax, plus supress the output if is_compiler_generated == true.
+                      // uses_operator_syntax = false;
+
+                         if (is_compiler_generated == true)
+                            {
+#if 0
+                              printf ("In Unparse_ExprStmt::unparseFuncCall(): Detected is_compiler_generated == true for conversion operator! \n");
+#endif
+                              suppress_implicit_conversion_operator = true;
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+             }
+        }
+
+#if 0
+     printf ("In Unparse_ExprStmt::unparseFuncCall(): (after test for conversion operator) uses_operator_syntax = %s \n",uses_operator_syntax == true ? "true" : "false");
+     curprint(string("/* In unparseFuncCall(): (after test for conversion operator) uses_operator_syntax     = ") + (uses_operator_syntax ? "true" : "false") + " */\n");
+#endif
+
 #if 0
   // DQ (11/16/2013): This need not be a SgFunctionRefExp.
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(func_call->get_function());
@@ -3618,10 +3731,14 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      printf ("isUnaryOperatorPlus(func_call->get_function())  = %s \n",unp->u_sage->isUnaryOperatorPlus(func_call->get_function()) ? "true" : "false");
      printf ("isUnaryOperatorMinus(func_call->get_function()) = %s \n",unp->u_sage->isUnaryOperatorMinus(func_call->get_function()) ? "true" : "false");
 #endif
+#if 0
+     printf ("WARNING: unparseOperatorSyntax and uses_operator_syntax are functionally redundant declarations \n");
+#endif
 
   // DQ (6/17/2007): Turn off the generation of "B b; b+b" in favor of "B b; b.A::operator+(b)
   // when A::operator+(A) is called instead of B::operator+(A).  See test2007_73.C for an example.
-     bool unparseOperatorSyntax = false;
+  // bool unparseOperatorSyntax = false;
+
   // if ( !unp->opt.get_overload_opt() && isBinaryOperator(func_call->get_function()) && (isSgDotExp(func_call->get_function()) != NULL) || (isSgArrowExp(func_call->get_function()) != NULL) )
   // if ( (unp->opt.get_overload_opt() == false) && ( (isSgDotExp(func_call->get_function()) != NULL) || (isSgArrowExp(func_call->get_function()) != NULL) ) )
   // if ( ((unp->opt.get_overload_opt() == false) && (uses_operator_syntax == false)) && ( (isSgDotExp(func_call->get_function()) != NULL) || (isSgArrowExp(func_call->get_function()) != NULL) ) )
@@ -3708,10 +3825,10 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                        {
 #if 0
                         if (SgProject::get_verbose() > 0)
-                        {
-                            printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
-                        }
-                         curprint ( "/* Warning: lhs and member function from different classes (linked though class derivation) */\n ");
+                           {
+                             printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
+                           }
+                        curprint ( "/* Warning: lhs and member function from different classes (linked though class derivation) */\n");
 #endif
 
                          if (SgProject::get_verbose() > 0)
@@ -3729,11 +3846,14 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          set<SgSymbol*>::iterator hiddenDeclaration = hiddenList.find(memberFunctionSymbol);
                          if ( hiddenDeclaration != hiddenList.end() )
                             {
+#if 1
+                              printf ("Warning: lhs class hidding derived class member function call (skip setting uses_operator_syntax == true) \n");
+#endif
 #if 0
-                              printf ("Warning: lhs class hidding derived class member function call \n");
                               curprint ( "/* Warning: lhs class hidding derived class member function call */\n ");
 #endif
-                              unparseOperatorSyntax = true;
+                           // unparseOperatorSyntax = true;
+                           // uses_operator_syntax = true;
                             }
                        }
                   }
@@ -3744,7 +3864,8 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #endif
                   }
 #if 0
-               printf ("Warning: name qualification required = %s \n",unparseOperatorSyntax ? "true" : "false");
+            // printf ("Warning: name qualification required = %s \n",unparseOperatorSyntax ? "true" : "false");
+               printf ("Warning: name qualification required = %s \n",uses_operator_syntax ? "true" : "false");
 #endif
              }
             else
@@ -3758,6 +3879,11 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
        // printf ("Exiting as part of testing \n");
        // ROSE_ASSERT(false);
         }
+
+#if 0
+     printf ("In unparseFuncCall(): unp->u_sage->isBinaryOperator(func_call->get_function() = %p = %s ) = %s \n",
+          func_call->get_function(),func_call->get_function()->class_name().c_str(),unp->u_sage->isBinaryOperator(func_call->get_function()) ? "true" : "false");
+#endif
 
   // FIRST PART
   // check if this is an binary operator overloading function and if the overloading 
@@ -3775,9 +3901,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #endif
           ROSE_ASSERT(func_call->get_args() != NULL);
           SgExpressionPtrList& list = func_call->get_args()->get_expressions();
-
-       // printf ("argument list size = %ld \n",list.size());
-
+#if 0
+          printf ("In unparseFuncCall(): argument list size = %ld \n",list.size());
+#endif
           SgExpressionPtrList::iterator arg = list.begin();
           if (arg != list.end())
              {
@@ -3813,14 +3939,27 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                ROSE_ASSERT (arg != list.end());
                unparseExpression((*arg), newinfo);
 #if 0
-               curprint ( "\n/* In unparseFuncCall(): 1st part AFTER: right arg: unparseExpression(*arg, info); */ \n");
+            // DQ (8/29/2014): This was a mistake.
+            // DQ (8/29/2014): This fails for test2014_172.C.
+            // ROSE_ASSERT (arg != list.end());
+               if (arg != list.end())
+                  {
+                    unparseExpression((*arg), newinfo);
+                  }
+                 else
+                  {
+                    printf ("WARNING: arg == list.end() in unparseFuncCall() \n");
+                  }
+#endif
+#if 0
+               curprint ("\n/* In unparseFuncCall(): 1st part AFTER: right arg: unparseExpression(*arg, info); */ \n");
 #endif
                newinfo.unset_nested_expression();
 
             // printf ("DONE: output function argument (right) \n");
              }
 #if 0
-          curprint ( "\n/* Leaving processing first part in unparseFuncCall */ \n");
+          curprint ("\n/* Leaving processing first part in unparseFuncCall */ \n");
 #endif
         }
        else
@@ -3843,7 +3982,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #if 0
           printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->class_name().c_str());
           curprint ("/* output 2nd part  func_call->get_function() = " + func_call->get_function()->class_name() + " */ \n");
+          curprint ( string("/* suppress_implicit_conversion_operator = ") + (uses_operator_syntax == true ? "true" : "false") + " */ \n");
 #endif
+
+       // DQ (8/29/2014): Adding support to supress output of implicit user-defined conversion operators.
+          if (suppress_implicit_conversion_operator == false)
+             {
        //
        // Unparse the function first.
        //
@@ -4003,6 +4147,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                        }
                   }
              }
+
        //
        // [DT] 3/30/2000 -- In the case of overloaded [] operators, 
        //      set a flag indicating that square brackets should be
@@ -4138,7 +4283,36 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
             // curprint(" /* needSquareBrackets == true */ ]");
              }
 
-       // curprint("\n/* Leaving processing second part in unparseFuncCall */ \n");
+       // DQ (8/29/2014): Adding support to supress output of implicit user-defined conversion operators.
+             }
+            else
+             {
+#if 0
+               printf ("Skipping due to suppressed implicit user-defined conversion operator \n");
+               curprint("/* Skipping due to suppressed implicit user-defined conversion operator */ \n ");
+#endif
+               SgUnparse_Info newinfo(info);
+               SgBinaryOp* binary_op = isSgBinaryOp(func_call->get_function());
+               if (binary_op != NULL)
+                  {
+                    SgDotExp* dotExp = isSgDotExp(binary_op);
+                    if (dotExp != NULL)
+                       {
+#if 0
+                         printf ("Unparse the lhs of the SgDotExp (as part of skipping conversion operator) \n");
+                         curprint("/* Unparse the lhs of the SgDotExp (as part of skipping conversion operator) */ \n ");
+#endif
+                         unparseExpression(dotExp->get_lhs_operand(),newinfo);
+#if 0
+                         printf ("DONE: Unparse the lhs of the SgDotExp (as part of skipping conversion operator) \n");
+                         curprint("/* DONE: Unparse the lhs of the SgDotExp (as part of skipping conversion operator) */ \n ");
+#endif
+                       }
+                  }
+             }
+#if 0
+          curprint("\n/* Leaving processing second part in unparseFuncCall */ \n");
+#endif
         }
 
 #if 0
@@ -4827,6 +5001,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  else
                   {
 #if 0
+                    printf ("case SgCastExp::e_C_style_cast: compiler generated cast not output \n");
                     curprint("/* case SgCastExp::e_C_style_cast: compiler generated cast not output */");
 #endif
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).

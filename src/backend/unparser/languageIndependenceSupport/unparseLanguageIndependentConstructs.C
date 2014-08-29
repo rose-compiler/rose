@@ -5373,69 +5373,106 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
 #if 0
      printf ("In getPrecedence(): variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+     curprint(string("\n/* In getPrecedence(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
 #endif
+
+     PrecedenceSpecifier precedence_value = 0;
 
      switch (variant)
         {
           case V_SgExprListExp:
-          case V_SgCommaOpExp:       return 1;
-          case V_SgAssignOp:         return 2;
+          case V_SgCommaOpExp:       // return 1;
+                                     precedence_value = 1; break;
+
+          case V_SgAssignOp:         // return 2;
        // DQ (2/1/2009): Added precedence for SgPointerAssignOp (Fortran 90)
-          case V_SgPointerAssignOp:  return 2;
-          case V_SgPlusAssignOp:     return 2;
-          case V_SgMinusAssignOp:    return 2;
-          case V_SgAndAssignOp:      return 2;
-          case V_SgIorAssignOp:      return 2;
-          case V_SgMultAssignOp:     return 2;
-          case V_SgDivAssignOp:      return 2;
-          case V_SgModAssignOp:      return 2;
-          case V_SgXorAssignOp:      return 2;
-          case V_SgLshiftAssignOp:   return 2;
-          case V_SgRshiftAssignOp:   return 2;
-          case V_SgConditionalExp:   return 3;
-          case V_SgOrOp:             return 4;
-          case V_SgAndOp:            return 5;
-          case V_SgBitOrOp:          return 6;
-          case V_SgBitXorOp:         return 7;
-          case V_SgBitAndOp:         return 8;
-          case V_SgEqualityOp:       return 9;
-          case V_SgNotEqualOp:       return 9;
-          case V_SgLessThanOp:       return 10;
-          case V_SgGreaterThanOp:    return 10;
-          case V_SgLessOrEqualOp:    return 10;
-          case V_SgGreaterOrEqualOp: return 10;
+          case V_SgPointerAssignOp:  // return 2;
+          case V_SgPlusAssignOp:     // return 2;
+          case V_SgMinusAssignOp:    // return 2;
+          case V_SgAndAssignOp:      // return 2;
+          case V_SgIorAssignOp:      // return 2;
+          case V_SgMultAssignOp:     // return 2;
+          case V_SgDivAssignOp:      // return 2;
+          case V_SgModAssignOp:      // return 2;
+          case V_SgXorAssignOp:      // return 2;
+          case V_SgLshiftAssignOp:   // return 2;
+          case V_SgRshiftAssignOp:   // return 2;
+                                     precedence_value = 2; break;
+
+           case V_SgConditionalExp:   // return 3;
+                                     precedence_value = 3; break;
+
+          case V_SgOrOp:             // return 4;
+                                     precedence_value = 4; break;
+
+          case V_SgAndOp:            // return 5;
+                                     precedence_value = 5; break;
+
+          case V_SgBitOrOp:          // return 6;
+                                     precedence_value = 6; break;
+
+          case V_SgBitXorOp:         // return 7;
+                                     precedence_value = 7; break;
+
+          case V_SgBitAndOp:         // return 8;
+                                     precedence_value = 8; break;
+
+          case V_SgEqualityOp:       // return 9;
+          case V_SgNotEqualOp:       // return 9;
+                                     precedence_value = 9; break;
+
+          case V_SgLessThanOp:       // return 10;
+          case V_SgGreaterThanOp:    // return 10;
+          case V_SgLessOrEqualOp:    // return 10;
+          case V_SgGreaterOrEqualOp: // return 10;
+                                     precedence_value = 10; break;
+
 
        // DQ (1/26/2013): I think this is wrong, "<<" and ">>" have value 7 (lower than "==") (see test2013_42.C).
        // case V_SgLshiftOp:         return 11;
        // case V_SgRshiftOp:         return 11;
-          case V_SgLshiftOp:         return 11;
-          case V_SgRshiftOp:         return 11;
+          case V_SgLshiftOp:         // return 11;
+          case V_SgRshiftOp:         // return 11;
 
-          case V_SgJavaUnsignedRshiftOp: return 11;
-          case V_SgAddOp:            return 12;
+          case V_SgJavaUnsignedRshiftOp: // return 11;
+                                     precedence_value = 11; break;
+
+          case V_SgAddOp:            // return 12;
+                                     precedence_value = 12; break;
+
 
        // DQ (2/1/2009): Added operator (which should have been here before)
-          case V_SgMinusOp:          return 15;
-          case V_SgUnaryAddOp:       return 15;
+          case V_SgMinusOp:          // return 15;
+          case V_SgUnaryAddOp:       // return 15;
+                                     precedence_value = 15; break;
 
-          case V_SgSubtractOp:       return 12;
-          case V_SgMultiplyOp:       return 13;
+
+          case V_SgSubtractOp:       // return 12;
+                                     precedence_value = 12; break;
+
+          case V_SgMultiplyOp:       // return 13;
           case V_SgIntegerDivideOp:
-          case V_SgDivideOp:         return 13;
-          case V_SgModOp:            return 13;
-          case V_SgDotStarOp:        return 14;
-          case V_SgArrowStarOp:      return 14;
-          case V_SgPlusPlusOp:       return 15;
-          case V_SgMinusMinusOp:     return 15;
-          case V_SgBitComplementOp:  return 15;
-          case V_SgNotOp:            return 15;
+          case V_SgDivideOp:         // return 13;
+          case V_SgModOp:            // return 13;
+                                     precedence_value = 13; break;
+
+          case V_SgDotStarOp:        // return 14;
+          case V_SgArrowStarOp:      // return 14;
+                                     precedence_value = 14; break;
+
+          case V_SgPlusPlusOp:       // return 15;
+          case V_SgMinusMinusOp:     // return 15;
+          case V_SgBitComplementOp:  // return 15;
+          case V_SgNotOp:            // return 15;
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
           case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
-          case V_SgSizeOfOp:         return 15;
+          case V_SgSizeOfOp:         // return 15;
 
        // DQ (6/20/2013): Added support for __alignof__ operator.
-          case V_SgAlignOfOp:        return 15;
+          case V_SgAlignOfOp:        // return 15;
+                                     precedence_value = 15; break;
+
 
           case V_SgFunctionCallExp:
              {
@@ -5459,25 +5496,33 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                     ROSE_ASSERT(false);
                   }
 #endif
-               return 16;
+               // return 16;
+               precedence_value = 16;
+               break;
              }
 
-          case V_SgPntrArrRefExp:    return 16;
-          case V_SgArrowExp:         return 16;
-          case V_SgDotExp:           return 16;
+          case V_SgPntrArrRefExp:    // return 16;
+          case V_SgArrowExp:         // return 16;
+          case V_SgDotExp:           // return 16;
 
-          case V_SgImpliedDo:        return 16;
+          case V_SgImpliedDo:        // return 16;
 
-          case V_SgLabelRefExp:      return 16;
-          case V_SgActualArgumentExpression: return 16;
+          case V_SgLabelRefExp:      // return 16;
+          case V_SgActualArgumentExpression: // return 16;
 
        // DQ (2/1/2009): Added support for Fortran operator.
-          case V_SgExponentiationOp: return 16;
-          case V_SgConcatenationOp:  return 11;
-          case V_SgSubscriptExpression:  return 16;  // Make the same as for SgPntrArrRefExp
+          case V_SgExponentiationOp: // return 16;
+                                     precedence_value = 16; break;
+
+          case V_SgConcatenationOp:  // return 11;
+                                     precedence_value = 11; break;
+
+          case V_SgSubscriptExpression:  // return 16;  // Make the same as for SgPntrArrRefExp
+                                     precedence_value = 16; break;
 
        // DQ (2/1/2009): This was missing from before.
-          case V_SgThisExp:          return 0;
+          case V_SgThisExp:          // return 0;
+                                     precedence_value = 0; break;
 
           case V_SgCastExp:
              {
@@ -5535,9 +5580,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                             }
 
                          string func_name = name.str();
-
+#if 0
                          printf ("case V_SgCastExp: functionCallExp = %p associated function func_name = %s \n",functionCallExp,func_name.c_str());
-
+#endif
                          ROSE_ASSERT(func_name.find("operator") != string::npos);
 
                        }
@@ -5562,54 +5607,71 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                     printf ("In getPrecedence(): case V_SgCastExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
                     printf ("   --- castExp = %p isCompilerGenerated = true (return precedence = 1) \n",castExp);
 #endif
-                 // If this is compiler generated thenwe have to look at the precedence of the unary operator's operand.
+                 // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
                  // return 1;
                     if (castExp != NULL)
                        {
-                         return getPrecedence(castExp->get_operand());
+                      // return getPrecedence(castExp->get_operand());
+                         precedence_value = getPrecedence(castExp->get_operand()); 
                        }
                       else
                        {
-                      // If this is compiler generated thenwe have to look at the precedence of the unary operator's operand.
-                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated thenwe have to look at the precedence of the unary operator's operand (returning 1) \n");
-                         return 1;
+                      // DQ (8/29/2014): Changed the precedence to avoid over parenthization of user-defined conversion operators 
+                      // (see test2006_185.C).  If it is compiler generated then we can argue that it has a higher precedence and 
+                      // this avoids the redundant parenthization which is a bug for GNU 4.4 and other versions of GNU.
+
+                      // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
+                      // printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 1) \n");
+                      // return 1;
+                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
+                      // return 16;
+                         precedence_value = 16; 
                        }
                   }
+                 else
+                  {
+                    precedence_value = 0; 
+                  }
 
-               return 0;
+            // return 0;
+               break;
              }
 
        // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
-          case V_SgTemplateParameterVal:   return 0;
+          case V_SgTemplateParameterVal:   // return 0;
 
-          case V_SgBoolValExp:             return 0;
-          case V_SgIntVal:                 return 0;
-          case V_SgThrowOp:                return 0;
-          case V_SgDoubleVal:              return 0;
-          case V_SgUnsignedIntVal:         return 0;
-          case V_SgAssignInitializer:      return 0;
-          case V_SgFloatVal:               return 0;
-          case V_SgVarArgOp:               return 0;
-          case V_SgLongDoubleVal:          return 0;
-          case V_SgLongIntVal:             return 0;
-          case V_SgLongLongIntVal:         return 0;
-          case V_SgVarArgStartOp:          return 0;
-          case V_SgNewExp:                 return 0;
-          case V_SgDeleteExp:              return 0;
-          case V_SgStringVal:              return 0;
-          case V_SgCharVal:                return 0;
-          case V_SgUnsignedLongLongIntVal: return 0;
-          case V_SgUnsignedLongVal:        return 0;
-          case V_SgComplexVal:             return 0;
-          case V_SgCAFCoExpression:        return 16;
+          case V_SgBoolValExp:             // return 0;
+          case V_SgIntVal:                 // return 0;
+          case V_SgThrowOp:                // return 0;
+          case V_SgDoubleVal:              // return 0;
+          case V_SgUnsignedIntVal:         // return 0;
+          case V_SgAssignInitializer:      // return 0;
+          case V_SgFloatVal:               // return 0;
+          case V_SgVarArgOp:               // return 0;
+          case V_SgLongDoubleVal:          // return 0;
+          case V_SgLongIntVal:             // return 0;
+          case V_SgLongLongIntVal:         // return 0;
+          case V_SgVarArgStartOp:          // return 0;
+          case V_SgNewExp:                 // return 0;
+          case V_SgDeleteExp:              // return 0;
+          case V_SgStringVal:              // return 0;
+          case V_SgCharVal:                // return 0;
+          case V_SgUnsignedLongLongIntVal: // return 0;
+          case V_SgUnsignedLongVal:        // return 0;
+          case V_SgComplexVal:             // return 0;
+                                     precedence_value = 0; break;
+
+          case V_SgCAFCoExpression:        // return 16;
+                                     precedence_value = 16; break;
 
        // Liao, 7/15/2009, UPC nodes
-          case V_SgUpcThreads:             return 0;
-          case V_SgUpcMythread:            return 0;
-          case V_SgNullExpression:         return 0;
+          case V_SgUpcThreads:             // return 0;
+          case V_SgUpcMythread:            // return 0;
+          case V_SgNullExpression:         // return 0;
        // TV (04/26/2010): CUDA nodes
-          case V_SgCudaKernelExecConfig:   return 0;
-          case V_SgCudaKernelCallExp:      return 0;
+          case V_SgCudaKernelExecConfig:   // return 0;
+          case V_SgCudaKernelCallExp:      // return 0;
+                                     precedence_value = 0; break;
 
        // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
        //     after my modification for a more generic support of the original
@@ -5640,44 +5702,54 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                   }
 #endif
 #endif
-               return 0;
+            // return 0;
+               precedence_value = 0; 
+               break;
              }
 
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
-          case V_SgStatementExpression:      return 0;
+          case V_SgStatementExpression:      // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
-          case V_SgVarRefExp:                return 0;
+          case V_SgVarRefExp:                // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (7/22/2013): I think this needs to be set so that we never output parenthesis for this case.
        // DQ (10/17/2012): Added support for SgDesignatedInitializer.
        // case V_SgDesignatedInitializer:    return 0;
        // case V_SgDesignatedInitializer:    return 16;
-          case V_SgDesignatedInitializer:    return 0;
+          case V_SgDesignatedInitializer: // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (1/26/2013): This case needs to be supported (see test2013_42.C).
-          case V_SgTypeIdOp:                 return 16;
+          case V_SgTypeIdOp:                 // return 16;
+                                     precedence_value = 16; break;
 
        // DQ (7/13/2013): Added support to type trait builtin functions (not clear if this is the correct value).
        // Make this the same precedence as a SgFunctionCallExp.
-          case V_SgTypeTraitBuiltinOperator: return 16;
+          case V_SgTypeTraitBuiltinOperator: // return 16;
+                                     precedence_value = 16; break;
 
        // DQ (9/25/2013): Adding support for new IR node (C90 and C++ compound literals).
-          case V_SgCompoundLiteralExp: return 0;
+          case V_SgCompoundLiteralExp: // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (9/25/2013): Adding support for Fortran user defined binary operators (however, I am not certain this is the correct precedence).
-          case V_SgUserDefinedBinaryOp: return 0;
+          case V_SgUserDefinedBinaryOp: // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (9/25/2013): Adding support for C/C++ asm operator (however, I am not certain this is the correct precedence).
-          case V_SgAsmOp: return 0;
+          case V_SgAsmOp: // return 0;
+                                     precedence_value = 0; break;
 
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
                printf ("Warning: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-#if 0
+#if 1
             // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
                printf ("Error: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
                ROSE_ASSERT(false);
@@ -5685,7 +5757,14 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
              }
         }
 
-     return 0;
+#if 0
+     printf ("Leaving getPrecedence(): variant = %d = %s precedence_value = %d \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str(),precedence_value);
+     curprint(string("\n/* Leaving getPrecedence(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " precedence_value = " + StringUtility::numberToString(precedence_value) + " */ \n");
+#endif
+
+  // DQ (8/29/2014): Modified this function to make it easier to debug the precedence return values directly.
+  // return 0;
+     return precedence_value;
    }
 
 
@@ -5984,6 +6063,28 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
           default:
              {
+            // DQ (8/29/2014): If this is a user-defined operator (SgFunctionCallExp) nested in a user-defined 
+            // operator (SgFunctionCallExp) then we need a more useful parent than the parent function's SgExprListExpr.
+               SgExprListExp* parent_exprListExp = isSgExprListExp(parentExpr);
+               if (parent_exprListExp != NULL)
+                  {
+                    SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
+                    if (functionCallExp != NULL)
+                       {
+                      // Find a better parent node to use (reach to the parent SgFunctionCallExp).
+                         SgNode* local_parentExpr = parentExpr;
+                         local_parentExpr = local_parentExpr->get_parent();
+                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(local_parentExpr);
+                         if (functionCallExp != NULL)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT || 0
+                              printf ("In requiresParentheses(): Found a better node to use in determining precedence: functionCallExp = %p \n",functionCallExp);
+#endif
+                              parentExpr = functionCallExp;
+                            }
+                       }
+                  }
+
                int parentVariant   = GetOperatorVariant(parentExpr);
                SgExpression* first = GetFirstOperand(parentExpr);
                if (parentVariant == V_SgPntrArrRefExp && first != expr)
@@ -5998,7 +6099,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                PrecedenceSpecifier parentPrecedence = getPrecedence(parentExpr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
-               printf ("parentVariant = %d  parentPrecedence = %d \n",parentVariant,parentPrecedence);
+               printf ("parentExpr = %p = %s parentVariant = %d  parentPrecedence = %d \n",parentExpr,parentExpr->class_name().c_str(),parentVariant,parentPrecedence);
 #endif
 
             // DQ (7/22/2013): Don't return true if this is a SgDesignatedInitializer.
@@ -6025,7 +6126,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #if DEBUG_PARENTHESIS_PLACEMENT
                int exprVariant = GetOperatorVariant(expr);
-               printf ("exprVariant = %d  exprPrecedence = %d \n",exprVariant,exprPrecedence);
+               printf ("expr = %p = %s exprVariant = %d  exprPrecedence = %d \n",expr,expr->class_name().c_str(),exprVariant,exprPrecedence);
 #endif
                if (exprPrecedence > parentPrecedence)
                   {
