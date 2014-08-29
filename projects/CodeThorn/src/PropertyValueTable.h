@@ -34,7 +34,7 @@ class PropertyValueTable {
   void write2012File(const char* filename, bool onlyyesno=false);
   void printResults();
   void printLtlResults();
-  void printResults(string yesAnswer, string noAnswer, string propertyName = "property", bool withCounterExample = true);
+  void printResults(string yesAnswer, string noAnswer, string propertyName = "property", bool withCounterExample = false);
   void printResultsStatistics();
   void init();
   void init(size_t size);

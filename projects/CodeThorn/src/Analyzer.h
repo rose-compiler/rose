@@ -175,6 +175,13 @@ namespace CodeThorn {
     boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* startState);                                                          
     boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
                                                             boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited);
+    // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults
+    void addCounterexample(int assertCode, const EState* assertEState);
+    // returns a list of EStates from source to target (shortest input path). 
+    // please note: target has to be a predecessor of source (reversed list)
+    list<const EState*> dijkstraShortestInputSequence(const EState* source, const EState* target);
+    list<const EState*> filterStdInOnly(list<const EState*>& states) const;
+    string reversedInputRunToString(list<const EState*>& run);
     
   public:
     SgNode* getCond(SgNode* node);
