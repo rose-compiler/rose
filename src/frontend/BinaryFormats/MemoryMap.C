@@ -953,6 +953,12 @@ MemoryMap::va_extents() const
 void
 MemoryMap::mprotect(AddressInterval range, unsigned perms, bool relax)
 {
+    mmodify(range, perms, ~perms, relax);
+}
+
+void
+MemoryMap::mmodify(AddressInterval range, unsigned requiredPerms, unsigned prohibitedPerms, bool relax)
+{
     bool done = false;
     while (!range.isEmpty() && !done) {
         Segments::NodeIterator found = p_segments.lowerBound(range.least());
@@ -973,17 +979,19 @@ MemoryMap::mprotect(AddressInterval range, unsigned perms, bool relax)
         const AddressInterval segment_range = found->key(); // copy since it might be deleted by MemoryMap::insert() below
         done = segment_range.greatest() >= range.greatest();
 
-        if (found->value().get_mapperms()!=perms) {
+        unsigned curPerms = found->value().get_mapperms();
+        if ((curPerms & requiredPerms)!=requiredPerms || (curPerms & prohibitedPerms)!=0) {
+            unsigned newPerms = (curPerms | requiredPerms) & ~prohibitedPerms;
             if (range.isContaining(segment_range)) {
                 // we can just change the segment in place
-                segment.set_mapperms(perms);
+                segment.set_mapperms(newPerms);
             } else {
                 // make a hole and insert a new segment
                 assert(segment_range.least() <= range.least());
                 AddressInterval new_range = AddressInterval::hull(range.least(),
                                                                   std::min(range.greatest(), segment_range.greatest()));
                 Segment new_segment = segment;
-                new_segment.set_mapperms(perms);
+                new_segment.set_mapperms(newPerms);
                 new_segment.set_buffer_offset(segment.get_buffer_offset(segment_range, new_range.least()));
                 p_segments.insert(new_range, new_segment, true/*make hole*/); // 'segment' is now invalid
             }

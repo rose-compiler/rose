@@ -719,6 +719,11 @@ public:
      *  operation is somewhat like the POSIX mprotect() function. */
     void mprotect(AddressInterval range, unsigned perms, bool relax=false);
 
+    /** Modifies permission bits for the specified address range.  The permissions in requiredPerms are added and those in
+     *  prohibitedPerms are removed.  The entire address range must already be mapped, but if @p relax is set then no exception
+     *  is thrown if part of the range is not mapped (that part is simply ignored). */
+    void mmodify(AddressInterval, unsigned requirePerms, unsigned prohibitedPerms=MM_PROT_NONE, bool relax=false);
+
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output.
      *  @{ */
