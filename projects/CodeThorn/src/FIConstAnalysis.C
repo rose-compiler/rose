@@ -429,32 +429,37 @@ EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, 
     }
     //cout<<endl;
     
-    // it holds here: val *is* a multi const
-    // handle all cases with 3-valued logic
+    // it holds here: val *is* a multi const!
     switch(op->variantT()) {
     case V_SgEqualityOp:
+      // case of one value is handled by const-analysis
       if(!myIsInConstSet) res=EvalValueType(false);
       else res=AType::Top();
       break;
     case V_SgNotEqualOp: 
+      // case of one value is handled by const-analysis
       if(!myIsInConstSet) res=EvalValueType(true);
       else res=AType::Top();
       break;
     case V_SgGreaterOrEqualOp:
-      if(myMaxConst>=constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
+      if(myMinConst>=constVal) res=EvalValueType(true);
+      else if(myMaxConst<constVal) res=EvalValueType(false);
+      else res=AType::Top();
       break;
     case V_SgGreaterThanOp:
-      if(myMaxConst>constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
-      break;
-    case V_SgLessThanOp:
-      if(myMinConst<constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
+      if(myMinConst>constVal) res=EvalValueType(true);
+      else if(myMaxConst<=constVal) res=EvalValueType(false);
+      else res=AType::Top();
       break;
     case V_SgLessOrEqualOp:
-      if(myMinConst<=constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
+      if(myMaxConst<=constVal) res=EvalValueType(true);
+      else if(myMinConst>constVal) res=EvalValueType(false);
+      else res=AType::Top();
+      break;
+    case V_SgLessThanOp:
+      if(myMaxConst<constVal) res=EvalValueType(true);
+      else if(myMinConst>=constVal) res=EvalValueType(false);
+      else res=AType::Top();
       break;
     default:
       cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
