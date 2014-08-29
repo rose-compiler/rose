@@ -31,14 +31,15 @@ void
 AddressUser::print(std::ostream &out) const {
     if (insn_!=NULL) {
         if (bblock_ != NULL) {
-            out <<"{" <<unparseInstructionWithAddress(insn_) <<" in " <<StringUtility::addrToString(bblock_->address()) <<"}";
+            out <<"{B-" <<StringUtility::addrToString(bblock_->address()) <<" ";
         } else {
-            out <<unparseInstructionWithAddress(insn_);
+            out <<"{B-none       ";
         }
+        out <<unparseInstructionWithAddress(insn_) <<"}";
     } else {
         ASSERT_require(odblock_.isValid());
-        out <<"data at " <<StringUtility::addrToString(odblock_.dataBlock()->address())
-            <<" has " <<StringUtility::plural(odblock_.nOwners(), "owners");
+        out <<"{D-" <<StringUtility::addrToString(odblock_.dataBlock()->address())
+            <<" " <<StringUtility::plural(odblock_.nOwners(), "owners") <<"}";
     }
 }
 
@@ -268,8 +269,9 @@ AddressUsers::isConsistent() const {
 
 void
 AddressUsers::print(std::ostream &out) const {
+    size_t nItems = 0;
     BOOST_FOREACH (const AddressUser &addressUser, users_)
-        out <<" " <<addressUser;
+        out <<(1==++nItems?"":", ") <<addressUser;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,7 +422,7 @@ AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
     using namespace StringUtility;
     BOOST_FOREACH (const Map::Node &node, map_.nodes())
         out <<prefix <<"[" <<addrToString(node.key().least()) <<"," <<addrToString(node.key().greatest())
-            <<"] =" <<node.value() <<"\n";
+            <<"] " <<StringUtility::plural(node.key().size(), "bytes") << ": " <<node.value() <<"\n";
 }
 
 } // namespace
