@@ -113,6 +113,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_73.C \
    test2014_74.C \
    test2014_75.C \
+   test2014_77.C \
+   test2014_78.C \
    test2013_117.C \
    test2014_76.C \
    test2014_79.C \
@@ -203,14 +205,15 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    lulesh.C \
    luleshTALC.C
 
+# DQ (8/29/2014): Put macros into testcode files so that they are only run on GNU g++ 4.4 compiler.
 # DQ (8/25/2014): These fail for older versions of GNU (e.g. g++ version 4.2.2)
 # --- error: cannot open tr1_impl/boost_sp_counted_base.h"
 # Restrict testing to g++ version 4.4 and above (where the test codes pass).
-if ROSE_USING_GCC_VERSION_LATER_4_4
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-  test2014_77.C \
-  test2014_78.C 
-endif
+# if ROSE_USING_GCC_VERSION_LATER_4_4
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+#   test2014_77.C 
+#   test2014_78.C 
+# endif
 
 # DQ (8/24/2014): This passes outside of Jenkins (boost foreach test codes) but 
 # fails for Jenkins since the location of boost is not specified for the test codes.

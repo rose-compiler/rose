@@ -1,3 +1,6 @@
+// DQ (8/29/2014): This test code fails for older compilers (e.g. g++ 4.2.4).
+#if ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 4) )
+
 #include <set>
 
 namespace XXX {
@@ -34,3 +37,5 @@ bool compareSolutions(const RatioFactorization& lhs,const RatioFactorization& rh
    }
 
 }
+
+#endif

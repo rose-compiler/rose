@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "omp.h" 
-extern void driver();
-extern void initialize();
-extern void jacobi();
+void driver();
+void initialize();
+void jacobi();
 void error_check();
 #define MSIZE 200
 int n;

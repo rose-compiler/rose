@@ -1,3 +1,4 @@
+#if ( (__GNUC__ == 4) && (__GNUC_MINOR__ == 4) )
 
 #include <memory>
 // #include <exception>        	// std::exception
@@ -55,3 +56,4 @@ private:
 } // namespace common
 } // namespace scallop
 
+#endif

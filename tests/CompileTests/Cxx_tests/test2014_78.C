@@ -1,3 +1,4 @@
+#if ( (__GNUC__ == 4) && (__GNUC_MINOR__ == 4) )
 
 #include <memory>
 #include <typeinfo>         	// std::type_info in get_deleter
@@ -51,3 +52,4 @@ private:
 } // namespace common
 } // namespace scallop
 
+#endif
