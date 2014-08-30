@@ -2589,6 +2589,20 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
           printf ("--- *i = %p = %s \n",*i,(*i)->class_name().c_str());
           curprint("/* unparseForInitStmt: " + (*i)->class_name() + " */ ");
 #endif
+       // DQ (8/30/2014): For all but the first entry we should have get_isAssociatedWithDeclarationList() == true.
+       // if (i != forInitStmt->get_init_stmt().begin())
+          if (forInitStmt->get_init_stmt().size() > 1)
+             {
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*i);
+
+            // Note that not all entries will be a SgVariableDeclaration (e.g. detected case of SgNullStatement).
+            // ROSE_ASSERT(variableDeclaration != NULL);
+               if (variableDeclaration != NULL)
+                  {
+                    ROSE_ASSERT(variableDeclaration->get_isAssociatedWithDeclarationList() == true);
+                  }
+             }
+
           unparseStatement(*i, newinfo);
           i++;
 
@@ -2602,7 +2616,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 
-     curprint ( string("; "));
+     curprint("; ");
    }
 
 
@@ -2633,12 +2647,12 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-#if 0
-          curprint("\n/* Unparse the for_init_stmt */\n ");
+#if 1
+          curprint("/* Unparse the for_init_stmt */\n ");
 #endif
           unparseStatement(tmp_stmt,newinfo);
-#if 0
-          curprint("\n/* DONE: Unparse the for_init_stmt */\n ");
+#if 1
+          curprint("/* DONE: Unparse the for_init_stmt */\n ");
 #endif
         }
      newinfo.unset_inConditional();
@@ -4414,8 +4428,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      while (p != vardecl_stmt->get_variables().end())
         {
-#if 0
-          curprint ( string("\n /* Inside of unparseVarDeclStmt(): top of loop over variables */ \n"));
+#if 1
+          curprint ("\n /* Inside of unparseVarDeclStmt(): top of loop over variables */ \n");
 #endif
           decl_item = *p;
           ROSE_ASSERT(decl_item != NULL);
@@ -4488,8 +4502,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           if (p == vardecl_stmt->get_variables().begin())
              {
             // If this is the first variable then output the base type
-#if 0
-               curprint ("\n /* In unparseVarDeclStmt(): (first variable): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
+#if 1
+               curprint ("/* In unparseVarDeclStmt(): (first variable): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
 #endif
 #if 0
             // DQ (5/6/2013): Experiment with calling the new refactored function. This code is perhaps specific to the problem demonstrated in test2013_153.C.
@@ -4744,7 +4758,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 #if 0
                printf ("Inside of unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = %s \n",ninfo_for_type.SkipBaseType() ? "true" : "false");
-               curprint ("\n /* In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = " + string(ninfo_for_type.SkipBaseType() ? "true" : "false") + " */ \n");
+#endif
+#if 1
+               curprint ("/* In unparseVarDeclStmt(): vardecl_stmt->get_isAssociatedWithDeclarationList() = " + string(vardecl_stmt->get_isAssociatedWithDeclarationList() ? "true" : "false") + " */ \n");
+               curprint ("/* In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = " + string(ninfo_for_type.SkipBaseType() ? "true" : "false") + " */ \n");
 #endif
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
@@ -5189,7 +5206,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
             // DQ (7/16/2012): Added new support for multiple variables in the same declaration, output the name of the variable...
                tmp_name = decl_item->get_name();
-               curprint ( tmp_name.str());
+               curprint(tmp_name.str());
              }
 
        // DQ (8/31/2013): I think this is the wrong location for the attribute (see test2013_40.c).
