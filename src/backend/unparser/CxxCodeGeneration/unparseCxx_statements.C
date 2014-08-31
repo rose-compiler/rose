@@ -2647,11 +2647,11 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-#if 1
+#if 0
           curprint("/* Unparse the for_init_stmt */\n ");
 #endif
           unparseStatement(tmp_stmt,newinfo);
-#if 1
+#if 0
           curprint("/* DONE: Unparse the for_init_stmt */\n ");
 #endif
         }
