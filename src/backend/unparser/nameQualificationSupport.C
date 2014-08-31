@@ -550,6 +550,12 @@ NameQualificationTraversal::nameQualificationDepthOfParent(SgDeclarationStatemen
        // In some cases the declaration can be in a scope with is not associated with a declaration (e.g. SgBasicBlock or SgForStatement).
           if (parentDeclaration != NULL)
              {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("In NameQualificationTraversal::nameQualificationDepthOfParent(): calling nameQualificationDepth(): parentDeclaration = %p = %s = %s \n",
+                    parentDeclaration,parentDeclaration->class_name().c_str(),SageInterface::get_name(parentDeclaration).c_str());
+               printf ("   --- currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
+#endif
             // qualificationDepth = nameQualificationDepth(parentDeclaration,parentScope,positionStatement);
                qualificationDepth = nameQualificationDepth(parentDeclaration,currentScope,positionStatement);
              }
@@ -777,12 +783,20 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      printf ("In nameQualificationDepth(SgDeclarationStatement*,...): declaration = %p = %s name = %s \n",declaration,declaration->class_name().c_str(),name.str());
 #endif
 
+#if 0
   // ROSE_ASSERT(name.is_null() == false);
+
+  // DQ (8/31/2014): The handling of this as a special case is funtamentally the problem with the test code (test2014_183.C)
+  // which demonstrates a namespace nested in a namespace with the same name (when this happens it is likely a bug, however
+  // it is legal C++ code and ROSE was having problem with this that sort of language construct and the issue is trased to
+  // the handling of un-named constructs in this code below. 
      if (name.is_null() == true)
         {
        // This name is empty so we need to keep going to evaluate the qualified name (see test2006_121.C).
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("CASE OF EMPTY NAME: declaration = %p = %s but has no valid name (it has and empty name), thus we have to recurse to the next level \n",declaration,declaration->class_name().c_str());
+          printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+          printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
 
        // DQ (8/20/2014): Add support for un-named namespaces (see test2014_132.C for an example).
@@ -799,6 +813,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
              }
         }
+#else
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In nameQualificationDepth(SgDeclarationStatement*,...): Skipping special handling of un-named constructs (not required): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+#endif
 
   // DQ (8/16/2013): Build the template parameters and template arguments as appropriate (will be NULL pointers for some types of declarations).
      SgTemplateParameterPtrList* templateParameterList = SageBuilder::getTemplateParameterList(declaration);
@@ -1807,6 +1826,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                 // The name does not match, so the associatedClassDeclaration is hidding the base class declaration.
                                    printf ("This class is NOT visible from where it is referenced (declaration with same name does not match) \n");
+                                   printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
                                 // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
@@ -1832,6 +1853,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               ROSE_ASSERT(namespaceDeclaration != NULL);
                               ROSE_ASSERT(associatedNamespaceDeclaration != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("associatedNamespaceDeclaration = %p \n",associatedNamespaceDeclaration);
+                              printf ("namespaceDeclaration           = %p \n",namespaceDeclaration);
+#endif
                               if (associatedNamespaceDeclaration->get_firstNondefiningDeclaration() == namespaceDeclaration->get_firstNondefiningDeclaration())
                                  {
                                 // This class is visible from where it is referenced.
@@ -1844,6 +1869,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // The name does not match, so the associatedClassDeclaration is hidding the base class declaration.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This namespace is NOT visible from where it is referenced (declaration with same name does not match) \n");
+                                   printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
                                 // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
@@ -1881,6 +1908,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // The name does not match, so the associatedClassDeclaration is hidding the base class declaration.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This variable is NOT visible from where it is referenced (declaration with same name does not match) \n");
+                                   printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
                                 // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
@@ -2028,6 +2057,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // The name does not match, so the associatedFunctionDeclaration is hidding the base class declaration.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This function or member function is NOT visible from where it is referenced (declaration with same name does not match) \n");
+                                   printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
 #if 0
                                 // DQ (4/12/2014): Since we have searched using the function type, we don't need to compare the function types here.
@@ -2099,6 +2130,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // The name does not match, so the associatedFunctionDeclaration is hidding the base class declaration.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This typedef is NOT visible from where it is referenced (declaration with same name does not match) \n");
+                                   printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
                                 // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
@@ -2172,6 +2205,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // The name does not match, so the associatedFunctionDeclaration is hidding the base class declaration.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This enum is NOT visible from where it is referenced (declaration with same name does not match) \n");
+                                   printf ("   --- currentScope      = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
                                 // Now resolve how much name qualification is required; what ever is required for the parent plus 1.
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
@@ -2197,7 +2232,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
              {
             // This class is visible from where it is referenced.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("This declaration = %p = %s is NOT visible from where it is referenced (no declaration with same name) \n",declaration,declaration->class_name().c_str());
+               printf ("This declaration = %p = %s is NOT visible from where it is referenced (no declaration with same name, calling nameQualificationDepthOfParent()) \n",declaration,declaration->class_name().c_str());
+               printf ("   --- currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("   --- positionStatement = %p = %s \n",positionStatement,positionStatement->class_name().c_str());
 #endif
                qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
              }
