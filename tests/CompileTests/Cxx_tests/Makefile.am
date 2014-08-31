@@ -202,6 +202,16 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_169.C \
    test2014_170.C \
    test2014_171.C \
+   test2014_172.C \
+   test2014_174.C \
+   test2014_176.C \
+   test2014_177.C \
+   test2014_178.C \
+   test2014_179.C \
+   test2014_182.C \
+   test2014_183.C \
+   test2014_184.C \
+   test2014_185.C \
    lulesh.C \
    luleshTALC.C
 
@@ -214,6 +224,14 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 #   test2014_77.C 
 #   test2014_78.C 
 # endif
+
+# DQ (8/31/2014): currently failing test codes:
+# test2014_173.C
+# test2014_175.C (declaration of array[][8], mixing unspecified array bounds with specified array bounds in multi-deminsional arrays)
+# test2014_177.C
+# test2014_178.C
+# test2014_180.C (non-trivial extern template failing example)
+# test2014_181.C (test of using extern "C++" syntax within an extern "C" block).
 
 # DQ (8/24/2014): This passes outside of Jenkins (boost foreach test codes) but 
 # fails for Jenkins since the location of boost is not specified for the test codes.
