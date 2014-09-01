@@ -1,3 +1,7 @@
+
+// This test code does not work on older compilers (versions of g++ 4.2.4 or less at least).
+#if ( (__GNUC__ == 4) && (__GNUC_MINOR__ >= 4) )
+
 namespace internal {
 
 // Redundant nested namespace causes a problem in ROSE...
@@ -23,3 +27,4 @@ void GeneratedExtensionFinder::Find()
 
 }  // namespace internal
 
+#endif
