@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
@@ -528,20 +529,21 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     assert(1==condition->get_width()); // FIXME: condition is not used
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    state->writeMemory(address, value, this);
+    state->writeMemory(address, value, this, this);
 }
     
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &condition,
-                          size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt_,
+                          const BaseSemantics::SValuePtr &condition)
 {
+    size_t nbits = dflt_->get_width();
     assert(1==condition->get_width()); // FIXME: condition is not used
     assert(8==nbits || 16==nbits || 32==nbits);
 
-    // Default values come from an optional memory map.
-    BaseSemantics::SValuePtr dflt = undefined_(nbits);
+    // Default values come from an optional memory map if possible, otherwise use the passed-in default.
+    BaseSemantics::SValuePtr dflt = dflt_;
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
@@ -557,10 +559,11 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, nbits, this));
+    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, this, this));
     return retval;
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

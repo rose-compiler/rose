@@ -3,7 +3,8 @@
 #include "rose.h"
 #include "SymbolicSemantics.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Demonstrate that we can subclass a the semantic value type.  Our new value type is the same as the value type used by ROSE's

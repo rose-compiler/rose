@@ -11,11 +11,13 @@ class DEF
 // this is because it is first entered into the non-defining map when the prototype is processed and then entered
 // into defining map when "T DEF<T>::foo()" is processed.
 
+#if 1
 template<class T>
 T DEF<T>::foo ()
    { 
      return xyz;
    }
+#endif
 
 #if 1
 int main()

@@ -3,6 +3,9 @@
 #ifndef ROSE_DISASSEMBLER_ARM_H
 #define ROSE_DISASSEMBLER_ARM_H
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for the ARM architecture. Most of the useful disassembly methods can be found in the superclass. */
 class DisassemblerArm: public Disassembler {
 public:
@@ -54,9 +57,9 @@ private:
     static SgAsmArmInstruction *makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, int condPos,
                                                                ArmInstructionKind kind, ArmInstructionCondition cond,
                                                                uint32_t insn);
-    SgAsmArmRegisterReferenceExpression *makeRegister(uint8_t reg) const;
-    SgAsmArmRegisterReferenceExpression *makePsrFields(bool useSPSR, uint8_t fields) const;
-    SgAsmArmRegisterReferenceExpression *makePsr(bool useSPSR) const;
+    SgAsmRegisterReferenceExpression *makeRegister(uint8_t reg) const;
+    SgAsmRegisterReferenceExpression *makePsrFields(bool useSPSR, uint8_t fields) const;
+    SgAsmRegisterReferenceExpression *makePsr(bool useSPSR) const;
 
     SgAsmExpression *makeRotatedImmediate() const;
     SgAsmExpression *makeShifterField() const; /**< Decode last 12 bits and bit 25 (I) */
@@ -87,5 +90,8 @@ private:
     uint32_t insn;                              /**< 4-byte instruction word */
     ArmInstructionCondition cond;
 };
+
+} // namespace
+} // namespace
 
 #endif

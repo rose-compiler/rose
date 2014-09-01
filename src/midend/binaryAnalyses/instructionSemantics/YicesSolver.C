@@ -10,6 +10,9 @@
 #define strtoull _strtoui64
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
 using namespace InsnSemanticsExpr;
 
 void
@@ -328,12 +331,15 @@ YicesSolver::out_number(std::ostream &o, const TreeNodePtr &tn)
 void
 YicesSolver::out_expr(std::ostream &o, const TreeNodePtr &tn)
 {
-    using namespace InsnSemanticsExpr;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
-            o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+            if (ln->get_nbits() <= 64) {
+                o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+            } else {
+                o <<"0b" <<ln->get_bits().toBinary();
+            }
         } else if (ln->is_memory()) {
             o <<"m" <<ln->get_name();
         } else {
@@ -513,7 +519,6 @@ YicesSolver::out_sext(std::ostream &o, const InternalNodePtr &in)
 void
 YicesSolver::out_uext(std::ostream &o, const InternalNodePtr &in)
 {
-    using namespace InsnSemanticsExpr;
     assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
@@ -680,12 +685,18 @@ yices_expr
 YicesSolver::ctx_expr(const TreeNodePtr &tn)
 {
     yices_expr retval = 0;
-    using namespace InsnSemanticsExpr;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
         if (ln->is_known()) {
-            retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+            if (ln->get_nbits() <= 64) {
+                retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+            } else {
+                int tmp[ln->get_nbits()];
+                for (size_t i=0; i<ln->get_nbits(); ++i)
+                    tmp[i] = ln->get_bits().get(i) ? 1 : 0;
+                retval = yices_mk_bv_constant_from_array(context, ln->get_nbits(), tmp);
+            }
         } else {
             assert(ln->is_memory() || ln->is_variable());
             char name[64];
@@ -1009,3 +1020,6 @@ YicesSolver::ctx_read(const InternalNodePtr &in)
     return retval;
 }
 #endif
+
+} // namespace
+} // namespace

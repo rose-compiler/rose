@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "IntervalSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace IntervalSemantics {
@@ -145,7 +146,7 @@ SValue::possible_bits() const
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                        size_t nbits, BaseSemantics::RiscOperators *ops)
+                        BaseSemantics::RiscOperators *ops)
 {
     assert(!"FIXME"); // [Robb Matzke 2013-03-14]
     abort();
@@ -722,10 +723,10 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &condition,
-                          size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt,
+                          const BaseSemantics::SValuePtr &condition)
 {
-    return undefined_(nbits); // FIXME
+    return dflt->copy(); // FIXME
 }
 
 void
@@ -736,6 +737,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     // FIXME
 }
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace

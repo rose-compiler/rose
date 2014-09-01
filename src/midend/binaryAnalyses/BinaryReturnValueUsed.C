@@ -14,8 +14,7 @@ namespace BinaryAnalysis {
 namespace ReturnValueUsed {
 
 // FIXME[Robb P. Matzke 2014-02-18]: Remove this when all of BinaryAnalsis is inside of "rose"
-using namespace ::BinaryAnalysis;
-using namespace ::BinaryAnalysis::InstructionSemantics2;
+using namespace InstructionSemantics2;
 
 // FIXME[Robb P. Matzke 2014-02-18]: These should all be template parameters
 typedef ControlFlow::BlockGraph Cfg;
@@ -145,7 +144,7 @@ public:
 static bool returnValueUsed(const Cfg &cfg, CfgVertex startVertex, const RegisterDictionary *regdict) {
     BaseSemantics::SValuePtr protoval = NullSemantics::SValue::instance();
     RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+    BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     BaseSemantics::RiscOperatorsPtr ops = NullSemantics::RiscOperators::instance(state);
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);

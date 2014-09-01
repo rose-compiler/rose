@@ -6,6 +6,9 @@
 #include "InstructionEnumsMips.h"
 #include "sageBuilderAsm.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 class DisassemblerMips: public Disassembler {
 public:
     DisassemblerMips() { init(); }
@@ -61,30 +64,30 @@ public:
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL);
 
     /** Create a new general purpose register reference expression. */
-    SgAsmMipsRegisterReferenceExpression *makeRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeRegister(unsigned regnum);
 
     /** Create a new floating point register reference expression. */
-    SgAsmMipsRegisterReferenceExpression *makeFpRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeFpRegister(unsigned regnum);
 
     /** Create a new register reference for Coprocessor 0. */
-    SgAsmMipsRegisterReferenceExpression *makeCp0Register(unsigned regnum, unsigned sel);
+    SgAsmRegisterReferenceExpression *makeCp0Register(unsigned regnum, unsigned sel);
 
     /** Create a new register reference for Coprocessor 2. */
-    SgAsmMipsRegisterReferenceExpression *makeCp2Register(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeCp2Register(unsigned regnum);
 
     /** Create a new floating point condition flag register reference expression.  The return value is a reference to one of
      *  the bits from the FCSR register.  If @p cc is zero then bit 23 is referenced, otherwise bit 24+cc is referenced. The @p
      *  cc value must be zero through seven, inclusive. */
-    SgAsmMipsRegisterReferenceExpression *makeFpccRegister(unsigned cc);
+    SgAsmRegisterReferenceExpression *makeFpccRegister(unsigned cc);
 
     /** Create a new register reference for a COP2 condition code.  See COP2ConditionCode() in the MIPS reference manual. */
-    SgAsmMipsRegisterReferenceExpression *makeCp2ccRegister(unsigned cc);
+    SgAsmRegisterReferenceExpression *makeCp2ccRegister(unsigned cc);
 
     /** Create a new register reference for a hardware register. See the RDHWR instruction documentation. */
-    SgAsmMipsRegisterReferenceExpression *makeHwRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeHwRegister(unsigned regnum);
 
     /** Create a new register reference for a shadow GPR. */
-    SgAsmMipsRegisterReferenceExpression *makeShadowRegister(unsigned regnum);
+    SgAsmRegisterReferenceExpression *makeShadowRegister(unsigned regnum);
 
     /** Create a new 8-bit value expression from an 8-bit value.  The @p bit_offset and @p nbits indicate where the value
      * originally came from in the instruction. */
@@ -132,5 +135,8 @@ protected:
     /** Address of instruction currently being disassembled. This is set each time disassembleOne() is called. */
     rose_addr_t insn_va;
 };
+
+} // namespace
+} // namespace
 
 #endif

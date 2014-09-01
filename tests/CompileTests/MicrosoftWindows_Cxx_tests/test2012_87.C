@@ -13,6 +13,7 @@ class X
           void getRemapField();
    };
 
+#if 1
 template<typename ObjectType>
 void X<ObjectType>::getRemapField()
    {
@@ -25,6 +26,7 @@ void X<ObjectType>::getRemapField()
   // Call member function using member function pointer.
      (object->*(mFieldAccessorMethod))();
    }
+#endif
 
 class Y
    {

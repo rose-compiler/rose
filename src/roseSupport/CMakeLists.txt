@@ -10,6 +10,7 @@ install(FILES  transformationSupport.h
                IncludeDirective.h
                callbacks.h
                Combinatorics.h
+               Diagnostics.h
                LinearCongruentialGenerator.h
                SqlDatabase.h
                utility_functionsImpl.C

@@ -12,6 +12,7 @@ class BaseFab
    };
 
 #if 1
+#if 1
 template <class T>
 void
 BaseFab<T>::maskLT (BaseFab<int>& mask) const
@@ -24,6 +25,7 @@ foo (BaseFab<int>& mask)
    {
 //     mask.setVal(0);
    }
+#endif
 #endif
 
 BaseFab< vector<int> > hash;

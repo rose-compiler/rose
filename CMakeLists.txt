@@ -354,9 +354,13 @@ else()
   endif()
 endif()
 
-# Set ROSE_SHLIBPATH_VAR.  For now, it is just LD_LIBRARY_PATH.
-# LD_LIBRARY_PATH.
-set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+# Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.
+# Otherwise, it is just LD_LIBRARY_PATH.
+if(MSVC)
+  set(ROSE_SHLIBPATH_VAR "PATH")
+else()
+  set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+endif()
 
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
@@ -440,6 +444,12 @@ if (enable-python)
   if(with-python)
     find_package(PythonInterp)
   endif()
+endif()
+
+option(enable-x10 "Enable X10 language support in ROSE." OFF)
+if (enable-x10)
+  # TODO:
+  set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
 endif()
 
 # Other configuration options
@@ -863,7 +873,7 @@ endif (NOT WIN32)
 if (NOT WIN32)
   set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} )
 else (NOT WIN32)
-  set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib )
+  set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)
 
 # Check compilers and version numbers, Liao 11/25/2009
@@ -945,6 +955,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
      ${ROSE_TOP_SRC_DIR}/src/midend/astProcessing 
+     ${ROSE_TOP_SRC_DIR}/src/midend/astMatching
      ${ROSE_TOP_SRC_DIR}/src/midend/astQuery 
      ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism 
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/annotation 

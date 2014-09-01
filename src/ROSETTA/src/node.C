@@ -226,10 +226,14 @@ Grammar::setUpNodes ()
 
   // printf ("nonTerminalList.size() = %zu \n",nonTerminalList.size());
 
+  // DQ (4/20/2014): Adding more support for ATerm library.
+     NEW_TERMINAL_MACRO (Aterm, "Aterm", "ATERM" );
+
   // DQ (3/14/2007): Added IR support for binaries
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
-     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
+  // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
+     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode | Aterm, "Node", "NodeTag", false );
 
   // ***********************************************************************
   // ***********************************************************************
@@ -435,6 +439,25 @@ Grammar::setUpNodes ()
      LocatedNodeSupport.setFunctionPrototype ( "HEADER_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
 
 
+  // ***************************************************************************************
+  // ***************************************************************************************
+  //                                 ATerm IR Node Support
+  // ***************************************************************************************
+  // ***************************************************************************************
+  // DQ (4/20/2014): Added support for ATerms in the IR.  The goal is to support a new level
+  // of reading ATerms (previously demonstrated in projects/AtermTranslation directory).
+  // This level of support reads the Aterms and represents the Aterms in a ROSE AST using
+  // specific SgAterm IR nodes that as fundamentally simpler then the more commonly use
+  // ROSE IR nodes.  This work is in contrast to the Aterm API for the ROSE AST which has
+  // become problematic to support beyond a specific level.  Current level of support for
+  // the ATerm API in ROSE is limited to the demonstration using ATerm specific tools that
+  // generate DOT graph files from any Aterm and can be make to work on the ROSE AST as 
+  // well though the use of the ATerm API in ROSE (all this is demonstrated in the examples
+  // in the projects/AtermTranslation directory).
+
+     Aterm.setFunctionPrototype ( "HEADER_ATERM_NODE", "../Grammar/LocatedNode.code");
+     Aterm.setDataPrototype     ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ***************************************************************************************
   // ***************************************************************************************
@@ -704,6 +727,10 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("SgName","name", "= \"\"",
           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // DQ (8/18/2014): Added Microsoft specific extension for the uuid string option.
+     InitializedName.setDataPrototype("std::string", "microsoft_uuid_string", "=\"\"",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // FMZ (4/7/2009): Added for Cray pointer declaration
 #if 0
@@ -731,7 +758,7 @@ Grammar::setUpNodes ()
   // it could be removed at some point.
      InitializedName.setDataPrototype("SgInitializedName*","prev_decl_item", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    InitializedName.setDataPrototype("bool","is_initializer", "= false",
+     InitializedName.setDataPrototype("bool","is_initializer", "= false",
                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype("SgDeclarationStatement*","declptr", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -857,33 +884,43 @@ Grammar::setUpNodes ()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
   // (not the SgInitializedName itself since it might be referenced from several places, I think).
      InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/12/2011): Added information required for new name qualification support.
      InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/12/2011): Added information required for new name qualification support.
      InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (11/18/2013): Added final to support Java (which can use it to represent const function parameters in function declarations).
   // This support is represented as a declaration modifier (but that is not sufficient for use in function parameters).
   // As supported in declaration modifiers, this use is semantically different than its use in function parameters.
      InitializedName.setDataPrototype("bool","isFinal","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
   // For example: "int array[];" This can be important to preserve when the primary declaration uses an
   // array bound that is declared between the secondary and primary declarations.  See test2014_81.c and
   // test2014_06.C.
      InitializedName.setDataPrototype("bool", "hasArrayTypeWithEmptyBracketSyntax", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
+     InitializedName.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/2/2014): Using C++11 auto keyword.
+     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
@@ -929,6 +966,15 @@ Grammar::setUpNodes ()
 
      LocatedNodeSupport.setFunctionSource ( "SOURCE_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
 
+
+  // ***************************************************************************************
+  // ***************************************************************************************
+  //                                 ATerm IR Node Support
+  // ***************************************************************************************
+  // ***************************************************************************************
+  // DQ (4/20/2014): Added support for ATerms in the IR.
+
+     Aterm.setFunctionSource    ( "SOURCE_ATERM_NODE", "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************

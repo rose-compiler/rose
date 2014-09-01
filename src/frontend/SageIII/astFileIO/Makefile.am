@@ -11,11 +11,11 @@ INCLUDES = $(ROSE_INCLUDES)
 # AST_FILE_IO.lo: StorageClassMemoryManagement.h 
 StorageClasses.lo: StorageClassMemoryManagement.h StorageClassMemoryManagement.C AstSpecificDataManagingClass.h
 
-include_HEADERS = \
+pkginclude_HEADERS = \
      StorageClassMemoryManagement.h
 
 # This file is generated
-nodist_include_HEADERS = \
+nodist_pkginclude_HEADERS = \
      AstSpecificDataManagingClass.h
 
 ROSETTA_GENERATED_FILES = AstSpecificDataManagingClass.h SourcesOfIRNodesAstFileIOSupport.C

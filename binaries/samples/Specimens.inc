@@ -116,14 +116,26 @@ elf_exe_x86_specimens =				\
     i386-ctrlaltdel				\
     i386-fcalls					\
     i386-fsck.cramfs				\
+    i386-fld					\
+    i386-fnstsw					\
+    i386-fst					\
+    i386-int3					\
+    i386-mul					\
     i386-nologin				\
+    i386-pop					\
     i386-pivot_root				\
     i386-pointers				\
     i386-poweroff				\
+    i386-pxor					\
+    i386-stmxcsr				\
+    i386-wait					\
+    i386-taintflow1				\
     i686-test1.O0.bin				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
     memreadwrite				\
+    pentium-movd				\
+    pentium-xmm					\
     usedef
 elf_obj_x86_specimens =
 elf_so_x86_specimens =				\
@@ -172,7 +184,18 @@ raw_rot13_x86_specimens =			\
 
 other_distributed =				\
     ARPPRODUCTICON.exe				\
+    i386-fld.s					\
+    i386-fnstsw.s				\
+    i386-fst.s					\
+    i386-int3.s					\
+    i386-mul.s					\
+    i386-pop.s					\
+    i386-pxor.s					\
+    i386-stmxcsr.s				\
+    i386-wait.s					\
     memreadwrite.s				\
+    pentium-movd.s				\
+    pentium-xmm.s				\
     vm-final.README				\
     vm-final.ipd
 

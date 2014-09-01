@@ -47,24 +47,6 @@ main ( int argc, char* argv[] )
   // printf ("Exiting after detectStructureFieldInitialization(project); \n");
   // ROSE_ASSERT(false);
 
-#if 0
-  // General template to use in matching against project.
-     SgAsmInstruction* target = NULL;
-
-  // target = SageBuilderAsm::buildx86Instruction(x86_mov);
-
-     target = SageBuilderAsm::buildx86Instruction(x86_mov,
-                   SageBuilderAsm::buildAsmx86RegisterReferenceExpression(x86_regclass_gpr,SgAsmx86RegisterReferenceExpression::e_ebp),
-                   SageBuilderAsm::buildAsmx86RegisterReferenceExpression(x86_regclass_gpr,SgAsmx86RegisterReferenceExpression::e_esp));
-     printf ("Target instruction = %s \n",unparseInstructionWithAddress(target).c_str());
-
-     ROSE_ASSERT(target != NULL);
-
-  // General function to find matching target AST in larger AST.
-     SgNode* matchingSubtree = find ( project, target, equivalenceTest );
-     ROSE_ASSERT(matchingSubtree != NULL);
-#endif
-
   // This program only does analysis, so it need not call the backend to generate code.
   // return 0;
 

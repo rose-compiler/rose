@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "MultiSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace MultiSemantics {
@@ -630,11 +631,11 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
-    SValuePtr retval = svalue_empty(nbits);
+    SValuePtr retval = svalue_empty(dflt->get_width());
     SUBDOMAINS(sd, (addr, cond))
-        retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(cond), nbits));
+        retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(dflt), sd(cond)));
     return retval;
 }
 
@@ -646,6 +647,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
         sd->writeMemory(segreg, sd(addr), sd(data), cond);
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

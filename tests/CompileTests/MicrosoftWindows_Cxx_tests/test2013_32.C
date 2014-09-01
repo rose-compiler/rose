@@ -14,7 +14,8 @@ namespace std
 
 #if 1
 
-namespace std __attribute__ ((__visibility__ ("default"))) {
+// namespace std __attribute__ ((__visibility__ ("default"))) {
+namespace std {
 // # 110 "/nfs/apps/gcc/4.2.4/lib/gcc/x86_64-unknown-linux-gnu/4.2.4/../../../../include/c++/4.2.4/bits/basic_string.h" 3
 // template<typename _CharT, typename _Traits, typename _Alloc>
   template<typename _CharT>
@@ -23,6 +24,7 @@ namespace std __attribute__ ((__visibility__ ("default"))) {
 //    typedef typename _Alloc::template rebind<_CharT>::other _CharT_alloc_type;
 
 #if 0
+ // MSVC does not allow this "name followed by "::" must be a class or namespace name"
     public:
       typedef _Traits traits_type;
       typedef typename _Traits::char_type value_type;
@@ -34,7 +36,6 @@ namespace std __attribute__ ((__visibility__ ("default"))) {
       typedef typename _CharT_alloc_type::pointer pointer;
       typedef typename _CharT_alloc_type::const_pointer const_pointer;
 #endif
-    
     };
 }
 

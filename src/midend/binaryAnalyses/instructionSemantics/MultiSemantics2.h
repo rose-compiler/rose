@@ -3,6 +3,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {                                // documented elsewhere
 namespace BinaryAnalysis {                      // documented elsewhere
 namespace InstructionSemantics2 {               // documented elsewhere
 
@@ -421,11 +422,13 @@ public:
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) /*override*/;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond, size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

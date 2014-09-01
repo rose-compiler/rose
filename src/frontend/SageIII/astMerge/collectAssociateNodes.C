@@ -298,6 +298,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (9/1/2012): Added more template support.
           case V_SgTemplateType:
 
+       // DQ (8/2/2014): Added C++11 SgDeclType support.
+          case V_SgDeclType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:
@@ -492,14 +495,14 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
             // Add associated nodes so that they will be excluded as well
                SgFunctionType* functionType = functionDeclaration->get_type();
                ROSE_ASSERT(functionType != NULL);
-#if 1
+#if 0
                printf ("addAssociatedNodes(): functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),SageInterface::get_name(functionDeclaration).c_str());
                printf ("addAssociatedNodes(): functionDeclaration = %p firstNondefiningDeclaration = %p definingDeclaration = %p \n",functionDeclaration,functionDeclaration->get_firstNondefiningDeclaration(),functionDeclaration->get_definingDeclaration());
 #endif
 #if 0
                printf ("addAssociatedNodes(): functionDeclaration mangled name = %s matchingNodeInMergedAST = %p \n",functionDeclaration->get_mangled_name().str(),matchingNodeInMergedAST);
 #endif
-#if 1
+#if 0
                functionDeclaration->get_startOfConstruct()->display("addAssociatedNodes(): functionDeclaration");
 #endif
                addAssociatedNodes(functionType,nodeList,markMemberNodesDefinedToBeDeleted);

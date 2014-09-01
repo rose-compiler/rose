@@ -8,6 +8,10 @@
 #include "DispatcherX86.h"
 #include "YicesSolver.h"
 #include "Disassembler.h"
+#include "Diagnostics.h"
+
+using namespace rose;                                   // temporary until this lives in "rose"
+using namespace rose::Diagnostics;
 
 // see base class
 bool
@@ -21,7 +25,7 @@ SgAsmx86Instruction::terminates_basic_block() {
 bool
 SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
 {
-    static const size_t EXECUTION_LIMIT = 25; // max size of basic blocks for expensive analyses
+    static const size_t EXECUTION_LIMIT = 10; // max size of basic blocks for expensive analyses
     if (insns.empty())
         return false;
     SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
@@ -44,8 +48,9 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     // function and the top of the stack holds an address of an instruction within the current function, then this must be a
     // function call.  FIXME: The implementation here assumes a 32-bit machine. [Robb P. Matzke 2013-09-06]
     if (interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace rose::BinaryAnalysis;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
@@ -77,7 +82,7 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->boolean_(true), 32));
+        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(32), esp->boolean_(true)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
             SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
@@ -101,8 +106,9 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     // the Partitioner).  Returns true if, after executing the basic block, the top of the stack contains the fall-through
     // address of the basic block. We depend on our caller to figure out if EIP is reasonably a function entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace BinaryAnalysis::InstructionSemantics2;
-        using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace rose::BinaryAnalysis;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
@@ -116,7 +122,8 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
 
         // Look at the top of the stack
         SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(dispatcher->REG_ESP),
-                                                        ops->get_protoval()->boolean_(true), 32));
+                                                        ops->get_protoval()->undefined_(32),
+                                                        ops->get_protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target) {
                 SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_EIP));
@@ -128,7 +135,6 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
             return true;
         }
     }
-        
 
     return false;
 }
@@ -154,9 +160,9 @@ SgAsmx86Instruction::is_unknown() const
 }
 
 /** Return control flow successors. See base class for full documentation. */
-Disassembler::AddressSet
+BinaryAnalysis::Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(bool *complete) {
-    Disassembler::AddressSet retval;
+    BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true; /*assume true and prove otherwise*/
 
     switch (get_kind()) {
@@ -276,7 +282,7 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
             if (!ival)
                 return false;
             if (target)
-                *target = ival->get_absolute_value();
+                *target = ival->get_absoluteValue();
             return true;
         }
         default:
@@ -285,18 +291,18 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
 }
 
 /** Return control flow successors. See base class for full documentation. */
-Disassembler::AddressSet
-SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
+BinaryAnalysis::Disassembler::AddressSet
+SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
-    static const bool debug = false;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
+    Stream debug(mlog[DEBUG]);
 
     if (debug) {
-        std::cerr <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
-                  <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<std::endl;
+        debug <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
+              <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
@@ -337,8 +343,8 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
                 SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
                 semantics.processInstruction(insn);
                 if (debug) {
-                    std::cerr << "  state after " <<unparseInstructionWithAddress(insn) <<std::endl
-                              <<policy.get_state();
+                    debug << "  state after " <<unparseInstructionWithAddress(insn) <<"\n"
+                          <<policy.get_state();
                 }
             }
             const RegisterType &newip = policy.get_ip();
@@ -349,21 +355,18 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             }
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
-            if (debug)
-                std::cerr <<e <<"\n";
+            debug <<e <<"\n";
         } catch(const Policy::Exception& e) {
             /* Abandon entire basic block if the semantics policy cannot handle the instruction. */
-            if (debug)
-                std::cerr <<e <<"\n";
+            debug <<e <<"\n";
         }
     }
 
     if (debug) {
-        std::cerr <<"  successors:";
-        for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            std::cerr <<" " <<StringUtility::addrToString(*si);
-        if (!*complete) std::cerr <<"...";
-        std::cerr <<std::endl;
+        debug <<"  successors:";
+        for (BinaryAnalysis::Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+            debug <<" " <<StringUtility::addrToString(*si);
+        debug <<(*complete?"":"...") <<"\n";
     }
 
     return successors;
@@ -532,7 +535,7 @@ bool
 SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                 bool relax_stack_semantics/*false*/)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
 
     if (insns.empty()) return false;
 
@@ -582,7 +585,7 @@ std::vector< std::pair< size_t, size_t > >
 SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                             bool relax_stack_semantics/*false*/)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
 
     static const bool verbose = false;
 

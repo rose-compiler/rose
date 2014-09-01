@@ -1,9 +1,9 @@
-void fatal () __attribute__ ((noreturn));
-          
+void fatal ();
+
 void fatal (/* ... */)
    {
     /* ... */ /* Print error message. */ /* ... */
-     exit (1);
+    /* exit (1); */
    }
 
 

@@ -5,10 +5,10 @@ int main() {
   int z;
   int s=0;
   for(i=1;i<n;i++) {
-	s=s+1;
-	for(j=1;j<n;j++) {
-	  s=s+j;
-	}
+    s=s+1;
+    for(j=1;j<n;j++) {
+      s=s+j;
+    }
   }
   z=s;
   return z>42;

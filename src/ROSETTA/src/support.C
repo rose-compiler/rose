@@ -809,12 +809,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "int", "upc_threads", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // C89 options:
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
      File.setDataPrototype         ( "bool", "C89_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "C89_gnu_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // C99 options:
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "C99_gnu_only", "= false",
@@ -822,14 +824,38 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // C11 and C++11 options:
   // DQ (7/21/2012): Adding C11 support.
      File.setDataPrototype         ( "bool", "C11_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
+     File.setDataPrototype         ( "bool", "C11_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/21/2012): Adding C++0x support.
      File.setDataPrototype         ( "bool", "Cxx0x_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (7/21/2012): Adding C++11 support.
      File.setDataPrototype         ( "bool", "Cxx11_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (7/27/2014): Adding C++11 GNU support.
+     File.setDataPrototype         ( "bool", "Cxx11_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // C14 and C++14 options:
+  // DQ (4/20/2014): Adding C14 support.
+     File.setDataPrototype         ( "bool", "C14_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
+     File.setDataPrototype         ( "bool", "C14_gnu_only", "= false",
+
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/20/2014): Adding C++14 support.
+     File.setDataPrototype         ( "bool", "Cxx14_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/27/2014): Adding C++14 gnu support.
+     File.setDataPrototype         ( "bool", "Cxx14_gnu_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/11/2007): Support for Fortran (Fortran, f77, f90, f95, f03)
@@ -1013,7 +1039,7 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/13/2004): Added to support to save Edg command line
-     File.setDataPrototype("std::string","savedEdgCommandLine", "= \"\"",
+     File.setDataPrototype("std::string","savedFrontendCommandLine", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/21/2005): Backend specific template option.  This might at a later date be abstracted out as a
@@ -1238,7 +1264,7 @@ Grammar::setUpSupport ()
 
   // RPM (12/29/2009): Switch to control how aggressive the disassembler is. It takes a list of words based loosely
   // on the constants in the Disassembler::SearchHeuristic enum.
-     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= Disassembler::SEARCH_DEFAULT",
+     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
@@ -1272,6 +1298,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
+  // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.
+  // DQ (4/28/2014): Added support for shared keyword as extension to C (implemented as embedded DSL 
+  // within UPC base language, this serves as an example of what is required to support a simple DSL 
+  // in ROSE).  In general we would need a more flexible mechanism than adding a flag to ROSE.
+  // File.setDataPrototype ("bool", "shared_memory_dsl", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ******************************************************************************
@@ -1754,6 +1788,12 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Cxx11_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/20/2014): Adding C14 and C++14 support.
+     Project.setDataPrototype ( "bool", "C14_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype ( "bool", "Cxx14_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype ( "bool", "Fortran_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1779,6 +1819,9 @@ Grammar::setUpSupport ()
 
      Project.setDataPrototype ("std::list<std::string>", "Java_ecj_jvm_options", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype ("bool", "Java_batch_mode", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ("std::list<std::string>", "Java_classpath", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1989,9 +2032,19 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgStorageModifier", "storageModifier", ".reset()",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/18/2014): Note that this is no longer GNU specific and is used to hold the section name for microsoft 
+  // specific attributes (e.g. allocate("segment_name") and code_seg("segment_name")). Changing the name of this
+  // data member would make this more clear.
      DeclarationModifier.setDataPrototype("std::string", "gnu_attribute_section_name", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "microsoft_uuid_string", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "microsoft_property_get_function_name", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "microsoft_property_put_function_name", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeModifier.setDataPrototype("SgBitVector", "modifierVector", "",

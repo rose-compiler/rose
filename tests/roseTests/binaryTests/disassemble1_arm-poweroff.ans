@@ -17,7 +17,6 @@ using this memory map for disassembly:
     va 0x00011f1c + 0x00000004 = 0x00011f20 rw-p at anon aaj     + 0x00000000 arm-poweroff(LOAD#3)
     va 0x00011f20 + 0x00000024 = 0x00011f44 rw-p at anon aby     + 0x00000000 arm-poweroff(.bss)
     va 0x00011f44 + 0x000000bc = 0x00012000 rw-p at anon aaj     + 0x00000028 arm-poweroff(LOAD#3)
-disassembled 1260 instructions and 3457 failures (use --show-bad to see errors)
 
 
 0x00008974: ================================== Function (symbol) <strchr>
@@ -2396,4 +2395,3 @@ disassembled 1260 instructions and 3457 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

@@ -179,11 +179,3 @@ GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
 
   return valid;
 }
-
-
-
-
-
-
-
-

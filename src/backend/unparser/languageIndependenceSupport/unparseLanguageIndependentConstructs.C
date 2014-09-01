@@ -1297,9 +1297,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // Only unparse using the AST if this was not able to be unparsed from the token stream.
           if (outputStatementAsTokens == false)
              {
+            // DQ (4/1/2014): Suggested fix to prevent unparsing of C style comments in Fortran 
+            // codes when using the verbose modes.
             // DQ (12/1/2013): Not clear if this is helpful or not (but it communicates in the 
             // unparsed code what statements were unparse using either the AST or the token stream).
-               if ( SgProject::get_verbose() > 0 )
+            // if ( SgProject::get_verbose() > 0 )
+               if ( SgProject::get_verbose() > 0 && SageInterface::getProject()->get_C_only() == true)
                   {
                     string s = "/* Unparsing from the AST stmt = " + stmt->class_name() + " */ ";
                     curprint (s);
@@ -1760,6 +1763,9 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
 
             // DQ (8/15/2007): This has been moved to the base class
                case EXPR_LIST: { unparseExprList(expr, info); break; }
+
+            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+               case NULLPTR_VAL:
 
             // DQ: These cases are separated out so that we can handle the 
             // original expression tree from any possible constant folding by EDG.
@@ -3279,6 +3285,9 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgLongDoubleVal:          { unparseLongDoubleVal(expr, info);   break; }
                case V_SgComplexVal:             { unparseComplexVal(expr, info);      break; }
 
+            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+               case V_SgNullptrValExp:          { unparseNullptrVal(expr, info);      break; }
+
                default:
                   {
                     printf ("Default reached in switch statement valueExp = %p = %s \n",valueExp,valueExp->class_name().c_str());
@@ -3289,6 +3298,23 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
         }
    }
 
+
+// DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+void
+UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(expr != NULL);
+#if 0
+     printf ("In UnparseLanguageIndependentConstructs::unparseNullptrVal(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
+
+     curprint("nullptr");
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 
 void
@@ -4311,7 +4337,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
         break;
       }
     case SgOmpClause::e_omp_default_shared:
-      {   
+      {
         curprint(string("shared"));
         break;
       }   

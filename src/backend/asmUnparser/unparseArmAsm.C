@@ -2,28 +2,32 @@
 #include "stringify.h"
 #include "AsmUnparser_compat.h"
 #include "Registers.h"
+#include "Diagnostics.h"
 
 using namespace rose;
+using namespace Diagnostics;
+using namespace BinaryAnalysis;
 
-static std::string unparseArmRegister(SgAsmArmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
+static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();
     if (!registers)
         registers = RegisterDictionary::dictionary_arm7();
     
     std::string name = registers->lookup(rdesc);
     if (name.empty()) {
-        std::cerr <<"unparseArmRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";
-        // std::cerr <<dict;
-        ROSE_ASSERT(!"register descriptor not found in dictionary");
+        SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(reg);
+        name = AsmUnparser::invalid_register(insn, rdesc, registers);
     }
 
-    /* Add mask letters to program status registers */
-    if (rdesc.get_major()==arm_regclass_psr && reg->get_psr_mask()!=0) {
-        name += "_";
-        if (reg->get_psr_mask() & 1) name += "c";
-        if (reg->get_psr_mask() & 2) name += "x";
-        if (reg->get_psr_mask() & 4) name += "s";
-        if (reg->get_psr_mask() & 8) name += "f";
+    if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(reg)) {
+        /* Add mask letters to program status registers */
+        if (rdesc.get_major()==arm_regclass_psr && dre->get_psr_mask()!=0) {
+            name += "_";
+            if (dre->get_psr_mask() & 1) name += "c";
+            if (dre->get_psr_mask() & 2) name += "x";
+            if (dre->get_psr_mask() & 4) name += "s";
+            if (dre->get_psr_mask() & 8) name += "f";
+        }
     }
 
     return name;
@@ -33,11 +37,11 @@ static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unpars
 #ifndef _MSC_VER
     std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
 #else
-        ROSE_ASSERT(false);
-        std::string retval ="";
+    ROSE_ASSERT(false);
+    std::string retval ="";
 #endif
 
-        ROSE_ASSERT(retval[0]!='(');
+    ASSERT_require(retval[0]!='(');
     return retval;
 }
 
@@ -46,13 +50,11 @@ static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {
     case arm_sign_none: return "";
     case arm_sign_plus: return "+";
     case arm_sign_minus: return "-";
-
-    default:
-      {
-        ROSE_ASSERT (false);
+    default: {
+        ASSERT_not_reachable("invalid ARM sign for expression unparsing: " + stringifyArmSignForExpressionUnparsing(sign));
         // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
         return "error in unparseArmSign";
-      }
+    }
   }
 }
 
@@ -73,7 +75,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
     }
     switch (expr->variantT()) {
         case V_SgAsmBinaryMultiply:
-            ROSE_ASSERT (isSgAsmIntegerValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
+            ASSERT_require(isSgAsmIntegerValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
             result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, arm_sign_none) + "*" +
                      StringUtility::numberToString(isSgAsmIntegerValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
             break;
@@ -177,7 +179,8 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             SgAsmExpression* addr = mr->get_address();
             switch (addr->variantT()) {
-                case V_SgAsmRegisterReferenceExpression:
+                case V_SgAsmDirectRegisterExpression:
+                case V_SgAsmIndirectRegisterExpression:
                 case V_SgAsmBinaryAdd:
                 case V_SgAsmBinarySubtract:
                 case V_SgAsmBinaryAddPreupdate:
@@ -185,7 +188,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
                 case V_SgAsmBinaryAddPostupdate:
                 case V_SgAsmBinarySubtractPostupdate:
                     break;
-                default: ROSE_ASSERT (!"Bad addressing mode");
+                default: ASSERT_not_reachable("bad addressing mode: " + stringifyVariantT(addr->variantT()));
             }
 
             std::string suffix;
@@ -194,13 +197,13 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
             break;
         }
 
-        case V_SgAsmArmRegisterReferenceExpression:
-            result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr), registers);
+        case V_SgAsmDirectRegisterExpression:
+            result += unparseArmRegister(isSgAsmDirectRegisterExpression(expr), registers);
             break;
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ve = isSgAsmIntegerValueExpression(expr);
-            assert(ve!=NULL);
-            uint64_t v = ve->get_absolute_value();
+            ASSERT_not_null(ve);
+            uint64_t v = ve->get_absoluteValue();
             result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
             if (labels && v!=0) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
@@ -211,8 +214,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
         }
 
         default: {
-            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
-            ROSE_ASSERT (false);
+            ASSERT_not_reachable("unhandled expression kind: " + expr->class_name());
         }
     }
 
@@ -230,11 +232,11 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
 
 /** Returns a string for the part of the assembly instruction before the first operand. */
 std::string unparseArmMnemonic(SgAsmArmInstruction *insn) {
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
     std::string result = insn->get_mnemonic();
     std::string cond = unparseArmCondition(insn->get_condition());
-    ROSE_ASSERT (insn->get_positionOfConditionInMnemonic() >= 0);
-    ROSE_ASSERT ((size_t)insn->get_positionOfConditionInMnemonic() <= result.size());
+    ASSERT_require(insn->get_positionOfConditionInMnemonic() >= 0);
+    ASSERT_require((size_t)insn->get_positionOfConditionInMnemonic() <= result.size());
     result.insert(result.begin() + insn->get_positionOfConditionInMnemonic(), cond.begin(), cond.end());
     return result;
 }
@@ -247,14 +249,14 @@ std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::Label
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmArmInstruction(node);
     }
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
 
     if (insn->get_kind() == arm_b || insn->get_kind() == arm_bl) {
-        ROSE_ASSERT(insn->get_operandList()->get_operands().size()==1);
-        ROSE_ASSERT(insn->get_operandList()->get_operands()[0]==expr);
+        ASSERT_require(insn->get_operandList()->get_operands().size()==1);
+        ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
         SgAsmIntegerValueExpression* tgt = isSgAsmIntegerValueExpression(expr);
-        ROSE_ASSERT(tgt);
-        return StringUtility::addrToString(tgt->get_value(), tgt->get_significant_bits());
+        ASSERT_not_null(tgt);
+        return StringUtility::addrToString(tgt->get_value(), tgt->get_significantBits());
     } else {
         return unparseArmExpression(expr, labels, registers, arm_sign_none);
     }

@@ -21,11 +21,10 @@ enum X86RegisterClass
   x86_regclass_segment,         /**< Minors are X86SegmentRegister (es,cs,ss,ds,fs,gs) */
   x86_regclass_cr,              /**< Control registers; Minors are 0-4, 8 */
   x86_regclass_dr,              /**< Debug registers; Minors are 0-7 */
-  x86_regclass_st,              /**< Floating point stack; Minors are 0-7 */
-  x86_regclass_mm,              /**< 64-bit mmN; Minors are 0-7. Note that these reference low 64 bits of st(i) */
+  x86_regclass_st,              /**< Floating point stack or MM registers; Minors are 0-7 */
   x86_regclass_xmm,             /**< 128-bit xmmN; Minors are 0-7. */
   x86_regclass_ip,              /**< Instruction pointer; Only allowed minor is zero. */
-  x86_regclass_flags            /**< Status flags register; Only allowed minor is zero. Offset and size determine flag bit(s). */
+  x86_regclass_flags            /**< Status flags. */
 };
 
 /** Intel x86 segment registers. */
@@ -61,7 +60,29 @@ enum X86GeneralPurposeRegister
     x86_gpr_r15         = 15,
 };
 
-/** Intel x86 status flags. These are the bit offsets in the flags register. */
+/** Intel x86 ST-related registers.  These are the 8 80-bit floating point registers. */
+enum X86StRegister {
+    x86_st_0            = 0,
+    x86_st_1            = 1,
+    x86_st_2            = 2,
+    x86_st_3            = 3,
+    x86_st_4            = 4,
+    x86_st_5            = 5,
+    x86_st_6            = 6,
+    x86_st_7            = 7,
+    x86_st_nregs        = 8,                            // number of ST registers
+};
+
+/** Minor numbers for x86_regclass_flag. */
+enum X86Flags {
+    x86_flags_status     = 0,                           // general-purpose status flags
+    x86_flags_fpstatus   = 1,                           // floating-point status flags
+    x86_flags_fptag      = 2,                           // floating-point tag register
+    x86_flags_fpctl      = 3,                           // floating-point control register
+    x86_flags_mxcsr      = 4,                           // SSE control and status register
+};
+
+/** Intel x86 status flags. These are the bit offsets in the x86_flags_status register. */
 enum X86Flag 
 {
     x86_flag_cf         = 0,

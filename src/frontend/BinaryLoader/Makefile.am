@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libroseBinaryLoader.la
-include_HEADERS = BinaryLoader.h BinaryLoaderElf.h BinaryLoaderElfObj.h BinaryLoaderPe.h
+pkginclude_HEADERS = BinaryLoader.h BinaryLoaderElf.h BinaryLoaderElfObj.h BinaryLoaderPe.h
 
 libroseBinaryLoader_la_DEPENDENCIES =
 
@@ -12,5 +12,3 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 else
    libroseBinaryLoader_la_SOURCES = dummyBinaryLoader.C
 endif
-
-EXTRA_DIST = dummyBinaryLoader.C

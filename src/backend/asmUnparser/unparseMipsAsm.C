@@ -1,31 +1,29 @@
 #include "sage3basic.h"
 #include "Registers.h"
 #include "AsmUnparser.h"
+#include "Diagnostics.h"
 
 #include <iomanip>
 
+using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
+
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseMipsMnemonic(SgAsmMipsInstruction *insn) {
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
     return insn->get_mnemonic();
 }
 
 /** Returns the name of a MIPS register.
  *
  * FIXME: This assumes MIPS32 */
-std::string unparseMipsRegister(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
+std::string unparseMipsRegister(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *registers) {
     using namespace StringUtility;
     if (!registers)
         registers = RegisterDictionary::dictionary_mips32();
     std::string name = registers->lookup(reg);
-    if (name.empty()) {
-        std::cerr <<"unparseMipsRegister(" <<reg <<"): register descriptor not found in dictionary.\n";
-        return (std::string("BAD_REGISTER(") +
-                numberToString(reg.get_major()) + "." +
-                numberToString(reg.get_minor()) + "." +
-                numberToString(reg.get_offset()) + "." +
-                numberToString(reg.get_nbits()) + ")");
-    }
+    if (name.empty())
+        name = AsmUnparser::invalid_register(insn, reg, registers);
     return name;
 }
 
@@ -43,21 +41,19 @@ static std::string mipsValToLabel(uint64_t val, const AsmUnparser::LabelMap *lab
 
 static std::string mipsTypeToPtrName(SgAsmType* ty) {
     if (NULL==ty) {
-        std::cerr <<"mipsTypeToPtrName: null type" <<std::endl;
+        mlog[ERROR] <<"mipsTypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
 
-    switch (ty->variantT()) {
-        case V_SgAsmTypeByte: return "BYTE";
-        case V_SgAsmTypeWord: return "HALFWORD";
-        case V_SgAsmTypeDoubleWord: return "WORD";
-        case V_SgAsmTypeQuadWord: return "DOUBLEWORD";
-        default: {
-            std::cerr << "MipsTypeToPtrName: Bad class " << ty->class_name() << std::endl;
-            assert(!"bad type class");
-            abort();
+    if (SgAsmIntegerType *it = isSgAsmIntegerType(ty)) {
+        switch (it->get_nBits()) {
+            case 8: return "BYTE";
+            case 16: return "HALFWORD";
+            case 32: return "WORD";
+            case 64: return "DOUBLEWORD";
         }
     }
+    ASSERT_not_reachable("invalid MIPS type: " + ty->toString());
 }
 
 
@@ -79,22 +75,23 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
             break;
         }
 
-        case V_SgAsmMipsRegisterReferenceExpression: {
-            SgAsmMipsRegisterReferenceExpression* rr = isSgAsmMipsRegisterReferenceExpression(expr);
-            result = unparseMipsRegister(rr->get_descriptor(), registers);
+        case V_SgAsmDirectRegisterExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
+            result = unparseMipsRegister(insn, rr->get_descriptor(), registers);
             break;
         }
 
         case V_SgAsmIntegerValueExpression: {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr);
-            assert(ival!=NULL);
-            uint64_t value = ival->get_absolute_value(); // not sign extended
-            result = StringUtility::signedToHex2(value, ival->get_significant_bits());
+            ASSERT_not_null(ival);
+            uint64_t value = ival->get_absoluteValue(); // not sign extended
+            result = StringUtility::signedToHex2(value, ival->get_significantBits());
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
             std::string label;
-            if (ival->get_significant_bits()>8)
+            if (ival->get_significantBits()>8)
                 label =mipsValToLabel(value, labels);
             if (label.empty())
                 label = ival->get_label();
@@ -103,8 +100,7 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         }
 
         default: {
-            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
-            ROSE_ASSERT (false);
+            ASSERT_not_reachable("invalid MIPS expression: " + expr->class_name());
         }
     }
 

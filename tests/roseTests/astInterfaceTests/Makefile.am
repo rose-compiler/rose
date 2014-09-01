@@ -145,6 +145,7 @@ generatedCodeExamples = \
   rose_inputinsertBeforeUsingCommaOp.C \
   rose_inputinsertAfterUsingCommaOp.C \
   rose_inputdeepCopy.C\
+  rose_inputloopCollapsing_1.C\
   rose_inputloopCollapsing_2.C\
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
@@ -382,10 +383,18 @@ rose_inputloopUnrolling2.C: inputloopUnrolling.C loopUnrolling
 endif
 
 if ROSE_USE_INDENT
-rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+
+rose_inputloopCollapsing_1.C: inputloopCollapsing_1.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,5>' -rose:loopcollapse:factor 2" \
+		INPUT=$(abspath $<) \
+		INDENT=yes \
+		$(srcdir)/astInterface.conf $@.passed
+rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 2" \
 		INPUT=$(abspath $<) \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
@@ -411,10 +420,18 @@ rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
 else
-rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+
+rose_inputloopCollapsing_1.C: inputloopCollapsing_1.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,5>' -rose:loopcollapse:factor 2" \
+		INPUT=$(abspath $<) \
+		INDENT=no \
+		$(srcdir)/astInterface.conf $@.passed
+rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 2" \
 		INPUT=$(abspath $<) \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
@@ -501,7 +518,7 @@ $(group3): rose_%: % $(group3_headers)
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)" \
+		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)"  \
 		$(TEST_EXIT_STATUS) $@
 
 # MUST keep this up-to-date!!
@@ -533,7 +550,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C
+       inputbuildJavaPackage.C inputloopCollapsing_1.C
 
 
 #------------------------------------------------------------------------------------------------------------------------

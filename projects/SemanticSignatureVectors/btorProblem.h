@@ -15,7 +15,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "semanticsModule.h"
 #include "integerOps.h"
 
 typedef unsigned int uint;

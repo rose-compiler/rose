@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <boost/lexical_cast.hpp>
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace FindConstants {
+
 /** A LatticeElement contains the value of a register or memory location. The value can either be one of three types:
  *  1. An unknown value (X).  Each potential unknown value is given a unique identifying "name" (a positive integer) which
  *     distinguishes it from all other unknown values, whether they are equal or unequal.
@@ -1187,8 +1191,8 @@ public:
                     result->set(LatticeElement<Len>::constant(le1.offset & le2.offset, result->def));
                 } else {
                     /* Is this instruction aligning the stack pointer? */
-                    SgAsmx86RegisterReferenceExpression *op1 = (opands.size()==2 ?
-                                                                isSgAsmx86RegisterReferenceExpression(opands[0]) : NULL);
+                    SgAsmRegisterReferenceExpression *op1 = (opands.size()==2 ?
+                                                             isSgAsmRegisterReferenceExpression(opands[0]) : NULL);
                     if (op1 && insn->get_kind()==x86_and &&
                         op1->get_descriptor().get_major()==x86_regclass_gpr && op1->get_descriptor().get_minor()==x86_gpr_sp &&
                         !le2.isTop) {
@@ -1287,5 +1291,10 @@ public:
         FindConstantsPolicy::finishInstruction(insn);
     }
 };
+
+} // namespace
+} // namespace
+} // namespace
+
 
 #endif /* !findConstants_H */

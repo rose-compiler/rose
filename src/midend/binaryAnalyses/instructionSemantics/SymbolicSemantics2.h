@@ -13,6 +13,7 @@
 #include <map>
 #include <vector>
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -144,11 +145,6 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
-    SValue(const TreeNodePtr &expr, const InsnSet &defs): BaseSemantics::SValue(expr->get_nbits()) {
-        width = expr->get_nbits();
-        this->expr = expr;
-        this->defs = defs;
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
@@ -167,11 +163,6 @@ public:
     static SValuePtr instance(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(nbits, value));
     }
-
-    /** Instantiate a new value with specified symbolic expression. */
-    static SValuePtr instance(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        return SValuePtr(new SValue(expr, defs));
-    }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
@@ -182,16 +173,16 @@ public:
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
         return instance(nbits, value);
     }
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const /*override*/ {
+        SValuePtr result = SValue::promote(number_(1, value?1:0));
+        result->get_expression()->set_comment(value?"true":"false");
+        return result;
+    }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
-    }
-
-    /** Virtual allocating constructor. Constructs a new semantic value with full control over all aspects of the value. */
-    virtual BaseSemantics::SValuePtr create(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        return instance(expr, defs);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -338,7 +329,8 @@ public:
     struct CellCompressor {
         virtual ~CellCompressor() {}
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const MemoryCellList::CellList &cells) = 0;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const MemoryCellList::CellList &cells) = 0;
     };
     
     /** Functor for handling a memory read whose address matches more than one memory cell.  This functor returns a symbolic
@@ -356,13 +348,15 @@ public:
      */
     struct CellCompressorMcCarthy: CellCompressor {
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) /*override*/;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  Simply returns the @p dflt value. */
     struct CellCompressorSimple: CellCompressor {
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) /*override*/;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  This is the default cell
@@ -372,37 +366,38 @@ public:
         CellCompressorMcCarthy cc_mccarthy;
         CellCompressorSimple cc_simple;
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) /*override*/;
     };
 
 protected:
     CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
-    CellCompressorChoice cc_choice;             /**< The default cell compressor. */
+    static CellCompressorChoice cc_choice;      /**< The default cell compressor. Static because we use its address. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
-        : BaseSemantics::MemoryCellList(protocell, protoval), cell_compressor(&cc_choice) {}
+    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+        : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
-    MemoryState(const BaseSemantics::SValuePtr &protoval)
-        : BaseSemantics::MemoryCellList(protoval), cell_compressor(&cc_choice) {}
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
 
     MemoryState(const MemoryState &other)
-        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor), cc_choice(other.cc_choice) {}
+        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
-        return MemoryStatePtr(new MemoryState(protocell, protoval));
+    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryStatePtr(new MemoryState(protocell));
     }
 
     /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
      * as the cell type. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
-        return MemoryStatePtr(new MemoryState(protoval));
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
     }
 
     /** Instantiates a new deep copy of an existing state. */
@@ -415,14 +410,14 @@ public:
 public:
     /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
      * BaseSemantics::MemoryCell as the cell type. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
-                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protocell, protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+        return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
@@ -448,13 +443,14 @@ public:
      *
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                                                size_t nbits, BaseSemantics::RiscOperators *ops) /*override*/;
+                                                BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) /*override*/;
 
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *ops) /*override*/;
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -520,7 +516,7 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval);
+        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -583,8 +579,10 @@ public:
     // implementations.
 protected:
     SValuePtr svalue_expr(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        BaseSemantics::SValuePtr newval = SValue::promote(protoval)->create(expr, defs);
-        return SValue::promote(newval);
+        SValuePtr newval = SValue::promote(protoval->undefined_(expr->get_nbits()));
+        newval->set_expression(expr);
+        newval->set_defining_instructions(defs);
+        return newval;
     }
 
     SValuePtr svalue_undefined(size_t nbits) {
@@ -740,16 +738,17 @@ public:
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) /*override*/;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond,
-                                                size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

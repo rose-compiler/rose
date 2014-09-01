@@ -6,5 +6,7 @@
 // at least as large as a long int, and have no fewer than 64 bits. The type was originally introduced 
 // by C99 to the standard C, and most C++ compilers support it as an extension already.[12][13]
 
-#error "NEED AND EXAMPLE OF THIS!"
+// #error "NEED AND EXAMPLE OF THIS!"
 
+// Example of long long int type.
+long long int x;

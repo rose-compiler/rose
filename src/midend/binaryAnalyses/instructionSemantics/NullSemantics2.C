@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "NullSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis { // documented elsewhere
 namespace InstructionSemantics2 { // documented elsewhere
 namespace NullSemantics { // documented in the header
@@ -14,8 +15,8 @@ RiscOperatorsPtr
 RiscOperators::instance(const RegisterDictionary *regdict)
 {
     BaseSemantics::SValuePtr protoval = SValue::instance();
-    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     SMTSolver *solver = NULL;
     return RiscOperatorsPtr(new RiscOperators(state, solver));
@@ -233,12 +234,12 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
     assert(get_state()!=NULL);
     (void) SValue::promote(addr);
     (void) SValue::promote(cond);
-    return undefined_(nbits);
+    return dflt->copy();
 }
 
 void
@@ -251,6 +252,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     (void) SValue::promote(cond);
 }
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace

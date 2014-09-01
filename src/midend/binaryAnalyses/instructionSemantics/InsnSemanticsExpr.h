@@ -7,12 +7,16 @@
 
 #include "Map.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <cassert>
 #include <inttypes.h>
+#include <sawyer/BitVector.h>
+#include <sawyer/SharedPointer.h>
+#include <sawyer/SmallObject.h>
 #include <set>
 #include <vector>
+
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
  *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
@@ -81,9 +85,9 @@ class TreeNode;
 class InternalNode;
 class LeafNode;
 
-typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
-typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
-typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
+typedef Sawyer::SharedPointer<const TreeNode> TreeNodePtr;
+typedef Sawyer::SharedPointer<const InternalNode> InternalNodePtr;
+typedef Sawyer::SharedPointer<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
@@ -126,11 +130,11 @@ public:
  *  Every node has a specified number of significant bits that is constant over the life of the node.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
- *  lattice and not a graph with cycles), tree nodes are always referenced through boost::shared_ptr<const T> where T is one of
- *  the tree node types: TreeNode, InternalNode, or LeafNode.  For convenience, we define TreeNodePtr, InternalNodePtr, and
- *  LeafNodePtr typedefs.  The shared_ptr owns the pointer to the tree node and thus the tree node pointer should never be
- *  deleted explicitly. */
-class TreeNode: public boost::enable_shared_from_this<TreeNode> {
+ *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
+ *  (<code>Sawyer::SharedPointer<const T></code> where @t T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
+ *  For convenience, we define TreeNodePtr, InternalNodePtr, and LeafNodePtr typedefs.  The pointers themselves collectively
+ *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
+class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
     size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
@@ -151,6 +155,11 @@ public:
      *  equal values or are the same variable. Two internal nodes are equivalent if they are the same width, the same
      *  operation, have the same number of children, and those children are all pairwise equivalent. */
     virtual bool equivalent_to(const TreeNodePtr& other) const = 0;
+
+    /** Compare two expressions structurally for sorting. Returns -1 if @p this is less than @p other, 0 if they are
+     *  structurally equal, and 1 if @p this is greater than @p other.  This function returns zero when an only when @ref
+     *  equivalent_to returns zero, but @ref equivalent_to can be much faster since it uses hashing. */
+    virtual int structural_compare(const TreeNodePtr& other) const = 0;
 
     /** Substitute one value for another. Finds all occurrances of @p from in this expression and replace them with @p to. If a
      * substitution occurs, then a new expression is returned. The matching of @p from to sub-parts of this expression uses
@@ -183,21 +192,32 @@ public:
      *  return value of the last call to the visitor. */
     virtual VisitAction depth_first_traversal(Visitor&) const = 0;
 
-    /** Computes the size of an expression by counting the number of nodes.  This algorithm is usually faster than a naive
-     *  traversal-with-increment because it optimizes for the case where a large expression has common subexpressions. */
-    size_t nnodes() const;
+    /** Computes the size of an expression by counting the number of nodes.  Operates in constant time.   Note that it is
+     *  possible (even likely) for the 64-bit return value to overflow in expressions when many nodes are shared.  For
+     *  instance, the following loop will create an expression that contains more than 2^64 nodes:
+     *
+     *  @code
+     *   InsnSemanticsExpr expr = LeafNode::create_variable(32);
+     *   for(size_t i=0; i<64; ++i)
+     *       expr = InternalNode::create(32, OP_ADD, expr, expr)
+     *  @endcode
+     *
+     *  When an overflow occurs the result is meaningless.
+     *
+     *  @sa nnodesUnique */
+    virtual uint64_t nnodes() const = 0;
 
     /** Returns the variables appearing in the expression. */
     std::set<LeafNodePtr> get_variables() const;
 
     /** Dynamic cast of this object to an internal node. */
     InternalNodePtr isInternalNode() const {
-        return boost::dynamic_pointer_cast<const InternalNode>(shared_from_this());
+        return sharedFromThis().dynamicCast<const InternalNode>();
     }
 
     /** Dynamic cast of this object to a leaf node. */
     LeafNodePtr isLeafNode() const {
-        return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
+        return sharedFromThis().dynamicCast<const LeafNode>();
     }
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
@@ -232,7 +252,7 @@ public:
      * 
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(sharedFromThis(), fmt); }
     WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
     /** @} */
 
@@ -390,36 +410,39 @@ class InternalNode: public TreeNode {
 private:
     Operator op;
     TreeNodes children;
+    uint64_t nnodes_;                                   // total number of nodes; self + children's nnodes
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
-    // accidently using pointers to these objects -- all access should be through boost::shared_ptr<>.
+    // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
     InternalNode(size_t nbits, Operator op, const std::string comment="")
-        : TreeNode(nbits, comment), op(op) {}
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         add_child(a);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                  std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
         add_child(c);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
-        : TreeNode(nbits, comment), op(op) {
+        : TreeNode(nbits, comment), op(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
     }
 
 public:
     /** Create a new expression node. Although we're creating internal nodes, the simplification process might replace it with
-     *  a leaf node. Use these class methods instead of c'tors. */
+     *  a leaf node. Use these class methods instead of c'tors.
+     *
+     *  @{ */
     static TreeNodePtr create(size_t nbits, Operator op, const std::string comment="") {
         InternalNodePtr retval(new InternalNode(nbits, op, comment));
         return retval->simplifyTop();
@@ -448,12 +471,14 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual int structural_compare(const TreeNodePtr& other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
     virtual uint64_t get_value() const { assert(!"not a constant value"); return 0;}
     virtual VisitAction depth_first_traversal(Visitor&) const;
+    virtual uint64_t nnodes() const { return nnodes_; }
 
     /** Returns the number of children. */
     size_t nchildren() const { return children.size(); }
@@ -521,13 +546,11 @@ class LeafNode: public TreeNode {
 private:
     enum LeafType { CONSTANT, BITVECTOR, MEMORY };
     LeafType leaf_type;
-    union {
-        uint64_t ival;                  /**< Integer (unsigned) value when 'known' is true; unused msb are zero */
-        uint64_t name;                  /**< Variable ID number when 'known' is false. */
-    };
+    Sawyer::Container::BitVector bits; /**< Value when 'known' is true */
+    uint64_t name;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), ival(0) {}
+    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), name(0) {}
 
     static uint64_t name_counter;
 
@@ -538,6 +561,9 @@ public:
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */
     static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
+
+    /** Construct a new known value with the specified bits. */
+    static LeafNodePtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="");
 
     /** Create a new Boolean, a single-bit integer. */
     static LeafNodePtr create_boolean(bool b, std::string comment="") {
@@ -550,11 +576,14 @@ public:
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
     virtual uint64_t get_value() const;
+    virtual const Sawyer::Container::BitVector& get_bits() const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual int structural_compare(const TreeNodePtr& other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual VisitAction depth_first_traversal(Visitor&) const;
+    virtual uint64_t nnodes() const { return 1; }
 
     /** Is the node a bitvector variable? */
     virtual bool is_variable() const;
@@ -579,46 +608,32 @@ public:
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
 std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
 
-
-/** Counts the total size across a number of expressions. This algorithm is optimized for the case when expressions contain
- *  common subexpressions. The iterators should point to a sequence of TreeNodePtr smart pointers. Returns (size_t)(-1) if
- *  there are more nodes than what can be represented in size_t (yes, this does actually happen when large expressions contain
- *  a high degree of common subexpressions). */
+/** Counts the number of unique nodes.
+ *
+ *  Counts the number of unique nodes across a number of expressions.  Nodes shared between two expressions are counted only
+ *  one time, whereas the TreeNode::nnodes virtual method counts shared nodes multiple times. */
 template<typename InputIterator>
-size_t
-total_nnodes(InputIterator begin, InputIterator end)
+uint64_t
+nnodesUnique(InputIterator begin, InputIterator end)
 {
     struct T1: Visitor {
-        typedef Map<const TreeNode*, size_t> SeenNodes;
-        typedef std::vector<std::pair<size_t, bool> > Stack;
+        typedef std::set<const TreeNode*> SeenNodes;
 
         SeenNodes seen;                                 // nodes that we've already seen, and the subtree size
-        size_t total_size;                              // total tree size
-        Stack stack;                                    // total_size when we enter a node, and whether we traversed children
+        uint64_t nUnique;                               // number of unique nodes
 
-        T1(): total_size(0) {}
+        T1(): nUnique(0) {}
 
         VisitAction preVisit(const TreeNodePtr &node) {
-            std::pair<SeenNodes::iterator, bool> inserted = seen.insert(std::make_pair(node.get(), 0));
-            stack.push_back(std::make_pair(total_size, inserted.second));
-            if (!inserted.second) {
-                assert(inserted.first->second > 0);     // failure implies that we've entered this node twice w/out exit; cycle
-                if (total_size + inserted.first->second - 1 < total_size)
-                    return TERMINATE;                   // overflow
-                total_size += inserted.first->second - 1; // don't count ourself yet
-                return TRUNCATE;
+            if (seen.insert(getRawPointer(node)).second) {
+                ++nUnique;
+                return CONTINUE;                        // this node has not been seen before; traverse into children
+            } else {
+                return TRUNCATE;                        // this node has been seen already; skip over the children
             }
-            return CONTINUE;
         }
 
         VisitAction postVisit(const TreeNodePtr &node) {
-            assert(!stack.empty());
-            if ((total_size+1) < stack.back().first)
-                return TERMINATE;                       // overflow
-            size_t subtree_size = ++total_size - stack.back().first;
-            if (stack.back().second)
-                seen[node.get()] = subtree_size;
-            stack.pop_back();
             return CONTINUE;
         }
     } visitor;
@@ -626,8 +641,11 @@ total_nnodes(InputIterator begin, InputIterator end)
     VisitAction status = CONTINUE;
     for (InputIterator ii=begin; ii!=end && TERMINATE!=status; ++ii)
         status = (*ii)->depth_first_traversal(visitor);
-    return TERMINATE==status ? (size_t)(-1) : visitor.total_size;
+    return visitor.nUnique;
 }
 
 } // namespace
+} // namespace
+} // namespace
+
 #endif

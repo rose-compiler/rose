@@ -27,7 +27,7 @@ class Y
    {
      public:
 #if DEFINE_AS_FRIEND_FUNCTION
-          template <typename T> friend bool operator== (Y,int);
+       // template <typename T> friend bool operator== (Y,int);
 #else
           template <typename T> bool operator== (int);
 #endif

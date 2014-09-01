@@ -18,6 +18,10 @@ using boost::math::erf;
 using std::isnan;
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 /******************************************************************************************************************************
  *                                      RegionStats
  ******************************************************************************************************************************/
@@ -624,7 +628,7 @@ Partitioner::count_registers(const InstructionMap &insns, double *mean_ptr, doub
             SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node);
             if (rre) {
                 size_t nbits = rre->get_descriptor().get_nbits();
-                double v = log((double)nbits) / M_LN2;
+                double v = ::log((double)nbits) / M_LN2;
                 sum += do_variance ? (v-mean)*(v-mean) : v;
                 ++n;
             }
@@ -721,7 +725,8 @@ Partitioner::region_statistics()
 {
     MemoryMap mymap = *map;
     mymap.prune(MemoryMap::MM_PROT_EXEC);
-    return region_statistics(mymap.va_extents());
+    ExtentMap emap = toExtentMap(mymap.va_extents());
+    return region_statistics(emap);
 }
 
 Partitioner::RegionStats *
@@ -945,3 +950,6 @@ Partitioner::is_code(const ExtentMap &region, double *raw_vote_ptr, std::ostream
 
     return retval;
 }
+
+} // namespace
+} // namespace
