@@ -227,6 +227,21 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
 # ************************************************************
+# Option to turn on a special mode of memory pools: no reuse of deleted memory. 
+# This is useful to track AST nodes during transformation, otherwise the same memory may be reused
+# by multiple different AST nodes. 
+# Liao 8/13/2014
+# ************************************************************
+
+AC_ARG_ENABLE(memoryPoolNoReuse, AS_HELP_STRING([--enable-memory-pool-no-reuse], [Enable special memory pool model: no reuse of deleted memory (default is to reuse memory)]))
+AM_CONDITIONAL(ROSE_USE_MEMORY_POOL_NO_REUSE, [test "x$enable_memory_pool_no_reuse" = xyes])
+if test "x$enable_memory_pool_no_reuse" = "xyes"; then
+  AC_MSG_WARN([Turn on a special mode in memory pools: no reuse of deleted memory blocks.])
+  AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
+fi
+
+
+# ************************************************************
 # Option to control the size of the generated files by ROSETTA
 # ************************************************************
 
@@ -234,7 +249,7 @@ AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_
 AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
-  AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
+  AC_MSG_WARN([Using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR.])
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
@@ -269,10 +284,12 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
 if test "x$enable_microsoft_extensions" = "xyes"; then
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
 else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
 # DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
@@ -848,6 +865,8 @@ fi
 
 # Call supporting macro for Haskell
 ROSE_SUPPORT_HASKELL
+
+ROSE_SUPPORT_CUDA
 
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
@@ -1644,17 +1663,32 @@ echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # This list should be the same as in build (search for Makefile.in)
+
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
+src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
-
 
 # End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
@@ -1738,6 +1772,7 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
+src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
@@ -1817,13 +1852,13 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
+projects/BinaryCloneDetection/compression/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/CodeThorn/Makefile
 projects/CodeThorn/src/Makefile
-projects/CodeThorn/src/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -2276,14 +2311,16 @@ AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
 	make rosePublicConfig.h
 ]])
 
-
+# [TOO1, 2014-04-22]
+# TODO: Re-enable once we phase out support for older version of Autotools.
+#       Specifically, Pontetec is using Autoconf 2.59 and Automake 1.9.6.
 # Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
-AC_CONFIG_COMMANDS([absoluteNames],
-[[
-	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
-	find . -name Makefile | xargs sed -i~ \
-	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
-]])
+#AC_CONFIG_COMMANDS([absoluteNames],
+#[[
+#	echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
+#	find . -name Makefile | xargs sed -i~ \
+#	    -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
+#]])
 
 
 

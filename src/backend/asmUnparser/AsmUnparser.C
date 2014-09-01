@@ -2,6 +2,13 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
+
+Sawyer::Message::Facility AsmUnparser::mlog;
+
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
  *  result in a meaningful basic block.  For instance, consider the following block:
@@ -58,6 +65,16 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     }
     
     return retval;
+}
+
+// class method
+void AsmUnparser::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
+        Diagnostics::mfacilities.insert(mlog);
+    }
 }
 
 void
@@ -274,6 +291,39 @@ AsmUnparser::line_prefix() const
     if (nprint<0 || (size_t)nprint >= sizeof buf)
         strcpy(buf, "<OVERFLOW> ");
     return buf;
+}
+
+std::string
+AsmUnparser::invalid_register(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *regdict)
+{
+    using namespace StringUtility;
+    Stream warn(mlog[WARN]);
+
+    std::string regstr = numberToString(reg.get_major()) + "." + numberToString(reg.get_minor()) + "." +
+                         numberToString(reg.get_offset()) + "." + numberToString(reg.get_nbits());
+    if (insn) {
+        warn <<"invalid register reference " <<regstr <<" at va " <<addrToString(insn->get_address()) <<"\n";
+    } else {
+        warn <<"invalid register reference " <<regstr <<"\n";
+    }
+
+    static bool wasDescribed = false;
+    if (!wasDescribed) {
+        warn <<"  This warning is caused by instructions using registers that don't have names in the\n"
+             <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
+             <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
+             <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
+             <<"  chooses a dictionary based on the architecture specified in the file header. For example,\n"
+             <<"  this warning may be caused by a file whose header specifies i386 but the instructions in\n"
+             <<"  the file are for the amd64 architecture.  The assembly listing will indicate unnamed\n"
+             <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
+             <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
+             <<"  register, and \"d\" is the number of significant bits.\n";
+        if (regdict!=NULL)
+            warn <<"  Dictionary in use at time of warning: " <<regdict->get_architecture_name() <<"\n";
+        wasDescribed = true;
+    }
+    return "BAD_REGISTER(" + regstr + ")";
 }
 
 
@@ -724,11 +774,11 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
             // get_label() in the previous disassembled instruction.
             const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
             for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
-                args.output <<(0==nsucs++?"":", ") <<StringUtility::addrToString((*si)->get_absolute_value());
-                SgAsmBlock *suc_blk = isSgAsmBlock((*si)->get_base_node());
-                SgAsmFunction *suc_func = suc_blk ? suc_blk->get_enclosing_function() : isSgAsmFunction((*si)->get_base_node());
+                args.output <<(0==nsucs++?"":", ") <<StringUtility::addrToString((*si)->get_absoluteValue());
+                SgAsmBlock *suc_blk = isSgAsmBlock((*si)->get_baseNode());
+                SgAsmFunction *suc_func = suc_blk ? suc_blk->get_enclosing_function() : isSgAsmFunction((*si)->get_baseNode());
                 if (suc_func && my_func && suc_func!=my_func) {
-                    if (suc_func->get_entry_va() != (*si)->get_absolute_value())
+                    if (suc_func->get_entry_va() != (*si)->get_absoluteValue())
                         args.output <<" in ";
                     if (suc_func->get_name().empty()) {
                         args.output <<"<<Func>>";
@@ -927,7 +977,7 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
         0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
         SgUnsignedCharList data = args.data->get_raw_bytes();
         MemoryMap map;
-        map.insert(Extent(args.data->get_address(), data.size()),
+        map.insert(AddressInterval::baseSize(args.data->get_address(), data.size()),
                    MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
                                       MemoryMap::MM_PROT_RX, "static data block"));
         unparser->set_prefix_format(args.unparser->get_prefix_format());
@@ -1160,3 +1210,6 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
     }
     return enabled;
 }
+
+} // namespace
+} // namespace

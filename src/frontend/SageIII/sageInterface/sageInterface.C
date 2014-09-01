@@ -102,6 +102,317 @@ typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 using namespace std;
 using namespace SageBuilder;
 
+
+
+
+void
+SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
+   {
+  // DQ (4/3/2014): This function either builds a new set or inserts declarations into an
+  // existing set based on if a set defined by the key (firstNondefiningDeclaration) is present.
+     ROSE_ASSERT(decl != NULL);
+
+#if 0
+     printf ("TOP of SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+
+     if (firstNondefiningDeclaration == NULL)
+        {
+       // It appears that some loop transformations (pass3.C) don't set the firstNondefiningDeclaration.
+          printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): firstNondefiningDeclaration == NULL: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+          return;
+        }
+     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
+     if (decl == firstNondefiningDeclaration)
+        {
+          if (declarationMap.find(firstNondefiningDeclaration) == declarationMap.end())
+             {
+#if 0
+               printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+            // Add a new set.
+               declarationMap[decl] = new set<SgDeclarationStatement*>();
+
+               ROSE_ASSERT (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+               ROSE_ASSERT(declarationMap[decl] != NULL);
+
+            // Add a declaration to an existing set.
+               declarationMap[firstNondefiningDeclaration]->insert(decl);
+             }
+            else
+             {
+               if (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end())
+                  {
+#if 0
+                    printf ("In SageInterface::DeclarationSets::addDeclaration(): Add the declaration to the existing set: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+                 // Add a declaration to an existing set.
+                    declarationMap[firstNondefiningDeclaration]->insert(decl);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("ERROR: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+                 // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
+                 // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.
+                    bool ignore_error = (isSgFunctionParameterList(decl) != NULL);
+
+                 // DQ (4/17/2014): This is required for the EDG version 4.8 and I don't know why.
+                 // Currently the priority is to pass our existing tests.
+                 // An idea is that this is sharing introduced as a result of the use of defaul parameters.
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
+                    ignore_error = ignore_error || (isSgTemplateInstantiationDecl(decl) != NULL);
+#endif
+
+                    if (ignore_error == true)
+                       {
+#if 0
+#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
+                         printf ("Ignoring the error for a SgFunctionParameterList and SgTemplateInstantiationDecl \n");
+#else
+                         printf ("Ignoring the error for a SgFunctionParameterList \n");
+#endif
+#endif
+                       }
+                      else
+                       {
+                         printf ("declarationMap[firstNondefiningDeclaration]->size() = %zu \n",declarationMap[firstNondefiningDeclaration]->size());
+
+                         printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
+                         printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
+
+                         SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(decl->get_parent()->get_parent());
+                         if (namespaceDefinitionStatement != NULL)
+                            {
+                              namespaceDefinitionStatement->get_file_info()->display("namespaceDefinitionStatement: debug");
+                            }
+
+                         if (isSgCtorInitializerList(decl) != NULL)
+                            {
+                              firstNondefiningDeclaration->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration->get_parent(): debug");
+                              decl->get_parent()->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl->get_parent(): debug");
+                            }
+
+                         firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
+                         decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
+
+                         printf ("Can not ignore this error \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+        }
+       else
+        {
+       // Add the declaration (make sure there is a set that exists).
+          if (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end())
+             {
+            // Make sure it does not already exist in the set.
+               ROSE_ASSERT (declarationMap[firstNondefiningDeclaration] != NULL);
+#if 0
+               printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a declaration to an existing set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+            // Add a declaration to an existing set.
+            // ROSE_ASSERT (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end());
+            // declarationMap[firstNondefiningDeclaration]->insert(decl);
+               if (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end())
+                  {
+                 // Add a declaration to an existing set.
+                    declarationMap[firstNondefiningDeclaration]->insert(decl);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("This declaration is already in the set (skip adding it twice): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+                  }
+             }
+            else
+             {
+            // In this case the defining declaration might be the only declaration to be traversed and
+            // so a set has not been built yet.
+#if 0
+               printf ("In SageInterface::DeclarationSets::addDeclaration(): Adding set and declaration for the firstNondefiningDeclaration = %p = %s = %s \n",
+                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),get_name(firstNondefiningDeclaration).c_str());
+#endif
+
+            // DQ (4/5/2014): Just build the set and don't insert the firstNondefiningDeclaration.
+            // If we were to do so then it would be an error to use the insert it later.
+            // Note recursive call.
+            // addDeclaration(firstNondefiningDeclaration);
+               declarationMap[firstNondefiningDeclaration] = new set<SgDeclarationStatement*>();
+
+               ROSE_ASSERT (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+
+            // DQ (4/5/2014): We have to insert this since it is different from the firstNondefiningDeclaration.
+            // Add the declaration to the existing set.
+               declarationMap[firstNondefiningDeclaration]->insert(decl);
+
+            // DQ (4/5/2014): Added assertion.
+               ROSE_ASSERT(declarationMap[firstNondefiningDeclaration]->find(decl) != declarationMap[firstNondefiningDeclaration]->end());
+#if 0
+               printf ("SageInterface::DeclarationSets::addDeclaration(): No set exists for the firstNondefiningDeclaration = %p = %s = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),get_name(firstNondefiningDeclaration).c_str());
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+#if 0
+     printf ("Leaving SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+   }
+
+const std::set<SgDeclarationStatement*>* 
+SageInterface::DeclarationSets::getDeclarations(SgDeclarationStatement* decl)
+   {
+  // DQ (4/3/2014): This function returns the associated set of declarations.
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+
+     ROSE_ASSERT(declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+
+     const set<SgDeclarationStatement*>* declarationSet = declarationMap[firstNondefiningDeclaration];
+
+  // return this->declarationMap[firstNondefiningDeclaration];
+     return declarationSet;
+   }
+
+std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > &
+SageInterface::DeclarationSets::getDeclarationMap()
+   {
+     return declarationMap;
+   }
+
+bool
+SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement* decl)
+   {
+  // DQ (4/7/2014): This function assumes that the input is a friend declaration.
+
+  // The existence of a declaration in a named scope (if a friend function) will cause
+  // subsequent declarations to be qualified where name qualification is required.
+  // A couple of issues:
+  //    We likely need to keep track of the order of the declarations in the more
+  //    complex cases because name qualification will be required after the declaration
+  //    that appears in the named scope; but will not be required before the declaration in
+  //    the named scope.
+
+#define DEBUG_LOCATED_IN_DEFINING_SCOPE 0
+
+     SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
+     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
+     set<SgDeclarationStatement*>* declarationSet = declarationMap[firstNondefiningDeclaration];
+     ROSE_ASSERT(declarationSet != NULL);
+
+     set<SgDeclarationStatement*>::iterator i = declarationSet->begin();
+
+     bool isDefinedInNamedScope = false;
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+     printf ("In DeclarationSets::isLocatedInDefiningScope(): decl = %p = %s \n",decl,decl->class_name().c_str());
+     printf ("   --- declarationSet->size()                        = %zu \n",declarationSet->size());
+#endif
+
+     SgDeclarationStatement* associatedDeclaration = NULL;
+
+     while (isDefinedInNamedScope == false && i != declarationSet->end())
+        {
+          ROSE_ASSERT(*i != NULL);
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+       // We want to know the structural position, not the semantic scope.
+          SgScopeStatement* semantic_scope   = (*i)->get_scope();
+          SgScopeStatement* structural_scope = isSgScopeStatement((*i)->get_parent());
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- semantic_scope = %p = %s \n",semantic_scope,semantic_scope->class_name().c_str());
+          printf ("   --- structural_scope = %p = %s \n",structural_scope,structural_scope->class_name().c_str());
+#endif
+       // DQ (4/7/2014): If it is a member of a class then we don't consider the structural scope, else it makes a difference,
+          SgScopeStatement* scope = isSgClassDefinition(semantic_scope) != NULL ? semantic_scope : structural_scope;
+          ROSE_ASSERT(scope != NULL);
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+          printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("   --- scope->isNamedScope() = %s \n",scope->isNamedScope() ? "true" : "false");
+#endif
+       // if (scope->isNamedScope() == true)
+          SgGlobal* globalScope = isSgGlobal(scope);
+
+       // Friend functions declared in the class definition are not meaningful for determining name qualification.
+       // if (globalScope != NULL || scope->isNamedScope() == true)
+          if (globalScope != NULL || (scope->isNamedScope() == true && isSgClassDefinition(structural_scope) == NULL) )
+             {
+            // Check if the function is output in the unparing, else it would not be defined.
+               bool willBeOutput = ((*i)->get_file_info()->isCompilerGenerated() == false ||
+                                      ((*i)->get_file_info()->isCompilerGenerated() &&
+                                       (*i)->get_file_info()->isOutputInCodeGeneration()) );
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+               printf ("   --- before: willBeOutput = %s \n",willBeOutput ? "true" : "false");
+#endif
+            // Being output only count when it is output where it is located structurally.
+               willBeOutput = willBeOutput && scope == structural_scope;
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+               printf ("   --- after: willBeOutput = %s \n",willBeOutput ? "true" : "false");
+#endif
+               associatedDeclaration = *i;
+
+            // isDefinedInNamedScope = true;
+               isDefinedInNamedScope = willBeOutput;
+             }
+
+          i++;
+        }
+
+#if DEBUG_LOCATED_IN_DEFINING_SCOPE
+     if (associatedDeclaration != NULL)
+        {
+          printf ("Leaving DeclarationSets::isLocatedInDefiningScope(): associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
+        }
+       else
+        {
+          printf ("Leaving DeclarationSets::isLocatedInDefiningScope(): associatedDeclaration = %p \n",associatedDeclaration);
+        }
+#endif
+
+     return isDefinedInNamedScope;
+   }
+
+SageInterface::DeclarationSets*
+SageInterface::buildDeclarationSets(SgNode* n)
+   {
+     DeclarationSets* declarationSet = new DeclarationSets();
+
+     class DeclarationSetTraversal : public AstSimpleProcessing
+        {
+          private:
+               DeclarationSets* declarationSet;
+
+          public:
+               DeclarationSetTraversal(DeclarationSets* ds) : declarationSet(ds) {}
+               void visit (SgNode* node)
+                  {
+                    SgDeclarationStatement* decl = isSgDeclarationStatement(node);
+                    if (decl != NULL)
+                       {
+                         declarationSet->addDeclaration(decl);
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     DeclarationSetTraversal traversal(declarationSet);
+     traversal.traverse(n, preorder);
+
+     return declarationSet;
+   }
+
+
 int SageInterface::gensym_counter = 0;
 // DQ: 09/23/03
 // We require a global function for getting the string associated
@@ -7936,7 +8247,7 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
 //! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
 // Her loop translation does not pass AST consistency tests so we rewrite some of them here
 // NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
-bool SageInterface::forLoopNormalization(SgForStatement* loop)
+bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant /*= true*/)
 {
   ROSE_ASSERT(loop != NULL);
   // Normalize initialization statement of the for loop
@@ -8035,10 +8346,12 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
    // Liao, 9/22/2009
    // folding entire loop may cause decreased accuracy for floating point operations
    // we only want to fold the loop controlling expressions
-  //constantFolding(loop->get_parent());
-  constantFolding(loop->get_test());
-  constantFolding(loop->get_increment());
-
+  if (foldConstant)
+  {
+    //constantFolding(loop->get_parent());
+    constantFolding(loop->get_test());
+    constantFolding(loop->get_increment());
+  }
 
   return true;
 }
@@ -10237,6 +10550,33 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
       prev_stmt = *iter;
     }
   }
+
+void SageInterface::insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope,
+                                                             bool movePreprocessingInfo)
+{
+    ROSE_ASSERT(newStmt!=NULL);
+    ROSE_ASSERT(scope!=NULL);
+    BOOST_FOREACH (SgStatement *targetStmt, scope->generateStatementList()) {
+        if (!isSgDeclarationStatement(targetStmt)) {
+            insertStatementBefore(targetStmt, newStmt, movePreprocessingInfo);
+            return;
+        }
+    }
+    appendStatement(newStmt, scope);
+}
+
+void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
+                                                                 SgScopeStatement *scope)
+{
+    ROSE_ASSERT(scope!=NULL);
+    BOOST_FOREACH (SgStatement *targetStmt, scope->generateStatementList()) {
+        if (!isSgDeclarationStatement(targetStmt)) {
+            insertStatementListBefore(targetStmt, newStmts);
+            return;
+        }
+    }
+    appendStatementList(newStmts, scope);
+}
 
   void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
   {
@@ -17271,7 +17611,8 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
  *                            loop scope, and used inside the loop scope.
  *                            If the target_loop comes with omp target directive, these variables should be added in map in clause in 
  *                            transOmpCollpase(..) function in omp_lowering.cpp.
- *                              
+ *
+ *  The input loop pointer is changed to the generated collapsed loop after the transformation.                              
  *
  * 
  *  Loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
@@ -17339,6 +17680,9 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
  *       j_nom_2 = -(z % 5 * 2) + 10;
  *       a[i_nom_1][j_nom_2]=i_nom_1 + j_nom_2;
  *     }
+ *  // for the generated loop, a few compiler generated variables are introduced
+ *     final_total_iters for the collapsed loop
+ *     i_interval for each of the n-1 loops
  **
 */
 
@@ -17357,6 +17701,10 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      */
     SgForStatement *& target_loop = loop;
 
+    // we use global scope to help generate unique variable name later
+    // local scope-based unique names may cause conflicts if the declarations are moved around (in OpenMP target data promotion)
+    SgGlobal* global_scope = getGlobalScope (loop); 
+    ROSE_ASSERT (global_scope != NULL);
     SgInitializedName** ivar = new SgInitializedName*[collapsing_factor];
     SgExpression** lb = new SgExpression*[collapsing_factor];
     SgExpression** ub = new SgExpression*[collapsing_factor];
@@ -17439,9 +17787,11 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         //build variables to store iteration numbers in each loop, simplify the calculation of "final_total_iters"
         //insert the new variable (store real iteration number of each level of the loop) before the target loop
         string iter_var_name= "_total_iters";
-        iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
+        //iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
+        iter_var_name = "__"+ivar[i]->get_name().getString() + iter_var_name+ generateUniqueVariableName (global_scope,"");
         SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
         insertStatementBefore(insert_target, total_iter);    
+        constantFolding (total_iter);
         total_iters[i] = buildVarRefExp(iter_var_name, scope);
         ub_exp = buildMultiplyOp(ub_exp, total_iters[i]);    //Winnie, build up the final iteration range 
     }
@@ -17452,7 +17802,8 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     */
 
     /*Winnie, build another variable to store final total iteration counter of the loop after collapsing*/
-    string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
+    //string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
+    string final_iter_counter_name = "__final_total_iters" + generateUniqueVariableName(global_scope,"");
     SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
     insertStatementBefore(insert_target, final_total_iter);
     ub_exp = buildVarRefExp(final_iter_counter_name, scope);
@@ -17466,7 +17817,8 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         {
             interval[i] = buildMultiplyOp(total_iters[j], interval[i]); 
         }
-        string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
+        //string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
+        string interval_name = "__"+ ivar[i]->get_name().getString() + "_interval" + generateUniqueVariableName (global_scope,"");
         SgVariableDeclaration* temp_interval = buildVariableDeclaration(interval_name, buildIntType(), buildAssignInitializer(copyExpression(interval[i]), buildIntType()), scope);
         insertStatementBefore(insert_target, temp_interval);
         interval[i] = buildVarRefExp(interval_name, scope);
@@ -17479,8 +17831,14 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
    //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
     //Winnie, declare a brand new var as the new index
-      string ivar_name = "new_index";
-      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);  
+      string ivar_name = "__collapsed_index"+ generateUniqueVariableName (global_scope,"");
+      SgVariableDeclaration* new_index_decl = buildVariableDeclaration(ivar_name, buildIntType(), NULL, insert_target->get_scope());
+      SgVariableSymbol * collapsed_index_symbol = getFirstVarSym (new_index_decl);
+      insertStatementBefore(insert_target, new_index_decl);
+      SgVarRefExp * clps_index_ref = buildVarRefExp(collapsed_index_symbol);
+      new_var_list->append_expression(clps_index_ref);
+
+//      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);  
   
   
      SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
@@ -17511,7 +17869,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
          if(i != collapsing_factor - 2){ //Winnie, if this is the second last level of loop, no need to create new variable to hold the remain_value, or remove the original index variable declaration
              string remain_var_name= "_remainder";
-             remain_var_name = ivar[i]->get_name().getString() + remain_var_name;  
+             remain_var_name = "__"+ ivar[i]->get_name().getString() + remain_var_name;  
              SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);  
              remain_exp_temp = buildVarRefExp(remain_var_name, scope);
              new_stmt_list.push_back(loop_index_decl); 
@@ -17538,7 +17896,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     cond_stmt = buildExprStatement(buildLessOrEqualOp(buildVarRefExp(ivar_name,scope),copyExpression(ub_exp)));
     ROSE_ASSERT(cond_stmt != NULL);
 
-    SgForStatement* new_loop = buildForStatement(init_stmt, cond_stmt,incr_exp, body);  //Winnie, add in the new block!
+    SgForStatement* new_loop = buildForStatement(buildAssignStatement(clps_index_ref, buildIntVal(0)), cond_stmt,incr_exp, body);  //Winnie, add in the new block!
     new_loop->set_parent(scope);  //TODO: what's the correct parent?
 
     replaceStatement(target_loop, new_loop);
@@ -17660,7 +18018,7 @@ void SageInterface::destroyTempDirectory(string directory_name) {
 /**
  * Invoke JavaRose to translate a given file and put the resulting AST in the global space of the project.
  */
-SgFile *SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
+SgFile* SageInterface::processFile(SgProject *project, string filename, bool unparse /* = false */) {
     //
     // Set up the new source file for processing "a la Rose".
     //
@@ -17746,7 +18104,7 @@ string SageInterface::preprocessImport(SgProject *project, string import_string)
  * Using the file_content string, create a file with the content in question; build its AST and
  * add it to the project.
  */
-void SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content, bool unparse /* true */) {
+SgFile* SageInterface::preprocessCompilationUnit(SgProject *project, string file_name, string file_content, bool unparse /* true */) {
     //
     // Call the Java side to create an input file with the relevant import statement.
     //
@@ -17760,7 +18118,7 @@ void SageInterface::preprocessCompilationUnit(SgProject *project, string file_na
     string filename = (string) utf8;
     Rose::Frontend::Java::Ecj::currentEnvironment -> ReleaseStringUTFChars(temp_file, utf8);
 
-    processFile(project, filename, unparse); // translate the file and unparse it, if requested (unparse=true is the default).
+    return processFile(project, filename, unparse); // translate the file and unparse it, if requested (unparse=true is the default).
 }
 
 
@@ -17820,10 +18178,6 @@ SgClassDefinition *SageInterface::findOrInsertJavaPackage(SgProject *project, st
 
     return package_definition;
 }
-//------------------------------------------------------------------------------
-#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-//------------------------------------------------------------------------------
-
 
 /**
  * If the class_name already exists in the scope, return it. Otherwise, import it.
@@ -17904,3 +18258,8 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassType *class_type
     SgClassDefinition *class_definition = class_declaration -> get_definition();
     return findJavaMain(class_definition);
 }
+
+//------------------------------------------------------------------------------
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+//------------------------------------------------------------------------------
+

@@ -3,7 +3,15 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
+/* Needed for __attribute__ definition on Visual Studio */
+#include "threadSupport.h"
+
+#include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -84,6 +92,182 @@ SnippetFile::lookup(const std::string &fileName)
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
+// Return the first non-empty statement from the specified source code, without the trailing semicolon.  This returns the
+// non-comment material from the beginning of the supplied string up to but not including the first semicolon that is not part
+// of a comment or string literal.  Comments are C++/Java style comments. Strings are delimited by single and double quotes
+// (any number of characters in either) and support backslash as an escape mechanism.  The source string is assumed to start
+// outside a comment or string.
+static std::string extractFirstStatement(const std::string &source)
+{
+    std::string firstStmt;
+    std::string inComment;                              // comment state: "", "/", "//", "/*", or "/**"
+    char inString='\0';                                 // string state: '\0', '"' or '\''
+    bool escaped=false;                                 // true if previous character was a backslash not in a comment
+    BOOST_FOREACH (char ch, source) {
+        if (inComment=="" && !inString && '/'==ch) {
+            assert(!escaped);
+            inComment = "/";
+        } else if (inComment=="/") {
+            assert(!escaped);
+            assert(!inString);
+            if ('/'==ch || '*'==ch) {
+                inComment += ch;
+            } else {
+                firstStmt += inComment + ch;
+                inComment = "";
+                if ('\''==ch || '"'==ch)
+                    inString = ch;
+                escaped = '\\'==ch;
+            }
+        } else if (inComment=="//" && '\n'==ch) {
+            assert(!escaped);
+            assert(!inString);
+            inComment = "";
+        } else if (inComment=="/*" && '*'==ch) {
+            assert(!escaped);
+            assert(!inString);
+            inComment = "/**";
+        } else if (inComment=="/**") {
+            assert(!escaped);
+            assert(!inString);
+            if ('/'==ch) {
+                inComment = "";
+            } else {
+                inComment = "/*";
+            }
+        } else if (inComment=="//" || inComment=="/*") {
+            assert(!escaped);
+            assert(!inString);
+        } else if (inString) {
+            assert(inComment=="");
+            firstStmt += ch;
+            if (!escaped && ch==inString)
+                inString = '\0';
+            escaped = '\\'==ch;
+        } else if (';'==ch) {
+            boost::trim(firstStmt);
+            if (!firstStmt.empty())
+                break;
+        } else {
+            firstStmt += ch;
+        }
+    }
+    return boost::trim_copy(firstStmt);
+}
+
+// Look at source code (before it's parsed) to try to figure out what package it belongs to.  The "package" statement must be
+// the first statement in the file and there can be only one, so it's fairly easy to find.
+static std::string getJavaPackageFromSourceCode(const std::string &source)
+{
+    std::string firstStmt = extractFirstStatement(source);
+    if (boost::starts_with(firstStmt, "package")) {
+        std::string pkgName = boost::trim_copy(firstStmt.substr(7));
+        return pkgName;
+    }
+
+    return "";
+}
+
+// Return the class name from a file name.  If the file is "a/b/c.java" then the class is "c"
+static std::string getJavaClassNameFromFileName(const std::string fileName)
+{
+    std::string notDir;                                 // part of the name after the final slash
+    size_t slashIdx = fileName.rfind('/');
+    if (slashIdx != std::string::npos) {
+        notDir = fileName.substr(slashIdx+1);
+    } else {
+        notDir = fileName;
+    }
+
+    return boost::erase_last_copy(notDir, ".java");
+}
+
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+// Parse java file based on addJavaSource.cpp test case
+static SgFile* parseJavaFile(const std::string &fileName)
+{
+    // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
+    std::string sourceCode;
+    {
+        MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(fileName);
+        char *charBuf = new char[buffer->size()];
+        buffer->read(charBuf, 0, buffer->size());
+        sourceCode = std::string(charBuf, buffer->size());
+    }
+
+    // Get the package name etc. from the file contents.  We must know these before we can parse the file.
+    std::string pkgName = getJavaPackageFromSourceCode(sourceCode);
+    std::string pkgDirectory = boost::replace_all_copy(pkgName, ".", "/");
+    std::string className = getJavaClassNameFromFileName(fileName);
+    std::string qualifiedClassName = pkgName.empty() ? className : pkgName + "." + className;
+
+#if 0 /*DEBUGGING [Robb P. Matzke 2014-03-31]*/
+    std::cerr <<"ROBB: Java file name is \"" <<fileName <<"\"\n"
+              <<"      Java package directory is \"" <<pkgDirectory <<"\"\n"
+              <<"      Package name is \"" <<pkgName <<"\"\n"
+              <<"      Non-qualified class name is \"" <<className <<"\"\n"
+              <<"      Qualified class name is \"" <<qualifiedClassName <<"\n";
+#endif
+
+    // Code similar to the addJavaSource.cpp unit test
+    SgProject *project = SageInterface::getProject();
+    assert(project!=NULL);
+    std::string tempDirectory = SageInterface::getTempDirectory(project);
+#if 1 /*FIXME[Robb P. Matzke 2014-04-01]: working around a bug in the Java support*/
+    // The current Java support is not able to create parent directories (i.e., like "mkdir -p foo/bar/baz") so we must
+    // do that explicitly to prevent getting a segmentation fault in the Java run time. But we cannot create "baz" because
+    // we must allow Java to be able to do that part.
+    {
+        std::string dirName = tempDirectory;
+        std::vector<std::string> components;
+        boost::split(components, pkgDirectory, boost::is_any_of("/"), boost::token_compress_on);
+        BOOST_FOREACH (const std::string &component, components) {
+            if (!component.empty()) {
+                dirName += "/" + component;
+                boost::filesystem::create_directory(dirName);
+                std::cerr <<"ROBB: created directory \"" <<dirName <<"\"\n";
+            }
+        }
+        struct stat sb;
+        int status __attribute__((unused)) = stat(dirName.c_str(), &sb);
+        assert(0==status);
+        assert(boost::filesystem::is_directory(dirName));
+        if (dirName!=tempDirectory) {
+            boost::filesystem::remove_all(dirName); // removing leaf directory so Java can create it
+            std::cerr <<"ROBB: removed directory \"" <<dirName <<"\"\n";
+        }
+    }
+#endif
+
+    // We need to make sure the package exists, but findOrInsertJavaPackage fails when the package name is the empty string.
+    // Hope that package "" exists already.
+    std::string classPath;
+    if (pkgName.empty()) {
+        classPath = className;
+    } else {
+        SgClassDefinition *pkgDef = SageInterface::findOrInsertJavaPackage(project, pkgName, true/* create dir if inserted */);
+        assert(pkgDef!=NULL);
+        classPath = pkgDirectory + "/" + className;
+    }
+
+    // Parse the source code
+    SgFile *file = SageInterface::preprocessCompilationUnit(project, classPath, sourceCode);
+
+#if 0
+    /* FIXME[Robb P. Matzke 2014-04-01]: This directory is apparently needed after parsing and I'm not sure when its safe
+     * to clean it up. The addJavaSource unit test does the cleanup after calling backend(), but we have no control over
+     * that since it's done by the user sometime after snippet injections are finished (in fact, the snippet data structures
+     * might already be destroyed by then). */
+    SageInterface::destroyTempDirectory(tempDirectory);
+#endif
+#if 1 /*DEBUGGING [Robb P. Matzke 2014-04-01]*/
+    std::cerr <<"ROBB: Java snippet has been parsed; file = (" <<file->class_name() <<"*)" <<file <<"\n";
+#endif
+
+    return file;
+}
+#endif
+
 // Class method
 SgSourceFile *
 SnippetFile::parse(const std::string &fileName)
@@ -94,7 +278,18 @@ SnippetFile::parse(const std::string &fileName)
     std::string outputName = "/SNIPPET_SHOULD_NOT_BE_UNPARSED/x";
 
     // Try to load the snippet by parsing its source file
-    SgFile *file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
+    SgFile *file = NULL;
+    if (SageInterface::is_Java_language()) {
+#if 0 /* [Robb P. Matzke 2014-03-31] */
+        // This appears not to work any better than SageBuilder::buildFile and Philippe Charles concurs that it might not.
+        file = SageInterface::processFile(SageInterface::getProject(), fileName, false/* don't unparse */);
+#elif defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT)
+        // This is the better way (but much more complicated) to parse a Java file.
+        file = parseJavaFile(fileName);
+#endif
+    } else {
+        file = SageBuilder::buildFile(fileName, outputName, SageInterface::getProject());
+    }
     SgSourceFile *snippetAst = isSgSourceFile(file);
     assert(snippetAst!=NULL);
     attachPreprocessingInfo(snippetAst);
@@ -443,45 +638,6 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         targetFirstDeclaration = isSgDeclarationStatement(targetStatements[i]);
     SgStatement *targetFirstStatement = targetStatements.empty() ? NULL : targetStatements.front();
 
-    // Make it look like the entire snippet file actually came from the same file as the insertion point. This is an attempt to
-    // avoid unparsing problems for C where the unparser asserts things such as "the file for a function declaration's scope
-    // must be the same file as the function declaration". Even if we deep-copy the function declaration from the snippet file
-    // and insert it into the specimen, when unparsing the specimen the declaration's scope will still point to the original
-    // scope in the snippet file.
-    struct T1: SnippetAstTraversal {
-        Sg_File_Info *target;                           // new file info, the one to which nodes will be set
-        Sg_File_Info *snippet;                          // only change nodes that are from this file
-        T1(Sg_File_Info *target, Sg_File_Info *snippet) {
-            this->target = Sg_File_Info::generateDefaultFileInfo(); *this->target = *target;
-            this->snippet = Sg_File_Info::generateDefaultFileInfo(); *this->snippet = *snippet;
-        }
-        void fixInfo(Sg_File_Info *info) {
-            // It is not sufficient to set only the file_id, we also need to set the physical_file_id.  It is also not
-            // sufficient to use setTransformation.  We need to be more complete, otherwise the Java unparser will not
-            // unparse anonymous classes because statementFromFile() returns false. [Robb P. Matzke 2014-03-21]
-            if (info && info->get_file_id()==snippet->get_file_id()) {
-                *info = *target;
-            } else if (info && SageInterface::is_Java_language()) {
-                *info = *target;
-            }
-        }
-        void operator()(SgNode *node, AstSimpleProcessing::Order when) {
-            if (preorder==when) {
-                if (SgLocatedNode *loc = isSgLocatedNode(node)) {
-                    fixInfo(loc->get_file_info());
-                    fixInfo(loc->get_startOfConstruct());
-                    fixInfo(loc->get_endOfConstruct());
-                } else if (SgFile *loc = isSgFile(node)) {
-                    // SgFile is not a subclass of SgLocatedNode, but it still has these Sg_File_Info methods
-                    fixInfo(loc->get_file_info());
-                    fixInfo(loc->get_startOfConstruct());
-                    fixInfo(loc->get_endOfConstruct());
-                }
-            }
-        }
-    } t1(targetFunction->get_file_info(), ast->get_body()->get_file_info());
-    t1.traverse(file->getAst());
-
     // Copy into the target file other functions, variables, imports, etc. that are above the snippet SgFunctionDefinition in
     // the snippet's file but which the user wants copied nonetheless.  Some of these things might be referenced by the
     // snippet, and others might completely unrelated but the user wants them copied anyway.
@@ -543,7 +699,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                             break;
                         case LOCDECLS_AT_END:
                             file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], targetFunctionScope));
-                            SageInterface::insertStatementAfterLastDeclaration(stmts[i], targetFunctionScope);
+                            SageInterface::insertStatementBeforeFirstNonDeclaration(stmts[i], targetFunctionScope);
                             break;
                         case LOCDECLS_AT_CURSOR:
                             file->addInsertionRecord(SnippetInsertion(stmts[i], stmtsOrig[i], insertionPoint));
@@ -719,27 +875,40 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     }
 }
 
-// class method
 void
 Snippet::causeUnparsing(SgNode *ast, Sg_File_Info *target)
 {
-    // Make sure that the specified AST is actually unparsed into the place it was inserted. This seems more complicated
-    // than it should be.
+    // Mark the things we insert as being transformations so they get inserted into the output by backend()
     struct T1: SnippetAstTraversal {
-        Sg_File_Info *target;
-        T1(Sg_File_Info *target): target(target) {}
         void operator()(SgNode *node, AstSimpleProcessing::Order when) {
             if (preorder==when) {
                 if (SgLocatedNode *loc = isSgLocatedNode(node)) {
-                    loc->set_file_info(new Sg_File_Info(*target));
-                    loc->set_startOfConstruct(new Sg_File_Info(*target));
-                    loc->set_endOfConstruct(new Sg_File_Info(*target));
-                    loc->get_file_info()->setOutputInCodeGeneration();
+#if 1
+                 // DQ (4/14/2014): This appears to work just fine, but I would have expected the longer version (below) would have been required.
+                    loc->get_file_info()->setTransformation();
+                    loc->setOutputInCodeGeneration();
+#else
+                 // DQ (4/14/2014): This should be a more complete version to set all of the Sg_File_Info objects on a SgLocatedNode.
+                    ROSE_ASSERT(loc->get_startOfConstruct() != NULL);
+                    loc->get_startOfConstruct()->setTransformation();
+                    loc->get_startOfConstruct()->setOutputInCodeGeneration();
+
+                    ROSE_ASSERT(loc->get_endOfConstruct() != NULL);
+                    loc->get_endOfConstruct()->setTransformation();
+                    loc->get_endOfConstruct()->setOutputInCodeGeneration();
+
+                    if (SgExpression* exp = isSgExpression(loc))
+                       {
+                         ROSE_ASSERT(exp->get_operatorPosition() != NULL);
+                         exp->get_operatorPosition()->setTransformation();
+                         exp->get_operatorPosition()->setOutputInCodeGeneration();
+                       }
+#endif
                 }
             }
         }
-    } t1(target);
-    t1.traverse(ast);
+    };
+    T1().traverse(ast);
 }
 
 void
@@ -849,6 +1018,11 @@ Snippet::removeIncludeDirectives(SgNode *node)
                     ++iter;
                 }
             }
+            // Remove the AttachedPreprocessingInfoType node from the AST if it is empty, otherwise an assertion in
+            // SageInterface::insertStatement will fail: it checks that either the preprocessing list node is null or
+            // non-empty.
+            if (cpp->empty())
+                locnode->set_attachedPreprocessingInfoPtr(NULL);
         }
     }
 }
@@ -1060,8 +1234,17 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
     // If our topInsertionPoint had #include directives and we inserted stuff, then those include directives need to be moved
     // and reattached to the first node we inserted.
-    if (firstInserted!=NULL && lastDeclWithIncludes!=NULL)
+    if (firstInserted!=NULL && lastDeclWithIncludes!=NULL) {
         SageInterface::movePreprocessingInfo(lastDeclWithIncludes, firstInserted);
+
+        // Since we moved the preprocessing info out of lastDeclWithIncludes, we need to also make sure that
+        // lastDeclWithIncludes does not point to an AttachedPreprocessingInfoType node since
+        // SageInterface::insertStatement requires that any AttachedPreprocessingInfoType is non-empty.
+        if (lastDeclWithIncludes->getAttachedPreprocessingInfo()) {
+            assert(lastDeclWithIncludes->get_attachedPreprocessingInfoPtr()->empty());
+            lastDeclWithIncludes->set_attachedPreprocessingInfoPtr(NULL);
+        }
+    }
 
 #if 0
     printf ("Exiting as a test! \n");

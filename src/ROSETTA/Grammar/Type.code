@@ -18,9 +18,11 @@ HEADER_START
 
           \endif
        */
-          friend class SgPointerType;     //!< provide access to private data
-          friend class SgReferenceType;   //!< provide access to private data
-          friend class SgTypedefType;     //!< provide access to private data
+          friend class SgPointerType;         //!< provide access to private data
+          friend class SgReferenceType;       //!< provide access to private data
+          friend class SgRvalueReferenceType; //!< provide access to private data
+          friend class SgDeclType;            //!< provide access to private data
+          friend class SgTypedefType;         //!< provide access to private data
        /*! */
 
      public:
@@ -898,6 +900,14 @@ HEADER_TYPE_LABEL_TYPE_START
 
 HEADER_TYPE_LABEL_TYPE_END
 
+
+HEADER_DECL_TYPE_START
+
+          void set_base_type(SgType* base_type);
+
+HEADER_DECL_TYPE_END
+
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -1031,8 +1041,7 @@ $CLASSNAME::get_mangled (void) const
      string mangled_name (base_str);
      const string ptr_begin_tag ("__Pb__");
      string::size_type pos_begin = mangled_name.find (ptr_begin_tag);
-     mangled_name.replace (pos_begin, ptr_begin_tag.size (),
-                           "__PMb__" + cls_name);
+     mangled_name.replace (pos_begin, ptr_begin_tag.size (), "__PMb__" + cls_name);
 
      return SgName (mangled_name.c_str ());
    }
@@ -1250,6 +1259,8 @@ SgType::SgType()
      p_ptr_to(NULL),
      p_modifiers(NULL),
      p_typedefs(NULL),
+     p_rvalue_ref_to(NULL),
+     p_decltype_ref_to(NULL),
   // DQ (10/3/2010): Readded to the SgType since it is used uniformally within Fortran types.
   // DQ (12/1/2007): This has been moved to the SgModifierType
      p_type_kind(NULL),
@@ -1260,6 +1271,8 @@ SgType::SgType()
      ROSE_ASSERT(p_modifiers == NULL);
      p_typedefs = new SgTypedefSeq();
      ROSE_ASSERT(p_typedefs != NULL);
+     ROSE_ASSERT(p_rvalue_ref_to == NULL);
+     ROSE_ASSERT(p_decltype_ref_to == NULL);
 
   // FMZ (2/6/2009): Added a flag for CoArray
      p_isCoArray = false;
@@ -1280,6 +1293,8 @@ SgType::SgType(const SgType & X)
      p_ptr_to(X.p_ptr_to),
      p_modifiers(X.p_modifiers),
      p_typedefs(X.p_typedefs),
+     p_rvalue_ref_to(X.p_rvalue_ref_to),
+     p_decltype_ref_to(X.p_decltype_ref_to),
   // DQ (10/3/2010): Readded to the SgType since it is used uniformally within Fortran types.
   // DQ (12/1/2007): This has been moved to the SgModifierType
      p_type_kind(X.p_type_kind),
@@ -1297,6 +1312,8 @@ SgType::SgType(const SgType & X)
      ROSE_ASSERT(p_ref_to == NULL);
      ROSE_ASSERT(p_ptr_to == NULL);
      ROSE_ASSERT(p_modifiers == NULL);
+     ROSE_ASSERT(p_rvalue_ref_to == NULL);
+     ROSE_ASSERT(p_decltype_ref_to == NULL);
   // DQ (12/1/2007): This has been moved to the SgModifierType
   // ROSE_ASSERT(p_type_kind == NULL);
 #endif
@@ -1458,9 +1475,13 @@ SgType::isIntegerType() const
           case T_LONG_LONG:
           case T_SIGNED_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_SIGNED_128BIT_INTEGER:
+          case T_UNSIGNED_128BIT_INTEGER:
           case T_BOOL:
                return true; // 1
                break;
+
           default:
                return false; // 0
         }
@@ -1494,6 +1515,10 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_CHAR:
           case T_UNSIGNED_SHORT:
           case T_UNSIGNED_INT:
+
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_UNSIGNED_LONG_LONG:
+          case T_UNSIGNED_128BIT_INTEGER:
                return 1;
                break;
           default:
@@ -2497,6 +2522,14 @@ SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_START
 SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_END
 
 
+SOURCE_TYPE_SIGNED_128BIT_TYPE_START
+SOURCE_TYPE_SIGNED_128BIT_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_128BIT_TYPE_START
+SOURCE_TYPE_UNSIGNED_128BIT_TYPE_END
+
+
 SOURCE_TYPE_LONG_DOUBLE_TYPE_START
 SOURCE_TYPE_LONG_DOUBLE_TYPE_END
 
@@ -2688,6 +2721,56 @@ SOURCE_POINTER_MEMBER_TYPE_END
 
 SOURCE_REFERENCE_TYPE_START
 SOURCE_REFERENCE_TYPE_END
+
+
+SOURCE_RVALUE_REFERENCE_TYPE_START
+SOURCE_RVALUE_REFERENCE_TYPE_END
+
+
+SOURCE_DECL_TYPE_START
+
+void
+SgDeclType::set_base_type(SgType* base_type)
+   {
+     ROSE_ASSERT(base_type != NULL);
+     if (p_base_expression == NULL || (isSgFunctionParameterRefExp(p_base_expression) != NULL))
+        {
+          p_base_type = base_type;
+        }
+       else
+        {
+       // Prefer the one available in p_base_expression.
+          p_base_type = NULL;
+          if (base_type != p_base_expression->get_type())
+             {
+               printf ("Error: base_type in SgDeclType::set_base_type() does not match p_base_expression->get_type() \n");
+             }
+          ROSE_ASSERT(base_type == p_base_expression->get_type());
+        }
+   }
+
+SgType*
+SgDeclType::get_base_type() const
+   {
+     SgType* return_type = NULL;
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(p_base_expression != NULL);
+     if (p_base_expression == NULL || isSgFunctionParameterRefExp(p_base_expression) != NULL)
+        {
+          return_type = p_base_type;
+        }
+       else
+        {
+          return_type = p_base_expression->get_type();
+        }
+
+     ROSE_ASSERT(return_type != NULL);
+
+     return return_type;
+  // return p_base_expression->get_type();
+   }
+
+SOURCE_DECL_TYPE_END
 
 
 SOURCE_NAMED_TYPE_START
@@ -2890,7 +2973,6 @@ SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType
    }
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-
 SgName
 SgJavaParameterizedType::get_name() const {
     if (get_declaration()) {
@@ -2914,8 +2996,15 @@ SgJavaParameterizedType::get_name() const {
     else
         return SgName((char *)0L);
 }
+#else
+SgName
+SgJavaParameterizedType::get_name() const {
+    ROSE_ASSERT(! "[FATAL] ROSE was not configured with Java support");
+    return "";
+}
+#endif
 
-
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 SgName
 SgJavaParameterizedType::get_qualified_name() const {
     string name = get_raw_type() -> get_qualified_name().getString();
@@ -2935,7 +3024,12 @@ SgJavaParameterizedType::get_qualified_name() const {
     }
     return SgName(name);
 }
-
+#else
+SgName
+SgJavaParameterizedType::get_qualified_name() const {
+    ROSE_ASSERT(! "[FATAL] ROSE was not configured with Java support");
+    return "";
+}
 #endif
 
 // DQ (8/18/2011): This function is copied from the version from SgClassType.
@@ -3095,7 +3189,7 @@ SgJavaUnionType::SgJavaUnionType ( const SgJavaUnionType & X )
 SgName
 SgJavaUnionType::get_name() const {
     string name = "";
-    for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+    for (size_t i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
       if (i > 0) { // != p_type_list.begin())
             name += " | ";
         }
@@ -3114,7 +3208,7 @@ $CLASSNAME::get_mangled(void) const
 
      SgName mangled_name;
 
-     for (int i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
+     for (size_t i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
          if (i > 0) { // != p_type_list.begin())
              mangled_name += "_|_";
          }
@@ -3163,7 +3257,7 @@ $CLASSNAME::get_mangled(void) const
      ROSE_ASSERT(class_declaration);
      SgName mangled_name = class_declaration -> get_mangled_name();
      SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
-     for (int i = 0; i < bases.size(); i++) {
+     for (size_t i = 0; i < bases.size(); i++) {
          mangled_name += "_";
          SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
          mangled_name += super_type -> get_mangled_name();
@@ -3465,21 +3559,21 @@ SgModifierType::get_mangled (void) const
      if (type_mod.isRestrict())    mangled_name << "RST";
   // if (upc_mod.isUPC_Shared())  mangled_name << "SHD";
 
-     // \pp make mangled name depend on blocksize
+  // \pp make mangled name depend on blocksize
      if (upc_mod.get_isShared())
-     {
-       mangled_name << "SHD";
+        {
+          mangled_name << "SHD";
 
-       std::stringstream sstr;
-       long              blocksize = upc_mod.get_layout();
-       ROSE_ASSERT(blocksize >= -2);
+          std::stringstream sstr;
+          long              blocksize = upc_mod.get_layout();
+          ROSE_ASSERT(blocksize >= -2);
 
        // \pp just add the blocksize as string to the mangled name.
        //     The TypeTable implementation needs to differentiate types
        //     with different shared blocksize.
-       sstr << blocksize;
-       mangled_name << sstr.str();
-     }
+          sstr << blocksize;
+          mangled_name << sstr.str();
+        }
 
      if (upc_mod.isUPC_Strict())  mangled_name << "STR";
      if (upc_mod.isUPC_Relaxed()) mangled_name << "RLX";
@@ -4660,7 +4754,6 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 
 
 SOURCE_ARRAY_TYPE_START
-#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
@@ -4756,8 +4849,6 @@ SgArrayType::get_qualified_name(void) const {
 
     return SgName(name);
 }
-
-#endif
 
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
@@ -6028,6 +6119,147 @@ SgReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_ty
    }
 
 SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_RVALUE_REFERENCE_TYPE_START
+SgRvalueReferenceType*
+SgRvalueReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(base_type != NULL);
+
+  // DQ (7/29/2014): I think that rvalue reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     if (base_type->p_rvalue_ref_to)
+        {
+          return base_type->p_rvalue_ref_to;
+        }
+       else
+        {
+          SgRvalueReferenceType* newType = new SgRvalueReferenceType(base_type);
+          assert(newType != NULL);
+
+          SgName name = newType->get_mangled();
+
+#if 0
+          printf ("Building a rvalue reference to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+       // Only look for pointers to type in the global type table.
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+
+          if (t == NULL)
+             {
+            // The pointer type was not found in the type table, put it into the global type table.
+               SgType* root_type = base_type->stripType();
+               ROSE_ASSERT(root_type != NULL);
+               if (handledUsingLocalTable(root_type) == false)
+                  {
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+                    get_globalTypeTable()->insert_type(name,newType);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skip putting the SgReferenceType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+                  }
+             }
+            else
+             {
+            // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+               printf ("Mangled type name for SgReferenceType = %s (already exists in type table) \n",name.str());
+#endif
+               ROSE_ASSERT(t != newType);
+
+               delete newType;
+               newType = NULL;
+
+               newType = isSgRvalueReferenceType(t);
+             }
+
+          base_type->p_rvalue_ref_to = newType;
+          assert(base_type->p_rvalue_ref_to != NULL);
+
+          return base_type->p_rvalue_ref_to;
+        }
+   }
+
+SOURCE_CREATE_TYPE_FOR_RVALUE_REFERENCE_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_DECL_TYPE_START
+// SgDeclType* SgDeclType::createType(SgType* base_type, SgExpression* optional_fortran_type_kind)
+SgDeclType*
+SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_fortran_type_kind)
+   {
+  // DQ (8/2/2014): The decltype takes an expression (and stores it) but references the type of that expression.
+     SgType* base_type = base_expression->get_type();
+     ROSE_ASSERT(base_type != NULL);
+
+  // DQ (8/2/2014): I think that decltype reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     if (base_type->p_decltype_ref_to)
+        {
+          return base_type->p_decltype_ref_to;
+        }
+       else
+        {
+          SgDeclType* newType = new SgDeclType(base_expression);
+          assert(newType != NULL);
+
+          SgName name = newType->get_mangled();
+
+#if 0
+          printf ("Building a decltype reference to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+       // Only look for pointers to type in the global type table.
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+
+          if (t == NULL)
+             {
+            // The pointer type was not found in the type table, put it into the global type table.
+               SgType* root_type = base_type->stripType();
+               ROSE_ASSERT(root_type != NULL);
+               if (handledUsingLocalTable(root_type) == false)
+                  {
+#if 0
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+                    get_globalTypeTable()->insert_type(name,newType);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Skip putting the SgDeclType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+                  }
+             }
+            else
+             {
+            // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+               printf ("Mangled type name for SgDeclType = %s (already exists in type table) \n",name.str());
+#endif
+               ROSE_ASSERT(t != newType);
+
+               delete newType;
+               newType = NULL;
+
+               newType = isSgDeclType(t);
+             }
+
+          base_type->p_decltype_ref_to = newType;
+          assert(base_type->p_decltype_ref_to != NULL);
+
+          return base_type->p_decltype_ref_to;
+        }
+   }
+
+SOURCE_CREATE_TYPE_FOR_DECL_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START
