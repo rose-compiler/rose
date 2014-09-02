@@ -123,6 +123,7 @@ AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 # Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
+ROSE_CONFIGURE_SECTION([GNU Fortran])
 # DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
