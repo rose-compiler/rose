@@ -227,6 +227,21 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
 # ************************************************************
+# Option to turn on a special mode of memory pools: no reuse of deleted memory. 
+# This is useful to track AST nodes during transformation, otherwise the same memory may be reused
+# by multiple different AST nodes. 
+# Liao 8/13/2014
+# ************************************************************
+
+AC_ARG_ENABLE(memoryPoolNoReuse, AS_HELP_STRING([--enable-memory-pool-no-reuse], [Enable special memory pool model: no reuse of deleted memory (default is to reuse memory)]))
+AM_CONDITIONAL(ROSE_USE_MEMORY_POOL_NO_REUSE, [test "x$enable_memory_pool_no_reuse" = xyes])
+if test "x$enable_memory_pool_no_reuse" = "xyes"; then
+  AC_MSG_WARN([Turn on a special mode in memory pools: no reuse of deleted memory blocks.])
+  AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
+fi
+
+
+# ************************************************************
 # Option to control the size of the generated files by ROSETTA
 # ************************************************************
 
@@ -234,7 +249,7 @@ AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_
 AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
-  AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
+  AC_MSG_WARN([Using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR.])
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
@@ -1757,6 +1772,7 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
+src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
@@ -1836,6 +1852,7 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
+projects/BinaryCloneDetection/compression/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile

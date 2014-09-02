@@ -6,6 +6,8 @@
 
 #include "rose.h"
 
+using namespace rose::BinaryAnalysis;
+
 /* Collects all instructions from all basic blocks into a map by instruction address. */
 class InstructionCollector: public SgSimpleProcessing {
 public:

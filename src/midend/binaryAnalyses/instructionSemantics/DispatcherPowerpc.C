@@ -2,6 +2,7 @@
 #include "BaseSemantics2.h"
 #include "DispatcherPowerpc.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -1078,5 +1079,6 @@ DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result)
     operators->writeRegister(REG_CR0, operators->concat(so, c));
 }
 
+} // namespace
 } // namespace
 } // namespace

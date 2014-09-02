@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <cmath>
 
+using namespace rose::BinaryAnalysis;
+
 struct UnexecutableSegments: public MemoryMap::Visitor {
     virtual bool operator()(const MemoryMap*, const AddressInterval&, const MemoryMap::Segment &segment) {
         return 0 == (segment.get_mapperms() & MemoryMap::MM_PROT_EXEC);

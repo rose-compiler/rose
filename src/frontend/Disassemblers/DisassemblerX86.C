@@ -13,10 +13,13 @@
 #include "DisassemblerX86.h"
 #include "integerOps.h"
 #include "stringify.h"
+#include "DispatcherX86.h"
 
 #include <sstream>
 
-using namespace rose;
+namespace rose {
+namespace BinaryAnalysis {
+
 
 /* See header file for full documentation. */
 
@@ -63,11 +66,30 @@ DisassemblerX86::init(size_t wordsize)
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
     switch (wordsize) {
-        case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::dictionary_i286());  break;
-        case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_pentium4());  break;
-        case 8: insnSize = x86_insnsize_64; set_registers(RegisterDictionary::dictionary_amd64()); break;
+        case 2:
+            insnSize = x86_insnsize_16;
+            set_registers(RegisterDictionary::dictionary_i286());
+            REG_IP = *p_registers->lookup("ip");
+            REG_SP = *p_registers->lookup("sp");
+            REG_SS = *p_registers->lookup("ss");
+            break;
+        case 4:
+            insnSize = x86_insnsize_32;
+            set_registers(RegisterDictionary::dictionary_pentium4());
+            REG_IP = *p_registers->lookup("eip");
+            REG_SP = *p_registers->lookup("esp");
+            REG_SS = *p_registers->lookup("ss");
+            break;
+        case 8:
+            insnSize = x86_insnsize_64;
+            set_registers(RegisterDictionary::dictionary_amd64());
+            REG_IP = *p_registers->lookup("rip");
+            REG_SP = *p_registers->lookup("rsp");
+            REG_SS = *p_registers->lookup("ss");
+            break;
         default: ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
+    p_proto_dispatcher = InstructionSemantics2::DispatcherX86::instance();
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(ByteOrder::ORDER_LSB);
@@ -369,18 +391,8 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    const char *name = NULL;
-    switch (insnSize) {
-        case x86_insnsize_16: name="ip"; break;
-        case x86_insnsize_32: name="eip"; break;
-        case x86_insnsize_64: name="rip"; break;
-        case x86_insnsize_none:
-            ASSERT_not_reachable("invalid instruction size: " + stringifyX86InstructionSize(insnSize));
-    }
-    ASSERT_not_null(get_registers());
-    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
-    ASSERT_not_null(rdesc);
-    SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(*rdesc);
+    ASSERT_require(REG_IP.is_valid());
+    SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(REG_IP);
     r->set_type(sizeToType(insnSize));
     return r;
 }
@@ -5891,3 +5903,6 @@ DisassemblerX86::decodeGroupP()
         default: return makeInstruction(x86_prefetch, "prefetch", modrm);
     }
 }
+
+} // namespace
+} // namespace

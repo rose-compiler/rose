@@ -3,6 +3,7 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/Sawyer.h>
+#include <boost/integer_traits.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -62,6 +63,11 @@ public:
         return 0==size ? Interval() : Interval::hull(lo, lo+size-1);
     }
 
+    /** Construct an interval that covers the entire domain. */
+    static Interval whole() {
+        return hull(boost::integer_traits<T>::const_min, boost::integer_traits<T>::const_max);
+    }
+
     /** Assignment from an interval. */
     Interval& operator=(const Interval &other) {
         lo_ = other.lo_;
@@ -94,7 +100,7 @@ public:
     bool isSingleton() const { return lo_ == hi_; }
 
     /** True if interval covers entire space. */
-    bool isWhole() const { return !isEmpty() && hi_ + 1 == lo_; }
+    bool isWhole() const { return lo_==boost::integer_traits<T>::const_min && hi_==boost::integer_traits<T>::const_max; }
 
     /** True if two intervals overlap.
      *

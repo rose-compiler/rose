@@ -13,6 +13,7 @@
 #include <map>
 #include <vector>
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -371,7 +372,7 @@ public:
 
 protected:
     CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
-    CellCompressorChoice cc_choice;             /**< The default cell compressor. */
+    static CellCompressorChoice cc_choice;      /**< The default cell compressor. Static because we use its address. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -383,7 +384,7 @@ protected:
         : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
 
     MemoryState(const MemoryState &other)
-        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor), cc_choice(other.cc_choice) {}
+        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
@@ -745,8 +746,9 @@ public:
                              const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

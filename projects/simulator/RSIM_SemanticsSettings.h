@@ -67,8 +67,8 @@
 /** Paradigm C sub-domains.
  *
  *  Subdomain 0 must be the simulator concrete domain (or a user-defined version with an identical interface).  The user may
- *  modify subdomains 1 through 3 to be whatever they like.  See the BinaryAnalysis::InstructionSemantics::MultiSemantics class
- *  in ROSE's API Reference Manual for details.
+ *  modify subdomains 1 through 3 to be whatever they like.  See the rose::BinaryAnalysis::InstructionSemantics::MultiSemantics
+ *  class in ROSE's API Reference Manual for details.
  *
  *  There are at least two ways for the user to get control between RISC operations in order to have an opportunity to
  *  manipulate the state of all the sub-domains. One is to provide an implementation for startInstruction() and/or
@@ -78,15 +78,15 @@
 #define RSIM_SEMANTICS_OUTER_0_VTYPE    RSIM_Semantics::InnerValueType
 #define RSIM_SEMANTICS_OUTER_0_STATE    RSIM_Semantics::InnerState
 #define RSIM_SEMANTICS_OUTER_0_POLICY   RSIM_Semantics::InnerPolicy
-#define RSIM_SEMANTICS_OUTER_1_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-#define RSIM_SEMANTICS_OUTER_1_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#define RSIM_SEMANTICS_OUTER_1_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
-#define RSIM_SEMANTICS_OUTER_2_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-#define RSIM_SEMANTICS_OUTER_2_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#define RSIM_SEMANTICS_OUTER_2_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
-#define RSIM_SEMANTICS_OUTER_3_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-#define RSIM_SEMANTICS_OUTER_3_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#define RSIM_SEMANTICS_OUTER_3_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
+#define RSIM_SEMANTICS_OUTER_1_VTYPE    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+#define RSIM_SEMANTICS_OUTER_1_STATE    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::State
+#define RSIM_SEMANTICS_OUTER_1_POLICY   rose::BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
+#define RSIM_SEMANTICS_OUTER_2_VTYPE    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+#define RSIM_SEMANTICS_OUTER_2_STATE    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::State
+#define RSIM_SEMANTICS_OUTER_2_POLICY   rose::BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
+#define RSIM_SEMANTICS_OUTER_3_VTYPE    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+#define RSIM_SEMANTICS_OUTER_3_STATE    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::State
+#define RSIM_SEMANTICS_OUTER_3_POLICY   rose::BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
 
 
 
@@ -103,7 +103,7 @@
 /** Semantic dispatcher type.  This is the class that decodes x86 instructions and dispatches RISC operations to the various
  *  instruction semantics policies. */
 namespace RSIM_Semantics {
-    typedef BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<RSIM_SEMANTICS_POLICY, RSIM_SEMANTICS_VTYPE> Dispatcher;
+typedef rose::BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<RSIM_SEMANTICS_POLICY, RSIM_SEMANTICS_VTYPE> Dispatcher;
 }
 
 #endif
