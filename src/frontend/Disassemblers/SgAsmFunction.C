@@ -202,7 +202,7 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
         NodeSelector *selector;
         gcry_md_hd_t md; // message digest
         T1(NodeSelector *selector): selector(selector) {
-            gcry_error_t error = gcry_md_open(&md, GCRY_MD_SHA1, 0);
+            gcry_error_t error __attribute__((unused)) = gcry_md_open(&md, GCRY_MD_SHA1, 0);
             assert(GPG_ERR_NO_ERROR==error);
         }
         ~T1() {

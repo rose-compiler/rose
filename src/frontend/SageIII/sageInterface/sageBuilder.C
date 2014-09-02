@@ -5630,7 +5630,7 @@ SageBuilder::buildListExp_nfi(const std::vector<SgExpression*>& elts)
 }
 
 //----------------------build unary expressions----------------------
-template <class T>
+template <class T> ROSE_DLL_API
 T* SageBuilder::buildUnaryExpression(SgExpression* operand)
 { 
   SgExpression* myoperand=operand;
@@ -5660,7 +5660,7 @@ T* SageBuilder::buildUnaryExpression(SgExpression* operand)
   return result; 
 }
 
-template <class T>
+template <class T> ROSE_DLL_API
 T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand)
    {
      SgExpression* myoperand = operand;
@@ -5685,7 +5685,7 @@ T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand)
    }
 
 #define BUILD_UNARY_DEF(suffix) \
-  Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* op) \
+  ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* op) \
   { \
      return SageBuilder::buildUnaryExpression_nfi<Sg##suffix>(op); \
   } \
@@ -5851,7 +5851,7 @@ SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw
 
 //---------------------binary expressions-----------------------
 
-template <class T>
+template <class T> ROSE_DLL_API
 T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
 {
   SgExpression* mylhs, *myrhs;
@@ -5895,7 +5895,7 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
 
 }
 
-template <class T>
+template <class T> ROSE_DLL_API
 T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
    {
      SgExpression* mylhs, *myrhs;

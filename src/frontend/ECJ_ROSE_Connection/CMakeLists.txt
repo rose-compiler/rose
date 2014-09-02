@@ -13,6 +13,7 @@ set(JavaTraversal_LIB_SRCS
   jni_utils.C java_support.C)
 
 add_library(JavaTraversal SHARED ${JavaTraversal_LIB_SRCS})
+target_link_libraries(JavaTraversal ROSE_DLL)
 
 set_target_properties(JavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
 add_dependencies(JavaTraversal
@@ -24,9 +25,11 @@ install(TARGETS JavaTraversal DESTINATION lib)
 
 set(libroseJava_SOURCES openJavaParser_main.C ecj.C jserver.C)
 
-add_library(roseJava ${libroseJava_SOURCES})
+add_library(roseJava OBJECT ${libroseJava_SOURCES})
 add_dependencies(roseJava
   rosetta_generated extract_rose_required_ecj_source_files)
+set_target_properties(roseJava PROPERTIES COMPILE_DEFINITIONS
+  ROSE_DLL_EXPORTS=1)
 
 
 ########### install files ###############

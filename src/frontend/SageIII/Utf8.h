@@ -7,9 +7,10 @@
  */
 
 #include <exception>
+#include "rosedll.h"
 using namespace std;
 
-class Utf8 {
+class ROSE_DLL_API Utf8 {
 private:
     /**
      * Compute the code value of a Unicode character encoded in UTF8 format

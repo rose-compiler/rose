@@ -14469,7 +14469,7 @@ X aggressive
      p_skip_unparse_asm_commands = false;
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
+     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
 
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
@@ -15562,6 +15562,9 @@ SgProject::initialization()
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
+
+  // ZG (5/27/2014): This was uninitialized on Windows, so adding it here.
+     p_globalScopeAcrossFiles = NULL;
    }
 
 
