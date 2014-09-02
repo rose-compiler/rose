@@ -166,13 +166,15 @@ void Backstroke::RunTimeSystem::print_stack_info() {
   cout<<"STACKEND     : "<<prog_stack_bottom<<endl;
 }
 
+#if 0
 bool Backstroke::RunTimeSystem::is_stack_ptr(void *ptr) {
   bool is_stack_ptr= ((uintptr_t) ptr >= (uintptr_t) prog_stack_bottom
           && (uintptr_t) ptr <= (uintptr_t) prog_stack_local);
   //cout<<"DEBUG: is_stack_ptr("<<ptr<<"):"<<is_stack_ptr<<endl;
   return is_stack_ptr;
-
-}  
+}
+#endif
+  
 size_t Backstroke::RunTimeSystem::currentEventLength() {
   currentEventRecord->stack_bitype.size();
 }
