@@ -45,7 +45,7 @@ $(TEST_OUTPUTS): ../src/vectorization
 	../src/vectorization $(srcdir)/$(@:=.c)
 
 $(COMPARE_OUTPUTS): 
-	@if $(DIFF) $(top_srcdir)/projects/vectorization/tests/$(@:=.c) $(@:=.c); then \
+	if $(DIFF) $(top_srcdir)/projects/vectorization/tests/$(@:=.c) $(@:=.c); then \
 		echo "vectorization: diff translated ouput: " $@;   \
 	else    \
 		echo "Files differ; test falied"; \

@@ -6,4 +6,8 @@
 
 X10SourceCodePosition * convert_X10_SourcePosition(JNIEnv *env, jobject sourcePosition);
 
+std::string normalize(std::string str);
+
+extern std::string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
+
 #endif

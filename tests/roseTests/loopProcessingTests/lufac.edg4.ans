@@ -30,8 +30,8 @@ double abs(double x)
   }
 }
 #define n 50
-extern void printmatrix(double x[][50]);
-extern void initmatrix(double x[][50],double s);
+void printmatrix(double x[][50]);
+void initmatrix(double x[][50],double s);
 
 int main(int argc,char *argv[])
 {
