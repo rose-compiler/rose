@@ -400,45 +400,46 @@ EvalValueType FIConstAnalysis::evalSgOrOp(EvalValueType lhsResult,EvalValueType 
   return res;
 }
 
-EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val) {
+EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType constVal0) {
   ROSE_ASSERT(op);
   ROSE_ASSERT(var);
 
   ROSE_ASSERT(global_variableIdMapping);
   ROSE_ASSERT(global_variableConstInfo);
 
-  assert(!(val.isTop()||val.isBot()));
+  assert(!(constVal0.isTop()||constVal0.isBot()));
 
-    EvalValueType res=AType::Top(); // default if no more precise result can be determined
+  EvalValueType res=AType::Top(); // default if no more precise result can be determined
 
-  int constVal=val.getIntValue();
+  if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
+
+  int constVal=constVal0.getIntValue();
   VariableId varId;
   bool isVar=determineVariable(var, varId, *global_variableIdMapping);
   assert(isVar);
-  if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
   bool myIsMultiConst=global_variableConstInfo->isMultiConst(varId);
   if(myIsMultiConst) {
-    bool myIsInConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
+    bool constValIsInVarMultiConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
     int myMinConst=global_variableConstInfo->minConst(varId);
     int myMaxConst=global_variableConstInfo->maxConst(varId);
     if(detailedOutput) {
       cout<<" isMC:"<<myIsMultiConst;
-      cout<<" isInConstSet:"<<myIsInConstSet;
+      cout<<" isInConstSet:"<<constValIsInVarMultiConstSet;
       cout<<" min:"<<myMinConst;
       cout<<" max:"<<myMaxConst;
     }
     //cout<<endl;
     
-    // it holds here: val *is* a multi const!
+    // it holds here: val *is* a multi const! (more than one const value)
     switch(op->variantT()) {
     case V_SgEqualityOp:
       // case of one value is handled by const-analysis
-      if(!myIsInConstSet) res=EvalValueType(false);
+      if(!constValIsInVarMultiConstSet) res=EvalValueType(false);
       else res=AType::Top();
       break;
     case V_SgNotEqualOp: 
       // case of one value is handled by const-analysis
-      if(!myIsInConstSet) res=EvalValueType(true);
+      if(!constValIsInVarMultiConstSet) res=EvalValueType(true);
       else res=AType::Top();
       break;
     case V_SgGreaterOrEqualOp:
@@ -466,7 +467,7 @@ EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, 
       assert(0);
     }
   } else {
-    if(detailedOutput) cout<<" not MC.";
+    if(detailedOutput) cout<<" not multi-const.";
   }
 
   if(detailedOutput) cout<<" Result: "<<res.toString()<<endl;
@@ -479,7 +480,6 @@ bool FIConstAnalysis::isConstVal(SgExpression* node) {
 
 EvalValueType FIConstAnalysis::eval(SgExpression* node) {
   EvalValueType res;
-  stringstream watch;
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
@@ -490,13 +490,14 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     if(option_multiconstanalysis) {
       // refinement for special cases handled by multi-const analysis
       if(isRelationalOperator(node)) {
-        EvalValueType res2;
+        EvalValueType res2=AType::Top();
         if(isSgVarRefExp(lhs) && isConstVal(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
         if(isConstVal(lhs) && isSgVarRefExp(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
         if(!res2.isTop()) {
           // found a more precise result with multi-const analysis results
+          ROSE_ASSERT(!res2.isBot());
           return res2;
         }
       }
