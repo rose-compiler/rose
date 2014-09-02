@@ -108,8 +108,189 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_67.C \
    test2014_68.C \
    test2014_70.C \
+   test2014_71.C \
+   test2014_72.C \
+   test2014_73.C \
+   test2014_74.C \
+   test2014_75.C \
+   test2014_77.C \
+   test2014_78.C \
+   test2013_117.C \
+   test2014_76.C \
+   test2014_79.C \
+   test2014_80.C \
+   test2014_81.C \
+   test2014_82.C \
+   test2014_83.C \
+   test2014_84.C \
+   test2014_85.C \
+   test2014_86.C \
+   test2014_87.C \
+   test2014_88.C \
+   test2014_89.C \
+   test2014_90.C \
+   test2014_91.C \
+   test2014_92.C \
+   test2014_93.C \
+   test2014_94.C \
+   test2014_95.C \
+   test2014_96.C \
+   test2014_97.C \
+   test2014_98.C \
+   test2014_99.C \
+   test2014_100.C \
+   test2014_101.C \
+   test2014_102.C \
+   test2014_107.C \
+   test2014_108.C \
+   test2014_109.C \
+   test2014_110.C \
+   test2014_111.C \
+   test2014_112.C \
+   test2014_114.C \
+   test2014_115.C \
+   test2014_116.C \
+   test2014_117.C \
+   test2014_118.C \
+   test2014_119.C \
+   test2014_120.C \
+   test2014_121.C \
+   test2014_122.C \
+   test2014_123.C \
+   test2014_124.C \
+   test2014_125.C \
+   test2014_126.C \
+   test2014_127.C \
+   test2014_128.C \
+   test2014_129.C \
+   test2014_130.C \
+   test2014_131.C \
+   test2014_132.C \
+   test2014_133.C \
+   test2014_134.C \
+   test2014_135.C \
+   test2014_136.C \
+   test2014_137.C \
+   test2014_139.C \
+   test2014_140.C \
+   test2014_141.C \
+   test2014_142.C \
+   test2014_143.C \
+   test2014_144.C \
+   test2014_145.C \
+   test2014_146.C \
+   test2014_147.C \
+   test2014_148.C \
+   test2014_149.C \
+   test2014_150.C \
+   test2014_151.C \
+   test2014_152.C \
+   test2014_153.C \
+   test2014_154.C \
+   test2014_155.C \
+   test2014_156.C \
+   test2014_157.C \
+   test2014_159.C \
+   test2014_160.C \
+   test2014_161.C \
+   test2014_162.C \
+   test2014_163.C \
+   test2014_165.C \
+   test2014_166.C \
+   test2014_167.C \
+   test2014_168.C \
+   test2014_169.C \
+   test2014_170.C \
+   test2014_171.C \
+   test2014_172.C \
+   test2014_174.C \
+   test2014_176.C \
+   test2014_177.C \
+   test2014_178.C \
+   test2014_179.C \
+   test2014_182.C \
+   test2014_183.C \
+   test2014_184.C \
+   test2014_185.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (8/29/2014): Put macros into testcode files so that they are only run on GNU g++ 4.4 compiler.
+# DQ (8/25/2014): These fail for older versions of GNU (e.g. g++ version 4.2.2)
+# --- error: cannot open tr1_impl/boost_sp_counted_base.h"
+# Restrict testing to g++ version 4.4 and above (where the test codes pass).
+# if ROSE_USING_GCC_VERSION_LATER_4_4
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+#   test2014_77.C 
+#   test2014_78.C 
+# endif
+
+# DQ (8/31/2014): currently failing test codes:
+# test2014_173.C
+# test2014_175.C (declaration of array[][8], mixing unspecified array bounds with specified array bounds in multi-deminsional arrays)
+# test2014_177.C
+# test2014_178.C
+# test2014_180.C (non-trivial extern template failing example)
+# test2014_181.C (test of using extern "C++" syntax within an extern "C" block).
+
+# DQ (8/24/2014): This passes outside of Jenkins (boost foreach test codes) but 
+# fails for Jenkins since the location of boost is not specified for the test codes.
+#  test2014_103.C
+#  test2014_104.C 
+#  test2014_105.C 
+#  test2014_106.C 
+
+# DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
+TESTS_NOT_PASSING = \
+   test2009_25.C \
+   test2012_252.C \
+   test2012_261.C \
+   test2012_272.C \
+   test2012_273.C \
+   test2012_274.C \
+   test2012_275.C \
+   test2012_276.C \
+   test2012_277.C \
+   test2012_278.C \
+   test2013_185.C \
+   test2013_224.C \
+   test2013_233.C \
+   test2013_245.C \
+   test2013_247.C \
+   test2013_248.C \
+   test2013_249.C \
+   test2013_254.C \
+   test2013_255.h \
+   test2013_256.h \
+   test2013_262.C \
+   test2013_263.C \
+   test2013_264.C \
+   test2013_265.C \
+   test2013_266.C \
+   test2013_267.C \
+   test2013_268.C \
+   test2013_269.C \
+   test2013_270.C \
+   test2013_289.h \
+   test2013_309.C \
+   test2013_321.C \
+   test2013_322.C \
+   test2013_323.C \
+   test2014_99.C \
+   test2014_100.C \
+   test2014_101.C \
+   test2014_102.C \
+   test2014_103.C \
+   test2014_112.h \
+   test2014_113.C \
+   test2014_118.C \
+   test2014_119.C \
+   test2014_120.C \
+   test2014_121.C \
+   test2014_164.C 
+
+# DQ (7/10/2014): Remaining bugs in new application.
+#  test2014_113.C 
 
 # DQ (7/3/2014): This C++ language feature is only properly supported in EDG version 4.9
 if ROSE_USE_EDG_VERSION_4_9
@@ -203,7 +384,7 @@ test2013_197.C
 # Not clear how to fix this at the moment, it was a made up test that I will work on later.
 # test2013_185.C 
 
-
+# DQ (7/6/2014): This test code is not fixed.
 # DQ (4/21/2013): failing regression tests (result of fix for operator vs. non-operator syntax in function calls).
 # test2013_117.C 
 
@@ -882,7 +1063,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_36.h test2006_42.h test2006_187a.h \
      test2006_187b.h test2007_08.h test2007_41.h  test2007_42.h test2007_47.h test2007_48.h test2007_97.h \
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
+     test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
      test2004_82.C 
 
