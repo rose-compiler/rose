@@ -23,8 +23,13 @@ class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
 
           void visit ( SgNode* node );
 
+       // DQ (7/12/2014): Added support to record the causalDeclaration (the declaration that is causing the SgAliasSymbol to be introduced).
+       // This is important for the name qualification to be generated correctly before and after the causalDeclaration has been seen.
+       // It is also helpful in knowing which SgAliassymbols to remove from the AST when a SgUsingDirective or SgUsingDeclaration is 
+       // removed from the AST.  This functionality has not yet been implemented.
        // This inserts an alias for each of the symbols in referencedScope into the symbol table of currentScope
-          static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel);
+       // static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel);
+          static void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel);
    };
 
 // endif for FIXUP_CXX_TO_USE_ALIASING_SYMBOLS_H
