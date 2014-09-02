@@ -715,8 +715,8 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
 {
     AddressIntervalSet addresses(p_segments);
     addresses.invert(AddressInterval::hull(start_va, (rose_addr_t)(-1)));
-    AddressIntervalSet::ConstNodeIterator fmi = addresses.lowerBound(start_va);
-    while ((fmi=addresses.firstFit(size, fmi)) != addresses.nodes().end()) {
+    AddressIntervalSet::ConstIntervalIterator fmi = addresses.lowerBound(start_va);
+    while ((fmi=addresses.firstFit(size, fmi)) != addresses.intervals().end()) {
         AddressInterval free_range = *fmi;
         rose_addr_t free_va = ALIGN_UP(free_range.least(), alignment);
         rose_addr_t free_sz = free_va > free_range.greatest() ? 0 : free_range.greatest()+1-free_va;
@@ -732,8 +732,8 @@ MemoryMap::find_last_free(rose_addr_t max_va) const
 {
     AddressIntervalSet addresses(p_segments);
     addresses.invert(AddressInterval::hull(0, max_va));
-    AddressIntervalSet::ConstNodeIterator fmi = addresses.findPrior(max_va);
-    if (fmi==addresses.nodes().end())
+    AddressIntervalSet::ConstIntervalIterator fmi = addresses.findPrior(max_va);
+    if (fmi==addresses.intervals().end())
         throw NoFreeSpace("find_last_free() failed", this, 1);
     return fmi->least();
 }
@@ -754,7 +754,7 @@ MemoryMap::prune(Visitor &predicate)
             matches.insert(node.key());
     }
 
-    BOOST_FOREACH (const AddressInterval &range, matches.nodes())
+    BOOST_FOREACH (const AddressInterval &range, matches.intervals())
         p_segments.erase(range);
 }
 
@@ -1035,7 +1035,7 @@ MemoryMap::erase_zeros(size_t minsize)
             }
         }
     }
-    BOOST_FOREACH (const AddressInterval &range, to_remove.nodes())
+    BOOST_FOREACH (const AddressInterval &range, to_remove.intervals())
         erase(range);
 }
 

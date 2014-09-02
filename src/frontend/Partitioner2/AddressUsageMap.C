@@ -393,7 +393,7 @@ AddressUsageMap::dataBlockExists(const DataBlock::Ptr &dblock) const {
 AddressIntervalSet
 AddressUsageMap::extent() const {
     AddressIntervalSet retval;
-    BOOST_FOREACH (const Map::Interval &interval, map_.keys())
+    BOOST_FOREACH (const Map::Interval &interval, map_.intervals())
         retval.insert(interval);
     return retval;
 }

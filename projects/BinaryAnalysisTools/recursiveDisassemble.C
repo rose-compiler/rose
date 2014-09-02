@@ -687,7 +687,7 @@ findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet &ex
 {
     size_t nProcessed = 0;
     AddressIntervalSet unused = partitioner.aum().unusedExtent(executableSpace);
-    BOOST_FOREACH (const AddressInterval &interval, unused.nodes()) {
+    BOOST_FOREACH (const AddressInterval &interval, unused.intervals()) {
         if (interval.least()<=executableSpace.least() || interval.greatest()>=executableSpace.greatest())
             continue;
         typedef std::vector<P2::Function::Ptr> Functions;
@@ -914,7 +914,7 @@ int main(int argc, char *argv[]) {
         AddressIntervalSet unusedAddresses = partitioner.aum().unusedExtent(executableSpace);
         std::cout <<"Unused addresses: " <<StringUtility::plural(unusedAddresses.size(), "bytes")
                   <<" in " <<StringUtility::plural(unusedAddresses.nIntervals(), "intervals") <<"\n";
-        BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.nodes())
+        BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.intervals())
             std::cout <<unused <<"\t" <<StringUtility::plural(unused.size(), "bytes") <<"\n";
     }
 

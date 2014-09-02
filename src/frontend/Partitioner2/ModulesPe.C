@@ -138,7 +138,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         iatAddresses.insert(AddressInterval::baseSize(import->get_iat_entry_va(), 4));
 
     // Add segments to the memory map.
-    BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.nodes()) {
+    BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.intervals()) {
         MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(iatExtent.size());
         partitioner.memoryMap().insert(iatExtent,
                                        MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_READ, "partitioner-adjusted IAT"));

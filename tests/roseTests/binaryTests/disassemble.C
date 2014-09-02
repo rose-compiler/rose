@@ -1278,7 +1278,7 @@ main(int argc, char *argv[])
         }
 
         /* Reserve parts of the address space. */
-        BOOST_FOREACH (const AddressInterval &interval, reserved.nodes()) {
+        BOOST_FOREACH (const AddressInterval &interval, reserved.intervals()) {
             map->insert(interval, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(interval.size()),
                                                      0, MemoryMap::MM_PROT_NONE, "reserved area"));
         }

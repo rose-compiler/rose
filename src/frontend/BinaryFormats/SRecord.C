@@ -133,7 +133,7 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
         }
 
         // Create buffers for the data and insert them into the memory map
-        BOOST_FOREACH (const AddressInterval &interval, addressesUsed.nodes()) {
+        BOOST_FOREACH (const AddressInterval &interval, addressesUsed.intervals()) {
             ASSERT_forbid(interval.isWhole());              // not practically possible since S-Record file would be >2^65 bytes
             MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(interval.size());
             map.insert(interval, MemoryMap::Segment(buffer, 0, accessPerms, "S-Records"));
