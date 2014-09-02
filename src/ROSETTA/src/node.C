@@ -727,6 +727,10 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("SgName","name", "= \"\"",
           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // DQ (8/18/2014): Added Microsoft specific extension for the uuid string option.
+     InitializedName.setDataPrototype("std::string", "microsoft_uuid_string", "=\"\"",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // FMZ (4/7/2009): Added for Cray pointer declaration
 #if 0
@@ -912,6 +916,10 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/2/2014): Using C++11 auto keyword.
+     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

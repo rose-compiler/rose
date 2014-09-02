@@ -10,6 +10,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/Graph.h>
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace DataFlowSemantics {
@@ -165,6 +166,7 @@ public:
                              const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

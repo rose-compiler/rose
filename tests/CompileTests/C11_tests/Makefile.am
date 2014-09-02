@@ -145,7 +145,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 endif
 endif
 else
-	@echo "C11 tests require GNU version 4.8 or 4.9 backend compilers."
+	@echo "C11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
 endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C11_tests: make check rule complete (terminated normally) ******"

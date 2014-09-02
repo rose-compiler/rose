@@ -4,3 +4,4 @@
 #include "AsmUnparser_compat.h"
 
 std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap*) { abort(); }
+void AsmUnparser::initDiagnostics() {}

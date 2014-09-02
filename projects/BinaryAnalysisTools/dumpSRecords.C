@@ -28,7 +28,7 @@ parseCommandLine(int argc, char *argv[], Options &opts) {
                     .action(showVersionAndExit(version_message(), 0))
                     .doc("Shows version information for various ROSE components and then exits."));
     switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Diagnostics::facilities))
+                    .action(configureDiagnostics("log", Diagnostics::mfacilities))
                     .argument("logspec")
                     .whichValue(SAVE_ALL)
                     .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
@@ -59,7 +59,7 @@ main(int argc, char *argv[]) {
     // Initialization
     Diagnostics::initialize();
     mlog.initStreams(rose::Diagnostics::destination);
-    Diagnostics::facilities.insertAndAdjust(mlog);
+    Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line
     Options opts;

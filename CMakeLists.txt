@@ -354,9 +354,13 @@ else()
   endif()
 endif()
 
-# Set ROSE_SHLIBPATH_VAR.  For now, it is just LD_LIBRARY_PATH.
-# LD_LIBRARY_PATH.
-set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+# Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.
+# Otherwise, it is just LD_LIBRARY_PATH.
+if(MSVC)
+  set(ROSE_SHLIBPATH_VAR "PATH")
+else()
+  set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+endif()
 
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
@@ -440,6 +444,12 @@ if (enable-python)
   if(with-python)
     find_package(PythonInterp)
   endif()
+endif()
+
+option(enable-x10 "Enable X10 language support in ROSE." OFF)
+if (enable-x10)
+  # TODO:
+  set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
 endif()
 
 # Other configuration options

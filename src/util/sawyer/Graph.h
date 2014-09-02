@@ -707,6 +707,14 @@ public:
         EdgeValue& value() { return value_; }
         const EdgeValue& value() const { return value_; }
         /** @} */
+
+        /** Determines if edge is a self-edge.
+         *
+         *  Returns true if this edge is a self edge.  A self edge is an edge whose source and target vertices are the same
+         *  vertex. */
+        bool isSelfEdge() const {
+            return source_ == target_;
+        }
     };
 
     /** Vertex node.
@@ -1154,7 +1162,7 @@ public:
      *  all edges that originate from or terminate at that vertex. The term "erasure" is Standard Template Library terminology
      *  for the withdrawal and deletion of an object from a container, and differs from the term "remove", which means to move
      *  an object to some near-the-end position in a container.  Any iterator that was pointing at the removed vertex or any of
-     *  its incident edges become invalid and should not be subsequently dereferenced, incremented, decremented, or compared;
+     *  its incident edges becomes invalid and should not be subsequently dereferenced, incremented, decremented, or compared;
      *  other iterators, edge and vertex, are unaffected.  The vertex with the highest ID number will be given the ID of the
      *  vertex that was removed in order to fill the gap left in the ID sequence.  This method returns an iterator for the
      *  vertex following the one that was deleted (possibly the one-past-last iterator if the last vertex was deleted).

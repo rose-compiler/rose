@@ -18,6 +18,10 @@ using boost::math::erf;
 using std::isnan;
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 /******************************************************************************************************************************
  *                                      RegionStats
  ******************************************************************************************************************************/
@@ -946,3 +950,6 @@ Partitioner::is_code(const ExtentMap &region, double *raw_vote_ptr, std::ostream
 
     return retval;
 }
+
+} // namespace
+} // namespace

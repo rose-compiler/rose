@@ -1,6 +1,8 @@
+#include "sage3basic.h"
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace DataFlowSemantics {
@@ -478,6 +480,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

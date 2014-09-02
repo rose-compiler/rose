@@ -155,6 +155,8 @@ int main(int argc, char *argv[]) {
     typedef Graph::VertexNodeIterator Vertex;
     typedef Graph::EdgeNodeIterator Edge;
 
+    Diagnostics::initialize();
+
     size_t nverts = 10000;
     size_t nedges = 10000000;
     bool showGraph = false;

@@ -12,6 +12,8 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
+using namespace rose::BinaryAnalysis;
+
 size_t RSIM_Thread::next_sequence_number = 1;
 
 /* Constructor */

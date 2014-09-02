@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
@@ -562,6 +563,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     return retval;
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

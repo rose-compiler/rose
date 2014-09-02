@@ -10,6 +10,9 @@
 
 #include <inttypes.h>
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. Although the SMTSolver class was originally
@@ -139,5 +142,8 @@ private:
     FILE *debug;
     void init();
 };
+
+} // namespace
+} // namespace
 
 #endif

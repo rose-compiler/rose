@@ -5,10 +5,12 @@
 #include "integerOps.h"
 #include "Registers.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** A policy for x86InstructionSemantics.
  *
  *  This policy keeps track of which registers (or parts of registers) are initialized. */
-
 namespace FindRegisterDefs {
 
 /******************************************************************************************************************************
@@ -775,6 +777,8 @@ public:
     }
 };
 
-}; // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

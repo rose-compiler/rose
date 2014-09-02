@@ -529,9 +529,7 @@
 /* Location of ROSE Compile Tree. */
 #define ROSE_COMPILE_TREE_PATH ${ROSE_TOP_BINARY_DIR}
 
-/* Variable like LD_LIBRARY_PATH */
-//AS Don't know what to do with this
-//ZG Setting to LD_LIBRARY_PATH for now.
+/* PATH on Windows, LD_LIBRARY_PATH everywhere else. */
 #define ROSE_SHLIBPATH_VAR "${ROSE_SHLIBPATH_VAR}"
 
 /* Whether to use the new EDG version 4.x */

@@ -18,7 +18,8 @@ class X
    };
 #endif
 
-#if 0
+#if 1
+// MSVC has different friend function symbol injection than GNU.
 template <typename T>
 bool operator== (T a,int b)
    {
