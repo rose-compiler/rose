@@ -12,5 +12,8 @@
 // static-duration variable, a thread-local object can be initialized using a constructor and 
 // destroyed using a destructor.
 
-#error "NEED AND EXAMPLE OF THIS!"
+// #error "NEED AND EXAMPLE OF THIS!"
+
+// Example of thread_local keyword as storage modifier.
+thread_local unsigned int rage = 1;
 

@@ -6,6 +6,10 @@
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 std::ostream&
 operator<<(std::ostream &o, const SMTSolver::Exception &e)
 {
@@ -190,3 +194,6 @@ SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const 
         exprs.push_back(expr);
     return satisfiable(exprs);
 }
+
+} // namespace
+} // namespace

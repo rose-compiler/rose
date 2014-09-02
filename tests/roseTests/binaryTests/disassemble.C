@@ -35,11 +35,12 @@
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 
-static Sawyer::Message::Facility mlog("tool");          // diagnostics at the tool level; further initialization in main()
+static Sawyer::Message::Facility mlog; // diagnostics at the tool level; initialization in main()
 
 enum DisassembleDriver { DDRIVE_PD, DDRIVE_DP, DDRIVE_D, DDRIVE_NONE };
 enum SyscallMethod { SYSCALL_NONE, SYSCALL_LINUX32 };
@@ -339,7 +340,7 @@ function_url_attr(SgAsmFunction *func)
 /* Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
  * control flow edges within the function. */
 static std::string
-dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::ControlFlow::Graph &global_cfg,
+dump_function_node(std::ostream &sout, SgAsmFunction *func, rose::BinaryAnalysis::ControlFlow::Graph &global_cfg,
                    bool verbose) 
 {
     using namespace StringUtility;
@@ -484,13 +485,13 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
          * non-fall-throughs are orange. We could have just as easily used Boost's depth_first_search(), but our nested loops
          * here allow us to short circuit the traversal and consider only the edges originating from blocks within this
          * function. */
-        boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+        boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
             SgAsmBlock *src_block = get(boost::vertex_name, global_cfg, *vi);
             SgAsmFunction *src_func = src_block->get_enclosing_function();
             if (src_func==func) {
                 rose_addr_t src_fallthrough_va = src_block->get_fallthrough_va();
-                boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
+                boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
                 for (boost::tie(ei, ei_end)=out_edges(*vi, global_cfg); ei!=ei_end; ++ei) {
                     SgAsmBlock *dst_block = get(boost::vertex_name, global_cfg, target(*ei, global_cfg));
                     SgAsmFunction *dst_func = dst_block->get_enclosing_function();
@@ -516,7 +517,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, BinaryAnalysis::Cont
  * out of the specified function. */
 static void
 dump_function_cfg(const std::string &fileprefix, SgAsmFunction *func,
-                  BinaryAnalysis::ControlFlow::Graph &global_cfg)
+                  rose::BinaryAnalysis::ControlFlow::Graph &global_cfg)
 {
     using namespace StringUtility;
 
@@ -537,12 +538,12 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunction *func,
      * to either the entry node of another function or to the address of a block which has not been disassembled. The nodes
      * for the former case are collapsed function nodes with names beginning with "F"; while the latter case nodes have names
      * beginning with "B" and are shaded pink for higher visibility. */
-    boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+    boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *src_block = get(boost::vertex_name, global_cfg, *vi);
         SgAsmFunction *src_func = src_block->get_enclosing_function();
         if (src_func==func) {
-            boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
+            boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(*vi, global_cfg); ei!=ei_end; ++ei) {
                 SgAsmBlock *dst_block = get(boost::vertex_name, global_cfg, target(*ei, global_cfg));
                 SgAsmFunction *dst_func = dst_block->get_enclosing_function();
@@ -588,19 +589,19 @@ static void
 dump_CFG_CG(SgNode *ast)
 {
     using namespace StringUtility;
-    typedef BinaryAnalysis::ControlFlow::Graph CFG;
-    typedef BinaryAnalysis::FunctionCall::Graph CG;
+    typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
 
     /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
-    struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
-        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+    struct UnassignedBlockFilter: public rose::BinaryAnalysis::ControlFlow::VertexFilter {
+        bool operator()(rose::BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return !func || 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } unassigned_block_filter;
-    BinaryAnalysis::ControlFlow cfg_analyzer;
+    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
     CFG global_cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(ast);
 
@@ -612,7 +613,7 @@ dump_CFG_CG(SgNode *ast)
     std::stringstream sout;
     sout <<"digraph callgraph {\n"
          <<"node [ shape = box ];\n";
-    CG cg = BinaryAnalysis::FunctionCall().build_cg_from_cfg<CG>(global_cfg);
+    CG cg = rose::BinaryAnalysis::FunctionCall().build_cg_from_cfg<CG>(global_cfg);
     {
         boost::graph_traits<CG>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
@@ -721,8 +722,8 @@ main(int argc, char *argv[])
      * can be controlled by the same command-line switches that control ROSE.
      *------------------------------------------------------------------------------------------------------------------------*/
     rose::Diagnostics::initialize();                    // rose has to be initialize for the next line to work
-    mlog.initStreams(rose::Diagnostics::destination);
-    rose::Diagnostics::facilities.insertAndAdjust(mlog);
+    mlog = Sawyer::Message::Facility("tool", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Declare command-line switches.
@@ -824,7 +825,7 @@ main(int argc, char *argv[])
                          "from one another by colons."));
                     
     switches.insert(Switch("log", 'L')
-                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::facilities))
+                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::mfacilities))
                     .argument("logspec")
                     .whichValue(Sawyer::CommandLine::SAVE_ALL)
                     .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
@@ -1460,14 +1461,14 @@ main(int argc, char *argv[])
 #if 1 /* TESTING NEW FEATURES [RPM 2011-05-23] */
     {
         struct CalculateDominance: public AstSimpleProcessing {
-            BinaryAnalysis::ControlFlow &cfg_analysis;
-            BinaryAnalysis::Dominance &dom_analysis;
-            CalculateDominance(BinaryAnalysis::ControlFlow &cfg_analysis,
-                               BinaryAnalysis::Dominance &dom_analysis)
+            rose::BinaryAnalysis::ControlFlow &cfg_analysis;
+            rose::BinaryAnalysis::Dominance &dom_analysis;
+            CalculateDominance(rose::BinaryAnalysis::ControlFlow &cfg_analysis,
+                               rose::BinaryAnalysis::Dominance &dom_analysis)
                 : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
                 {}
             void visit(SgNode *node) {
-                using namespace BinaryAnalysis;
+                using namespace rose::BinaryAnalysis;
                 typedef ControlFlow::Graph CFG;
                 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunction *func = isSgAsmFunction(node);
@@ -1481,8 +1482,8 @@ main(int argc, char *argv[])
                 }
             }
         };
-        BinaryAnalysis::ControlFlow cfg_analysis;
-        BinaryAnalysis::Dominance   dom_analysis;
+        rose::BinaryAnalysis::ControlFlow cfg_analysis;
+        rose::BinaryAnalysis::Dominance   dom_analysis;
         //dom_analysis.set_debug(stderr);
         CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
     }
@@ -1493,16 +1494,16 @@ main(int argc, char *argv[])
          *       1. compute the CFG over that function
          *       2. calculate the DG with that CFG
          *       3. apply the DG to the AST */
-        BinaryAnalysis::ControlFlow cfg_analysis;
-        BinaryAnalysis::Dominance dom_analysis;
+        rose::BinaryAnalysis::ControlFlow cfg_analysis;
+        rose::BinaryAnalysis::Dominance dom_analysis;
         //dom_analysis.set_debug(stderr);
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(interp);
         for (size_t i=0; i<functions.size(); i++) {
             SgAsmFunction *func = functions[i];
-            BinaryAnalysis::ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
-            BinaryAnalysis::ControlFlow::Vertex start = (BinaryAnalysis::ControlFlow::Vertex)0;
+            rose::BinaryAnalysis::ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
+            rose::BinaryAnalysis::ControlFlow::Vertex start = (rose::BinaryAnalysis::ControlFlow::Vertex)0;
             ASSERT_require(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, start);
+            rose::BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, start);
             dom_analysis.clear_ast(func);
             dom_analysis.apply_to_ast(dg);
         }
@@ -1513,9 +1514,9 @@ main(int argc, char *argv[])
          *     1. Compute the CFG over the entire AST
          *     2. calculate the DG starting with the program entry point
          *     3. apply the DG to the AST */
-        BinaryAnalysis::ControlFlow cfg_analysis;
-        BinaryAnalysis::ControlFlow::Graph global_cfg = cfg_analysis.build_graph(interp);
-        BinaryAnalysis::Dominance dom_analysis;
+        rose::BinaryAnalysis::ControlFlow cfg_analysis;
+        rose::BinaryAnalysis::ControlFlow::Graph global_cfg = cfg_analysis.build_graph(interp);
+        rose::BinaryAnalysis::Dominance dom_analysis;
         dom_analysis.set_debug(stderr);
         cfg_analysis.cache_vertex_descriptors(global_cfg);
         dom_analysis.clear_ast(interp);
@@ -1525,9 +1526,9 @@ main(int argc, char *argv[])
             if (func->get_reason() & SgAsmFunction::FUNC_ENTRY_POINT) {
                 SgAsmBlock *block = func->get_entry_block();
                 ASSERT_not_null(block);
-                BinaryAnalysis::ControlFlow::Vertex start = block->get_cached_vertex();
+                rose::BinaryAnalysis::ControlFlow::Vertex start = block->get_cached_vertex();
                 ASSERT_require(get(boost::vertex_name, global_cfg, start)==block);
-                BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(global_cfg, start);
+                rose::BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(global_cfg, start);
                 dom_analysis.apply_to_ast(dg);
             }
         }
@@ -1551,8 +1552,8 @@ main(int argc, char *argv[])
         std::cout <<ShowFunctions(block);
 
     if (!do_quiet && block) {
-        typedef BinaryAnalysis::ControlFlow::Graph CFG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
+        typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
+        CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
         unparser.set_registers(disassembler->get_registers());
         unparser.add_function_labels(block);
@@ -1694,7 +1695,7 @@ main(int argc, char *argv[])
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
     
-    size_t solver_ncalls = SMTSolver::get_class_stats().ncalls;
+    size_t solver_ncalls = rose::BinaryAnalysis::SMTSolver::get_class_stats().ncalls;
     if (solver_ncalls>0)
         mlog[INFO] <<"SMT solver was called " <<plural(solver_ncalls, "times") <<"\n";
     return 0;

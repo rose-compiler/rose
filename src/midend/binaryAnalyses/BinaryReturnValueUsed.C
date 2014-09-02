@@ -14,8 +14,7 @@ namespace BinaryAnalysis {
 namespace ReturnValueUsed {
 
 // FIXME[Robb P. Matzke 2014-02-18]: Remove this when all of BinaryAnalsis is inside of "rose"
-using namespace ::BinaryAnalysis;
-using namespace ::BinaryAnalysis::InstructionSemantics2;
+using namespace InstructionSemantics2;
 
 // FIXME[Robb P. Matzke 2014-02-18]: These should all be template parameters
 typedef ControlFlow::BlockGraph Cfg;

@@ -122,7 +122,7 @@ HEADER_BINARY_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool *complete,
-                                                             MemoryMap *initial_memory=NULL);
+                                                             const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
                 virtual bool is_unknown() const;
 HEADER_BINARY_INSTRUCTION_END
@@ -3627,7 +3627,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool* complete,
-                                                             MemoryMap *initial_memory=NULL) /*override*/;
+                                                             const MemoryMap *initial_memory=NULL) /*override*/;
                 virtual bool is_unknown() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
@@ -3673,7 +3673,7 @@ HEADER_BINARY_M68K_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool* complete,
-                                                             MemoryMap *initial_memory=NULL) /*override*/;
+                                                             const MemoryMap *initial_memory=NULL) /*override*/;
                 virtual bool is_unknown() const /*override*/;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
@@ -3928,8 +3928,8 @@ HEADER_TYPE_START
 
         public:
                 virtual void check() const;
-                virtual std::string toString() const { abort(); }       // ROSETTA doesn't support pure virtual methods
-                virtual size_t get_nBits() const { abort(); }           // ROSETTA doesn't support pure virtual methods
+                virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+                virtual size_t get_nBits() const { abort(); return -1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
                 virtual size_t get_nBytes() const;
 
                 template<class Type>                                    // Type is a subclass of SgAsmType

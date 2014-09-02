@@ -6,6 +6,9 @@
 #include "InstructionEnumsMips.h"
 #include "sageBuilderAsm.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 class DisassemblerMips: public Disassembler {
 public:
     DisassemblerMips() { init(); }
@@ -132,5 +135,8 @@ protected:
     /** Address of instruction currently being disassembled. This is set each time disassembleOne() is called. */
     rose_addr_t insn_va;
 };
+
+} // namespace
+} // namespace
 
 #endif

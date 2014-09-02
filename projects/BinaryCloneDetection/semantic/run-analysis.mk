@@ -45,3 +45,33 @@ $(fs_targets): %.fs.out: %
 	fi
 	@mv $@.tmp $@
 	@echo "func-similarities for $< completed"
+
+###############################################################################################################################
+as_targets=$(addsuffix .as.out, $(INPUTS))
+
+api-sim: $(as_targets)
+
+$(as_targets): %.as.out: %
+	@echo "Output was not redirected to a file" >$@.tmp
+	@echo "+ $(BINDIR)/105-api-similarity --progress $(RUN_FLAGS) -- $(DBNAME) < $<" >&2
+	@if [ "$(REDIRECT)" = yes ]; then								\
+		$(BINDIR)/105-api-similarity --progress $(RUN_FLAGS) -- $(DBNAME) < $< >$@.tmp 2>&1;	\
+	else												\
+		$(BINDIR)/105-api-similarity --progress $(RUN_FLAGS) -- $(DBNAME) < $<;			\
+	fi
+	@mv $@.tmp $@
+	@echo "api-similarities for $< completed"       
+
+###############################################################################################################################
+ca_targets=$(INPUTS)
+
+ca-computation: $(ca_targets)
+
+$(ca_targets):  
+	@echo "+ $(BINDIR)/110_compute_aggregate $(RUN_FLAGS) -- postgresql:///$@" 
+	$(BINDIR)/110_compute_aggregate $(RUN_FLAGS) -- postgresql:///$@;		
+	@echo "ca-computation for $@ completed"       
+
+
+
+

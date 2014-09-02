@@ -86,7 +86,7 @@ main(int argc, char *argv[])
     time_t start_time = time(NULL);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     SqlDatabase::TransactionPtr tx = conn->transaction();
-    
+
     // Save ourself in the history if we're modifying the database.
     int64_t cmd_id=-1;
     if (opt.delete_old_data)
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
                  " where exclude." + parts.back() + " is null";
     }
     tx->execute(stmt1);
-    
+
     // Create pairs of function IDs for those functions which have been tested and for which no similarity measurement has been
     // computed.  (FIXME: We should probably recompute similarity that might have changed due to rerunning tests or running the
     // same function but with more input groups. [Robb P. Matzke 2013-06-19])

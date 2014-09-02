@@ -7,6 +7,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+using namespace rose::BinaryAnalysis;
+
 /** Creates text sections from supplied instructions.
  *
  *  The supplied instructions are organized into zero or more text sections such that none of the sections has more than @p

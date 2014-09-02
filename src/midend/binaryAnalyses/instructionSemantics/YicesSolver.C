@@ -10,6 +10,9 @@
 #define strtoull _strtoui64
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
 using namespace InsnSemanticsExpr;
 
 void
@@ -328,7 +331,6 @@ YicesSolver::out_number(std::ostream &o, const TreeNodePtr &tn)
 void
 YicesSolver::out_expr(std::ostream &o, const TreeNodePtr &tn)
 {
-    using namespace InsnSemanticsExpr;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
@@ -517,7 +519,6 @@ YicesSolver::out_sext(std::ostream &o, const InternalNodePtr &in)
 void
 YicesSolver::out_uext(std::ostream &o, const InternalNodePtr &in)
 {
-    using namespace InsnSemanticsExpr;
     assert(in && 2==in->nchildren());
     assert(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
     assert(in->child(0)->get_value() > in->child(1)->get_nbits());
@@ -684,7 +685,6 @@ yices_expr
 YicesSolver::ctx_expr(const TreeNodePtr &tn)
 {
     yices_expr retval = 0;
-    using namespace InsnSemanticsExpr;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
     if (ln) {
@@ -1020,3 +1020,6 @@ YicesSolver::ctx_read(const InternalNodePtr &in)
     return retval;
 }
 #endif
+
+} // namespace
+} // namespace
