@@ -1,5 +1,5 @@
-// DQ (2/14/2014): Required for access to uint32_t and u_char on Rhel5 systems.
-#include <linux/types.h>
+// // DQ (2/14/2014): Required for access to uint32_t and u_char on Rhel5 systems.
+// #include <linux/types.h>
 
 /* RPM (3/26/2014): C99 fixed width types are in either <inttypes.h> or <stdint.h> on Debian systems. "u_char" is not
  * a standard type and not defined in <inttypes.h> or <stdint.h>, at least not on Debian Squeeze, so I've replaced
