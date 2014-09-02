@@ -23,7 +23,7 @@ namespace Cmdline {
     REMOVE_OPTION_FROM_ARGV = 1   ///< Remove the CLI option from the input argv
   };
 
-  extern int verbose;
+  extern ROSE_DLL_API int verbose;
 
   void
   makeSysIncludeList(
@@ -110,26 +110,26 @@ namespace Cmdline {
     /** Targeted for src/frontend/OpenFortranParser_SAGE_Connection/jserver.C,
      */
     namespace Ofp {
-      extern std::list<std::string> jvm_options;
+      extern ROSE_DLL_API std::list<std::string> jvm_options;
 
-      void
+      ROSE_DLL_API void
       StripRoseOptions (std::vector<std::string>& argv);
 
-      std::string
+      ROSE_DLL_API std::string
       GetRoseClasspath();
 
-      void
+      ROSE_DLL_API void
       Process (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:fortran:ofp:jvm_options
        */
-      void
+      ROSE_DLL_API void
       ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:fortran:ofp:enable_remote_debugging
        *  Enable remote debugging of the Java Virtual Machine (JVM).
        */
-      void
+      ROSE_DLL_API void
       ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
     } // namespace Rose::Cmdline::Fortran::OpenFortranParser
   } // namespace Rose::Cmdline::Fortran
@@ -323,32 +323,32 @@ namespace Cmdline {
     /** Targeted for src/frontend/ECJ_ROSE_Connection/jserver.C,
      */
     namespace Ecj {
-      extern bool batch_mode;
-      extern std::list<std::string> jvm_options;
+      extern ROSE_DLL_API bool batch_mode;
+      extern ROSE_DLL_API std::list<std::string> jvm_options;
 
-      void
+      ROSE_DLL_API void
       StripRoseOptions (std::vector<std::string>& argv);
 
-      std::string
+      ROSE_DLL_API std::string
       GetRoseClasspath();
 
-      void
+      ROSE_DLL_API void
       Process (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:batch_mode
        */
-      void
+      ROSE_DLL_API void
       ProcessBatchMode (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:jvm_options
        */
-      void
+      ROSE_DLL_API void
       ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:enable_remote_debugging
        *  Enable remote debugging of the Java Virtual Machine (JVM).
        */
-      void
+      ROSE_DLL_API void
       ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
     }
   } // namespace Rose::Cmdline::Java
@@ -362,6 +362,22 @@ namespace Cmdline {
     // -rose:x10
     void
     ProcessX10Only (SgProject* project, std::vector<std::string>& argv);
+
+    namespace X10c {
+
+    extern std::list<std::string> jvm_options;
+
+    std::string
+    GetRoseClasspath();
+
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    /** -rose:java:ecj:jvm_options
+     */
+    void
+    ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
+    } // namespace Rose::Cmdline::X10::X10c
   } // namespace Rose::Cmdline::X10
 
 } // namespace Rose::Cmdline

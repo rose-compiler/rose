@@ -24,7 +24,7 @@ SgAsmInstruction::get_successors(bool *complete) {
  *  might want to override this to do something more sophisticated. */
 std::set<rose_addr_t>
 SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
-                                 MemoryMap *initial_memory/*=NULL*/)
+                                 const MemoryMap *initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;
