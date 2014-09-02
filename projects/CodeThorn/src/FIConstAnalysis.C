@@ -480,7 +480,6 @@ bool FIConstAnalysis::isConstVal(SgExpression* node) {
 
 EvalValueType FIConstAnalysis::eval(SgExpression* node) {
   EvalValueType res;
-  stringstream watch;
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
@@ -491,13 +490,14 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     if(option_multiconstanalysis) {
       // refinement for special cases handled by multi-const analysis
       if(isRelationalOperator(node)) {
-        EvalValueType res2;
+        EvalValueType res2=AType::Top();
         if(isSgVarRefExp(lhs) && isConstVal(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
         if(isConstVal(lhs) && isSgVarRefExp(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
         if(!res2.isTop()) {
           // found a more precise result with multi-const analysis results
+          ROSE_ASSERT(!res2.isBot());
           return res2;
         }
       }
