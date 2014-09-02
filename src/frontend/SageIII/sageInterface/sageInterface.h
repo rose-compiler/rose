@@ -213,7 +213,7 @@ struct hash_nodeptr
    ROSE_DLL_API SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
 
 #if 0
- // DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+ // DQ (8/13/2013): This function does not make since any more, now that we have made the symbol
  // table handling more precise and we have to provide template parameters for any template lookup.
  // We also have to know if we want to lookup template classes, template functions, or template 
  // member functions (since each have specific requirements).
