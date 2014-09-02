@@ -37,8 +37,10 @@ namespace XXX
      class UnstructuredBlockPartitioner 
         {
           public:
+            // DQ (8/31/2014): These two statements have unparse the default template argument and failed to name qualify it.
+            // Note that this is unparsed as: typedef boost::function< double (const ::std_xxx::vector < Extents_t , allocator< Extents_t > > &) > CostFunction;
                typedef boost::function<double (std_xxx::vector<Extents_t> const &)> CostFunction;
-
+            // Note that this is unparsed as: boost::function< double (const ::std_xxx::vector < Extents_t , allocator< Extents_t > > &) > CostFunction_var;
                boost::function<double (std_xxx::vector<Extents_t> const &)> CostFunction_var;
         };
 
