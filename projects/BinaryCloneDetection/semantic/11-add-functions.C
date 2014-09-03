@@ -9,6 +9,7 @@
 
 #include "vectorCompression.h"
 
+using namespace rose;
 using namespace CloneDetection;
 using namespace rose::BinaryAnalysis;
 

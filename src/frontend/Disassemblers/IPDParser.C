@@ -3,6 +3,10 @@
 #include "Partitioner.h"
 #include "AssemblerX86.h"       /* Needed to assemble the "successors" program in parse_Successors() */
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 std::ostream&
 operator<<(std::ostream &o, const Partitioner::IPDParser::Exception &e)
 {
@@ -348,3 +352,5 @@ Partitioner::IPDParser::parse_Successors()
     return true;
 }
 
+} // namespace
+} // namespace

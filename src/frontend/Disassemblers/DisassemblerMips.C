@@ -4,8 +4,11 @@
 #include "integerOps.h"
 #include "Diagnostics.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 using namespace IntegerOps;
-using namespace rose::Diagnostics;
+using namespace Diagnostics;
 
 class DisassemblerMips;
 
@@ -3591,6 +3594,9 @@ void
 DisassemblerMips::init()
 {
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
+    REG_IP = *get_registers()->lookup("pc");
+    REG_SP = *get_registers()->lookup("sp");
+
     set_wordsize(4);
     set_alignment(4);
     set_sex(ByteOrder::ORDER_MSB);
@@ -3860,3 +3866,6 @@ DisassemblerMips::init()
 //   024 = W    word fixed point
 //   025 = L    long fixed point
 //   026 = PS   pair of single precision
+
+} // namespace
+} // namespace

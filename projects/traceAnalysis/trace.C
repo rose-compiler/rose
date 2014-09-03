@@ -34,6 +34,8 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
+using namespace rose::BinaryAnalysis;
+
 
 #if 0
 // This code does not compile (documentation only).
@@ -253,6 +255,7 @@ SgAsmGenericFile* generatePeExecutable(const std::string &name, const Disassembl
 int
 main(int argc, char* argv[])
    {
+     rose::Diagnostics::initialize();                 // because we're not calling frontend()
      if (argc != 2)
         {
           fprintf(stderr, "Usage: %s <trace file>\n", argv[1]);

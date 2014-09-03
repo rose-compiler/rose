@@ -5,6 +5,10 @@
 #include "Disassembler.h"
 #include <sawyer/Optional.h>
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 #ifndef NAN
 #define INFINITY (DBL_MAX+DBL_MAX)
 #define NAN (INFINITY-INFINITY)
@@ -145,7 +149,9 @@ protected:
         BasicBlock *bblock;                     /**< Block to which this instruction belongs, if any. */
 
         /* These methods are forwarded to the underlying instruction node for convenience. */
-        Disassembler::AddressSet get_successors(bool *complete) const { return node->get_successors(complete); }
+        Disassembler::AddressSet get_successors(bool *complete) const {
+            return node->get_successors(complete);
+        }
         rose_addr_t get_address() const { return node->get_address(); }
         size_t get_size() const { return node->get_size(); }
         bool terminates_basic_block() const { return node->terminates_basic_block(); }
@@ -1894,5 +1900,9 @@ public:
 public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
+
+} // namespace
+} // namespace
+
 
 #endif

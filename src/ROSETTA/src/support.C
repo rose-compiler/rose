@@ -308,6 +308,13 @@ Grammar::setUpSupport ()
      SymbolTable.setDataPrototype("bool","case_insensitive","= false",
                             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (7/12/2014): This supports name qualification (see test2014_90.C) and the use of SgAliasSymbols before
+  // of after their use in the AST relative to the causal nodes (SgUsingDirectiveStatement, SgUsingDeclarationStatement, 
+  // SgBaseClass, etc.).  This is a requirement imposed because we must support the generation of source code
+  // from the AST (and correct name qualification as a result).
+     SymbolTable.setDataPrototype("static SgNodeSet","aliasSymbolCausalNodeSet", "",
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
      TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
      TypeTable.setAutomaticGenerationOfConstructor(false);
@@ -1264,7 +1271,7 @@ Grammar::setUpSupport ()
 
   // RPM (12/29/2009): Switch to control how aggressive the disassembler is. It takes a list of words based loosely
   // on the constants in the Disassembler::SearchHeuristic enum.
-     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= Disassembler::SEARCH_DEFAULT",
+     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely

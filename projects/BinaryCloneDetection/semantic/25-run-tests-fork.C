@@ -23,6 +23,7 @@
 
 using namespace CloneDetection;
 using namespace CloneDetection::RunTests;
+using namespace rose::BinaryAnalysis;
 
 static bool sortedBySpecimen(const WorkItem &a, const WorkItem &b) {
     return a.specimen_id < b.specimen_id;

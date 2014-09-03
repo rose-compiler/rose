@@ -392,8 +392,8 @@ private:
      *                                  Instructions and disassembly
      **************************************************************************************************************************/
 private:
-    Disassembler *disassembler;                 /**< Disassembler to use for obtaining instructions */
-    Disassembler::InstructionMap icache;        /**< Cache of disassembled instructions */
+    rose::BinaryAnalysis::Disassembler *disassembler;                 /**< Disassembler to use for obtaining instructions */
+    rose::BinaryAnalysis::Disassembler::InstructionMap icache;        /**< Cache of disassembled instructions */
 
 public:
     /** Disassembles the instruction at the specified virtual address. For efficiency, instructions are cached by the
@@ -429,7 +429,7 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
      *  concurrently. However, the disassembler object which is returned can probably not be used concurrently by multiple
      *  threads. See documentation for Disassembler for thread safety details. */
-    Disassembler *get_disassembler() const {
+    rose::BinaryAnalysis::Disassembler *get_disassembler() const {
         return disassembler;
     }
 

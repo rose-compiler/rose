@@ -64,21 +64,22 @@ CloneDetection::PointerDetector* detect_pointers(SgAsmFunction*, const CloneDete
 void sig_handler(int signo);
 void add_builtin_functions(NameSet&);
 SgAsmGenericHeader* header_for_va(SgAsmInterpretation*, rose_addr_t va);
-Disassembler::AddressSet get_import_addresses(SgAsmInterpretation*, const NameSet &whitelist_names);
+rose::BinaryAnalysis::Disassembler::AddressSet get_import_addresses(SgAsmInterpretation*, const NameSet &whitelist_names);
 void overmap_dynlink_addresses(SgAsmInterpretation*, const InstructionProvidor&, FollowCalls, MemoryMap *ro_map /*in,out*/,
-                               rose_addr_t special_value, const Disassembler::AddressSet &whitelist_imports,
-                               Disassembler::AddressSet &whitelist /*out*/);
+                               rose_addr_t special_value, const rose::BinaryAnalysis::Disassembler::AddressSet &whitelist_imports,
+                               rose::BinaryAnalysis::Disassembler::AddressSet &whitelist /*out*/);
 OutputGroup fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
                       const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers,
-                      const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo,
-                      InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs);
+                      const AddressIdMap &entry2id, const rose::BinaryAnalysis::Disassembler::AddressSet &whitelist_exports,
+                      FuncAnalyses &funcinfo, InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg,
+                      ConsumedInputs &consumed_inputs);
 SqlDatabase::TransactionPtr checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer,
                                        InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs,
                                        Progress *progress, size_t ntests_ran, int64_t cmd_id);
 void runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDetectors &pointers, SgAsmFunction *func,
                 const FunctionIdMap &function_ids, InsnCoverage &insn_coverage /*in,out*/, DynamicCallGraph &dynamic_cg /*in,out*/,
                 Tracer &tracer /*in,out*/, ConsumedInputs &consumed_inputs /*in,out*/, SgAsmInterpretation *interp,
-                const Disassembler::AddressSet &whitelist_exports, int64_t cmd_id, InputGroup &igroup,
+                const rose::BinaryAnalysis::Disassembler::AddressSet &whitelist_exports, int64_t cmd_id, InputGroup &igroup,
                 FuncAnalyses funcinfo, const InstructionProvidor &insns, MemoryMap *ro_map, const AddressIdMap &entry2id,
                 OutputGroups &ogroups /*in,out*/);
 

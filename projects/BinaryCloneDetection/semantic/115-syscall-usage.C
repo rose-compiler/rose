@@ -27,6 +27,7 @@ static
 unsigned int ids_reserved_for_syscalls = 1000;
 
 using namespace boost;
+using namespace rose;
 
 typedef boost::adjacency_list< boost::vecS,
                                boost::vecS,

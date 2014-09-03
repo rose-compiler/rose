@@ -21,6 +21,9 @@ int main()
 #include "BinaryFunctionCall.h"                 /* function call graphs */
 #include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 class IdaFile {
 public:
     IdaFile(int id): id(id) {}

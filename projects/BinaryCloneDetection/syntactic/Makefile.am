@@ -125,7 +125,7 @@ FailureDetectionSchema.C: compute-pairwise-precision.sql
 # Andreas is looking into whether any of these files are actually necessary or if they
 # can be removed from the source tree. [Robb Matzke, 2013-03-12]
 EXTRA_DIST = 					\
-        compute-pairwise-precision.sql          \                                          
+        compute-pairwise-precision.sql          \
 	callLSH.h				\
 	collateByHash.C				\
 	createCloneDetectionVectorsBinary.h	\

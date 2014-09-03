@@ -126,5 +126,18 @@ namespace Java {
 
 }// ::Rose
 
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace X10 {
+namespace X10c {
+  extern SgSourceFile* X10c_globalFilePointer;
+}// ::Rose::Frontend::X10::X10c
+}// ::Rose::Frontend::X10
+}// ::Rose::Frontend
+}// ::Rose
+#endif
+
+
 #endif // ROSE_SAGESUPPORT_H
 

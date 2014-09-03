@@ -3189,8 +3189,8 @@ SgJavaUnionType::SgJavaUnionType ( const SgJavaUnionType & X )
 SgName
 SgJavaUnionType::get_name() const {
     string name = "";
-    for (size_t i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
-      if (i > 0) { // != p_type_list.begin())
+    for (size_t i = 0; i < p_type_list.size(); i++) {
+      if (i > 0) {
             name += " | ";
         }
         name += isSgClassDeclaration(isSgNamedType(p_type_list[i]) -> getAssociatedDeclaration()) -> get_name();
@@ -3208,8 +3208,8 @@ $CLASSNAME::get_mangled(void) const
 
      SgName mangled_name;
 
-     for (size_t i = 0; i < p_type_list.size(); i++) {// SgTypePtrList::iterator i = p_type_list.begin(); i != p_type_list.end(); i++) {
-         if (i > 0) { // != p_type_list.begin())
+     for (size_t i = 0; i < p_type_list.size(); i++) {
+         if (i > 0) {
              mangled_name += "_|_";
          }
          mangled_name += p_type_list[i] -> get_mangled();

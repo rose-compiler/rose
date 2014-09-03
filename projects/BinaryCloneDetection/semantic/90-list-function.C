@@ -5,6 +5,8 @@
 #include "DwarfLineMapper.h"
 #include <cerrno>
 
+using namespace rose;
+
 std::string argv0;
 
 static void

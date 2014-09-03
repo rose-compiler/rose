@@ -185,15 +185,6 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
-       // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
-          case V_SgNullptrValExp:
-             {
-               const SgNullptrValExp* nullptrValueExpression = isSgNullptrValExp(this);
-               ROSE_ASSERT(nullptrValueExpression != NULL);
-               s = "nullptr";
-               break;
-             }
-
        // DQ (8/19/2009): Added case
           case V_SgStringVal:
              {
@@ -1046,10 +1037,7 @@ cout.flush();
                               file->set_outputLanguage(SgFile::e_C_output_language);
 
                               file->set_C_only(true);
-#if 0
-                              printf ("Checking for UPC file extension: CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) = %s \n",CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) ? "true" : "false");
-                              printf ("   --- sourceFile->get_UPC_only() = %s \n",sourceFile->get_UPC_only() ? "true" : "false");
-#endif
+
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {
@@ -1511,6 +1499,18 @@ namespace Ecj {
 }// Rose
 #endif
 
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace X10 {
+namespace X10c {
+  extern void jserver_init();
+}// Rose::Frontend::X10::X10c
+}// Rose::Frontend::X10
+}// Rose::Frontend
+}// Rose
+#endif
+
 //! internal function to invoke the EDG frontend and generate the AST
 int
 SgProject::parse(const vector<string>& argv)
@@ -1631,6 +1631,9 @@ SgProject::parse(const vector<string>& argv)
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     Rose::Frontend::Java::Ecj::jserver_init();
 #endif
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+                    Rose::Frontend::X10::X10c::jserver_init();
+#endif
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
                     errorCode = parse();
@@ -1704,10 +1707,7 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
   // printf ("In the SgSourceFile constructor \n");
-     this->p_package = NULL;
-     this->p_import_list = NULL;
-     this->p_class_list = NULL;
-     
+
      set_globalScope(NULL);
 
   // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
@@ -4373,14 +4373,53 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] Building the X10 AST" << std::endl;
   #endif
+    if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
+        return 0;
+    }
+
+    ROSE_ASSERT(get_requires_C_preprocessor() == false);
+
+    vector<string> frontEndCommandLine;
+    frontEndCommandLine.push_back(p_argv[0]);
+
+    // Java does not use include files, so we can enforce this.
+    ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
+
+  // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
+#if 0
+    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+    // MH-20140424
+    // Add all of the specified source files
+    Rose_STL_Container<string> sourceFilenames = get_project()->get_sourceFileNameList();
+    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
+        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+        frontEndCommandLine.push_back(targetSourceFileToRemove);
+    }
+#endif
+
+#if 0
+    int size = frontEndCommandLine.size();
+    for (int i = 0; i < size; ++i) {
+        printf("%d : %s\n", i, frontEndCommandLine[i].c_str());
+    }
+#endif
 
   int argc = p_argv.size();
   char** argv = NULL;
 
-  CommandlineProcessing::
-      generateArgcArgvFromList(p_argv, argc, argv);
+        CommandlineProcessing::
+        generateArgcArgvFromList(frontEndCommandLine, argc, argv);
 
-  int status = x10_main(argc, argv);
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+        Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
+    ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
+#endif
+        int status = x10_main(argc, argv);
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+    Rose::Frontend::X10::X10c::X10c_globalFilePointer = NULL;
+#endif
+
   return status;
 }
 
@@ -4708,7 +4747,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Partitioner::disassembleInterpretation(interps[i]);
+            rose::BinaryAnalysis::Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 

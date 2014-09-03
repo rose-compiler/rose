@@ -11,6 +11,14 @@ linearDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 linearDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# disassembler using the new partitioner
+
+bin_PROGRAMS += recursiveDisassemble
+recursiveDisassemble_SOURCES = recursiveDisassemble.C
+recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
+recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # S-Record utilities
 
 bin_PROGRAMS += dumpSRecords
@@ -22,6 +30,14 @@ bin_PROGRAMS += fileToSRecords
 fileToSRecords_SOURCES = fileToSRecords.C
 fileToSRecords_CPPFLAGS = $(ROSE_INCLUDES)
 fileToSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# maximize bijection of two sets
+
+bin_PROGRAMS += maxBijection
+maxBijection_SOURCES = maxBijection.C
+maxBijection_CPPFLAGS = $(ROSE_INCLUDES)
+maxBijection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets

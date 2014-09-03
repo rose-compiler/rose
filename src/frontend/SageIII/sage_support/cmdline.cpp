@@ -26,6 +26,7 @@ ROSE_DLL_API int Rose::Cmdline::verbose = 0;
 ROSE_DLL_API bool Rose::Cmdline::Java::Ecj::batch_mode = false;
 ROSE_DLL_API std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
 ROSE_DLL_API std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
+std::list<std::string> Rose::Cmdline::X10::X10c::jvm_options;
 
 /*-----------------------------------------------------------------------------
  *  namespace Rose::Cmdline {
@@ -2777,6 +2778,79 @@ ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
   }
 }
 
+void
+Rose::Cmdline::X10::X10c::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing X10 compiler frontend commandline options" << std::endl;
+
+  ProcessJvmOptions(project, argv);
+}
+
+void
+Rose::Cmdline::X10::X10c::
+ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing X10 compiler frontend JVM commandline options" << std::endl;
+
+  std::string x10c_jvm_options = "";
+
+  bool has_x10c_jvm_options =
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          X10::option_prefix,
+          "x10c:jvm_options",
+          x10c_jvm_options,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_x10c_jvm_options)
+  {
+      if (SgProject::get_verbose() > 1)
+      {
+          std::cout
+              << "[INFO] Processing X10 compiler options: "
+              << "'" << x10c_jvm_options << "'"
+              << std::endl;
+      }
+
+      std::list<std::string> x10c_jvm_options_list =
+          StringUtility::tokenize(x10c_jvm_options, ' ');
+
+      Cmdline::X10::X10c::jvm_options.insert(
+          Cmdline::X10::X10c::jvm_options.begin(),
+          x10c_jvm_options_list.begin(),
+          x10c_jvm_options_list.end());
+  }// has_x10c_jvm_options
+}// Cmdline::X10::ProcessJvmOptions
+
+std::string
+Rose::Cmdline::X10::X10c::
+GetRoseClasspath ()
+{
+  std::string classpath = "-Djava.class.path=";
+
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+  classpath +=
+      std::string(X10_INSTALL_PATH) + "/lib/x10c.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/lpg.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast.java_1.0.0.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast_1.0.0.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.core_1.1.3.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.shrike_1.3.1.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/x10wala.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/org.eclipse.equinox.common_3.6.0.v20100503.jar";
+#endif // ROSE_BUILD_X10_LANGUAGE_SUPPORT
+
+  classpath += ":";
+
+  // Everything else?
+  classpath += ".";
+
+  return classpath;
+}
+
 /*-----------------------------------------------------------------------------
  *  namespace SgFile {
  *---------------------------------------------------------------------------*/
@@ -3279,7 +3353,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              SwitchGroup switches;
              switches.insert(Switch("rose:log")
                              .resetLongPrefixes("-")    // ROSE switches only support single hyphens
-                             .action(configureDiagnostics("rose:log", Diagnostics::facilities))
+                             .action(configureDiagnostics("rose:log", Diagnostics::mfacilities))
                              .argument("config"));
              std::vector<std::string> args;
              args.push_back("-rose:log");
@@ -4472,9 +4546,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
              set_disassemblerSearchHeuristics(heuristics);
-         } catch(const Disassembler::Exception &e) {
+         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
              fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
@@ -4489,7 +4563,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
              set_partitionerSearchHeuristics(heuristics);
          } catch(const std::string &e) {
              fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());

@@ -1772,6 +1772,7 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
+src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
