@@ -2,10 +2,12 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
-using namespace rose;                                   // temporary until this API lives inside the "rose" name space
-using namespace rose::Diagnostics;
+namespace rose {
+namespace BinaryAnalysis {
 
-Sawyer::Message::Facility AsmUnparser::mlog("AsmUnparser");
+using namespace Diagnostics;
+
+Sawyer::Message::Facility AsmUnparser::mlog;
 
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
@@ -70,8 +72,8 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
+        Diagnostics::mfacilities.insert(mlog);
     }
 }
 
@@ -1208,3 +1210,6 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
     }
     return enabled;
 }
+
+} // namespace
+} // namespace

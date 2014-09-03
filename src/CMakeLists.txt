@@ -18,7 +18,8 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
 # DQ (3/8/2014): Added new include path fo RoseAst.h used in sageInterface.C and sageBuilder.C files.
   ${CMAKE_SOURCE_DIR}/src/midend/astMatching
-  ${CMAKE_SOURCE_DIR}/src/util)
+  ${CMAKE_SOURCE_DIR}/src/util
+  ${CMAKE_SOURCE_DIR}/src/frontend)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -142,6 +143,7 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/SmallObject.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
@@ -279,6 +281,23 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/Diagnostics.C
      )
 
+set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUsageMap.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/BasicBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ControlFlowGraph.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Exception.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Function.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/InstructionProvider.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Modules.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesElf.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesM68k.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesPe.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesX86.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/OwnedDataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Partitioner.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Semantics.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Utility.C
+)
 
 
 set(roseDisassemblers_SRC
@@ -976,6 +995,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${virtualCFG_SRC}
  ${AstFromString_SRC}
  ${rose_support_src}
+ ${rosePartitioner2_SRC}
  ${roseDisassemblers_SRC}
  ${roseBinaryFormats_fileList_part0}
  ${roseBinaryLoader_SRC}

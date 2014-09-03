@@ -71,11 +71,14 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/Message.C			\
 	sawyer/ProgressBar.C			\
 	sawyer/Sawyer.C				\
+	sawyer/SmallObject.C			\
 	sawyer/useHeaders.C
 nobase_pkginclude_HEADERS   =			\
 	sawyer/Assert.h				\
 	sawyer/BitVector.h			\
 	sawyer/BitVectorSupport.h		\
+	sawyer/Cached.h				\
+	sawyer/Callbacks.h			\
 	sawyer/CommandLine.h			\
 	sawyer/DefaultAllocator.h		\
 	sawyer/Graph.h				\
@@ -93,6 +96,8 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/ProgressBar.h			\
 	sawyer/Sawyer.h				\
 	sawyer/SharedPointer.h			\
+	sawyer/SmallObject.h			\
+	sawyer/Stack.h				\
 	sawyer/WarningsOff.h			\
 	sawyer/WarningsRestore.h
 EXTRA_DIST += sawyer/CMakeLists.txt
