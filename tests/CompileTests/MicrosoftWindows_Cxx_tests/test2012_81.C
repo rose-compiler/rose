@@ -12,7 +12,7 @@ class X
 
 int main()
    {
-#if 0
+#if 1
      X<int> a(1);
      X<int> b(1.0);
 #endif

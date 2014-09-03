@@ -1,7 +1,7 @@
 
 // First test code for 2006
 
-#if 0
+#if 1
 // template<class NodeType>
 class DOTSubgraphRepresentation
    {

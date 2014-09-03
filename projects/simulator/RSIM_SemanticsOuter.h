@@ -5,7 +5,7 @@
 #include "MultiSemantics.h"
 
 #define RSIM_SEMANTICS_OUTER_BASE                                                                                              \
-    BinaryAnalysis::InstructionSemantics::MultiSemantics<                                                                      \
+    rose::BinaryAnalysis::InstructionSemantics::MultiSemantics<                                                                \
         RSIM_SEMANTICS_OUTER_0_VTYPE, RSIM_SEMANTICS_OUTER_0_STATE, RSIM_SEMANTICS_OUTER_0_POLICY,                             \
         RSIM_SEMANTICS_OUTER_1_VTYPE, RSIM_SEMANTICS_OUTER_1_STATE, RSIM_SEMANTICS_OUTER_1_POLICY,                             \
         RSIM_SEMANTICS_OUTER_2_VTYPE, RSIM_SEMANTICS_OUTER_2_STATE, RSIM_SEMANTICS_OUTER_2_POLICY,                             \

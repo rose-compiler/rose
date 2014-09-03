@@ -42,6 +42,8 @@
 #include "SymbolicSemantics.h"
 #include "SignAnalysisExample.h"
 
+using namespace rose;
+
 /* Monitors the CPU instruction pointer.  When it reaches a specified value analyze the function at the specified location. */
 class Analysis: public RSIM_Callbacks::InsnCallback {
 public:

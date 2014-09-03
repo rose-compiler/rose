@@ -4,10 +4,9 @@
 #include "Registers.h"
 #include "Diagnostics.h"
 
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
-using namespace rose::Diagnostics;
-
 using namespace rose;
+using namespace Diagnostics;
+using namespace BinaryAnalysis;
 
 static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
     const RegisterDescriptor &rdesc = reg->get_descriptor();

@@ -18,17 +18,8 @@ namespace A
           public:
             // template <typename T> friend bool operator== (T,T);
         };
-#if 0
-//   }
-// namespace A
-//   {
-     template <typename T>
-     bool operator== (T,T)
-        {
-          return false;
-        }
-#endif
-#if 0
+
+#if 1
      template <typename T>
      bool operator== (T,T)
         {

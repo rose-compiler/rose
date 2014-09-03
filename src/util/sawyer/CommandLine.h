@@ -596,7 +596,7 @@ typedef std::vector<ParsedValue> ParsedValues;
  *
  * @sa
  *  @ref parser_factories */
-class SAWYER_EXPORT ValueParser: public SharedFromThis<ValueParser> {
+class SAWYER_EXPORT ValueParser: public SharedObject, public SharedFromThis<ValueParser> {
 #include <sawyer/WarningsOff.h>
     ValueSaver::Ptr valueSaver_;
 #include <sawyer/WarningsRestore.h>

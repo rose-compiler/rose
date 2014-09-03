@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <boost/lexical_cast.hpp>
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace FindConstants {
+
 /** A LatticeElement contains the value of a register or memory location. The value can either be one of three types:
  *  1. An unknown value (X).  Each potential unknown value is given a unique identifying "name" (a positive integer) which
  *     distinguishes it from all other unknown values, whether they are equal or unequal.
@@ -1287,5 +1291,10 @@ public:
         FindConstantsPolicy::finishInstruction(insn);
     }
 };
+
+} // namespace
+} // namespace
+} // namespace
+
 
 #endif /* !findConstants_H */

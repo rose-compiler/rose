@@ -1,5 +1,11 @@
-// DQ (2/14/2014): Required for access to uint32_t and u_char on Rhel5 systems.
-#include <linux/types.h>
+// // DQ (2/14/2014): Required for access to uint32_t and u_char on Rhel5 systems.
+// #include <linux/types.h>
+
+/* RPM (3/26/2014): C99 fixed width types are in either <inttypes.h> or <stdint.h> on Debian systems. "u_char" is not
+ * a standard type and not defined in <inttypes.h> or <stdint.h>, at least not on Debian Squeeze, so I've replaced
+ * u_char below with "unsigned char". */
+#include <stdint.h>
+
 
 #if 0
 // DQ (2/22/2014): These are required for RedHat 6, but are redundant for RedHat 5 and cause an error.
@@ -90,7 +96,7 @@ test_cpuid(uint32_t i, uint32_t *buf)
 void
 test_cpuinfo(void)
 {
-    u_char    *vendor;
+    unsigned char *vendor;
     uint32_t   vbuf[5], cpu[4], model, ngx_cacheline_size;
 
     ngx_cacheline_size = 0;
@@ -103,7 +109,7 @@ test_cpuinfo(void)
 
     test_cpuid(0, vbuf);
 
-    vendor = (u_char *) &vbuf[1];
+    vendor = (unsigned char *) &vbuf[1];
 
     if (vbuf[0] == 0) {
         return;

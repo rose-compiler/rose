@@ -3,6 +3,7 @@
 #include "DispatcherX86.h"
 #include "integerOps.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -2137,5 +2138,6 @@ DispatcherX86::popFloatingPoint()
     operators->writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
 
+} // namespace
 } // namespace
 } // namespace

@@ -390,7 +390,7 @@ public:
             nvalues_set = true;
         }
     }
-    
+
     virtual void operator()(InputQueue &q, int igroup_id) /*override*/ {
         size_t nvalues = nvalues_set ? this->nvalues : q.size();
         if (nvalues > q.size()) {
@@ -471,7 +471,7 @@ public:
     QueueModifiers queue_modifiers;
     InputQueueName default_queue;
 };
-    
+
 int
 main(int argc, char *argv[])
 {

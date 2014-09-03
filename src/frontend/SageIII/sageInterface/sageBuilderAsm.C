@@ -1,9 +1,6 @@
-// tps (01/14/2010) : Switching from rose.h to sage3
 #include "sage3basic.h"
-
-// DQ (5/1/2010): This is required to support the function: SgAsmInstruction* SageBuilderAsm::buildMultibyteNopInstruction(int n)
 #include "InstructionEnumsX86.h"
-
+#include <boost/foreach.hpp>
 
 using namespace std;
 
@@ -664,4 +661,51 @@ SageBuilderAsm::makeExprListExp() {
 SgAsmExprListExp*
 SageBuilderAsm::buildExprListExpression() {
     return new SgAsmExprListExp();
+}
+
+SgAsmBlock*
+SageBuilderAsm::buildBasicBlock(const std::vector<SgAsmInstruction*> &insns) {
+    SgAsmBlock *bb = new SgAsmBlock;
+    if (!insns.empty()) {
+        bb->set_id(insns.front()->get_address());
+        bb->set_address(insns.front()->get_address());
+        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+            bb->get_statementList().push_back(insn);
+            insn->set_parent(bb);
+        }
+    }
+    return bb;
+}
+
+SgAsmStaticData*
+SageBuilderAsm::buildStaticData(rose_addr_t startVa, const SgUnsignedCharList &rawData) {
+    SgAsmStaticData *sd = new SgAsmStaticData;
+    sd->set_address(startVa);
+    sd->set_raw_bytes(rawData);
+    return sd;
+}
+
+SgAsmBlock*
+SageBuilderAsm::buildDataBlock(SgAsmStaticData *staticData) {
+    ASSERT_not_null(staticData);
+    SgAsmBlock *db = new SgAsmBlock;
+    db->set_id(staticData->get_address());
+    db->set_address(staticData->get_address());
+    db->get_statementList().push_back(staticData);
+    staticData->set_parent(db);
+    return db;
+}
+
+SgAsmFunction*
+SageBuilderAsm::buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*> &blocks) {
+    SgAsmFunction *func = new SgAsmFunction;
+    func->set_entry_va(entryVa);
+    if (!blocks.empty()) {
+        func->set_address(blocks.front()->get_address());
+        BOOST_FOREACH (SgAsmBlock *block, blocks) {
+            func->get_statementList().push_back(block);
+            block->set_parent(func);
+        }
+    }
+    return func;
 }

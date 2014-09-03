@@ -304,10 +304,10 @@ Multiplexer::addDestination(const DestinationPtr &destination) {
     std::vector<DestinationPtr> work(1, destination);
     while (!work.empty()) {
         DestinationPtr d = work.back();
-        if (get(d)==this)
+        if (getRawPointer(d)==this)
             throw std::runtime_error("cycle introduced in Sawyer::Multiplexer tree");
         work.pop_back();
-        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(get(d)))
+        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(getRawPointer(d)))
             work.insert(work.end(), seq->destinations_.begin(), seq->destinations_.end());
     }
     
@@ -479,7 +479,7 @@ Prefix::setProgramName() {
         programName_ = name;
     }
 #endif
-    if (programName_.getOrElse("").empty())
+    if (programName_.orElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
@@ -591,8 +591,8 @@ UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
-            retval = gang()->properties().interruptionStr.getOrDefault() +
-                     gang()->properties().lineTermination.getOrDefault();
+            retval = gang()->properties().interruptionStr.orDefault() +
+                     gang()->properties().lineTermination.orDefault();
             gang()->clear();
         }
     }
@@ -620,12 +620,12 @@ UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (mesg.isCanceled()) {
-            retval = props.cancelationStr.getOrDefault() +
-                     props.lineTermination.getOrDefault();
+            retval = props.cancelationStr.orDefault() +
+                     props.lineTermination.orDefault();
             gang()->clear();
         } else if (mesg.isComplete()) {
-            retval = props.completionStr.getOrDefault() +
-                     props.lineTermination.getOrDefault();
+            retval = props.completionStr.orDefault() +
+                     props.lineTermination.orDefault();
             gang()->clear();
         } else {
             gang()->emitted(mesg, props);
@@ -736,7 +736,7 @@ SAWYER_EXPORT void
 SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
     if (mesg.isComplete()) {
         int priority = LOG_ERR;
-        switch (props.importance.getOrElse(ERROR)) {
+        switch (props.importance.orElse(ERROR)) {
             case DEBUG: priority = LOG_DEBUG;   break;
             case TRACE: priority = LOG_DEBUG;   break;
             case WHERE: priority = LOG_DEBUG;   break;

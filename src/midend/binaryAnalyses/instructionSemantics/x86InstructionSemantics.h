@@ -11,6 +11,10 @@
 #include "integerOps.h"
 #include "AsmUnparser_compat.h" /* for unparseInstructionWithAddress() */
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
+
 static inline int numBytesInAsmType(SgAsmType* type) {
     ASSERT_not_null(type);
     return type->get_nBytes();
@@ -30,13 +34,10 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
     return segreg;
 }
 
-namespace BinaryAnalysis {
-    namespace InstructionSemantics {
-
 /** Translation class.  Translates x86 instructions to RISC-like operations and invokes those operations in the supplied
- *  semantic policy (a template argument).  See the BinaryAnalysis::InstructionSemantics name space for details. Apologies for
- *  the lack of documentation for this class.  You can at least find some examples in the semantics.C file of the
- *  tests/roseTests/binaryTests directory, among others. */
+ *  semantic policy (a template argument).  See the rose::BinaryAnalysis::InstructionSemantics name space for
+ *  details. Apologies for the lack of documentation for this class.  You can at least find some examples in the semantics.C
+ *  file of the tests/roseTests/binaryTests directory, among others. */
 template <typename Policy, template <size_t> class WordType>
 struct X86InstructionSemantics {
 #   ifdef Word
@@ -2542,6 +2543,8 @@ struct X86InstructionSemantics {
 
 #undef Word
         
-    } /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+
 #endif /* ROSE_X86INSTRUCTIONSEMANTICS_H */

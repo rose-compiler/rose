@@ -17,7 +17,7 @@ namespace std
 #endif
    }
 
-#if 0
+#if 1
 namespace std
    {
      template <typename T> bool operator== (T,int);
@@ -35,7 +35,7 @@ namespace std
    }
 #endif
 
-#if 0
+#if 1
 namespace std
    {
      template <typename T> bool operator== (T,int);
