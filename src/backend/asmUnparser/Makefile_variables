@@ -8,6 +8,7 @@ asmUnparser_la_sources=				\
 	$(asmUnparserPath)/unparseX86Asm.C	\
 	$(asmUnparserPath)/unparseArmAsm.C	\
 	$(asmUnparserPath)/unparsePowerpcAsm.C	\
+	$(asmUnparserPath)/unparseM68kAsm.C	\
 	$(asmUnparserPath)/unparseMipsAsm.C
 else
 asmUnparser_la_sources=$(asmUnparserPath)/dummyAsmUnparser.C

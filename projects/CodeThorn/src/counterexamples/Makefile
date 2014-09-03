@@ -1,4 +1,4 @@
-all: Problem14.log Problem15.log Problem16.log Problem17.log Problem18.log Problem19.log
+all: Problem28.log
 
 	# $(MAKE) clean && $(MAKE) -j1 Problem1.log
 	# $(MAKE) clean && $(MAKE) -j1 Problem2.log
@@ -26,7 +26,7 @@ csv:
           cp Problem$$i-qc.csv ../regressiondata/ ; \
         done
 
-RERS=$(patsubst %,Problem%.log, $(shell seq 13))
+RERS=$(patsubst %,Problem%.log, $(shell seq 54))
 rers: $(RERS)
 
 clean:

@@ -128,6 +128,7 @@ SgName appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgum
 
 //! Built in simple types
 ROSE_DLL_API SgTypeBool *  buildBoolType();
+ROSE_DLL_API SgTypeNullptr* buildNullptrType();
 ROSE_DLL_API SgTypeChar *  buildCharType();
 ROSE_DLL_API SgTypeDouble* buildDoubleType();
 ROSE_DLL_API SgTypeFloat*  buildFloatType();
@@ -168,6 +169,12 @@ ROSE_DLL_API SgPointerType* buildPointerType(SgType *base_type = NULL);
 
 //! Build a reference type
 ROSE_DLL_API SgReferenceType* buildReferenceType(SgType *base_type = NULL);
+
+//! Build a rvalue reference type
+ROSE_DLL_API SgRvalueReferenceType* buildRvalueReferenceType(SgType *base_type);
+
+//! Build a decltype reference type
+ROSE_DLL_API SgDeclType* buildDeclType(SgExpression *base_expression, SgType* base_type);
 
 // Liao, entirely phase out this function ! Build a modifier type with no modifiers set
 //SgModifierType* buildModifierType(SgType *base_type = NULL);
@@ -274,6 +281,10 @@ SgNullExpression* buildNullExpression_nfi();
 SgBoolValExp* buildBoolValExp(int value = 0);
 SgBoolValExp* buildBoolValExp(bool value = 0);
 SgBoolValExp* buildBoolValExp_nfi(int value);
+
+// DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+SgNullptrValExp* buildNullptrValExp();
+SgNullptrValExp* buildNullptrValExp_nfi();
 
 SgCharVal* buildCharVal(char value = 0);
 SgCharVal* buildCharVal_nfi(char value, const std::string& str);
@@ -687,6 +698,12 @@ SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
 //! This is part of Java specific operator support.
 SgJavaInstanceOfOp* buildJavaInstanceOfOp(SgExpression* exp = NULL, SgType* type = NULL);
 
+// DQ (7/24/2014): Adding support for c11 generic operands.
+ROSE_DLL_API SgTypeExpression *buildTypeExpression(SgType* type);
+
+// DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
+ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp(int parameter_number, int parameter_level );
+ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp_nfi(int parameter_number, int parameter_level );
 
 //@}
 
@@ -1247,6 +1264,8 @@ ROSE_DLL_API SgAsmStmt* buildMultibyteNopStatement( int n );
 SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
 // SgAccessModifier buildAccessModifier ( unsigned int access );
 
+// DQ (7/25/2014): Adding support for C11 static assertions.
+ROSE_DLL_API SgStaticAssertionDeclaration* buildStaticAssertionDeclaration(SgExpression* condition, const SgName & string_literal);
 
 //@}
 

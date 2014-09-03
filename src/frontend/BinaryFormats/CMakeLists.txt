@@ -44,5 +44,5 @@ set(roseBinaryFormats_SRC ${roseBinaryFormats_fileList_part0} )
 
 install(
   FILES  DataConversion.h IntelPinSupport.h MemoryMap.h ByteOrder.h
-         WorkLists.h
+         SRecord.h WorkLists.h
   DESTINATION include)

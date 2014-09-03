@@ -101,6 +101,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
+   $(top_builddir)/src/util/libroseSaywer.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(libroseBinaryLibraries)
 else
@@ -125,6 +126,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
+   $(top_builddir)/src/util/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
@@ -137,7 +139,7 @@ endif
 EXTRA_DIST = CMakeLists.txt extra.docs
 
 # Header files that need to be included in the distribution
-include_HEADERS = \
+pkginclude_HEADERS = \
      rose.h \
      roseInternal.h \
      rose_msvc.h \

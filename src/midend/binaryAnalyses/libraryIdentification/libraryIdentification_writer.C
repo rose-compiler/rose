@@ -465,11 +465,11 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
           MemoryMap *map = asmInterpretation->get_map(); /*map that was used durring disassembly*/
           ROSE_ASSERT(map!=NULL);
           ROSE_ASSERT(map->exists(startAddress));
-          std::pair<Extent, MemoryMap::Segment> me = map->at(startAddress);
-          startOffset = me.second.get_buffer_offset(me.first, startAddress);
+          const MemoryMap::Segments::Node &me1 = map->at(startAddress);
+          startOffset = me1.value().get_buffer_offset(me1.key(), startAddress);
           ROSE_ASSERT(map->exists(endAddress));
-          me = map->at(endAddress);
-          endOffset = me.second.get_buffer_offset(me.first, endAddress);
+          const MemoryMap::Segments::Node &me2 = map->at(endAddress);
+          endOffset = me2.value().get_buffer_offset(me2.key(), endAddress);
 #endif
 
           printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);

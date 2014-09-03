@@ -8,7 +8,7 @@ noinst_LTLIBRARIES =  libfailsafe.la
 libfailsafe_la_SOURCES = \
   failSafePragma.C
 
-include_HEADERS =  \
+pkginclude_HEADERS =  \
   failSafePragma.h
 
 clean-local:

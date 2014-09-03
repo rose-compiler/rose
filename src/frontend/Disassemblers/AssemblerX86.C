@@ -41,21 +41,14 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             SgAsmIntegerValueExpression *ee = isSgAsmIntegerValueExpression(e);
             std::ostringstream ss;
             ss <<"IntegerValue {value="
-               <<StringUtility::addrToString(ee->get_absolute_value(), ee->get_significant_bits())
+               <<StringUtility::addrToString(ee->get_absoluteValue(), ee->get_significantBits())
                <<"}";
             fprintf(f, ss.str().c_str());
             break;
         }
-        case V_SgAsmSingleFloatValueExpression: {
-            SgAsmSingleFloatValueExpression *ee = isSgAsmSingleFloatValueExpression(e);
-            fprintf(f, "SingleFloatValue {value=%g", ee->get_value());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmDoubleFloatValueExpression: {
-            SgAsmDoubleFloatValueExpression *ee = isSgAsmDoubleFloatValueExpression(e);
-            fprintf(f, "DoubleFloatValue {value=%g", ee->get_value());
+        case V_SgAsmFloatValueExpression: {
+            SgAsmFloatValueExpression *ee = isSgAsmFloatValueExpression(e);
+            fprintf(f, "FloatValue {value=%g", ee->get_nativeValue());
             printExpr(f, e, prefix, V_SgAsmValueExpression);
             fprintf(f, "}");
             break;
@@ -187,30 +180,10 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
 
         /*=== Register Reference Expressions ===*/
 
-        case V_SgAsmRegisterReferenceExpression: {
+        case V_SgAsmDirectRegisterExpression:
+        case V_SgAsmIndirectRegisterExpression: {
             fprintf(f, ", type=?");
             printExpr(f, e, prefix, V_SgAsmExpression);
-            break;
-        }
-        case V_SgAsmx86RegisterReferenceExpression: {
-            SgAsmx86RegisterReferenceExpression *ee = isSgAsmx86RegisterReferenceExpression(e);
-            fprintf(f, "x86RegisterReference {major=%u, minor=%u, bit_offset=%u nbits=%u", 
-                    ee->get_descriptor().get_major(), ee->get_descriptor().get_minor(),
-                    ee->get_descriptor().get_offset(), ee->get_descriptor().get_nbits());
-            printExpr(f, e, prefix, V_SgAsmRegisterReferenceExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmArmRegisterReferenceExpression: {
-            fprintf(f, "ArmRegisterReference {");
-            printExpr(f, e, prefix, V_SgAsmRegisterReferenceExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmPowerpcRegisterReferenceExpression: {
-            fprintf(f, "PowerpcRegisterReference {");
-            printExpr(f, e, prefix, V_SgAsmRegisterReferenceExpression);
-            fprintf(f, "}");
             break;
         }
 
@@ -448,7 +421,7 @@ bool
 AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *insn,
                       int64_t *disp_p/*out*/, int64_t *imm_p/*out*/) const
 {
-    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(expr);
+    SgAsmRegisterReferenceExpression    *rre = isSgAsmRegisterReferenceExpression(expr);
     SgAsmMemoryReferenceExpression      *mre = isSgAsmMemoryReferenceExpression(expr);
     SgAsmValueExpression                *ve  = isSgAsmValueExpression(expr);
     switch (od) {
@@ -544,11 +517,11 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("operand types ptr16:16, ptr16:32, ptr16:64 not implemented", insn);
 
         case od_m16_16:
-            return mre && isSgAsmTypeWord(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Word();
         case od_m16_32:
-            return mre && isSgAsmTypeDoubleWord(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86DoubleWord();
         case od_m16_64:
-            return mre && isSgAsmTypeQuadWord(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86QuadWord();
 
         case od_reg:
             throw Exception("operand type reg not implemented", insn);
@@ -577,7 +550,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 8==ive->get_significant_bits();
+                    return NULL!=ive && 8==ive->get_significantBits();
                 } else {
                     return *imm_p>=-128 && *imm_p<=127;
                 }
@@ -588,7 +561,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 16==ive->get_significant_bits();
+                    return NULL!=ive && 16==ive->get_significantBits();
                 } else {
                     return *imm_p>=-32768 && *imm_p<=32767;
                 }
@@ -599,7 +572,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 32==ive->get_significant_bits();
+                    return NULL!=ive && 32==ive->get_significantBits();
                 } else {
                     return *imm_p>=-2147483648LL && *imm_p<=2147483647LL;
                 }
@@ -610,7 +583,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(ve);
-                    return NULL!=ive && 64==ive->get_significant_bits();
+                    return NULL!=ive && 64==ive->get_significantBits();
                 } else {
                     return true;
                 }
@@ -636,46 +609,50 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             return (matches(od_m8, expr, insn, disp_p, imm_p) || matches(od_m16, expr, insn, disp_p, imm_p) ||
                     matches(od_m32, expr, insn, disp_p, imm_p) || matches(od_m64, expr, insn, disp_p, imm_p));
         case od_m8:
-            return mre && isSgAsmTypeByte(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Byte();
         case od_m16:
-            return mre && isSgAsmTypeWord(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Word();
         case od_m32:
-            return mre && (isSgAsmTypeDoubleWord(mre->get_type()) || isSgAsmTypeSingleFloat(mre->get_type()));
+            return mre &&
+                (mre->get_type()==SageBuilderAsm::buildTypeX86DoubleWord() ||
+                 mre->get_type()==SageBuilderAsm::buildTypeX86Float32());
         case od_m64:
-            return mre && (isSgAsmTypeQuadWord(mre->get_type()) || isSgAsmTypeDoubleFloat(mre->get_type()));
+            return mre &&
+                (mre->get_type()==SageBuilderAsm::buildTypeX86QuadWord() ||
+                 mre->get_type()==SageBuilderAsm::buildTypeX86Float64());
         case od_m128:
             throw Exception("m128 not implemented", insn);
 
         case od_m16a16:
-            return mre && isSgAsmTypeWord(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Word();
 
         case od_m32a32:
-            return mre && isSgAsmTypeDoubleWord(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86DoubleWord();
 
         case od_m16a32:
         case od_m16a64:
             throw Exception("operand types m16&32 and m16&64 not implemented", insn);
 
         case od_moffs8:
-            if (mre && isSgAsmTypeByte(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+            if (mre && mre->get_type()==SageBuilderAsm::buildTypeX86Byte() && isSgAsmValueExpression(mre->get_address())) {
                 *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
                 return true;
             }
             return false;
         case od_moffs16:
-            if (mre && isSgAsmTypeWord(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+            if (mre && mre->get_type()==SageBuilderAsm::buildTypeX86Word() && isSgAsmValueExpression(mre->get_address())) {
                 *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
                 return true;
             }
             return false;
         case od_moffs32:
-            if (mre && isSgAsmTypeDoubleWord(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+            if (mre && mre->get_type()==SageBuilderAsm::buildTypeX86DoubleWord() && isSgAsmValueExpression(mre->get_address())) {
                 *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
                 return true;
             }
             return false;
         case od_moffs64:
-            if (mre && isSgAsmTypeQuadWord(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+            if (mre && mre->get_type()==SageBuilderAsm::buildTypeX86QuadWord() && isSgAsmValueExpression(mre->get_address())) {
                 *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
                 return true;
             }
@@ -685,11 +662,11 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("sreg not implemented", insn);
 
         case od_m32fp:
-            return mre && isSgAsmTypeSingleFloat(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Float32();
         case od_m64fp:
-            return mre && isSgAsmTypeDoubleFloat(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Float64();
         case od_m80fp:
-            return mre && NULL!=isSgAsmType80bitFloat(mre->get_type());
+            return mre && mre->get_type()==SageBuilderAsm::buildTypeX86Float80();
 
         case od_st0:
             return (rre &&
@@ -728,7 +705,8 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                     x86_regclass_st==rre->get_descriptor().get_major());
 
         case od_mm:
-            return rre && x86_regclass_mm==rre->get_descriptor().get_major();
+            // These are the same registers as ST(n) except directly accessed (i.e., not as a stack)
+            return rre && x86_regclass_st==rre->get_descriptor().get_major();
 
         case od_mm_m32:
             return matches(od_mm, expr, insn, disp_p, imm_p) || matches(od_m32, expr, insn, disp_p, imm_p);
@@ -751,11 +729,11 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 return matches(od_xmm, expr, insn, disp_p, imm_p);
             if (!mre)
                 return false;
-            SgAsmTypeVector *tv = isSgAsmTypeVector(mre->get_type());
+            SgAsmVectorType *tv = isSgAsmVectorType(mre->get_type());
             if (tv)
-                return ((tv->get_elementCount()==4 && isSgAsmTypeSingleFloat(tv->get_elementType())) ||
-                        (tv->get_elementCount()==2 && isSgAsmTypeDoubleFloat(tv->get_elementType())));
-            return NULL!=isSgAsmTypeDoubleQuadWord(mre->get_type());
+                return ((tv->get_nElmts()==4 && tv->get_elmtType()==SageBuilderAsm::buildTypeX86Float32()) ||
+                        (tv->get_nElmts()==2 && tv->get_elmtType()==SageBuilderAsm::buildTypeX86Float64()));
+            return mre->get_type()==SageBuilderAsm::buildTypeX86DoubleQuadWord();
         }
 
         case od_XMM0:   /*implicit register "<XMM0>" */
@@ -803,8 +781,8 @@ AssemblerX86::matches(const InsnDefn *defn, SgAsmx86Instruction *insn, int64_t *
 
 AssemblerX86::MemoryReferencePattern
 AssemblerX86::parse_memref(SgAsmInstruction *insn, SgAsmMemoryReferenceExpression *expr,
-                           SgAsmx86RegisterReferenceExpression **base_reg/*out*/,
-                           SgAsmx86RegisterReferenceExpression **index_reg/*out*/, SgAsmValueExpression **scale_ve/*out*/, 
+                           SgAsmRegisterReferenceExpression **base_reg/*out*/,
+                           SgAsmRegisterReferenceExpression **index_reg/*out*/, SgAsmValueExpression **scale_ve/*out*/, 
                            SgAsmValueExpression **disp_ve/*out*/)
 {
     if (!expr)
@@ -837,17 +815,17 @@ AssemblerX86::parse_memref(SgAsmInstruction *insn, SgAsmMemoryReferenceExpressio
         addends.push_back(expr->get_address());
     }
     
-    SgAsmx86RegisterReferenceExpression *add_rre=NULL, *mult_rre=NULL;
+    SgAsmRegisterReferenceExpression *add_rre=NULL, *mult_rre=NULL;
     SgAsmValueExpression *add_ve=NULL, *mult_ve=NULL;
     for (std::vector<SgAsmExpression*>::iterator i=addends.begin(); i!=addends.end(); ++i) {
-        if (isSgAsmx86RegisterReferenceExpression(*i)) {
+        if (isSgAsmRegisterReferenceExpression(*i)) {
             if (add_rre) {
                 /* treat as Multiply(expr,1) */
                 if (mult_rre)
                     throw Exception("unable to encode memory reference expression (multiple register reference addends)", insn);
-                mult_rre = isSgAsmx86RegisterReferenceExpression(*i);
+                mult_rre = isSgAsmRegisterReferenceExpression(*i);
             } else {
-                add_rre = isSgAsmx86RegisterReferenceExpression(*i);
+                add_rre = isSgAsmRegisterReferenceExpression(*i);
             }
         } else if (isSgAsmValueExpression(*i)) {
             if (add_ve)
@@ -857,8 +835,8 @@ AssemblerX86::parse_memref(SgAsmInstruction *insn, SgAsmMemoryReferenceExpressio
             if (mult_rre)
                 throw Exception("unable to encode memory reference expression (multiple multiplies)", insn);
             SgAsmBinaryMultiply *mult = isSgAsmBinaryMultiply(*i);
-            mult_rre = isSgAsmx86RegisterReferenceExpression(mult->get_lhs());
-            if (!mult_rre) mult_rre = isSgAsmx86RegisterReferenceExpression(mult->get_rhs());
+            mult_rre = isSgAsmRegisterReferenceExpression(mult->get_lhs());
+            if (!mult_rre) mult_rre = isSgAsmRegisterReferenceExpression(mult->get_rhs());
             mult_ve = isSgAsmValueExpression(mult->get_lhs());
             if (!mult_ve) mult_ve = isSgAsmValueExpression(mult->get_rhs());
             if (!mult_rre || !mult_ve)
@@ -964,7 +942,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
             throw Exception("operand does not affect ModR/M byte", insn);
     }
     
-    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(expr);
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
     SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr);
 
     if (rre) {
@@ -1002,7 +980,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
             } else {
                 ROSE_ASSERT(!"unknown register position");
             }
-        } else if (rre->get_descriptor().get_major()==x86_regclass_mm) {
+        } else if (rre->get_descriptor().get_major()==x86_regclass_st) { // MM and ST(i) are the same physical registers
             rm = rre->get_descriptor().get_minor() % 8;
         } else if (rre->get_descriptor().get_major()==x86_regclass_xmm) {
             rm = rre->get_descriptor().get_minor() % 8;
@@ -1012,7 +990,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
             ROSE_ASSERT(!"not implemented");
         }
     } else if (mre) {
-        SgAsmx86RegisterReferenceExpression *base_reg=NULL, *index_reg=NULL;
+        SgAsmRegisterReferenceExpression *base_reg=NULL, *index_reg=NULL;
         SgAsmValueExpression *disp_ve=NULL, *scale_ve=NULL;
         MemoryReferencePattern mrp = parse_memref(insn, mre, &base_reg, &index_reg, &scale_ve, &disp_ve);
 
@@ -1079,7 +1057,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                     /* [register]+disp8  or  [register]+disp32 */
                     if (honor_operand_types) {
                         SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
-                        mod = disp_ive && 8==disp_ive->get_significant_bits() ? 1 : 2;
+                        mod = disp_ive && 8==disp_ive->get_significantBits() ? 1 : 2;
                     } else {
                         mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                     }
@@ -1131,7 +1109,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                 ROSE_ASSERT(base_reg && index_reg && disp_ve);
                 if (honor_operand_types) {
                     SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
-                    mod = disp_ive && 8==disp_ive->get_significant_bits() ? 1 : 2;
+                    mod = disp_ive && 8==disp_ive->get_significantBits() ? 1 : 2;
                 } else {
                     mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                 }
@@ -1174,7 +1152,7 @@ AssemblerX86::segment_override(SgAsmx86Instruction *insn)
                 int gpr;
                 T1(): is_found(false) {}
                 void visit(SgNode *node) {
-                    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(node);
+                    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node);
                     if (rre && x86_regclass_gpr==rre->get_descriptor().get_major() && !is_found) {
                         is_found = true;
                         gpr = rre->get_descriptor().get_minor();
@@ -1183,7 +1161,7 @@ AssemblerX86::segment_override(SgAsmx86Instruction *insn)
             } reg;
             reg.traverse(mre->get_address(), preorder);
 
-            SgAsmx86RegisterReferenceExpression *seg_reg = isSgAsmx86RegisterReferenceExpression(mre->get_segment());
+            SgAsmRegisterReferenceExpression *seg_reg = isSgAsmRegisterReferenceExpression(mre->get_segment());
             ROSE_ASSERT(seg_reg!=NULL);
             ROSE_ASSERT(seg_reg->get_descriptor().get_major()==x86_regclass_segment);
             switch (seg_reg->get_descriptor().get_minor()) {
@@ -1385,7 +1363,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     if (defn->opcode_modifiers & od_r_mask) {
         ROSE_ASSERT(insn->get_operandList()->get_operands().size()>=1);
         SgAsmExpression *expr = insn->get_operandList()->get_operands()[0];
-        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(expr);
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
         ROSE_ASSERT(rre!=NULL);
         ROSE_ASSERT(rre->get_descriptor().get_major()==x86_regclass_gpr);
         if (rre->get_descriptor().get_minor()>=8)
@@ -1398,7 +1376,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         for (size_t i=0; i<defn->operands.size(); i++) {
             if (defn->operands[i]==od_sti) {
                 SgAsmExpression *expr = insn->get_operandList()->get_operands()[i];
-                SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(expr);
+                SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
                 ROSE_ASSERT(rre && x86_regclass_st==rre->get_descriptor().get_major());
                 opcode += rre->get_descriptor().get_minor();
                 break;

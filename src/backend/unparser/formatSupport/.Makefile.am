@@ -8,7 +8,7 @@ INCLUDES = $(ROSE_INCLUDES)
 unparseFormat_headers = unparse_format.h unparseFormatHelp.h
 unparseFormat_sources = $(unparseFormat_headers:.h=.C)
 
-include_HEADERS = $(unparseFormat_headers)
+pkginclude_HEADERS = $(unparseFormat_headers)
 
 noinst_LTLIBRARIES = libunparseFormatSupport.la
 

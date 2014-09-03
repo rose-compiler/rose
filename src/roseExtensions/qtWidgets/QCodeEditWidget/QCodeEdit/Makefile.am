@@ -53,7 +53,7 @@ headerTarget_HEADERS = qce-config.h\
                        qreliablefilewatch.h
 
 
-include_HEADERS = qcodeedit.h 
+pkginclude_HEADERS = qcodeedit.h 
 
 
 endif

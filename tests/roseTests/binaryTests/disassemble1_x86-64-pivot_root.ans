@@ -26,7 +26,6 @@ using this memory map for disassembly:
     va 0x00500a66 + 0x00000002 = 0x00500a68 rw-p at buffer aal   + 0x00000a66 x86-64-pivot_root(LOAD#3)
     va 0x00500a68 + 0x00000180 = 0x00500be8 r--- at buffer ach   + 0x00000a68 x86-64-pivot_root(.gnu.conflict)
     va 0x00500be8 + 0x00000418 = 0x00501000 rw-p at buffer aal   + 0x00000be8 x86-64-pivot_root(LOAD#3)
-disassembled 2926 instructions and 200 failures (use --show-bad to see errors)
 
 
 0x00400468: ================================== Function (function call) unknown name
@@ -529,4 +528,3 @@ disassembled 2926 instructions and 200 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

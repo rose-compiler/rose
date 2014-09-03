@@ -203,7 +203,7 @@ CreateJvm(const struct Commandline a_cmdline)
   std::string jvm_max_heap = "-Xmx" + a_cmdline.jvm_max_heap;
   std::string file_encoding = "-Dfile.encoding=UTF-8";
   std::string x10_dist = "-Dx10.dist=" + std::string(X10_INSTALL_PATH);
-  std::string x10c_ecj_jar = "-Dx10c.ecj.jar=ecj.jar";
+  std::string x10c_ecj_jar = "-Dx10c.ecj.jar=ecj-4.3.2.jar";
   std::string x10c_math_jar = "-Dx10c.math.jar=commons-math3-3.2.jar";
   std::string classpath =
       "-Djava.class.path=" +
@@ -215,7 +215,7 @@ CreateJvm(const struct Commandline a_cmdline)
       std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.shrike_1.3.1.201101071300.jar" + ":" +
       std::string(X10_INSTALL_PATH) + "/lib/x10wala.jar" + ":" +
       std::string(X10_INSTALL_PATH) + "/lib/org.eclipse.equinox.common_3.6.0.v20100503.jar";
-  std::string libpath = "-Djava.library.path=/opt/edg4x-rose/installTree/lib";
+  std::string libpath = "-Djava.library.path=" + std::string(ROSE_INSTALLATION_PATH) + "/lib";
 
   options[0].optionString = (char*) file_encoding.c_str();
   options[1].optionString = (char*) x10_dist.c_str();
