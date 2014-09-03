@@ -144,6 +144,11 @@ void TransformationSequence::create(SgNode* node) {
   traverse(node);
 }
 
+// TODO: handle global variables and member variables in member functions
+bool isLocalVariable(SgExpression* exp) {
+  return isSgVarRefExp(exp);
+}
+
 void TransformationSequence::apply() {
   for(list<SgNode*>::iterator i=transformationSequence.begin();i!=transformationSequence.end();++i) {
     if(isSgAssignOp(*i)) {
@@ -159,9 +164,18 @@ void TransformationSequence::apply() {
     } else {
       SgExpression* exp=isSgExpression(*i);
       ROSE_ASSERT(exp);
-      string s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
-      cout<<"DEBUG: Applying transformation on operand: "<<s<<endl;
-      SgNodeHelper::replaceAstWithString(*i,s);
+      if(!isLocalVariable(exp)) {
+        string s;
+        if(isPointerType(exp->get_type())) {
+          s=string("(*rts.avpushptr((void**)&(")+exp->unparseToString()+")))";
+        } else {
+          s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
+        }
+        cout<<"DEBUG: Applying transformation on operand: "<<s<<endl;
+        SgNodeHelper::replaceAstWithString(*i,s);
+      } else {
+        cout<<"DEBUG: Detected local variable."<<endl;
+      }
     }
   }
   for(list<SgNode*>::iterator i=transformationSequenceCommit.begin();i!=transformationSequenceCommit.end();++i) {
@@ -169,10 +183,29 @@ void TransformationSequence::apply() {
     // TODO: implement as proper AST manipulation
     SgNode* operand=SgNodeHelper::getFirstChild(*i);
     SgExpression* deleteOperand=isSgExpression(operand);
-    string typeName=deleteOperand->get_type()->unparseToString();
-    typeName.erase(typeName.size()-1); // remove trailing "*" (must be pointer)
-    string destructorCall="~"+typeName+"()";
-    string registerCall=string(";rts.registerForCommit((void*)")+operand->unparseToString()+")";
+    SgType* deleteOperandType=deleteOperand->get_type();
+    //SgType* deleteOperandType2=deleteOperandType->findBaseType();
+    SgDeclarationStatement* decl=deleteOperandType->getAssociatedDeclaration();
+    string typeName;
+    string destructorCall;
+    if(SgClassDeclaration* classDecl=isSgClassDeclaration(decl)) {
+      SgSymbol* symbol=classDecl->get_symbol_from_symbol_table();
+      SgName name=symbol->get_name();
+      typeName=name;
+      destructorCall=string(operand->unparseToString())+"->"+"~"+typeName+"();";
+    } else {
+      if(SgExpression* exp=isSgExpression(operand)) {
+        typeName=exp->get_type()->unparseToString();
+        typeName.erase(typeName.size()-1); // remove trailing "*" (must be pointer)
+        cout<<"INFO: delete on non-class type "<<typeName<<endl;
+        destructorCall="";
+      } else {
+        cerr<<"Error: unknown operand or type in delete operation."<<endl;
+        exit(1);
+      }
+    }
+
+    string registerCall=string("rts.registerForCommit((void*)")+operand->unparseToString()+")";
     string code=destructorCall+registerCall;
     SgNodeHelper::replaceAstWithString(*i,code);
   }

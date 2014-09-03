@@ -227,10 +227,11 @@ int main(int argc, char* argv[]) {
   }
 #endif
 
-  cout << "INIT: Parsing and creating AST."<<endl;
+  cout << "INIT: Parsing and creating AST started."<<endl;
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
   // inline all functions
+  cout << "INIT: Parsing and creating AST finished."<<endl;
 
   if(args.count("stats")) {
     printCodeStatistics(root);
@@ -239,6 +240,7 @@ int main(int argc, char* argv[]) {
 
   SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
+    cout<<"STATUS: eliminating non-called trivial functions."<<endl;
     // inline functions
     TrivialInlining tin;
     tin.setDetailedOutput(detailedOutput);

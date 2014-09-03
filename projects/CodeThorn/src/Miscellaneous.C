@@ -8,6 +8,31 @@
 #include "CommandLineOptions.h"
 #include <cctype>
 
+void CodeThorn::nocheck(string checkIdentifier, bool checkResult) {
+  check(checkIdentifier,checkResult,false);
+}
+
+bool checkresult=true; // used by check
+
+void CodeThorn::check(string checkIdentifier, bool checkResult, bool check) {
+  static int checkNr=1;
+  cout << color("white") << "CHECK "<<checkNr<<": "; 
+  if(!check) {
+    cout<<color("white")<<"----";
+  } else {
+    if(checkResult) {
+      cout<<color("green")<<"PASS";
+    } else {
+      cout<<color("red")<<"FAIL";
+      checkresult=false;
+    }
+  }
+  cout << " ";
+  cout << color("white") << "["<<checkIdentifier << "]";
+  checkNr++;
+  cout<<color("normal")<<endl;
+}
+
 void CodeThorn::write_file(std::string filename, std::string data) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
