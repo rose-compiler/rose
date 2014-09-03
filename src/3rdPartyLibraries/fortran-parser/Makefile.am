@@ -46,7 +46,7 @@ OFP_SOURCE_FILES_WITHOUT_PATHS = \
 # DQ (10/17/2010): This is the better way to control this.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # Liao 8/4/2010, based on Jean Utke's suggestion on [Rose-public] Fortran built-ins
-   include_HEADERS = ActionEnums.h token.h FortranParserAction.h
+   pkginclude_HEADERS = ActionEnums.h token.h FortranParserAction.h
 endif
 
 OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/fortran-parser

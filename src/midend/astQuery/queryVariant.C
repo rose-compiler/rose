@@ -116,6 +116,21 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
                     printf ("iItr->first = %p = %s \n",iItr->first,iItr->first->class_name().c_str());
                   }
 #endif
+            // DQ (7/27/2014): Check if this is always non-NULL.
+            // ROSE_ASSERT(iItr->first != NULL);
+#if 0
+               if (iItr->first != NULL)
+                  {
+                 // printf ("In querySolverGrammarElementFromVariantVector(): iItr->first->variantT() = %d class_name = %s \n",iItr->first->variantT(),iItr->first->class_name().c_str());
+                    printf ("In querySolverGrammarElementFromVariantVector(): iItr->first             = %p \n",iItr->first);
+                    printf ("In querySolverGrammarElementFromVariantVector(): iItr->first->class_name = %s \n",iItr->first->class_name().c_str());
+                    printf ("In querySolverGrammarElementFromVariantVector(): iItr->first->variantT() = %d \n",(int)iItr->first->variantT());
+                  }
+                 else
+                  {
+                    printf ("In querySolverGrammarElementFromVariantVector(): iItr->first == NULL \n");
+                  }
+#endif
                SgType* type = isSgType(iItr->first);
                if ( type != NULL  )
                   {

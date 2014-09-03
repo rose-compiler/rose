@@ -754,7 +754,7 @@ Grammar::setUpNodes ()
   // it could be removed at some point.
      InitializedName.setDataPrototype("SgInitializedName*","prev_decl_item", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    InitializedName.setDataPrototype("bool","is_initializer", "= false",
+     InitializedName.setDataPrototype("bool","is_initializer", "= false",
                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype("SgDeclarationStatement*","declptr", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -880,33 +880,43 @@ Grammar::setUpNodes ()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
   // (not the SgInitializedName itself since it might be referenced from several places, I think).
      InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/12/2011): Added information required for new name qualification support.
      InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/12/2011): Added information required for new name qualification support.
      InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (11/18/2013): Added final to support Java (which can use it to represent const function parameters in function declarations).
   // This support is represented as a declaration modifier (but that is not sufficient for use in function parameters).
   // As supported in declaration modifiers, this use is semantically different than its use in function parameters.
      InitializedName.setDataPrototype("bool","isFinal","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
   // For example: "int array[];" This can be important to preserve when the primary declaration uses an
   // array bound that is declared between the secondary and primary declarations.  See test2014_81.c and
   // test2014_06.C.
      InitializedName.setDataPrototype("bool", "hasArrayTypeWithEmptyBracketSyntax", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
+     InitializedName.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/2/2014): Using C++11 auto keyword.
+     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair

@@ -295,13 +295,24 @@ SageInterface::equivalenceTest(SgNode* x, SgNode* y)
                break;
              }
 
-          case V_SgAsmx86RegisterReferenceExpression:
+          case V_SgAsmRegisterReferenceExpression:
+          case V_SgAsmDirectRegisterExpression:
              {
                SgAsmRegisterReferenceExpression* x_exp = isSgAsmRegisterReferenceExpression(x);
                SgAsmRegisterReferenceExpression* y_exp = isSgAsmRegisterReferenceExpression(y);
                result = x_exp->get_descriptor() == y_exp->get_descriptor();
                break;
              }
+
+          case V_SgAsmIndirectRegisterExpression: {
+              SgAsmIndirectRegisterExpression* x_exp = isSgAsmIndirectRegisterExpression(x);
+              SgAsmIndirectRegisterExpression* y_exp = isSgAsmIndirectRegisterExpression(y);
+              result = (x_exp->get_offset() == y_exp->get_offset() &&
+                        x_exp->get_stride() == y_exp->get_stride() &&
+                        x_exp->get_index() == y_exp->get_index() &&
+                        x_exp->get_modulus() == y_exp->get_modulus());
+              break;
+          }
 
           case V_SgAsmIntegerValueExpression:
              {

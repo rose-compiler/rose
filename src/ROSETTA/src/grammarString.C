@@ -6,6 +6,7 @@
 #include "terminal.h"
 #include "string_functions.h"
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -30,6 +31,37 @@ GrammarString::getDefaultInitializerString() const
    {
      return defaultInitializerString;
    }
+
+std::string
+GrammarString::infoFieldsToString() const {
+  //  typeNameString    
+  //   variableNameString
+  //  toBeTraversed
+  stringstream ss;
+#if 1
+  //ss<<   key;
+  //ss<<","<<functionNameString;
+  //ss<<","<<pureVirtualFunction;
+  ss<<"access=";
+#if 1
+  switch(automaticGenerationOfDataAccessFunctions.getValue()) {
+  case TAG_NO_ACCESS_FUNCTIONS: ss<<"no";break;
+  case TAG_BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
+  case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
+  case TAG_BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
+  default:
+        cerr<<"Error: unknown data access function type."<<endl;
+        ROSE_ASSERT(0);
+  }
+#endif
+  ss<<","<<"constr="<<   isInConstructorParameterList.getValue();
+  ss<<","<<"init="<<"\""<<defaultInitializerString<<"\"";
+  ss<<","<<"copy="<<toBeCopied.getValue();
+  ss<<","<<"del="<<   toBeDeleted.getValue();
+#endif
+    return ss.str();
+}
+
 
 ConstructParamEnum
 GrammarString::getIsInConstructorParameterList() const
