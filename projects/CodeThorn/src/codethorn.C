@@ -1433,6 +1433,7 @@ int main( int argc, char * argv[] ) {
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
     ("with-counterexamples", po::value< string >(), "adds an input sequence to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
+    ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1507,6 +1508,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
   boolOptions.registerOption("with-counterexamples",false);
+  boolOptions.registerOption("incomplete-stg",false);
 
   boolOptions.processOptions();
 
@@ -1822,6 +1824,20 @@ int main( int argc, char * argv[] ) {
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
+  int inputSeqLengthCovered;
+  int maxOfShortestAsserInput;
+  if (analyzer.getTransitionGraph()->isPrecise()) {
+    inputSeqLengthCovered = analyzer.getTransitionGraph()->getInputSeqLengthCovered();
+    maxOfShortestAsserInput = analyzer.getTransitionGraph()->getMaxOfShortestAssertInput();
+    cout << "STATUS: coverage of all input sequences of length " << inputSeqLengthCovered << " is guaranteed." << endl;
+    cout << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAsserInput << endl;
+  } else {
+    inputSeqLengthCovered = -1;
+    maxOfShortestAsserInput = -1;
+    cout << "STATUS: no guaranteed input sequence length coverage possible." << endl;
+    cout << "STATUS: determining maximum of shortest assert counterexamples not possible. " << endl;
+  }
+
   // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
 #if 0
   long removed=analyzer.getTransitionGraph()->removeDuplicates();
@@ -1911,8 +1927,40 @@ int main( int argc, char * argv[] ) {
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
 
   double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
-  printAnalyzerStatistics(analyzer, totalRunTime, "Finished computing state transition system");
 
+  cout <<color("white");
+  cout << "=============================================================="<<endl;
+  cout <<color("normal")<<"STG generation and assertion analysis complete"<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
+  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
+  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
+  cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
+  cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
+  cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
+  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout <<color("normal");
+  //printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
+
+  long pstateSetSizeInf = 0;
+  long eStateSetSizeInf = 0;
+  long transitionGraphSizeInf = 0;
+  long numOfconstraintSetsInf = 0;
+  long numOfStdinEStatesInf = 0;
+  long numOfStdoutVarEStatesInf = 0;
+  long numOfStdoutConstEStatesInf = 0;
+  long numOfStdoutEStatesInf = 0;
+  long numOfStderrEStatesInf = 0;
+  long numOfFailedAssertEStatesInf = 0;
+  long numOfConstEStatesInf = 0;
   double infPathsOnlyTime = 0;
   double stdIoOnlyTime = 0;
 
@@ -1921,18 +1969,32 @@ int main( int argc, char * argv[] ) {
     timer.start();
     analyzer.pruneLeavesRec();
     infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+
+    pstateSetSizeInf=analyzer.getPStateSet()->size();
+    eStateSetSizeInf = analyzer.getEStateSet()->size();
+    transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
+    numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
+    numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+    numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+    numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+    numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+    numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+    numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+    numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
   }
   
   if(boolOptions["std-io-only"]) {
     cout << "STATUS: bypassing all non standard I/O states."<<endl;
     timer.start();
-    //analyzer.removeNonIOStates();  //old version, works correclty but takes far too long
+    //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
     analyzer.reduceGraphInOutWorklistOnly();
     stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
   }
 
+  long eStateSetSizeIoOnly = 0;
+  long transitionGraphSizeIoOnly = 0;
   double spotLtlAnalysisTime = 0;
-  
+
   if (args.count("check-ltl")) {
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
@@ -1941,15 +2003,30 @@ int main( int argc, char * argv[] ) {
         timer.start();
         analyzer.pruneLeavesRec();
         infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+
+        pstateSetSizeInf=analyzer.getPStateSet()->size();
+        eStateSetSizeInf = analyzer.getEStateSet()->size();
+        transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
+        numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
+        numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+        numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+        numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+        numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+        numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+        numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+        numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
       }
       if (!boolOptions["std-io-only"]) {
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
         timer.start();
-        //analyzer.removeNonIOStates();  //old version, works correclty but takes far too long
+        //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
         analyzer.reduceGraphInOutWorklistOnly();
         stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
-        cout << "STATUS: number of transitions remaining after reduction to I/O/(worklist) states only: " << (analyzer.getTransitionGraph())->size() << endl;
-        cout << "STATUS: number of states remaining after reduction to I/O/(worklist) states only: " << (analyzer.getTransitionGraph())->estateSet().size() << endl;
+
+        eStateSetSizeIoOnly = (analyzer.getTransitionGraph())->estateSet().size();
+        transitionGraphSizeIoOnly = (analyzer.getTransitionGraph())->size();
+        cout << "STATUS: number of transitions remaining after reduction to I/O/(worklist) states only: " << transitionGraphSizeIoOnly << endl;
+        cout << "STATUS: number of states remaining after reduction to I/O/(worklist) states only: " <<eStateSetSizeIoOnly << endl;
       }
     }
     bool withCounterexample = false;
@@ -1974,6 +2051,7 @@ int main( int argc, char * argv[] ) {
     cout << "STATUS: generating LTL results"<<endl;
     SpotConnection spotConnection(ltl_filename);
     spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample);
+    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
     PropertyValueTable* ltlResults = spotConnection.getLtlResults();
     ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
     cout << "=============================================================="<<endl;
@@ -1986,13 +2064,12 @@ int main( int argc, char * argv[] ) {
     }
     delete ltlResults;
     ltlResults = NULL;
-    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
 
     //temporaryTotalRunTime = totalRunTime + infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
     //printAnalyzerStatistics(analyzer, temporaryTotalRunTime, "LTL check complete. Reduced transition system:");
   }
-
-  totalRunTime += infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
+  double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
+  double overallTime =totalRunTime + totalLtlRunTime;
 
   // TEST
   if (boolOptions["generate-assertions"]) {
@@ -2091,7 +2168,9 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(totalRunTime)<<", "
         <<readableruntime(infPathsOnlyTime)<<", "
         <<readableruntime(stdIoOnlyTime)<<", "
-        <<readableruntime(spotLtlAnalysisTime)<<endl;
+        <<readableruntime(spotLtlAnalysisTime)<<", "
+        <<readableruntime(totalLtlRunTime)<<", "
+        <<readableruntime(overallTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
@@ -2103,7 +2182,9 @@ int main( int argc, char * argv[] ) {
         <<totalRunTime<<", "
         <<infPathsOnlyTime<<", "
         <<stdIoOnlyTime<<", "
-        <<spotLtlAnalysisTime<<endl;
+        <<spotLtlAnalysisTime<<", "
+        <<totalLtlRunTime<<", "
+        <<overallTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
         <<eStateSetMaxCollisions<<", "
@@ -2124,6 +2205,22 @@ int main( int argc, char * argv[] ) {
         <<rewriteSystem.dump1_stats.numVariableElim<<", "
         <<rewriteSystem.dump1_stats.numConstExprElim
         <<endl;
+    text<<"Sizes infinite paths only,"<<pstateSetSizeInf<<", "
+        <<eStateSetSizeInf<<", "
+        <<transitionGraphSizeInf<<", "
+        <<numOfconstraintSetsInf<<", "
+        << numOfStdinEStatesInf<<", "
+        << numOfStdoutEStatesInf<<", "
+        << numOfStderrEStatesInf<<", "
+        << numOfFailedAssertEStatesInf<<", "
+        << numOfConstEStatesInf<<endl;
+    text<<"states & transitions after only-I/O-reduction,"
+        <<eStateSetSizeIoOnly<<", "
+        <<transitionGraphSizeIoOnly<<endl;
+    text<<"input length coverage & longest minimal assert input,"
+        <<inputSeqLengthCovered<<", "
+        <<maxOfShortestAsserInput<<endl;
+    
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
   }
