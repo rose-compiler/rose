@@ -28,7 +28,7 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage createAbstractHandles
+    buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -87,7 +87,7 @@ deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 loopCollapsing_SOURCES                    = loopCollapsing.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
-
+moveDeclarationToInnermostScope_SOURCES   = moveDeclarationToInnermostScope.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -150,6 +150,7 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
+  rose_inputmoveDeclarationToInnermostScope_1.C \
   buildJavaPackage.passed 
 
 # Liao 8/17/2010
@@ -457,6 +458,13 @@ rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
 endif
+
+rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS)" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
