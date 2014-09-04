@@ -315,8 +315,8 @@ protected:
     void configUpdated() {
         if (showValue_) {
             std::ostringstream ss;
-            ss <<value_.curValue;
-            bar_.suffix_ = ss.str() <<suffix_;
+            ss <<value_.curValue <<suffix_;
+            bar_.suffix_ = ss.str();
         } else {
             bar_.suffix_.clear();
         }

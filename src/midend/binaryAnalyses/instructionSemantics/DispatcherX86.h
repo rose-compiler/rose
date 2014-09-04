@@ -3,6 +3,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -10,6 +11,10 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
+    // Prototypical constructor
+    DispatcherX86() {}
+
+    // Normal constructor
     explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
         set_register_dictionary(RegisterDictionary::dictionary_pentium4());
         regcache_init();
@@ -32,6 +37,12 @@ public:
     RegisterDescriptor REG_DS, REG_ES, REG_SS;
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
+
+    /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
+     *  with the virtual @ref create method. */
+    static DispatcherX86Ptr instance() {
+        return DispatcherX86Ptr(new DispatcherX86);
+    }
 
     /** Constructor. */
     static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
@@ -136,4 +147,6 @@ public:
         
 } // namespace
 } // namespace
+} // namespace
+
 #endif

@@ -10,6 +10,8 @@
 
 #include <inttypes.h>
 
+using namespace rose::BinaryAnalysis;
+
 /* Example partitioner that demonstrates how to write a user-defined function detector that uses at least one protected data
  * member (the instruction cache, in this case).  Note that this is a contrived example since the instruction map is also
  * available via Partitioner::get_instructions(). */

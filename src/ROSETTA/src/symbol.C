@@ -268,6 +268,15 @@ Grammar::setUpSymbols ()
      AliasSymbol.setDataPrototype       ( "SgName", "new_name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/11/2014): Added to support references to the associated using declarations and using directives 
+  // that caused the sgAliasSymbol symbol to be built.  This is critical to support for name qualification
+  // that is different before and after a using declaration; but which forces the sgAliasSymbol to be 
+  // generated only once within the AST (before uparsing the associated using declaration of using directive
+  // that caused the generation of the sgAliasSymbol in the symbol tabel for the associated scope.
+  // Note that test2014_90.C is a simple example of why this is important.
+     AliasSymbol.setDataPrototype("SgNodePtrList", "causal_nodes", "",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      RenameSymbol.setFunctionPrototype   ( "HEADER_RENAME_SYMBOL", "../Grammar/Symbol.code" );
      RenameSymbol.setDataPrototype       ( "SgSymbol*", "original_symbol", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

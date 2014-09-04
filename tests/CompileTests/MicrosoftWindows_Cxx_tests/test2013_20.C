@@ -7,7 +7,7 @@
 
 int x;
 
-#if 0
+#if 1
 /* Review this issue later (problem with MSVC support for reference to un-named enum types in template declaration). */
 namespace std
    {

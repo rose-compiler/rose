@@ -6,6 +6,9 @@
 #include "Disassembler.h"
 #include "InstructionEnumsX86.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
@@ -24,17 +27,6 @@ public:
         init(wordsize);
     }
 
-    DisassemblerX86(const DisassemblerX86 &other)
-        : Disassembler(other), insnSize(other.insnSize), ip(other.ip), insnbufat(other.insnbufat),
-          segOverride(other.segOverride), branchPrediction(other.branchPrediction),
-          branchPredictionEnabled(other.branchPredictionEnabled), rexPresent(other.rexPresent), rexW(other.rexW), 
-          rexR(other.rexR), rexX(other.rexX), rexB(other.rexB), sizeMustBe64Bit(other.sizeMustBe64Bit),
-          operandSizeOverride(other.operandSizeOverride), addressSizeOverride(other.addressSizeOverride),
-          lock(other.lock), repeatPrefix(other.repeatPrefix), modregrmByteSet(other.modregrmByteSet),
-          modregrmByte(other.modregrmByte), modeField(other.modeField), rmField(other.rmField), modrm(other.modrm),
-          reg(other.reg), isUnconditionalJump(other.isUnconditionalJump) {
-    }
-    
     virtual ~DisassemblerX86() {}
 
     virtual DisassemblerX86 *clone() const /*override*/ { return new DisassemblerX86(*this); }
@@ -419,5 +411,8 @@ private:
     SgAsmExpression *reg;                       /**< Register reference expression built from modregrmByte; see getModRegRM() */
     bool isUnconditionalJump;                   /**< True for jmp, farjmp, ret, retf, iret, and hlt */
 };
+
+} // namespace
+} // namespace
 
 #endif

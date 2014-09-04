@@ -3,6 +3,7 @@
 
 #include "sage3basic.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Motorola S-Record.
@@ -132,4 +133,6 @@ public:
 };
 
 } // namespace
+} // namespace
+
 #endif

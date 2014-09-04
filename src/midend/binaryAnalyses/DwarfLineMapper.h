@@ -1,7 +1,8 @@
 #ifndef ROSE_DwarfLineMapper_H
 #define ROSE_DwarfLineMapper_H
 
-namespace BinaryAnalysis { // documented elsewhere
+namespace rose {
+namespace BinaryAnalysis {
 
 
 /** Build mappings between source locations and virtual addresses.
@@ -122,4 +123,6 @@ std::ostream& operator<<(std::ostream&, const DwarfLineMapper::SrcInfo&);
 std::ostream& operator<<(std::ostream&, const DwarfLineMapper&);
 
 } // namespace
+} // namespace
+
 #endif

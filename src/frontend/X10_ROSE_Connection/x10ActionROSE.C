@@ -85,7 +85,7 @@ createDummyClass(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionParenthesizedExpression(JNIEnv *env, jclass clz, jint x10_parentheses_count) 
 { 
-	cactionParenthesizedExpression(env, clz, x10_parentheses_count);
+        cactionParenthesizedExpression(env, clz, x10_parentheses_count);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetupSourceFilename(JNIEnv *env, jclass xxx, jstring x10_full_file_name) 
@@ -114,7 +114,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetupSourceFilename(JNIEnv 
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionClearSourceFilename(JNIEnv *env, jclass xxx) 
 { 
-	cactionClearSourceFilename(env, xxx);
+        cactionClearSourceFilename(env, xxx);
 }
 
 #if 1
@@ -124,7 +124,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassStart(JNIEnv *en
 #endif
 { 
 #if 1
-	cactionInsertClassStart(env, xxx, x10_string, is_interface, is_enum, is_anonymous, x10Token);
+        cactionInsertClassStart(env, xxx, x10_string, is_interface, is_enum, is_anonymous, x10Token);
 #else
     SgName name = convertJavaStringToCxxString(env, x10_string);
 
@@ -139,7 +139,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassStart(JNIEnv *en
     ROSE_ASSERT(class_definition && (! class_definition -> attributeExists("namespace")));
     setX10SourcePosition(class_definition, env, x10Token);
 //MH-20140501
-	SgScopeStatement *type_space = SageBuilder::buildScopeStatement(class_definition);
+        SgScopeStatement *type_space = SageBuilder::buildScopeStatement(class_definition);
     setX10SourcePosition(type_space, env, x10Token);
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
     ROSE_ASSERT(attribute);
@@ -152,7 +152,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassStart(JNIEnv *en
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassEnd(JNIEnv *env, jclass xxx, jstring x10_string, jobject x10Token) 
 { 
 #if 0
-	cactionInsertClassEnd(env, xxx, x10_string, x10Token);
+        cactionInsertClassEnd(env, xxx, x10_string, x10Token);
 #else
     SgName name = convertJavaStringToCxxString(env, x10_string);
 
@@ -191,7 +191,7 @@ cout.flush();
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring x10_name, jstring x10_external_name, jboolean x10_user_defined_class, jboolean x10_has_conflicts, jboolean x10_is_interface, jboolean x10_is_enum, jboolean x10_is_anonymous, jobject x10Token) 
 { 
 #if 0
-	cactionBuildClassSupportStart(env, xxx, x10_name, x10_external_name, x10_user_defined_class, x10_is_interface, x10_is_enum, x10_is_anonymous, x10Token);
+        cactionBuildClassSupportStart(env, xxx, x10_name, x10_external_name, x10_user_defined_class, x10_is_interface, x10_is_enum, x10_is_anonymous, x10Token);
 #else
     SgName name = convertJavaStringToCxxString(env, x10_name);
     SgName external_name = convertJavaStringToCxxString(env, x10_external_name);
@@ -283,17 +283,17 @@ cout << "Set attribute for class_definition=" << class_definition << endl;
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateClassSupportStart(JNIEnv *env, jclass xxx, jstring x10_name, jobject x10Token) 
 { 
-	cactionUpdateClassSupportStart(env, xxx, x10_name, x10Token);
+        cactionUpdateClassSupportStart(env, xxx, x10_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertTypeParameter(JNIEnv *env, jclass clz, jstring x10_name, jobject x10Token) 
 { 
-	cactionInsertTypeParameter(env, clz, x10_name, x10Token);
+        cactionInsertTypeParameter(env, clz, x10_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildTypeParameterSupport(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jint method_index, jstring x10_name, jint num_bounds, jobject x10Token) 
 { 
-	cactionBuildTypeParameterSupport(env, clz, x10_package_name, x10_type_name, method_index, x10_name, num_bounds, x10Token);
+        cactionBuildTypeParameterSupport(env, clz, x10_package_name, x10_type_name, method_index, x10_name, num_bounds, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdatePushMethodParameterScope(JNIEnv *env, jclass clz, jstring str1, jint method_index, jobject x10Token) 
@@ -303,12 +303,12 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdatePushMethodParameterSc
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateTypeParameterSupport(JNIEnv *env, jclass clz, jstring x10_name, int method_index, jint num_bounds, jobject x10Token) 
 { 
-	cactionUpdateTypeParameterSupport(env, clz, x10_name, method_index, num_bounds, x10Token);
+        cactionUpdateTypeParameterSupport(env, clz, x10_name, method_index, num_bounds, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdatePopMethodParameterScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionUpdatePopMethodParameterScope(env, clz, x10Token);
+        cactionUpdatePopMethodParameterScope(env, clz, x10Token);
 }
 
 #if 0
@@ -323,7 +323,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassExtendsAndImpleme
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstring x10_string, jint num_class_members, jobject x10Token) 
 { 
 #if 0
-	cactionBuildClassSupportEnd(env, xxx, x10_string, num_class_members, x10Token);
+        cactionBuildClassSupportEnd(env, xxx, x10_string, num_class_members, x10Token);
 #else
    SgName name = convertJavaStringToCxxString(env, x10_string);
 
@@ -477,7 +477,7 @@ cout << "Resolved type : "
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateClassSupportEnd(JNIEnv *env, jclass xxx, jstring x10_name, jboolean has_super_class, jint num_interfaces, jint num_class_members, jobject x10Token) 
 { 
-	cactionUpdateClassSupportEnd(env, xxx, x10_name, has_super_class, num_interfaces, num_class_members, x10Token);
+        cactionUpdateClassSupportEnd(env, xxx, x10_name, has_super_class, num_interfaces, num_class_members, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildInnerTypeSupport(JNIEnv *env, jclass clz,                                                                     jstring x10_package_name,
@@ -486,7 +486,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildInnerTypeSupport(JNIEn
 
 {
 
-	cactionBuildInnerTypeSupport(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionBuildInnerTypeSupport(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateInnerTypeSupport(JNIEnv *env, jclass clz,                                                                      jstring x10_package_name,
@@ -495,7 +495,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateInnerTypeSupport(JNIE
 
 {
 
-	cactionUpdateInnerTypeSupport(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionUpdateInnerTypeSupport(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportStart(JNIEnv *env, jclass clz,                                                                       jstring x10_name,
@@ -503,7 +503,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportStart(JNI
                                                                       jobject method_location) 
 {
 #if 0
-	cactionBuildMethodSupportStart(env, clz, x10_name, method_index, method_location);
+        cactionBuildMethodSupportStart(env, clz, x10_name, method_index, method_location);
 #else
    SgName name = convertJavaStringToCxxString(env, x10_name);
     if (SgProject::get_verbose() > 1)
@@ -544,7 +544,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateMethodSupportStart(JN
                                                                        jobject method_location) 
 {
 
-	cactionUpdateMethodSupportStart(env, clz, x10_name, method_index, num_formal_parameters, method_location);
+        cactionUpdateMethodSupportStart(env, clz, x10_name, method_index, num_formal_parameters, method_location);
 }
 
 #if 0
@@ -554,7 +554,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildArgumentSupport(JNIEnv
 #endif
 { 
 #if 0
-	cactionBuildArgumentSupport(env, clz, x10_argument_name, x10_argument_type_name, x10_is_var_args, x10_is_final, x10Token);
+        cactionBuildArgumentSupport(env, clz, x10_argument_name, x10_argument_type_name, x10_is_var_args, x10_is_final, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Build argument support\n");
@@ -625,7 +625,7 @@ cout << "Pushed " << initialized_name->get_name() << ", " << initialized_name ->
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateArgumentSupport(JNIEnv *env, jclass clz, jint argument_index, jstring x10_argument_name, jstring x10_argument_type_name, jboolean is_var_args, jboolean is_final, jobject x10Token) 
 { 
-	cactionUpdateArgumentSupport(env, clz, argument_index, x10_argument_name, x10_argument_type_name, is_var_args, is_final, x10Token);
+        cactionUpdateArgumentSupport(env, clz, argument_index, x10_argument_name, x10_argument_type_name, is_var_args, is_final, x10Token);
 }
 
 /*
@@ -643,7 +643,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateArgumentSupport(JNIEn
 
  **/
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportEnd(JNIEnv *env, jclass xxx,
-               													   jstring x10_string,
+                                                                                                                   jstring x10_string,
                                                                     jint method_index,
                                                                     jboolean x10_is_constructor,
                                                                     jboolean x10_is_abstract,
@@ -655,7 +655,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportEnd(JNIEn
                                                                     jobject args_location) 
 {
 #if 0
-	cactionBuildMethodSupportEnd(env, xxx, x10_string, method_index, x10_is_constructor, x10_is_abstract, x10_is_native, x10_number_of_type_parameters, x10_number_of_arguments, x10_is_compiler_generated, args_location, method_location);
+        cactionBuildMethodSupportEnd(env, xxx, x10_string, method_index, x10_is_constructor, x10_is_abstract, x10_is_native, x10_number_of_type_parameters, x10_number_of_arguments, x10_is_compiler_generated, args_location, method_location);
 #else
     SgName name = convertJavaStringToCxxString(env, x10_string);
     int number_of_type_parameters = x10_number_of_type_parameters;
@@ -791,18 +791,18 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateMethodSupportEnd(JNIE
                                                                      jobject method_location) 
 {
 
-	cactionUpdateMethodSupportEnd(env, xxx, x10_string, method_index, is_compiler_generated, number_of_parameters, args_location, method_location);
+        cactionUpdateMethodSupportEnd(env, xxx, x10_string, method_index, is_compiler_generated, number_of_parameters, args_location, method_location);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildInitializerSupport(JNIEnv *env, jclass clz, jboolean x10_is_static, jstring x10_string, jint initializer_index, jobject x10Token) 
 { 
-	cactionBuildInitializerSupport(env, clz, x10_is_static, x10_string, initializer_index, x10Token);
+        cactionBuildInitializerSupport(env, clz, x10_is_static, x10_string, initializer_index, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildFieldSupport(JNIEnv *env, jclass xxx, jstring x10_string, jobject x10Token) 
 { 
 #if 0
-	cactionBuildFieldSupport(env, xxx, x10_string, x10Token);
+        cactionBuildFieldSupport(env, xxx, x10_string, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Inside of cactionBuildFieldSupport (variable declaration for field) \n");
@@ -834,37 +834,37 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildFieldSupport(JNIEnv *e
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateFieldSupport(JNIEnv *env, jclass xxx, jstring x10_string, jobject x10Token) 
 { 
-	cactionUpdateFieldSupport(env, xxx, x10_string, x10Token);
+        cactionUpdateFieldSupport(env, xxx, x10_string, x10Token);
 }
 
 JNIEXPORT jboolean JNICALL Java_x10rose_visit_JNI_cactionIsSpecifiedSourceFile(JNIEnv *env, jclass clz, jstring x10_full_file_name) 
 { 
-	return cactionIsSpecifiedSourceFile(env, clz, x10_full_file_name);
+        return cactionIsSpecifiedSourceFile(env, clz, x10_full_file_name);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTest(JNIEnv *env, jclass clz) 
 { 
-	cactionTest(env, clz);
+        cactionTest(env, clz);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertImportedPackageOnDemand(JNIEnv *env, jclass clz, jstring x10_package_name, jobject x10Token) 
 { 
-	cactionInsertImportedPackageOnDemand(env, clz, x10_package_name, x10Token);
+        cactionInsertImportedPackageOnDemand(env, clz, x10_package_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertImportedTypeOnDemand(JNIEnv *env, jclass clz, jstring x10_package_name,  jstring x10_type_name, jobject x10Token) 
 { 
-	cactionInsertImportedTypeOnDemand(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionInsertImportedTypeOnDemand(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertImportedType(JNIEnv *env, jclass clz, jstring x10_package_name,  jstring x10_type_name, jobject x10Token) 
 { 
-	cactionInsertImportedType(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionInsertImportedType(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertImportedStaticField(JNIEnv *env, jclass clz, jstring x10_variable_name, jobject x10Token) 
 { 
-	cactionInsertImportedStaticField(env, clz, x10_variable_name, x10Token);
+        cactionInsertImportedStaticField(env, clz, x10_variable_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPushPackage(JNIEnv *env, jclass clz, jstring x10_package_name, jobject x10Token) 
@@ -883,39 +883,39 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPushPackage(JNIEnv *env, jc
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdatePushPackage(JNIEnv *env, jclass clz, jstring x10_package_name, jobject x10Token) 
 { 
-	cactionUpdatePushPackage(env, clz, x10_package_name, x10Token);
+        cactionUpdatePushPackage(env, clz, x10_package_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPopPackage(JNIEnv *env, jclass clz) 
 { 
-	cactionPopPackage(env, clz);
+        cactionPopPackage(env, clz);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPushTypeScope(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jobject x10Token) 
 { 
-	cactionPushTypeScope(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionPushTypeScope(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPopTypeScope(JNIEnv *env, jclass clz) 
 { 
-	cactionPopTypeScope(env, clz);
+        cactionPopTypeScope(env, clz);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPushTypeParameterScope(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jobject x10Token) 
 { 
-	cactionPushTypeParameterScope(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionPushTypeParameterScope(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPopTypeParameterScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionPopTypeParameterScope(env, clz, x10Token);
+        cactionPopTypeParameterScope(env, clz, x10Token);
 }
 
 //JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv *env, jclass clz, jint argc, jobjectArray argv) 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv *env, jclass clz, jint size, jobjectArray array) 
 { 
 #if 0
-	cactionCompilationUnitList(env, clz);
+        cactionCompilationUnitList(env, clz);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_x10rose_visit_JNI_cactionCompilationUnitList \n");
@@ -967,7 +967,6 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv 
 #endif
 	
     ROSE_ASSERT(::globalScope != NULL);
-
     //
     // At this point, the scope stack should be empty. Push the global scope into it.
     //
@@ -1002,17 +1001,17 @@ cout << "Stored type "
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitListEnd(JNIEnv *env, jclass clz) 
 { 
-	cactionCompilationUnitListEnd(env, clz);
+        cactionCompilationUnitListEnd(env, clz);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetupBasicTypes(JNIEnv *env, jclass clz) 
 { 
-	cactionSetupBasicTypes(env, clz);
+        cactionSetupBasicTypes(env, clz);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPackageAnnotations(JNIEnv *env, jclass clz, int num_annotations, jobject x10Token) 
 { 
-	cactionPackageAnnotations(env, clz, num_annotations, x10Token);
+        cactionPackageAnnotations(env, clz, num_annotations, x10Token);
 }
 
 #if 0
@@ -1022,7 +1021,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitDeclaration(
 #endif
 { 
 #if 0
-	cactionCompilationUnitDeclaration(env, clz, x10_full_file_name, x10_package_name, x10_filename, x10Token);
+        cactionCompilationUnitDeclaration(env, clz, x10_full_file_name, x10_package_name, x10_filename, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
          printf ("Inside of Java_x10rose_visit_JNI_cactionCompilationUnitDeclaration() \n");
@@ -1054,7 +1053,7 @@ cout.flush();
     ROSE_ASSERT(package_definition);
     ROSE_ASSERT(! ::currentSourceFile -> get_package());
     SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_name);
-	package_statement -> set_parent(package_definition);	
+        package_statement -> set_parent(package_definition);    
     ::currentSourceFile -> set_package(package_statement);
 #if 0
     SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
@@ -1102,17 +1101,17 @@ printf("namespace_symbol=%p\n", namespace_symbol);
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitDeclarationEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionCompilationUnitDeclarationEnd(env, clz, x10Token);
+        cactionCompilationUnitDeclarationEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEcjFatalCompilationErrors(JNIEnv *env, jclass clz, jstring x10_full_file_name) 
 { 
-	cactionEcjFatalCompilationErrors(env, clz, x10_full_file_name);
+        cactionEcjFatalCompilationErrors(env, clz, x10_full_file_name);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitDeclarationError(JNIEnv *env, jclass clz, jstring x10_error_message, jobject x10Token) 
 { 
-	cactionCompilationUnitDeclarationError(env, clz, x10_error_message, x10Token);
+        cactionCompilationUnitDeclarationError(env, clz, x10_error_message, x10Token);
 }
 
 #if 1
@@ -1146,7 +1145,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclaration(JNIEnv *env
 //  Java_x10rose_visit_JNI_cactionPushPackage(env, NULL, x10_package_name, NULL);
 
 //MH-20140418 Added
-	SgScopeStatement *outerScope = astX10ScopeStack.top();
+        SgScopeStatement *outerScope = astX10ScopeStack.top();
 
 //MH-20140418 Changed <tt>::globalScope</tt> to <tt>outerScope</tt>
     SgClassDeclaration *class_declaration = buildDefiningClassDeclaration(type_name, /*::globalScope*/outerScope);
@@ -1176,13 +1175,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationHeader(JNIEn
                                                                     jobject x10Token) 
 {
 
-	cactionTypeDeclarationHeader(env, clz, x10_has_super_class, num_interfaces, num_parameters, x10Token);
+        cactionTypeDeclarationHeader(env, clz, x10_has_super_class, num_interfaces, num_parameters, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionTypeDeclarationEnd(env, clz, x10Token);
+        cactionTypeDeclarationEnd(env, clz, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgClassDeclaration (cactionTypeDeclarationEnd) \n");
@@ -1257,14 +1256,14 @@ cout.flush();
 */
 
 #if 1 //MH-20140404
-	SgJavaClassDeclarationList *class_list = sourceFile -> get_class_list();
+        SgJavaClassDeclarationList *class_list = sourceFile -> get_class_list();
 #if 0
     if (class_list == NULL) {
-    	printf("class_list NULL\n");
+        printf("class_list NULL\n");
     }
     else if (class_list -> get_file_info() == NULL) { // The first
 //      setX10SourcePosition(class_list, env, x10Token);
-    	printf("file info NULL\n");
+        printf("file info NULL\n");
     }
 #endif
     class_list -> get_java_class_list().push_back(class_declaration);
@@ -1368,7 +1367,7 @@ cout.flush();
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionConstructorDeclaration(JNIEnv *env, jclass clz, jstring x10_string, jint constructor_index, jobject x10Token) 
 { 
-	cactionConstructorDeclaration(env, clz, x10_string, constructor_index, x10Token);
+        cactionConstructorDeclaration(env, clz, x10_string, constructor_index, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionConstructorDeclarationHeader(JNIEnv *env, jclass clz,                                                                            jstring x10_string, 
@@ -1381,17 +1380,17 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionConstructorDeclarationHeade
                                                                            jobject x10Token) 
 {
 
-	cactionConstructorDeclarationHeader(env, clz, x10_string, x10_is_public, x10_is_protected, x10_is_private, x10_numberOfTypeParameters, x10_numberOfArguments, x10_numberOfThrownExceptions, x10Token);
+        cactionConstructorDeclarationHeader(env, clz, x10_string, x10_is_public, x10_is_protected, x10_is_private, x10_numberOfTypeParameters, x10_numberOfArguments, x10_numberOfThrownExceptions, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionConstructorDeclarationEnd(JNIEnv *env, jclass clz, jint num_annotations, jint num_statements, jobject x10Token) 
 { 
-	cactionConstructorDeclarationEnd(env, clz, num_annotations, num_statements, x10Token);
+        cactionConstructorDeclarationEnd(env, clz, num_annotations, num_statements, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionExplicitConstructorCall(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionExplicitConstructorCall(env, clz, x10Token);
+        cactionExplicitConstructorCall(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionExplicitConstructorCallEnd(JNIEnv *env, jclass clz,                                                                          jboolean x10_is_implicit_super,
@@ -1405,13 +1404,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionExplicitConstructorCallEnd(
                                                                          jobject x10Token) 
 {
 
-	cactionExplicitConstructorCallEnd(env, clz, x10_is_implicit_super, x10_is_super, x10_has_qualification, x10_package_name, x10_type_name, constructor_index, x10_number_of_type_arguments, x10_number_of_arguments, x10Token);
+        cactionExplicitConstructorCallEnd(env, clz, x10_is_implicit_super, x10_is_super, x10_has_qualification, x10_package_name, x10_type_name, constructor_index, x10_number_of_type_arguments, x10_number_of_arguments, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclaration(JNIEnv *env, jclass clz, jstring x10_string, jint method_index, jobject x10Token) 
 { 
 #if 0
-	cactionMethodDeclaration(env, clz, x10_string, method_index, x10Token);
+        cactionMethodDeclaration(env, clz, x10_string, method_index, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Build a SgMemberFunctionDeclaration \n");
@@ -1472,7 +1471,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationHeader(JNI
                                                                       jobject x10Token) 
 {
 
-	cactionMethodDeclarationHeader(env, clz, x10_string, x10_is_abstract, x10_is_native, x10_is_static, x10_is_final, x10_is_synchronized, x10_is_public, x10_is_protected, x10_is_private, x10_is_strictfp, x10_numberOfTypeParameters, x10_numberOfArguments, x10_numberOfThrownExceptions, x10Token);
+        cactionMethodDeclarationHeader(env, clz, x10_string, x10_is_abstract, x10_is_native, x10_is_static, x10_is_final, x10_is_synchronized, x10_is_public, x10_is_protected, x10_is_private, x10_is_strictfp, x10_numberOfTypeParameters, x10_numberOfArguments, x10_numberOfThrownExceptions, x10Token);
 }
 
 
@@ -1586,7 +1585,7 @@ cout.flush();
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeParameterReference(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jint method_index, jstring x10_type_parameter_name, jobject x10Token) 
 { 
-	cactionTypeParameterReference(env, clz, x10_package_name, x10_type_name, method_index, x10_type_parameter_name, x10Token);
+        cactionTypeParameterReference(env, clz, x10_package_name, x10_type_name, method_index, x10_type_parameter_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jobject x10Visitor, jobject x10Token) 
@@ -1710,50 +1709,50 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedTypeReference(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jobject x10Token) 
 { 
-	cactionQualifiedTypeReference(env, clz, x10_package_name, x10_type_name, x10Token);
+        cactionQualifiedTypeReference(env, clz, x10_package_name, x10_type_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCatchArgument(JNIEnv *env, jclass clz, jstring x10_argument_name, jobject x10Token) 
 { 
-	cactionCatchArgument(env, clz, x10_argument_name, x10Token);
+        cactionCatchArgument(env, clz, x10_argument_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArgument(JNIEnv *env, jclass clz, jstring x10_argument_name, jobject x10Token) 
 { 
-	cactionArgument(env, clz, x10_argument_name, x10Token);
+        cactionArgument(env, clz, x10_argument_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCatchArgumentEnd(JNIEnv *env, jclass clz, jint num_annotations, jstring x10_argument_name, jint num_types, jboolean x10_is_final, jobject x10Token) 
 { 
-	cactionCatchArgumentEnd(env, clz, num_annotations, x10_argument_name, num_types, x10_is_final, x10Token);
+        cactionCatchArgumentEnd(env, clz, num_annotations, x10_argument_name, num_types, x10_is_final, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArgumentEnd(JNIEnv *env, jclass clz, jint num_annotations, jstring x10_argument_name, jobject x10Token) 
 { 
-	cactionArgumentEnd(env, clz, num_annotations, x10_argument_name, x10Token);
+        cactionArgumentEnd(env, clz, num_annotations, x10_argument_name, x10Token);
 }
 
 /*
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayTypeReference(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jint x10_number_of_dimensions, jobject x10Token) 
 { 
-	cactionArrayTypeReference(env, clz, x10_package_name, x10_type_name, x10_number_of_dimensions, x10Token);
+        cactionArrayTypeReference(env, clz, x10_package_name, x10_type_name, x10_number_of_dimensions, x10Token);
 }
 */
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayTypeReference(JNIEnv *env, jclass clz, jint x10_num_dimensions, jobject x10Token) 
 { 
-	cactionArrayTypeReference(env, clz, x10_num_dimensions, x10Token);
+        cactionArrayTypeReference(env, clz, x10_num_dimensions, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayTypeReferenceEnd(JNIEnv *env, jclass clz, jstring x10_name, int int1, jobject x10Token) 
 { 
-	cactionArrayTypeReferenceEnd(env, clz, x10_name, int1, x10Token);
+        cactionArrayTypeReferenceEnd(env, clz, x10_name, int1, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMessageSend(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jstring x10_function_name, jobject x10Token) 
 { 
 #if 0
-	cactionMessageSend(env, clz, x10_package_name, x10_type_name, x10_function_name, x10Token);
+        cactionMessageSend(env, clz, x10_package_name, x10_type_name, x10_function_name, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Build a function call (Message Send) \n");
@@ -1785,7 +1784,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMessageSendEnd(JNIEnv *env,
                                                              jobject x10Token) 
 {
 #if 0
-	cactionMessageSendEnd(env, clz, x10_is_static, x10_has_receiver, x10_package_name, x10_type_name, java_method_name, method_index, numTypeArguments, numArguments, x10Token);
+        cactionMessageSendEnd(env, clz, x10_is_static, x10_has_receiver, x10_package_name, x10_type_name, java_method_name, method_index, numTypeArguments, numArguments, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionMessageSendEnd() \n");
@@ -1971,77 +1970,77 @@ cout << "expr=" << expr << endl;
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionStringLiteral(JNIEnv *env, jclass clz, jstring x10_string, jobject x10Token) 
 { 
-	cactionStringLiteral(env, clz, x10_string, x10Token);
+        cactionStringLiteral(env, clz, x10_string, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAllocationExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionAllocationExpression(env, clz, x10Token);
+        cactionAllocationExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAllocationExpressionEnd(JNIEnv *env, jclass clz, jboolean has_type, jint x10_num_arguments, jobject x10Token) 
 { 
-	cactionAllocationExpressionEnd(env, clz, has_type, x10_num_arguments, x10Token);
+        cactionAllocationExpressionEnd(env, clz, has_type, x10_num_arguments, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionANDANDExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionANDANDExpression(env, clz, x10Token);
+        cactionANDANDExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionANDANDExpressionEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionANDANDExpressionEnd(env, clz, x10Token);
+        cactionANDANDExpressionEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAnnotationMethodDeclaration(JNIEnv *env, jclass clz, jstring x10_string, jint method_index, jobject x10Token) 
 { 
-	cactionAnnotationMethodDeclaration(env, clz, x10_string, method_index, x10Token);
+        cactionAnnotationMethodDeclaration(env, clz, x10_string, method_index, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAnnotationMethodDeclarationEnd(JNIEnv *env, jclass clz, jstring x10_string, jint method_index, jint num_annotations, jboolean has_default, jobject x10Token) 
 { 
-	cactionAnnotationMethodDeclarationEnd(env, clz, x10_string, method_index, num_annotations, has_default, x10Token);
+        cactionAnnotationMethodDeclarationEnd(env, clz, x10_string, method_index, num_annotations, has_default, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayAllocationExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionArrayAllocationExpression(env, clz, x10Token);
+        cactionArrayAllocationExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayAllocationExpressionEnd(JNIEnv *env, jclass clz, jint x10_num_dimensions, jboolean x10_has_initializers, jobject x10Token) 
 { 
-	cactionArrayAllocationExpressionEnd(env, clz, x10_num_dimensions, x10_has_initializers, x10Token);
+        cactionArrayAllocationExpressionEnd(env, clz, x10_num_dimensions, x10_has_initializers, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayInitializer(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionArrayInitializer(env, clz, x10Token);
+        cactionArrayInitializer(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayInitializerEnd(JNIEnv *env, jclass clz, jint x10_num_expressions, jobject x10Token) 
 { 
-	cactionArrayInitializerEnd(env, clz, x10_num_expressions, x10Token);
+        cactionArrayInitializerEnd(env, clz, x10_num_expressions, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionArrayReference(env, clz, x10Token);
+        cactionArrayReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArrayReferenceEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionArrayReferenceEnd(env, clz, x10Token);
+        cactionArrayReferenceEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAssertStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionAssertStatement(env, clz, x10Token);
+        cactionAssertStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAssertStatementEnd(JNIEnv *env, jclass clz, jboolean hasExceptionArgument, jobject x10Token) 
 { 
-	cactionAssertStatementEnd(env, clz, hasExceptionArgument, x10Token);
+        cactionAssertStatementEnd(env, clz, hasExceptionArgument, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAssignment(JNIEnv *env, jclass clz, jobject x10Token) 
@@ -2075,16 +2074,16 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAssignmentEnd(JNIEnv *env, 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionBinaryExpression(env, clz, x10Token);
+        cactionBinaryExpression(env, clz, x10Token);
 #else
-	    // I don't think we need this function.
+            // I don't think we need this function.
 #endif
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpressionEnd(JNIEnv *env, jclass clz, jint x10_operator_kind, jobject x10Token) 
 { 
 #if 0
-	cactionBinaryExpressionEnd(env, clz, x10_operator_kind, x10Token);
+        cactionBinaryExpressionEnd(env, clz, x10_operator_kind, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Build an Binary Expression End \n");
@@ -2160,7 +2159,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpressionEnd(JNIEnv 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlock(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionBlock(env, clz, x10Token);
+        cactionBlock(env, clz, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Build an SgBasicBlock scope \n");
@@ -2229,7 +2228,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlock(JNIEnv *env, jclass c
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlockEnd(JNIEnv *env, jclass clz, jint x10_numberOfStatements, jobject x10Token) 
 { 
 #if 0
-	cactionBlockEnd(env, clz, x10_numberOfStatements, x10Token);
+        cactionBlockEnd(env, clz, x10_numberOfStatements, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Pop the current SgBasicBlock scope off the scope stack...\n");
@@ -2277,93 +2276,93 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlockEnd(JNIEnv *env, jclas
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBreakStatement(JNIEnv *env, jclass clz, jstring x10_string, jobject x10Token) 
 { 
-	cactionBreakStatement(env, clz, x10_string, x10Token);
+        cactionBreakStatement(env, clz, x10_string, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCaseStatement(JNIEnv *env, jclass clz, jboolean hasCaseExpression, jobject x10Token) 
 { 
-	cactionCaseStatement(env, clz, hasCaseExpression, x10Token);
+        cactionCaseStatement(env, clz, hasCaseExpression, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCaseStatementEnd(JNIEnv *env, jclass clz, jboolean hasCaseExpression, jobject x10Token) 
 { 
-	cactionCaseStatementEnd(env, clz, hasCaseExpression, x10Token);
+        cactionCaseStatementEnd(env, clz, hasCaseExpression, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCastExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionCastExpression(env, clz, x10Token);
+        cactionCastExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCastExpressionEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionCastExpressionEnd(env, clz, x10Token);
+        cactionCastExpressionEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCharLiteral(JNIEnv *env, jclass clz, jchar x10_char_value, jobject x10Token) 
 { 
-	cactionCharLiteral(env, clz, x10_char_value, x10Token);
+        cactionCharLiteral(env, clz, x10_char_value, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionClassLiteralAccess(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionClassLiteralAccess(env, clz, x10Token);
+        cactionClassLiteralAccess(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionClassLiteralAccessEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionClassLiteralAccessEnd(env, clz, x10Token);
+        cactionClassLiteralAccessEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionClinit(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionClinit(env, clz, x10Token);
+        cactionClinit(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionConditionalExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionConditionalExpression(env, clz, x10Token);
+        cactionConditionalExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionConditionalExpressionEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionConditionalExpressionEnd(env, clz, x10Token);
+        cactionConditionalExpressionEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionContinueStatement(JNIEnv *env, jclass clz, jstring x10_string, jobject x10Token) 
 { 
-	cactionContinueStatement(env, clz, x10_string, x10Token);
+        cactionContinueStatement(env, clz, x10_string, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompoundAssignment(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionCompoundAssignment(env, clz, x10Token);
+        cactionCompoundAssignment(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompoundAssignmentEnd(JNIEnv *env, jclass clz, jint x10_operator_kind, jobject x10Token) 
 { 
-	cactionCompoundAssignmentEnd(env, clz, x10_operator_kind, x10Token);
+        cactionCompoundAssignmentEnd(env, clz, x10_operator_kind, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionDoStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionDoStatement(env, clz, x10Token);
+        cactionDoStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionDoStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionDoStatementEnd(env, clz, x10Token);
+        cactionDoStatementEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionDoubleLiteral(JNIEnv *env, jclass clz, jdouble x10_value, jstring x10_source, jobject x10Token) 
 { 
-	cactionDoubleLiteral(env, clz, x10_value, x10_source, x10Token);
+        cactionDoubleLiteral(env, clz, x10_value, x10_source, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEmptyStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionEmptyStatement(env, clz, x10Token);
+        cactionEmptyStatement(env, clz, x10Token);
 #else
     // Nothing to do;
 #endif
@@ -2372,7 +2371,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEmptyStatement(JNIEnv *env,
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEmptyStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionEmptyStatementEnd(env, clz, x10Token);
+        cactionEmptyStatementEnd(env, clz, x10Token);
 #else
     SgNullStatement *stmt = SageBuilder::buildNullStatement();
     ROSE_ASSERT(stmt != NULL);
@@ -2383,23 +2382,23 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEmptyStatementEnd(JNIEnv *e
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEqualExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionEqualExpression(env, clz, x10Token);
+        cactionEqualExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionEqualExpressionEnd(JNIEnv *env, jclass clz, jint x10_operator_kind, jobject x10Token) 
 { 
-	cactionEqualExpressionEnd(env, clz, x10_operator_kind, x10Token);
+        cactionEqualExpressionEnd(env, clz, x10_operator_kind, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionExtendedStringLiteral(JNIEnv *env, jclass clz, jstring x10_string, jobject x10Token) 
 { 
-	cactionExtendedStringLiteral(env, clz, x10_string, x10Token);
+        cactionExtendedStringLiteral(env, clz, x10_string, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFalseLiteral(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionFalseLiteral(env, clz, x10Token);
+        cactionFalseLiteral(env, clz, x10Token);
 #else
     SgExpression *expression = SageBuilder::buildBoolValExp(false);
     astX10ComponentStack.push(expression);
@@ -2437,7 +2436,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFieldDeclarationEnd(JNIEnv 
 #endif
 {
 #if 0
-	cactionFieldDeclarationEnd(env, clz, variable_name, num_annotations, is_enum_constant, has_initializer, is_final, is_private, is_protected, is_public, is_volatile, is_synthetic, is_static, is_transient, x10Token);
+        cactionFieldDeclarationEnd(env, clz, variable_name, num_annotations, is_enum_constant, has_initializer, is_final, is_private, is_protected, is_public, is_volatile, is_synthetic, is_static, is_transient, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionFieldDeclarationEnd() \n");
@@ -2557,7 +2556,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFieldDeclarationEnd(JNIEnv 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFieldReference(JNIEnv *env, jclass clz, jstring x10_field, jobject x10Token) 
 { 
 #if 0
-	cactionFieldReference(env, clz, x10_field, x10Token);
+        cactionFieldReference(env, clz, x10_field, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionFieldReference() \n");
@@ -2722,27 +2721,27 @@ else {
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFloatLiteral(JNIEnv *env, jclass clz, jfloat x10_value, jstring x10_source, jobject x10Token) 
 { 
-	cactionFloatLiteral(env, clz, x10_value, x10_source, x10Token);
+        cactionFloatLiteral(env, clz, x10_value, x10_source, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForeachStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionForeachStatement(env, clz, x10Token);
+        cactionForeachStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForeachStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionForeachStatementEnd(env, clz, x10Token);
+        cactionForeachStatementEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionForStatement(env, clz, x10Token);
+        cactionForStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForStatementEnd(JNIEnv *env, jclass clz, jint num_initializations, jboolean has_condition, jint num_increments, jobject x10Token) 
 { 
-	cactionForStatementEnd(env, clz, num_initializations, has_condition, num_increments, x10Token);
+        cactionForStatementEnd(env, clz, num_initializations, has_condition, num_increments, x10Token);
 }
 
 #if 0
@@ -2752,7 +2751,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionIfStatement(JNIEnv *env, jc
 #endif
 { 
 #if 0
-	cactionIfStatement(env, clz, has_false_body, x10Token);
+        cactionIfStatement(env, clz, has_false_body, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionIfStatement() \n");
@@ -2780,7 +2779,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionIfStatement(JNIEnv *env, jc
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionIfStatementEnd(JNIEnv *env, jclass clz, jboolean has_false_body, jobject x10Token) 
 { 
 #if 0
-	cactionIfStatementEnd(env, clz, has_false_body, x10Token);
+        cactionIfStatementEnd(env, clz, has_false_body, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionIfStatementEnd() \n");
@@ -2835,7 +2834,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionImportReference(JNIEnv *env
                                                               jobject x10Token) 
 {
 #if 1
-	cactionImportReference(env, clz, x10_is_static, x10_qualified_name, x10_contains_wildcard, x10Token);
+        cactionImportReference(env, clz, x10_is_static, x10_qualified_name, x10_contains_wildcard, x10Token);
 #else
     // This is the import statement.  The semantics is to include the named file and add its
     // declarations to the global scope so that they can be referenced by the current file.
@@ -2946,28 +2945,28 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionImportReference(JNIEnv *env
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInitializer(JNIEnv *env, jclass clz, jboolean x10_is_static, jstring x10_string, jint initializer_index, jobject x10Token) 
 { 
-	cactionInitializer(env, clz, x10_is_static, x10_string, initializer_index, x10Token);
+        cactionInitializer(env, clz, x10_is_static, x10_string, initializer_index, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInitializerEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionInitializerEnd(env, clz, x10Token);
+        cactionInitializerEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInstanceOfExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionInstanceOfExpression(env, clz, x10Token);
+        cactionInstanceOfExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInstanceOfExpressionEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionInstanceOfExpressionEnd(env, clz, x10Token);
+        cactionInstanceOfExpressionEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionIntLiteral(JNIEnv *env, jclass clz, jint x10_value, jstring x10_source, jobject x10Token) 
 { 
 #if 0
-	cactionIntLiteral(env, clz, x10_value, x10_source, x10Token);
+        cactionIntLiteral(env, clz, x10_value, x10_source, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Build IntVal \n");
@@ -2991,139 +2990,139 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionIntLiteral(JNIEnv *env, jcl
 /*
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadoc(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadoc(env, clz, x10Token);
+        cactionJavadoc(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocClassScope(env, clz, x10Token);
+        cactionJavadocClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocAllocationExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocAllocationExpression(env, clz, x10Token);
+        cactionJavadocAllocationExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocAllocationExpressionClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocAllocationExpressionClassScope(env, clz, x10Token);
+        cactionJavadocAllocationExpressionClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocArgumentExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocArgumentExpression(env, clz, x10Token);
+        cactionJavadocArgumentExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocArgumentExpressionClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocArgumentExpressionClassScope(env, clz, x10Token);
+        cactionJavadocArgumentExpressionClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocArrayQualifiedTypeReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocArrayQualifiedTypeReference(env, clz, x10Token);
+        cactionJavadocArrayQualifiedTypeReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocArrayQualifiedTypeReferenceClassScope(env, clz, x10Token);
+        cactionJavadocArrayQualifiedTypeReferenceClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocArraySingleTypeReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocArraySingleTypeReference(env, clz, x10Token);
+        cactionJavadocArraySingleTypeReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocArraySingleTypeReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocArraySingleTypeReferenceClassScope(env, clz, x10Token);
+        cactionJavadocArraySingleTypeReferenceClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocFieldReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocFieldReference(env, clz, x10Token);
+        cactionJavadocFieldReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocFieldReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocFieldReferenceClassScope(env, clz, x10Token);
+        cactionJavadocFieldReferenceClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocImplicitTypeReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocImplicitTypeReference(env, clz, x10Token);
+        cactionJavadocImplicitTypeReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocImplicitTypeReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocImplicitTypeReferenceClassScope(env, clz, x10Token);
+        cactionJavadocImplicitTypeReferenceClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocMessageSend(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocMessageSend(env, clz, x10Token);
+        cactionJavadocMessageSend(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocMessageSendClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocMessageSendClassScope(env, clz, x10Token);
+        cactionJavadocMessageSendClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocQualifiedTypeReference(JNIEnv *env, jclass clz, jobject x10Token)  
 { 
-	cactionJavadocQualifiedTypeReference(env, clz, x10Token);
+        cactionJavadocQualifiedTypeReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocQualifiedTypeReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocQualifiedTypeReferenceClassScope(env, clz, x10Token);
+        cactionJavadocQualifiedTypeReferenceClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocReturnStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocReturnStatement(env, clz, x10Token);
+        cactionJavadocReturnStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocReturnStatementClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocReturnStatementClassScope(env, clz, x10Token);
+        cactionJavadocReturnStatementClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocSingleNameReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocSingleNameReference(env, clz, x10Token);
+        cactionJavadocSingleNameReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocSingleNameReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocSingleNameReferenceClassScope(env, clz, x10Token);
+        cactionJavadocSingleNameReferenceClassScope(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocSingleTypeReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocSingleTypeReference(env, clz, x10Token);
+        cactionJavadocSingleTypeReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionJavadocSingleTypeReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionJavadocSingleTypeReferenceClassScope(env, clz, x10Token);
+        cactionJavadocSingleTypeReferenceClassScope(env, clz, x10Token);
 }
 */
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLabeledStatement(JNIEnv *env, jclass clz, jstring labelName, jobject x10Token) 
 { 
-	cactionLabeledStatement(env, clz, labelName, x10Token);
+        cactionLabeledStatement(env, clz, labelName, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLabeledStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionLabeledStatementEnd(env, clz, x10Token);
+        cactionLabeledStatementEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLocalDeclaration(JNIEnv *env, jclass clz, jint num_annotations, jstring x10_variable_name, jboolean is_final, jobject x10Token) 
 { 
 #if 1
-	cactionLocalDeclaration(env, clz, num_annotations, x10_variable_name, is_final, x10Token);
+        cactionLocalDeclaration(env, clz, num_annotations, x10_variable_name, is_final, x10Token);
 #else
     SgName variable_name = convertJavaStringToCxxString(env, x10_variable_name);
 
@@ -3164,7 +3163,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLocalDeclaration(JNIEnv *en
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLocalDeclarationEnd(JNIEnv *env, jclass clz, jstring variable_name, jboolean hasInitializer, jobject x10Token) 
 { 
 #if 1
-	cactionLocalDeclarationEnd(env, clz, variable_name, hasInitializer, x10Token);
+        cactionLocalDeclarationEnd(env, clz, variable_name, hasInitializer, x10Token);
 #else
 
     if (SgProject::get_verbose() > 0)
@@ -3228,7 +3227,7 @@ cout.flush();
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLongLiteral(JNIEnv *env, jclass clz, jlong x10_value, jstring x10_source, jobject x10Token) 
 { 
 #if 0
-	cactionLongLiteral(env, clz, x10_value, x10_source, x10Token);
+        cactionLongLiteral(env, clz, x10_value, x10_source, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Build LongVal \n");
@@ -3253,108 +3252,108 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionLongLiteral(JNIEnv *env, jc
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMarkerAnnotationEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionMarkerAnnotationEnd(env, clz, x10Token);
+        cactionMarkerAnnotationEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMemberValuePairEnd(JNIEnv *env, jclass clz, jstring x10_name, jobject x10Token) 
 { 
-	cactionMemberValuePairEnd(env, clz, x10_name, x10Token);
+        cactionMemberValuePairEnd(env, clz, x10_name, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionStringLiteralConcatenation(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionStringLiteralConcatenation(env, clz, x10Token);
+        cactionStringLiteralConcatenation(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionNormalAnnotationEnd(JNIEnv *env, jclass clz, jint num_member_value_pairs, jobject x10Token) 
 { 
-	cactionNormalAnnotationEnd(env, clz, num_member_value_pairs, x10Token);
+        cactionNormalAnnotationEnd(env, clz, num_member_value_pairs, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionNullLiteral(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionNullLiteral(env, clz, x10Token);
+        cactionNullLiteral(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionORORExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionORORExpression(env, clz, x10Token);
+        cactionORORExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionORORExpressionEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionORORExpressionEnd(env, clz, x10Token);
+        cactionORORExpressionEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionParameterizedTypeReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionParameterizedTypeReference(env, clz, x10Token);
+        cactionParameterizedTypeReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionParameterizedTypeReferenceEnd(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jboolean has_type_arguments, int x10_num_type_arguments, jobject x10Token) 
 { 
-	cactionParameterizedTypeReferenceEnd(env, clz, x10_package_name, x10_type_name, has_type_arguments, x10_num_type_arguments, x10Token);
+        cactionParameterizedTypeReferenceEnd(env, clz, x10_package_name, x10_type_name, has_type_arguments, x10_num_type_arguments, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionParameterizedQualifiedTypeReferenceEnd(JNIEnv *env, jclass clz, jstring x10_type_name, jboolean has_type_arguments, int x10_num_type_arguments, jobject x10Token) 
 { 
-	cactionParameterizedQualifiedTypeReferenceEnd(env, clz, x10_type_name, has_type_arguments, x10_num_type_arguments, x10Token);
+        cactionParameterizedQualifiedTypeReferenceEnd(env, clz, x10_type_name, has_type_arguments, x10_num_type_arguments, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPostfixExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionPostfixExpression(env, clz, x10Token);
+        cactionPostfixExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPostfixExpressionEnd(JNIEnv *env, jclass clz, jint x10_operator_kind, jobject x10Token) 
 { 
-	cactionPostfixExpressionEnd(env, clz, x10_operator_kind, x10Token);
+        cactionPostfixExpressionEnd(env, clz, x10_operator_kind, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPrefixExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionPrefixExpression(env, clz, x10Token);
+        cactionPrefixExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPrefixExpressionEnd(JNIEnv *env, jclass clz, jint x10_operator_kind, jobject x10Token) 
 { 
-	cactionPrefixExpressionEnd(env, clz, x10_operator_kind, x10Token);
+        cactionPrefixExpressionEnd(env, clz, x10_operator_kind, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedAllocationExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionQualifiedAllocationExpression(env, clz, x10Token);
+        cactionQualifiedAllocationExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedAllocationExpressionEnd(JNIEnv *env, jclass clz, jboolean has_type, jboolean x10_contains_enclosing_instance, jint x10_num_arguments, jboolean x10_is_anonymous, jobject x10Token) 
 { 
-	cactionQualifiedAllocationExpressionEnd(env, clz, has_type, x10_contains_enclosing_instance, x10_num_arguments, x10_is_anonymous, x10Token);
+        cactionQualifiedAllocationExpressionEnd(env, clz, has_type, x10_contains_enclosing_instance, x10_num_arguments, x10_is_anonymous, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedSuperReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionQualifiedSuperReference(env, clz, x10Token);
+        cactionQualifiedSuperReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedSuperReferenceEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionQualifiedSuperReferenceEnd(env, clz, x10Token);
+        cactionQualifiedSuperReferenceEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedThisReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionQualifiedThisReference(env, clz, x10Token);
+        cactionQualifiedThisReference(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionQualifiedThisReferenceEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionQualifiedThisReferenceEnd(env, clz, x10Token);
+        cactionQualifiedThisReferenceEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionReturnStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionReturnStatement(env, clz, x10Token);
+        cactionReturnStatement(env, clz, x10Token);
 #else
     // Nothing to do !!!
 #endif
@@ -3363,7 +3362,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionReturnStatement(JNIEnv *env
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionReturnStatementEnd(JNIEnv *env, jclass clz, jboolean has_expression, jobject x10Token) 
 { 
 #if 0
-	cactionReturnStatementEnd(env, clz, has_expression, x10Token);
+        cactionReturnStatementEnd(env, clz, has_expression, x10Token);
 #else
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionReturnStatementEnd() \n");
@@ -3381,13 +3380,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionReturnStatementEnd(JNIEnv *
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSingleMemberAnnotationEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionSingleMemberAnnotationEnd(env, clz, x10Token);
+        cactionSingleMemberAnnotationEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSingleNameReference(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jstring x10_name, jobject x10Token) 
 { 
 #if 0
-	cactionSingleNameReference(env, clz, x10_package_name, x10_type_name, x10_name, x10Token);
+        cactionSingleNameReference(env, clz, x10_package_name, x10_type_name, x10_name, x10Token);
 #else
     SgName package_name = convertX10PackageNameToCxxString(env, x10_package_name),
            type_name = convertJavaStringToCxxString(env, x10_type_name),
@@ -3431,9 +3430,9 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSingleNameReference(JNIEnv 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSuperReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionSuperReference(env, clz, x10Token);
+        cactionSuperReference(env, clz, x10Token);
 #else
-	    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+            SgClassDefinition *class_definition = getCurrentTypeDefinition();
     ROSE_ASSERT(class_definition -> get_declaration() && (! class_definition -> attributeExists("namespace")));
 
     vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
@@ -3458,28 +3457,28 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSuperReference(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSwitchStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionSwitchStatement(env, clz, x10Token);
+        cactionSwitchStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSwitchStatementEnd(JNIEnv *env, jclass clz, jint numCases, jboolean hasDefaultCase, jobject x10Token) 
 { 
-	cactionSwitchStatementEnd(env, clz, numCases, hasDefaultCase, x10Token);
+        cactionSwitchStatementEnd(env, clz, numCases, hasDefaultCase, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSynchronizedStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionSynchronizedStatement(env, clz, x10Token);
+        cactionSynchronizedStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSynchronizedStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionSynchronizedStatementEnd(env, clz, x10Token);
+        cactionSynchronizedStatementEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionThisReference(env, clz, x10Token);
+        cactionThisReference(env, clz, x10Token);
 #else
     SgClassDefinition *class_definition = getCurrentTypeDefinition();
     ROSE_ASSERT(! class_definition -> attributeExists("namespace"));
@@ -3500,24 +3499,24 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference(JNIEnv *env, 
 /*
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReferenceClassScope(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionThisReferenceClassScope(env, clz, x10Token);
+        cactionThisReferenceClassScope(env, clz, x10Token);
 }
 */
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThrowStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionThrowStatement(env, clz, x10Token);
+        cactionThrowStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThrowStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionThrowStatementEnd(env, clz, x10Token);
+        cactionThrowStatementEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTrueLiteral(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
-	cactionTrueLiteral(env, clz, x10Token);
+        cactionTrueLiteral(env, clz, x10Token);
 #else
     SgExpression *expression = SageBuilder::buildBoolValExp(true);
     astX10ComponentStack.push(expression);
@@ -3526,47 +3525,47 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTrueLiteral(JNIEnv *env, jc
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCatchBlockEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionCatchBlockEnd(env, clz, x10Token);
+        cactionCatchBlockEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTryStatement(JNIEnv *env, jclass clz, jint numCatchBlocks, jboolean hasFinallyBlock, jobject x10Token) 
 { 
-	cactionTryStatement(env, clz, numCatchBlocks, hasFinallyBlock, x10Token);
+        cactionTryStatement(env, clz, numCatchBlocks, hasFinallyBlock, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTryStatementEnd(JNIEnv *env, jclass clz, jint num_resources, jint num_catch_blocks, jboolean has_finally_block, jobject x10Token) 
 { 
-	cactionTryStatementEnd(env, clz, num_resources, num_catch_blocks, has_finally_block, x10Token);
+        cactionTryStatementEnd(env, clz, num_resources, num_catch_blocks, has_finally_block, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUnaryExpression(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionUnaryExpression(env, clz, x10Token);
+        cactionUnaryExpression(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUnaryExpressionEnd(JNIEnv *env, jclass clz, jint x10_operator_kind, jobject x10Token) 
 { 
-	cactionUnaryExpressionEnd(env, clz, x10_operator_kind, x10Token);
+        cactionUnaryExpressionEnd(env, clz, x10_operator_kind, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWhileStatement(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionWhileStatement(env, clz, x10Token);
+        cactionWhileStatement(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWhileStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionWhileStatementEnd(env, clz, x10Token);
+        cactionWhileStatementEnd(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWildcard(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-	cactionWildcard(env, clz, x10Token);
+        cactionWildcard(env, clz, x10Token);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWildcardEnd(JNIEnv *env, jclass clz, jboolean is_unbound, jboolean has_extends_bound, jboolean has_super_bound, jobject x10Token) 
 { 
-	cactionWildcardEnd(env, clz, is_unbound, has_extends_bound, has_super_bound, x10Token);
+        cactionWildcardEnd(env, clz, is_unbound, has_extends_bound, has_super_bound, x10Token);
 }
 
 JNIEXPORT jstring JNICALL Java_x10rose_visit_JNI_cactionGetCurrentClassName (JNIEnv *env, jclass clz)
