@@ -290,6 +290,10 @@ analyterix_SOURCES = \
   GeneralAnalyzerBase.C \
   GeneralAnalyzer.h \
   GeneralAnalyzer.C \
+  PropertyState.h \
+  PropertyState.C \
+  IntervalPropertyState.h \
+  IntervalPropertyState.C \
   analyterix.C
 
 reverser_LDADD = -lrose

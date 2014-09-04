@@ -260,11 +260,17 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
   }
 }
 
-class GeneralAnalysisTestState : public PropertyState {
+#include "IntervalLattice.h"
+
+#include "PropertyState.h"
+#include "IntervalPropertyState.h"
+
+class IntervalPropertyStateFactory : public PropertyStateFactory {
 public:
-  void toStream(ostream& os, VariableIdMapping* vim=0) {}
-  bool approximatedBy(GeneralAnalysisTestState &other) { return false; }
-  void combine(GeneralAnalysisTestState& other){ }
+    PropertyState* create() {
+      PropertyState* pstate=new IntervalPropertyState(); 
+      return 0;
+    }
 };
 
 void generalAnalysis(SgProject* root) {
@@ -273,8 +279,10 @@ void generalAnalysis(SgProject* root) {
   boolOptions.registerOption("post-semantic-fold",false); // temporary
 
   GeneralAnalyzer* generalAnalyzer=new GeneralAnalyzer();
-#if 0
+  IntervalPropertyStateFactory* factory=new IntervalPropertyStateFactory();
+  generalAnalyzer->setFactory(factory);
   generalAnalyzer->initialize(root);
+#if 0
   generalAnalyzer->initializeGlobalVariables(root);
 
   std::string funtofind="main";

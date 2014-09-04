@@ -15,13 +15,23 @@
 
 using namespace CodeThorn;
 
+PropertyStateFactory::PropertyStateFactory() {
+}
+
+PropertyStateFactory::~PropertyStateFactory() {
+}
+
+void GeneralAnalyzerBase::setFactory(PropertyStateFactory* factory) {
+  _factory=factory;
+}
 
 GeneralAnalyzerBase::GeneralAnalyzerBase():
   _labeler(0),
   _cfanalyzer(0),
   _numberOfLabels(0),
   _preInfoIsValid(false),
-  _solverMode(GeneralAnalyzerBase::SOLVERMODE_STANDARD)
+  _solverMode(GeneralAnalyzerBase::SOLVERMODE_STANDARD),
+  _factory(0)
 {}
 
 
@@ -41,7 +51,8 @@ PropertyState* GeneralAnalyzerBase::getPostInfo(Label lab) {
 
 void GeneralAnalyzerBase::computeAllPreInfo() {
   for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
-    PropertyState* le=new PropertyState();
+    ROSE_ASSERT(_factory);
+    PropertyState* le=_factory->create();
     computePreInfo(lab,le);
     _analyzerDataPreInfo[lab]=le;
   }

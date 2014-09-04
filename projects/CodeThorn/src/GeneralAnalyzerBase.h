@@ -14,17 +14,17 @@
 #include <set>
 #include <string>
 
-namespace CodeThorn {
-
   using std::set;
   using std::vector;
   using std::string;
 
-class PropertyState {
+#include "PropertyState.h"
+
+class PropertyStateFactory {
  public:
-  virtual void toStream(ostream& os, VariableIdMapping* vim=0) {}
-  virtual bool approximatedBy(PropertyState* other) { return false; }
-  virtual void combine(PropertyState* other){}
+  PropertyStateFactory();
+  virtual PropertyState* create()=0;
+  virtual ~PropertyStateFactory();
 };
 
 class GeneralAnalyzerBase {
@@ -49,6 +49,8 @@ class GeneralAnalyzerBase {
   void setSolverMode(SolverMode);
   PropertyState* getPreInfo(Label lab);
   PropertyState* getPostInfo(Label lab);
+  // allocates a default object (factory)
+  void setFactory(PropertyStateFactory* factory);
  protected:
   virtual PropertyState* transfer(Label label, PropertyState* element);
   virtual void solve();
@@ -63,16 +65,16 @@ class GeneralAnalyzerBase {
   vector<PropertyState*> _analyzerData;
   WorkListSeq<Label> _workList;
   PropertyState* _initialElement;
+  PropertyStateFactory* _factory;
  protected:
   bool _preInfoIsValid;
   void computeAllPreInfo();
+  PropertyState* createPropertyState();
  private:
   void solveAlgorithm1();
   void solveAlgorithm2();
   void computePreInfo(Label lab,PropertyState* info);
   SolverMode _solverMode;
 };
-
-} // end of namespace
 
 #endif
