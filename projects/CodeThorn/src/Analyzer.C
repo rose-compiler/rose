@@ -2498,6 +2498,9 @@ void Analyzer::runSolver5() {
 #endif
   cout <<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   printStatusMessage(true);
+
+  list<pair<int, const EState*> > assertionFirstOccurences;
+  const EState* mostRecentWorklistState = NULL;
 # pragma omp parallel shared(workVector) private(threadNum)
   {
     threadNum=omp_get_thread_num();
@@ -2588,14 +2591,20 @@ void Analyzer::runSolver5() {
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
-                addToWorkList(newEStatePtr);            
+              if(pres.first==true) {
+                addToWorkList(newEStatePtr);
+                mostRecentWorklistState = newEStatePtr;
+              }
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
+              if (!newEStatePtr) {
+                cout << "ERROR: newEStatePtr is 0. " << endl; 
+                assert(0);
+              }
               recordTransition(currentEStatePtr,e,newEStatePtr);        
               if(boolOptions["report-failed-assert"]) {
 #pragma omp critical
@@ -2618,7 +2627,7 @@ void Analyzer::runSolver5() {
                   {
 		    //if this particular assertion was never reached before, compute and update counterexample
 		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                      addCounterexample(assertCode, newEStatePtr);
+                      assertionFirstOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                     } 
                   }
                 }
@@ -2654,19 +2663,40 @@ void Analyzer::runSolver5() {
       //    } // worklist-parallel for
   } // while
   } // omp parallel
-  const bool isComplete=true;
+  const bool isComplete = true;
   if(isIncompleteSTGReady()) {
     printStatusMessage(true);
     cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    reachabilityResults.finishedReachability(isPrecise(),isComplete);
+    bool complete;
+    if(boolOptions["incomplete-stg"]) {
+      complete=false;
+    } else {
+      complete=true;
+    }
+    reachabilityResults.finishedReachability(isPrecise(),complete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(isComplete);
+    transitionGraph.setIsComplete(complete);
     cout << "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
+  int maxCounterexampleLength = -1;
+  for (list<pair<int, const EState*> >::iterator i = assertionFirstOccurences.begin(); i != assertionFirstOccurences.end(); ++i ) {
+    int ceLength = addCounterexample(i->first, i->second);
+    if (ceLength > maxCounterexampleLength) {maxCounterexampleLength = ceLength;}
+  }
+  if(boolOptions["rers-binary"]) {
+     if ((getExplorationMode() == EXPL_BREADTH_FIRST)) {
+       transitionGraph.setMaxOfShortestAssertInput(maxCounterexampleLength);
+       if (mostRecentWorklistState && isPrecise()) {  
+          // Breadth-first search with a fixed size main loop and precise results guarantees that a prefix of certain
+          // length was covered.
+          transitionGraph.setInputSeqLengthCovered( (inputSequenceLength(mostRecentWorklistState) - 1) );
+       }
+     }
+  }
 }
 
 // solver 6 uses a different parallelization scheme (condition is not omp compliant yet)
@@ -2945,7 +2975,49 @@ void Analyzer::runSolver7() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
-list<const EState*> Analyzer::dijkstraShortestInputSequence(const EState* source, const EState* target) {
+list<const EState*> Analyzer::reverseInputSequenceBreadthFirst(const EState* source, const EState* target) {
+  // 1.) init: list wl , hashset predecessor, hasset visited
+  list<const EState*> worklist;
+  worklist.push_back(source);
+  boost::unordered_map <const EState*, const EState*> predecessor;
+  boost::unordered_set<const EState*> visited;
+  // 2.) while (elem in worklist) {s <-- pop wl; if (s not yet visited) {update predecessor map; 
+  //                                check if s==target; yes --> break, no --> add all pred to wl }}
+  bool targetFound = false;
+  while (worklist.size() > 0 && !targetFound) {
+    const EState* vertex = worklist.front();
+    worklist.pop_front();
+    if (visited.find(vertex) == visited.end()) {  //avoid cycles
+      visited.insert(vertex);
+      EStatePtrSet predsOfVertex = transitionGraph.pred(vertex);
+      for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
+        predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
+        if ((*i) == target) {
+          targetFound=true;
+          break;
+        } else {
+          worklist.push_back((*i));
+        }
+      }
+    }
+  }
+  if (!targetFound) {
+    cout << "ERROR: target state not connected to source while generating reversed trace source --> target." << endl;
+    assert(0);
+  }
+  // 3.) reconstruct trace. filter list of only input states and return it
+  list<const EState*> run;
+  run.push_front(target);
+  boost::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
+  while (nextPred != predecessor.end()) {
+    run.push_front(nextPred->second);
+    nextPred = predecessor.find(nextPred->second);
+  }
+  list<const EState*> result = filterStdInOnly(run);
+  return result;
+}
+
+list<const EState*> Analyzer::reverseInputSequenceDijkstra(const EState* source, const EState* target) {
   EStatePtrSet states = transitionGraph.estateSet();
   boost::unordered_set<const EState*> worklist;
   map <const EState*, int> distance;
@@ -2974,7 +3046,7 @@ list<const EState*> Analyzer::dijkstraShortestInputSequence(const EState* source
         }
       }
     }
-    //check for all predecessors if a shorter path to them was found
+    //check for all predecessors if a shorter path leading to them was found
     EStatePtrSet predsOfVertex = transitionGraph.pred(vertex);
     for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
       int altDist;
@@ -3041,12 +3113,28 @@ string Analyzer::reversedInputRunToString(list<const EState*>& run) {
   return result;
 }
 
-void Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
+int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   //cout << "DEBUG: assertion " << assertCode << " reached for the first time. "<< endl;
-  list<const EState*> counterexampleRun = 
-                        dijkstraShortestInputSequence(assertEState, transitionGraph.getStartEState());
+  list<const EState*> counterexampleRun;
+  if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+    counterexampleRun = reverseInputSequenceBreadthFirst(assertEState, transitionGraph.getStartEState());
+  } else {
+    counterexampleRun = reverseInputSequenceDijkstra(assertEState, transitionGraph.getStartEState());
+  }
+  int ceRunLength = counterexampleRun.size();
   string counterexample = reversedInputRunToString(counterexampleRun);
   //cout << "DEBUG: adding assert counterexample " << counterexample << endl;
   reachabilityResults.strictUpdateCounterexample(assertCode, counterexample);
+  return ceRunLength;
+}
+
+int Analyzer::inputSequenceLength(const EState* target) {
+  list<const EState*> run;
+  if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+    run = reverseInputSequenceBreadthFirst(target, transitionGraph.getStartEState());
+  } else {
+    run = reverseInputSequenceDijkstra(target, transitionGraph.getStartEState());
+  }
+  return run.size();
 }
 

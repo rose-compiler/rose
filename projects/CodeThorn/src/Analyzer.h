@@ -175,13 +175,18 @@ namespace CodeThorn {
     boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* startState);                                                          
     boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
                                                             boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited);
-    // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults
-    void addCounterexample(int assertCode, const EState* assertEState);
+    // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
+    // counterexample input sequence.
+    int addCounterexample(int assertCode, const EState* assertEState);
+    // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
+    list<const EState*>reverseInputSequenceBreadthFirst(const EState* source, const EState* target);
     // returns a list of EStates from source to target (shortest input path). 
-    // please note: target has to be a predecessor of source (reversed list)
-    list<const EState*> dijkstraShortestInputSequence(const EState* source, const EState* target);
+    // please note: target has to be a predecessor of source (reversed trace)
+    list<const EState*> reverseInputSequenceDijkstra(const EState* source, const EState* target);
     list<const EState*> filterStdInOnly(list<const EState*>& states) const;
     string reversedInputRunToString(list<const EState*>& run);
+    //returns the shortest possible number of input states on the path leading to "target".
+    int inputSequenceLength(const EState* target);
     
   public:
     SgNode* getCond(SgNode* node);
