@@ -781,3 +781,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgAsyncStmt
+SgFinishStmt
+SgAtStmt
+SgHereExp
