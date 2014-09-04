@@ -1434,6 +1434,7 @@ int main( int argc, char * argv[] ) {
     ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
     ("with-counterexamples", po::value< string >(), "adds an input sequence to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
     ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
+    ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1508,6 +1509,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
   boolOptions.registerOption("with-counterexamples",false);
+  boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
 
   boolOptions.processOptions();
@@ -1824,19 +1826,32 @@ int main( int argc, char * argv[] ) {
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
 
-  int inputSeqLengthCovered;
-  int maxOfShortestAsserInput;
-  if (analyzer.getTransitionGraph()->isPrecise()) {
-    inputSeqLengthCovered = analyzer.getTransitionGraph()->getInputSeqLengthCovered();
-    maxOfShortestAsserInput = analyzer.getTransitionGraph()->getMaxOfShortestAssertInput();
-    cout << "STATUS: coverage of all input sequences of length " << inputSeqLengthCovered << " is guaranteed." << endl;
-    cout << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAsserInput << endl;
-  } else {
-    inputSeqLengthCovered = -1;
-    maxOfShortestAsserInput = -1;
-    cout << "STATUS: no guaranteed input sequence length coverage possible." << endl;
-    cout << "STATUS: determining maximum of shortest assert counterexamples not possible. " << endl;
+  double extractAssertionTracesTime= 0;
+  int maxOfShortestAssertInput = -1;
+  if ( boolOptions["with-counterexamples"]) {
+    timer.start();
+    maxOfShortestAssertInput = analyzer.extractAssertionTraces();
+    extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
+    if (maxOfShortestAssertInput > -1) {
+      cout << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAssertInput << endl;
+    } else {
+      cout << "STATUS: determining maximum of shortest assert counterexamples not possible. " << endl;
+    }
   }
+
+  double determinePrefixDepthTime= 0;
+  int inputSeqLengthCovered = -1;
+  if ( boolOptions["determine-prefix-depth"]) {
+    timer.start();
+    inputSeqLengthCovered = analyzer.getLowerBoundPrefixLength(); 
+    determinePrefixDepthTime = timer.getElapsedTimeInMilliSec();
+    if (inputSeqLengthCovered > -1) {
+      cout << "STATUS: coverage of all input sequences of length " << inputSeqLengthCovered << " is guaranteed." << endl;
+    } else {
+      cout << "STATUS: no guarantee about minimal covered input sequence length possible." << endl;
+    }
+  }
+  double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
   // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
 #if 0
@@ -2069,7 +2084,6 @@ int main( int argc, char * argv[] ) {
     //printAnalyzerStatistics(analyzer, temporaryTotalRunTime, "LTL check complete. Reduced transition system:");
   }
   double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
-  double overallTime =totalRunTime + totalLtlRunTime;
 
   // TEST
   if (boolOptions["generate-assertions"]) {
@@ -2139,7 +2153,9 @@ int main( int argc, char * argv[] ) {
     }
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
   }
-  
+
+  double overallTime =totalRunTime + totalInputTracesTime + totalLtlRunTime;
+
   if(args.count("csv-stats")) {
     string filename=args["csv-stats"].as<string>().c_str();
     stringstream text;
@@ -2166,6 +2182,9 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
         <<readableruntime(sortingAndIORunTime)<<", "
         <<readableruntime(totalRunTime)<<", "
+        <<readableruntime(extractAssertionTracesTime)<<", "
+        <<readableruntime(determinePrefixDepthTime)<<", "
+        <<readableruntime(totalInputTracesTime)<<", "
         <<readableruntime(infPathsOnlyTime)<<", "
         <<readableruntime(stdIoOnlyTime)<<", "
         <<readableruntime(spotLtlAnalysisTime)<<", "
@@ -2180,6 +2199,9 @@ int main( int argc, char * argv[] ) {
         <<arrayUpdateSsaNumberingRunTime<<", "
         <<sortingAndIORunTime<<", "
         <<totalRunTime<<", "
+        <<extractAssertionTracesTime<<", "
+        <<determinePrefixDepthTime<<", "
+        <<totalInputTracesTime<<", "
         <<infPathsOnlyTime<<", "
         <<stdIoOnlyTime<<", "
         <<spotLtlAnalysisTime<<", "
@@ -2219,7 +2241,7 @@ int main( int argc, char * argv[] ) {
         <<transitionGraphSizeIoOnly<<endl;
     text<<"input length coverage & longest minimal assert input,"
         <<inputSeqLengthCovered<<", "
-        <<maxOfShortestAsserInput<<endl;
+        <<maxOfShortestAssertInput<<endl;
     
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
@@ -2420,6 +2442,7 @@ int main( int argc, char * argv[] ) {
   return 0;
 }
 
+//currently not used. conceived due to different statistics after LTL evaluation that could be printed in the same way as above.
 void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime, string title) {
   long pstateSetSize=analyzer.getPStateSet()->size();
   long pstateSetBytes=analyzer.getPStateSet()->memorySize();

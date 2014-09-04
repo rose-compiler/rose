@@ -387,10 +387,6 @@ class EStateList : public list<EState> {
   void setIsComplete(bool v);
   bool isPrecise();
   bool isComplete();
-  void setInputSeqLengthCovered(int l) { _inputSeqLengthCovered=l;}
-  int getInputSeqLengthCovered() { return _inputSeqLengthCovered;}
-  void setMaxOfShortestAssertInput (int l) {_maxOfShortestAssertInput = l;}
-  int getMaxOfShortestAssertInput () {return _maxOfShortestAssertInput;}
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet
@@ -399,8 +395,6 @@ class EStateList : public list<EState> {
   set<const EState*> _recomputedestateSet;
   bool _preciseSTG;
   bool _completeSTG;
-  int _inputSeqLengthCovered;
-  int _maxOfShortestAssertInput;
 };
 
 } // namespace CodeThorn
