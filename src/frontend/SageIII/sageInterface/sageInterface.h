@@ -2026,6 +2026,8 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 // DQ (6/7/2012): Unclear where this function should go...
   bool hasTemplateSyntax( const SgName & name );
 
+//! Move a declaration to a scope which is the closest to the declaration's use places
+bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl);
 
 #if 0
 
