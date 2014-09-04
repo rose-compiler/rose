@@ -461,16 +461,18 @@ Grammar::setUpStatements ()
           ClinkageStartStatement | ClinkageEndStatement,
           "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT", false );
 
-    // + variable list
-    NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
-     // simplest directives, just one line 
-    NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
-    NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
+  // + variable list
+     NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
+  // simplest directives, just one line 
+     NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
+     NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
 
 
-    // + variable list
-    NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
+  // + variable list
+     NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
 
+  // DQ (8/16/2014): Adding support for Microsoft attributes (e.g. "[repeatable] int x;")
+     NEW_TERMINAL_MACRO (MicrosoftAttributeDeclaration, "MicrosoftAttributeDeclaration", "MS_ATTRIBUTE_DECL_STMT"    );
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
@@ -486,7 +488,8 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement        |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine       | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement |
-          StaticAssertionDeclaration, "DeclarationStatement", "DECL_STMT", false);
+          StaticAssertionDeclaration              | MicrosoftAttributeDeclaration, 
+          "DeclarationStatement", "DECL_STMT", false);
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -1050,6 +1053,20 @@ Grammar::setUpStatements ()
 
   // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
      FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/9/2014): Example test2014_85.C demonstrates that the declared type of a function can be 
+  // equivalent to other same functions (associated defining and non-defining declarations), but 
+  // syntatically different in a way that makes a difference to the code generated from the unparser 
+  // (but not to the formal type system).  I am not clear if this type should be traversed, I think 
+  // not, since it is a function type used only for the representation of syntax.
+     FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type_syntax", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL /* || DEF2TYPE_TRAVERSAL */, NO_DELETE);
+
+  // DQ (7/9/2014): Added boolean flag to communicate when the function's type syntax is different from 
+  // the function's type.  However, when the type_syntax is non-null, it is always an equivalent type.
+  // Future work will enforce this concept fo type equivalence, not yet supported.
+     FunctionDeclaration.setDataPrototype ( "bool","type_syntax_is_available", "= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/26/2014): Added support for C11 "_Noreturn" keyword (alternative noreturn specification).
@@ -2602,6 +2619,19 @@ Grammar::setUpStatements ()
                "SgNamespaceDeclarationStatement*", "namespaceDeclaration", "= NULL",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/8/2014): Added support for name qualification.
+     NamespaceAliasDeclarationStatement.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/8/2014): Added information required for new name qualification support.
+     NamespaceAliasDeclarationStatement.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/8/2014): Added information required for new name qualification support.
+     NamespaceAliasDeclarationStatement.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      NamespaceDefinitionStatement.setFunctionPrototype ( "HEADER_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
   // NamespaceDefinitionStatement.setDataPrototype ("SgDeclarationStatementPtrList", "declarationList", "",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL);
@@ -3430,6 +3460,11 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+
+     MicrosoftAttributeDeclaration.setFunctionPrototype ( "HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     MicrosoftAttributeDeclaration.setDataPrototype ("SgName", "attribute_string", "= \"\"",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
   // This support allows transformations to introduce their own macros.
@@ -3870,6 +3905,9 @@ Grammar::setUpStatements ()
 
 //    OmpClauseBodyStatement.setAutomaticGenerationOfDestructor(false);
 #endif
+
+     MicrosoftAttributeDeclaration.setFunctionSource ( "SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
    }
 
 

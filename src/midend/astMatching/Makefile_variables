@@ -48,3 +48,8 @@ matcherparser.C: $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll $(srcdir)/$(mAstM
 	@rm lex.yy.c y.tab.c
 matcherparser.h: matcherparser.C
 
+install-exec-hook:
+	INCLUDEDIR="$(DESTDIR)$(includedir)/rose/midend/astMatching" && \
+	mkdir -p "$${INCLUDEDIR}" && \
+	for header in $(mAstMatching_includeHeaders); do \
+          $(LN_S) --force "$(DESTDIR)/$(includedir)/$$(basename $${header})" "$${INCLUDEDIR}/$$(basename $${header})"; done

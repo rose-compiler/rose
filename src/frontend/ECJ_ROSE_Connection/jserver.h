@@ -2,6 +2,7 @@
 #define __JAVA_JSERVER_H__
 
 #include "jni.h"
+#include "rosedll.h"
 
 #define STATIC_METHOD 1
 #define REGULAR_METHOD 0
@@ -19,16 +20,16 @@ namespace Rose {
     namespace Frontend {
         namespace Java {
 
-            extern SgClassDefinition *javaLangPackageDefinition;
-            extern SgClassType *ObjectClassType;
-            extern SgClassType *StringClassType;
-            extern SgClassType *ClassClassType;
-            extern SgVariableSymbol *lengthSymbol;
+            extern ROSE_DLL_API SgClassDefinition *javaLangPackageDefinition;
+            extern ROSE_DLL_API SgClassType *ObjectClassType;
+            extern ROSE_DLL_API SgClassType *StringClassType;
+            extern ROSE_DLL_API SgClassType *ClassClassType;
+            extern ROSE_DLL_API SgVariableSymbol *lengthSymbol;
 
             namespace Ecj {
 
-                extern SgProject* Ecj_globalProjectPointer;
-                jstring      jserver_getJavaString(const char*);
+                extern ROSE_DLL_API SgProject* Ecj_globalProjectPointer;
+                jstring ROSE_DLL_API jserver_getJavaString(const char*);
                 jobject      jserver_getNewObject(jclass,jmethodID, jobjectArray,jstring,jstring);
                 jclass       jserver_FindClass(const char *name);
                 jobjectArray jserver_getJavaStringArray(int argc, char **argv);
@@ -40,10 +41,10 @@ namespace Rose {
                 void         jserver_finish();
                 JNIEnv* getEnv();
 
-                extern jclass currentJavaTraversalClass;
-                extern JNIEnv *currentEnvironment;
+                extern ROSE_DLL_API jclass currentJavaTraversalClass;
+                extern ROSE_DLL_API JNIEnv *currentEnvironment;
                 extern jmethodID mainMethod;
-                extern jmethodID hasConflictsMethod;
+                extern ROSE_DLL_API jmethodID hasConflictsMethod;
                 extern jmethodID getTempDirectoryMethod;
                 extern jmethodID createTempFileMethod;
                 extern jmethodID createTempNamedFileMethod;

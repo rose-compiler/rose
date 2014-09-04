@@ -3631,6 +3631,16 @@ HEADER_JAVA_PACKAGE_STATEMENT_START
           virtual SgName get_mangled_name() const;
 HEADER_JAVA_PACKAGE_STATEMENT_END
 
+
+HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
+
+       // We need this to be defined to avoid calling the base class version (which is an error).
+          SgName get_mangled_name() const;
+
+          bool hasExplicitScope() const;
+
+HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -4500,6 +4510,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 #if 1
        // DQ (5/16/2013): Build an alias symbol for the 
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
+
+       // DQ (7/12/2014): Added assertion.
+          ROSE_ASSERT(aliasSymbol != NULL);
+
           if (namespaceDefinitionStatement->get_global_definition() == NULL)
              {
                SgNamespaceDeclarationStatement* namespaceDeclarationStatement = isSgNamespaceDeclarationStatement(namespaceDefinitionStatement->get_namespaceDeclaration());
@@ -9074,7 +9088,9 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
         {
           printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
                this,this->class_name().c_str(),firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+          ROSE_ASSERT(this->get_file_info() != NULL);
           this->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this: debug");
+          ROSE_ASSERT(firstNondefiningDeclaration->get_file_info() != NULL);
           firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
       }
 
@@ -17143,4 +17159,34 @@ SgOmpSimdStatement::post_construction_initialization()
    {}
 SOURCE_OMP_SIMD_STATEMENT_END
 
+
+SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
+
+void
+SgMicrosoftAttributeDeclaration::post_construction_initialization()
+   {
+  // Not sure we have to do anything here!
+   }
+
+// We need this to be defined to avoid calling the base class version (which is an error).
+SgName
+SgMicrosoftAttributeDeclaration::get_mangled_name() const
+   {
+  // Not sure we have to do anything here!
+
+#if 0
+     printf ("Exiting as a test! (SgMicrosoftAttributeDeclaration::get_mangled_name() not implemented) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return "microsoft_attribute";
+   }
+
+bool
+SgMicrosoftAttributeDeclaration::hasExplicitScope() const
+   {
+  // This function reports that this IR node does NOT store its scope explicitly.
+     return false;
+   }
+SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
 

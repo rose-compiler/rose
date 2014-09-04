@@ -1442,7 +1442,7 @@ cout.flush();
              class_scope -> append_member(package_declaration);
         else if (global_scope) {
              global_scope -> append_declaration(package_declaration);
-		}
+                }
         else ROSE_ASSERT(false);
 #endif
     }
