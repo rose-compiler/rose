@@ -162,13 +162,13 @@ AC_DEFUN([ROSE_SUPPORT_X10],
           [],
           [ROSE_MSG_ERROR([x10wala.jar is missing, can't use this X10 installation])])
       AC_CHECK_FILE(
-          [${X10_LIBRARY_PATH}/commons-math3-3.0.jar],
+          [${X10_LIBRARY_PATH}/commons-math3-3.3.jar],
           [],
-          [ROSE_MSG_ERROR([commons-math3-3.0.jar is missing, can't use this X10 installation])])
+          [ROSE_MSG_ERROR([commons-math3-3.3.jar is missing, can't use this X10 installation])])
       AC_CHECK_FILE(
-          [${X10_LIBRARY_PATH}/ecj.jar],
+          [${X10_LIBRARY_PATH}/ecj-4.4.jar],
           [],
-          [ROSE_MSG_ERROR([ecj.jar is missing, can't use this X10 installation])])
+          [ROSE_MSG_ERROR([ecj-4.4.jar is missing, can't use this X10 installation])])
       AC_CHECK_FILE(
           [${X10_LIBRARY_PATH}/org.eclipse.equinox.common_3.6.0.v20100503.jar],
           [],

@@ -226,6 +226,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (StringConversion,          "StringConversion",              "STR_CONV" );
      NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",               "YIELD_EXP" );
 
+#include "x10/exp_terminals.cpp"
+
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -301,7 +303,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-          NonMembershipOp | IsOp            | IsNotOp,
+          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -351,7 +353,7 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp | FunctionParameterRefExp, "Expression", "ExpressionTag", false);
+          ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
