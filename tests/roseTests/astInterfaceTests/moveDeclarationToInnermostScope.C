@@ -17,7 +17,7 @@ int main(int argc, char * argv[])
   SgBasicBlock* body = func->get_definition()->get_body();
   ROSE_ASSERT(body!= NULL);
   Rose_STL_Container<SgNode*> var_decls= NodeQuery::querySubTree(body,V_SgVariableDeclaration);
-
+  cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
   for (size_t i=0; i< var_decls.size(); i++)
   {
     SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
