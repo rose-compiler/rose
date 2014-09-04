@@ -61,6 +61,7 @@ namespace CodeThorn {
   };
 
   typedef list<const EState*> EStateWorkList;
+  typedef pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class Analyzer;
@@ -151,6 +152,14 @@ namespace CodeThorn {
     // connects start, input, output and worklist states according to possible paths in the transition graph. 
     // removes all states and transitions that are not necessary for the graph that only consists of these new transitions.
     void reduceGraphInOutWorklistOnly();
+    // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
+    // stores results in PropertyValueTable "reachabilityResults".
+    // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
+    // shortest ones leading to the individual failing assertion (returns -1 otherwise).
+    int extractAssertionTraces();
+    // if possible, a guarantee about the covered prefix of the complete STG will be returned (-1 otherwise)
+    //  (length measured in number of input states per path).
+    int getLowerBoundPrefixLength();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -313,6 +322,7 @@ namespace CodeThorn {
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
     ExprAnalyzer* getExprAnalyzer();
+    list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
     
   private:
     set<int> _inputVarValues;
@@ -339,6 +349,8 @@ namespace CodeThorn {
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
+    list<FailedAssertion> _firstAssertionOccurences;
+    const EState* _mostRecentlyAddedWorklistState;
   }; // end of class analyzer
   
 } // end of namespace CodeThorn

@@ -134,7 +134,8 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
              _semanticFoldThreshold(5000),_solver(5),_analyzerMode(AM_ALL_STATES),
-                     _maxTransitions(0),_maxTransitionsForcedTop(0),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false),_explorationMode(EXPL_BREADTH_FIRST) {
+                     _maxTransitions(0),_maxTransitionsForcedTop(0),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false),
+                             _explorationMode(EXPL_BREADTH_FIRST),_mostRecentlyAddedWorklistState(NULL) {
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -2498,9 +2499,6 @@ void Analyzer::runSolver5() {
 #endif
   cout <<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   printStatusMessage(true);
-
-  list<pair<int, const EState*> > assertionFirstOccurences;
-  const EState* mostRecentWorklistState = NULL;
 # pragma omp parallel shared(workVector) private(threadNum)
   {
     threadNum=omp_get_thread_num();
@@ -2593,7 +2591,7 @@ void Analyzer::runSolver5() {
               const EState* newEStatePtr=pres.second;
               if(pres.first==true) {
                 addToWorkList(newEStatePtr);
-                mostRecentWorklistState = newEStatePtr;
+                _mostRecentlyAddedWorklistState = newEStatePtr;
               }
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
@@ -2622,12 +2620,12 @@ void Analyzer::runSolver5() {
                 assertCode=reachabilityAssertCode(currentEStatePtr);
               }              
               if(assertCode>=0) {
-                if(boolOptions["with-counterexamples"]) {
+                if(boolOptions["with-counterexamples"] ) {
 #pragma omp critical
                   {
 		    //if this particular assertion was never reached before, compute and update counterexample
 		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                      assertionFirstOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                     } 
                   }
                 }
@@ -2664,6 +2662,9 @@ void Analyzer::runSolver5() {
   } // while
   } // omp parallel
   const bool isComplete = true;
+  if (!isPrecise()) {
+    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
+  }
   if(isIncompleteSTGReady()) {
     printStatusMessage(true);
     cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
@@ -2682,21 +2683,6 @@ void Analyzer::runSolver5() {
     cout << "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
-  int maxCounterexampleLength = -1;
-  for (list<pair<int, const EState*> >::iterator i = assertionFirstOccurences.begin(); i != assertionFirstOccurences.end(); ++i ) {
-    int ceLength = addCounterexample(i->first, i->second);
-    if (ceLength > maxCounterexampleLength) {maxCounterexampleLength = ceLength;}
-  }
-  if(boolOptions["rers-binary"]) {
-     if ((getExplorationMode() == EXPL_BREADTH_FIRST)) {
-       transitionGraph.setMaxOfShortestAssertInput(maxCounterexampleLength);
-       if (mostRecentWorklistState && isPrecise()) {  
-          // Breadth-first search with a fixed size main loop and precise results guarantees that a prefix of certain
-          // length was covered.
-          transitionGraph.setInputSeqLengthCovered( (inputSequenceLength(mostRecentWorklistState) - 1) );
-       }
-     }
-  }
 }
 
 // solver 6 uses a different parallelization scheme (condition is not omp compliant yet)
@@ -2975,6 +2961,35 @@ void Analyzer::runSolver7() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
+int Analyzer::extractAssertionTraces() {
+  int maxInputTraceLength = -1;
+  for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {
+    cout << "STATUS: extracting trace leading to assertion: " << i->first << endl;
+    int ceLength = addCounterexample(i->first, i->second);
+    if (ceLength > maxInputTraceLength) {maxInputTraceLength = ceLength;}
+  }
+  if(boolOptions["rers-binary"]) {
+    if ((getExplorationMode() == EXPL_BREADTH_FIRST) && transitionGraph.isPrecise()) {
+      return maxInputTraceLength;
+    }
+  }
+  return -1;
+}
+
+int Analyzer::getLowerBoundPrefixLength() {
+  if(boolOptions["rers-binary"]) {
+    if ((getExplorationMode() == EXPL_BREADTH_FIRST)) {
+      if (_mostRecentlyAddedWorklistState && isPrecise()) {  
+        // Breadth-first search with a fixed size main loop and precise results guarantees that a prefix of certain
+        // length was covered.
+        cout << "STATUS: determining length of longest path" << endl;
+        return (inputSequenceLength(_mostRecentlyAddedWorklistState) - 1);
+      }
+    }
+  }
+  return -1;
+}
+
 list<const EState*> Analyzer::reverseInputSequenceBreadthFirst(const EState* source, const EState* target) {
   // 1.) init: list wl , hashset predecessor, hasset visited
   list<const EState*> worklist;
@@ -3114,7 +3129,6 @@ string Analyzer::reversedInputRunToString(list<const EState*>& run) {
 }
 
 int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
-  //cout << "DEBUG: assertion " << assertCode << " reached for the first time. "<< endl;
   list<const EState*> counterexampleRun;
   if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
     counterexampleRun = reverseInputSequenceBreadthFirst(assertEState, transitionGraph.getStartEState());
