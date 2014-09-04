@@ -18361,8 +18361,56 @@ class Scope_Node {
     // for tree information
     Scope_Node* parent; // point to the parent scope in the chain
     std::vector < Scope_Node* > children ; // point to children scopes 
+  
+    //print the subtree rooted at this node to a dot file named as filename.dot
+    void printToDot(std::string filename);
+    std::string prettyPrint();
+   private: 
+      //! recursive traverse the current subtree and write dot file information
+      void traverse_write (Scope_Node* n, std::ofstream & dotfile);
+      std::string getLineNumberStr(){ int lineno = scope->get_file_info()->get_line(); return StringUtility::numberToString(lineno); } ;
+      // Dot graph Node Id: unique memory address, prepend with "n_".
+      std::string getDotNodeId() { return "n_"+StringUtility::numberToString(scope); };
+      std::string getScopeTypeStr() 
+      { string rt;  
+        if (s_type == s_decl) rt = "s_decl"; 
+        else if (s_type == s_intermediate) rt = "s_intermediate";
+        else if (s_type == s_use) rt = "s_use";
+        else ROSE_ASSERT (false);
+        return rt; }
   };
+
+std::string Scope_Node::prettyPrint()
+{
+  int lineno = scope->get_file_info()->get_line();
+  return StringUtility::numberToString(scope)+"@"+StringUtility::numberToString(lineno);
+}
+
+void Scope_Node::printToDot (std::string filename)
+{
+  string full_filename = filename + ".dot";
+  ofstream dotfile (full_filename.c_str());
+  dotfile <<"digraph scopetree{"<<endl;
+  traverse_write (this, dotfile);
+  dotfile <<"}"<<endl;
+}
+
+void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
+{
+  std::vector < Scope_Node* > children = n->children;
+  // must output both node and edge lines: here is the node
+  dotfile<<n->getDotNodeId()<<"[label=\""<< StringUtility::numberToString(n->scope)<<"\nLine="<<n->getLineNumberStr()
+         <<" Depth="<<StringUtility::numberToString(n->depth)<<"\nType="<<n->getScopeTypeStr()<<"\"];"<<endl;
+  for (size_t i=0; i<children.size(); i++)
+  {
+    // Here is the edge
+    dotfile<<n->getDotNodeId()<<"->"<<children[i]->getDotNodeId()<<";"<<endl;
+    traverse_write (children[i], dotfile);
+  }
+}
  
+
+
 bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl)
 {
   bool debug = true;
@@ -18432,60 +18480,80 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
 
   for (size_t i =0; i< var_refs.size(); i++)
   {
-     std::stack <Scope_Node*> temp_scope_stack;
+     std::stack <SgScopeStatement*> temp_scope_stack;
      SgVarRefExp *vRef = var_refs[i];
-     SgScopeStatement * current_scope = getScope (vRef);
+     SgScopeStatement* var_scope = getScope (vRef);
+     SgScopeStatement * current_scope = var_scope;
      ROSE_ASSERT (current_scope != decl_scope); // we should have excluded this situation already
-     temp_scope_stack.push (new Scope_Node(current_scope, s_use)) ; 
-     while (current_scope != decl_scope) 
-     {
+     temp_scope_stack.push (current_scope) ;  // push the very first scope
+     do {
        // this won't work since getScope () will return the input scope as it is!!
        //current_scope = getScope (current_scope);
-       current_scope = current_scope->get_scope();
-       temp_scope_stack.push (new Scope_Node(current_scope, s_intermediate)) ; 
+       current_scope = current_scope->get_scope(); // get parent scope and push
+       temp_scope_stack.push (current_scope) ; 
      }
-   // The shared root scope is not pushed. So the min size of the stack is 1.   
-   //temp_scope_stack.push (Scope_Node(current_scope, s_decl)) ; 
+     while (current_scope != decl_scope) ;
+     // exit condition is current_scope == decl_scope, as a result  
+     // at this point , the declaration scope is already pushed into the stack  
+
+   if (debug)
+   {
+     cout<<"scope stack size="<<temp_scope_stack.size()<<endl;
+   }
      
      //if the current use scope is not yet considered
-     // add nodes into the scope tree, avoid duplicated add 
-     if (processedUseScopes.find(getScope(vRef)) == processedUseScopes.end())
+     // add nodes into the scope tree, avoid duplicated add the scope node containing multiple var references.
+     if (processedUseScopes.find(var_scope) == processedUseScopes.end())
      {
        // add each scope into the scope tree
        Scope_Node* current_parent = scope_tree;
+       int depth_counter = 0;
        while (!temp_scope_stack.empty())
        { // TODO: verify that the scope tree preserves the original order of children scopes.
-         Scope_Node* current_node = temp_scope_stack.top();
-         // avoid add duplicated node into the tree
-         if (ScopeTreeMap[current_node->scope] == NULL )
+         current_scope = temp_scope_stack.top();
+         Scope_Node * current_node = NULL; 
+         ScopeType s_t; 
+         if (current_scope == var_scope) 
+           s_t = s_use;
+         else 
+           s_t = s_intermediate; 
+         // avoid add duplicated node into the tree, the first one, root node, is duplicate.
+         if (ScopeTreeMap[current_scope] == NULL )
          {
+           current_node = new Scope_Node(current_scope, s_t);
            (current_parent->children).push_back(current_node);
            current_node->parent = current_parent;
+           current_node->depth = depth_counter;
 
-           ScopeTreeMap[current_node->scope] = current_node;
+           ScopeTreeMap[current_scope] = current_node;
          }
           else
           {
             //TODO handle possible overlapped paths   
           }  
          temp_scope_stack.pop();
-         current_parent = ScopeTreeMap[current_node->scope]; // must use the one in the tree, not necessary current_node from the stack
-         if (current_node != ScopeTreeMap[current_node->scope])
+         // must use the one in the tree, not necessary current_node from the stack
+         current_parent = ScopeTreeMap[current_scope]; 
+         if (current_node != ScopeTreeMap[current_scope])
             delete current_node; // delete redundant Scope Node.
+         depth_counter++;
        } // end while pop scope stack  
 
        // mark the current leaf scope as processed.
-       processedUseScopes.insert (getScope(vRef));
+       processedUseScopes.insert (var_scope);
      } // end if not processed var scope  
 
 
   } // end of generating trimmed scope tree
+  //------------- debug the scope tree---------
+  scope_tree->printToDot("scope_tree_"+(var_sym->get_name()).getString());
 
   // now use the scope tree to move the declaration around
   if (processedUseScopes.size() ==1 ) // simplest case, only a single use place
   {
     SgScopeStatement* bottom_scope = *(processedUseScopes.begin());
     removeStatement(decl); 
+    //TODO verify that the symbols are moved also!!
     prependStatement (decl, bottom_scope);
     return true;
   }
