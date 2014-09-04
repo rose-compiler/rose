@@ -4502,6 +4502,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 #if 1
        // DQ (5/16/2013): Build an alias symbol for the 
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
+
+       // DQ (7/12/2014): Added assertion.
+          ROSE_ASSERT(aliasSymbol != NULL);
+
           if (namespaceDefinitionStatement->get_global_definition() == NULL)
              {
                SgNamespaceDeclarationStatement* namespaceDeclarationStatement = isSgNamespaceDeclarationStatement(namespaceDefinitionStatement->get_namespaceDeclaration());
@@ -9076,7 +9080,9 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
         {
           printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
                this,this->class_name().c_str(),firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+          ROSE_ASSERT(this->get_file_info() != NULL);
           this->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this: debug");
+          ROSE_ASSERT(firstNondefiningDeclaration->get_file_info() != NULL);
           firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
       }
 
