@@ -376,7 +376,9 @@ sub load_config {
   close CONFIG;
 
   # Convert the timeout value to seconds (zero implies infinity)
-  if ($conf{timeout} !~ /^\d+$/) {
+  if ($conf{timeout} eq "") {
+    $conf{timeout} = 15*60; # use the default
+  } elsif ($conf{timeout} !~ /^\d+$/) {
     if ($conf{timeout} =~ /^(\d+)\s*(s|sec|seconds?|m|min|minutes?|hr?|hours?)$/) {
       $conf{timeout} = $1 * {s=>1, m=>60, h=>3600}->{substr $2,0,1};
     } elsif ($conf{timeout} eq 'never') {

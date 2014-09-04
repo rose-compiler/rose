@@ -446,6 +446,12 @@ if (enable-python)
   endif()
 endif()
 
+option(enable-x10 "Enable X10 language support in ROSE." OFF)
+if (enable-x10)
+  # TODO:
+  set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
+endif()
+
 # Other configuration options
 
 option(disable-binary-analysis-tests
