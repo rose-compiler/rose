@@ -1433,6 +1433,7 @@ int main( int argc, char * argv[] ) {
     ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("spot-counter-example", po::value< string >(), "adds a third column to ltl results. It contains counter example input sequences for formulae that could be falsified. [=yes|no]")
+    ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1507,6 +1508,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
   boolOptions.registerOption("spot-counter-example",false);
+  boolOptions.registerOption("minimize-states",false);
 
   boolOptions.processOptions();
 
@@ -1594,6 +1596,9 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
+  }
+  if(boolOptions["minimize-states"]) {
+    analyzer.setMinimizeStates(true);
   }
 
   int numberOfThreadsToUse=1;

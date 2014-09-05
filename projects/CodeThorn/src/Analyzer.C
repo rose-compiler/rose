@@ -128,9 +128,22 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   return ss.str();
 }
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
-             _semanticFoldThreshold(5000),_solver(5),_analyzerMode(AM_ALL_STATES),
-                     _maxTransitions(-1),_maxTransitionsForcedTop(-1),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false),_explorationMode(EXPL_BREADTH_FIRST) {
+Analyzer::Analyzer():
+  startFunRoot(0),
+  cfanalyzer(0),
+  _displayDiff(10000),
+  _numberOfThreadsToUse(1),
+  _ltlVerifier(2),
+  _semanticFoldThreshold(5000),
+  _solver(5),
+  _analyzerMode(AM_ALL_STATES),
+  _maxTransitions(-1),
+  _maxTransitionsForcedTop(-1),
+  _treatStdErrLikeFailedAssert(false),
+  _skipSelectedFunctionCalls(false),
+  _explorationMode(EXPL_BREADTH_FIRST),
+  _minimizeStates(false)
+ {
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -2374,6 +2387,8 @@ void Analyzer::runSolver5() {
   {
     threadNum=omp_get_thread_num();
     while(!all_false(workVector)) {
+      bool oneSuccessorOnly=false;
+      EState newEStateBackupForOneSuccessorOnly;
       //cout<<"DEBUG: running : WL:"<<estateWorkList.size()<<endl;
       if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
         printStatusMessage(true);
@@ -2403,7 +2418,7 @@ void Analyzer::runSolver5() {
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         assert(currentEStatePtr);
-      
+      shortcut:      
         if(variableValueMonitor.isActive()) {
           cout<<"DEBUG: varmon is active."<<endl;
           VariableIdSet hotVariables=variableValueMonitor.getHotVariables(this,currentEStatePtr);
@@ -2411,6 +2426,7 @@ void Analyzer::runSolver5() {
         }
         
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+        oneSuccessorOnly=(edgeSet.size()==1);
         //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
@@ -2426,6 +2442,7 @@ void Analyzer::runSolver5() {
             cout << "DEBUG: EState: "<<(*newEStateList.begin()).toString(&variableIdMapping)<<endl;
           }
 #endif
+          oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
@@ -2451,6 +2468,11 @@ void Analyzer::runSolver5() {
             }
 
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+              if(oneSuccessorOnly && _minimizeStates && (newEState.io.isNonIO())) {
+                newEStateBackupForOneSuccessorOnly=newEState;
+                currentEStatePtr=&newEStateBackupForOneSuccessorOnly;
+                goto shortcut;
+              }
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)

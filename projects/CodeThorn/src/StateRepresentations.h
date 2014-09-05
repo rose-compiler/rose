@@ -152,6 +152,7 @@ class InputOutput {
   bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
   bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
   bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
+  bool isNonIO() const { return op==NONE; }
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);
