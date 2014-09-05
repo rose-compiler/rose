@@ -2,6 +2,8 @@
 // provide (stub) definitions for those nodes' virtual methods in order to get things to compile when those nodes aren't
 // actually being used anywhere.
 #include "sage3basic.h"
+#include "Diagnostics.h"
+#include "Disassembler.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmFloatValueExpression
@@ -9,7 +11,6 @@
 double SgAsmFloatValueExpression::get_nativeValue() const { abort(); }
 void SgAsmFloatValueExpression::set_nativeValue(double) { abort(); }
 void SgAsmFloatValueExpression::updateBitVector() { abort(); }
-void SgAsmFloatValueExpression::updateNativeValue() { abort(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmIntegerValueExpression
@@ -148,3 +149,13 @@ std::string SgAsmVectorType::toString() const { return std::string(); }
 size_t SgAsmVectorType::get_nBits() const { return 0; }
 size_t SgAsmVectorType::get_nElmts() const { return 0; }
 SgAsmType* SgAsmVectorType::get_elmtType() const { return 0; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Disassembler
+
+void Disassembler::initDiagnostics() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Partitioner
+
+void Partitioner::initDiagnostics() {}

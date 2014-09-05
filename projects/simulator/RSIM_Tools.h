@@ -345,7 +345,7 @@ public:
                             bp_not_pushed = true;
                         }
                     }
-                } catch (const Disassembler::Exception&) {
+                } catch (const rose::BinaryAnalysis::Disassembler::Exception&) {
                     /* ignored -- it just means the top of stack probably doesn't even point to executable memory */
                 }
                 args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC), "FunctionReporter: stack frames",
@@ -537,7 +537,7 @@ public:
             m->mesg("MemoryDisassembler triggered: disassembling now...");
             SgAsmBlock *block = args.thread->get_process()->disassemble();
             if (show)
-                AsmUnparser().unparse(std::cout, block);
+                rose::BinaryAnalysis::AsmUnparser().unparse(std::cout, block);
         }
         return enabled;
     }

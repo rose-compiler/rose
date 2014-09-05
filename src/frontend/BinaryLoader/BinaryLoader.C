@@ -13,8 +13,9 @@
 
 using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
-Sawyer::Message::Facility BinaryLoader::mlog("BinaryLoader");
+Sawyer::Message::Facility BinaryLoader::mlog;
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
 std::ostream&
@@ -44,8 +45,8 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("BinaryLoader", Diagnostics::destination);
+        Diagnostics::mfacilities.insert(mlog);
     }
 }
 

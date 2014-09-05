@@ -4,7 +4,7 @@
 
 // ROSE is slowly organizing all binary analysis into name spaces.  SymbolicSemantics is now inside
 // BinaryAnalysis::InstructionSemantics.
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 typedef SymbolicSemantics::Policy<SymbolicSemantics::State,SymbolicSemantics::ValueType> Policy;
 typedef SymbolicSemantics::State<SymbolicSemantics::ValueType> State;

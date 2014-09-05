@@ -1,7 +1,7 @@
 
 #if 1
 
-namespace Ares {
+namespace XXX {
 
 template <typename TYPE> void coarsenNodalByInjection(TYPE** fx, TYPE** cx, const bool coarsen_slides );
 

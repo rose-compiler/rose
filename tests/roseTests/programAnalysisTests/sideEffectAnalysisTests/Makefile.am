@@ -8,56 +8,29 @@ if ROSE_USE_SQLITE_DATABASE
 
 INCLUDES = $(ROSE_INCLUDES)
 
-## The grammar generator (ROSETTA) should use its own template repository
-# CXX_TEMPLATE_REPOSITORY_PATH = .
-
 bin_PROGRAMS = testSideEffect
 testSideEffect_SOURCES = testSideEffect.C
-# testSideEffect_DEPENDENCIES = TestDriver.o
 testSideEffect_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = testClasses1.C  testClasses2.C  testClasses3.C  testGlobal1.C  testGlobal2.C \
-	           testLoop.C  testPtr1.C  testPtr2.C  testRef.C  testShadow.C
+# NOTE: testPtr2.C was not tested for some undocumented reason in the original makefile, so it not in this list either.
+TEST_SPECIMENS = testGlobal1.C testGlobal2.C testRef.C testPtr1.C testClasses1.C testClasses2.C testClasses3.C testLoop.C
+TEST_ANSWERS = $(addsuffix .ans, $(TEST_SPECIMENS))
+TEST_TARGETS = $(addsuffix .passed, $(TEST_SPECIMENS))
 
-TESTCODES =
+EXTRA_DIST = $(TEST_SPECIMENS) $(TEST_ANSWERS)
 
-check-local:	testSideEffect
-	@echo "Run test code ..."
-	./testSideEffect $(srcdir)/testGlobal1.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testGlobal1.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testGlobal2.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testGlobal2.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testRef.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testRef.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testPtr1.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testPtr1.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testClasses1.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testClasses1.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testClasses2.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testClasses2.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testClasses3.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testClasses3.outx
-	-rm *db
-	./testSideEffect $(srcdir)/testLoop.C | grep -i 'side effect' > tmp
-	diff -u tmp $(srcdir)/testLoop.outx
-	-rm *db
-	@echo "Side-Effect Tests Passed"
-	@echo "*******************************************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/programAnalysisTests/sideEffectAnalysisTests: make check rule complete (terminated normally) ******"
-	@echo "*******************************************************************************************************************************"
-
-# endif for section of Makefile.am which is dependent upon the optional database support
-endif
+# NOTE: foo.outx is a funny name for test answers; the usual name is foo.C.ans
+$(TEST_TARGETS): %.passed: testSideEffect $(srcdir)/% $(srcdir)/%.ans $(top_srcdir)/scripts/test_with_answer
+	@$(RTH_RUN)									\
+		TITLE="testSideEffect $* [$@]"						\
+		USE_SUBDIR=yes								\
+		CMD="$$(pwd)/testSideEffect $(srcdir)/$* |grep -i 'side effect'"	\
+		ANS="$(srcdir)/$*.ans"							\
+		$(top_srcdir)/scripts/test_with_answer $@
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
-	rm -rf rose_mm.C
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 
-distclean-local:
-	rm -rf Templates.DB
+check-local: $(TEST_TARGETS)
+
+endif

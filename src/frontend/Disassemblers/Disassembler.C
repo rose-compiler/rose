@@ -14,8 +14,11 @@
 #include "stringify.h"
 
 #include <stdarg.h>
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
-using namespace rose::Diagnostics;
+
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
 using namespace StringUtility;
 
 /* See header file for full documentation of all methods in this file. */
@@ -28,7 +31,7 @@ RTS_mutex_t Disassembler::class_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_DISASSEM
 std::vector<Disassembler*> Disassembler::disassemblers;
 
 /* Diagnostics */
-Sawyer::Message::Facility Disassembler::mlog("Disassembler");
+Sawyer::Message::Facility Disassembler::mlog;
 double Disassembler::progress_interval = 10.0;
 double Disassembler::progress_time = 0.0;
 
@@ -36,8 +39,8 @@ void Disassembler::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Disassembler", Diagnostics::destination);
+        Diagnostics::mfacilities.insert(mlog);
     }
 }
     
@@ -887,3 +890,5 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     return successors;
 }
 
+} // namespace
+} // namespace

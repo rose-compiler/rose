@@ -139,8 +139,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // Set the values in each reference to the name qualified language construct.
           void setNameQualification ( SgVarRefExp* varRefExp, SgVariableDeclaration* variableDeclaration,int amountOfNameQualificationRequired );
 
+       // DQ (7/11/2014): This function is not implemented (not sure where it might have been).
        // DQ (6/5/2011): Added to support case where SgInitializedName in SgVarRefExp can't be traced back to a SgVariableDeclaration (see test2011_75.C).
-          void setNameQualification ( SgVarRefExp* varRefExp, SgScopeStatement* scopeStatement,int amountOfNameQualificationRequired );
+       // void setNameQualification ( SgVarRefExp* varRefExp, SgScopeStatement* scopeStatement,int amountOfNameQualificationRequired );
 
           void setNameQualification ( SgBaseClass* baseClass, SgClassDeclaration*    classDeclaration,   int amountOfNameQualificationRequired );
           void setNameQualification ( SgUsingDeclarationStatement* usingDeclaration, SgInitializedName* associatedInitializedName, int amountOfNameQualificationRequired );
@@ -175,6 +176,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // This case is demonstrated in test2011_62.C
        // void setNameQualification ( SgClassDeclaration* classDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgClassDeclaration* classDeclaration, int amountOfNameQualificationRequired );
+
+       // DQ (7/8/2014): Adding support for name qualification of SgNamespaceDeclarations within a SgNamespaceAliasDeclarationStatement.
+          void setNameQualification ( SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
 
        // This is a separate function just for setting the information specific to the name qualification of return types.
        // This information cannot be stored in the SgFunctionType since that might be shared and referenced from different locations.

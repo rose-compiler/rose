@@ -51,9 +51,9 @@ derived classes.
 
 \internal This is a base class for all symbols.
 
-\todo Consider derivation of SgEnumSymbol, SgClassSymbol, and SgTypedefSymbol from a
-    common SgTypeSymbol.  Then supporting functions for SgTypeSymbol would lookup
-    any of these type based symbols.
+\todo Consider derivation of SgEnumSymbol, SgClassSymbol, SgFunctionTypeSymbol, and 
+    SgTypedefSymbol from a common SgTypeSymbol.  Then supporting functions for 
+    SgTypeSymbol would lookup any of these type based symbols.
 
 \sa \ref SgDeclarationStatement
 

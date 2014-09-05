@@ -1,0 +1,7 @@
+* Verify algorithm (with original)
+
+* Ignore duplicates for:
+  * declaration/definitions
+  * variable references
+
+* Sort by similarity %

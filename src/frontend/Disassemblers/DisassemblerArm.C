@@ -7,7 +7,10 @@
 #include "DisassemblerArm.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
 
 /* See header file for full documentation. */
 
@@ -606,3 +609,6 @@ DisassemblerArm::disassemble()
       // DQ (11/29/2009): Avoid MSVC warning.
       return NULL;
 }
+
+} // namespace
+} // namespace

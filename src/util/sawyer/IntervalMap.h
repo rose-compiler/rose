@@ -160,6 +160,7 @@ public:
 private:
     Map map_;
     Policy policy_;
+    typename Interval::Value size_;                     // number of values (map_.size is number of intervals)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -168,7 +169,7 @@ public:
     /** Default constructor.
      *
      *  Creates an empty container. */
-    IntervalMap() {}
+    IntervalMap(): size_(0) {}
 
     /** Copy constructor.
      *
@@ -238,6 +239,25 @@ public:
     }
     /** @} */
 
+    /** Find the first node whose interval begins above the specified scalar key.
+     *
+     *  Returns an iterator to the node, or the end iterator if no such node exists.
+     *
+     *  @{ */
+    NodeIterator upperBound(const typename Interval::Value &scalar) {
+        NodeIterator ub = map_.upperBound(Interval(scalar)); // first node that ENDS after scalar
+        while (ub!=map_.nodes().end() && ub->key().least() <= scalar)
+            ++ub;
+        return ub;
+    }
+    ConstNodeIterator upperBound(const typename Interval::Value &scalar) const {
+        ConstNodeIterator ub = map_.upperBound(Interval(scalar)); // first node that ENDS after scalar
+        while (ub!=map_.nodes().end() && ub->key().least() <= scalar)
+            ++ub;
+        return ub;
+    }
+    /** @} */
+
     /** Find the last node whose interval starts at or below the specified scalar key.
      *
      *  Returns an iterator to the node, or the end iterator if no such node exists.
@@ -288,16 +308,43 @@ public:
     }
     /** @} */
 
+    /** Finds all nodes overlapping the specified interval.
+     *
+     *  Returns an iterator range that enumerates the nodes that overlap with the specified interval.
+     *
+     *  @{ */
+    boost::iterator_range<NodeIterator> findAll(const Interval &interval) {
+        if (interval.isEmpty())
+            return boost::iterator_range<NodeIterator>(nodes().end(), nodes().end());
+        NodeIterator begin = lowerBound(interval.least());
+        if (begin==nodes().end() || begin->key().least() > interval.greatest())
+            return boost::iterator_range<NodeIterator>(nodes().end(), nodes().end());
+        return boost::iterator_range<NodeIterator>(begin, upperBound(interval.greatest()));
+    }
+    boost::iterator_range<ConstNodeIterator> findAll(const Interval &interval) const {
+        if (interval.isEmpty())
+            return boost::iterator_range<ConstNodeIterator>(nodes().end(), nodes().end());
+        ConstNodeIterator begin = lowerBound(interval.least());
+        if (begin==nodes().end() || begin->key().least() > interval.greatest())
+            return boost::iterator_range<ConstNodeIterator>(nodes().end(), nodes().end());
+        return boost::iterator_range<ConstNodeIterator>(begin, upperBound(interval.greatest()));
+    }
+    /** @} */
+    
     /** Find first interval that overlaps with the specified interval.
      *
      *  Returns an iterator to the matching node, or the end iterator if no such node exists.
      *
      * @{ */
     NodeIterator findFirstOverlap(const Interval &interval) {
+        if (interval.isEmpty())
+            return nodes().end();
         NodeIterator lb = lowerBound(interval.least());
         return lb!=nodes().end() && interval.isOverlapping(lb->key()) ? lb : nodes().end();
     }
     ConstNodeIterator findFirstOverlap(const Interval &interval) const {
+        if (interval.isEmpty())
+            return nodes().end();
         ConstNodeIterator lb = lowerBound(interval.least());
         return lb!=nodes().end() && interval.isOverlapping(lb->key()) ? lb : nodes().end();
     }
@@ -506,12 +553,10 @@ public:
 
     /** Returns the number of values represented by this container.
      *
-     *  The number of values in a container is the sum of the widths of all the nodes. */
+     *  The number of values in a container is the sum of the widths of all the nodes. This can be calculated in constant
+     *  time. */
     typename Interval::Value size() const {
-        typename Interval::Value sum = 0;
-        for (ConstKeyIterator iter=keys().begin(); iter!=keys().end(); ++iter)
-            sum += iter->size();
-        return sum;
+        return size_;
     }
 
     /** Returns the minimum scalar key. */
@@ -595,6 +640,7 @@ public:
     /** Empties the container. */
     void clear() {
         map_.clear();
+        size_ = 0;
     }
 
     /** Erase the specified interval. */
@@ -614,7 +660,8 @@ public:
                 // erase entire found interval
                 if (eraseBegin==nodes().end())
                     eraseBegin = iter;
-            } else if (erasure.least()>foundInterval.least()&& erasure.greatest()<foundInterval.greatest()) {
+                size_ -= foundInterval.size();
+            } else if (erasure.least()>foundInterval.least() && erasure.greatest()<foundInterval.greatest()) {
                 // erase the middle of the node, leaving a left and a right portion
                 ASSERT_require(eraseBegin==nodes().end());
                 eraseBegin = iter;
@@ -624,6 +671,7 @@ public:
                 IntervalPair lt = splitInterval(rt.first, erasure.least());
                 policy_.truncate(rt.first, v /*in,out*/, erasure.least());
                 insertions.insert(lt.first, v);
+                size_ -= erasure.size();
             } else if (erasure.least() > foundInterval.least()) {
                 // erase the right part of the node
                 ASSERT_require(eraseBegin==nodes().end());
@@ -631,6 +679,7 @@ public:
                 IntervalPair halves = splitInterval(foundInterval, erasure.least());
                 policy_.truncate(foundInterval, v /*in,out*/, erasure.least());
                 insertions.insert(halves.first, v);
+                size_ -= halves.second.size();
             } else if (erasure.greatest() < foundInterval.greatest()) {
                 // erase the left part of the node
                 if (eraseBegin==nodes().end())
@@ -638,6 +687,7 @@ public:
                 IntervalPair halves = splitInterval(foundInterval, erasure.greatest()+1);
                 Value rightValue = policy_.split(foundInterval, v /*in,out*/, halves.second.least());
                 insertions.insert(halves.second, rightValue);
+                size_ -= halves.first.size();
             }
         }
 
@@ -652,7 +702,7 @@ public:
      *  Every interval in @p other is erased from this container. */
     template<typename T2, class Policy2>
     void eraseMultiple(const IntervalMap<Interval, T2, Policy2> &other) {
-        ASSERT_forbid2((const void*)&other != (const void*)this, "use clear() instead");
+        ASSERT_forbid2((const void*)&other == (const void*)this, "use clear() instead");
         typedef typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator OtherIter;
         for (OtherIter oi=other.nodes().begin(); oi!=other.nodes().end(); ++oi)
             erase(oi->key());
@@ -681,6 +731,7 @@ public:
                 policy_.merge(left->key(), left->value(), key, value)) {
                 key = Interval::hull(left->key().least(), key.greatest());
                 std::swap(value, left->value());
+                size_ -= left->key().size();
                 map_.eraseAt(left);
             }
         }
@@ -692,11 +743,13 @@ public:
                 key.greatest()+1==right->key().least() &&
                 policy_.merge(key, value, right->key(), right->value())) {
                 key = Interval::hull(key.least(), right->key().greatest());
+                size_ -= right->key().size();
                 map_.eraseAt(right);
             }
         }
 
         map_.insert(key, value);
+        size_ += key.size();
     }
 
     /** Insert values from another container.
@@ -705,7 +758,7 @@ public:
      *  type. */
     template<typename T2, class Policy2>
     void insertMultiple(const IntervalMap<Interval, T2, Policy2> &other, bool makeHole=true) {
-        ASSERT_forbid2((const void*)&other != (const void*)this, "cannot insert a container into itself");
+        ASSERT_forbid2((const void*)&other == (const void*)this, "cannot insert a container into itself");
         typedef typename IntervalMap<Interval, T2, Policy>::ConstNodeIterator OtherIter;
         for (OtherIter oi=other.nodes().begin(); oi!=other.nodes().end(); ++oi)
             insert(oi->key(), Value(oi->value()), makeHole);
@@ -714,8 +767,7 @@ public:
 // FIXME[Robb Matzke 2014-04-13]
 //    // Intersection
 //    void intersect(const Interval&);
-//    template<T2, Policy2>
-//    void intersect(const IntervalMap<Interval, T2, Policy2> &other);
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

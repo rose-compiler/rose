@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "MultiSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace MultiSemantics {
@@ -646,6 +647,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
         sd->writeMemory(segreg, sd(addr), sd(data), cond);
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

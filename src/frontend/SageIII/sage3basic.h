@@ -86,6 +86,10 @@
 #include <algorithm>
 #include <fstream>
 
+// DQ (8/25/2014): Added logic to isTemplateDeclaration(a_routine_ptr) to force isTemplateDeclaration 
+// in ROSE/EDG connection to be false where the topScopeStack() is a template class instantaition scope.
+#define ENFORCE_NO_FUNCTION_TEMPLATE_DECLARATIONS_IN_TEMPLATE_CLASS_INSTANTIATIONS 0
+
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
 
