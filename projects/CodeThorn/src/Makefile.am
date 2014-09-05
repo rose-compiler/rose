@@ -284,6 +284,16 @@ analyterix_SOURCES = \
   addressTakenAnalysis.h \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  GeneralResultAttribute.h \
+  GeneralResultAttribute.C \
+  GeneralAnalyzerBase.h \
+  GeneralAnalyzerBase.C \
+  GeneralAnalyzer.h \
+  GeneralAnalyzer.C \
+  PropertyState.h \
+  PropertyState.C \
+  IntervalPropertyState.h \
+  IntervalPropertyState.C \
   analyterix.C
 
 reverser_LDADD = -lrose

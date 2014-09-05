@@ -134,7 +134,7 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
              _semanticFoldThreshold(5000),_solver(5),_analyzerMode(AM_ALL_STATES),
-                     _maxTransitions(0),_maxTransitionsForcedTop(0),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false),_explorationMode(EXPL_BREADTH_FIRST) {
+                     _maxTransitions(-1),_maxTransitionsForcedTop(-1),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false),_explorationMode(EXPL_BREADTH_FIRST) {
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -155,9 +155,9 @@ bool Analyzer::isPrecise() {
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions==0)
+  if(_maxTransitions==-1)
     return false;
-  return transitionGraph.size()>_maxTransitions;
+  return (long int)transitionGraph.size()>=_maxTransitions;
 }
 
 ExprAnalyzer* Analyzer::getExprAnalyzer() {
@@ -292,9 +292,9 @@ void Analyzer::addToWorkList(const EState* estate) {
 }
 
 bool Analyzer::isActiveGlobalTopify() {
-  if(_maxTransitionsForcedTop==0)
+  if(_maxTransitionsForcedTop==-1)
     return false;
-  bool isActive=transitionGraph.size()>_maxTransitionsForcedTop;
+  bool isActive=(long int)transitionGraph.size()>=_maxTransitionsForcedTop;
   if(isActive) {
     boolOptions.registerOption("rers-binary",false);
     return true;
@@ -2487,6 +2487,7 @@ void Analyzer::runSolver5() {
   {
     threadNum=omp_get_thread_num();
     while(!all_false(workVector)) {
+      //cout<<"DEBUG: running : WL:"<<estateWorkList.size()<<endl;
       if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
         printStatusMessage(true);
         prevStateSetSize=estateSet.size();
@@ -2529,6 +2530,7 @@ void Analyzer::runSolver5() {
         assert(currentEStatePtr);
       
         if(variableValueMonitor.isActive()) {
+          cout<<"DEBUG: varmon is active."<<endl;
           VariableIdSet hotVariables=variableValueMonitor.getHotVariables(this,currentEStatePtr);
           variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr),hotVariables);
         }
@@ -2545,6 +2547,9 @@ void Analyzer::runSolver5() {
           string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);
           if(sourceString.size()==20) sourceString+="...";
           cout << "DEBUG: source:"<<sourceString<<endl;
+          if(newEStateList.size()==1) {
+            cout << "DEBUG: EState: "<<(*newEStateList.begin()).toString(&variableIdMapping)<<endl;
+          }
 #endif
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();

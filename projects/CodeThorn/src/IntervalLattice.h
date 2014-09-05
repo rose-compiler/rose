@@ -1,9 +1,12 @@
+#ifndef INTERVALLATTICE_H
+#define INTERVALLATTICE_H
+
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <cassert>
-#include "../AType.h"
+#include "AType.h"
 
 // Author: Markus Schordan, 2014.
 
@@ -390,6 +393,13 @@ class IntervalLattice {
   BoolLatticeType isSmallerOrEqual(IntervalLattice l1, IntervalLattice l2) {
     return isSmaller(l1,l2)||isEqual(l1,l2);
   }
+  bool operator=(IntervalLattice l2) {
+    return (isTop() && l2.isTop())
+    || (isBot() && l2.isTop())
+    || (getLow()==l2.getLow() && getHigh()==l2.getHigh())
+    ;
+  }
+
  private:
   void setIsLowInf(bool val) {
     _isLowInf=val;
@@ -407,3 +417,5 @@ class IntervalLattice {
   bool _isLowInf;
   bool _isHighInf;
 };
+
+#endif

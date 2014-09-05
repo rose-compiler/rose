@@ -4,54 +4,67 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#ifndef DFANALYZER_C
-#define DFANALYZER_C
+#ifndef GENERALANALYZERBASE_C
+#define GENERALANALYZERBASE_C
 
-#include "DFAnalyzer.h"
+#include "sage3basic.h"
+#include "GeneralAnalyzerBase.h"
 #include "AnalysisAbstractionLayer.h"
 #include "GeneralResultAttribute.h"
+#include "WorkListSeq.h"
 
 using namespace CodeThorn;
 
-template<typename LatticeType>
-DFAnalyzer<LatticeType>::DFAnalyzer():
+PropertyStateFactory::PropertyStateFactory() {
+}
+
+PropertyStateFactory::~PropertyStateFactory() {
+}
+
+void GeneralAnalyzerBase::setFactory(PropertyStateFactory* factory) {
+  _factory=factory;
+}
+
+GeneralAnalyzerBase::GeneralAnalyzerBase():
   _labeler(0),
   _cfanalyzer(0),
   _numberOfLabels(0),
   _preInfoIsValid(false),
-  _solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD)
+  _solverMode(GeneralAnalyzerBase::SOLVERMODE_STANDARD),
+  _factory(0)
 {}
 
-template<typename LatticeType>
-LatticeType DFAnalyzer<LatticeType>::getPreInfo(Label lab) {
+
+PropertyState* GeneralAnalyzerBase::getPreInfo(Label lab) {
   if(!_preInfoIsValid) {
     computeAllPreInfo();
     ROSE_ASSERT(_preInfoIsValid==true);
   }
-  return *_analyzerDataPreInfo[lab];
+  return _analyzerDataPreInfo[lab];
 }
 
-template<typename LatticeType>
-LatticeType DFAnalyzer<LatticeType>::getPostInfo(Label lab) {
-  return *_analyzerData[lab];
+
+PropertyState* GeneralAnalyzerBase::getPostInfo(Label lab) {
+  return _analyzerData[lab];
 }
 
-template<typename LatticeType>
-void DFAnalyzer<LatticeType>::computeAllPreInfo() {
+
+void GeneralAnalyzerBase::computeAllPreInfo() {
   for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
-    LatticeType le;
+    ROSE_ASSERT(_factory);
+    PropertyState* le=_factory->create();
     computePreInfo(lab,le);
     _analyzerDataPreInfo[lab]=le;
   }
   _preInfoIsValid=true;
 }
 
-template<typename LatticeType>
-void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
+
+void GeneralAnalyzerBase::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
-template<typename LatticeType>
-LatticeType DFAnalyzer<LatticeType>::initializeGlobalVariables(SgProject* root) {
+
+PropertyState* GeneralAnalyzerBase::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
@@ -60,22 +73,21 @@ LatticeType DFAnalyzer<LatticeType>::initializeGlobalVariables(SgProject* root) 
   cout <<"INFO: global variables: "<<globalVars.size()<<endl;
   cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
   cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
-  LatticeType elem;
+  PropertyState* elem=new PropertyState();
   list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end())
       elem=transfer(_labeler->getLabel(*i),elem);
   }
   cout << "INIT: initial element: ";
-  elem.toStream(cout,&_variableIdMapping);
+  elem->toStream(cout,&_variableIdMapping);
   cout<<endl;
   _initialElement=elem;
   return elem;
 }
 
-template<typename LatticeType>
 void
-DFAnalyzer<LatticeType>::initialize(SgProject* root) {
+GeneralAnalyzerBase::initialize(SgProject* root) {
   cout << "INIT: Creating VariableIdMapping."<<endl;
   _variableIdMapping.computeVariableSymbolMapping(root);
   cout << "INIT: Creating Labeler."<<endl;
@@ -94,7 +106,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
   for(long l=0;l<_labeler->numberOfLabels();++l) {
-    LatticeType le;
+    PropertyState* le=new PropertyState();
     _analyzerDataPreInfo.push_back(le);
     _analyzerData.push_back(le);
   }
@@ -164,9 +176,9 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
 #endif
 }
 
-template<typename LatticeType>
+
 void
-DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
+GeneralAnalyzerBase::determineExtremalLabels(SgNode* startFunRoot=0) {
   if(startFunRoot) {
     Label startLabel=_cfanalyzer->getLabel(startFunRoot);
     _extremalLabels.insert(startLabel);
@@ -181,22 +193,22 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
 }
 
 // runs until worklist is empty
-template<typename LatticeType>
+
 void
-DFAnalyzer<LatticeType>::solveAlgorithm1() {
+GeneralAnalyzerBase::solveAlgorithm1() {
   cout<<"INFO: solver (label-out-algorithm1) started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     Label lab=_workList.take();
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    LatticeType inInfo;
+    PropertyState* inInfo=new PropertyState();
     computePreInfo(lab,inInfo);
     
-    LatticeType newInfo=transfer(lab,inInfo);
+    PropertyState* newInfo=transfer(lab,inInfo);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    if(!newInfo.approximatedBy(_analyzerData[lab])) {
-      _analyzerData[lab].combine(newInfo);
+    if(!newInfo->approximatedBy(_analyzerData[lab])) {
+      _analyzerData[lab]->combine(newInfo);
       LabelSet succ;
       succ=_flow.succ(lab);
       _workList.add(succ);
@@ -208,9 +220,9 @@ DFAnalyzer<LatticeType>::solveAlgorithm1() {
 }
 
 // runs until worklist is empty
-template<typename LatticeType>
+
 void
-DFAnalyzer<LatticeType>::solve() {
+GeneralAnalyzerBase::solve() {
   switch(_solverMode) {
   case SOLVERMODE_STANDARD: solveAlgorithm1();break;
   case SOLVERMODE_DYNAMICLOOPFIXPOINTS: solveAlgorithm2();break;
@@ -219,20 +231,20 @@ DFAnalyzer<LatticeType>::solve() {
   }
   _preInfoIsValid=false;
 }
-template<typename LatticeType>
+
 
 void
-DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
+GeneralAnalyzerBase::computePreInfo(Label lab,PropertyState* inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo.combine(_analyzerData[*i]);
+    inInfo->combine(_analyzerData[*i]);
   }
 }
 
 // runs until worklist is empty
-template<typename LatticeType>
+
 void
-DFAnalyzer<LatticeType>::solveAlgorithm2() {
+GeneralAnalyzerBase::solveAlgorithm2() {
   cout<<"INFO: solver started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
@@ -240,13 +252,13 @@ DFAnalyzer<LatticeType>::solveAlgorithm2() {
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
 
-    LatticeType inInfo;
+    PropertyState* inInfo=new PropertyState();
     computePreInfo(lab,inInfo);
-    LatticeType newInfo=transfer(lab,inInfo);
+    PropertyState* newInfo=transfer(lab,inInfo);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
     bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));
-    if(!newInfo.approximatedBy(_analyzerData[lab])) {
-      _analyzerData[lab].combine(newInfo);
+    if(!newInfo->approximatedBy(_analyzerData[lab])) {
+      _analyzerData[lab]->combine(newInfo);
       // semantic propagation: if node[l] is a condition of a loop only propagate on the true branch
       LabelSet succ;
       {
@@ -270,14 +282,14 @@ DFAnalyzer<LatticeType>::solveAlgorithm2() {
   cout<<"INFO: solver finished."<<endl;
 }
 // runs until worklist is empty
-template<typename LatticeType>
+
 void
-DFAnalyzer<LatticeType>::run() {
+GeneralAnalyzerBase::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     cout << "Initializing "<<*i<<" with ";
     _analyzerData[*i]=transfer(*i,_initialElement);
-    _analyzerData[*i].toStream(cout,&_variableIdMapping);
+    _analyzerData[*i]->toStream(cout,&_variableIdMapping);
     cout<<endl;
     LabelSet initsucc=_flow.succ(*i);
     for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
@@ -288,15 +300,15 @@ DFAnalyzer<LatticeType>::run() {
 }
 
 // default identity function
-template<typename LatticeType>
-LatticeType
-DFAnalyzer<LatticeType>::transfer(Label lab, LatticeType element) {
+
+PropertyState*
+GeneralAnalyzerBase::transfer(Label lab, PropertyState* element) {
   return element;
 }
 
-template<typename LatticeType>
-typename DFAnalyzer<LatticeType>::ResultAccess&
-DFAnalyzer<LatticeType>::getResultAccess() {
+
+GeneralAnalyzerBase::ResultAccess&
+GeneralAnalyzerBase::getResultAccess() {
   return _analyzerData;
 }
 
@@ -309,14 +321,14 @@ using std::string;
 
 #include <sstream>
 
-template<typename LatticeType>
-void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
+
+void GeneralAnalyzerBase::attachResultsToAst(string attributeName) {
   size_t lab=0;
-  for(typename std::vector<LatticeType>::iterator i=_analyzerData.begin();
+  for(AnalyzerData::iterator i=_analyzerData.begin();
       i!=_analyzerData.end();
       ++i) {
     std::stringstream ss;
-    (&(*i))->toStream(ss);
+    (*i)->toStream(ss);
     //std::cout<<ss.str();
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
     _labeler->getNode(lab)->setAttribute(attributeName,new GeneralResultAttribute(ss.str()));
@@ -325,18 +337,18 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
 
 }
 
-template<typename LatticeType>
-CFAnalyzer* DFAnalyzer<LatticeType>::getCFAnalyzer() {
+
+CFAnalyzer* GeneralAnalyzerBase::getCFAnalyzer() {
   return _cfanalyzer;
 }
 
-template<typename LatticeType>
-Labeler* DFAnalyzer<LatticeType>::getLabeler() {
+
+Labeler* GeneralAnalyzerBase::getLabeler() {
   return _labeler;
 }
 
-template<typename LatticeType>
-VariableIdMapping* DFAnalyzer<LatticeType>::getVariableIdMapping() {
+
+VariableIdMapping* GeneralAnalyzerBase::getVariableIdMapping() {
   return &_variableIdMapping;
 }
 

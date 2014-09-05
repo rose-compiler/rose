@@ -1,5 +1,5 @@
 #include <iostream>
-#include "IntervalLattice.h"
+#include "../IntervalLattice.h"
 
 using namespace std;
 

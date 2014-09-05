@@ -38,6 +38,9 @@
 #include <cmath>
 #include "assert.h"
 
+#include "GeneralAnalyzerBase.h"
+#include "GeneralAnalyzer.h"
+
 // ROSE analyses
 #include "VariableRenaming.h"
 
@@ -52,6 +55,7 @@ using namespace AnalysisAbstractionLayer;
 string option_prefix;
 bool option_stats=false;
 bool option_rdanalysis=false;
+bool option_generalanalysis=false;
 bool option_roserdanalysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
@@ -254,6 +258,40 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
       cout<<" none.";
     cout<<endl;
   }
+}
+
+#include "IntervalLattice.h"
+
+#include "PropertyState.h"
+#include "IntervalPropertyState.h"
+
+class IntervalPropertyStateFactory : public PropertyStateFactory {
+public:
+    PropertyState* create() {
+      return new IntervalPropertyState(); 
+    }
+};
+
+void generalAnalysis(SgProject* root) {
+  cout<<"STATUS: general analysis started."<<endl;
+  boolOptions.registerOption("semantic-fold",false); // temporary
+  boolOptions.registerOption("post-semantic-fold",false); // temporary
+
+  GeneralAnalyzer* generalAnalyzer=new GeneralAnalyzer();
+  IntervalPropertyStateFactory* factory=new IntervalPropertyStateFactory();
+  generalAnalyzer->setFactory(factory);
+  generalAnalyzer->initialize(root);
+#if 0
+  generalAnalyzer->initializeGlobalVariables(root);
+
+  std::string funtofind="main";
+  RoseAst completeast(root);
+  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+  generalAnalyzer->determineExtremalLabels(startFunRoot);
+  generalAnalyzer->run();
+#endif
+  delete generalAnalyzer;
+  cout<<"STATUS: general analysis finished."<<endl;
 }
 
 void rdAnalysis(SgProject* root) {
@@ -504,6 +542,7 @@ int main(int argc, char* argv[]) {
       ("rd-analysis", "perform reaching definitions analysis.")
       ("rose-rd-analysis", "perform rose-core reaching definitions analysis.")
       ("fi-constanalysis", "perform flow-insensitive constant analysis.")
+      ("general-analysis", "perform general analysis.")
       ("varidmapping", "prints variableIdMapping")
       ("write-varidmapping", "writes variableIdMapping to a file variableIdMapping.csv")
       ("check-ast-expr-rewrite", "checks all expression in an ast with a generic rewrite operation.")
@@ -539,6 +578,9 @@ int main(int argc, char* argv[]) {
     }
     if(args.count("rd-analysis")) {
       option_rdanalysis=true;
+    }
+    if(args.count("general-analysis")) {
+      option_generalanalysis=true;
     }
     if(args.count("rose-rd-analysis")) {
       option_roserdanalysis=true;
@@ -611,6 +653,10 @@ int main(int argc, char* argv[]) {
   if(option_rdanalysis) {
     cout<<"STATUS: Performing RD analysis."<<endl;
     rdAnalysis(root);
+  }
+  if(option_generalanalysis) {
+    cout<<"STATUS: Performing general analysis."<<endl;
+    generalAnalysis(root);
   }
   if(option_roserdanalysis) {
       cout << "INFO: generating rose-rd dot file (1/2)."<<endl;
