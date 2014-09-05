@@ -467,7 +467,7 @@ rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostSc
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
-rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
+rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
@@ -575,6 +575,6 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
 check-local: $(generatedCodeExamples)
 
 clean-local:
-	rm -f $(generatedCodeExamples)
+	rm -f $(generatedCodeExamples) *.dot
 	rm -f $(addsuffix .passed, $(generatedCodeExamples))
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
