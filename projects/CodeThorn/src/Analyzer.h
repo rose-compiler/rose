@@ -309,8 +309,8 @@ namespace CodeThorn {
     int _solver;
     AnalyzerMode _analyzerMode;
     set<const EState*> _newNodesToFold;
-    size_t _maxTransitions;
-    size_t _maxTransitionsForcedTop;
+    long int _maxTransitions;
+    long int _maxTransitionsForcedTop;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;

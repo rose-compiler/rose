@@ -268,8 +268,7 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
 class IntervalPropertyStateFactory : public PropertyStateFactory {
 public:
     PropertyState* create() {
-      PropertyState* pstate=new IntervalPropertyState(); 
-      return 0;
+      return new IntervalPropertyState(); 
     }
 };
 

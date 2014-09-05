@@ -65,7 +65,6 @@ class GeneralAnalyzerBase {
   vector<PropertyState*> _analyzerData;
   WorkListSeq<Label> _workList;
   PropertyState* _initialElement;
-  PropertyStateFactory* _factory;
  protected:
   bool _preInfoIsValid;
   void computeAllPreInfo();
@@ -75,6 +74,7 @@ class GeneralAnalyzerBase {
   void solveAlgorithm2();
   void computePreInfo(Label lab,PropertyState* info);
   SolverMode _solverMode;
+  PropertyStateFactory* _factory;
 };
 
 #endif
