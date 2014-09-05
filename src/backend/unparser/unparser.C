@@ -2304,7 +2304,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                          if (project->get_appendPID() == true)
                             {
                               ostringstream os;
-                              os << getpid();  
+                              #ifdef _MSC_VER 
+                              os << _getpid(); 
+                              #else 
+                              os << getpid(); 
+                              #endif 
                               unsigned dot = outputFilename.find_last_of(".");
                               outputFilename = outputFilename.substr(0,dot) + "_" + os.str() + outputFilename.substr(dot);
                               if ( SgProject::get_verbose() > 0 )
