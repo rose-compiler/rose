@@ -2620,16 +2620,16 @@ void Analyzer::runSolver5() {
                 assertCode=reachabilityAssertCode(currentEStatePtr);
               }              
               if(assertCode>=0) {
-                if(boolOptions["with-counterexamples"] ) {
 #pragma omp critical
-                  {
+                {
+                  if(boolOptions["with-counterexamples"] ) { 
 		    //if this particular assertion was never reached before, compute and update counterexample
 		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                       _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                     } 
                   }
+                  reachabilityResults.reachable(assertCode);
                 }
-                reachabilityResults.reachable(assertCode);
               } else {
                 // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
                 if(!boolOptions["rersmode"]) {

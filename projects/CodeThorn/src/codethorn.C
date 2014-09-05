@@ -1825,6 +1825,7 @@ int main( int argc, char * argv[] ) {
   }
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
+  cout << "=============================================================="<<endl;
 
   double extractAssertionTracesTime= 0;
   int maxOfShortestAssertInput = -1;
@@ -1968,14 +1969,15 @@ int main( int argc, char * argv[] ) {
   long pstateSetSizeInf = 0;
   long eStateSetSizeInf = 0;
   long transitionGraphSizeInf = 0;
-  long numOfconstraintSetsInf = 0;
-  long numOfStdinEStatesInf = 0;
-  long numOfStdoutVarEStatesInf = 0;
-  long numOfStdoutConstEStatesInf = 0;
-  long numOfStdoutEStatesInf = 0;
-  long numOfStderrEStatesInf = 0;
-  long numOfFailedAssertEStatesInf = 0;
-  long numOfConstEStatesInf = 0;
+  long eStateSetSizeStgInf = 0;
+  //long numOfconstraintSetsInf = 0;
+  //long numOfStdinEStatesInf = 0;
+  //long numOfStdoutVarEStatesInf = 0;
+  //long numOfStdoutConstEStatesInf = 0;
+  //long numOfStdoutEStatesInf = 0;
+  //long numOfStderrEStatesInf = 0;
+  //long numOfFailedAssertEStatesInf = 0;
+  //long numOfConstEStatesInf = 0;
   double infPathsOnlyTime = 0;
   double stdIoOnlyTime = 0;
 
@@ -1988,14 +1990,15 @@ int main( int argc, char * argv[] ) {
     pstateSetSizeInf=analyzer.getPStateSet()->size();
     eStateSetSizeInf = analyzer.getEStateSet()->size();
     transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
-    numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
-    numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
-    numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
-    numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
-    numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
-    numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-    numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
-    numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
+    eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
+    //numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
+    //numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+    //numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+    //numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+    //numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+    //numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+    //numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+    //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
   }
   
   if(boolOptions["std-io-only"]) {
@@ -2022,14 +2025,15 @@ int main( int argc, char * argv[] ) {
         pstateSetSizeInf=analyzer.getPStateSet()->size();
         eStateSetSizeInf = analyzer.getEStateSet()->size();
         transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
-        numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
-        numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
-        numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
-        numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
-        numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
-        numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-        numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
-        numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
+        eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
+        //numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
+        //numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+        //numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+        //numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+        //numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+        //numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+        //numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+        //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
       }
       if (!boolOptions["std-io-only"]) {
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
@@ -2227,15 +2231,16 @@ int main( int argc, char * argv[] ) {
         <<rewriteSystem.dump1_stats.numVariableElim<<", "
         <<rewriteSystem.dump1_stats.numConstExprElim
         <<endl;
-    text<<"Sizes infinite paths only,"<<pstateSetSizeInf<<", "
+    text<<"infinite-paths-size,"<<pstateSetSizeInf<<", "
         <<eStateSetSizeInf<<", "
         <<transitionGraphSizeInf<<", "
-        <<numOfconstraintSetsInf<<", "
-        << numOfStdinEStatesInf<<", "
-        << numOfStdoutEStatesInf<<", "
-        << numOfStderrEStatesInf<<", "
-        << numOfFailedAssertEStatesInf<<", "
-        << numOfConstEStatesInf<<endl;
+        <<eStateSetSizeStgInf<<endl;
+        //<<numOfconstraintSetsInf<<", "
+        //<< numOfStdinEStatesInf<<", "
+        //<< numOfStdoutEStatesInf<<", "
+        //<< numOfStderrEStatesInf<<", "
+        //<< numOfFailedAssertEStatesInf<<", "
+        //<< numOfConstEStatesInf<<endl;
     text<<"states & transitions after only-I/O-reduction,"
         <<eStateSetSizeIoOnly<<", "
         <<transitionGraphSizeIoOnly<<endl;
