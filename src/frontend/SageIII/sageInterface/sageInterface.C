@@ -18365,6 +18365,11 @@ class Scope_Node {
     //print the subtree rooted at this node to a dot file named as filename.dot
     void printToDot(std::string filename);
     std::string prettyPrint();
+    //! Depth-first traverse to get all nodes within the current subtree
+    void traverse_node(std::vector<Scope_Node* >& allnodes);
+    //! delete all children, grandchildren, etc.
+    void deep_delete_children();
+
    private: 
       //! recursive traverse the current subtree and write dot file information
       void traverse_write (Scope_Node* n, std::ofstream & dotfile);
@@ -18379,6 +18384,34 @@ class Scope_Node {
         else ROSE_ASSERT (false);
         return rt; }
   };
+  
+std::map <SgScopeStatement* , Scope_Node*>  ScopeTreeMap; // quick query if a scope is in the scope tree
+void Scope_Node::deep_delete_children()
+{
+  std::vector <Scope_Node*> allnodes;
+  this->traverse_node (allnodes);
+  // allnodes[0] is the root node itself, we keep it.
+  for (size_t i =1; i<allnodes.size(); i++) 
+  {
+    Scope_Node* child = allnodes[i];
+    // mark the associated scope as not in the scope tree
+    ScopeTreeMap[child->scope] = NULL;
+    delete child;
+  }
+  // no children for the current node
+  children.clear(); 
+}
+void Scope_Node::traverse_node(std::vector<Scope_Node* >& allnodes)
+{
+  // action on current node, save to the vector
+  allnodes.push_back(this);
+  std::vector < Scope_Node* > children = this->children;
+  for (size_t i=0; i<children.size(); i++) 
+  {
+     Scope_Node* child = children[i];
+     child->traverse_node(allnodes);
+  }
+}
 
 std::string Scope_Node::prettyPrint()
 {
@@ -18413,6 +18446,7 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
 
 bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl)
 {
+  ScopeTreeMap.clear();
   bool debug = true;
   ROSE_ASSERT (decl != NULL);
   SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
@@ -18467,10 +18501,6 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
    *             This is hard to do if we store paths explicitly (we have to change all other paths containing the scope being added) 
    *    }
    */
-  // we explicitly store all chains (paths) in the scope tree for this version
-  // the index to the vector is the chain ID
-  std::vector <  Scope_Node* >  scope_chains;
-  std::map <SgScopeStatement* , Scope_Node*>  ScopeTreeMap; // quick query if a scope is in the scope tree
   std::set<SgScopeStatement*> processedUseScopes; // avoid repetitively consider the same use scopes
   // the root of the scope tree
   Scope_Node* scope_tree =new Scope_Node (decl_scope, s_decl);
@@ -18478,6 +18508,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   scope_tree->parent= NULL;
   ScopeTreeMap[decl_scope] = scope_tree; 
 
+  // For each variable reference, we backtrack its scopes, and add the scope chain into the scope tree of this variable.
   for (size_t i =0; i< var_refs.size(); i++)
   {
      std::stack <SgScopeStatement*> temp_scope_stack;
@@ -18485,7 +18516,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
      SgScopeStatement* var_scope = getScope (vRef);
      SgScopeStatement * current_scope = var_scope;
      ROSE_ASSERT (current_scope != decl_scope); // we should have excluded this situation already
-     temp_scope_stack.push (current_scope) ;  // push the very first scope
+     temp_scope_stack.push (current_scope) ;  // push the very first bottom scope
      do {
        // this won't work since getScope () will return the input scope as it is!!
        //current_scope = getScope (current_scope);
@@ -18529,13 +18560,44 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
          }
           else
           {
-            //TODO handle possible overlapped paths   
-          }  
+            //TODO: optimize 3: we only push scopes which are not yet in the scope tree in to the temp_scope_stack for a new variable use!!
+            // This will save overhead of pushing duplicated scopes into stack and later adding them into the scope tree!!
+            // Downside: need to calculate depth separately, not using the stack depth. 
+            //
+            //handle possible overlapped paths, we only want to store the shortest path reaching a s_use node.
+            // Further path to deeper use of a variable does not need to be considered. 
+            // This is called trimmed path or trimmed tree. 
+            //
+            // Three conditions
+            //1. Reuse the existing scope node, continue next scope in the stack
+            //  e.g. the root node and the intermediate nodes shared by multiple scope chains
+            // no special handling at all here. 
+            
+            //2. Reuse the existing scope node, stop going further
+            //  e.g. the existing scope node is already a leaf node (s_use type)
+            //  There is no need to go deeper for the current scope chain.
+            Scope_Node* existing_node = ScopeTreeMap[current_scope]; 
+            if (existing_node->s_type == s_use)
+             {
+               break; // jump out the while loop for the stack. 
+             }  
+            //3. Modify the existing scope node's type to be decl, stop g
+            //  e.g We are reaching the leaf node of the current scope chain (s_use type)
+            //  The existing scope node is s_intermediate. 
+            //  we should delete the existing subtree and add the new leaf node
+            //  To simplify the implementation, we change type of the existing node to be s_use type and delete all its children nodes. 
+            else if (s_t == s_use) 
+            {
+              ROSE_ASSERT (existing_node->s_type == s_intermediate);
+              existing_node->s_type = s_use; 
+              existing_node->deep_delete_children(); 
+           }  
+          } 
          temp_scope_stack.pop();
          // must use the one in the tree, not necessary current_node from the stack
          current_parent = ScopeTreeMap[current_scope]; 
-         if (current_node != ScopeTreeMap[current_scope])
-            delete current_node; // delete redundant Scope Node.
+//         if (current_node != ScopeTreeMap[current_scope])
+//            delete current_node; // delete redundant Scope Node.
          depth_counter++;
        } // end while pop scope stack  
 
@@ -18546,8 +18608,18 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
 
   } // end of generating trimmed scope tree
   //------------- debug the scope tree---------
-  scope_tree->printToDot("scope_tree_"+(var_sym->get_name()).getString());
+  if (debug)
+  {
+    scope_tree->printToDot("scope_tree_"+(var_sym->get_name()).getString());
+    std::vector <Scope_Node*> allnodes; 
+    scope_tree->traverse_node (allnodes);
+    cout<<"Scope tree node count:"<<allnodes.size()<<endl;
+  }
 
+
+  // TODO: for processed use scopes, some of them may be trimmed from the scope tree.
+  // We only need to consider the leaves in the scope tree. 
+  //
   // now use the scope tree to move the declaration around
   if (processedUseScopes.size() ==1 ) // simplest case, only a single use place
   {
