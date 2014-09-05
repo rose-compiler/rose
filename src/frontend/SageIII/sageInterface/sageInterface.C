@@ -11060,13 +11060,13 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
           SgScopeStatement* requiredScope = scope;
           SgScopeStatement* preAssociatedScope = initName->get_scope();
        // printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
+
           if (preAssociatedScope != NULL)
              {
 #if 0
                printf ("In SageInterface::fixVariableDeclaration(): Note that this variable already has an associated scope! preAssociatedScope = %p = %s (but will be reset below) \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
 #endif
             // ROSE_ASSERT(preAssociatedScope == scope);
-
                requiredScope = preAssociatedScope;
              }
 
@@ -18353,6 +18353,7 @@ enum ScopeType {s_decl, s_intermediate, s_use};
 class Scope_Node {
   public: 
     Scope_Node (SgScopeStatement* s, ScopeType t):scope(s), s_type(t) {};
+    //TODO: protect members behind access functions
     // scope information
     SgScopeStatement* scope; 
     ScopeType s_type;
@@ -18369,6 +18370,9 @@ class Scope_Node {
     void traverse_node(std::vector<Scope_Node* >& allnodes);
     //! delete all children, grandchildren, etc.
     void deep_delete_children();
+    //! Starting from the root, find the first node which has more than one children.
+    // This is useful to identify the innermost common scope of all leaf scopes.
+    Scope_Node * findFirstBranchNode();
 
    private: 
       //! recursive traverse the current subtree and write dot file information
@@ -18384,8 +18388,19 @@ class Scope_Node {
         else ROSE_ASSERT (false);
         return rt; }
   };
+
+Scope_Node*  Scope_Node::findFirstBranchNode()
+{
+  Scope_Node* first_branch_node = this; 
+  // three cases: 0 children, 1 children, >1 children
+  while (first_branch_node->children.size()==1)
+    first_branch_node = first_branch_node->children[0];
+  // now the node must has either 0 or >1 children.
+  return first_branch_node; 
+}
   
-std::map <SgScopeStatement* , Scope_Node*>  ScopeTreeMap; // quick query if a scope is in the scope tree
+//TODO make this a member of Scope_Node.  
+std::map <SgScopeStatement* , Scope_Node*>  ScopeTreeMap; // quick query if a scope is in the scope tree, temp variable shared by all trees.
 void Scope_Node::deep_delete_children()
 {
   std::vector <Scope_Node*> allnodes;
@@ -18442,23 +18457,36 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
   }
 }
  
-
-
-bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl)
+//! Generate a scope tree for a declaration: the tree is trimmed. 
+//  To trim the tree , the inner scopes using the variable are removed if there is a use scope which enclosing the inner scopes. 
+//  Return the tree, can not be a NULL pointer. At least we return a node for the scope of the declaration
+//  Also return the leaf scopes represented by the tree
+//  TODO: make it a SageInterface function
+Scope_Node* generateScopeTree(SgDeclarationStatement* decl)//std::map <SgScopeStatement*, Scope_Node*>& ScopeTreeMap)
 {
   ScopeTreeMap.clear();
-  bool debug = true;
+  bool debug = true; // debugging flag
   ROSE_ASSERT (decl != NULL);
   SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
   ROSE_ASSERT (var_decl != NULL);
   SgScopeStatement * decl_scope = decl->get_scope();
   ROSE_ASSERT (decl_scope != NULL);
 
-  SgVariableSymbol* var_sym = isSgVariableSymbol(getFirstVarSym(var_decl));
+  SgVariableSymbol* var_sym = isSgVariableSymbol(SageInterface::getFirstVarSym(var_decl));
   ROSE_ASSERT (var_sym != NULL);
 
-  // find all variable references to the declared variable.
+  // the root of the scope tree
+  Scope_Node* scope_tree =new Scope_Node (decl_scope, s_decl);
+  scope_tree->depth = 0;
+  scope_tree->parent= NULL;
+  ScopeTreeMap[decl_scope] = scope_tree; 
+
+  // Step 1. Find all variable references to the declared variable.
+  // Note: querySubTree uses pre-order traversal. 
+  // This is essential since we want to preserve the order of the scopes within a parent scope.
+  // The order of found variable references reflects the order of their scopes in AST. 
   //TODO: optimize for multiple declarations, avoid redundant query
+  //   We can batch-generate scope trees for all declarations within a function
   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(decl_scope, V_SgVarRefExp);
   std::vector  <SgVarRefExp*> var_refs; 
   bool usedInSameScope = false; // if the declared variable is also used within the same scope
@@ -18467,7 +18495,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
     SgVarRefExp *vRef = isSgVarRefExp(*i);
     if (vRef->get_symbol() == var_sym )
     {
-      if (getScope(vRef) == decl_scope) 
+      if (SageInterface::getScope(vRef) == decl_scope) 
       {
         usedInSameScope = true; 
         break;
@@ -18475,15 +18503,16 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
       var_refs.push_back(vRef);
     } // match symbol
   }
-  // Nothing to do if already in the use scope
+  // If there is a single variable use which happens within the declaration scope,
+  // we immediately return.
   if (usedInSameScope) 
   { 
     if (debug)
-      cout<<"Found a declaration with a varRefExp in the same scope, skipped."<<endl;
-    return false; 
+      cout<<"Found a declaration with a varRefExp in the same scope, return a single node scope tree."<<endl;
+    return scope_tree; 
   }
 
-  // For each references, generate a scope chain
+  // Step 2: For each reference, generate a scope chain, stored in a temp stack. 
   // Each scope can be either where the variable is declared, used, or a scope in between (intermediate)
   /*
    *    For each reference place
@@ -18501,135 +18530,169 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
    *             This is hard to do if we store paths explicitly (we have to change all other paths containing the scope being added) 
    *    }
    */
-  std::set<SgScopeStatement*> processedUseScopes; // avoid repetitively consider the same use scopes
-  // the root of the scope tree
-  Scope_Node* scope_tree =new Scope_Node (decl_scope, s_decl);
-  scope_tree->depth = 0;
-  scope_tree->parent= NULL;
-  ScopeTreeMap[decl_scope] = scope_tree; 
-
+  // There may be multiple variable references within a same scope, 
+  // we use a set to record processed scope in order to avoid repetitively considering the same use scopes.
+  std::set<SgScopeStatement*> processedUseScopes;
   // For each variable reference, we backtrack its scopes, and add the scope chain into the scope tree of this variable.
   for (size_t i =0; i< var_refs.size(); i++)
   {
-     std::stack <SgScopeStatement*> temp_scope_stack;
-     SgVarRefExp *vRef = var_refs[i];
-     SgScopeStatement* var_scope = getScope (vRef);
-     SgScopeStatement * current_scope = var_scope;
-     ROSE_ASSERT (current_scope != decl_scope); // we should have excluded this situation already
-     temp_scope_stack.push (current_scope) ;  // push the very first bottom scope
-     do {
-       // this won't work since getScope () will return the input scope as it is!!
-       //current_scope = getScope (current_scope);
-       current_scope = current_scope->get_scope(); // get parent scope and push
-       temp_scope_stack.push (current_scope) ; 
-     }
-     while (current_scope != decl_scope) ;
-     // exit condition is current_scope == decl_scope, as a result  
-     // at this point , the declaration scope is already pushed into the stack  
+    std::stack <SgScopeStatement*> temp_scope_stack;
+    SgVarRefExp *vRef = var_refs[i];
+    SgScopeStatement* var_scope = SageInterface::getScope (vRef);
+    SgScopeStatement * current_scope = var_scope;
+    ROSE_ASSERT (current_scope != decl_scope); // we should have excluded this situation already
+    temp_scope_stack.push (current_scope) ;  // push the very first bottom scope
+    do {
+      // this won't work since getScope () will return the input scope as it is!!
+      //current_scope = getScope (current_scope);
+      current_scope = current_scope->get_scope(); // get parent scope and push
+      temp_scope_stack.push (current_scope) ; 
+    }
+    while (current_scope != decl_scope) ;
+    // exit condition is current_scope == decl_scope, as a result  
+    // at this point , the declaration scope is already pushed into the stack  
 
-   if (debug)
-   {
-     cout<<"scope stack size="<<temp_scope_stack.size()<<endl;
-   }
-     
-     //if the current use scope is not yet considered
-     // add nodes into the scope tree, avoid duplicated add the scope node containing multiple var references.
-     if (processedUseScopes.find(var_scope) == processedUseScopes.end())
-     {
-       // add each scope into the scope tree
-       Scope_Node* current_parent = scope_tree;
-       int depth_counter = 0;
-       while (!temp_scope_stack.empty())
-       { // TODO: verify that the scope tree preserves the original order of children scopes.
-         current_scope = temp_scope_stack.top();
-         Scope_Node * current_node = NULL; 
-         ScopeType s_t; 
-         if (current_scope == var_scope) 
-           s_t = s_use;
-         else 
-           s_t = s_intermediate; 
-         // avoid add duplicated node into the tree, the first one, root node, is duplicate.
-         if (ScopeTreeMap[current_scope] == NULL )
-         {
-           current_node = new Scope_Node(current_scope, s_t);
-           (current_parent->children).push_back(current_node);
-           current_node->parent = current_parent;
-           current_node->depth = depth_counter;
+    if (debug)
+    {
+      cout<<"scope stack size="<<temp_scope_stack.size()<<endl;
+    }
 
-           ScopeTreeMap[current_scope] = current_node;
-         }
-          else
+    // Step 3: add nodes into the scope tree from the stack.
+    //if the current use scope is not yet considered
+    // add nodes into the scope tree, avoid duplicated add the scope node containing multiple var references.
+    if (processedUseScopes.find(var_scope) == processedUseScopes.end())
+    {
+      // add each scope into the scope tree
+      Scope_Node* current_parent = scope_tree;
+      int depth_counter = 0;
+      while (!temp_scope_stack.empty())
+      { // TODO: verify that the scope tree preserves the original order of children scopes.
+        current_scope = temp_scope_stack.top();
+        Scope_Node * current_node = NULL; 
+        ScopeType s_t; 
+        if (current_scope == var_scope) 
+          s_t = s_use;
+        else 
+          s_t = s_intermediate; 
+        // avoid add duplicated node into the tree, the first one, root node, is duplicate.
+        if (ScopeTreeMap[current_scope] == NULL )
+        {
+          current_node = new Scope_Node(current_scope, s_t);
+          (current_parent->children).push_back(current_node);
+          current_node->parent = current_parent;
+          current_node->depth = depth_counter;
+
+          ScopeTreeMap[current_scope] = current_node;
+        }
+        else
+        {
+          //TODO: optimize 3: we only push scopes which are not yet in the scope tree in to the temp_scope_stack for a new variable use!!
+          // This will save overhead of pushing duplicated scopes into stack and later adding them into the scope tree!!
+          // Downside: need to calculate depth separately, not using the stack depth. 
+          //
+          //handle possible overlapped paths, we only want to store the shortest path reaching a s_use node.
+          // Further path to deeper use of a variable does not need to be considered. 
+          // This is called trimmed path or trimmed tree. 
+          //
+          // Three conditions
+          //1. Reuse the existing scope node, continue next scope in the stack
+          //  e.g. the root node and the intermediate nodes shared by multiple scope chains
+          // no special handling at all here. 
+
+          //2. Reuse the existing scope node, stop going further
+          //  e.g. the existing scope node is already a leaf node (s_use type)
+          //  There is no need to go deeper for the current scope chain.
+          Scope_Node* existing_node = ScopeTreeMap[current_scope]; 
+          if (existing_node->s_type == s_use)
           {
-            //TODO: optimize 3: we only push scopes which are not yet in the scope tree in to the temp_scope_stack for a new variable use!!
-            // This will save overhead of pushing duplicated scopes into stack and later adding them into the scope tree!!
-            // Downside: need to calculate depth separately, not using the stack depth. 
-            //
-            //handle possible overlapped paths, we only want to store the shortest path reaching a s_use node.
-            // Further path to deeper use of a variable does not need to be considered. 
-            // This is called trimmed path or trimmed tree. 
-            //
-            // Three conditions
-            //1. Reuse the existing scope node, continue next scope in the stack
-            //  e.g. the root node and the intermediate nodes shared by multiple scope chains
-            // no special handling at all here. 
-            
-            //2. Reuse the existing scope node, stop going further
-            //  e.g. the existing scope node is already a leaf node (s_use type)
-            //  There is no need to go deeper for the current scope chain.
-            Scope_Node* existing_node = ScopeTreeMap[current_scope]; 
-            if (existing_node->s_type == s_use)
-             {
-               break; // jump out the while loop for the stack. 
-             }  
-            //3. Modify the existing scope node's type to be decl, stop g
-            //  e.g We are reaching the leaf node of the current scope chain (s_use type)
-            //  The existing scope node is s_intermediate. 
-            //  we should delete the existing subtree and add the new leaf node
-            //  To simplify the implementation, we change type of the existing node to be s_use type and delete all its children nodes. 
-            else if (s_t == s_use) 
-            {
-              ROSE_ASSERT (existing_node->s_type == s_intermediate);
-              existing_node->s_type = s_use; 
-              existing_node->deep_delete_children(); 
-           }  
-          } 
-         temp_scope_stack.pop();
-         // must use the one in the tree, not necessary current_node from the stack
-         current_parent = ScopeTreeMap[current_scope]; 
-//         if (current_node != ScopeTreeMap[current_scope])
-//            delete current_node; // delete redundant Scope Node.
-         depth_counter++;
-       } // end while pop scope stack  
+            break; // jump out the while loop for the stack. 
+          }  
+          //3. Modify the existing scope node's type to be decl, stop g
+          //  e.g We are reaching the leaf node of the current scope chain (s_use type)
+          //  The existing scope node is s_intermediate. 
+          //  we should delete the existing subtree and add the new leaf node
+          //  To simplify the implementation, we change type of the existing node to be s_use type and delete all its children nodes. 
+          else if (s_t == s_use) 
+          {
+            ROSE_ASSERT (existing_node->s_type == s_intermediate);
+            existing_node->s_type = s_use; 
+            existing_node->deep_delete_children(); 
+          }  
+        } 
+        temp_scope_stack.pop();
+        // must use the one in the tree, not necessary current_node from the stack
+        current_parent = ScopeTreeMap[current_scope]; 
+        //         if (current_node != ScopeTreeMap[current_scope])
+        //            delete current_node; // delete redundant Scope Node.
+        depth_counter++;
+      } // end while pop scope stack  
 
-       // mark the current leaf scope as processed.
-       processedUseScopes.insert (var_scope);
-     } // end if not processed var scope  
+      // mark the current leaf scope as processed.
+      processedUseScopes.insert (var_scope);
+    } // end if not processed var scope  
+  } // end of adding a scope stack into the  scope tree
 
-
-  } // end of generating trimmed scope tree
   //------------- debug the scope tree---------
   if (debug)
   {
-    scope_tree->printToDot("scope_tree_"+(var_sym->get_name()).getString());
+    SgFunctionDeclaration* func_decl = SageInterface::getEnclosingFunctionDeclaration (decl);
+    std::string func_name = (func_decl->get_name()).getString();
+    int decl_lineno = decl->get_file_info()->get_line();
+    std::string filename = "scope_tree_"+func_name+"_"+(var_sym->get_name()).getString()+ "_at_"+ StringUtility::numberToString(decl_lineno);
+    // report the number of nodes in the scope tree
     std::vector <Scope_Node*> allnodes; 
     scope_tree->traverse_node (allnodes);
     cout<<"Scope tree node count:"<<allnodes.size()<<endl;
+    // write the tree into a dot file
+    scope_tree->printToDot(filename);
   }
+  return scope_tree; 
+}  
 
+bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration)
+{
+  SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
+  ROSE_ASSERT (decl != NULL);
+  // Step 1: generate a scope tree for the declaration
+  Scope_Node* scope_tree = generateScopeTree (decl);
 
-  // TODO: for processed use scopes, some of them may be trimmed from the scope tree.
-  // We only need to consider the leaves in the scope tree. 
-  //
-  // now use the scope tree to move the declaration around
-  if (processedUseScopes.size() ==1 ) // simplest case, only a single use place
+  // single node scope tree, nowhere to move into. 
+  if ((scope_tree->children).size() == 0 )
+    return false; 
+
+  // for a scope tree with two or more nodes  
+  Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
+
+  // simplest case, only a single use place
+  // the first branch node is also the bottom node
+  if ((first_branch_node->children).size() ==0)
   {
-    SgScopeStatement* bottom_scope = *(processedUseScopes.begin());
+    SgScopeStatement* bottom_scope = first_branch_node->scope;
+    //TODO may need a dedicated declaration move interface function to handle details
     removeStatement(decl); 
-    //TODO verify that the symbols are moved also!!
     prependStatement (decl, bottom_scope);
+    //
+#if 1 
+    //verify that the symbols are moved also!!
+    SgVariableSymbol * sym = getFirstVarSym(decl);
+    SgScopeStatement* orig_scope = sym->get_scope();
+    if (orig_scope != bottom_scope)
+    {
+      // SageInterface::fixVariableDeclaration() cannot switch the scope for init name.
+      // it somehow always reuses previously associated scope.
+      SgInitializedName* init_name = getFirstInitializedName (decl);
+      init_name->set_scope(bottom_scope);
+      SgName sname = sym->get_name();
+      orig_scope->remove_symbol(sym);
+      bottom_scope->insert_symbol(sname, sym);
+    }
+    // This is difficult since C++ variables have namespaces
+    // Details are in SageInterface::fixVariableDeclaration()
+    ROSE_ASSERT (bottom_scope->symbol_exists(sym));
+#endif     
     return true;
   }
 
-  return false;  //TODO if moved, return true
+  return false;  
 }
 
