@@ -12,13 +12,21 @@ int main()
   }
 
   {
-    // use with two defs
+    // use with multiple defs
     {
       j=0  ;
+      { // deeper scope, should be trimmed
+        j =0;
+      }
     }
 
     {
-      j=2  ;
+      {
+        {
+         j = 0;// initially built into scope tree, later trimmed. 
+        }
+      }
+      j=2  ; //this should trigger trimming the previous path 
     }
   }
 
