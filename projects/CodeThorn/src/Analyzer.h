@@ -157,9 +157,6 @@ namespace CodeThorn {
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
     // shortest ones leading to the individual failing assertion (returns -1 otherwise).
     int extractAssertionTraces();
-    // if possible, a guarantee about the covered prefix of the complete STG will be returned (-1 otherwise)
-    //  (length measured in number of input states per path).
-    int getLowerBoundPrefixLength();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -350,7 +347,6 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     list<FailedAssertion> _firstAssertionOccurences;
-    const EState* _mostRecentlyAddedWorklistState;
   }; // end of class analyzer
   
 } // end of namespace CodeThorn

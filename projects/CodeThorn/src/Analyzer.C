@@ -850,12 +850,16 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               int index=((rers_result+100)*(-1));
               assert(index>=0 && index <=99);
               binaryBindingAssert[index]=true;
-              reachabilityResults.reachable(index);
+              //reachabilityResults.reachable(index); //previous location in code
               //cout<<"DEBUG: found assert Error "<<index<<endl;
               ConstraintSet _cset=*estate->constraints();
               InputOutput _io;
               _io.recordFailedAssert();
-              EState _eState=createEState(edge.target,_pstate,_cset,_io);
+              // error label encoded in the output value, storing it in the new failing assertion EState
+              PState newPstate  = _pstate;
+              newPstate[globalVarIdByName("output")]=CodeThorn::AType::CppCapsuleConstIntLattice(rers_result);
+              EState _eState=createEState(edge.target,newPstate,_cset,_io);
+              //EState _eState=createEState(edge.target,_pstate,_cset,_io); //previous version
               return elistify(_eState);
             }
             RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
@@ -2284,6 +2288,18 @@ void Analyzer::runSolver3() {
 }
 
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
+#ifdef RERS_SPECIALIZATION
+  if(boolOptions["rers-binary"]) {
+    PState* pstate = const_cast<PState*>( (currentEStatePtr)->pstate() ); 
+    int outputVal = (*pstate)[globalVarIdByName("output")].getValue().getIntValue();
+    if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
+      return -1;
+    }
+    int assertCode = ((outputVal+100)*(-1));
+    assert(assertCode>=0 && assertCode <=99); 
+    return assertCode;
+  }
+#endif
   string name=labelNameOfAssertLabel(currentEStatePtr->label());
   if(name.size()==0)
     return -1;
@@ -2595,10 +2611,22 @@ void Analyzer::runSolver5() {
               }
               
               // record reachability
-              int assertCode=reachabilityAssertCode(currentEStatePtr);
+              //int assertCode=reachabilityAssertCode(currentEStatePtr); //previous version
+              int assertCode;
+              if(boolOptions["rers-binary"]) {
+                assertCode=reachabilityAssertCode(newEStatePtr);
+              } else {
+                assertCode=reachabilityAssertCode(currentEStatePtr);
+              }  
               if(assertCode>=0) {
 #pragma omp critical
                 {
+                  if(boolOptions["with-counterexamples"] ) { 
+		    //if this particular assertion was never reached before, compute and update counterexample
+		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+                      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                    } 
+                  }
                     reachabilityResults.reachable(assertCode);
                 }
               } else {
@@ -2633,15 +2661,24 @@ void Analyzer::runSolver5() {
   } // while
   } // omp parallel
   const bool isComplete=true;
+  if (!isPrecise()) {
+    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
+  }
   if(isIncompleteSTGReady()) {
     printStatusMessage(true);
     cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    reachabilityResults.finishedReachability(isPrecise(),isComplete);
+    bool complete;
+    if(boolOptions["incomplete-stg"]) {
+      complete=false;
+    } else {
+      complete=true;
+    }
+    reachabilityResults.finishedReachability(isPrecise(),complete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(isComplete);
+    transitionGraph.setIsComplete(complete);
     cout << "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
@@ -2923,3 +2960,179 @@ void Analyzer::runSolver7() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
+int Analyzer::extractAssertionTraces() {
+  int maxInputTraceLength = -1;
+  for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {
+    cout << "STATUS: extracting trace leading to assertion: " << i->first << endl;
+    int ceLength = addCounterexample(i->first, i->second);
+    if (ceLength > maxInputTraceLength) {maxInputTraceLength = ceLength;}
+  }
+  if(boolOptions["rers-binary"]) {
+    if ((getExplorationMode() == EXPL_BREADTH_FIRST) && transitionGraph.isPrecise()) {
+      return maxInputTraceLength;
+    }
+  }
+  return -1;
+}
+
+list<const EState*> Analyzer::reverseInputSequenceBreadthFirst(const EState* source, const EState* target) {
+  // 1.) init: list wl , hashset predecessor, hasset visited
+  list<const EState*> worklist;
+  worklist.push_back(source);
+  boost::unordered_map <const EState*, const EState*> predecessor;
+  boost::unordered_set<const EState*> visited;
+  // 2.) while (elem in worklist) {s <-- pop wl; if (s not yet visited) {update predecessor map; 
+  //                                check if s==target; yes --> break, no --> add all pred to wl }}
+  bool targetFound = false;
+  while (worklist.size() > 0 && !targetFound) {
+    const EState* vertex = worklist.front();
+    worklist.pop_front();
+    if (visited.find(vertex) == visited.end()) {  //avoid cycles
+      visited.insert(vertex);
+      EStatePtrSet predsOfVertex = transitionGraph.pred(vertex);
+      for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
+        predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
+        if ((*i) == target) {
+          targetFound=true;
+          break;
+        } else {
+          worklist.push_back((*i));
+        }
+      }
+    }
+  }
+  if (!targetFound) {
+    cout << "ERROR: target state not connected to source while generating reversed trace source --> target." << endl;
+    assert(0);
+  }
+  // 3.) reconstruct trace. filter list of only input states and return it
+  list<const EState*> run;
+  run.push_front(target);
+  boost::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
+  while (nextPred != predecessor.end()) {
+    run.push_front(nextPred->second);
+    nextPred = predecessor.find(nextPred->second);
+  }
+  list<const EState*> result = filterStdInOnly(run);
+  return result;
+}
+
+list<const EState*> Analyzer::reverseInputSequenceDijkstra(const EState* source, const EState* target) {
+  EStatePtrSet states = transitionGraph.estateSet();
+  boost::unordered_set<const EState*> worklist;
+  map <const EState*, int> distance;
+  map <const EState*, const EState*> predecessor;
+  //initialize distances and worklist
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    worklist.insert(*i);
+    if ((*i) == source) {
+      distance.insert(pair<const EState*, int>((*i), 0));
+    } else {
+      distance.insert(pair<const EState*, int>((*i), (std::numeric_limits<int>::max() - 1)));
+    }
+  }
+  assert( distance.size() == worklist.size() );
+
+  //process worklist
+  while (worklist.size() > 0 ) {   
+    //extract vertex with shortest distance to source
+    int minDist = std::numeric_limits<int>::max();
+    const EState* vertex = NULL;
+    for (map<const EState*, int>::iterator i=distance.begin(); i != distance.end(); ++i) {
+      if ( (worklist.find(i->first) != worklist.end()) ) {
+        if ( (i->second < minDist)) {
+          minDist = i->second;
+          vertex = i->first;
+        }
+      }
+    }
+    //check for all predecessors if a shorter path leading to them was found
+    EStatePtrSet predsOfVertex = transitionGraph.pred(vertex);
+    for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
+      int altDist;
+      if( (*i)->io.isStdInIO() ) { 
+        altDist = distance[vertex] + 1; 
+      } else {
+        altDist = distance[vertex]; //we only count the input sequence length
+      }
+      if (altDist < distance[*i]) {
+        distance[*i] = altDist;
+        //update predecessor
+        map <const EState*, const EState*>::iterator predListIndex = predecessor.find((*i));
+        if (predListIndex != predecessor.end()) {
+          predListIndex->second = vertex;
+        } else {
+          predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
+        }
+        //optimization: stop if the target state was found
+        if ((*i) == target) {break;}
+      } 
+    }
+    int worklistReducedBy = worklist.erase(vertex); 
+    assert(worklistReducedBy == 1);
+  }
+
+  //extract and return input run from source to target (backwards in the STG)
+  list<const EState*> run;
+  run.push_front(target);
+  map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
+  while (nextPred != predecessor.end()) {
+    run.push_front(nextPred->second);
+    nextPred = predecessor.find(nextPred->second);
+  }
+  assert ((*run.begin()) == source);
+  list<const EState*> result = filterStdInOnly(run);
+  return result;
+}
+
+list<const EState*> Analyzer::filterStdInOnly(list<const EState*>& states) const {
+  list<const EState*> result;
+  for (list<const EState*>::iterator i = states.begin(); i != states.end(); i++ ) {
+    if( (*i)->io.isStdInIO() ) { 
+      result.push_back(*i);
+    }
+  }
+  return result;
+} 
+
+string Analyzer::reversedInputRunToString(list<const EState*>& run) {
+  string result = "[";
+  for (list<const EState*>::reverse_iterator i = run.rbegin(); i != run.rend(); i++ ) {
+    if (i != run.rbegin()) {
+      result += ";";
+    }
+    //get input value
+    PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
+    int iVal = (*pstate)[globalVarIdByName("input")].getValue().getIntValue();
+    //transform into string representation and add to result
+    char iValChar = (char) (iVal + ((int) 'A') - 1);
+    string ltlInputVar = "i" + boost::lexical_cast<string>(iValChar);
+    result += ltlInputVar; 
+  }
+  result += "]";
+  return result;
+}
+
+int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
+  list<const EState*> counterexampleRun;
+  if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+    counterexampleRun = reverseInputSequenceBreadthFirst(assertEState, transitionGraph.getStartEState());
+  } else {
+    counterexampleRun = reverseInputSequenceDijkstra(assertEState, transitionGraph.getStartEState());
+  }
+  int ceRunLength = counterexampleRun.size();
+  string counterexample = reversedInputRunToString(counterexampleRun);
+  //cout << "DEBUG: adding assert counterexample " << counterexample << endl;
+  reachabilityResults.strictUpdateCounterexample(assertCode, counterexample);
+  return ceRunLength;
+}
+
+int Analyzer::inputSequenceLength(const EState* target) {
+  list<const EState*> run;
+  if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+    run = reverseInputSequenceBreadthFirst(target, transitionGraph.getStartEState());
+  } else {
+    run = reverseInputSequenceDijkstra(target, transitionGraph.getStartEState());
+  }
+  return run.size();
+}

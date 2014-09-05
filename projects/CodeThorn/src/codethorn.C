@@ -1844,14 +1844,8 @@ int main( int argc, char * argv[] ) {
   double determinePrefixDepthTime= 0;
   int inputSeqLengthCovered = -1;
   if ( boolOptions["determine-prefix-depth"]) {
-    timer.start();
-    inputSeqLengthCovered = analyzer.getLowerBoundPrefixLength(); 
-    determinePrefixDepthTime = timer.getElapsedTimeInMilliSec();
-    if (inputSeqLengthCovered > -1) {
-      cout << "STATUS: coverage of all input sequences of length " << inputSeqLengthCovered << " is guaranteed." << endl;
-    } else {
-      cout << "STATUS: no guarantee about minimal covered input sequence length possible." << endl;
-    }
+    cout << "ERROR: option \"determine-prefix-depth\" currenlty deactivated." << endl;
+    return 1;
   }
   double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
