@@ -13,6 +13,7 @@
 
 #include "jserver.h"
 
+// MH (5/9/2014): Update to use namespace X10
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
@@ -20,18 +21,18 @@
 
 namespace Rose {
     namespace Frontend {
-        namespace Java {
+        namespace X10 {
 
-            ROSE_DLL_API SgClassDefinition *javaLangPackageDefinition = NULL;
-            ROSE_DLL_API SgClassType *ObjectClassType = NULL;
-            ROSE_DLL_API SgClassType *StringClassType = NULL;
-            ROSE_DLL_API SgClassType *ClassClassType = NULL;
-            ROSE_DLL_API SgVariableSymbol *lengthSymbol = NULL;
+            SgClassDefinition *x10LangPackageDefinition = NULL;
+            SgClassType *ObjectClassType = NULL;
+            SgClassType *StringClassType = NULL;
+            SgClassType *ClassClassType = NULL;
+            SgVariableSymbol *lengthSymbol = NULL;
 
-            namespace Ecj {
+            namespace X10c {
                 using namespace std;
 
-                ROSE_DLL_API SgProject* Ecj_globalProjectPointer = 0;
+                SgSourceFile* X10c_globalFilePointer = 0;
 
                 typedef struct {
                    JavaVM * jvm;
@@ -48,10 +49,10 @@ namespace Rose {
                 void     jserver_destroy();
                 jclass   jserver_getJavaStringClass();
 
-                ROSE_DLL_API jclass currentJavaTraversalClass = NULL;
-                ROSE_DLL_API JNIEnv *currentEnvironment = NULL;
+                jclass currentX10TraversalClass = NULL;
+                JNIEnv *currentEnvironment = NULL;
                 jmethodID mainMethod = NULL;
-                ROSE_DLL_API jmethodID hasConflictsMethod = NULL;
+                jmethodID hasConflictsMethod = NULL;
                 jmethodID getTempDirectoryMethod = NULL;
                 jmethodID createTempFileMethod = NULL;
                 jmethodID createTempNamedFileMethod = NULL;
@@ -143,10 +144,10 @@ namespace Rose {
                     //----------------------------------------------------------------------------
                     // Add all our JVM options
                     //----------------------------------------------------------------------------
-                    // TOO1 (2/11/2014): JVM options now stored in the Cmdline::Java::ECJ namespace.
-                    std::list<std::string> jvm_options = Rose::Cmdline::Java::Ecj::jvm_options;
+                    // MH (5/21/2014): X10 compiler options stored in the Cmdline::X10::x10c namespace.
+                    std::list<std::string> jvm_options = Rose::Cmdline::X10::X10c::jvm_options;
 
-                    std::string classpath = Rose::Cmdline::Java::Ecj::GetRoseClasspath();
+                    std::string classpath = Rose::Cmdline::X10::X10c::GetRoseClasspath();
                     jvm_options.push_back(classpath);
 
                     jvm_args.nOptions = jvm_options.size();
@@ -154,7 +155,7 @@ namespace Rose {
                     for(int i=0; i < jvm_args.nOptions; ++i) {
                         std::string jvm_option = jvm_options.front();
                         if (Rose::Cmdline::verbose > 0)
-                            std::cout << "[INFO] [ECJ] jvm_option[" << i << "] = " << jvm_option << std::endl;
+                            std::cout << "[INFO] [x10c] jvm_option[" << i << "] = " << jvm_option << std::endl;
                         jvm_args.options[i].optionString = strdup(jvm_option.c_str());
                         jvm_options.pop_front();
                     }
@@ -230,8 +231,8 @@ namespace Rose {
                     JNIEnv * env = get_env();
                     return env->FindClass("java/lang/String");
                 }
-            }// Rose::Frontend::Java::Ecj
-        }// Rose::Frontend::Java
+            }// Rose::Frontend::X10::X10c
+        }// Rose::Frontend::X10
     }// Rose::Frontend
 }// Rose
 

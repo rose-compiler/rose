@@ -35,6 +35,7 @@ jmethodID get_method(JNIEnv *env, jclass cls, const char * mthName, const char *
 }
 
 jclass get_class(JNIEnv *env, jobject jobj) {
+//printf("jobj=%p\n", jobj);
     jclass cls = env->GetObjectClass(jobj);
     if (cls == NULL) {
         printf ("Error: jclass cls == NULL! \n");
