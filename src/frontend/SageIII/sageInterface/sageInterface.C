@@ -18373,6 +18373,8 @@ class Scope_Node {
     //! Starting from the root, find the first node which has more than one children.
     // This is useful to identify the innermost common scope of all leaf scopes.
     Scope_Node * findFirstBranchNode();
+//TODO fix this : use depth first traversal   
+//    ~Scope_Node () {  deep_delete_children(); }
 
    private: 
       //! recursive traverse the current subtree and write dot file information
@@ -18404,14 +18406,22 @@ std::map <SgScopeStatement* , Scope_Node*>  ScopeTreeMap; // quick query if a sc
 void Scope_Node::deep_delete_children()
 {
   std::vector <Scope_Node*> allnodes;
+  // TODO better way is to use width-first traversal and delete from the bottom to the top
   this->traverse_node (allnodes);
   // allnodes[0] is the root node itself, we keep it.
-  for (size_t i =1; i<allnodes.size(); i++) 
+  // reverse order of preorder to delete things?
+  //for (size_t i =1; i<allnodes.size(); i++) 
+  for (size_t i =allnodes.size()-1 ; i>0; i--) 
   {
     Scope_Node* child = allnodes[i];
     // mark the associated scope as not in the scope tree
     ScopeTreeMap[child->scope] = NULL;
-    delete child;
+    // TODO: currently a workaround for multiple delete due to recursive call issue. 
+    if (child != NULL)
+    {
+      delete child;
+      child = NULL;
+    }
   }
   // no children for the current node
   children.clear(); 
@@ -18447,8 +18457,11 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
 {
   std::vector < Scope_Node* > children = n->children;
   // must output both node and edge lines: here is the node
-  dotfile<<n->getDotNodeId()<<"[label=\""<< StringUtility::numberToString(n->scope)<<"\nLine="<<n->getLineNumberStr()
-         <<" Depth="<<StringUtility::numberToString(n->depth)<<"\nType="<<n->getScopeTypeStr()<<"\"];"<<endl;
+  dotfile<<n->getDotNodeId()<<"[label=\""<< StringUtility::numberToString(n->scope)
+         <<"\n"<<n->scope->class_name()
+         <<"\nLine="<<n->getLineNumberStr()
+         <<" Depth="<<StringUtility::numberToString(n->depth)
+         <<"\nType="<<n->getScopeTypeStr()<<"\"];"<<endl;
   for (size_t i=0; i<children.size(); i++)
   {
     // Here is the edge
@@ -18649,16 +18662,101 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl)//std::map <SgScopeSt
   return scope_tree; 
 }  
 
+//! Move a variable declaration from its original scope to a new scope, assuming original scope != target_scope
+void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope)
+{
+  ROSE_ASSERT (decl!= NULL);
+  ROSE_ASSERT (target_scope != NULL);
+  ROSE_ASSERT (target_scope != decl->get_scope());
+
+  // Move the declaration 
+  //TODO: consider another way: copy the declaration, insert the copy, replace varRefExp, and remove (delete) the original declaration 
+  SageInterface::removeStatement(decl); 
+
+  switch (target_scope->variantT())
+  {
+    case V_SgBasicBlock:
+      {
+        SageInterface::prependStatement (decl, target_scope);
+        break;
+      }
+    case V_SgForStatement: 
+      {
+        // we move int i; to be for (int i=0; ...);
+        SgForStatement* stmt = isSgForStatement (target_scope);
+        SgStatementPtrList& stmt_list = stmt->get_init_stmt();
+        // Try to match a pattern like for (i=0; ...) here
+        // assuming there is only one assignment like i=0
+        // We don't yet handle more complex cases
+        if (stmt_list.size() !=1)
+        {
+          cerr<<"Error in moveVariableDeclaration(): only single init statement is handled for SgForStatement now."<<endl;
+          ROSE_ASSERT (stmt_list.size() ==1);
+        }
+        SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
+        ROSE_ASSERT (exp_stmt != NULL);
+        SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+        ROSE_ASSERT (assign_op != NULL);
+
+        // remove the existing i=0; preserve its right hand operand
+        SgExpression * rhs = SageInterface::copyExpression(assign_op->get_rhs_operand());
+        stmt_list.clear();
+        SageInterface::deepDelete (exp_stmt);
+
+        // modify the decl's rhs to be the new one
+        SgInitializedName * init_name = SageInterface::getFirstInitializedName (decl);
+        SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs);
+        if (init_name->get_initptr() != NULL)
+          SageInterface::deepDelete (init_name->get_initptr());
+        init_name->set_initptr(initor);
+        initor->set_parent(init_name);
+
+        stmt_list.insert (stmt_list.begin(),  decl );
+        break;
+      }
+
+    default:
+      {
+        cerr<<"Error. Unhandled target scope type:"<<target_scope->class_name()<<endl;
+        ROSE_ASSERT  (false);
+      }
+  }
+
+#if 1 
+  //make sure the symbol is moved also since prependStatement() (in fact fixVariableDeclaration()) does not handle this detail.
+  SgVariableSymbol * sym = SageInterface::getFirstVarSym(decl);
+  SgScopeStatement* orig_scope = sym->get_scope();
+  if (orig_scope != target_scope)
+  {
+    // SageInterface::fixVariableDeclaration() cannot switch the scope for init name.
+    // it somehow always reuses previously associated scope.
+    SgInitializedName* init_name = SageInterface::getFirstInitializedName (decl);
+    init_name->set_scope(target_scope);
+    SgName sname = sym->get_name();
+    orig_scope->remove_symbol(sym);
+    target_scope->insert_symbol(sname, sym);
+  }
+  // This is difficult since C++ variables have namespaces
+  // Details are in SageInterface::fixVariableDeclaration()
+  ROSE_ASSERT (target_scope->symbol_exists(sym));
+#endif     
+
+}
+
 bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
   ROSE_ASSERT (decl != NULL);
   // Step 1: generate a scope tree for the declaration
+  // -----------------------------------------------------
   Scope_Node* scope_tree = generateScopeTree (decl);
 
   // single node scope tree, nowhere to move into. 
   if ((scope_tree->children).size() == 0 )
+  {
+//TODO    delete scope_tree;
     return false; 
+  }
 
   // for a scope tree with two or more nodes  
   Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
@@ -18668,31 +18766,12 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   if ((first_branch_node->children).size() ==0)
   {
     SgScopeStatement* bottom_scope = first_branch_node->scope;
-    //TODO may need a dedicated declaration move interface function to handle details
-    removeStatement(decl); 
-    prependStatement (decl, bottom_scope);
-    //
-#if 1 
-    //verify that the symbols are moved also!!
-    SgVariableSymbol * sym = getFirstVarSym(decl);
-    SgScopeStatement* orig_scope = sym->get_scope();
-    if (orig_scope != bottom_scope)
-    {
-      // SageInterface::fixVariableDeclaration() cannot switch the scope for init name.
-      // it somehow always reuses previously associated scope.
-      SgInitializedName* init_name = getFirstInitializedName (decl);
-      init_name->set_scope(bottom_scope);
-      SgName sname = sym->get_name();
-      orig_scope->remove_symbol(sym);
-      bottom_scope->insert_symbol(sname, sym);
-    }
-    // This is difficult since C++ variables have namespaces
-    // Details are in SageInterface::fixVariableDeclaration()
-    ROSE_ASSERT (bottom_scope->symbol_exists(sym));
-#endif     
+    moveVariableDeclaration (decl, bottom_scope);
+    //TODO    delete scope_tree;
     return true;
-  }
+  } // end the single decl-use path case
 
+//TODO  delete scope_tree;
   return false;  
 }
 

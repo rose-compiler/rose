@@ -6174,7 +6174,7 @@ TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
           if (NULL == node->get_parent())
              {
             // output << prefix << "node has null parent property but was reached by AST traversal\n";
-               printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (NULL == node->get_parent()): prefix = %s node's parent property does not match traversal parent\n",prefix.c_str());
+               printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (NULL == node->get_parent()): node class_name = %s , prefix = %s node's parent property is NULL\n",node->class_name().c_str(), prefix.c_str());
 
                show_details_and_maybe_fail(node);
              } 
