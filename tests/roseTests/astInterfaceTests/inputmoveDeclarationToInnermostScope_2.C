@@ -11,7 +11,6 @@ void initialize()
   dx = 2.0 / (n-1);
   dy = 2.0 / (m-1);
 
-  //#pragma omp parallel for private(xx,yy,j,i)
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)    
     {   
