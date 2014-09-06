@@ -69,8 +69,6 @@ codethorn_SOURCES = \
   RDLattice.h                      \
   RDLattice.C                      \
   Evaluator.h                      \
-  codethorn.C                      \
-  codethorn.h                      \
   WorkListSeq.h                    \
   DFAnalyzer.h                     \
   AnalysisAbstractionLayer.h       \
@@ -97,7 +95,11 @@ codethorn_SOURCES = \
   SpotState.C \
   SpotState.h \
   SpotSuccIter.C \
-  SpotSuccIter.h
+  SpotSuccIter.h \
+  ArrayElementAccessData.h \
+  ArrayElementAccessData.C \
+  codethorn.h \
+  codethorn.C
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \

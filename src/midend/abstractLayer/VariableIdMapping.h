@@ -31,6 +31,7 @@ class VariableIdMapping {
   */
 
  public:
+  VariableIdMapping();
   //typedef boost::unordered_set<VariableId> VariableIdSet;
   typedef set<VariableId> VariableIdSet;
 
@@ -87,6 +88,13 @@ class VariableIdMapping {
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
   VariableIdSet variableIdsOfAstSubTree(SgNode* node);
 
+  /* if this mode is activated variable ids are created for each element of arrays with fixed size
+     e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
+     this mode must be set before the mapping is computed with computeVariableSymbolMapping
+  */
+  void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
+  SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
+
  private:
 
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
@@ -99,6 +107,7 @@ class VariableIdMapping {
   // used for mapping in both directions
   vector<SgSymbol*> mappingVarIdToSym;
   map<SgSymbol*,size_t> mappingSymToVarId;
+  bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
 
  typedef VariableIdMapping::VariableIdSet VariableIdSet;
@@ -127,6 +136,7 @@ class VariableId {
   bool isValid() { return _id!=-1; }
  public:
   //SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
+
  private: 
   //SgSymbol* sym;
   int _id;

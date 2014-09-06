@@ -9,6 +9,9 @@
 
 using std::set;
 
+VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
+}
+
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
   SgSymbol* varSym=getSymbol(varId);
   return isSgVariableDeclaration(SgNodeHelper::findVariableDeclarationWithVariableSymbol(varSym));
@@ -221,12 +224,20 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgSymbol* sym=0;
       bool found=false;
+      int arraySize=-1; // -1 denotes: not an array
       if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
         sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
-        if(sym)
+        if(sym) {
           found=true;
-        else
+          if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
+            cout<<"INFO: found array decl: size: ";
+            SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
+            arraySize=initList.size();
+            cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
+          }
+        } else {
           cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
+        }
         assert(!isSgVariableDefinition(sym));
       }
       if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
@@ -507,4 +518,9 @@ VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNo
       vset.insert(vid);
   }
   return vset;
+}
+
+SgExpressionPtrList& VariableIdMapping::getInitializerListOfArrayVariable(VariableId arrayVar) {
+  SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
+  return SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
 }
