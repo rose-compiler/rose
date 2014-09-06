@@ -66,6 +66,7 @@ class VariableIdMapping {
   VariableId variableId(SgInitializedName* initName);
   VariableId variableId(SgSymbol* sym);
   VariableId variableIdFromCode(int);
+  VariableId variableIdOfArrayElement(VariableId arrayVar, int elemIndex);
   SgSymbol* getSymbol(VariableId varId);
   SgType* getType(VariableId varId);
   // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
@@ -79,6 +80,7 @@ class VariableIdMapping {
   string uniqueShortVariableName(VariableId varId);
 
   void registerNewSymbol(SgSymbol* sym);
+  void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(ostream& os);
   void generateDot(string filename,SgNode* astRoot);
 

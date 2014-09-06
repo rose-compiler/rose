@@ -563,6 +563,20 @@ const EState* Analyzer::addToWorkListIfNew(EState estate) {
   }
 }
 
+/* TODO: ADD ARRAY-INITIALIZERS
+            VariableId arrayVarId=mappingSymToVarId[sym];
+            for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+              SgExpression* exp=*i;
+              if(SgIntVal* intVal=isSgIntVal(exp)) {
+                int intVal=intValNode->get_value();
+              } else {
+                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<endl;
+                exit(1);
+              }
+            }
+
+ */
+
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
   //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -579,8 +593,28 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       //assert(initializer);
       ConstraintSet cset=*currentEState.constraints();
       SgAssignInitializer* assignInitializer=0;
-      if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        //cout << "initializer found:"<<endl;
+      if(initializer && isSgAggregateInitializer(initializer)) {
+        cout<<"DEBUG: array-initializer found:"<<initializer->unparseToString()<<endl;
+        PState newPState=*currentEState.pstate();
+        int elemIndex=0;
+        SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
+        for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+          VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+          SgExpression* exp=*i;
+          SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+          SgIntVal* intValNode=0;
+          if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
+            int intVal=intValNode->get_value();
+            cout<<"DEBUG:initialize array element here:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+          } else {
+            cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<astTermWithNullValuesToString(exp)<<endl;
+            exit(1);
+          }
+          elemIndex++;
+        }
+        return createEState(targetLabel,newPState,cset);
+      } else if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
+        cout << "DEBUG: initializer found:"<<initializer->unparseToString()<<endl;
         SgExpression* rhs=assignInitializer->get_operand_i();
         assert(rhs);
         PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);

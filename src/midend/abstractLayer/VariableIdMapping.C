@@ -234,6 +234,9 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
             SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
             arraySize=initList.size();
             cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
+            registerNewArraySymbol(sym,arraySize);
+            symbolSet.insert(sym);
+            found=false;
           }
         } else {
           cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
@@ -258,12 +261,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           continue;
         }
 #endif        
-        string longName=SgNodeHelper::uniqueLongVariableName(sym);
+        //string longName=SgNodeHelper::uniqueLongVariableName(sym);
         
         // ensure all symbols are SgVariableSymbol
         SgVariableSymbol* finalvarsym=isSgVariableSymbol(sym);
         assert(finalvarsym);
-        MapPair pair=make_pair(longName,finalvarsym);
+        //MapPair pair=make_pair(longName,finalvarsym);
         if(symbolSet.find(finalvarsym)==symbolSet.end()) {
           assert(finalvarsym);
           registerNewSymbol(finalvarsym);
@@ -338,6 +341,14 @@ VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
     return VariableId(); // always defaults to a value different to all mapped values
 }
 
+VariableId VariableIdMapping::variableIdOfArrayElement(VariableId arrayVar, int elemIndex) {
+  int idCode=arrayVar.getIdCode();
+  int elemIdCode=idCode+elemIndex;
+  VariableId elemVarId;
+  elemVarId.setIdCode(elemIdCode);
+  return elemVarId;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -367,6 +378,22 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   VariableId newVarId=variableId(sym);
   temporaryVariableIdMapping.insert(make_pair(newVarId,name));
   return newVarId;
+}
+
+void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
+  ROSE_ASSERT(arraySize>0);
+  if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
+    // map symbol to var-id of array variable symbol
+    mappingSymToVarId[sym]=mappingVarIdToSym.size();
+    for(int i=0;i<arraySize;i++) {
+    // assign one var-id for each array element
+      cout<<"registering "<<i<<endl;
+      mappingVarIdToSym.push_back(sym);
+    }
+  } else {
+    cerr<< "Error: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
+    exit(1);
+  }
 }
 
 void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
