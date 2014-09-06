@@ -213,6 +213,11 @@ SAWYER_EXPORT FILE *popen(const std::string&, const char *how);
 /** Semi-portable replacement for pclose. */
 SAWYER_EXPORT int pclose(FILE*);
 
+/** Generate a sequential name.
+ *
+ *  A new string is generated each time this is called. */
+SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
+
 } // namespace
 
 // Define only when we have the Boost Chrono library, which was first available in boost-1.47.

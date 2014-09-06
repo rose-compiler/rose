@@ -494,7 +494,49 @@ public:
     }
     /** @} */
 
+    /** Find the first unmapped region.
+     *
+     *  Returns an interval that describes the lowest unmapped interval that begins at or after the specified starting address
+     *  and ends immediately prior to the mapped address that follows the unmapped interval, or the greatest possible address
+     *  if there are no following mapped addresses.  If @p minAddr is after the last unmapped address then an empty interval is
+     *  returned.  The returned interval will not include addresses less than @p minAddr. */
+    Interval firstUnmapped(typename Interval::Value minAddr) const {
+        Interval all = Interval::whole();
+        for (ConstNodeIterator iter=lowerBound(minAddr); iter!=nodes().end(); ++iter) {
+            if (minAddr < iter->key().least())          // minAddr is not mapped
+                return Interval::hull(minAddr, iter->key().least()-1);
+            if (iter->key().greatest() == all.greatest())
+                return Interval();                      // no unmapped addresses, prevent potential overflow in next statement
+            minAddr = iter->key().greatest() + 1;
+        }
+        return Interval::hull(minAddr, all.greatest());
+    }
 
+    /** Find the last unmapped region.
+     *
+     *  Returns an interval that describes the lowest unmapped interval that ends at or before the specified maximum address
+     *  and starts immediately after the next lower mapped address, or the least possible address is no lower mapped address is
+     *  present. If @p maxAddr is before the first unmapped address then an empty interval is returned.  The returned interval
+     *  will not include addresses greater than @p maxAddr. */
+    Interval lastUnmapped(typename Interval::Value maxAddr) const {
+        Interval all = Interval::whole();
+        for (ConstNodeIterator iter=findPrior(maxAddr); iter!=nodes().begin(); --iter) {
+            if (maxAddr > iter->key().greatest())        // maxAddr is not mapped
+                return Interval::hull(iter->key().greatest()+1, maxAddr);
+            if (iter->key().least() == all.least())
+                return Interval();                      // no unmapped address, prevent potential overflow in next statement
+            maxAddr = iter->key().least() - 1;
+        }
+        return Interval::hull(all.least(), maxAddr);
+    }
+
+    /** Returns true if element exists.
+     *
+     *  Returns true if and only if the specified key exists in the map. */
+    bool exists(const typename Interval::Value &size) {
+        return find(size)!=nodes().end();
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Accessors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -67,4 +67,15 @@ pclose(FILE *f) {
 #endif
 }
 
+SAWYER_EXPORT std::string
+generateSequentialName(size_t length) {
+    static size_t ncalls = 0;
+    size_t sequence = ncalls++;
+    std::string letters(length, 'a');
+    for (size_t i=0; i<length && sequence; ++i, sequence/=26)
+        letters[length-(i+1)] += sequence % 26;
+    return letters;
+}
+
+
 } // namespace

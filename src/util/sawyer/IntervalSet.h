@@ -328,12 +328,22 @@ public:
     }
     /** @} */
 
-
+    /** Determines if a value exists in the set.
+     *
+     *  Returns true if the specified value is a member of the set. */
+    bool exists(const typename Interval::Value &scalar) const {
+        return find(scalar)!=intervals().end();
+    }
+    
     /** Determines whether this set fully contains the argument.
      *
      *  Returns true if this set contains all values represented by the argument.
      *
      * @{ */
+    bool contains(const typename Interval::Value &scalar) const {
+        return exists(scalar);
+    }
+
     template<class Interval2>
     bool contains(const Interval2 &interval) const {
         return map_.contains(interval);
