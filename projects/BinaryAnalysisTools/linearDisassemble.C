@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     // Obtain a disassembler (do this before opening the specimen so "--isa=list" has a chance to run)
     Disassembler *disassembler = getDisassembler(settings.isaName);
     ASSERT_not_null(disassembler);
-    disassembler->set_protection(MemoryMap::MM_PROT_READ); // we map the file read-only, so disassemble that part
+    disassembler->set_protection(MemoryMap::READABLE); // we map the file read-only, so disassemble that part
 
     // Open the file that needs to be disassembled
     if (positionalArgs.empty())
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
         throw std::runtime_error("too many files specified; see --help");
     std::string specimenName = positionalArgs[0];
     MemoryMap map;
-    if (!map.insert_file(specimenName, settings.mapVa))
+    if (!map.insertFile(specimenName, settings.mapVa))
         throw std::runtime_error("problem reading file: " + specimenName);
     map.dump(std::cerr);                                // debugging so the user can see the map
 
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = settings.startVa;
-    while (map.next(va).assignTo(va)) {
+    while (map.atOrAfter(va).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
         try {
             SgAsmInstruction *insn = disassembler->disassembleOne(&map, va);

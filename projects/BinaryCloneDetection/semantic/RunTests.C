@@ -1026,11 +1026,10 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                             std::cerr <<argv0 <<":     writing " <<StringUtility::plural(nbytes, "bytes")
                                       <<" at " <<StringUtility::addrToString(base_va) <<"\n";
                         }
-                        MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->erase(AddressInterval::baseSize(base_va, nbytes));
+                        MemoryMap::Buffer::Ptr mmbuf = MemoryMap::AllocatingBuffer::instance(nbytes);
+                        mmbuf->write((uint8_t*)buf, 0, nbytes);
                         ro_map->insert(AddressInterval::baseSize(base_va, nbytes),
-                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
-                                                          "analysis-mapped dynlink addresses"));
+                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::READABLE, "analysis-mapped dynlink addresses"));
                     } else {
                         delete[] buf;
                     }

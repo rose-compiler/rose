@@ -307,9 +307,9 @@ deExecuteZeros(MemoryMap &map /*in,out*/, const size_t threshold) {
         return;
     rose_addr_t va = 0;
     AddressInterval zeros;
-    while (map.next(va, MemoryMap::MM_PROT_EXEC).assignTo(va)) {
-        uint8_t buf[4096];
-        size_t nRead = map.read(buf, va, sizeof buf, MemoryMap::MM_PROT_EXEC);
+    uint8_t buf[4096];
+    while (AddressInterval accessed = map.atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
+        size_t nRead = accessed.size();
         size_t firstZero = 0;
         while (firstZero < nRead) {
             while (firstZero<nRead && buf[firstZero]!=0) ++firstZero;
@@ -325,7 +325,7 @@ deExecuteZeros(MemoryMap &map /*in,out*/, const size_t threshold) {
                     if (zeros.size() >= threshold) {
                         P2::mlog[INFO] <<"removing execute permission for " <<StringUtility::plural(zeros.size(), "zeros")
                                        <<" at " <<StringUtility::addrToString(zeros.least()) <<"\n";
-                        map.mmodify(zeros, MemoryMap::MM_PROT_NONE, MemoryMap::MM_PROT_EXEC);
+                        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
                     }
                     zeros = AddressInterval::baseSize(va+firstZero, nZeros);
                 }
@@ -338,7 +338,7 @@ deExecuteZeros(MemoryMap &map /*in,out*/, const size_t threshold) {
     if (zeros.size()>=threshold) {
         P2::mlog[INFO] <<"removing execute permission for " <<StringUtility::plural(zeros.size(), "zeros")
                        <<" at " <<StringUtility::addrToString(zeros.least()) <<"\n";
-        map.mmodify(zeros, MemoryMap::MM_PROT_NONE, MemoryMap::MM_PROT_EXEC);
+        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
     }
 }
 
@@ -534,7 +534,7 @@ markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
     std::set<rose_addr_t> targets;                      // distinct call targets
 
     // Iterate over every executable address in the memory map
-    for (rose_addr_t va=0; partitioner.memoryMap().next(va, MemoryMap::MM_PROT_EXEC).assignTo(va); ++va) {
+    for (rose_addr_t va=0; partitioner.memoryMap().atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va); ++va) {
         if (alignment>1)                                // apply alignment here as an optimization
             va = ((va+alignment-1)/alignment)*alignment;
 
@@ -544,8 +544,10 @@ markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
         if (SgAsmInstruction *insn = partitioner.discoverInstruction(va)) {
             std::vector<SgAsmInstruction*> bb(1, insn);
             rose_addr_t target = NO_ADDRESS;
-            if (insn->is_function_call(bb, &target, NULL) && partitioner.memoryMap().exists(target, MemoryMap::MM_PROT_EXEC))
+            if (insn->is_function_call(bb, &target, NULL) &&
+                partitioner.memoryMap().at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 targets.insert(target);
+            }
         }
     }
 
@@ -658,23 +660,26 @@ findDeadCode(P2::Partitioner &partitioner) {
 static size_t
 findFunctionPadding(P2::Partitioner &partitioner) {
     size_t nProcessed = 0;
+    const MemoryMap &m = partitioner.memoryMap();
     BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
         rose_addr_t entryVa = function->address();
-        rose_addr_t paddingVa = entryVa;
+        if (0==entryVa)
+            break;
+        rose_addr_t padMax=entryVa-1, padMin=entryVa;
         uint8_t buf[2];
-        size_t nread;
-        while ((nread=std::min(paddingVa, (rose_addr_t)2))>0 &&
-               (nread=partitioner.memoryMap().readBackward(buf, paddingVa, nread, MemoryMap::MM_PROT_EXEC))) {
-            if (2==nread && ((0==buf[0] && 0==buf[1]) || (0x51==buf[0] && 0xfc==buf[1]))) {
-                paddingVa -= 2;
-            } else if ((2==nread && 0==buf[1]) || (1==nread && 0==buf[0])) {
-                paddingVa -= 1;
+        while (AddressInterval accessed = m.at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE).read(buf, m.BACKWARD)) {
+            if (2==accessed.size() && ((0==buf[0] && 0==buf[1]) || (0x51==buf[0] && 0xfc==buf[1]))) {
+                padMin = accessed.least();
+            } else if (2==accessed.size() && 0==buf[1]) {
+                padMin = accessed.least() + 1;
+            } else if (1==accessed.size() && 0==buf[0]) {
+                padMin = accessed.least();
             } else {
                 break;
             }
         }
-        if (paddingVa < entryVa) {
-            partitioner.attachFunctionDataBlock(function, paddingVa, entryVa-paddingVa);
+        if (padMin <= padMax) {
+            partitioner.attachFunctionDataBlock(function, padMin, padMax-padMin+1);
             ++nProcessed;
         }
     }
@@ -748,10 +753,10 @@ int main(int argc, char *argv[]) {
     if (settings.mapVa!=NO_ADDRESS) {
         if (!disassembler)
             throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        size_t nBytesMapped = map.insert_file(specimenName, settings.mapVa);
+        size_t nBytesMapped = map.insertFile(specimenName, settings.mapVa);
         if (0==nBytesMapped)
             throw std::runtime_error("problem reading file: " + specimenName);
-        map.mprotect(AddressInterval::baseSize(settings.mapVa, nBytesMapped), MemoryMap::MM_PROT_RX);
+        map.at(settings.mapVa).limit(nBytesMapped).changeAccess(MemoryMap::EXECUTABLE, 0);
     } else {
         std::vector<std::string> args;
         args.push_back(argv[0]);
@@ -788,8 +793,8 @@ int main(int argc, char *argv[]) {
 
     // Some analyses need to know what part of the address space is being disassembled.
     AddressIntervalSet executableSpace;
-    BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
-        if ((node.value().get_mapperms() & MemoryMap::MM_PROT_EXEC)!=0)
+    BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
+        if ((node.value().accessibility() & MemoryMap::EXECUTABLE)!=0)
             executableSpace.insert(node.key());
     }
 

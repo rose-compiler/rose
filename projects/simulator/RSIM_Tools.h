@@ -234,10 +234,10 @@ public:
                         std::string name = defn->get_name();
                         if (name.empty()) {
                             RTS_READ(process->rwlock()) {
-                                if (process->get_memory().exists(defn->get_entry_va())) {
-                                    const MemoryMap::Segment &sgmt = process->get_memory().at(defn->get_entry_va()).value();
-                                    if (!sgmt.get_name().empty())
-                                        name = "in " + sgmt.get_name();
+                                if (process->get_memory().at(defn->get_entry_va()).exists()) {
+                                    const MemoryMap::Segment &sgmt = process->get_memory().find(defn->get_entry_va())->value();
+                                    if (!sgmt.name().empty())
+                                        name = "in " + sgmt.name();
                                 }
                             } RTS_READ_END;
                         }
@@ -415,9 +415,7 @@ public:
                                                  *   or RSIM_Process::mem_write().  If the intersection is empty then this
                                                  *   callback will not be triggered. */
 
-    MemoryAccessWatcher(rose_addr_t va, size_t nbytes,
-                        unsigned how=MemoryMap::MM_PROT_ANY, unsigned req_perms=MemoryMap::MM_PROT_ANY,
-                        RTS_Message *mesg=NULL)
+    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how=0, unsigned req_perms=0, RTS_Message *mesg=NULL)
         : mesg(mesg), va(va), nbytes(nbytes), how(how), req_perms(req_perms) {
         if (!mesg)
             this->mesg = new RTS_Message(stderr, NULL);
@@ -427,7 +425,7 @@ public:
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
-            std::string operation = rose::stringifyMemoryMapProtection(args.how, "MM_PROT_");
+            std::string operation = args.how==MemoryMap::READABLE ? "READ" : "WRITE";
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
             mesg->mesg("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",
@@ -697,7 +695,7 @@ public:
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
             size_t total_written=0;
-            unsigned perms = need_write_perm ? MemoryMap::MM_PROT_WRITE : MemoryMap::MM_PROT_NONE;
+            unsigned perms = need_write_perm ? MemoryMap::WRITABLE : 0;
 
             if (new_value) {
                 total_written = args.thread->get_process()->mem_write(new_value, memaddr, nbytes, perms);

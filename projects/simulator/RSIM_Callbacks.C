@@ -118,7 +118,7 @@ RSIM_Callbacks::clear_memory_callbacks(When when)
 
 bool
 RSIM_Callbacks::call_memory_callbacks(When when,
-                                      RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms,
+                                      RSIM_Process *process, unsigned how, unsigned req_perms,
                                       rose_addr_t va, size_t nbytes, void *buffer, size_t &nbytes_xfer,
                                       bool prev)
 {
