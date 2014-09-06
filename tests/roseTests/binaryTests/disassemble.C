@@ -647,19 +647,6 @@ dump_CFG_CG(SgNode *ast)
     }
 }
 
-/* Returns true for any anonymous memory region containing more than a certain size. */
-static rose_addr_t large_anonymous_region_limit = 8192;
-static struct LargeAnonymousRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const AddressInterval &range, const MemoryMap::Segment &segment) {
-        if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
-            mlog[INFO] <<"ignoring zero-mapped memory at va " + addrToString(range.least()) <<" + "
-                       <<addrToString(range.size()) <<" = " <<addrToString(range.greatest()+1) <<"\n";
-            return true;
-        }
-        return false;
-    }
-} large_anonymous_region_p;
-
 // A simple partitioner that creates a single function having all instructions.
 class SimplePartitioner: public Partitioner {
 protected:
@@ -1041,14 +1028,14 @@ main(int argc, char *argv[])
 
     bool do_link = !library_paths.empty();
 
-    unsigned protection = MemoryMap::MM_PROT_EXEC;
+    unsigned protection = MemoryMap::EXECUTABLE;
     if (!protection_string.empty()) {
         protection = 0;
         BOOST_FOREACH (char ch, protection_string) {
             switch (ch) {
-                case 'r': protection |= MemoryMap::MM_PROT_READ;  break;
-                case 'w': protection |= MemoryMap::MM_PROT_WRITE; break;
-                case 'x': protection |= MemoryMap::MM_PROT_EXEC;  break;
+                case 'r': protection |= MemoryMap::READABLE;  break;
+                case 'w': protection |= MemoryMap::WRITABLE; break;
+                case 'x': protection |= MemoryMap::EXECUTABLE;  break;
                 case '-': break;
                 default:
                     mlog[ERROR] <<"invalid --protection bit: " <<ch <<"\n";
@@ -1191,6 +1178,9 @@ main(int argc, char *argv[])
             ++nposargs;
             std::string raw_filename = args[argno];
             if (boost::ends_with(raw_filename, ".index")) {
+#if 1 // [Robb P. Matzke 2014-09-03]: no longer supported
+                throw std::runtime_error("loading memory map dumps is not currently supported");
+#else
                 std::string basename = raw_filename.substr(0, raw_filename.size()-6);
                 try {
                     raw_map.load(basename);
@@ -1198,6 +1188,7 @@ main(int argc, char *argv[])
                     mlog[ERROR] <<e <<"\n";
                     exit(1);
                 }
+#endif
             } else {
                 /* The --raw command-line args come in pairs consisting of the file name containing the raw machine
                  * instructions and the virtual address where those instructions are mapped.  The virtual address can be
@@ -1218,16 +1209,17 @@ main(int argc, char *argv[])
                 unsigned perm = 0;
                 while (suffix && *suffix) {
                     switch (*suffix++) {
-                        case 'r': perm |= MemoryMap::MM_PROT_READ;  break;
-                        case 'w': perm |= MemoryMap::MM_PROT_WRITE; break;
-                        case 'x': perm |= MemoryMap::MM_PROT_EXEC;  break;
+                        case 'r': perm |= MemoryMap::READABLE; break;
+                        case 'w': perm |= MemoryMap::WRITABLE; break;
+                        case 'x': perm |= MemoryMap::EXECUTABLE; break;
                         default: mlog[ERROR] <<"invalid map permissions: " <<(suffix-1) <<"\n"; exit(1);
                     }
                 }
                 std::string base_name = StringUtility::stripPathFromFileName(raw_filename);
-                if (!perm) perm = MemoryMap::MM_PROT_RX;
-                size_t raw_file_size = raw_map.insert_file(raw_filename, start_va, false, true, base_name);
-                raw_map.mprotect(AddressInterval::baseSize(start_va, raw_file_size), MemoryMap::MM_PROT_RX);
+                if (!perm) perm = MemoryMap::READABLE | MemoryMap::EXECUTABLE;
+                size_t raw_file_size = raw_map.insertFile(raw_filename, start_va, false, base_name);
+                unsigned raw_file_access = MemoryMap::READABLE | MemoryMap::EXECUTABLE;
+                raw_map.at(start_va).limit(raw_file_size).changeAccess(raw_file_access, ~raw_file_access);
             }
         } else {
             nposargs++;
@@ -1278,10 +1270,8 @@ main(int argc, char *argv[])
         }
 
         /* Reserve parts of the address space. */
-        BOOST_FOREACH (const AddressInterval &interval, reserved.intervals()) {
-            map->insert(interval, MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(interval.size()),
-                                                     0, MemoryMap::MM_PROT_NONE, "reserved area"));
-        }
+        BOOST_FOREACH (const AddressInterval &interval, reserved.intervals())
+            map->insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), 0, "reserved area"));
 
         /* Run the loader */
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
@@ -1394,10 +1384,8 @@ main(int argc, char *argv[])
     }
 
     /* Should we filter away any anonymous regions? */
-    if (anon_pages > 0) {
-        large_anonymous_region_limit = anon_pages * 1024;
-        map.prune(large_anonymous_region_p);
-    }
+    if (anon_pages > 0)
+        map.eraseZeros(anon_pages*1024);
 
     /* If we did dynamic linking, then mark the ".got.plt" section as read-only.  This makes the disassembler treat it as
      * constant data so that dynamically-linked function thunks get known successor information.  E.g., a thunk like this:
@@ -1418,7 +1406,7 @@ main(int argc, char *argv[])
                 if ((*si)->is_mapped()) {
                     AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
                                                                           (*si)->get_mapped_size());
-                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                    map.within(mapped_va).changeAccess(MemoryMap::READABLE, ~MemoryMap::READABLE);
                 }
             }
         }
@@ -1579,7 +1567,8 @@ main(int argc, char *argv[])
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
     if ((do_show_extents || do_show_coverage) && block) {
-        ExtentMap extents=toExtentMap(map.va_extents());
+        AddressIntervalSet extents_tmp(map);
+        ExtentMap extents=toExtentMap(extents_tmp);
         size_t disassembled_map_size = extents.size();
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
