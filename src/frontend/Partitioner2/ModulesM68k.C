@@ -103,6 +103,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     size_t tableIdx = 0;
     rose_addr_t leastCodeVa = (rose_addr_t)(-1);
     std::set<rose_addr_t> codeVas;
+    const MemoryMap &map = args.partitioner->memoryMap();
     while (1) {
         // Where is the offset in memory?  It must be between the end of the JMP instruction (watch out for overflow) and the
         // lowest address for a switch case.
@@ -122,7 +123,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         // Read the offset from the offset table.  Something went wrong if we can't read it because we know that the code for
         // the switch cases follows the table.
         uint16_t offsetBE;
-        if (2!=args.partitioner->memoryMap().read(&offsetBE, offsetVa, 2, MemoryMap::MM_PROT_EXEC)) {
+        if (2!=map.at(offsetVa).limit(2).require(MemoryMap::EXECUTABLE).read((uint8_t*)&offsetBE).size()) {
             mlog[WARN] <<"short read entry[" <<tableIdx <<"] " <<StringUtility::addrToString(offsetVa)
                        <<" in offset table " <<StringUtility::addrToString(startOfOffsetTable) <<"\n";
             break;

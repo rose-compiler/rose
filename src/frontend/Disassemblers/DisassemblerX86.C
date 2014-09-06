@@ -113,7 +113,7 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
      * In theory, by adding all appropriate prefix bytes you can obtain an instruction that is up to 16 bytes long. However,
      * the x86 CPU will generate an exception if the instruction length exceeds 15 bytes, and so will the getByte method. */
     unsigned char temp[16];
-    size_t tempsz = map->read(temp, start_va, sizeof temp, get_protection());
+    size_t tempsz = map->at(start_va).limit(sizeof temp).require(get_protection()).read(temp).size();
 
     /* Disassemble the instruction */
     startInstruction(start_va, temp, tempsz);

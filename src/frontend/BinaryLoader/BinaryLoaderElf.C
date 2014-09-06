@@ -67,7 +67,10 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
     rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
 
     // Minimum address at which to map
-    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), maximum_alignment);
+    AddressInterval freeSpace = map->unmapped(AddressInterval::whole().greatest(), map->BACKWARD);
+    if (freeSpace.isEmpty())
+        throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
+    rose_addr_t map_base_va = ALIGN_UP(freeSpace.least(), maximum_alignment);
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
@@ -923,7 +926,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
     switch (nbytes) {
         case 4: {
             uint32_t guest;
-            size_t nread = memmap->read(&guest, target_va, sizeof guest);
+            size_t nread = memmap->readQuick(&guest, target_va, sizeof guest);
             if (nread<sizeof guest) {
                 trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
@@ -933,7 +936,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
         }
         case 8: {
             uint64_t guest;
-            size_t nread = memmap->read(&guest, target_va, sizeof guest);
+            size_t nread = memmap->readQuick(&guest, target_va, sizeof guest);
             if (nread<sizeof guest) {
                 trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
@@ -1029,7 +1032,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
         case 4: {
             uint32_t guest;
             ByteOrder::host_to_disk(sex, value, &guest);
-            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            size_t nwrite = memmap->writeQuick(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
                 throw Exception("short write at " + StringUtility::addrToString(target_va));
@@ -1039,7 +1042,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
         case 8: {
             uint64_t guest;
             ByteOrder::host_to_disk(sex, value, &guest);
-            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            size_t nwrite = memmap->writeQuick(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
                 throw Exception("short write at " + StringUtility::addrToString(target_va));
@@ -1067,14 +1070,14 @@ BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const Symver
         uint8_t buf[4096];
         size_t nbytes = std::min(symbol_sz, sizeof buf);
 
-        size_t nread = memmap->read(buf, symbol_va, nbytes);
+        size_t nread = memmap->readQuick(buf, symbol_va, nbytes);
         if (nread<nbytes) {
             trace <<"    short read (only " <<StringUtility::plural(nread, "bytes")
                   <<" but expected " <<nbytes <<") at " <<StringUtility::addrToString(symbol_va) <<"\n";
             throw Exception("short read at " + StringUtility::addrToString(symbol_va));
         }
 
-        size_t nwrite = memmap->write(buf, target_va, nbytes);
+        size_t nwrite = memmap->writeQuick(buf, target_va, nbytes);
         if (nwrite<nbytes) {
             trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes")
                   <<" but expected " <<nbytes <<" at " <<StringUtility::addrToString(target_va) <<"\n";

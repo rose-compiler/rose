@@ -139,16 +139,17 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
 
     // Add segments to the memory map.
     BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.intervals()) {
-        MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(iatExtent.size());
         partitioner.memoryMap().insert(iatExtent,
-                                       MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_READ, "partitioner-adjusted IAT"));
+                                       MemoryMap::Segment::anonymousInstance(iatExtent.size(), MemoryMap::READABLE,
+                                                                             "partitioner-adjusted IAT"));
     }
 
     // Write IAT entries into the newly mapped IATs
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
         uint32_t packed;
         ByteOrder::host_to_le(node.key(), &packed);
-        if (4!=partitioner.memoryMap().write(&packed, node.value()->get_iat_entry_va(), 4, MemoryMap::MM_PROT_NONE))
+        rose_addr_t iatVa = node.value()->get_iat_entry_va();
+        if (4!=partitioner.memoryMap().at(iatVa).limit(4).write((uint8_t*)&packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }

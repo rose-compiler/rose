@@ -723,10 +723,10 @@ Partitioner::count_size_variance(const InstructionMap &insns)
 Partitioner::RegionStats *
 Partitioner::region_statistics()
 {
-    MemoryMap mymap = *map;
-    mymap.prune(MemoryMap::MM_PROT_EXEC);
-    ExtentMap emap = toExtentMap(mymap.va_extents());
-    return region_statistics(emap);
+    MemoryMap onlyExecutable = *map;
+    onlyExecutable.require(MemoryMap::EXECUTABLE).keep();
+    ExtentMap executableExtent = toExtentMap(AddressIntervalSet(onlyExecutable));
+    return region_statistics(executableExtent);
 }
 
 Partitioner::RegionStats *

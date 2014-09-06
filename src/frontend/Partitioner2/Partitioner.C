@@ -78,8 +78,8 @@ Partitioner::reportProgress() const {
     static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
     if (!bar) {
         if (0==progressTotal_) {
-            BOOST_FOREACH (const MemoryMap::Segments::Node &node, memoryMap_.segments().nodes()) {
-                if (0 != (node.value().get_mapperms() & MemoryMap::MM_PROT_EXEC))
+            BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_.nodes()) {
+                if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
                     progressTotal_ += node.key().size();
             }
         }
@@ -1203,7 +1203,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
 
 Function::Ptr
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
-    while (memoryMap_.next(startVa, MemoryMap::MM_PROT_EXEC).assignTo(startVa)) {
+    while (memoryMap_.at(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
         if (!unmappedVa)
             return Function::Ptr();                   // no higher unused address
@@ -1657,8 +1657,9 @@ Partitioner::buildBasicBlockAst(const BasicBlock::Ptr &bb, bool relaxed) const {
 SgAsmBlock*
 Partitioner::buildDataBlockAst(const DataBlock::Ptr &dblock, bool relaxed) const {
     // Build the static data item
-    SgUnsignedCharList rawBytes = memoryMap_.read(dblock->address(), dblock->size(), MemoryMap::MM_PROT_NONE);
-    ASSERT_require(rawBytes.size()==dblock->size());
+    SgUnsignedCharList rawBytes(dblock->size(), 0);
+    size_t nRead = memoryMap_.at(dblock->address()).read(rawBytes).size();
+    ASSERT_require(nRead==dblock->size());
     SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
 
     // Build the data block IR node pointing to the static item
