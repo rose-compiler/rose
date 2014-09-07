@@ -261,10 +261,6 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 set(USE_CMAKE 1)
 
 
-if (NOT WIN32)
-enable_language(Fortran)
-endif (NOT WIN32)
-
 # tps (1/4/2010) Do not know how to add flag to CMakeSetup yet
 option ( enable-smaller-generated-files "Build with smaller generated files for IR nodes" )
 #set( enable-smaller-generated-files 1 )
@@ -358,9 +354,13 @@ else()
   endif()
 endif()
 
-# Set ROSE_SHLIBPATH_VAR.  For now, it just has the same value as
-# LD_LIBRARY_PATH.
-set(ROSE_SHLIBPATH_VAR $ENV{LD_LIBRARY_PATH})
+# Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.
+# Otherwise, it is just LD_LIBRARY_PATH.
+if(MSVC)
+  set(ROSE_SHLIBPATH_VAR "PATH")
+else()
+  set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
+endif()
 
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
@@ -388,11 +388,6 @@ if (enable-cuda)
   set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
 endif()
 
-option(enable-fortran "Enable Fortran support in ROSE." ON)
-if (enable-fortran)
-  set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
-endif()
-
 option(enable-java "Enable Java support in ROSE." ON)
 if (enable-java)
   message(Status "Looking for JAVA ...")
@@ -401,6 +396,9 @@ if (enable-java)
   find_program(GCJH gcjh)
   find_package(JNI)
   set(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT 1)
+  set(USE_ROSE_INTERNAL_JAVA_SUPPORT 1)
+  get_filename_component(BACKEND_JAVA_COMPILER ${Java_JAVAC_EXECUTABLE} NAME)
+  install(FILES ${JAVA_JVM_LIBRARY} DESTINATION lib)
 endif()
 
 option(enable-opencl "Enable OpenCL support in ROSE." ON)
@@ -409,6 +407,26 @@ if (enable-opencl)
   find_path(with-opencl-inc NAMES cl.h
     DOC "For OpenCL runtime library")
   find_library(with-opencl-lib OpenCL DOC "OpenCL library for runtime examples")
+endif()
+
+option(enable-fortran "Enable Fortran support in ROSE." ON)
+if (enable-fortran)
+  if (NOT enable-java)
+    message(FATAL_ERROR "Fortran support also requires Java support.  Either turn enable-java ON, or enable-fortran OFF")
+  endif()
+  set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
+  enable_language(Fortran)
+  # check if gfortran was found
+  if(CMAKE_COMPILER_IS_GNUG77)
+    set(USE_GFORTRAN_IN_ROSE 1)
+    # query gfortran version
+    execute_process(
+      COMMAND ${CMAKE_Fortran_COMPILER} -dumpversion
+      OUTPUT_VARIABLE gfortran_version_output)
+    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)"
+      gfortran_version "${gfortran_version_output}")
+    message(STATUS "gfortran version ${gfortran_version} detected")
+  endif()
 endif()
 
 option(enable-php "Enable PHP support in ROSE." ON)
@@ -426,6 +444,12 @@ if (enable-python)
   if(with-python)
     find_package(PythonInterp)
   endif()
+endif()
+
+option(enable-x10 "Enable X10 language support in ROSE." OFF)
+if (enable-x10)
+  # TODO:
+  set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
 endif()
 
 # Other configuration options
@@ -657,6 +681,9 @@ find_path(with-smt-solver smt-solver
        Used only for testing.")
 
 find_path(with-wine "bin/wine" DOC "Specify the prefix where Wine is installed")
+if (with-wine)
+  set(ROSE_WINE_INCLUDES -I${with-wine}/include)
+endif()
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
@@ -838,21 +865,24 @@ endif(NOT BISON_FOUND)
 
 
 if (NOT WIN32)
-find_library(M_LIB m)
-find_library(RT_LIB rt)
+  find_library(M_LIB m)
+  find_library(RT_LIB rt)
 endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 if (NOT WIN32)
-set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
+  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} )
 else (NOT WIN32)
-set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib )
+  set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)
 
 # Check compilers and version numbers, Liao 11/25/2009
 # the module is located in src/cmake/modules
 include(roseChooseBackendCompiler)
 include(roseGenerateBackendCompilerSpecificHeaders)
+
+# Install the directories within <bin>/include-staging
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include)
 
 # --------- finish all fundamental tests, now set derivative variables
 # Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
@@ -925,6 +955,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
      ${ROSE_TOP_SRC_DIR}/src/midend/astProcessing 
+     ${ROSE_TOP_SRC_DIR}/src/midend/astMatching
      ${ROSE_TOP_SRC_DIR}/src/midend/astQuery 
      ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism 
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/annotation 
@@ -1042,10 +1073,22 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Set up RPATH so that our executables will be able to find their dependent
+# libraries using relative paths.
+set(origin "$ORIGIN")
+if (APPLE)
+  set(origin "@executable_path")
+endif()
+set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
+
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
+add_subdirectory(scripts)
+add_subdirectory(tools)
+
+enable_testing()
 
 if(NOT disable-tests-directory)
   add_subdirectory(tests)
@@ -1058,8 +1101,6 @@ endif()
 if(NOT disable-projects-directory)
   add_subdirectory(projects)
 endif()
-
-enable_testing()
 
 # Copy CTestCustom.cmake into the binary directory.
 # This file tells CTest to ignore some output that it otherwise
@@ -1158,8 +1199,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 
 ########### install files ###############
 
-#install(FILES  rose_config.h DESTINATION ${INCLUDE_INSTALL_DIR} )
+# this has to remain the last subdirectory so that all the targets
+# are installed before bundle.cmake runs.
+add_subdirectory(cmake)
 
-
+# This include file defines how CPack should create our installers.
+include(cmake/ROSECPack.cmake)
 
 message(Status "Finished ...")

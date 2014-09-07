@@ -9,7 +9,7 @@ unparseCxxCodeGeneration_headers = unparseCxx.h unparseCxx_types.h
 
 unparseCxxCodeGeneration_sources = unparseCxx_expressions.C unparseCxx_statements.C unparseCxx_types.C
 
-include_HEADERS = $(unparseCxxCodeGeneration_headers)
+pkginclude_HEADERS = $(unparseCxxCodeGeneration_headers)
 
 noinst_LTLIBRARIES = libunparseCxx.la
 

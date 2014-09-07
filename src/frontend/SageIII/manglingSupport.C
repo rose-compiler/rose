@@ -337,7 +337,11 @@ mangleQualifiersToString (const SgScopeStatement* scope)
             // DQ (3/14/2012): I think that defaults should be resurced for errors, and not proper handling of unexpected cases.
                default: // Embed the class name for subsequent debugging.
                   {
-                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %p = %s not handled (default reached) \n",scope,scope->class_name().c_str());
+                 // DQ (3/19/2014): Supress this output, but permit it with verbose level == 1.
+                    if (SgProject::get_verbose() > 0)
+                       {
+                         printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %p = %s not handled (default reached) \n",scope,scope->class_name().c_str());
+                       }
 
                  // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
                     ROSE_ASSERT(scope->class_name() != "SgNode");

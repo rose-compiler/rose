@@ -5,6 +5,8 @@
 
 #include "AstAttributeMechanism.h"
 
+#include <boost/numeric/conversion/cast.hpp>
+
 // Moved function definitions from header file to simplify debugging
 
 // ********************************************
@@ -257,6 +259,12 @@ AstRegExAttribute::AstRegExAttribute(const std::string & s)
      expression = s;
    }
 
+AstAttribute* AstRegExAttribute::copy() {
+    return new AstRegExAttribute(expression);
+}
+
+
+
 // ********************************************
 //              AstSgNodeAttribute
 // ********************************************
@@ -271,7 +279,13 @@ AstSgNodeAttribute::AstSgNodeAttribute(SgNode * node_)
    {
    }
 
+void AstSgNodeAttribute::setNode(SgNode *node_) { node = node_; }
 SgNode *AstSgNodeAttribute::getNode() { return node; }
+
+AstAttribute* AstSgNodeAttribute::copy() {
+    return new AstSgNodeAttribute(node);
+}
+
 
 // ********************************************
 //              AstSgNodeListAttribute
@@ -285,18 +299,27 @@ AstSgNodeListAttribute::AstSgNodeListAttribute(std::vector<SgNode *> &list) {
 
 void AstSgNodeListAttribute::addNode(SgNode *node) { nodeList.push_back(node); }
 
-void AstSgNodeListAttribute::setNode(SgNode *node, int index) {
+void AstSgNodeListAttribute::setNode(SgNode *node, int signedIndex) {
+    size_t index = boost::numeric_cast<size_t>(signedIndex);
     while (nodeList.size() <= index) { // make sure the element at the specified index is available
         nodeList.push_back(NULL); 
     }
     nodeList[index] = node;
 }
 
-SgNode *AstSgNodeListAttribute::getNode(int index) { return (index >= 0 && index < nodeList.size() ? nodeList[index] : NULL); }
+SgNode *AstSgNodeListAttribute::getNode(int signedIndex) {
+    size_t index = boost::numeric_cast<size_t>(signedIndex);
+    return (index >= 0 && index < nodeList.size() ? nodeList[index] : NULL);
+}
 
 std::vector<SgNode *> &AstSgNodeListAttribute::getNodeList() { return nodeList; }
 
 int AstSgNodeListAttribute::size() { return nodeList.size(); }
+
+AstAttribute* AstSgNodeListAttribute::copy() {
+    return new AstSgNodeListAttribute(nodeList);
+}
+
 
 // ********************************************
 //              AstIntAttribute
@@ -308,4 +331,72 @@ AstIntAttribute::AstIntAttribute(int value_)
    }
 
 int AstIntAttribute::getValue() { return value; }
+
+AstAttribute *AstIntAttribute::copy() {
+    return new AstIntAttribute(value);
+}
+
+// ********************************************
+//              AstParameterizedTypeAttribute
+// ********************************************
+
+AstParameterizedTypeAttribute::AstParameterizedTypeAttribute(SgNamedType *genericType_) : genericType(genericType_) { isSgClassType(genericType); }
+
+bool AstParameterizedTypeAttribute::argumentsMatch(SgTemplateParameterList *type_arg_list, std::vector<SgTemplateParameter *> *new_args_ptr) {
+    if (type_arg_list == NULL && new_args_ptr == NULL) { // two null argument list? ... then they compare.
+        return true;
+    }
+    if (type_arg_list == NULL || new_args_ptr == NULL) { // Only one of the argument lists is null?
+        return false;
+    }
+    ROSE_ASSERT(type_arg_list != NULL && new_args_ptr != NULL);
+
+    SgTemplateParameterPtrList args = type_arg_list -> get_args();
+    if (args.size() != new_args_ptr -> size()) {
+        return false;
+    }
+    SgTemplateParameterPtrList::iterator arg_it = args.begin(),
+                                         new_arg_it = new_args_ptr -> begin();
+    for (; arg_it != args.end(); arg_it++, new_arg_it++) {
+        SgType *type1 = (*arg_it) -> get_type(),
+               *type2 = (*new_arg_it) -> get_type();
+        if (type1 != type2) {
+            break;
+        }
+    }
+    return (arg_it == args.end()); // The two argument lists match?
+}
+
+SgJavaParameterizedType *AstParameterizedTypeAttribute::findOrInsertParameterizedType(std::vector<SgTemplateParameter *> *new_args_ptr) {
+    //
+    // Keep track of parameterized types in a table so as not to duplicate them.
+    //
+    for (std::list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+        if (argumentsMatch((*type_it) -> get_type_list(), new_args_ptr)) {
+            return (*type_it);
+        }
+    }
+
+    //
+    // This parameterized type does not yet exist. Create it, store it in the table and return it.
+    //
+    SgClassDeclaration *classDeclaration = isSgClassDeclaration(genericType -> getAssociatedDeclaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    SgTemplateParameterList *typeParameterList = (new_args_ptr == NULL ? NULL : new SgTemplateParameterList());
+    if (new_args_ptr != NULL) {
+        typeParameterList -> set_args(*new_args_ptr);
+    }
+    SgJavaParameterizedType *parameterized_type = new SgJavaParameterizedType(classDeclaration, genericType, typeParameterList);
+    parameterizedTypes.push_front(parameterized_type);
+
+    return parameterized_type;
+}
+
+AstAttribute *AstParameterizedTypeAttribute::copy() {
+    AstParameterizedTypeAttribute *attribute = new AstParameterizedTypeAttribute(genericType);
+    for (std::list<SgJavaParameterizedType *>::iterator type_it = parameterizedTypes.begin(); type_it != parameterizedTypes.end(); type_it++) {
+        attribute -> parameterizedTypes.push_back(*type_it);
+    }
+    return attribute;
+}
 

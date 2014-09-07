@@ -273,10 +273,65 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
    {
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
+     ROSE_ASSERT (initializedName != NULL);
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
-     ROSE_ASSERT (initializedName!= NULL);
+
+  // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
+     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+        {
+       // Here we want to use the type syntx that originally appears with this function declaration in the original code.
+          SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
+          ROSE_ASSERT(function_type != NULL);
+#if 0
+       // printf ("Found the original function type syntax: function_type = %p = %s \n",function_type,function_type->unparseToString().c_str());
+          printf ("In unparseFunctionParameterDeclaration(): Found the original function type syntax: function_type = %p = %s \n",function_type,function_type->class_name().c_str());
+#endif
+          SgFunctionParameterTypeList* type_argument_list = function_type->get_argument_list();
+          ROSE_ASSERT(type_argument_list != NULL);
+
+       // find the associated index from the initializedName.
+          SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
+          ROSE_ASSERT(name_argument_list != NULL);
+
+          SgInitializedNamePtrList & name_list = name_argument_list->get_args();
+
+          SgInitializedNamePtrList::iterator i = name_list.begin();
+          size_t counter = 0;
+          while (i != name_list.end() && (*i) != initializedName)
+             {
+#if 0
+               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %zu \n",counter);
+#endif
+               counter++;
+               i++;
+             }
+
+          ROSE_ASSERT(i != name_list.end());
+#if 0
+          printf ("In unparseFunctionParameterDeclaration(): counter = %zu \n",counter);
+#endif
+       // SgTypePtrList & get_arguments()
+          tmp_type = type_argument_list->get_arguments()[counter];
+#if 0
+          printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
+#if 0
+          printf ("In unparseFunctionParameterDeclaration(): (funcdecl_stmt->get_type_syntax_is_available() == true): exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+       // DQ (7/10/2014): Enforce this rule.
+          ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
+        }
+
+#if 0
+     printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // DQ (8/9/2013): refactored to support additional refactoring to seperate out code to unparse SgInitializedName.
      bool oldStyleDefinition = funcdecl_stmt->get_oldStyleDefinition();
@@ -300,6 +355,105 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   //      (tmp_name.str() != NULL) ? tmp_name.str() : "NULL NAME");
 
   // initializedName.get_storageModifier().display("New storage modifiers in unparseFunctionParameterDeclaration()");
+
+#if 0
+ // DQ (*8/18/2014): Microsoft declspec attributes that apply to function parameters.
+    appdomain
+    deprecated
+    dllimport
+    dllexport
+    novtable
+    process
+    restrict
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+#define MS_DECLSPEC_DEBUG 0
+
+     if (initializedName->is_ms_declspec_parameter_appdomain())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(appdomain) \n");
+#endif
+          curprint("__declspec(appdomain) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_deprecated())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(deprecated) \n");
+#endif
+          curprint("__declspec(deprecated) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_dllimport())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(dllimport) \n");
+#endif
+          curprint("__declspec(dllimport) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_dllexport())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(dllexport) \n");
+#endif
+          curprint("__declspec(dllexport) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_novtable())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(novtable) \n");
+#endif
+          curprint("__declspec(novtable) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_process())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(process) \n");
+#endif
+          curprint("__declspec(process) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_restrict())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(restrict) \n");
+#endif
+          curprint("__declspec(restrict) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_selectany())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(selectany) \n");
+#endif
+          curprint("__declspec(selectany) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_thread())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(thread) \n");
+#endif
+          curprint("__declspec(thread) ");
+        }
+    
+     if (initializedName->is_ms_declspec_parameter_uuid())
+        {
+#if MS_DECLSPEC_DEBUG
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the Microsoft __declspec(uuid) \n");
+#endif
+       // curprint("__declspec(uuid) ");
+          curprint("__declspec(uuid(\"");
+          curprint(initializedName->get_microsoft_uuid_string());
+          curprint("\")) ");
+        }
 
      SgStorageModifier & storage = initializedName->get_storageModifier();
      if (storage.isExtern())
@@ -911,6 +1065,12 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
             // unparseForStmt(stmt, info);
                break;
 
+       // DQ (7/25/2014): Adding support for C11 static assertions.
+          case V_SgStaticAssertionDeclaration:          unparseStaticAssertionDeclaration (stmt, info);    break;
+
+       // DQ (8/17/2014): Adding support for Microsoft attributes.
+          case V_SgMicrosoftAttributeDeclaration:       unparseMicrosoftAttributeDeclaration (stmt, info); break;
+
           default:
              {
                printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
@@ -954,12 +1114,20 @@ void
 Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
   // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
+     SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
+     ROSE_ASSERT (namespaceDeclaration != NULL);
+
 #if 0
+     printf("In unparseNamespaceDeclarationStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint("/* In unparseNamespaceDeclarationStatement() */ ");
 #endif
 
-     SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
-     ROSE_ASSERT (namespaceDeclaration != NULL);
+  // DQ (8/12/2014): Adding support for inlined namespaces (C++11 support).
+     if (namespaceDeclaration->get_isInlinedNamespace() == true)
+        {
+          curprint("inline ");
+        }
+
      curprint("namespace ");
 
   // This can be an empty string (in the case of an unnamed namespace)
@@ -978,7 +1146,11 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
 #if 0
           printf ("Calling unparseStatement() for namespaceDeclaration->get_definition() = %p \n",namespaceDeclaration->get_definition());
 #endif
-          unparseStatement(namespaceDeclaration->get_definition(),info);
+       // DQ (8/19/2014): If we unparse the SgNamespaceDeclarationStatement, then we mean to unparse the SgNamespaceDefinition as well.
+       // test2014_110.C demonstrates where the SgNamespaceDefinition has the wrong source position (from a header file) and
+       // thus is not unparsed (filterd by the logic in unparseStatement()).  So try to call the correct unparse function directly.
+       // unparseStatement(namespaceDeclaration->get_definition(),info);
+          unparseNamespaceDefinitionStatement(namespaceDeclaration->get_definition(),info);
         }
        else
         {
@@ -986,6 +1158,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
         }
 
 #if 0
+     printf("Leaving unparseNamespaceDeclarationStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint("/* Leaving unparseNamespaceDeclarationStatement() */ ");
 #endif
 
@@ -1003,6 +1176,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
   // to support the output of the declaration.
   // ROSE_ASSERT(stmt->get_file_info()->isCompilerGenerated() == true || stmt->get_file_info()->isOutputInCodeGeneration() == false);
    }
+
 
 void
 Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnparse_Info & info )
@@ -1081,10 +1255,32 @@ Unparse_ExprStmt::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, 
      SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceAliasDeclaration != NULL);
 
-     curprint ( string("\nnamespace "));
+     curprint ("\nnamespace ");
      curprint ( namespaceAliasDeclaration->get_name().str());
-     curprint ( string(" = "));
+     curprint (" = ");
      ROSE_ASSERT(namespaceAliasDeclaration->get_namespaceDeclaration() != NULL);
+
+  // DQ (7/8/2014): Support for new name qualification.
+     SgUnparse_Info tmp_info(info);
+     tmp_info.set_name_qualification_length(namespaceAliasDeclaration->get_name_qualification_length());
+     tmp_info.set_global_qualification_required(namespaceAliasDeclaration->get_global_qualification_required());
+
+#if 0
+  // DQ (7/8/2014): Compute the name qualification separately.
+     curprint ( usingDirective->get_namespaceDeclaration()->get_name().str();
+     curprint ( usingDirective->get_namespaceDeclaration()->get_qualified_name().str();
+#endif
+
+  // DQ (7/8/2014): We store the information about the name qualification in the reference to the namespace, 
+  // and not in the namespace.  This is so that multiple references to the namespace can be supported using 
+  // different levels of qualification.
+     SgName nameQualifier = namespaceAliasDeclaration->get_qualified_name_prefix();
+
+#if 0
+     printf ("In unparseNamespaceAliasDeclarationStatement(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+     curprint ( nameQualifier);
+
      curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
      curprint ( string(";\n"));
    }
@@ -1333,10 +1529,19 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
      SgDeclarationStatement* declarationStatement = templateInstantiationDirective->get_declaration();
      ROSE_ASSERT(declarationStatement != NULL);
 
-  // printf ("Inside of unparseTemplateInstantiationDirectiveStmt declaration = %s \n",declarationStatement->sage_class_name());
+#if 0
+     printf ("Inside of unparseTemplateInstantiationDirectiveStmt declaration = %s \n",declarationStatement->class_name().c_str());
+     curprint("/* unparseTemplateInstantiationDirectiveStmt(): explicit template instantiation */ \n ");
+#endif
 
-  // curprint ( string("/* explicit template instantiation */ \n ";
   // curprint ( string("template ";
+
+  // DQ (8/2/2014): Added support for C++ directive to surpress template instantiation. 
+     if (templateInstantiationDirective->get_do_not_instantiate() == true)
+        {
+       // syntax for C++11 "do not instantiate" directive.
+          curprint ("extern ");
+        }
 
      ROSE_ASSERT(declarationStatement->get_file_info() != NULL);
   // declarationStatement->get_file_info()->display("Location of SgTemplateInstantiationDirectiveStatement \n");
@@ -1360,7 +1565,13 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
 #endif
             // DQ (8/29/2005): "template" keyword now output by Unparse_ExprStmt::outputTemplateSpecializationSpecifier()
             // curprint ( string("template ";
+#if 1
+            // DQ (8/19/2014): Original code.
                unparseClassDeclStmt(classDeclaration,info);
+#else
+            // DQ (8/19/2014): New code.
+               unparseTemplateInstantiationDeclStmt(declarationStatement,info);
+#endif
                break;
              }
 
@@ -1391,7 +1602,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
                  // DQ (8/29/2005): "template" keyword now output by Unparse_ExprStmt::outputTemplateSpecializationSpecifier()
                  // curprint ( string("template ";
 #if 0
-                     printf ("memberFunctionDeclaration = %p = %s = %s \n",
+                    printf ("memberFunctionDeclaration = %p = %s = %s \n",
                           memberFunctionDeclaration,
                           memberFunctionDeclaration->class_name().c_str(),
                           memberFunctionDeclaration->get_name().str());
@@ -1445,6 +1656,11 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
                ROSE_ASSERT(false);
              }
         }
+
+#if 0
+     printf ("Leaving unparseTemplateInstantiationDirectiveStmt declaration = %s \n",declarationStatement->class_name().c_str());
+     curprint("/* Leaving unparseTemplateInstantiationDirectiveStmt(): explicit template instantiation */ \n ");
+#endif
    }
 
 
@@ -1458,9 +1674,11 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
      SgClassDeclaration* classDeclaration = isSgClassDeclaration(templateInstantiationDeclaration);
      ROSE_ASSERT(classDeclaration != NULL);
 
-  // curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt() */");
-
-#if OUTPUT_DEBUGGING_CLASS_NAME
+#if 0
+     printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt() */");
+#endif
+#if OUTPUT_DEBUGGING_CLASS_NAME || 0
      printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p/%p name = %s  templateName = %s transformed = %s/%s prototype = %s compiler-generated = %s compiler-generated and marked for output = %s \n",
           classDeclaration,templateInstantiationDeclaration,
           templateInstantiationDeclaration->get_name().str(),
@@ -1547,14 +1765,14 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
         {
           if ( templateInstantiationDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
              {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("In unparseTemplateInstantiationDeclStmt(): Class template is marked for output in the current source file. \n");
 #endif
                outputClassTemplateInstantiation = true;
              }
             else
              {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("In unparseTemplateInstantiationDeclStmt(): Class template is NOT marked for output in the current source file. \n");
 #endif
              }
@@ -1631,13 +1849,13 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
 
           if (locatedInNamespace == true)
              {
-               curprint ( string("   }"));
+               curprint("   }");
              }
         }
        else
         {
 #if 0
-          curprint("/* Skipped output of template class declaration (name = " + templateInstantiationDeclaration->get_qualified_name().str() + ") */ \n");
+          curprint(string("/* Skipped output of template class declaration (name = ") + templateInstantiationDeclaration->get_qualified_name().str() + ") */ \n");
 #endif
        // If not transformed then we only want to output the template (and usually only the 
        // name of the template specialization) in variable declarations and the like.
@@ -1648,8 +1866,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
 #endif
           if ( info.outputClassTemplateName() == true )
              {
-            // printf ("Calling unparseClassDeclStmt to unparse the SgTemplateInstantiationDecl \n");
-
+#if 0
+               printf ("Calling unparseClassDeclStmt to unparse the SgTemplateInstantiationDecl \n");
+#endif
             // DQ (9/8/2004):
             // The unparseClassDeclStmt does much more that what we require and is not setup to 
             // handle templates well, it generally works well if the template name required does 
@@ -1795,7 +2014,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                        }
                       else
                        {
-#if 1
+#if 0
                          printf ("Declaration does NOT appear in the current source file. \n");
 #endif
                       // curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): skip output of template function declaration */ \n ";
@@ -1915,7 +2134,12 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
 
           if (templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL)
              {
+            // DQ (4/6/2014): This happens when a member function template in embedded in a class
+            // template and thus there is not an associated template for the member function separate
+            // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
+#if 0
                printf (" I think that this can happen (see test2005_139.C) \n");
+#endif
              }
 #if 0
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() != NULL);
@@ -2365,6 +2589,26 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
           printf ("--- *i = %p = %s \n",*i,(*i)->class_name().c_str());
           curprint("/* unparseForInitStmt: " + (*i)->class_name() + " */ ");
 #endif
+       // DQ (8/30/2014): For all but the first entry we should have get_isAssociatedWithDeclarationList() == true.
+       // if (i != forInitStmt->get_init_stmt().begin())
+          if (forInitStmt->get_init_stmt().size() > 1)
+             {
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*i);
+
+            // Note that not all entries will be a SgVariableDeclaration (e.g. detected case of SgNullStatement).
+            // ROSE_ASSERT(variableDeclaration != NULL);
+               if (variableDeclaration != NULL)
+                  {
+                 // DQ (8/31/2014): This fails for one of the transformation tests: tests/roseTests/programTransformationTests/pass1.C
+                 // This is likely an error in the implementation of the transformation (all other tests of the AST without transformations pass).
+                    if (variableDeclaration->get_isAssociatedWithDeclarationList() == false)
+                       {
+                         printf ("WARNING: In unparseForInitStmt(forInitStmt = %p): I would have expected that variableDeclaration->get_isAssociatedWithDeclarationList() == true \n",forInitStmt);
+                       }
+                 // ROSE_ASSERT(variableDeclaration->get_isAssociatedWithDeclarationList() == true);
+                  }
+             }
+
           unparseStatement(*i, newinfo);
           i++;
 
@@ -2378,7 +2622,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 
-     curprint ( string("; "));
+     curprint("; ");
    }
 
 
@@ -2410,11 +2654,11 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        else
         {
 #if 0
-          curprint("\n/* Unparse the for_init_stmt */\n ");
+          curprint("/* Unparse the for_init_stmt */\n ");
 #endif
           unparseStatement(tmp_stmt,newinfo);
 #if 0
-          curprint("\n/* DONE: Unparse the for_init_stmt */\n ");
+          curprint("/* DONE: Unparse the for_init_stmt */\n ");
 #endif
         }
      newinfo.unset_inConditional();
@@ -2796,7 +3040,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
 #if 0
           printf ("Forward function (function prototype) \n");
-          curprint ( string("\n/* Forward function (function prototype) */ \n"));
+          curprint("\n/* Forward function (function prototype) */ \n");
 #endif
           SgClassDefinition *cdefn = isSgClassDefinition(funcdecl_stmt->get_parent());
 
@@ -2939,12 +3183,18 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
+                 // ast into a different file.  Granted, this isn't a robust way to copy code from one AST into another
+                 // because it doesn't try to resolve any conflicts with symbols, but if the following assertion is
+                 // commented out it at least works.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
 
                  // DQ (2/26/2009): Commented out because moreTest3.cpp fails for outlining to a separate file.
                     if (TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) != TransformationSupport::getSourceFile(firstNondefiningFunction))
                        {
                          printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
+                         printf ("firstNondefiningFunction = %s \n",firstNondefiningFunction->get_name().str());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
                          printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
@@ -2953,7 +3203,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
-                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                 // RPM (12/10/2013): Commented out because this fails for astSnippetTests which deep-copy a function
+                 // forward declaration and SageInterface::insertStatementBefore() the decl into a different file. The
+                 // copied-and-inserted declaration is unparsed correctly if this assert is commented out.
+                    //ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
                   }
 #if 0
                printf ("Unparser: firstNondefiningFunction = %p \n",firstNondefiningFunction);
@@ -2962,7 +3215,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (3/4/2009): This test appear to only fail for tutorial/rose_inputCode_InstrumentationTranslator.C 
                if (firstNondefiningFunction->get_symbol_from_symbol_table() == NULL)
                   {
-                    printf ("Warning failing test: firstNondefiningFunction->get_symbol_from_symbol_table() != NULL, apepars to happen for tutorial/rose_inputCode_InstrumentationTranslator.C \n");
+                    printf ("Warning failing test: firstNondefiningFunction->get_symbol_from_symbol_table() != NULL, appears to happen for tutorial/rose_inputCode_InstrumentationTranslator.C \n");
                   }
             // ROSE_ASSERT(firstNondefiningFunction->get_symbol_from_symbol_table() != NULL);
              }
@@ -3003,6 +3256,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("calling unparse_helper \n");
           curprint ("/* calling unparse_helper */");
 #endif
           unparse_helper(funcdecl_stmt, ninfo);
@@ -3011,6 +3265,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_declstatement_ptr(NULL);
 
 #if 0
+          printf ("DONE: calling unparse_helper \n");
           curprint ("/* DONE: calling unparse_helper */");
 #endif
 
@@ -3063,10 +3318,16 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // it can be put after the type and before the variable name.
                unp->u_sage->printAttributesForType(funcdecl_stmt,info);
 
-               curprint ( string(";"));
+               curprint(";");
+#if 0
+               printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): funcdecl_stmt->isExternBrace() = %s \n",funcdecl_stmt->isExternBrace() ? "true" : "false");
+#endif
                if (funcdecl_stmt->isExternBrace())
                   {
-                    curprint ( string(" }"));
+#if 0
+                    printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): output extern brace \n");
+#endif
+                    curprint(" }");
                   }
              }
 #if 0
@@ -3806,16 +4067,28 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // curprint ( string(" = 0"));
                if (mfuncdecl_stmt != mfuncdecl_stmt->get_definingDeclaration())
                   {
-                    curprint (string(" = 0"));
+                    curprint(" = 0");
                   }
+             }
+
+       // DQ (8/11/2014): Added support for final keyword unparsing.
+          if (mfuncdecl_stmt->get_declarationModifier().isFinal() == true)
+             {
+               curprint(" final");
+             }
+
+       // DQ (8/11/2014): Added support for final keyword unparsing.
+          if (mfuncdecl_stmt->get_declarationModifier().isOverride() == true)
+             {
+               curprint(" override");
              }
 
           if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
              {
-               curprint ( string(";"));
+               curprint(";");
                if (mfuncdecl_stmt->isExternBrace())
                   {
-                    curprint ( string(" }"));
+                    curprint(" }");
                   }
              }
             else
@@ -3835,12 +4108,12 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                     if (first)
                        {
-                         curprint ( string(" : "));
+                         curprint(" : ");
                          first = 0;
                        }
                       else
                        {
-                         curprint ( string(", "));
+                         curprint(", ");
                        }
 
                     ROSE_ASSERT ((*p) != NULL);
@@ -3952,6 +4225,56 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isStatic()  = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isExtern()  = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isMutable() = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isMutable() ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): vardecl_stmt->get_is_thread_local  = %s \n",vardecl_stmt->get_is_thread_local() ? "true" : "false");
+#endif
+
+  // DQ (7/25/2014): We can assume that if this is g++ then we are using gcc for the backend C compiler.
+     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+#ifndef _MSC_VER
+     if (backEndCompiler == "g++")
+        {
+          SgFile* file = TransformationSupport::getFile(vardecl_stmt);
+#if 0
+          printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
+#endif
+          bool is_Cxx_Compiler = false;
+          bool is_C_Compiler   = false;
+          if (file != NULL)
+             {
+               is_Cxx_Compiler = file->get_Cxx_only();
+               is_C_Compiler   = file->get_C_only();
+             }
+            else
+             {
+               printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+             }
+
+       // For C we need to use the GNU 4.9 compiler.
+       // Now check the version of the identified GNU g++ compiler.
+          if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 9) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+              {
+            // DQ (7/25/2014): Adding C11 thread local support.
+            // if (vardecl_stmt->get_is_thread_local() == true)
+               if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                  {
+                    curprint("_Thread_local ");
+                  }
+             }
+            else
+             {
+            // For C++ we can use the GNU 4.8 compiler.
+               if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 8) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+                  {
+                 // DQ (8/13/2014): Adding C++11 thread local support.
+                    if (is_Cxx_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                       {
+                         curprint("thread_local ");
+                       }
+                  }
+             }
+        }
+#else
+  // Not sure what the status is of MSVC C11 support for thread local storage.
 #endif
 
 #if 0
@@ -3972,7 +4295,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      printf ("In unparseVarDeclStmt(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In unparseVarDeclStmt(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): info.SkipBaseType()        = %s \n",(info.SkipBaseType() == true) ? "true" : "false");
 #endif
+
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
@@ -4076,18 +4401,46 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
      ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
 
-  // printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+#if 0
+     printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+     printf ("(*p)->get_using_C11_Alignas_keyword() = %s \n",(*p)->get_using_C11_Alignas_keyword() ? "true" : "false");
+#endif
+
+  // DQ (7/26/2014): Adding support for C11 _Alignas keyword.
+     if ((*p)->get_using_C11_Alignas_keyword() == true)
+        {
+          curprint("_Alignas(");
+          SgNode* constant_or_type = (*p)->get_constant_or_type_argument_for_Alignas_keyword();
+          SgType*       type_operand     = isSgType(constant_or_type);
+          SgExpression* constant_operand = isSgExpression(constant_or_type);
+          if (type_operand != NULL)
+             {
+               unp->u_type->unparseType(type_operand,info);
+             }
+            else
+             {
+               if (constant_operand != NULL)
+                  {
+                    unparseExpression(constant_operand,info);
+                  }
+                 else
+                  {
+                    printf ("Error: C11 _Alignas operand is not a type or constant \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+          curprint(")");
+        }
 
      while (p != vardecl_stmt->get_variables().end())
         {
 #if 0
-          curprint ( string("\n /* Inside of unparseVarDeclStmt(): top of loop over variables */ \n"));
+          curprint ("\n /* Inside of unparseVarDeclStmt(): top of loop over variables */ \n");
 #endif
           decl_item = *p;
           ROSE_ASSERT(decl_item != NULL);
 
           tmp_init = NULL;
-
 
           tmp_type = decl_item->get_type();
 
@@ -4147,7 +4500,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 #endif
 
-          bool first = true;
+       // DQ (7/26/2014): comment out to avoid compiler warning.
+       // bool first = true;
 
        // DQ (11/28/2004): I hate it when "while(true)" is used!
        // while(true)
@@ -4155,7 +4509,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
             // If this is the first variable then output the base type
 #if 0
-               curprint ("\n /* In unparseVarDeclStmt(): (first variable): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
+               curprint ("/* In unparseVarDeclStmt(): (first variable): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
 #endif
 #if 0
             // DQ (5/6/2013): Experiment with calling the new refactored function. This code is perhaps specific to the problem demonstrated in test2013_153.C.
@@ -4214,6 +4568,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
 #endif
+
+            // DQ (8/2/2014): Added support for "auto" keyword (used in C++11).
+               if (decl_item->get_using_auto_keyword() == true)
+                  {
+                    curprint("auto ");
+                  }
+               
                if (namedType != NULL)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
@@ -4305,7 +4666,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // ROSE_ASSERT(isSgTypedefDeclaration(declStmt) == NULL);
 
 #if 0
-               printf ("Inside of unparseVarDeclStmt: first = %s \n",(first == true) ? "true" : "false");
+            // printf ("Inside of unparseVarDeclStmt: first = %s \n",(first == true) ? "true" : "false");
                printf ("Inside of unparseVarDeclStmt: declStmt = %p \n",declStmt);
                printf ("Inside of unparseVarDeclStmt: isSgTypedefDeclaration(declStmt) = %p \n",isSgTypedefDeclaration(declStmt));
 #endif
@@ -4317,7 +4678,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
                printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
+               printf ("In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType()        = %s \n",(ninfo_for_type.SkipBaseType() == true) ? "true" : "false");
 #endif
+
             // DQ (1/9/2014): These should have been setup to be the same.
                ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
@@ -4401,21 +4764,55 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 #if 0
                printf ("Inside of unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = %s \n",ninfo_for_type.SkipBaseType() ? "true" : "false");
-               curprint ("\n /* In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = " + string(ninfo_for_type.SkipBaseType() ? "true" : "false") + " */ \n");
 #endif
-
+#if 0
+               curprint ("/* In unparseVarDeclStmt(): vardecl_stmt->get_isAssociatedWithDeclarationList() = " + string(vardecl_stmt->get_isAssociatedWithDeclarationList() ? "true" : "false") + " */ \n");
+               curprint ("/* In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = " + string(ninfo_for_type.SkipBaseType() ? "true" : "false") + " */ \n");
+#endif
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
 #if 1
+#if 0
+                    printf ("Using ninfo_for_type.set_PrintName(); to support unparsing of type \n");
+#endif
                  // This is an alternative to permit the unparsing of the type to control the name output for types.
                  // But it would have to be uniform that all the pieces of the first part of the type would have to 
                  // be output.  E.g. "*" in "*X".
                     ninfo_for_type.set_PrintName();
+#if 0
+
+#error "DEAD CODE!"
                     unp->u_type->unparseType(tmp_type, ninfo_for_type);
+#else
+                    if (ninfo_for_type.SkipBaseType() == false)
+                       {
+                         unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                       }
+                      else
+                       {
+                      // DQ (8/20/2014): We need to check if this is a pointer or reference (or rvalue reference?).
+#if 0
+                         printf ("In unparseVarDeclStmt(): isAssociatedWithDeclarationList: Note that (ninfo_for_type.SkipBaseType() == true) so type was not unparsed (but we need to handle pointers) \n");
+#endif
+                         SgPointerType* pointerType = isSgPointerType(tmp_type);
+                         if (pointerType != NULL)
+                            {
+                              curprint(" *");
+
+                              SgPointerType* nested_pointerType = isSgPointerType(pointerType->get_base_type());
+                              if (nested_pointerType != NULL)
+                                 {
+                                   curprint(" *");
+                                   printf ("Maybe we need to check the base_type to see if this is a chain of pointers. \n");
+                                 }
+                            }
+                       }
+#endif
 #else
                  // Get the base type and if it is a class or enum, is it associated with a un-named 
                  // declaration (if so then we need to output the name in this associated declaration).
                  // if (isSgNamedType(tmp_type) != NULL)
+#error "DEAD CODE!"
                     SgType* baseType = tmp_type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
                     SgClassType* classType = isSgClassType(baseType);
                     SgEnumType*  enumType  = isSgEnumType(baseType);
@@ -4460,12 +4857,21 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ROSE_ASSERT(ninfo_for_type.isTypeSecondPart() == false);
 #if 0
                     printf ("##### This works for test2013_156.C and not quite for test2013_158.C, but it should be using ninfo_for_type so that the name qualification info is passed properly! \n");
+                    printf ("   --- tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
                  // DQ (5/7/2013): This is an attempt to fix test2013_156.C.
                  // DQ (7/28/2012): Output the type if this is not associated with a declaration list from a previous declaration.
                  // unp->u_type->unparseType(tmp_type, ninfo_for_type);
                  // unp->u_type->unparseType(tmp_type, ninfo);
-                    unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                 // unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                    if (ninfo_for_type.SkipBaseType() == false)
+                       {
+                         unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                       }
+                      else
+                       {
+                         printf ("In unparseVarDeclStmt(): Note that (ninfo_for_type.SkipBaseType() == true) so type was not unparsed \n");
+                       }
                   }
 #else
 
@@ -4481,6 +4887,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 #if 0
                curprint("\n/* END: output using unp->u_type->unparseType (1st part) */ \n");
+#endif
+#if 0
+               curprint("/* END: output using unp->u_type->unparseType (1st part) */");
 #endif
 #if 0
             // DQ (12/31/2013): review this in light of change to support type attributres directly.
@@ -4586,6 +4995,14 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // curprint(tmp_name.str());
                     if (isAnonymousName == false)
                        {
+#if 0
+                      // DQ (5/26/2014): The fix to output a space in unparseTemplateArgumentList() when we have an empty template argument list means
+                      // that we no longer require this space to be output here (which was a problem for more general non template test codes that
+                      // were using diff against a gold standard for there tests (in the ROSE regression tests).
+                      // DQ (5/17/2014): With fixes to the determination of template declarations and template instantiation declarations, test2005_163.C
+                      // now requires  whitespace between the variable's type and the variable's name.
+                         curprint(" ");
+#endif
                          curprint(tmp_name.str());
                        }
 
@@ -4642,13 +5059,23 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // unp->u_type->unparseType(tmp_type, ninfo2);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
 
+#if 0
+               printf ("DONE: Calling 2nd part of unp->u_type->unparseType for %s \n",tmp_type->sage_class_name());
+               curprint("\n/* END: output using unp->u_type->unparseType (2nd part) */ \n ");
+#endif
+
+#if 0
+               printf ("Calling printAttributes() \n");
+               curprint("\n/* Calling printAttributes() */ \n ");
+#endif
             // DQ (2/6/2014): Move this to be after the name is output.
             // DQ (8/31/2013): Added support for missing attributes.
                unp->u_sage->printAttributes(decl_item,info);
 
+            // DQ (7/26/2014): comment out to avoid compiler warning.
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
-               first = false;
+            // first = false;
 
             // DQ (5/6/2013): Associated end of block for alternative handling of type in variable declaration.
             //    }
@@ -4783,9 +5210,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
             else
              {
-            // DQ (7/16/2012): Added new support for maultiple variables in the same declaration, output the name of the variable...
+            // DQ (7/16/2012): Added new support for multiple variables in the same declaration, output the name of the variable...
                tmp_name = decl_item->get_name();
-               curprint ( tmp_name.str());
+               curprint(tmp_name.str());
              }
 
        // DQ (8/31/2013): I think this is the wrong location for the attribute (see test2013_40.c).
@@ -4972,7 +5399,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (!info.SkipSemiColon())
              {
-               curprint (  string(";"));
+               curprint(";");
              }
         }
        else
@@ -5025,17 +5452,17 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                     case SgClassDeclaration::e_class : 
                        {
-                         curprint ( string("class "));
+                         curprint("class ");
                          break;
                        }
                     case SgClassDeclaration::e_struct :
                        {
-                         curprint ( string("struct "));
+                         curprint("struct ");
                          break;
                        }
                     case SgClassDeclaration::e_union :
                        {
-                         curprint ( string("union "));
+                         curprint("union ");
                          break;
                        }
 
@@ -5043,7 +5470,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     case SgClassDeclaration::e_template_parameter :
                        {
                       // skip type elaboration here.
-                         curprint ( string(" "));
+                         curprint(" ");
                          break;
                        }
 
@@ -5060,6 +5487,23 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        /* have to make sure if it needs qualifier or not */
 
           SgName nm = classdecl_stmt->get_name();
+
+       // DQ (8/19/2014): Adding code to output the template instantiation with template arguments processed to support name qualification.
+          SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(classdecl_stmt);
+          if (templateInstantiation != NULL)
+             {
+#if 0
+               printf ("In unparseClassDeclStmt(): name used must be reset to exclude template arguments (since they must be output seperately): nm = %s \n",nm.str());
+               printf ("   --- templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
+               printf ("   --- templateInstantiation->get_name()         = %s \n",templateInstantiation->get_name().str());
+#endif
+               nm = templateInstantiation->get_name();
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
 #if 0
           if (nm == "Zone")
              {
@@ -5079,7 +5523,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgName nameQualifier = unp->u_name->generateNameQualifier( classdecl_stmt , class_info );
             // printf ("In unparseClassDeclStmt() nameQualifier (from unp->u_type->unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
 
-               curprint ( nameQualifier.str());
+               curprint(nameQualifier.str());
              }
 #endif
        // DQ (7/20/2011): Test compilation without these functions.
@@ -5103,6 +5547,8 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           printf ("In unparseClassDeclStmt(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
 #endif
+#if 0
+       // DQ (8/19/2014): Original code.
        // DQ (6/9/2013): Skip output of name when it is a generated name such as "__anonymous_0x10f3efa8"
        // curprint (nameQualifier);
        // curprint ( (nm + " ").str());
@@ -5113,6 +5559,31 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint (nameQualifier);
                curprint ( (nm + " ").str());
              }
+#else
+       // DQ (8/19/2014): Adding code to output the template instantiation with template arguments processed to support name qualification.
+          if (templateInstantiation != NULL)
+             {
+#if 0
+               printf ("Now output the template arguments \n");
+#endif
+               curprint (nameQualifier);
+               unparseTemplateName(templateInstantiation,info);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+            // DQ (8/19/2014): Original code (copied to the else branch).
+               if (isAnonymousName == false && classdecl_stmt->get_isUnNamed() == false)
+                  {
+                 // Output the qualified name.
+                    curprint (nameQualifier);
+                    curprint ( (nm + " ").str());
+                  }
+             }
+#endif
 #else
        // DQ (7/28/2012): This is the modified version of the code and I think it is not required.
        // DQ (7/28/2012): Support un-named classes (see test2012_141.C).
@@ -5147,13 +5618,20 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           curprint("/* After name in Unparse_ExprStmt::unparseClassDeclStmt */ \n");
 #endif
+
+       // DQ (8/11/2014): Added support for final keyword unparsing.
+          if (classdecl_stmt->get_declarationModifier().isFinal() == true)
+             {
+               curprint("final ");
+             }
+
           if (classdecl_stmt->isForward() && !info.SkipSemiColon())
              {
-               curprint(string(";"));
+               curprint(";");
 
                if (classdecl_stmt->isExternBrace())
                   {
-                    curprint(string(" }"));
+                    curprint(" }");
                   }
              }
         }
@@ -5238,7 +5716,10 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      ninfo.set_current_context(NULL);
      ninfo.set_current_context(classDeclaration->get_type());
 
-  // curprint ( string("/* Print out inheritance */ \n";
+#if 0
+     printf ("In unparseClassDefnStmt(): Print out inheritance \n");
+     curprint("/* Print out inheritance */ \n");
+#endif
 
   // print out inheritance
      SgBaseClassPtrList::iterator p = classdefn_stmt->get_inheritances().begin();
@@ -5297,8 +5778,21 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                curprint(nameQualifier.str());
 
-            // base name
-               curprint ( tmp_decl->get_name().str());
+            // print the base class name
+            // DQ (8/20/2014): We need to output the template name when this is a templated base class.
+            // curprint(tmp_decl->get_name().str());
+               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(tmp_decl);
+#if 0
+               printf ("In unparseClassDefnStmt(): base class output: tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
+#endif
+               if (templateInstantiationDeclaration != NULL)
+                  {
+                    unparseTemplateName(templateInstantiationDeclaration,info);
+                  }
+                 else
+                  {
+                    curprint(tmp_decl->get_name().str());
+                  }
 
                p++;
 
@@ -5433,6 +5927,26 @@ Unparse_ExprStmt::unparseTypeAttributes ( SgDeclarationStatement* declaration )
 #endif
         }
 
+  // DQ (7/24/2014): Added support to unparse the alignment attribute.
+     short alignmentValue = declaration->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
+
+#if 0
+     printf ("In unparseTypeAttributes(SgDeclarationStatement*): alignmentValue = %d \n",(int)alignmentValue);
+#endif
+
+  // DQ (7/24/2014): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
+     if (alignmentValue >= 0)
+        {
+#if 0
+          curprint(" /* alignment attribute on decl_stmt->get_declarationModifier().get_typeModifier() */ ");
+#endif
+       // DQ (7/27/2014): Fixed attribute to have correct spelling.
+       // curprint(" __attribute__((align(N)))");
+       // curprint(" __attribute__((align(");
+          curprint(" __attribute__((aligned(");
+          curprint(StringUtility::numberToString((int)alignmentValue));
+          curprint(")))");
+        }
    }
 
 
@@ -5448,6 +5962,14 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseEnumDeclStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 
+     string enum_string = "enum ";
+
+  // DQ (8/12/2014): Adding support for C++11 scoped enums (syntax is "enum class ").
+     if (enum_stmt->get_isScopedEnum() == true)
+        {
+          enum_string += "class ";
+        }
+
   // Check if this enum declaration appears imbedded within another declaration
      if ( !info.inEmbeddedDecl() )
         {
@@ -5457,14 +5979,15 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
        // If this is part of a class definition then get the access information
           SgClassDefinition *cdefn = isSgClassDefinition(enum_stmt->get_parent());
-          if (cdefn && cdefn->get_declaration()->get_class_type()==SgClassDeclaration::e_class)
+          if (cdefn && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
              {
                info.set_CheckAccess();
              }
        // printDebugInfo("entering unp->u_sage->printSpecifier", true);
           unp->u_sage->printSpecifier(enum_stmt, info);
           info.unset_CheckAccess();
-          curprint ( string("enum " ) + enum_stmt->get_name().str() + " ");
+       // curprint(string("enum ") + enum_stmt->get_name().str() + " ");
+          curprint(enum_string + enum_stmt->get_name().str() + " ");
         }
        else
         { 
@@ -5490,7 +6013,8 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgNamedType *ptype=isSgNamedType(cdefn->get_declaration()->get_type());
                if (!ptype || (info.get_current_context() == ptype))
                   {
-                    curprint ( string("enum " ) +  enum_stmt->get_name().str() + " ");
+                 // curprint( string("enum " ) +  enum_stmt->get_name().str() + " ");
+                    curprint(enum_string + enum_stmt->get_name().str() + " ");
                   }
                  else
                   {
@@ -5502,13 +6026,15 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                       else
                        { 
-                         curprint ( string("enum " ) + enum_stmt->get_name().str() + " ");
+                      // curprint( string("enum " ) + enum_stmt->get_name().str() + " ");
+                         curprint(enum_string + enum_stmt->get_name().str() + " ");
                        }
                   }
              }
             else
              {
-               curprint ( string("enum " ) + enum_stmt->get_name().str() + " ");
+            // curprint ( string("enum " ) + enum_stmt->get_name().str() + " ");
+               curprint (enum_string + enum_stmt->get_name().str() + " ");
              }
         }
 
@@ -5517,6 +6043,16 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("enum_stmt->get_embedded()  = %s \n",enum_stmt->get_embedded()  ? "true" : "false");
      printf ("enum_stmt->isExternBrace() = %s \n",enum_stmt->isExternBrace() ? "true" : "false");
 #endif
+
+  // DQ (8/12/2014): Adding support for C++11 base type specification syntax.
+     if (enum_stmt->get_field_type() != NULL)
+        {
+          curprint(" : ");
+
+       // Make a new SgUnparse_Info object.
+          SgUnparse_Info ninfo(info);
+          unp->u_type->unparseType(enum_stmt->get_field_type(),ninfo);           
+        }
 
   // DQ (6/26/2005): Support for empty enum declarations!
      if (enum_stmt == enum_stmt->get_definingDeclaration())
@@ -6862,6 +7398,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->u_type->unparseType(btype, ninfo_for_type);
              }
 #else
+
+#error "DEAD CODE!"
+
           unp->u_type->unparseType(btype, ninfo_for_type);
 #endif
 
@@ -6878,6 +7417,15 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (10/7/2004): Moved the output of the name to before the output of the second part of the type
        // to handle the case of "typedef A* A_Type[10];" (see test2004_104.C).
+
+#if 0
+       // DQ (5/26/2014): The fix to output a space in unparseTemplateArgumentList() when we have an empty template argument list means
+       // that we no longer require this space to be output here (which was a problem for more general non template test codes that
+       // were using diff against a gold standard for there tests (in the ROSE regression tests).
+       // DQ (5/17/2014): With fixes to the determination of template declarations and template instantiation declarations, test2004_145.C
+       // (and associated test code test2014_58.C) now require  whitespace between the typedef's base type and the typedef's name.
+          curprint(" ");
+#endif
 
        // The name of the type (X, in the following example) has to appear after the 
        // declaration. Example: struct { int a; } X;
@@ -7398,6 +7946,50 @@ Unparse_ExprStmt::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnpa
     }
   }
 }
+
+
+void
+Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // DQ (7/25/2014): Adding support for C11 static assertions.
+
+  // For C11 this whould be unparsed as "_Static_assert", but for C++ it should be unparsed as "static_assert".
+     SgStaticAssertionDeclaration* staticAssertionDeclaration = isSgStaticAssertionDeclaration(stmt);
+     ROSE_ASSERT(staticAssertionDeclaration != NULL);
+
+     curprint("_Static_assert(");
+     unparseExpression(staticAssertionDeclaration->get_condition(), info);
+     curprint(",\"");
+  // unparseExpression(staticAssertionDeclaration->get_string_literal(), info);
+     curprint(staticAssertionDeclaration->get_string_literal());
+     curprint("\");");
+
+#if 0
+      printf ("Exiting as a test! (unparseStaticAssertionDeclaration not implemented) \n");
+      ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+void
+Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // DQ (8/17/2014): Adding support for Microsoft attributes.
+     SgMicrosoftAttributeDeclaration* microsoftAttributeDeclaration = isSgMicrosoftAttributeDeclaration(stmt);
+     ROSE_ASSERT(microsoftAttributeDeclaration != NULL);
+
+     curprint("[");
+     curprint(microsoftAttributeDeclaration->get_attribute_string());
+     curprint("]");
+
+#if 0
+      printf ("Exiting as a test! (unparseMicrosoftAttributeDeclaration not implemented) \n");
+      ROSE_ASSERT(false);
+#endif
+   }
+
+
 
  // EOF
 
