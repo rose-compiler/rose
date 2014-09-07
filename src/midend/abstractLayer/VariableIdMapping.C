@@ -31,6 +31,14 @@ bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type);
 }
+bool VariableIdMapping::hasPointerType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgPointerType(type)!=0;
+}
+bool VariableIdMapping::hasArrayType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgArrayType(type)!=0;
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.

@@ -73,6 +73,8 @@ class VariableIdMapping {
   bool hasIntegerType(VariableId varId);
   // returns true if this variable has any floating-point type (float,double,longdouble)
   bool hasFloatingPointType(VariableId varId);
+  bool hasPointerType(VariableId varId);
+  bool hasArrayType(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);

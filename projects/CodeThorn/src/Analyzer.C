@@ -605,7 +605,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           SgIntVal* intValNode=0;
           if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
             int intVal=intValNode->get_value();
-            cout<<"DEBUG:initialize array element here:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+            cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+            newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
           } else {
             cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<astTermWithNullValuesToString(exp)<<endl;
             exit(1);
@@ -1378,6 +1379,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             PState oldPState=*estate.pstate();
             ConstraintSet oldcset=*estate.constraints();            
             estateList.push_back(createEState(edge.target,oldPState,oldcset));            
+            cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
+            exit(1);
           } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
@@ -1490,7 +1493,6 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
 
 // TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
 // TODO: currently all rhs which are not a variable are evaluated to top by this function
-// TODO: x=x eliminates constraints of x but it should not.
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));
   AValue rhsIntVal=AType::Top();
@@ -1505,7 +1507,6 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       isRhsIntVal=true;
     }
   }
-
   // extracted info: isRhsIntVal:rhsIntVal 
   if(SgIntVal* intValNode=isSgIntVal(rhs)) {
     // found integer on rhs
@@ -1531,6 +1532,28 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
   }
   PState newPState=currentPState;
+
+  // handle pointer assignment/initialization
+  if(variableIdMapping.hasPointerType(lhsVar)) {
+    cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
+    cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
+    if(SgVarRefExp* rhsVarExp=isSgVarRefExp(rhs)) {
+      VariableId rhsVarId=variableIdMapping.variableId(rhsVarExp);
+      if(variableIdMapping.hasArrayType(rhsVarId)) {
+        cout<<" of array type.";
+        // we use the id-code as int-value (points-to info)
+        int idCode=rhsVarId.getIdCode();
+        newPState.setVariableToValue(lhsVar,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(idCode)));
+        cout<<" id-code: "<<idCode;
+      } else {
+        cout<<"RHS: unknown : type: ";
+        cout<<astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        exit(1);
+      }
+      cout<<endl;
+    }
+  }
+
   if(newPState.varExists(lhsVar)) {
     if(!isRhsIntVal && !isRhsVar) {
       rhsIntVal=AType::Top();

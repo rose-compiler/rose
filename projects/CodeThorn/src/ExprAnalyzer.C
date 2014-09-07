@@ -31,18 +31,33 @@ bool ExprAnalyzer::variable(SgNode* node, string& varName) {
     return false;
   }
 }
+
 bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   assert(node);
+  if(SgNodeHelper::isArrayAccess(node)) {
+    // 1) array variable id
+    // 2) eval array-index expr
+    // 3) if const then compute variable id otherwise return non-valid var id (would require set)
+    VariableId arrayVarId;
+    SgExpression* arrayIndexExpr=0;
+    int arrayIndexInt=-1;
+    cout<<"ARRAY-ACCESS"<<astTermWithNullValuesToString(node)<<endl;
+    if(false) {
+      varId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,arrayIndexInt);
+    }
+    return false;
+  }
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
     assert(_variableIdMapping);
-#if 1
+#if 0
     SgSymbol* sym=varref->get_symbol();
     assert(sym);
     varId=_variableIdMapping->variableId(sym);
 #else
     // MS: to investigate: even with the new var-sym-only case this does not work
     // MS: investigage getSymbolOfVariable
+    // MS: 9/6/2014: this seems to work now
     varId=_variableIdMapping->variableId(varref);
 #endif
     return true;
@@ -66,7 +81,7 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
-
+  cout<<"DEBUG: evalConstInt: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
   // guard: for floating-point expression: return immediately with most general result
   // TODO: refine to walk the tree, when assignments are allowed in sub-expressions
   // MS: 2014-06-27: this cannot run in parallel because exp->get_type() seg-faults 
@@ -90,7 +105,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   res.result=AType::ConstIntLattice(AType::Bot());
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
-    cout << "INFO: incdec-op found!"<<endl;
+    cout << "Error: incdec-op not supported in conditions yet."<<endl;
+    exit(1);
   }
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     list<SingleEvalResultConstInt> resultList;
@@ -360,9 +376,37 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         case V_SgPntrArrRefExp: {
           // assume top for array elements (array elements are not stored in state)
-          res.result=AType::Top();
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+          cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<endl;
+          if(rhsResult.value().isTop()) {
+            res.result=AType::Top();
+            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+            resultList.push_back(res);
+          } else {
+            if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
+            
+              VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+              VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,rhsResult.value().getIntValue());
+              cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<endl;
+
+              // read value of variable var id (same as for VarRefExp - TODO: reuse)
+              const PState* pstate=estate.pstate();
+              if(pstate->varExists(arrayElementId)) {
+                PState pstate2=*pstate; // also removes constness
+                res.result=pstate2[arrayElementId].getValue();
+                if(res.result.isTop() && useConstraints) {
+                  AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
+                  res.result=val;
+                }
+                return listify(res);
+              } else {
+                cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+                exit(1);
+              }
+            } else {
+              cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
+              exit(1);
+            }
+          }
           break;
         }
         default:
@@ -458,12 +502,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         //if(!val.isTop())
         // TODO: we will want to monitor this for statistics!
         //  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
+        // TODO: TOPIFY-MODE: most efficient here
         res.result=val;
       }
       return listify(res);
     } else {
       res.result=AType::Top();
-      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+      cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
     break;
