@@ -268,10 +268,14 @@ string get_type_name(SgType* t)
                     res = res + "volatile ";
                 if (mod_type->get_typeModifier().isRestrict())
                    {
+                  // DQ (9/2/2014): Added support for mpiicpc used at LLNL.
                   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
                   // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
                      string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                     if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
+#if 0
+                     printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
+#endif
+                     if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc")
                         res = res + "__restrict__ ";
                      else
                         res = res + "restrict ";
@@ -2282,6 +2286,11 @@ Unparse_Type::unparseRestrictKeyword()
   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
   // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
      string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+
+#if 0
+     printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
+#endif
+
   // Liao 6/11/2008, Preserve the original "restrict" for UPC
   // regardless types of the backend compiler
      if (SageInterface::is_UPC_language() == true )
@@ -2291,7 +2300,8 @@ Unparse_Type::unparseRestrictKeyword()
         }
        else
         {
-          if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
+       // DQ (9/2/2014): Added support for mpiicpc used at LLNL.
+          if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc")
              {
             // GNU uses a string variation on the C99 spelling of the "restrict" keyword
             // DQ (12/12/2012): We need the white space before and after the keyword.
