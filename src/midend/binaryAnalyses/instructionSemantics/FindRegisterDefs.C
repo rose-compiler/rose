@@ -2,6 +2,8 @@
 #include "FindRegisterDefs.h"
 #include <ostream>
 
+namespace rose {
+namespace BinaryAnalysis {
 namespace FindRegisterDefs {
 
 /******************************************************************************************************************************
@@ -81,4 +83,6 @@ Policy::print(std::ostream &o) const
     o <<cur_state;
 }
 
-}; // namespace
+} // namespace
+} // namespace
+} // namespace

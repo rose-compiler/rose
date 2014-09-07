@@ -10,7 +10,7 @@ kde4_add_executable(fileLocation ${fileLocation_SRCS})
 
 target_link_libraries(fileLocation ${KDE4_KDECORE_LIBS})
 
-install(TARGETS fileLocation ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS fileLocation DESTINATION bin)
 
 
 ########### install files ###############

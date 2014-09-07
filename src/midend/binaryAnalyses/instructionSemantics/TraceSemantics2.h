@@ -4,6 +4,7 @@
 #include "BaseSemantics2.h"
 #include "threadSupport.h"
 
+namespace rose {
 namespace BinaryAnalysis {                      // documented elsewhere
 namespace InstructionSemantics2 {               // documented elsewhere
 
@@ -32,7 +33,7 @@ namespace InstructionSemantics2 {               // documented elsewhere
  *  Symbolic@0x28470a0 insn@0x080480a0[0]: signExtend(16[8], 32) = 16[32]
  *  Symbolic@0x28470a0 insn@0x080480a0[0]: add(v3284[32], 16[32]) = (add[32] v3284[32] 16[32])
  *  Symbolic@0x28470a0 insn@0x080480a0[0]: boolean_(1) = 1[1]
- *  Symbolic@0x28470a0 insn@0x080480a0[0]: readMemory(ss, (add[32] v3284[32] 16[32]), 1[1], 8) = v3285[8]
+ *  Symbolic@0x28470a0 insn@0x080480a0[0]: readMemory(ss, (add[32] v3284[32] 16[32]), v3286[8], 1[1]) = v3285[8]
  *  Symbolic@0x28470a0 insn@0x080480a0[0]: writeRegister(al, v3285[8])
  *  Symbolic@0x28470a0 insn@0x080480a0[0]: finishInstruction(mov    al, BYTE PTR ss:[ebp + 0x10])
  * @endcode
@@ -279,11 +280,12 @@ public:
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
     virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&);
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr&cond, size_t nbits);
+                                                const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond);
     virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond);
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

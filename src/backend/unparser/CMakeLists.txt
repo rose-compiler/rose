@@ -32,7 +32,9 @@ add_subdirectory(formatSupport)
 #add_dependencies( unparser ROSETTA )
 ########### install files ###############
 
-set(unparser_headers copy_unparser.h unparser.h unparse_sym.h)
+set(unparser_headers copy_unparser.h unparser.h unparse_sym.h
+  astUnparseAttribute.h IncludedFilesUnparser.h nameQualificationSupport.h)
+
 install(FILES ${unparser_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 

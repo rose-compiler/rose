@@ -464,6 +464,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_93.c \
      test2014_94.c \
      test2014_95.c \
+     test2014_100.c \
+     test2014_200.c \
+     test2014_201.c \
+     test2014_202.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -485,7 +489,17 @@ if OS_VENDOR_REDHAT_REL6
    EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173_redhat_rel6.c
 endif
 
-
+# DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
+FILES_NOT_PASSING = \
+     test2014_71.c \
+     test2014_73.c \
+     test2014_74.c \
+     test2014_75.c \
+     test2014_90.c \
+     test2014_96.c \
+     test2014_97.c \
+     test2014_98.c \
+     test2014_99.c 
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))
@@ -796,9 +810,32 @@ test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
-             test2006_134.h test2010_08.h predict.def test2010_15.h \
-             test2009_18.c test2009_20.c grep_verify.h test2012_75.h \
-             test2012_78.h test2012_155.h test2012_156.h
+             predict.def test2009_18.c test2009_20.c test2014_20_inc.c test2014_27_inc.c test2014_28_inc.c \
+	     test2012_145.c conftest.c test2005_168.c \
+	     confdefs.h grep_verify.h verify.h \
+	     test2006_134.h \
+	     test2010_08.h \
+	     test2010_15.h \
+	     test2012_155.h \
+	     test2012_156.h \
+	     test2012_63.h \
+	     test2012_75.h \
+	     test2012_78.h \
+	     test2013_05.h \
+	     test2013_06.h \
+	     test2013_114.h \
+	     test2014_06.h \
+	     test2014_07.h \
+	     test2014_19.h \
+	     test2014_33.h \
+	     test2014_36.h \
+	     test2014_43.h \
+	     test2014_56.h \
+	     test2014_59.h \
+	     test2014_60_data_members.h \
+	     test2014_60_values.h \
+	     test2014_66.h \
+	     test2014_73.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
@@ -831,7 +868,7 @@ clean-local:
 	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
 	rm -f *.err *.passed *.failed
 	rm -f token_trailing_*.c token_leading_*.c
-
+	rm -f test2014_83 test2014_93
 
 ################################################################################
 #

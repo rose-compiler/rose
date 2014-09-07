@@ -39,7 +39,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  CallGraphAnalysis.h RoseBin_DotGraph.h RoseBin_Graph.h RoseBin_GmlGraph.h SB_Graph.h RoseSrc_CallGraphAnalysis.h
+pkginclude_HEADERS =  CallGraphAnalysis.h RoseBin_DotGraph.h RoseBin_Graph.h RoseBin_GmlGraph.h SB_Graph.h RoseSrc_CallGraphAnalysis.h
 
 
 EXTRA_DIST = CMakeLists.txt

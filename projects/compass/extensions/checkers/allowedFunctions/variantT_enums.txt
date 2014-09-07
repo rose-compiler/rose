@@ -370,13 +370,8 @@ V_SgAsmUnaryExpression
 V_SgAsmMemoryReferenceExpression 	
 V_SgAsmControlFlagsExpression 	
 V_SgAsmCommonSubExpression 	
-V_SgAsmx86RegisterReferenceExpression 	
-V_SgAsmArmRegisterReferenceExpression 	
 V_SgAsmRegisterReferenceExpression 	
-V_SgAsmByteValueExpression 	
-V_SgAsmWordValueExpression 	
-V_SgAsmDoubleWordValueExpression 	
-V_SgAsmQuadWordValueExpression 	
+V_SgAsmIntegerValueExpression 	
 V_SgAsmSingleFloatValueExpression 	
 V_SgAsmDoubleFloatValueExpression 	
 V_SgAsmValueExpression 	
@@ -390,6 +385,7 @@ V_SgAsmTypeDoubleQuadWord
 V_SgAsmTypeSingleFloat 	
 V_SgAsmTypeDoubleFloat 	
 V_SgAsmType80bitFloat 	
+V_SgAsmType96bitFloat 	
 V_SgAsmType128bitFloat 	
 V_SgAsmTypeVector 	
 V_SgAsmType 	

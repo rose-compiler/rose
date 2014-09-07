@@ -5,7 +5,7 @@
 namespace StaticCFG
 {
     template<typename _filter>
-    void CustomFilteredCFG<_filter>::buildFilteredCFG()  {
+    void ROSE_DLL_API CustomFilteredCFG<_filter>::buildFilteredCFG()  {
         all_nodes_.clear();
         clearNodesAndEdges();
         std::set< VirtualCFG::FilteredCFGNode<_filter> > explored;

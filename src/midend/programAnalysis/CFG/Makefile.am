@@ -19,6 +19,6 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  CFG.h CFGImpl.h
+pkginclude_HEADERS =  CFG.h CFGImpl.h
 
 EXTRA_DIST = CMakeLists.txt

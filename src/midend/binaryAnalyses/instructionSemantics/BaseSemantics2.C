@@ -2,6 +2,7 @@
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -88,11 +89,189 @@ std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
 void
 Exception::print(std::ostream &o) const
 {
-    o <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
+    o <<"rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
         o <<": " <<unparseInstructionWithAddress(insn);
     o <<"\n";
 }
+
+/*******************************************************************************************************************************
+ *                                      Allocators
+ *******************************************************************************************************************************/
+
+void
+Allocator::bucketAddresses(BucketAddressMap &result, size_t poolNumber) const
+{
+    ASSERT_require(poolNumber < N_FREE_LISTS);
+    result.clear();
+    BOOST_FOREACH (Bucket *bucket, buckets_[poolNumber]) {
+        BucketAddressInterval addrInterval = BucketAddressInterval::hull((uint64_t)bucket,
+                                                                         (uint64_t)bucket->buffer+bucket->SIZE-1);
+        ASSERT_require2(result.findFirstOverlap(addrInterval)==result.nodes().end(), "buckets cannot overlap");
+        result.insert(addrInterval, bucket);
+    }
+}
+
+void
+Allocator::bucketUsage(BucketUsageCounts &result, size_t poolNumber, const BucketAddressMap &bucketAddressMap) const
+{
+    ASSERT_require(poolNumber < N_FREE_LISTS);
+    result.clear();
+    size_t objectSize = (poolNumber+1) * SIZE_DIVISOR;
+    size_t nObjsPerBucket = Bucket::SIZE / objectSize;
+    BOOST_FOREACH (Bucket *bucket, buckets_[poolNumber])
+        result.insert(bucket, nObjsPerBucket);
+    for (FreeItem *obj=freelist[poolNumber]; obj!=NULL; obj=obj->next) {
+        Bucket *bucket = bucketAddressMap[(uint64_t)obj];
+        ASSERT_require((char*)obj >= (char*)bucket->buffer);
+        ASSERT_require((char*)obj + objectSize <= bucket->buffer + bucket->SIZE);
+        ASSERT_require(result[bucket]>0);
+        --result[bucket];
+    }
+}
+
+void
+Allocator::bucketUsage(BucketUsageCounts &result, size_t poolNumber) const
+{
+    BucketAddressMap bucketAddressMap;
+    bucketAddresses(bucketAddressMap /*out*/, poolNumber);
+    bucketUsage(result /*out*/, poolNumber, bucketAddressMap);
+}
+
+void
+Allocator::printStatistics(std::ostream &out) const
+{
+    using namespace StringUtility;
+    out <<"Allocator statistics for SValue objects:\n";
+    size_t nPoolsPrinted=0, nBuckets=0, bytesUsed=0;
+    for (size_t i=0; i<N_FREE_LISTS; ++i) {
+        if (!buckets_[i].empty()) {
+            out <<"  Pool #" <<i <<"\n";
+            size_t objectSize = (i+1) * SIZE_DIVISOR;
+            size_t nObjsPerBucket = Bucket::SIZE / objectSize;
+            size_t bucketMemory = buckets_[i].size()*Bucket::SIZE;
+            out <<"    Max object size:        " <<plural(objectSize, "bytes") <<"\n";
+            out <<"    Max objects per bucket: " <<nObjsPerBucket <<"\n";
+            out <<"    Number of buckets:      " <<buckets_[i].size() <<"\n";
+            out <<"    Objects in use:         " <<plural(nallocated_[i], "objects") <<"\n";
+            out <<"    Object memory:          " <<(nallocated_[i]*objectSize) <<" bytes\n";
+            out <<"    Pool utilization:       " <<(100.0*nallocated_[i]*objectSize/bucketMemory) <<" percent\n";
+            out <<"    High water:             " <<plural(highwater_[i], "objects") <<"\n";
+            out <<"    High water utilization: " <<(100.0*highwater_[i]*objectSize/bucketMemory) <<" percent\n";
+
+            BucketUsageCounts usageCounts;
+            bucketUsage(usageCounts, i);
+            BOOST_FOREACH (const BucketUsageCounts::Node node, usageCounts.nodes()) {
+                out <<"      Bucket at " <<addrToString((uint64_t)node.key()) <<":\t"
+                    <<plural(node.value(), "objects") <<" in use\n";
+                bytesUsed += node.value() * objectSize;
+            }
+
+            nBuckets += buckets_[i].size();
+            ++nPoolsPrinted;
+        }
+    }
+    if (0==nPoolsPrinted) {
+        out <<"  allocator is empty\n";
+    } else {
+        size_t totalBytes = (nBuckets*sizeof(Bucket));
+        out <<"  Totals across all pools for this allocator\n"
+            <<"    Number of buckets:            " <<nBuckets <<"\n"
+            <<"    Memory allocated for buckets: " <<totalBytes <<" bytes\n"
+            <<"    Memory in use for objects:    " <<bytesUsed <<" bytes inc. internal fragmentation\n"
+            <<"    Utilization:                  " <<(100.0*bytesUsed/totalBytes) <<" percent\n";
+    }
+}
+
+void
+Allocator::assertInvariants() const
+{
+    static size_t ncalls = 0;
+    if (++ncalls % 1000 == 0)
+        std::cerr <<"[" <<ncalls <<"]";
+    for (size_t i=0; i<N_FREE_LISTS; ++i) {
+        const size_t object_size = (i+1) * SIZE_DIVISOR;
+        size_t nObjsPerBucket = Bucket::SIZE / object_size;
+        std::cerr <<"[objsz " <<object_size <<"][objs/bucket " <<nObjsPerBucket <<"]";
+
+        std::map<char*, const Bucket*> bm1;
+        BOOST_FOREACH (const Bucket *bucket, buckets_[i]) {
+            for (size_t offset=0; offset+object_size<=Bucket::SIZE; offset+=object_size)
+                bm1[(char*)bucket->buffer+offset] = bucket;
+        }
+        BucketAddressMap bm2;
+        bucketAddresses(bm2 /*out*/, i);
+        size_t nfree = 0;
+        for (const FreeItem *item=freelist[i]; item; item=item->next, ++nfree) {
+            ASSERT_require(bm1.find((char*)item)!=bm1.end());
+            ASSERT_require(bm2.find((uint64_t)item)!=bm2.nodes().end());
+            const Bucket *b1 = bm1[(char*)item];
+            const Bucket *b2 = bm2[(uint64_t)item];
+            ASSERT_always_not_null(b1);
+            ASSERT_always_not_null(b2);
+            ASSERT_always_require(b1 == b2);
+        }
+        std::cerr <<"[nfree " <<nfree <<"]";
+
+        BucketUsageCounts usageCounts;
+        bucketUsage(usageCounts /*out*/, i);
+        size_t totalUsed = 0;
+        BOOST_FOREACH (const BucketUsageCounts::Node &node, usageCounts.nodes()) {
+            std::cerr <<"[bucket " <<node.key() <<" used " <<node.value() <<"]";
+            totalUsed += node.value();
+        }
+        std::cerr <<"[total used " <<totalUsed <<"]";
+        ASSERT_require(totalUsed == nallocated_[i]);
+    }
+}
+
+void
+Allocator::vacuum()
+{
+    for (size_t i=0; i<N_FREE_LISTS; ++i) {
+        // Initialize address map and usage counts
+        BucketAddressMap bucketAddressMap;              // maps object addresses to the buckets that contain them
+        bucketAddresses(bucketAddressMap, i);
+        BucketUsageCounts bucketUsageCounts;
+        bucketUsage(bucketUsageCounts, i, bucketAddressMap);
+
+        // Create a new free list that doesn't have any objects that belong to buckets about to be deleted
+        FreeItem *obj = freelist[i], *next = NULL;
+        freelist[i] = NULL;
+        for (/*void*/; obj!=NULL; obj=next) {
+            next = obj->next;
+            if (bucketUsageCounts[bucketAddressMap[(uint64_t)obj]]!=0) {
+                obj->next = freelist[i];
+                freelist[i] = obj;
+            }
+        }
+
+        // Delete buckets that have no used objects.
+        std::list<Bucket*>::iterator bi = buckets_[i].begin();
+        while (bi!=buckets_[i].end()) {
+            Bucket *bucket = *bi;
+            if (bucketUsageCounts[bucket]==0) {
+                delete bucket;
+                bi = buckets_[i].erase(bi);
+            } else {
+                ++bi;
+            }
+        }
+    }
+}
+
+void
+Allocator::destroyAllObjects()
+{
+    for (size_t i=0; i<N_FREE_LISTS; ++i) {
+        BOOST_FOREACH (Bucket *bucket, buckets_[i]) {
+            memset(bucket, 0, sizeof(*bucket));
+            delete bucket;
+        }
+        freelist[i] = NULL;
+    }
+}
+
 
 /*******************************************************************************************************************************
  *                                      Semantic Values
@@ -255,6 +434,9 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
 void
 RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
+    ASSERT_not_null(value);
+    ASSERT_require2(reg.get_nbits()==value->get_width(), "value written to register must be the same width as the register");
+
     // Fast case: the state does not store this register or any register that might overlap with this register
     Registers::iterator ri = registers.find(reg);
     if (ri==registers.end()) {
@@ -470,6 +652,9 @@ RegisterStateX86::clear()
         segreg[i] = protoval->undefined_(16);
     for (size_t i=0; i<n_flags; ++i)
         flag[i] = protoval->undefined_(1);
+    for (size_t i=0; i<n_st; ++i)
+        st[i] = protoval->undefined_(80);
+    fpstatus = protoval->undefined_(16);
 }
 
 void
@@ -482,6 +667,7 @@ RegisterStateX86::zero()
         segreg[i] = protoval->number_(16, 0);
     for (size_t i=0; i<n_flags; ++i)
         flag[i] = protoval->number_(1, 0);
+    fpstatus = protoval->number_(16, 0);
 }
 
 SValuePtr
@@ -491,11 +677,18 @@ RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops
         case x86_regclass_gpr:
             return readRegisterGpr(reg, ops);
         case x86_regclass_flags:
-            return readRegisterFlag(reg, ops);
+            if (reg.get_minor()==x86_flags_status)
+                return readRegisterFlag(reg, ops);
+            if (reg.get_minor()==x86_flags_fpstatus)
+                return readRegisterFpStatus(reg, ops);
+            throw Exception("invalid flags minor number: " + StringUtility::numberToString(reg.get_minor()),
+                            ops->get_insn());
         case x86_regclass_segment:
             return readRegisterSeg(reg, ops);
         case x86_regclass_ip:
             return readRegisterIp(reg, ops);
+        case x86_regclass_st:
+            return readRegisterSt(reg, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
                             " (wrong RegisterDictionary?)", ops->get_insn());
@@ -575,6 +768,30 @@ RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *o
     return ip;
 }
 
+SValuePtr
+RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_st);
+    assert(reg.get_minor()<8);
+    assert(reg.get_offset()==0);
+    assert(reg.get_nbits()==80);
+    SValuePtr retval = st[reg.get_minor()];
+    assert(retval!=NULL && retval->get_width()==80);
+    return retval;
+}
+
+SValuePtr
+RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(reg.get_minor()==x86_flags_fpstatus);
+    assert(reg.get_offset() + reg.get_nbits() <= 16);
+    assert(fpstatus!=NULL && fpstatus->get_width()==16);
+    if (16==reg.get_nbits())
+        return fpstatus;
+    return ops->extract(fpstatus, reg.get_offset(), reg.get_offset()+reg.get_nbits());
+}
+
 void
 RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
@@ -582,11 +799,18 @@ RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &
         case x86_regclass_gpr:
             return writeRegisterGpr(reg, value, ops);
         case x86_regclass_flags:
-            return writeRegisterFlag(reg, value, ops);
+            if (reg.get_minor()==x86_flags_status)
+                return writeRegisterFlag(reg, value, ops);
+            if (reg.get_minor()==x86_flags_fpstatus)
+                return writeRegisterFpStatus(reg, value, ops);
+            throw Exception("invalid register minor number: " + StringUtility::numberToString(reg.get_minor()),
+                            ops->get_insn());
         case x86_regclass_segment:
             return writeRegisterSeg(reg, value, ops);
         case x86_regclass_ip:
             return writeRegisterIp(reg, value, ops);
+        case x86_regclass_st:
+            return writeRegisterSt(reg, value, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
                             " (wrong RegisterDictionary?)", ops->get_insn());
@@ -671,6 +895,35 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
+RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_st);
+    assert(reg.get_minor()<8);
+    assert(reg.get_offset()==0);
+    assert(reg.get_nbits()==80);
+    assert(value!=NULL);
+    assert(value->get_width()==80);
+    st[reg.get_minor()] = value;
+}
+
+void
+RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(reg.get_minor()==x86_flags_fpstatus);
+    assert(reg.get_offset()+reg.get_nbits() <= 16);
+    assert(value!=NULL && value->get_width()==reg.get_nbits());
+
+    SValuePtr towrite = value;
+    if (reg.get_offset()!=0)
+        towrite = ops->concat(ops->extract(fpstatus, 0, reg.get_offset()), towrite);
+    if (reg.get_offset() + reg.get_nbits()<32)
+        towrite = ops->concat(towrite, ops->extract(fpstatus, reg.get_offset()+reg.get_nbits(), 16));
+    assert(towrite->get_width()==16);
+    fpstatus = towrite;
+}
+
+void
 RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const 
 {
     const RegisterDictionary *regdict = fmt.get_register_dictionary();
@@ -724,6 +977,28 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
                 }
             }
         }
+        for (size_t i=0; i<n_st; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_st, i, 0, 80));
+            if (should_show(regname, st[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*st[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_flags, x86_flags_fpstatus, 0, 16));
+            if (should_show(regname, fpstatus)) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*fpstatus+fmt) <<" }\n";
+                }
+            }
+        }
         {
             std::string regname = regnames(RegisterDescriptor(x86_regclass_ip, 0, 0, 32));
             if (should_show(regname, ip)) {
@@ -743,74 +1018,78 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
  *******************************************************************************************************************************/
 
 bool
-MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *ops) const
+MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
     if (8==value->get_width() && 8==other->get_value()->get_width())
-        return address->may_equal(other->get_address(), ops->get_solver());
+        return address->may_equal(other->get_address(), addrOps->get_solver());
 
     size_t addr_nbits = address->get_width();
     assert(other->get_address()->get_width()==addr_nbits);
 
     assert(value->get_width() % 8 == 0);                // memory is byte addressable, so values must be multiples of a byte
     SValuePtr lo1 = address;
-    SValuePtr hi1 = ops->add(lo1, ops->number_(lo1->get_width(), value->get_width() / 8));
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
 
     assert(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
-    SValuePtr hi2 = ops->add(lo2, ops->number_(lo2->get_width(), other->get_value()->get_width() / 8));
+    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->get_width(), other->get_value()->get_width() / 8));
 
     // Two cells may_alias iff we can prove that they are not disjoint.  The two cells are disjoint iff lo2 >= hi1 or lo1 >=
     // hi2. Two things complicate this: first, the values might not be known quantities, depending on the semantic domain.
     // Second, the RiscOperators does not define a greater-than-or-equal operation, so we need to write it in terms of a
     // subtraction. See x86 CMP and JG instructions for examples. ("sf" is sign flag, "of" is overflow flag.)
     SValuePtr carries;
-    SValuePtr diff = ops->addWithCarries(lo2, ops->invert(hi1), ops->boolean_(true), carries/*out*/);
-    SValuePtr sf = ops->extract(diff, addr_nbits-1, addr_nbits);
-    SValuePtr of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
-    SValuePtr cond1 = ops->invert(ops->xor_(sf, of));
-    diff = ops->addWithCarries(lo1, ops->invert(hi2), ops->boolean_(true), carries/*out*/);
-    sf = ops->extract(diff, addr_nbits-1, addr_nbits);
-    of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
-    SValuePtr cond2 = ops->invert(ops->xor_(sf, of));
-    SValuePtr disjoint = ops->or_(cond1, cond2);
+    SValuePtr diff = addrOps->addWithCarries(lo2, addrOps->invert(hi1), addrOps->boolean_(true), carries/*out*/);
+    SValuePtr sf = addrOps->extract(diff, addr_nbits-1, addr_nbits);
+    SValuePtr of = addrOps->xor_(addrOps->extract(carries, addr_nbits-1, addr_nbits),
+                                 addrOps->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond1 = addrOps->invert(addrOps->xor_(sf, of));
+    diff = addrOps->addWithCarries(lo1, addrOps->invert(hi2), addrOps->boolean_(true), carries/*out*/);
+    sf = addrOps->extract(diff, addr_nbits-1, addr_nbits);
+    of = addrOps->xor_(addrOps->extract(carries, addr_nbits-1, addr_nbits),
+                       addrOps->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond2 = addrOps->invert(addrOps->xor_(sf, of));
+    SValuePtr disjoint = addrOps->or_(cond1, cond2);
     if (disjoint->is_number() && disjoint->get_number()!=0)
         return false;
     return true;
 }
 
 bool
-MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
+MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
     if (8==value->get_width() && 8==other->get_value()->get_width())
-        return address->must_equal(other->get_address(), ops->get_solver());
+        return address->must_equal(other->get_address(), addrOps->get_solver());
 
     size_t addr_nbits = address->get_width();
     assert(other->get_address()->get_width()==addr_nbits);
 
     assert(value->get_width() % 8 == 0);
     SValuePtr lo1 = address;
-    SValuePtr hi1 = ops->add(lo1, ops->number_(lo1->get_width(), value->get_width() / 8));
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
 
     assert(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
-    SValuePtr hi2 = ops->add(lo2, ops->number_(lo2->get_width(), other->get_value()->get_width() / 8));
+    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->get_width(), other->get_value()->get_width() / 8));
 
     // Two cells must_alias iff hi2 >= lo1 and hi1 >= lo2. Two things complicate this: first, the values might not be known
     // quantities, depending on the semantic domain.  Second, the RiscOperators does not define a greater-than-or-equal
     // operation, so we need to write it in terms of a subtraction. See x86 CMP and JG instructions for examples. ("sf" is sign
     // flag, "of" is overflow flag.)
     SValuePtr carries;
-    SValuePtr diff = ops->addWithCarries(hi2, ops->invert(lo1), ops->boolean_(true), carries/*out*/);
-    SValuePtr sf = ops->extract(diff, addr_nbits-1, addr_nbits);
-    SValuePtr of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
-    SValuePtr cond1 = ops->invert(ops->xor_(sf, of));
-    diff = ops->addWithCarries(hi1, ops->invert(lo2), ops->boolean_(true), carries/*out*/);
-    sf = ops->extract(diff, addr_nbits-1, addr_nbits);
-    of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
-    SValuePtr cond2 = ops->invert(ops->xor_(sf, of));
-    SValuePtr overlap = ops->and_(cond1, cond2);
+    SValuePtr diff = addrOps->addWithCarries(hi2, addrOps->invert(lo1), addrOps->boolean_(true), carries/*out*/);
+    SValuePtr sf = addrOps->extract(diff, addr_nbits-1, addr_nbits);
+    SValuePtr of = addrOps->xor_(addrOps->extract(carries, addr_nbits-1, addr_nbits),
+                                 addrOps->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond1 = addrOps->invert(addrOps->xor_(sf, of));
+    diff = addrOps->addWithCarries(hi1, addrOps->invert(lo2), addrOps->boolean_(true), carries/*out*/);
+    sf = addrOps->extract(diff, addr_nbits-1, addr_nbits);
+    of = addrOps->xor_(addrOps->extract(carries, addr_nbits-1, addr_nbits),
+                       addrOps->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond2 = addrOps->invert(addrOps->xor_(sf, of));
+    SValuePtr overlap = addrOps->and_(cond1, cond2);
     if (overlap->is_number() && overlap->get_number()!=0)
         return true;
     return false;
@@ -826,12 +1105,12 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 }
 
 SValuePtr
-MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t nbits, RiscOperators *ops)
+MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps)
 {
     assert(addr!=NULL);
     assert(dflt!=NULL && (!byte_restricted || dflt->get_width()==8));
     bool short_circuited;
-    CellList found = scan(addr, nbits, ops, short_circuited/*out*/);
+    CellList found = scan(addr, dflt->get_width(), addrOps, valOps, short_circuited/*out*/);
     size_t nfound = found.size();
 
     SValuePtr retval;
@@ -840,23 +1119,23 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
         cells.push_front(protocell->create(addr, dflt));
     } else {
         retval = found.front()->get_value();
-        if (retval->get_width()!=nbits) {
+        if (retval->get_width()!=dflt->get_width()) {
             assert(!byte_restricted); // can't happen if memory state stores only byte values
-            retval = ops->unsignedExtend(retval, nbits); // extend or truncate
+            retval = valOps->unsignedExtend(retval, dflt->get_width()); // extend or truncate
         }
     }
 
-    assert(retval->get_width()==nbits);
+    assert(retval->get_width()==dflt->get_width());
     return retval;
 }
 
 std::set<rose_addr_t>
-MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *ops)
+MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps)
 {
     assert(addr!=NULL);
     std::set<rose_addr_t> retval;
     bool short_circuited;
-    CellList found = scan(addr, nbits, ops, short_circuited/*out*/);
+    CellList found = scan(addr, nbits, addrOps, valOps, short_circuited/*out*/);
     for (CellList::iterator fi=found.begin(); fi!=found.end(); ++fi) {
         MemoryCellPtr cell = *fi;
         if (cell->get_latest_writer())
@@ -866,7 +1145,7 @@ MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOper
 }
 
 void
-MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops)
+MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
     assert(!byte_restricted || value->get_width()==8);
     MemoryCellPtr cell = protocell->create(addr, value);
@@ -882,15 +1161,16 @@ MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 }
 
 MemoryCellList::CellList
-MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOperators *ops, bool &short_circuited/*out*/) const
+MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
+                     bool &short_circuited/*out*/) const
 {
     short_circuited = false;
     CellList retval;
-    MemoryCellPtr tmpcell = protocell->create(addr, ops->undefined_(nbits));
+    MemoryCellPtr tmpcell = protocell->create(addr, valOps->undefined_(nbits));
     for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (tmpcell->may_alias(*ci, ops)) {
+        if (tmpcell->may_alias(*ci, addrOps)) {
             retval.push_back(*ci);
-            if ((short_circuited = tmpcell->must_alias(*ci, ops)))
+            if ((short_circuited = tmpcell->must_alias(*ci, addrOps)))
                 break;
         }
     }
@@ -938,18 +1218,6 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
         // If the exception was thrown by something that didn't have an instruction available, then add the instruction
         if (!e.insn)
             e.insn = insn;
-#if 1 /*DEBUGGING [Robb P. Matzke 2014-01-15]*/
-        if (e.insn) {
-            std::string what = StringUtility::trim(e.what());
-            std::string insn_s = StringUtility::addrToString(e.insn->get_address()) + ": " + unparseInstruction(e.insn);
-            if (what.empty()) {
-                what = insn_s;
-            } else {
-                what += " (" + insn_s + ")";
-            }
-            throw Exception(what, e.insn);
-        }
-#endif
         throw e;
     }
     operators->finishInstruction(insn);
@@ -987,7 +1255,7 @@ Dispatcher::iproc_get(int key)
 }
 
 const RegisterDescriptor &
-Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
+Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing)
 {
     const RegisterDictionary *regdict = get_register_dictionary();
     if (!regdict)
@@ -995,8 +1263,12 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
 
     const RegisterDescriptor *reg = regdict->lookup(regname);
     if (!reg) {
+        if (allowMissing) {
+            static RegisterDescriptor invalidRegister;
+            return invalidRegister;
+        }
         std::ostringstream ss;
-        ss <<"Invalid register: \"" <<regname <<"\"";
+        ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->get_architecture_name() <<"\"";
         throw Exception(ss.str(), get_insn());
     }
 
@@ -1009,6 +1281,49 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
     return *reg;
 }
 
+void
+Dispatcher::decrementRegisters(SgAsmExpression *e)
+{
+    struct T1: AstSimpleProcessing {
+        RiscOperatorsPtr ops;
+        T1(const RiscOperatorsPtr &ops): ops(ops) {}
+        void visit(SgNode *node) {
+            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                const RegisterDescriptor &reg = rre->get_descriptor();
+                if (rre->get_adjustment() < 0) {
+                    SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
+                    if (reg.get_nbits() <= 64) {
+                        adj = ops->unsignedExtend(adj, reg.get_nbits());  // truncate
+                    } else {
+                        adj = ops->signExtend(adj, reg.get_nbits());      // extend
+                    }
+                    ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
+                }
+            }
+        }
+    } t1(operators);
+    t1.traverse(e, preorder);
+}
+
+void
+Dispatcher::incrementRegisters(SgAsmExpression *e)
+{
+    struct T1: AstSimpleProcessing {
+        RiscOperatorsPtr ops;
+        T1(const RiscOperatorsPtr &ops): ops(ops) {}
+        void visit(SgNode *node) {
+            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                const RegisterDescriptor &reg = rre->get_descriptor();
+                if (rre->get_adjustment() > 0) {
+                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.get_nbits());
+                    ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
+                }
+            }
+        }
+    } t1(operators);
+    t1.traverse(e, preorder);
+}
+
 SValuePtr
 Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
 {
@@ -1016,7 +1331,8 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        retval = operators->readRegister(rre->get_descriptor());
+        const RegisterDescriptor &reg = rre->get_descriptor();
+        retval = operators->readRegister(reg);
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
@@ -1031,14 +1347,8 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators->unsignedMultiply(lhs, rhs);
-    } else if (SgAsmByteValueExpression *val = isSgAsmByteValueExpression(e)) {
-        retval = operators->number_(8, SageInterface::getAsmSignedConstant(val));
-    } else if (SgAsmWordValueExpression *val = isSgAsmWordValueExpression(e)) {
-        retval = operators->number_(16, SageInterface::getAsmSignedConstant(val));
-    } else if (SgAsmDoubleWordValueExpression *val = isSgAsmDoubleWordValueExpression(e)) {
-        retval = operators->number_(32, SageInterface::getAsmSignedConstant(val));
-    } else if (SgAsmQuadWordValueExpression *val = isSgAsmQuadWordValueExpression(e)) {
-        retval = operators->number_(64, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(e)) {
+        retval = operators->number_(ival->get_significantBits(), ival->get_value());
     }
 
     assert(retval!=NULL);
@@ -1068,8 +1378,22 @@ void
 Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/)
 {
     assert(e!=NULL && value!=NULL);
-    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        operators->writeRegister(rre->get_descriptor(), value);
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        operators->writeRegister(re->get_descriptor(), value);
+    } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
+        SValuePtr offset = operators->readRegister(re->get_offset());
+        if (!offset->is_number()) {
+            std::string offset_name = get_register_dictionary()->lookup(re->get_offset());
+            offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
+            throw Exception("indirect register offset " + offset_name + "must have a concrete value", NULL);
+        }
+        size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
+        RegisterDescriptor reg = re->get_descriptor();
+        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
+        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
+        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
+        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        operators->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
         operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
@@ -1083,18 +1407,42 @@ SValuePtr
 Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
 {
     assert(e!=NULL);
-    BaseSemantics::SValuePtr retval;
-    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        retval = operators->readRegister(rre->get_descriptor());
+    SValuePtr retval;
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        retval = operators->readRegister(re->get_descriptor());
+    } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
+        SValuePtr offset = operators->readRegister(re->get_offset());
+        if (!offset->is_number()) {
+            std::string offset_name = get_register_dictionary()->lookup(re->get_offset());
+            offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
+            throw Exception("indirect register offset " + offset_name + "must have a concrete value", NULL);
+        }
+        size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
+        RegisterDescriptor reg = re->get_descriptor();
+        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
+        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
+        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
+        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        retval = operators->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
-        retval = operators->readMemory(segmentRegister(mre), addr, operators->boolean_(true), value_nbits);
+        BaseSemantics::SValuePtr dflt = undefined_(value_nbits);
+        retval = operators->readMemory(segmentRegister(mre), addr, dflt, operators->boolean_(true));
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
         uint64_t val = SageInterface::getAsmSignedConstant(ve);
         retval = operators->number_(value_nbits, val);
+    } else if (SgAsmBinaryAdd *sum = isSgAsmBinaryAdd(e)) {
+        SgAsmExpression *lhs = sum->get_lhs();
+        SgAsmExpression *rhs = sum->get_rhs();
+        size_t nbits = std::max(lhs->get_nBits(), rhs->get_nBits());
+        retval = operators->add(operators->signExtend(read(lhs, lhs->get_nBits(), addr_nbits), nbits),
+                                operators->signExtend(read(rhs, rhs->get_nBits(), addr_nbits), nbits));
+    } else if (SgAsmBinaryMultiply *product = isSgAsmBinaryMultiply(e)) {
+        SgAsmExpression *lhs = product->get_lhs();
+        SgAsmExpression *rhs = product->get_rhs();
+        retval = operators->unsignedMultiply(read(lhs, lhs->get_nBits()), read(rhs, rhs->get_nBits()));
     } else {
-        assert(!"not implemented");
-        abort();
+        ASSERT_not_implemented(e->class_name());
     }
 
     // Make sure the return value is the requested width. The unsignedExtend() can expand or shrink values.
@@ -1103,11 +1451,8 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
         retval = operators->unsignedExtend(retval, value_nbits);
     return retval;
 }
-
-
     
-    
-
+} // namespace
 } // namespace
 } // namespace
 } // namespace

@@ -6,6 +6,9 @@
 #include "Disassembler.h"
 #include "InstructionEnumsX86.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
@@ -24,17 +27,6 @@ public:
         init(wordsize);
     }
 
-    DisassemblerX86(const DisassemblerX86 &other)
-        : Disassembler(other), insnSize(other.insnSize), ip(other.ip), insnbufat(other.insnbufat),
-          segOverride(other.segOverride), branchPrediction(other.branchPrediction),
-          branchPredictionEnabled(other.branchPredictionEnabled), rexPresent(other.rexPresent), rexW(other.rexW), 
-          rexR(other.rexR), rexX(other.rexX), rexB(other.rexB), sizeMustBe64Bit(other.sizeMustBe64Bit),
-          operandSizeOverride(other.operandSizeOverride), addressSizeOverride(other.addressSizeOverride),
-          lock(other.lock), repeatPrefix(other.repeatPrefix), modregrmByteSet(other.modregrmByteSet),
-          modregrmByte(other.modregrmByte), modeField(other.modeField), rmField(other.rmField), modrm(other.modrm),
-          reg(other.reg), isUnconditionalJump(other.isUnconditionalJump) {
-    }
-    
     virtual ~DisassemblerX86() {}
 
     virtual DisassemblerX86 *clone() const /*override*/ { return new DisassemblerX86(*this); }
@@ -181,25 +173,25 @@ private:
                                          SgAsmExpression *op3=NULL, SgAsmExpression *op4=NULL);
 
     /** Constructs a register reference expression for the instruction pointer register. */
-    SgAsmx86RegisterReferenceExpression *makeIP();
+    SgAsmRegisterReferenceExpression *makeIP();
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber);
+    SgAsmRegisterReferenceExpression *makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber);
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber);
+    SgAsmRegisterReferenceExpression *makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber);
 
     /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
      *  than one type. */
-    SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
+    SgAsmRegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode, SgAsmType *registerType=NULL) const;
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
+    SgAsmRegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
         return makeRegister(fullRegisterNumber, effectiveOperandMode());
     }
 
     /* FIXME: documentation? */
-    SgAsmx86RegisterReferenceExpression *makeRegisterEffective(bool rexExtension, uint8_t registerNumber) {
+    SgAsmRegisterReferenceExpression *makeRegisterEffective(bool rexExtension, uint8_t registerNumber) {
         return makeRegister(registerNumber + (rexExtension ? 8 : 0), effectiveOperandMode());
     }
 
@@ -240,7 +232,7 @@ private:
 
     /** Builds the register reference expression for the ModR/M byte. See getModRegRM(). The @p mrType is only used for vector
      *  registers. */
-    SgAsmx86RegisterReferenceExpression *makeModrmRegister(RegisterMode, SgAsmType* mrType=NULL);
+    SgAsmRegisterReferenceExpression *makeModrmRegister(RegisterMode, SgAsmType* mrType=NULL);
 
     /** Throw an exceptions if the instruction requires the "Mod" part of the ModR/M byte to have the value 3. */
     void requireMemory() const {
@@ -419,5 +411,8 @@ private:
     SgAsmExpression *reg;                       /**< Register reference expression built from modregrmByte; see getModRegRM() */
     bool isUnconditionalJump;                   /**< True for jmp, farjmp, ret, retf, iret, and hlt */
 };
+
+} // namespace
+} // namespace
 
 #endif

@@ -6,6 +6,10 @@
 #include <vector>
 
 #include "callbacks.h"
+#include "Diagnostics.h"
+
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Functions indexed by entry address.
  *
@@ -358,7 +362,7 @@ public:
          *  callback, so subclasses should take care to add their own footnote if necessary. */
         OutputCallback(const std::string &name, size_t width, const std::string description="")
             : name(name), desc(description), width(width), header_prefix(" "), separator_prefix(" "), data_prefix(" ") {
-            assert(width>0 || name.empty());
+            ASSERT_require(width>0 || name.empty());
         }
 
         virtual ~OutputCallback() {}
@@ -485,5 +489,7 @@ protected:
     ROSE_Callbacks::List<OutputCallback> output_callbacks;
 };
 
-    
+} // namespace
+} // namespace
+
 #endif

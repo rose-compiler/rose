@@ -9,15 +9,24 @@
  *---------------------------------------------------------------------------*/
 #include "cmdline.h"
 #include "keep_going.h"
+#include "Diagnostics.h"                                // rose::Diagnostics
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <sawyer/CommandLine.h>
+
+using namespace rose;                                   // temporary, until this file lives in namespace rose
+
+#include <inttypes.h> /* for %" PRIuPTR " vs. %Iu handling */
 
 /*-----------------------------------------------------------------------------
  *  Variable Definitions
  *---------------------------------------------------------------------------*/
-int Rose::Cmdline::verbose = 0;
-std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
-std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
+ROSE_DLL_API int Rose::Cmdline::verbose = 0;
+ROSE_DLL_API bool Rose::Cmdline::Java::Ecj::batch_mode = false;
+ROSE_DLL_API std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
+ROSE_DLL_API std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
+std::list<std::string> Rose::Cmdline::X10::X10c::jvm_options;
 
 /*-----------------------------------------------------------------------------
  *  namespace Rose::Cmdline {
@@ -27,7 +36,7 @@ void
 Rose::Cmdline::
 makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result)
    {
-     string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include/edg");
      for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           ROSE_ASSERT (!i->empty());
@@ -121,7 +130,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
 
      if (SgProject::get_verbose() > 0)
         {
-          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
         }
 
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
@@ -186,7 +195,7 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
 
      initExecutableFileSuffixList();
 
-  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -258,6 +267,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
           argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
+          argument == "-rose:log" ||                        // Used to conntrol rose::Diagnostics
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
           argument == "-rose:outputFormat" ||
@@ -278,6 +288,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:projectSpecificDatabaseFile" ||
 
           // TOO1 (2/13/2014): Starting to refactor CLI handling into separate namespaces
+          Rose::Cmdline::Unparser::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Fortran::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Java::OptionRequiresArgument(argument) ||
 
@@ -347,6 +358,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (1/26/2014): Support for make dependence option -MM <file name for dependence info>
           argument == "-MM" ||
+
+       // DQ (3/25/2014): We need the icpc/icc ‘-fp-model <arg>’  command-line compiler option to be
+       // passed to the backend compiler properly.  The ‘-fp-model’ option always has a single argument.
+          argument == "-fp-model" ||
           false)
         {
           result = true;
@@ -387,6 +402,9 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    {
      Rose_STL_Container<string> sourceFileList;
 
+      { // Expand Javac's @argfile since it may contain filenames
+          argList = Rose::Cmdline::Java::ExpandArglist(argList);
+      }
 
      bool isSourceCodeCompiler = false;
 
@@ -440,7 +458,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
           if ( (*i).empty() || (((*i)[0] != '-') && ((*i)[0] != '+')) )
              {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
+            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
 
                  if (!isSourceFilename(*i) &&
                      (binaryMode || !isObjectFilename(*i)) &&
@@ -547,6 +565,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           Rose::Cmdline::NormalizeIncludePathOptions(
               local_commandLineArgumentList);
   }
+  { // Expand Javac's @argfile before CLI processing
+      local_commandLineArgumentList =
+          Rose::Cmdline::Java::ExpandArglist(
+              local_commandLineArgumentList);
+  }
 
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
@@ -554,7 +577,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
   // printf ("DONE with copy of command line in SgProject constructor! \n");
 
-  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %zu \n",local_commandLineArgumentList.size());
+  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %" PRIuPTR " \n",local_commandLineArgumentList.size());
 
      if (SgProject::get_verbose() > 1)
         {
@@ -585,6 +608,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("option -help found \n");
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
+  // Default
           cout << version_message() << endl;
        // ROSE::usage(0);
           SgFile::usage(0);
@@ -815,6 +839,38 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_mode_32_bit = true;
         }
 
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
+  //
+  // noclobber_output_file
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","noclobber_output_file",false) == true )
+        {
+#if 0
+          printf ("detected use of noclobber_output_file mode \n");
+#endif
+          p_noclobber_output_file = true;
+        }
+
+
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
+  //
+  // noclobber_if_different_output_file
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","noclobber_if_different_output_file",false) == true )
+        {
+#if 0
+          printf ("detected use of noclobber_if_different_output_file mode \n");
+#endif
+          p_noclobber_if_different_output_file = true;
+
+       // Make it an error to specify both of these noclobber options.
+          if (p_noclobber_output_file == true)
+             {
+               printf ("Error: options -rose:noclobber_output_file and -rose:noclobber_if_different_output_file are mutually exclusive \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
   //
   // specify compilation only option (new style command line processing)
   //
@@ -873,6 +929,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_openmp_linking(true);
         }
 
+      Rose::Cmdline::Unparser::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Fortran::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Java::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::X10::Process(this, local_commandLineArgumentList);
@@ -1137,7 +1194,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
 
-       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %zu \n",p_sourceFileNameList.size());
+       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %" PRIuPTR " \n",p_sourceFileNameList.size());
 
        // DQ (2/4/2009): Only put *.o files into the objectFileNameList is they are not being
        // processed as binary source files (targets for analysis, as opposed to linking).
@@ -1256,12 +1313,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
               p_includeDirectorySpecifierList.push_back("-I" + include_path);
 
-              bool is_directory = boost::filesystem::is_directory(include_path);
+              std::string include_path_no_quotes =
+                  boost::replace_all_copy(include_path, "\"", "");
+              bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
               if (false == is_directory)
               {
                   std::cout  << "[WARN] "
                           << "Invalid argument to -I; path does not exist: "
-                          << "'" << include_path << "'"
+                          << "'" << include_path_no_quotes << "'"
                           << std::endl;
               }
           }
@@ -1367,7 +1426,6 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
       // be entered.
       if (looking_for_include_path_arg)
       {
-          r_argv.push_back("-I" + arg);
           looking_for_include_path_arg = false; // reset for next iteration
 
           // Sanity check
@@ -1379,6 +1437,12 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
                         << "'" << arg << "'"
                         << std::endl;
           }
+          #ifdef _MSC_VER
+          // ensure that the path is quoted on Windows.
+          r_argv.push_back("-I\"" + arg + "\"");
+          #else
+          r_argv.push_back("-I" + arg + "");
+          #endif
       }
       else if ((arg.size() >= 2) && (arg[0] == '-') && (arg[1] == 'I'))
       {
@@ -1394,7 +1458,15 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           }
           else
           {
-              // no normalization required for -I<path>
+              // no normalization required for -I<path>, but ensure
+              // that the path is quoted on Windows.
+              #ifdef _MSC_VER
+              if (arg[2] != '"')
+              {
+                  arg.insert(2, "\"");
+                  arg.append("\"");
+              }
+              #endif
               r_argv.push_back(arg);
           }
       }
@@ -1422,6 +1494,7 @@ void
 Rose::Cmdline::
 StripRoseOptions (std::vector<std::string>& argv)
 {
+  Cmdline::Unparser::StripRoseOptions(argv);
   Cmdline::Fortran::StripRoseOptions(argv);
   Cmdline::Java::StripRoseOptions(argv);
 }// Cmdline::StripRoseOptions
@@ -1443,9 +1516,86 @@ ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
           std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
 
       project->set_keep_going(true);
-      ROSE::KeepGoing::g_keep_going = true;
+      Rose::KeepGoing::g_keep_going = true;
   }
 }
+
+//------------------------------------------------------------------------------
+//                                  Unparser
+//------------------------------------------------------------------------------
+
+bool
+Rose::Cmdline::Unparser::
+OptionRequiresArgument (const std::string& option)
+{
+  return
+      // ROSE Options
+      option == "-rose:unparser:some_option_taking_argument";
+}// ::Rose::Cmdline:Unparser:::OptionRequiresArgument
+
+void
+Rose::Cmdline::Unparser::
+StripRoseOptions (std::vector<std::string>& argv)
+{
+  std::string argument;
+
+  // TOO1 (3/20/2014): TODO: Refactor Unparser specific CLI handling here
+  // (1) Options WITHOUT an argument
+  // Example: sla(argv, "-rose:", "($)", "(unparser)",1);
+  sla(argv, "-rose:unparser:", "($)", "(clobber_input_file)",1);
+
+  //
+  // (2) Options WITH an argument
+  //
+
+  // Remove Unparser options with ROSE-unparser prefix; option arguments removed
+  // by generateOptionWithNameParameterList.
+  //
+  // For example,
+  //
+  //    BEFORE: argv = [-rose:unparser:clobber_input_file, -rose:verbose, "3"]
+  //    AFTER:  argv = [-rose:verbose, "3"]
+  //            unparser_options = [-clobber_input_file]
+  // std::vector<std::string> unparser_options =
+  //     CommandlineProcessing::generateOptionWithNameParameterList(
+  //         argv,                               // Remove ROSE-Unparser options from here
+  //         Cmdline::Unparser::option_prefix,   // Current prefix, e.g. "-rose:unparser:"
+  //         "-");                               // New prefix, e.g. "-"
+}// ::Rose::Cmdline::Unparser::StripRoseOptions
+
+void
+Rose::Cmdline::Unparser::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Unparser commandline options" << std::endl;
+
+  ProcessClobberInputFile(project, argv);
+}// ::Rose::Cmdline::Unparser::Process
+
+void
+Rose::Cmdline::Unparser::
+ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_clobber_input_file =
+      CommandlineProcessing::isOption(
+          argv,
+          Cmdline::Unparser::option_prefix,
+          "clobber_input_file",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_clobber_input_file)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] **CAUTION** Turning on the Unparser's destructive clobber mode =O" << std::endl;
+
+      project->set_unparser__clobber_input_file(true);
+  }
+  else
+  {
+      project->set_unparser__clobber_input_file(false);
+  }
+}// ::Rose::Cmdline::Unparser::ProcessClobberInputFile
 
 //------------------------------------------------------------------------------
 //                                  Fortran
@@ -1711,10 +1861,15 @@ OptionRequiresArgument (const std::string& option)
 {
   return
       // Javac Options
+      option == "-bootclasspath"            ||
       option == "-classpath"                ||
       option == "-cp"                       ||
       option == "-sourcepath"               ||
       option == "-d"                        ||
+      option == "-source"                   ||
+      option == "-target"                   ||
+      option == "-encoding"                 ||
+      option == "-s"                        ||
       // ROSE Options
       option == "-rose:java:cp"             ||
       option == "-rose:java:classpath"      ||
@@ -1739,6 +1894,8 @@ StripRoseOptions (std::vector<std::string>& argv)
   //
   // (2) Options WITH an argument
   //
+
+  Cmdline::Java::Ecj::StripRoseOptions(argv);
 
   // Remove Java options with ROSE-Java prefix; option arguments removed
   // by generateOptionWithNameParameterList.
@@ -1768,8 +1925,6 @@ StripRoseOptions (std::vector<std::string>& argv)
       else
           argv.push_back(java_option);
   }
-
-  Cmdline::Java::Ecj::StripRoseOptions(argv);
 }// Cmdline::Java::StripRoseOptions
 
 void
@@ -1777,13 +1932,27 @@ Rose::Cmdline::Java::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
   if (SgProject::get_verbose() > 1)
-      std::cout << "[INFO] Processing Java commandline options" << std::endl;
+  {
+      std::cout
+          << "[INFO] Processing Java commandline options: "
+          << CommandlineProcessing::generateStringFromArgList(argv, true, false)
+          << std::endl;
+  }
 
-  ProcessJavaOnly(project, argv);
-  ProcessClasspath(project, argv);
-  ProcessSourcepath(project, argv);
-  ProcessDestdir(project, argv);
-  ProcessSourceDestdir(project, argv);
+  Cmdline::Java::ProcessJavaOnly(project, argv);
+  Cmdline::Java::ProcessClasspath(project, argv);
+  Cmdline::Java::ProcessSourcepath(project, argv);
+  Cmdline::Java::ProcessDestdir(project, argv);
+  Cmdline::Java::ProcessSourceDestdir(project, argv);
+  Cmdline::Java::ProcessS(project, argv);
+  Cmdline::Java::ProcessSource(project, argv);
+  Cmdline::Java::ProcessTarget(project, argv);
+  Cmdline::Java::ProcessEncoding(project, argv);
+  Cmdline::Java::ProcessG(project, argv);
+  Cmdline::Java::ProcessNoWarn(project, argv);
+  Cmdline::Java::ProcessVerbose(project, argv);
+  Cmdline::Java::ProcessDeprecation(project, argv);
+  Cmdline::Java::ProcessBootclasspath(project, argv);
 
   Cmdline::Java::Ecj::Process(project, argv);
 }
@@ -1792,6 +1961,7 @@ void
 Rose::Cmdline::Java::
 ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
 {
+  project->set_Java_only(false);
   bool is_java_only =
       CommandlineProcessing::isOption(
           argv,
@@ -1871,6 +2041,47 @@ ProcessClasspath (SgProject* project, std::vector<std::string>& argv)
       }// sanity check
   }// has_java_classpath
 }// Cmdline::Java::ProcessClasspath
+
+void
+Rose::Cmdline::Java::
+ProcessBootclasspath (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string bootclasspath = "";
+
+  bool has_java_bootclasspath =
+      // -bootclasspath
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-bootclasspath",
+          "",
+          bootclasspath,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_bootclasspath)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -bootclasspath option" << std::endl;
+
+      // Parse and register the Java bootclasspath in the project
+      std::list<std::string> bootclasspath_list =
+          StringUtility::tokenize(bootclasspath, ':');
+      project->set_Java_bootclasspath(bootclasspath_list);
+
+      // Sanity check: Check existence of paths in Bootbootclasspath
+      BOOST_FOREACH(std::string path, bootclasspath_list)
+      {
+          bool path_exists = boost::filesystem::exists(path);
+          if (!path_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid path specified in -bootclasspath; path does not exist: "
+                  << "'" << path << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_bootclasspath
+}// Cmdline::Java::ProcessBootclasspath
 
 void
 Rose::Cmdline::Java::
@@ -2001,6 +2212,338 @@ ProcessSourceDestdir (SgProject* project, std::vector<std::string>& argv)
   }// has_java_source_destdir
 }// Cmdline::Java::ProcessSourceDestdir
 
+void
+Rose::Cmdline::Java::
+ProcessS (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string generate_source_file_dir = "";
+
+  bool has_java_source_destdir =
+      // -s
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-s",
+          "",
+          generate_source_file_dir,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_source_destdir)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing javac -s option" << std::endl;
+
+      project->set_Java_s(generate_source_file_dir);
+
+      // Sanity check: Check existence of source destdir path
+      {
+          bool directory_exists = boost::filesystem::is_directory(generate_source_file_dir);
+          if (!directory_exists)
+          {
+              std::cout
+                  << "[WARN] "
+                  << "Invalid javac -s directory path; path does not exist: "
+                  << "'" << generate_source_file_dir << "'"
+                  << std::endl;
+          }
+      }// sanity check
+  }// has_java_source_destdir
+}// Cmdline::Java::ProcessSourceDestdir
+
+void
+Rose::Cmdline::Java::
+ProcessSource (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -source " << std::endl;
+
+  std::string source = "";
+
+  bool has_java_source =
+      // -source
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-source",
+          "",
+          source,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:source
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "source",
+          source,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  // Default
+  //if (has_java_source == false)
+  //{
+  //    source = "1.6";
+  //}
+
+  project->set_Java_source(source);
+}// Cmdline::Java::ProcessSource
+
+void
+Rose::Cmdline::Java::
+ProcessTarget (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -target " << std::endl;
+
+  std::string target = "";
+
+  bool has_java_target =
+      // -target
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-target",
+          "",
+          target,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:target
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "target",
+          target,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  // Default
+  //if (has_java_target == false)
+  //{
+  //    target = "1.6";
+  //}
+
+  project->set_Java_target(target);
+}// Cmdline::Java::Processtarget
+
+void
+Rose::Cmdline::Java::
+ProcessEncoding (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string encoding = "";
+
+  bool has_java_encoding =
+      // -encoding
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-encoding",
+          "",
+          encoding,
+          Cmdline::REMOVE_OPTION_FROM_ARGV) ||
+      // -rose:java:encoding
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          Java::option_prefix,
+          "encoding",
+          encoding,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_encoding)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -encoding " << encoding << std::endl;
+
+      project->set_Java_encoding(encoding);
+  }// has_java_encoding
+}// Cmdline::Java::Processencoding
+
+void
+Rose::Cmdline::Java::
+ProcessG (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string g = "";
+
+  bool has_java_g =
+      // -g
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          "-g",
+          "",
+          g,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_g)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -g[:none,source,lines,vars] " << g << std::endl;
+
+      project->set_Java_g(g);
+  }// has_java_g
+}// Cmdline::Java::Processg
+
+void
+Rose::Cmdline::Java::
+ProcessNoWarn (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_java_nowarn =
+      // -nowarn
+      CommandlineProcessing::isOption(
+          argv,
+          "-nowarn",
+          "",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_nowarn)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -nowarn " << std::endl;
+  }// has_java_nowarn
+
+  project->set_Java_nowarn(has_java_nowarn);
+}// Cmdline::Java::Processnowarn
+
+void
+Rose::Cmdline::Java::
+ProcessVerbose (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_java_verbose =
+      // -verbose
+      CommandlineProcessing::isOption(
+          argv,
+          "-verbose",
+          "",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_java_verbose)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -verbose " << std::endl;
+  }// has_java_verbose
+
+  project->set_Java_verbose(has_java_verbose);
+}// Cmdline::Java::ProcessVerbose
+
+void
+Rose::Cmdline::Java::
+ProcessDeprecation (SgProject* project, std::vector<std::string>& argv)
+{
+  bool has_deprecation =
+      // -deprecation
+      CommandlineProcessing::isOption(
+          argv,
+          "-deprecation",
+          "",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_deprecation)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Processing Java -deprecation " << std::endl;
+  }
+
+  project->set_Java_deprecation(has_deprecation);
+}// ::Rose::Cmdline::Java::ProcessDeprecation
+
+Rose_STL_Container<std::string>
+Rose::Cmdline::Java::
+ExpandArglist (const std::string& arglist_string)
+{
+  ROSE_ASSERT(!arglist_string.empty());
+  ROSE_ASSERT(arglist_string[0] == '@'); // @filename
+
+  Rose_STL_Container<std::string> arglist;
+
+  if (arglist_string.size() < 2)
+  {
+      std::cout
+          << "[FATAL] No filename found after @ symbol "
+          << "on the command line. Should be @<filename>."
+          << std::endl;
+      ROSE_ASSERT(false);
+  }
+  else
+  {
+      std::string filename = arglist_string.substr(1);
+      ROSE_ASSERT(filename.empty() == false);
+
+      arglist = Rose::Cmdline::Java::GetListFromFile(filename);
+      if (SgProject::get_verbose() > 2)
+      {
+          printf ("[INFO] "
+                  "Expanded @%s = '%s'\n",
+                  filename.c_str(),
+                  StringUtility::listToString(arglist).c_str());
+      }
+      return arglist;
+  }
+}// Cmdline::Java::ExpandArglist
+
+// TODO: should we validate that '@arglist' is only
+// passed once on the commandline?
+Rose_STL_Container<std::string>
+Rose::Cmdline::Java::
+ExpandArglist (const Rose_STL_Container<std::string>& p_argv)
+{
+  Rose_STL_Container<std::string> argv = p_argv;
+  Rose_STL_Container<std::string>::iterator i = argv.begin();
+  while (i != argv.end())
+  {
+      std::string argument = *i;
+      if (argument[0] == '@')
+      {
+          Rose_STL_Container<std::string> arglist =
+              Rose::Cmdline::Java::ExpandArglist(argument);
+
+          // Insert actual list of arguments in-place where @filename was found
+          int i_offset = std::distance(argv.begin(), i);
+          argv.erase(i);
+          argv.insert(argv.end(), arglist.begin(), arglist.end());
+          i = argv.begin() + i_offset;
+      }
+      else
+      {
+          ++i; // next commandline argument
+      }
+  }
+  return argv;
+}
+
+std::vector<std::string>
+Rose::Cmdline::Java::
+GetListFromFile (const std::string& filename)
+{
+    ROSE_ASSERT(! filename.empty());
+
+    std::vector<std::string> list;
+    std::ifstream            file(filename.c_str());
+    std::string              line;
+
+    while (!file.fail() && std::getline(file, line))
+    {
+        // TOO1 (3/4/2014): Strip quotes surrounding arguments; this is specific
+        //                  to how Maven utilizes javac @argfiles, e.g.:
+        //
+        //                      "javac"
+        //                      "-target 1.6"
+        //                      "-source 1.6"
+        //                      "File.java"
+        //
+        //                  TODO: Re-implement since this will not handle the case
+        //                  where file paths contain spaces and require quotations:
+        //
+        //                      "javac"
+        //                      "C:\ Program Files\Foo Bar Workspace\File.java"
+        line.erase(
+            std::remove(line.begin(), line.end(), '\"'),
+            line.end());
+        list.push_back(line);
+    }
+
+    file.close();
+
+    if (list.empty())
+    {
+        std::cout
+            << "[FATAL] No arguments found in file "
+            << "'" << filename << "'"
+            << std::endl;
+        ROSE_ASSERT(false);
+    }
+
+    return list;
+}
+
 // -rose:java:ecj options have already been transformed by Cmdline::Java::StripRoseOptions.
 // Therefore, for example,
 //
@@ -2021,6 +2564,13 @@ StripRoseOptions (std::vector<std::string>& argv)
           << "Stripping ROSE Java ECJ commandline options"
           << std::endl;
   }
+
+  // (1) Options WITHOUT an argument
+  sla(argv, "-rose:java:ecj:", "($)", "batch_mode", 1);
+
+  //
+  // (2) Options WITH an argument
+  //
 
   // Remove ECJ options with ROSE-ECJ prefix; option arguments removed
   // by generateOptionWithNameParameterList.
@@ -2049,6 +2599,13 @@ std::string
 Rose::Cmdline::Java::Ecj::
 GetRoseClasspath ()
 {
+  
+  #ifdef _MSC_VER
+  std::string separator = ";";
+  #else
+  std::string separator = ":";
+  #endif
+  
   std::string classpath = "-Djava.class.path=";
 
   // Java (ECJ front-end) support (adding specific jar file)
@@ -2062,7 +2619,7 @@ GetRoseClasspath ()
           ecj_class_path_jarfile,
           std::string("lib/") + ecj_jar_file_name
       );
-  classpath += ":";
+  classpath += separator;
 
   // Java (ECJ front-end) support (adding path to source tree for the jar file).
   // This allows us to avoid copying the jar file to the build tree which is
@@ -2072,7 +2629,7 @@ GetRoseClasspath ()
       findRoseSupportPathFromBuild(
           ecj_class_path,
           std::string("lib/"));
-  classpath += ":";
+  classpath += separator;
 
   // Everything else?
   classpath += ".";
@@ -2082,11 +2639,34 @@ GetRoseClasspath ()
 
 void
 Rose::Cmdline::Java::Ecj::
+ProcessBatchMode (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing Java -rose:java:ecj:batch_mode " << std::endl;
+
+  bool has_batch_mode =
+      // -rose:java:ecj:batch_mode
+      CommandlineProcessing::isOption(
+          argv,
+          Java::option_prefix,
+          "ecj:batch_mode",
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] -rose:java:ecj:batch_mode=" << has_batch_mode << std::endl;
+
+  Rose::Cmdline::Java::Ecj::batch_mode = has_batch_mode;
+  project->set_Java_batch_mode(has_batch_mode);
+}// ::Rose::Cmdline::Java::Ecj::ProcessBatchMode
+
+void
+Rose::Cmdline::Java::Ecj::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
   if (SgProject::get_verbose() > 1)
       std::cout << "[INFO] Processing Java's ECJ frontend commandline options" << std::endl;
 
+  ProcessBatchMode(project, argv);
   ProcessJvmOptions(project, argv);
   ProcessEnableRemoteDebugging(project, argv);
 }
@@ -2198,6 +2778,79 @@ ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
   }
 }
 
+void
+Rose::Cmdline::X10::X10c::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing X10 compiler frontend commandline options" << std::endl;
+
+  ProcessJvmOptions(project, argv);
+}
+
+void
+Rose::Cmdline::X10::X10c::
+ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing X10 compiler frontend JVM commandline options" << std::endl;
+
+  std::string x10c_jvm_options = "";
+
+  bool has_x10c_jvm_options =
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          X10::option_prefix,
+          "x10c:jvm_options",
+          x10c_jvm_options,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_x10c_jvm_options)
+  {
+      if (SgProject::get_verbose() > 1)
+      {
+          std::cout
+              << "[INFO] Processing X10 compiler options: "
+              << "'" << x10c_jvm_options << "'"
+              << std::endl;
+      }
+
+      std::list<std::string> x10c_jvm_options_list =
+          StringUtility::tokenize(x10c_jvm_options, ' ');
+
+      Cmdline::X10::X10c::jvm_options.insert(
+          Cmdline::X10::X10c::jvm_options.begin(),
+          x10c_jvm_options_list.begin(),
+          x10c_jvm_options_list.end());
+  }// has_x10c_jvm_options
+}// Cmdline::X10::ProcessJvmOptions
+
+std::string
+Rose::Cmdline::X10::X10c::
+GetRoseClasspath ()
+{
+  std::string classpath = "-Djava.class.path=";
+
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+  classpath +=
+      std::string(X10_INSTALL_PATH) + "/lib/x10c.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/lpg.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast.java_1.0.0.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast_1.0.0.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.core_1.1.3.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.shrike_1.3.1.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/x10wala.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/org.eclipse.equinox.common_3.6.0.v20100503.jar";
+#endif // ROSE_BUILD_X10_LANGUAGE_SUPPORT
+
+  classpath += ":";
+
+  // Everything else?
+  classpath += ".";
+
+  return classpath;
+}
+
 /*-----------------------------------------------------------------------------
  *  namespace SgFile {
  *---------------------------------------------------------------------------*/
@@ -2244,10 +2897,16 @@ SgFile::usage ( int status )
 "                             follow C89 standard, disable C++\n"
 "     -rose:C99_only, -rose:C99\n"
 "                             follow C99 standard, disable C++\n"
+"     -rose:C11_only, -rose:C11\n"
+"                             follow C11 standard, disable C++\n"
+"     -rose:C14_only, -rose:C14\n"
+"                             follow C14 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++89 standard\n"
 "     -rose:Cxx11_only, -rose:Cxx11\n"
 "                             follow C++11 standard\n"
+"     -rose:Cxx14_only, -rose:Cxx14\n"
+"                             follow C++14 standard\n"
 "     -rose:java\n"
 "                             compile Java code (work in progress)\n"
 "     -rose:java:cp, -rose:java:classpath, -cp, -classpath\n"
@@ -2259,9 +2918,9 @@ SgFile::usage ( int status )
 "     -rose:java:ds\n"
 "                             Specifies translated sources destination dir\n"
 "     -rose:java:source\n"
-"                             Specifies java sources version\n"
+"                             Specifies java sources version (default=1.6)\n"
 "     -rose:java:target\n"
-"                             Specifies java classes target version\n"
+"                             Specifies java classes target version (default=1.6)\n"
 "     -rose:java:encoding\n"
 "                             Specifies the character encoding\n"
 "     -rose:java:ecj:jvm_options\n"
@@ -2410,6 +3069,9 @@ SgFile::usage ( int status )
 "                               Higher values generate more output (can be\n"
 "                               applied to individual files and to the project\n"
 "                               separately).\n"
+"     -rose:log WHAT\n"
+"                             Control diagnostic output. See '-rose:log help' for\n"
+"                             more information.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
 "     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
@@ -2493,6 +3155,16 @@ SgFile::usage ( int status )
 "                             the IPDParser class for details.\n"
 "\n"
 "Control code generation:\n"
+"     -rose:unparser:clobber_input_file\n"
+"                               **CAUTION**RED*ALERT**CAUTION**\n"
+"                               If you don't know what this option does, don't use it!\n"
+"                               We are not responsible for any mental or physical damage\n"
+"                               that you will incur with the use of this option :)\n"
+"\n"
+"                               Note: This option breaks parallel builds, so make sure\n"
+"                               that with this option you use ROSE, and run your build\n"
+"                               system, sequentially.\n"
+"                               **CAUTION**RED*ALERT**CAUTION**\n"
 "     -rose:unparse_line_directives\n"
 "                               unparse statements using #line directives with\n"
 "                               reference to the original file and line number\n"
@@ -2554,6 +3226,11 @@ SgFile::usage ( int status )
 "                             This option has only shown an effect on the 2.5 million line\n"
 "                             wireshark application\n"
 "                             (not presently compatable with OpenMP or C++ code)\n"
+"     -rose:noclobber_output_file\n"
+"                             force error on rewrite of existing output file (default: false).\n"
+"     -rose:noclobber_if_different_output_file\n"
+"                             force error on rewrite of existing output file only if result\n"
+"                             if a different output file (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -2656,6 +3333,37 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
 
+  //
+  // Diagnostic logging.  We need all of the '-rose:log WHAT' command-line switches in the order they appear, which seems to
+  // mean that we need to parse the argv vector ourselves. CommandlineParsing doesn't have a suitable function, and the sla
+  // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
+  // specifically the part about being able to return an array of values.
+  //
+     Diagnostics::initialize();                         // this maybe should go somewhere else?
+     static const std::string removalString = "-rose:log (REMOVE_ME)";
+     for (size_t i=0; i<argv.size(); ++i) {
+         if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
+             argv[i] = removalString;
+             std::string switchValue = argv[++i];
+             argv[i] = removalString;
+
+             // This is a bit of a roundabout way to do this, but it supports "help", "list", etc and keeps ROSE's capabilities
+             // up to date with the latest documentation in Sawyer.
+             using namespace Sawyer::CommandLine;
+             SwitchGroup switches;
+             switches.insert(Switch("rose:log")
+                             .resetLongPrefixes("-")    // ROSE switches only support single hyphens
+                             .action(configureDiagnostics("rose:log", Diagnostics::mfacilities))
+                             .argument("config"));
+             std::vector<std::string> args;
+             args.push_back("-rose:log");
+             args.push_back(switchValue);
+             Parser parser;
+             parser.with(switches).parse(args).apply(); // causes configureDiagnostics to be called
+         }
+     }
+     argv.erase(std::remove(argv.begin(), argv.end(), removalString), argv.end());
+     
   //
   // markGeneratedFiles option
   //
@@ -2950,20 +3658,86 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_C89_gnu_only(false);
         }
 
-  //
-  // C11 only option (turns on EDG c11 options (whatever they will be).
-  //
+  // DQ (7/25/2014): We need to support -std=c11 explicitly.
      set_C11_only(false);
      ROSE_ASSERT (get_C11_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-std=","(c11)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C11 mode ON \n");
+          set_C11_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
+  // DQ (7/27/2014): We need to support -std=gnu11 explicitly.
+     set_C11_gnu_only(false);
+     ROSE_ASSERT (get_C11_gnu_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-std=","(gnu11)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C11 mode ON \n");
+          set_C11_only(true);
+          set_C11_gnu_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+        }
+
+  //
+  // C11 only option (turns on EDG c11 options (using the edg --c11 option).
+  //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(C11|C11_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("C11 mode ON \n");
-
+#if 0
           printf ("Specification of C11 on command line not yet supported on the command line \n");
           ROSE_ASSERT(false);
-
+#endif
           set_C11_only(true);
+
+       // DQ (7/27/2014): The default should match that of the GNU backend.
+          set_C11_gnu_only(true);
+
+       // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
+          set_C89_only(false);
+          set_C99_only(false);
+          set_C14_only(false);
+        }
+
+  //
+  // C14 only option (turns on EDG c11 options (there is not specific c14 EDG options, but C14 is enabled using c11).
+  //
+     set_C14_only(false);
+     ROSE_ASSERT (get_C14_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C14|C14_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("C14 mode ON \n");
+#if 0
+          printf ("Specification of C14 on command line not yet supported on the command line \n");
+          ROSE_ASSERT(false);
+#endif
+          set_C14_only(true);
+          set_C14_gnu_only(true);
+
+       // DQ (7/27/2014): Turn off C11 mode if we are turning on C14 mode.
+          set_C11_only(false);
+          set_C11_gnu_only(false);
 
        // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
           set_C89_only(false);
@@ -2980,13 +3754,33 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Cxx11 mode ON \n");
-#if 1
+
        // DQ (7/2/2013): Turn on the C++11 version of the option now that we have moved to EDG 4.7.
        // set_C11_only(true);
           set_Cxx11_only(true);
-#else
-          set_Cxx0x_only(true);
-#endif
+
+       // DQ (7/27/2014): Adding gnu version C++11 as better default for GNU backend.
+          set_Cxx11_gnu_only(true);
+        }
+
+  //
+  // C++14 only option (turns on EDG --c++14 option currently).
+  //
+     set_Cxx14_only(false);
+  // set_Cxx11_only(false);
+     set_Cxx0x_only(false);
+     ROSE_ASSERT (get_Cxx14_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx14|Cxx14_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Cxx14 mode ON \n");
+
+       // DQ (7/2/2013): Turn on the C++14 version of the option now that we have moved to EDG 4.9.
+       // set_C11_only(true);
+          set_Cxx14_only(true);
+
+       // DQ (7/27/2014): Adding gnu version C++14 as better default for GNU backend.
+          set_Cxx14_gnu_only(true);
         }
 
   //
@@ -3000,6 +3794,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      bool hasEdgUpcEnabled  = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
      bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
+#if 0
+     printf ("***** hasRoseUpcEnabled = %s \n",hasRoseUpcEnabled ? "true" : "false");
+#endif
+
      if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled)
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -3010,6 +3808,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
           CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
         }
+
+#if 0
+     printf ("***** get_UPC_only() = %s \n",get_UPC_only() ? "true" : "false");
+#endif
 
   // DQ (9/19/2010): Added support for UPC++.  This uses the UPC mode and internally processes the code as C++ instead of C.
   // set_UPCpp_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
@@ -3744,10 +4546,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
              set_disassemblerSearchHeuristics(heuristics);
-         } catch(const Disassembler::Exception &e) {
-             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
+         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
+             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
 #else
@@ -3761,7 +4563,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
              set_partitionerSearchHeuristics(heuristics);
          } catch(const std::string &e) {
              fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
@@ -4053,9 +4855,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 #endif
 
@@ -4076,6 +4878,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(h|help)",1);
      optionCount = sla(argv, "-rose:", "($)", "(V|version)", 1);
   // optionCount = sla(argv, "-rose:", "($)", "(v|verbose)",1);
+     char *loggingSpec = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(log)", loggingSpec, 1);
      optionCount = sla(argv, "-rose:", "($)", "(keep_going)",1);
      int integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(v|verbose)", &integerOption, 1);
@@ -4090,8 +4894,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C14|C14_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx0x|Cxx0x_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx11|Cxx11_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx14|Cxx14_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(FailSafe|failsafe)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_warnings)",1);
@@ -4261,12 +5067,18 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (2/5/2014): Remove this option from the command line that will be handed to the backend compiler (typically GNU gcc or g++).
      optionCount = sla(argv, "-rose:", "($)", "(suppressConstantFoldingPostProcessing)",1);
 
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error.
+     optionCount = sla(argv, "-rose:", "($)", "noclobber_output_file",1);
+
+  // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
+     optionCount = sla(argv, "-rose:", "($)", "noclobber_if_different_output_file",1);
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 #endif
    }
@@ -4501,7 +5313,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
      for (size_t i=0; i < configDefs.size(); i++)
         {
-          printf ("configDefs[%zu] = %s \n",i,configDefs[i].c_str());
+          printf ("configDefs[%" PRIuPTR "] = %s \n",i,configDefs[i].c_str());
         }
 #endif
 
@@ -4551,14 +5363,44 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+#ifdef ROSE_USE_MICROSOFT_EXTENSIONS
+  // DQ (4/21/2014): Add Microsoft specific options:
+  //    --microsoft
+  //    --microsoft_16
+  //    --microsoft_version version-number
+  //    --microsoft_build_number build-number
+  // Not all of these are required, the simplest usage is to use "--microsoft".
+  // DQ (4/21/2014): Use the simple option to turn on microsoft mode.
+     commandLine.push_back("--microsoft");
+
+#if 0
+  // EDG 4.9 permits emulation modes for specific MSVC versions.  Not clear what version of MSVC we should be emulating.
+  // This is the version number for MSVC 5.0, but we need to get a later version.
+     int emulate_msvc_version_number = 1100;
+  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+     commandLine.push_back("--microsoft_version");
+     commandLine.push_back(StringUtility::numberToString(emulate_msvc_version_number));
+#endif
+#endif
+
+#ifndef ROSE_USE_MICROSOFT_EXTENSIONS
 #ifndef _MSC_VER
   // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
      int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
-  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+
+  // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
+  // emulate_gnu_version_number = 4*10000 + 8*100 + 1;
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("In SgFile::build_EDG_CommandLine(): emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+        }
+
      commandLine.push_back("--gnu_version");
      commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+#endif
 #endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
@@ -4576,38 +5418,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
 #if 0
+  // DQ (4/11/2014): This can be accomplished by using --edg:dump_configuration on the ROSE command line.
      commandLine.push_back("--dump_configuration");
 #endif
-
-  // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-
-  // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
-    //--------------------------------------------------------------------------
-    // TOO (11/12/2012) - Refactor to use generic EDG version.
-    // DQ  (11/1/2011)  - Fix to use EDG 4.3
-    //
-    // Note that the new EDG/Sage interface does not require a generated set of
-    // header files specific to ROSE.
-    //
-    commandLine.push_back("--edg_base_dir");
-    {
-        // Examples: 3.10, 4.3, 4.4
-        std::stringstream sstream;
-        sstream
-            << ROSE_EDG_MAJOR_VERSION_NUMBER
-            << "."
-            << ROSE_EDG_MINOR_VERSION_NUMBER;
-
-        std::string edg_version(sstream.str());
-
-     // DQ (7/11/2013): Had to put this back after adding the more macros from rose_host_envir.h to defined.h.rose.
-     // DQ (7/10/2013): base lib was configured to be the "src/frontend/CxxFrontend/EDG/EDG_" + edg_version 
-     // (maybe it should be "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib").
-     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
-     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version,"share"));
-        commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
-    }
-
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
@@ -4649,62 +5462,20 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
              }
         }
 
-#if 0
-  // This functionality has been moved to before source name extraction since the
-  // -isystem dir will be extracted as a file name and treated as a source file name
-  // and the -isystem will not have an option.
-
-  // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specified directory
-  // to the start of the system include path).  This maps to the "--sys_include" in EDG.
-     string isystem_string_target = "-isystem";
-     for (unsigned int i=1; i < argv.size(); i++)
-        {
-       // AS (070306) Handle g++ --include directives
-          std::string stack_arg(argv[i]);
-       // std::cout << "stack arg is: " << stack_arg << std::endl;
-          if( stack_arg.find(isystem_string_target) <= 2){
-              i++;
-              ROSE_ASSERT(i<argv.size());
-              std::string currentArgument(argv[i]);
-              // std::cout << "Current argument " << currentArgument << std::endl;
-
-              currentArgument = StringUtility::getAbsolutePathFromRelativePath(currentArgument);
-              commandLine.push_back("--sys_include");
-              commandLine.push_back(currentArgument);
-          }
-     }
-#else
-  // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
-
-  // PL (09/25/2013) This is still required for the EDG 4.X
-//#ifndef ROSE_USE_NEW_EDG_INTERFACE
-  // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
-  // AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
-  // PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
-     for (vector<string>::iterator i = includePaths.begin(); i != includePaths.end(); ++i)
-        {
-          commandLine.push_back("--sys_include");
-          commandLine.push_back(*i);
-        }
-//#endif
-
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
-
-  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
-  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
-     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
-        {
-       // Build the preinclude directory list
-          if ( SgProject::get_verbose() >= 1 )
-               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
-
-          commandLine.push_back("--sys_include");
-          commandLine.push_back(*i);
-        }
-#endif
-
+#ifndef ROSE_USE_MICROSOFT_EXTENSIONS
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
+#else
+  // DQ (4/21/2014): The preinclude file we generate for ROSE is specific to the backend and for Windows code might be too specific to Linux.
+  // But we certainly don't want the -D options: e.g "-D__GNUG__=4 -D__GNUC__=4 -D__GNUC_MINOR__=4 -D__GNUC_PATCHLEVEL__=7"
+#if 0
+  // DQ (8/18/2014): Supress this output, I think we do want to include the rose_edg_required_macros_and_functions.h 
+  // (but we might want to use it to specify different or additional builtin functions in the future).
+     printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+#endif
+  // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
+     commandLine.push_back("--preinclude");
+     commandLine.push_back("rose_edg_required_macros_and_functions.h");
+#endif
 
   // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used
   // George Vulov (12/8/2010) Include the file rose_edg_required_macros_and_functions.h first, then the other preincludes
@@ -4799,7 +5570,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      else {
        // if (get_C_only() == true || get_C99_only() == true)
        // if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
-          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true)
+       // if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true)
+          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true || get_C14_only() == true)
              {
             // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
             // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
@@ -4905,11 +5677,29 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_C11_only() == true)
         {
+       // DQ (4/20/2014): With EDG 4.9 we now have support for the --c11 option.
        // Add option to indicate use of C11 code (not C++) to EDG frontend
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
           inputCommandLine.push_back("--c11");
+#else
+          inputCommandLine.push_back("--c99");
+#endif
+        }
 
-          printf ("Not clear yet what internal option to use in EDG for C11 command line support \n");
+     if (get_C14_only() == true)
+        {
+       // DQ (4/20/2014): With EDG 4.9 we now have support for the --c11 option.
+       // Add option to indicate use of C11 code (not C++) to EDG frontend
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+          inputCommandLine.push_back("--c11");
+#else
+          printf ("Error: C14 support is not available using older version of EDG internally (before EDG version 4.9 \n");
           ROSE_ASSERT(false);
+#endif
+#if 0
+          printf ("Not clear yet what internal option to use in EDG for C14 command line support \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
   // DQ (7/2/2013): This should not be used any more.
@@ -4918,10 +5708,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // Add option to indicate use of C++0x code to EDG frontend
           inputCommandLine.push_back("--c++0x");
 
-          printf ("This Cxx0x option should not be used any more. \n");
+          printf ("This Cxx0x option should not be used any more (use Cxx11_only only option). \n");
           ROSE_ASSERT(false);
         }
 
+#if 0
+     printf ("In build_EDG_CommandLine(): get_Cxx11_only() = %s \n",get_Cxx11_only() ? "true" : "false");
+#endif
      if (get_Cxx11_only() == true)
         {
        // Add option to indicate use of C++11 code to EDG frontend
@@ -4931,6 +5724,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
           inputCommandLine.push_back("--c++11");
        // inputCommandLine.push_back("--c++0x");
+        }
+
+     if (get_Cxx14_only() == true)
+        {
+       // Add option to indicate use of C++14 code to EDG frontend
+
+          inputCommandLine.push_back("--c++14");
         }
 
      if (get_strict_language_handling() == true)
@@ -5026,7 +5826,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--preinit_il");
         }
 
-  // printf ("After processing -sage:preinit_il option argc = %zu \n",argv.size());
+  // printf ("After processing -sage:preinit_il option argc = %" PRIuPTR " \n",argv.size());
 #endif
 
   // ***********************************************************************
@@ -5110,9 +5910,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Add all input include paths so that the EDG front end will know where to find headers
 
 #if 0
-     for (int i=0; i < includePathCounter; i++)
+     printf ("Include paths specified: \n");
+     int counter = 0;
+     for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
         {
-          printf ("     includePaths[%d] = %s \n",i,includePaths[i]);
+          printf ("     includePaths[%d] = %s \n",counter++,(*i).c_str());
         }
 #endif
 
@@ -5121,6 +5923,27 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("-I" + *i);
         }
+
+#if 1
+  // PL (4/15/2014): In GCC's document about system headers (http://gcc.gnu.org/onlinedocs/cpp/System-Headers.html):
+  // All directories named by -isystem are searched after all directories named by -I, no matter what their order was on the command line.
+  // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
+  // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("project->get_preincludeDirectoryList().size() = %" PRIuPTR " \n",project->get_preincludeDirectoryList().size());
+
+  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
+  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
+     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
+        {
+       // Build the preinclude directory list
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(*i);
+        }
+#endif
 
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--XXXXX");
@@ -5152,7 +5975,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // DQ (8/6/2006): there are a number of options that when specified in their EDG forms
   // should turn on ROSE mechanisms.  "--edg:c" should turn on C mode in ROSE.
-  // printf ("--edg option processing: edgOptionList.size() = %zu \n",edgOptionList.size());
+  // printf ("--edg option processing: edgOptionList.size() = %" PRIuPTR " \n",edgOptionList.size());
      Rose_STL_Container<string>::iterator i = edgOptionList.begin();
      while (i != edgOptionList.end())
         {
@@ -5489,22 +6312,29 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if 0
   // display("SgFile::buildCompilerCommandLineOptions()");
-     printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
-     printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-     printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
-     printf ("Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
-     printf ("Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
-     printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
-     printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
-     printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
-     printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-     printf ("get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
-     printf ("get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
-     printf ("get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
-     printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
-     printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
-     printf ("get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
-     printf ("get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
+
+     printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+     printf ("   --- C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+     printf ("   --- C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("   --- Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+     printf ("   --- Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
+     printf ("   --- Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
+     printf ("   --- get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
+     printf ("   --- get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
+     printf ("   --- get_C11_only()            = %s \n",(get_C11_only() == true) ? "true" : "false");
+     printf ("   --- get_C14_only()            = %s \n",(get_C14_only() == true) ? "true" : "false");
+     printf ("   --- get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
+     printf ("   --- get_Cxx11_only()          = %s \n",(get_Cxx11_only() == true) ? "true" : "false");
+     printf ("   --- get_Cxx14_only()          = %s \n",(get_Cxx14_only() == true) ? "true" : "false");
+     printf ("   --- get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
+     printf ("   --- get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
+     printf ("   --- get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
+     printf ("   --- get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
+     printf ("   --- get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
+     printf ("   --- get_F2008_only()          = %s \n",(get_F2008_only() == true) ? "true" : "false");
+     printf ("   --- get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
+     printf ("   --- get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
+     printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with
@@ -5513,7 +6343,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // We need a better way of identifying the C compiler which might not be known
   // ideally it should be specified at configure time so that it can be known in
   // case the -rose:C_only option is used.
-     if (get_C_only() == true || get_C99_only() == true)
+  // if (get_C_only() == true || get_C99_only() == true)
+     if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
      {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -5538,23 +6369,98 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back("-std=c99");
                   }
              }
+            else
+             {
+            // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+               if (get_C11_only() == true)
+                  {
+                 // compilerNameString.push_back("-std=c11");
+                    if (get_C11_gnu_only() == true)
+                       {
+                         compilerNameString.push_back("-std=gnu11");
+                       }
+                      else
+                       {
+                         compilerNameString.push_back("-std=c11");
+                       }
+                  }
+                 else
+                  {
+                 // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+                    if (get_C14_only() == true)
+                       {
+                      // compilerNameString.push_back("-std=c14");
+                         if (get_C14_gnu_only() == true)
+                            {
+                              compilerNameString.push_back("-std=gnu14");
+                            }
+                           else
+                            {
+                              compilerNameString.push_back("-std=c14");
+                            }
+                       }
+                      else
+                       {
+                      // The default is to not specify anything using the "-std=" option.
+                       }
+                  }
+             }
      }
-    else if (get_Cxx_only())
-    {
-        compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
-    }
-    else if (get_binary_only())
-    {
-        if (SgProject::get_verbose() >= 3)
-        {
+     else if (get_Cxx_only())
+     {
+       compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+
+    // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+       if (get_Cxx11_only() == true)
+          {
+         // compilerNameString.push_back("-std=c++11");
+            if (get_Cxx11_gnu_only() == true)
+               {
+                 compilerNameString.push_back("-std=gnu++11");
+               }
+              else
+               {
+                 compilerNameString.push_back("-std=c++11");
+               }
+          }
+         else
+          {
+         // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
+            if (get_Cxx14_only() == true)
+               {
+              // DQ (7/27/2014): These options are not available in GNU g++ yet.
+#if 1
+                 compilerNameString.push_back("-std=c++14");
+#else
+              // DQ (7/27/2014): This function (get_Cxx14_gnu_only()) is not available in ROSE yet.
+                 if (get_Cxx14_gnu_only() == true)
+                    {
+                      compilerNameString.push_back("-std=gnu++14");
+                    }
+                   else
+                    {
+                      compilerNameString.push_back("-std=c++14");
+                    }
+#endif
+               }
+              else
+               {
+              // The default is to not specify anything using the "-std=" option.
+               }
+          }
+     }
+     else if (get_binary_only())
+     {
+       if (SgProject::get_verbose() >= 3)
+         {
             std::cout
                 << "[TRACE] Backend compiler for binary analysis is set as"
                 << "'" << compilerNameString[0] << "'"
                 << std::endl;
-        }
-    }
-    else if (get_Fortran_only() == true)
-    {
+         }
+     }
+     else if (get_Fortran_only() == true)
+     {
         // compilerNameString = "f77 ";
         compilerNameString[0] = ROSE_GFORTRAN_PATH;
 
@@ -5662,7 +6568,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
 #if 0
-     printf ("Selected compilerNameString.size() = %zu compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
+     printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
 #endif
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
@@ -5728,12 +6634,15 @@ if (get_C_only() ||
      argcArgvList.erase(argcArgvList.begin());
 
 #if 0
+     printf ("In buildCompilerCommandLineOptions: test 1: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+#if 0
   // DQ (1/24/2010): Moved this inside of the true branch below.
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT (project != NULL);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
-     printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+     printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
 
   // DQ (4/20/2006): Modified to only do this when generating code and compiling it
@@ -5747,7 +6656,7 @@ if (get_C_only() ||
           ROSE_ASSERT (project != NULL);
           Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 #if 0
-          printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+          printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
           for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
              {
@@ -5785,7 +6694,7 @@ if (get_C_only() ||
         }
 
 #if 0
-     printf ("After removing source file name: argcArgvList.size() = %zu argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+     printf ("After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
 #endif
 
@@ -5849,7 +6758,7 @@ if (get_C_only() ||
             // unsigned int endingQuote   = i->rfind("\"");
                std::string::size_type endingQuote   = i->rfind("\"");
 #if 0
-               printf ("startingQuote = %zu endingQuote = %zu \n",startingQuote,endingQuote);
+               printf ("startingQuote = %" PRIuPTR " endingQuote = %" PRIuPTR " \n",startingQuote,endingQuote);
 #endif
             // There should be a double quote on both ends of the string
                ROSE_ASSERT (endingQuote != std::string::npos);
@@ -5860,7 +6769,7 @@ if (get_C_only() ||
             // std::string quotedSubstringWithoutQuotes = i->substr(startingQuote,endingQuote);
                std::string::size_type substringWithoutQuotesSize = ((endingQuote-1) - (startingQuote+1)) + 1;
 #if 0
-               printf ("substringWithoutQuotesSize = %zu \n",substringWithoutQuotesSize);
+               printf ("substringWithoutQuotesSize = %" PRIuPTR " \n",substringWithoutQuotesSize);
 #endif
             // Generate the string without quotes so that we can rebuild the quoted string.
             // This is more critical if there were escpes before the quotes in the original string.
@@ -5890,6 +6799,12 @@ if (get_C_only() ||
              }
         }
 
+#if 0
+     printf ("In buildCompilerCommandLineOptions: test 2: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
+     printf ("In buildCompilerCommandLineOptions: test 2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
+#endif
+
   // Add any options specified by the user (and add space at the end)
      compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
 
@@ -5905,6 +6820,24 @@ if (get_C_only() ||
      printf ("oldFileName         = %s \n",oldFileName.c_str());
 #endif
 
+  // DQ (4/13/2014): Added support to avoid output of a specified include path twice.
+     bool oldFileNamePathOnlyAlreadySpecifiedAsIncludePath = false;
+     for (vector<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
+          string s = std::string("-I") + oldFileNamePathOnly;
+          if (s == *i)
+             {
+#if 0
+               printf ("Identified oldFileNamePathOnly as already specified as include path (avoid redundant specification of -I paths) \n");
+#endif
+               oldFileNamePathOnlyAlreadySpecifiedAsIncludePath = true;
+             }
+        }
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions: test 3: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+
   // DQ (4/2/2011): Java does not have -I as an accepted option.
      if (get_C_only() || get_Cxx_only())
         {
@@ -5918,7 +6851,8 @@ if (get_C_only() ||
        // Only add the path if it is a valid name (not an empty name, in which case skip it since the oldFile
        // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
        // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
-          if (oldFileNamePathOnly.empty() == false)
+       // if (oldFileNamePathOnly.empty() == false)
+          if (oldFileNamePathOnly.empty() == false && oldFileNamePathOnlyAlreadySpecifiedAsIncludePath == false)
              {
                vector<string>::iterator iter;
             // find the very first -Ixxx option's position
@@ -5970,6 +6904,10 @@ if (get_C_only() ||
              }
         }
 
+#if 0
+     printf ("In buildCompilerCommandLineOptions: test 4: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+
     // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
     // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
     // -I../../../../sourcetree/src/midend/programTransformation/ompLowering
@@ -5990,7 +6928,8 @@ if (get_C_only() ||
        if (iter_last_inc != compilerNameString.end())
          iter_last_inc ++; // accommodate the insert-before-an-iterator semantics used in vector::insert() 
  
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // Liao 7/14/2014. Justin changed installation path of headers to install/rose, 
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, libxomp.h etc, which are installed under $ROSE_INS/include
        // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
 
        // Header should always be available 
@@ -5998,7 +6937,7 @@ if (get_C_only() ||
        // where only a minimum configuration options are used and not all macros are defined. 
 #ifdef ROSE_INSTALLATION_PATH 
        string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include"; 
+       include_path += "/include/rose"; 
        compilerNameString.insert(iter_last_inc, "-I"+include_path); 
 #endif
      }

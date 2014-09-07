@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <utility>
 
+#include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 #else
@@ -82,7 +84,38 @@ Some other utility functions not related AST can be found in
          - Other stuff ...
  */
 namespace SageInterface
-{
+   {
+  // DQ (4/3/2014): Added general AST support seperate from the AST.
+
+  // Container and API for analysis information that is outside of the AST and as a result
+  // prevents frequent modification of the IR.
+     class DeclarationSets
+        {
+       // DQ (4/3/2014): This stores all associated declarations as a map of sets.
+       // the key to the map is the first nondefining declaration and the elements of the set are
+       // all of the associated declarations (including the defining declaration).
+
+          private:
+           //! Map of first-nondefining declaration to all other associated declarations.
+               std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > declarationMap;
+
+          public:
+               void addDeclaration(SgDeclarationStatement* decl);
+               const std::set<SgDeclarationStatement*>* getDeclarations(SgDeclarationStatement* decl);
+
+               std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > & getDeclarationMap();
+
+               bool isLocatedInDefiningScope(SgDeclarationStatement* decl);
+
+        };
+
+  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
+  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifing the IR.
+     DeclarationSets* buildDeclarationSets(SgNode*);
+
+
+
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
@@ -164,8 +197,7 @@ struct hash_nodeptr
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
-   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName,
-                                                         SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName & functionName, SgScopeStatement *currentScope=NULL);
 
    // Liao, 1/24/2008, find exact match for a function
    //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
@@ -181,7 +213,7 @@ struct hash_nodeptr
    ROSE_DLL_API SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
 
 #if 0
- // DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+ // DQ (8/13/2013): This function does not make since any more, now that we have made the symbol
  // table handling more precise and we have to provide template parameters for any template lookup.
  // We also have to know if we want to lookup template classes, template functions, or template 
  // member functions (since each have specific requirements).
@@ -216,7 +248,7 @@ struct hash_nodeptr
     */
    // DQ (12/9/2004): Moved this function (by Alin Jula) from being a member of SgInitializedName
    // to this location where it can be a part of the interface for the Sage III AST.
-   int set_name (SgInitializedName * initializedNameNode, SgName new_name);
+   ROSE_DLL_API int set_name (SgInitializedName * initializedNameNode, SgName new_name);
 
    /*! \brief Output function type symbols in global function type symbol table.
     */
@@ -387,7 +419,7 @@ struct hash_nodeptr
    std::string extractPragmaKeyword(const SgPragmaDeclaration *);
 
    //! Check if a node is SgOmp*Statement
-   bool isOmpStatement(SgNode* );
+   ROSE_DLL_API bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.
     */
    // DQ (8/27/2005):
@@ -421,7 +453,7 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-    /** Generate a name that is unique in the current scope and any parent and children scopes.
+    /** Generate a name like __temp#__ that is unique in the current scope and any parent and children scopes. # is a unique integer counter.
     * @param baseName the word to be included in the variable names. */
     std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
 
@@ -479,7 +511,7 @@ struct hash_nodeptr
 
      This is part of a test done by the copy function to compute those IR nodes in the copy that still reference the original AST.
   */
-    std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
+    ROSE_DLL_API std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy, SgCopyHelp * help = NULL);
 
   //! Deep copy an arbitrary subtree
    ROSE_DLL_API SgNode* deepCopyNode (const SgNode* subtree);
@@ -540,6 +572,9 @@ class StatementGenerator {
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
 ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
 
+//! Build an abstract handle from an AST node, reuse previously built handle when possible
+ROSE_DLL_API AbstractHandle::abstract_handle* buildAbstractHandle(SgNode*);
+
 //! Obtain a matching SgNode from an abstract handle string
 ROSE_DLL_API SgNode* getSgNodeFromAbstractHandleString(const std::string& input_string);
 
@@ -561,7 +596,7 @@ bool isPrefixOperatorName( const SgName & functionName );
 //! Is an overloaded operator a postfix operator. (e.g. ).
 bool isPostfixOperator( SgExpression* exp );
 
-//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+//! Is an overloaded operator an index operator (also referred to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
 bool isIndexOperator( SgExpression* exp );
 
 //@}
@@ -699,11 +734,11 @@ ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* targ
 // interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This 
 // function is the only function that should be called directly (though in a namespace we can't define permissions).
 //! Set the source code positon for the current (input) node.
-  void setSourcePosition(SgNode* node);
+  ROSE_DLL_API void setSourcePosition(SgNode* node);
 
 // A better name might be "setSourcePositionForSubTree"
 //! Set the source code positon for the subtree (including the root).
-  void setSourcePositionAtRootAndAllChildren(SgNode *root);
+  ROSE_DLL_API void setSourcePositionAtRootAndAllChildren(SgNode *root);
 
 // DQ (5/1/2012): New function with improved name (still preserving the previous interface).
 // This function is not required once the new mechanism defining a source position mode is complete (shortly).
@@ -954,6 +989,11 @@ ROSE_DLL_API bool isUpcArrayWithThreads(SgArrayType* t);
 //! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
 ROSE_DLL_API SgType* lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope=NULL);
 
+// DQ (7/22/2014): Added support for comparing expression types in actual arguments with those expected from the formal function parameter types.
+//! Get the type of the associated argument expression from the function type.
+ROSE_DLL_API SgType* getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression);
+
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1018,7 +1058,7 @@ ROSE_DLL_API void setLoopStride(SgNode* loop, SgExpression* stride);
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
-//! Normalize a for loop, return true if successful
+//! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
 //!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)
@@ -1029,7 +1069,7 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i++ is normalized to i+=1 and
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
-ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop);
+ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
 
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);
@@ -1396,8 +1436,14 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #endif
    }
 
-//! Get the closest scope from astNode. Return astNode if it is already a scope.
-ROSE_DLL_API SgScopeStatement* getScope(const SgNode* astNode);
+  //! Find enclosing source file node 
+  ROSE_DLL_API SgSourceFile* getEnclosingSourceFile(SgNode* n, const bool includingSelf=false);
+
+  //! Get the closest scope from astNode. Return astNode if it is already a scope.
+  ROSE_DLL_API SgScopeStatement* getScope(const SgNode* astNode);
+
+  //! Get the enclosing scope from a node n 
+  ROSE_DLL_API SgScopeStatement* getEnclosingScope(SgNode* n, const bool includingSelf=false);
 
   //! Traverse back through a node's parents to find the enclosing global scope
   ROSE_DLL_API SgGlobal* getGlobalScope( const SgNode* astNode);
@@ -1566,6 +1612,16 @@ ROSE_DLL_API void insertStatementAfterLastDeclaration(SgStatement* stmt, SgScope
 
 //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
 ROSE_DLL_API void insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope);
+
+//! Insert a statement before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
+//  then the statement is inserted at the end of the scope.
+ROSE_DLL_API void insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope,
+                                                           bool movePreprocessingInfo=true);
+
+//! Insert statements before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
+//then the new statements are inserted at the end of the scope.
+ROSE_DLL_API void insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
+                                                               SgScopeStatement *scope);
 
 //! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
 ROSE_DLL_API void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
@@ -1736,34 +1792,34 @@ ROSE_DLL_API int fixVariableReferences(SgNode* root);
 It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general.
 In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usually used internally within appendStatment(), insertStatement().
 */
-void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
 
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
-void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a class declaration was built without knowing its target scope.
-void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
 
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a namespace declaration was built without knowing its target scope.
-void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
 
 
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
-void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
-void setFortranNumericLabel(SgStatement* stmt, int label_value);
+ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value);
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
-int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
+ROSE_DLL_API int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
 
 //! Fix the symbol table and set scope (only if scope in declaration is not already set).
-void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
 
 //! Fix the symbol table and set scope (only if scope in declaration is not already set).
-void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
-void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.
@@ -1772,7 +1828,7 @@ void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
  *  accordingly if there are any.
  *  Assumption: The function has already inserted/appended/prepended into the scope before calling this function.
  */
-void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
+ROSE_DLL_API void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
 
 //------------------------------------------------------------------------
 //@{
@@ -2247,6 +2303,30 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool IsTrivial(const SgType * const inputType);
       bool IsUnion(const SgType * const inputType);
       SgType *  UnderlyingType(SgType *type);
+
+// DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
+   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+
+// DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
+   bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
+
+//--------------------------------Java interface functions ---------------------
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+      ROSE_DLL_API std::string getTempDirectory(SgProject *project);
+      ROSE_DLL_API void destroyTempDirectory(std::string);
+      ROSE_DLL_API SgFile *processFile(SgProject *, std::string, bool unparse = false);
+      ROSE_DLL_API std::string preprocessPackage(SgProject *, std::string);
+      ROSE_DLL_API std::string preprocessImport(SgProject *, std::string);
+      ROSE_DLL_API SgFile* preprocessCompilationUnit(SgProject *, std::string, std::string, bool unparse = true);
+      ROSE_DLL_API SgClassDefinition *findJavaPackage(SgScopeStatement *, std::string);
+      ROSE_DLL_API SgClassDefinition *findOrInsertJavaPackage(SgProject *, std::string, bool create_directory = false);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassDefinition *package_definition, std::string);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, std::string, std::string);
+      ROSE_DLL_API SgClassDeclaration *findOrImportJavaClass(SgProject *, SgClassType *);
+      ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassDefinition *);
+      ROSE_DLL_API SgMemberFunctionDeclaration *findJavaMain(SgClassType *);
+#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
 }// end of namespace
 
 #endif

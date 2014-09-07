@@ -3,7 +3,9 @@
 #include <rose.h>
 //#include "interproceduralBinaryAnalysis::ControlFlow::Graph.h"
 #include <string>
+#ifndef _MSC_VER
 #include <err.h>
+#endif
 #include "graphProcessing.h"
 #include "BinaryControlFlow.h"
 #include "BinaryLoader.h"
@@ -11,6 +13,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace rose;
 
 
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */

@@ -2,6 +2,7 @@
 #include "BaseSemantics2.h"
 #include "DispatcherPowerpc.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -276,7 +277,7 @@ struct IP_bc: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue);
         uint8_t boConstant = byteValue->get_value();
         // bool bo_4 = boConstant & 0x1;
@@ -294,7 +295,7 @@ struct IP_bc: P {
         } else {
             ctr_ok = ops->invert(ops->equalToZero(ops->readRegister(d->REG_CTR)));
         }
-        SgAsmPowerpcRegisterReferenceExpression *bi = isSgAsmPowerpcRegisterReferenceExpression(args[1]);
+        SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
         assert(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
@@ -311,7 +312,7 @@ struct IP_bca: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue);
         uint8_t boConstant = byteValue->get_value();
         // bool bo_4 = boConstant & 0x1;
@@ -329,7 +330,7 @@ struct IP_bca: P {
         } else {
             ctr_ok = ops->invert(ops->equalToZero(ops->readRegister(d->REG_CTR)));
         }
-        SgAsmPowerpcRegisterReferenceExpression *bi = isSgAsmPowerpcRegisterReferenceExpression(args[1]);
+        SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
         assert(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
@@ -346,12 +347,12 @@ struct IP_bcctr: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue != NULL);
         uint8_t boConstant = byteValue->get_value();
         bool bo_1 = boConstant & 0x8;
         bool bo_0 = boConstant & 0x10;
-        SgAsmPowerpcRegisterReferenceExpression *bi = isSgAsmPowerpcRegisterReferenceExpression(args[1]);
+        SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
         assert(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
@@ -370,7 +371,7 @@ struct IP_bclr: P {
         assert_args(insn, args, 3);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmByteValueExpression *byteValue = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         assert(byteValue);
         uint8_t boConstant = byteValue->get_value();
         // bool bo_4 = boConstant & 0x1;
@@ -388,7 +389,7 @@ struct IP_bclr: P {
         } else {
             ctr_ok = ops->invert(ops->equalToZero(ops->readRegister(d->REG_CTR)));
         }
-        SgAsmPowerpcRegisterReferenceExpression *bi = isSgAsmPowerpcRegisterReferenceExpression(args[1]);
+        SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
         assert(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
@@ -417,7 +418,7 @@ struct IP_cmp: P {
                                               ops->ite(ops->extract(carries, 31, 32),
                                                        ops->number_(3, 4),
                                                        ops->number_(3, 2)));
-        SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(args[0]);
+        SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(args[0]);
         assert(bf && bf->get_descriptor().get_major() == powerpc_regclass_cr && bf->get_descriptor().get_nbits() == 4);
         // This should be a helper function!
         BaseSemantics::SValuePtr  so = ops->extract(ops->readRegister(d->REG_XER), 31, 32);
@@ -445,7 +446,7 @@ struct IP_cmpi: P {
                                               ops->ite(ops->extract(carries, 31, 32),
                                                        ops->number_(3, 4),
                                                        ops->number_(3, 2)));
-        SgAsmPowerpcRegisterReferenceExpression *bf = isSgAsmPowerpcRegisterReferenceExpression(args[0]);
+        SgAsmRegisterReferenceExpression *bf = isSgAsmRegisterReferenceExpression(args[0]);
         assert(bf && bf->get_descriptor().get_major() == powerpc_regclass_cr && bf->get_descriptor().get_nbits() == 4);
         // This should be a helper function!
         BaseSemantics::SValuePtr so = ops->extract(ops->readRegister(d->REG_XER), 31, 32);
@@ -470,7 +471,7 @@ struct IP_cmpl: P {
                                               ops->ite(ops->extract(carries, 31, 32),
                                                        ops->number_(3, 4),
                                                        ops->number_(3, 2)));
-        SgAsmPowerpcRegisterReferenceExpression* bf = isSgAsmPowerpcRegisterReferenceExpression(args[0]);
+        SgAsmRegisterReferenceExpression* bf = isSgAsmRegisterReferenceExpression(args[0]);
         assert(bf && bf->get_descriptor().get_major() == powerpc_regclass_cr && bf->get_descriptor().get_nbits()==4);
         // This should be a helper function!
         BaseSemantics::SValuePtr so = ops->extract(ops->readRegister(d->REG_XER), 31, 32);
@@ -551,13 +552,14 @@ struct IP_lmw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr base = d->effectiveAddress(args[1], 32);
-        SgAsmPowerpcRegisterReferenceExpression *rt = isSgAsmPowerpcRegisterReferenceExpression(args[0]);
+        SgAsmRegisterReferenceExpression *rt = isSgAsmRegisterReferenceExpression(args[0]);
         assert(rt && rt->get_descriptor().get_major() == powerpc_regclass_gpr);
         RegisterDescriptor reg = rt->get_descriptor();
         rose_addr_t offset = 0;
         for (unsigned minor=reg.get_minor(); minor<32; minor+=1, offset+=4) {
             BaseSemantics::SValuePtr addr = ops->add(base, ops->number_(32, offset));
-            BaseSemantics::SValuePtr value = ops->readMemory(RegisterDescriptor(), addr, ops->boolean_(true), 32);
+            BaseSemantics::SValuePtr dflt = ops->undefined_(32);
+            BaseSemantics::SValuePtr value = ops->readMemory(RegisterDescriptor(), addr, dflt, ops->boolean_(true));
             reg.set_minor(minor);
             ops->writeRegister(reg, value);
         }
@@ -574,7 +576,7 @@ struct IP_lwzu: P {
         assert(binaryAdd);
         SgAsmExpression *ra = binaryAdd->get_lhs();
         BaseSemantics::SValuePtr addr = d->effectiveAddress(args[1], 32);
-        d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->boolean_(true), 32));
+        d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), ops->boolean_(true)));
         d->write(ra, addr);
     }
 };
@@ -672,10 +674,10 @@ struct IP_rlwimi: P {
         BaseSemantics::SValuePtr rs = d->read(args[0], 32);
         BaseSemantics::SValuePtr ra = d->read(args[1], 32);
         BaseSemantics::SValuePtr sh = ops->extract(d->read(args[2], 32), 0, 5);
-        SgAsmByteValueExpression *mb = isSgAsmByteValueExpression(args[3]);
+        SgAsmIntegerValueExpression *mb = isSgAsmIntegerValueExpression(args[3]);
         assert(mb);
         int mb_value = mb->get_value();
-        SgAsmByteValueExpression *me = isSgAsmByteValueExpression(args[4]);
+        SgAsmIntegerValueExpression *me = isSgAsmIntegerValueExpression(args[4]);
         assert(me);
         int me_value = me->get_value();
         uint32_t mask = build_mask(mb_value, me_value);
@@ -694,10 +696,10 @@ struct IP_rlwinm: P {
         assert_args(insn, args, 5);
         BaseSemantics::SValuePtr rs = d->read(args[1], 32);
         BaseSemantics::SValuePtr sh = ops->extract(d->read(args[2], 32), 0, 5);
-        SgAsmByteValueExpression *mb = isSgAsmByteValueExpression(args[3]);
+        SgAsmIntegerValueExpression *mb = isSgAsmIntegerValueExpression(args[3]);
         assert(mb);
         int mb_value = mb->get_value();
-        SgAsmByteValueExpression *me = isSgAsmByteValueExpression(args[4]);
+        SgAsmIntegerValueExpression *me = isSgAsmIntegerValueExpression(args[4]);
         assert(me);
         int me_value = me->get_value();
         uint32_t mask = build_mask(mb_value, me_value);
@@ -714,7 +716,7 @@ struct IP_rlwinm: P {
 struct IP_sc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SgAsmByteValueExpression *bv = isSgAsmByteValueExpression(args[0]);
+        SgAsmIntegerValueExpression *bv = isSgAsmIntegerValueExpression(args[0]);
         assert(bv);
         ops->interrupt(0, bv->get_value());
     }
@@ -784,7 +786,7 @@ struct IP_stmw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr base = d->effectiveAddress(args[1], 32);
-        SgAsmPowerpcRegisterReferenceExpression *rs = isSgAsmPowerpcRegisterReferenceExpression(args[0]);
+        SgAsmRegisterReferenceExpression *rs = isSgAsmRegisterReferenceExpression(args[0]);
         assert(rs && rs->get_descriptor().get_major() == powerpc_regclass_gpr);
         RegisterDescriptor reg = rs->get_descriptor();
         rose_addr_t offset = 0;
@@ -1077,5 +1079,6 @@ DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result)
     operators->writeRegister(REG_CR0, operators->concat(so, c));
 }
 
+} // namespace
 } // namespace
 } // namespace

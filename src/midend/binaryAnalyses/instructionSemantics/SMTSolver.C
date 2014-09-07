@@ -6,6 +6,10 @@
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 std::ostream&
 operator<<(std::ostream &o, const SMTSolver::Exception &e)
 {
@@ -37,6 +41,12 @@ SMTSolver::reset_class_stats()
     RTS_MUTEX(class_stats_mutex) {
         class_stats = Stats();
     } RTS_MUTEX_END;
+}
+
+InsnSemanticsExpr::TreeNodePtr
+SMTSolver::evidence_for_address(uint64_t addr)
+{
+    return evidence_for_name(StringUtility::addrToString(addr));
 }
 
 SMTSolver::Satisfiable
@@ -176,3 +186,14 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn)
     exprs.push_back(tn);
     return satisfiable(exprs);
 }
+
+SMTSolver::Satisfiable
+SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const InsnSemanticsExpr::TreeNodePtr &expr)
+{
+    if (expr!=NULL)
+        exprs.push_back(expr);
+    return satisfiable(exprs);
+}
+
+} // namespace
+} // namespace

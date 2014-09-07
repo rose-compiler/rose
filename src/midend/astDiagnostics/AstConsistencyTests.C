@@ -1353,7 +1353,18 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgModifierType returned from SgFunctionCallExp::get_type() member function \n");
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeVoid returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+#endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (7/7/2014): This case is required for ROSE compiling ROSE header files.
+                    case V_SgTypeUnknown:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
 #endif
                          break;
                        }
@@ -2441,9 +2452,9 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                ROSE_ASSERT(locatedNode->get_file_info() != NULL);
                if (locatedNode->get_file_info()->isShared() == false)
                   {
-                    printf ("Warning: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
                     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                        {
+                         printf ("Warning: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
                          locatedNode->get_file_info()->display("Error: found a shared IR node (might be marked as shared after AST merge; not handled yet)");
                        }
                   }
@@ -2477,24 +2488,32 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+             {
                printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
 
-          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
-          if (declarationStatement != NULL)
-             {
-               printf ("*** (possible sharing violation) declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
-               ROSE_ASSERT(declarationStatement->get_parent() != NULL);
-               printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
-               printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
-               printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+               SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
+               if (declarationStatement != NULL)
+                  {
+                    printf ("*** (possible sharing violation) declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+                    ROSE_ASSERT(declarationStatement->get_parent() != NULL);
+                    printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
+                    printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
+                    printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+                  }
              }
 
 #if 0
+       // DQ (4/8/2014): This now only fails for Boost examples, so I this is the good news,
+       // however, it means that I still can't enforce this everywhere. These tests:
+       // test2013_234.C
+       // test2013_240.C
+       // test2013_242.C
+       // test2013_246.C
+       // test2013_241.C
+
        // DQ (10/16/2013): Now that we have the token stream support computed correctly, 
        // we have to disable this check to support the C++ tests (e.g. test2004_77.C).
-
        // DQ (10/14/2013): Turn this on as part of testing the token stream mapping!
-
        // DQ (10/19/2012): This fails for a collection of C++ codes only:
        // test2011_121.C
        // test2011_141.C
@@ -2523,7 +2542,10 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
           ROSE_ASSERT(false);
 #else
        // DQ (4/26/2012): debugging... (test2012_67.C)
-          printf ("In TestAstForUniqueNodesInAST::visit (): Commented out this error to view the dot file \n");
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+             {
+               printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples) \n");
+             }
 #endif
         }
 #if 0
@@ -2735,16 +2757,31 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                SgAccessModifier::access_modifier_enum firstNondefiningDeclaration_access_modifier = firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().get_modifier();
                if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
                   {
-                    printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                 // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
+                    if (isSgTemplateInstantiationDecl(definingDeclaration) != NULL)
+                       {
+                         printf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         printf ("Waringg: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                       }
+                      else
+                       {
+                         printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
 
-                    firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
-                    definingDeclaration->get_file_info()->display("definingDeclaration");
+                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
+                         definingDeclaration->get_file_info()->display("definingDeclaration");
 
-                    printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                    printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                         printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                       }
                   }
-               
-               ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+
+            // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
+            // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+               if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL)
+                 {
+                   ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+                 }
              }
         }
 
@@ -3677,8 +3714,8 @@ TestExpressionTypes::visit ( SgNode* node )
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
        /* Except when it is the operand of the sizeof operator or the unary & operator, or is a
-          string literal used to initialize an array, an expression that has type ‚Äò‚Äòarray of type‚Äô‚Äô is
-          converted to an expression with type ‚Äò‚Äòpointer to type‚Äô‚Äô that points to the initial element of
+          string literal used to initialize an array, an expression that has type array of type is
+          converted to an expression with type pointer to type that points to the initial element of
           the array object and is not an lvalue. */
           type = type->stripTypedefsAndModifiers();
           ROSE_ASSERT(type != NULL);
@@ -5044,8 +5081,11 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
-                              printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
-                                   node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                              if (SgProject::get_verbose() > 0)
+                                 {
+                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                        node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                                 }
                             }
 #else
                       // DQ (9/26/2011): Trying to handle this via a better implementation of this test.
@@ -5262,8 +5302,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
+                           // DQ (8/19/2014): Since these are shared (by design, so that the symbol table use is optimal) it is less important to warn about these.
                            // DQ (3/6/2007): This is always a case we want to warn about!
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
 #endif

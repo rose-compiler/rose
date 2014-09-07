@@ -5,7 +5,7 @@
 
 using namespace StringUtility;
 using namespace SageInterface;
-using namespace BinaryAnalysis::InstructionSemantics2;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 int
 main(int argc, char *argv[])

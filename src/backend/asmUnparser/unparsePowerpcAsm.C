@@ -14,20 +14,22 @@
 #include "integerOps.h"
 #include "powerpcInstructionProperties.h"
 #include "Registers.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 /****************************************************
  * resolve expression
  ****************************************************/
-static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc, const RegisterDictionary *registers)
+static std::string unparsePowerpcRegister(SgAsmInstruction *insn, const RegisterDescriptor &rdesc,
+                                          const RegisterDictionary *registers)
 {
     if (!registers)
         registers = RegisterDictionary::dictionary_powerpc();
     std::string name = registers->lookup(rdesc);
-    if (name.empty()) {
-        std::cerr <<"unparsePowerpcRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";
-        //std::cerr <<rdict;
-        ROSE_ASSERT(!"register descriptor not found in dictionary");
-    }
+    if (name.empty())
+        name = AsmUnparser::invalid_register(insn, rdesc, registers);
     return name;
 }
 
@@ -51,7 +53,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
                     if (isSgAsmValueExpression(a->get_rhs())) {
                         // Sign-extend from 16 bits
                         SgAsmValueExpression *ve = isSgAsmValueExpression(a->get_rhs());
-                        assert(ve!=NULL);
+                        ASSERT_not_null(ve);
                         result = boost::lexical_cast<std::string>(
                                    (int64_t)IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(ve)));
                         result += "(" + lhs + ")";
@@ -66,16 +68,14 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             }
             break;
         }
-        case V_SgAsmPowerpcRegisterReferenceExpression: {
-            SgAsmPowerpcRegisterReferenceExpression* rr = isSgAsmPowerpcRegisterReferenceExpression(expr);
-            result = unparsePowerpcRegister(rr->get_descriptor(), registers);
+        case V_SgAsmDirectRegisterExpression: {
+            SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(expr);
+            SgAsmDirectRegisterExpression* rr = isSgAsmDirectRegisterExpression(expr);
+            result = unparsePowerpcRegister(insn, rr->get_descriptor(), registers);
             break;
         }
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression: {
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+        case V_SgAsmIntegerValueExpression: {
+            uint64_t v = isSgAsmIntegerValueExpression(expr)->get_absoluteValue();
             if (useHex) {
                 result = StringUtility::intToHex(v);
             } else {
@@ -89,8 +89,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             break;
         }
         default: {
-            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
-            ROSE_ASSERT (false);
+            ASSERT_not_reachable("invalid PowerPC expression: " + expr->class_name());
         }
     }
     result = StringUtility::appendAsmComment(result, expr->get_replacement());
@@ -99,7 +98,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
 
 /** Returns a string for the part of the assembly instruction before the first operand. */
 std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction *insn) {
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
     return insn->get_mnemonic();
 }
 
@@ -111,7 +110,7 @@ std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::L
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmPowerpcInstruction(node);
     }
-    ROSE_ASSERT(insn!=NULL);
+    ASSERT_not_null(insn);
 
     PowerpcInstructionKind kind = insn->get_kind();
     bool isBranchTarget = (((kind == powerpc_b ||

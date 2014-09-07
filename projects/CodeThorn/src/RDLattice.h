@@ -4,10 +4,6 @@
 #ifndef RD_LATTICE_H
 #define RD_LATTICE_H
 
-using CodeThorn::Label;
-using CodeThorn::VariableId;
-using CodeThorn::VariableIdMapping;
-
 /*! 
   * \author Markus Schordan
   * \date 2013.

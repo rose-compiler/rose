@@ -9,6 +9,8 @@ complexCondition.c \
 dep_distance.c \
 doall.c \
 firstprivate.c \
+firstprivate2.c \
+firstprivate3.c \
 foo.c \
 functionCall.c \
 ifAndFor.c \
@@ -90,13 +92,61 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 ../autoPar:
 	$(MAKE) -C ../. autoPar
 
+# we want to use diff to compare generated files with reference files
+# Pending test cases: TODO
+#jacobi_seq.c # still fails due to some missed live-in variables
+#minusMinus.c  
+#multiReduction.c // not supported 
+# TODO: diff patches is a better choice.  Tolerate other differences introduced by ROSE.
+C_TESTCODES_REQUIRED_TO_VERIFY = \
+anti_dep.c \
+array_scalar.c \
+c99loop.c \
+complexCondition.c \
+dep_distance.c \
+doall.c \
+firstprivate.c \
+firstprivate2.c \
+firstprivate3.c \
+foo.c \
+functionCall.c \
+ifAndFor.c \
+indirectIndex.c \
+livenessTest.c \
+matrixmultiply.c \
+matrixmultiply2.c \
+matrixVectormultiply.c \
+outer_only.c \
+output_dep3.c \
+plusAssign.c \
+plusplus.c \
+lastprivate.c
+
+# TODO discard this list once all files are verified
+
+C_TEST_Generated_Files = $(addprefix rose_,${C_TESTCODES_REQUIRED_TO_VERIFY})
+DIFF=diff
+REFERENCE_PATH=$(top_srcdir)/projects/autoParallelization/tests/references
+
+C_TEST_DIFF_FILES=$(C_TEST_Generated_Files:.c=.c.diff)
+
+$(C_TEST_Generated_Files):../autoPar 
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:rose_%=%) >> log.out
+
+# object files means rose_ *.c files also exist
+#$(C_TEST_DIFF_FILES):$(C_TEST_Objects)
+# TODO not good enough, we want to depend on individual generated file here
+$(C_TEST_DIFF_FILES): $(C_TEST_Generated_Files) 
+	echo "Verifying autoPar translation by using diff ..."; \
+	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) >> log.out 
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) >> $(@).out 
 #$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out) # pipeline buries return code
 
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) >> log.out
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) >> $(@).out
 rose_interp1_elem.C: ../autoPar interp1_elem.C
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
@@ -127,6 +177,7 @@ check-local:
 	@$(MAKE) test_diff.out
 	@$(MAKE) inner_only.out
 	@$(MAKE) doall_2.out
+	@$(MAKE) $(C_TEST_DIFF_FILES)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
@@ -135,8 +186,8 @@ EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++
 	Stress2.cc clibfunc.annot SegDB.annot doall_2.c inner_only.c std_vector.annot
 
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch
+	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch *.diff
 
-	
+
 
 

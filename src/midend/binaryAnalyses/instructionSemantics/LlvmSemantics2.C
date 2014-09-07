@@ -4,16 +4,16 @@
 #include "integerOps.h"
 #include "stringify.h"
 
-using namespace rose;                                   // temporary until this stuff is all inside that namespace
-
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace LlvmSemantics {
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &cond, size_t nbits)
+                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
+    size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
     return svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_READ,
                                             LeafNode::create_memory(nbits), addr->get_expression()));
@@ -38,7 +38,7 @@ RiscOperators::reset()
     BaseSemantics::MemoryStatePtr mem = state->get_memory_state();
 
     RegisterStatePtr new_regs = RegisterState::promote(regs->create(get_protoval(), regs->get_register_dictionary()));
-    BaseSemantics::MemoryStatePtr new_mem = mem->create(get_protoval());
+    BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
 
     new_regs->initialize_nonoverlapping(get_important_registers(), false);
@@ -197,16 +197,18 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<uint64_t> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        void operator()(const TreeNodePtr &node) {
+        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node)/*override*/ {
             if (!seen.insert(node->hash()).second)
-                return;                                 // already processed this same expression
+                return InsnSemanticsExpr::TRUNCATE; // already processed this same expression
             size_t width = node->get_nbits();
             if (InternalNodePtr inode = node->isInternalNode()) {
                 if (InsnSemanticsExpr::OP_READ==inode->get_operator()) {
-                    assert(2==inode->size());
+                    assert(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
-            } else if (LeafNodePtr leaf = node->isLeafNode()) {
+            } else {
+                LeafNodePtr leaf = node->isLeafNode();
+                ASSERT_not_null(leaf);
                 if (leaf->is_variable()) {
                     std::string comment = leaf->get_comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
@@ -214,6 +216,10 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     LeafNodePtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
+            return InsnSemanticsExpr::CONTINUE;
+        }
+        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&)/*override*/ {
+            return InsnSemanticsExpr::CONTINUE;
         }
     } t1(this, o, regs, dictionary);
 
@@ -221,17 +227,17 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
     RegisterStatePtr regstate = RegisterState::promote(get_state()->get_register_state());
     for (size_t i=0; i<regs.size(); ++i) {
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
-        value->get_expression()->depth_first_visit(&t1);
+        value->get_expression()->depth_first_traversal(t1);
     }
 
     // Prerequisites for memory writes
     for (TreeNodes::const_iterator mwi=mem_writes.begin(); mwi!=mem_writes.end(); ++mwi) {
         const TreeNodePtr mem_write = *mwi;
-        mem_write->depth_first_visit(&t1);
+        mem_write->depth_first_traversal(t1);
     }
 
     // Prerequisites for the instruction pointer.
-    get_instruction_pointer()->get_expression()->depth_first_visit(&t1);
+    get_instruction_pointer()->get_expression()->depth_first_traversal(t1);
 }
 
 void
@@ -320,7 +326,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             const SgAsmIntegerValuePtrList &succs = bb->get_successors();
             std::vector<rose_addr_t> succs_va;
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si)
-                succs_va.push_back((*si)->get_absolute_value());
+                succs_va.push_back((*si)->get_absoluteValue());
 
             if (succs.size()==2 && true_func==func && false_func==func &&
                 std::min(succs_va[0], succs_va[1])==std::min(true_va, false_va) &&
@@ -415,7 +421,7 @@ RiscOperators::emit_memory_writes(std::ostream &o)
         InternalNodePtr inode = mem_writes[i]->isInternalNode();
         assert(inode!=NULL);
         assert(inode->get_operator() == InsnSemanticsExpr::OP_WRITE);
-        assert(inode->size()==3);
+        assert(inode->nchildren()==3);
         TreeNodePtr addr = inode->child(1);
         TreeNodePtr value = inode->child(2);
         o <<prefix() <<"; store value=" <<*value <<" at address=" <<*addr <<"\n";
@@ -1192,7 +1198,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
             case InsnSemanticsExpr::OP_NOOP:
             case InsnSemanticsExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyInsnSemanticsExprOperator(inode->get_operator()) +
+                                               stringifyBinaryAnalysisInsnSemanticsExprOperator(inode->get_operator()) +
                                                " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
@@ -1474,6 +1480,7 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp)
     return ss.str();
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

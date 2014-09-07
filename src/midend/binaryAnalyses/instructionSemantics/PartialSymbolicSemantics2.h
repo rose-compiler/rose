@@ -21,6 +21,7 @@
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -198,7 +199,8 @@ protected:
         assert(registers!=NULL);
         (void) SValue::promote(registers->get_protoval());
         assert(memory!=NULL);
-        (void) SValue::promote(memory->get_protoval());
+        (void) SValue::promote(memory->get_addr_protoval());
+        (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
         BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
@@ -269,7 +271,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
-    MemoryMap *map;
+    const MemoryMap *map;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -290,8 +292,14 @@ public:
      * PartialSymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
+#if defined(__GNUC__)
+#if __GNUC__==4 && __GNUC_MINOR__==2
+        // This is needed to work around a bug in GCC-4.2.4 optimization. [Robb P. Matzke 2014-07-16]
+        volatile int x = protoval.get()->nrefs__;
+#endif
+#endif
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
         memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         SMTSolver *solver = NULL;
@@ -339,8 +347,8 @@ public:
      *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory
      *  map is used when reading the value.
      * @{ */
-    MemoryMap *get_memory_map() const { return map; }
-    void set_memory_map(MemoryMap *m) { map = m; }
+    const MemoryMap *get_memory_map() const { return map; }
+    void set_memory_map(const MemoryMap *m) { map = m; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -396,8 +404,8 @@ public:
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond,
-                                                size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
@@ -804,9 +812,9 @@ protected:
             }
 #endif
 
-        } /*namespace*/
-    } /*namespace*/
-} /*namespace*/
-
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

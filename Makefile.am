@@ -61,7 +61,7 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/tutorial
-	cp rosePublicConfig.h $(DESTDIR)$(includedir)/
+	cp rosePublicConfig.h $(pkgincludedir)
 
 install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
@@ -93,6 +93,10 @@ export prefix	# for use by policy scripts
 enforce_policies:
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
 
+# Most checks in ROSE are named "check-whatever", so do the same for policy checking
+.PHONY: check-policies
+check-policies: enforce_policies
+
 
 # DQ (6/29/2004): I don't think we need this!
 # LIBS = @LIBS@ ${SAGE_LIBS}
@@ -108,12 +112,14 @@ enforce_policies:
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers build ChangeLog2
 
-# Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
-# otherwise the stale one can go into the distribution package
+# The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
+# each time we make a distribution because we don't want to distribute stale information.
+EXTRA_DIST += bincompat-sig
+.PHONY: cleanSig
 cleanSig:
 	rm -rf bincompat-sig
 bincompat-sig: cleanSig
-	$(srcdir)/scripts/bincompat-sig > $@
+	$(srcdir)/scripts/edg-generate-sig > $@
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
 # ROSE_Talks
@@ -140,7 +146,7 @@ distclean-local:
 # into the distribution instead; from which then rose_config.h is generated).
 # However, the public version should be installed and distributed.
 noinst_HEADERS = rose_config.h
-include_HEADERS = rosePublicConfig.h
+pkginclude_HEADERS = rosePublicConfig.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
 # called when compiling the /src/util directory (perhaps it should be located in 
@@ -163,7 +169,8 @@ install-data-local: uninstall-local
 	-mkdir $(DESTDIR)$(includedir)
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
 #	if !ROSE_USE_NEW_EDG_INTERFACE
-	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
+	mkdir -p "$(DESTDIR)$(includedir)/edg"
+	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/edg"
 #	endif
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'

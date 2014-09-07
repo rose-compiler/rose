@@ -1,0 +1,31 @@
+# Non-recursive Makefile
+
+mAbstractLayer_includeHeaders=\
+	$(mAbstractLayerPath)/AstAnnotator.h \
+	$(mAbstractLayerPath)/DFAstAttribute.h \
+	$(mAbstractLayerPath)/CPAstAttributeInterface.h \
+	$(mAbstractLayerPath)/RDAstAttributeInterface.h \
+	$(mAbstractLayerPath)/Labeler.h \
+	$(mAbstractLayerPath)/VariableIdMapping.h \
+	$(mAbstractLayerPath)/SgNodeHelper.h
+
+mAbstractLayer_la_sources=\
+	$(mAbstractLayerPath)/AstAnnotator.C \
+	$(mAbstractLayerPath)/DFAstAttribute.C \
+	$(mAbstractLayerPath)/CPAstAttributeInterface.C \
+	$(mAbstractLayerPath)/RDAstAttributeInterface.C \
+	$(mAbstractLayerPath)/Labeler.C \
+	$(mAbstractLayerPath)/VariableIdMapping.C \
+	$(mAbstractLayerPath)/SgNodeHelper.C
+
+mAbstractLayer_extraDist=\
+	$(mAbstractLayerPath)/CMakeLists.txt \
+	$(mAbstractLayerPath)/README 
+
+mAbstractLayer_cleanLocal=\
+	rm -rf \
+	$(mAbstractLayerPath)/core \
+	$(mAbstractLayerPath)/ii_files \
+	$(mAbstractLayerPath)/ti_files \
+	$(mAbstractLayerPath)/Templates.DB
+

@@ -1,4 +1,5 @@
-#include "rose.h"
+#include "sage3basic.h"
+
 #include "InsnSemanticsExpr.h"
 #include "SMTSolver.h"
 #include "stringify.h"
@@ -9,8 +10,8 @@
 #define xor ^
 #endif
 
-using namespace rose;
-
+namespace rose {
+namespace BinaryAnalysis {
 namespace InsnSemanticsExpr {
 
 uint64_t
@@ -21,7 +22,7 @@ const char *
 to_str(Operator o)
 {
     static char buf[64];
-    std::string s = stringifyInsnSemanticsExprOperator(o, "OP_");
+    std::string s = stringifyBinaryAnalysisInsnSemanticsExprOperator(o, "OP_");
     assert(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
     for (char *s=buf; *s; s++) {
@@ -43,13 +44,17 @@ TreeNode::get_variables() const
 {
     struct T1: public Visitor {
         std::set<LeafNodePtr> vars;
-        void operator()(const TreeNodePtr &node) {
+        VisitAction preVisit(const TreeNodePtr&) {
+            return CONTINUE;
+        }
+        VisitAction postVisit(const TreeNodePtr &node) {
             LeafNodePtr l_node = node->isLeafNode();
             if (l_node && !l_node->is_known())
                 vars.insert(l_node);
+            return CONTINUE;
         }
     } t1;
-    depth_first_visit(&t1);
+    depth_first_traversal(t1);
     return t1.vars;
 }
 
@@ -68,6 +73,28 @@ TreeNode::hash() const
     return hashval;
 }
 
+void
+TreeNode::assert_acyclic() const
+{
+#ifndef NDEBUG
+    struct T1: Visitor {
+        std::vector<const TreeNode*> ancestors;
+        VisitAction preVisit(const TreeNodePtr &node) {
+            assert(std::find(ancestors.begin(), ancestors.end(), getRawPointer(node))==ancestors.end());
+            ancestors.push_back(getRawPointer(node));
+            return CONTINUE;
+        }
+        VisitAction postVisit(const TreeNodePtr &node) {
+            assert(!ancestors.empty() && ancestors.back()==getRawPointer(node));
+            ancestors.pop_back();
+            return CONTINUE;
+        }
+    } t1;
+    depth_first_traversal(t1);
+#endif
+}
+
+
 /*******************************************************************************************************************************
  *                                      InternalNode methods
  *******************************************************************************************************************************/
@@ -75,78 +102,94 @@ TreeNode::hash() const
 void
 InternalNode::add_child(const TreeNodePtr &child)
 {
-    ROSE_ASSERT(child!=0);
+    assert(child!=0);
     children.push_back(child);
+    nnodes_ += child->nnodes();
 }
 
 void
-InternalNode::print(std::ostream &o, Formatter &formatter) const
+InternalNode::print(std::ostream &o, Formatter &fmt) const
 {
+    struct FormatGuard {
+        Formatter &fmt;
+        FormatGuard(Formatter &fmt): fmt(fmt) {
+            ++fmt.cur_depth;
+        }
+        ~FormatGuard() {
+            --fmt.cur_depth;
+        }
+    } formatGuard(fmt);
+    
     o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
+    if (fmt.show_comments!=Formatter::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
-    for (size_t i=0; i<children.size(); i++) {
-        bool printed = false;
-        LeafNodePtr child_leaf = children[i]->isLeafNode();
-        o <<" ";
-        switch (op) {
-            case OP_ASR:
-            case OP_ROL:
-            case OP_ROR:
-            case OP_UEXTEND:
-                if (0==i && child_leaf) {
-                    child_leaf->print_as_unsigned(o, formatter);
-                    printed = true;
-                }
-                break;
 
-            case OP_EXTRACT:
-                if ((0==i || 1==i) && child_leaf) {
-                    child_leaf->print_as_unsigned(o, formatter);
-                    printed = true;
-                }
-                break;
-                
-            case OP_BV_AND:
-            case OP_BV_OR:
-            case OP_BV_XOR:
-            case OP_CONCAT:
-            case OP_UDIV:
-            case OP_UGE:
-            case OP_UGT:
-            case OP_ULE:
-            case OP_ULT:
-            case OP_UMOD:
-            case OP_UMUL:
-                if (child_leaf) {
-                    child_leaf->print_as_unsigned(o, formatter);
-                    printed = true;
-                }
-                break;
+    if (fmt.max_depth!=0 && fmt.cur_depth>=fmt.max_depth && 0!=nchildren()) {
+        o <<" ...";
+    } else {
+        for (size_t i=0; i<children.size(); i++) {
+            bool printed = false;
+            LeafNodePtr child_leaf = children[i]->isLeafNode();
+            o <<" ";
+            switch (op) {
+                case OP_ASR:
+                case OP_ROL:
+                case OP_ROR:
+                case OP_UEXTEND:
+                    if (0==i && child_leaf) {
+                        child_leaf->print_as_unsigned(o, fmt);
+                        printed = true;
+                    }
+                    break;
 
-            default:
-                break;
+                case OP_EXTRACT:
+                    if ((0==i || 1==i) && child_leaf) {
+                        child_leaf->print_as_unsigned(o, fmt);
+                        printed = true;
+                    }
+                    break;
+
+                case OP_BV_AND:
+                case OP_BV_OR:
+                case OP_BV_XOR:
+                case OP_CONCAT:
+                case OP_UDIV:
+                case OP_UGE:
+                case OP_UGT:
+                case OP_ULE:
+                case OP_ULT:
+                case OP_UMOD:
+                case OP_UMUL:
+                    if (child_leaf) {
+                        child_leaf->print_as_unsigned(o, fmt);
+                        printed = true;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (!printed)
+                children[i]->print(o, fmt);
         }
-
-        if (!printed)
-            children[i]->print(o, formatter);
+        o <<")";
     }
-    o <<")";
 }
 
 bool
 InternalNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (this==other_.get()) {
+    if (this==getRawPointer(other_)) {
         retval = true;
     } else if (equivalent_to(other_)) {
         // This is probably faster than using an SMT solver. It also serves as the naive approach when an SMT solver
         // is not available.
         retval = true;
     } else if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+        TreeNodePtr assertion = InternalNode::create(1, OP_NE, sharedFromThis(), other_);
         retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
     }
     return retval;
@@ -156,17 +199,42 @@ bool
 InternalNode::may_equal(const TreeNodePtr &other, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         return true;
     } else if (equivalent_to(other)) {
         // This is probably faster than using an SMT solver.  It also serves as the naive approach when an SMT solver
         // is not available.
         retval = true;
     } else if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other);
+        TreeNodePtr assertion = InternalNode::create(1, OP_EQ, sharedFromThis(), other);
         retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
     }
     return retval;
+}
+
+int
+InternalNode::structural_compare(const TreeNodePtr &other_) const
+{
+    InternalNodePtr other = other_->isInternalNode();
+    if (this==getRawPointer(other)) {
+        return 0;
+    } else if (other==NULL) {
+        return 1;                                       // leaf nodes < internal nodes
+    } else if (op != other->op) {
+        return op < other->op ? -1 : 1;
+    } else if (get_nbits() != other->get_nbits()) {
+        return get_nbits() < other->get_nbits() ? -1 : 1;
+    } else if (children.size() != other->children.size()) {
+        return children.size() < other->children.size() ? -1 : 1;
+    } else {
+        // compare children
+        ASSERT_require(children.size()==other->children.size());
+        for (size_t i=0; i<children.size(); ++i) {
+            if (int cmp = children[i]->structural_compare(other->children[i]))
+                return cmp;
+        }
+    }
+    return 0;
 }
 
 bool
@@ -174,7 +242,7 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
 {
     bool retval = false;
     InternalNodePtr other = other_->isInternalNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other==NULL || get_nbits()!=other->get_nbits()) {
         retval = false;
@@ -227,17 +295,25 @@ InternalNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
         }
     }
     if (!substituted)
-        return shared_from_this();
+        return sharedFromThis();
     return InternalNode::create(get_nbits(), get_operator(), newnodes, get_comment());
 }
 
-void
-InternalNode::depth_first_visit(Visitor *v) const
+VisitAction
+InternalNode::depth_first_traversal(Visitor &v) const
 {
-    assert(v!=NULL);
-    for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
-        (*ci)->depth_first_visit(v);
-    (*v)(shared_from_this());
+    TreeNodePtr self = sharedFromThis();
+    VisitAction action = v.preVisit(self);
+    if (CONTINUE==action) {
+        for (std::vector<TreeNodePtr>::const_iterator ci=children.begin(); ci!=children.end(); ++ci) {
+            action = (*ci)->depth_first_traversal(v);
+            if (TERMINATE==action)
+                break;
+        }
+    }
+    if (TERMINATE!=action)
+        action = v.postVisit(self);
+    return action;
 }
 
 InternalNodePtr
@@ -260,48 +336,124 @@ InternalNode::nonassociative() const
     if (modified)
         return InternalNodePtr(retval);
     delete retval;
-    return shared_from_this()->isInternalNode();
+    return isInternalNode();
+}
+
+// compare expressions for sorting operands of commutative operators. Returns -1, 0, 1
+static int
+expr_cmp(const TreeNodePtr &a, const TreeNodePtr &b)
+{
+    assert(a!=NULL && b!=NULL);
+    InternalNodePtr ai = a->isInternalNode();
+    InternalNodePtr bi = b->isInternalNode();
+    LeafNodePtr al = a->isLeafNode();
+    LeafNodePtr bl = b->isLeafNode();
+    assert((ai!=NULL) xor (al!=NULL));
+    assert((bi!=NULL) xor (bl!=NULL));
+
+    if ((ai==NULL) != (bi==NULL)) {
+        // internal nodes are less than leaf nodes
+        return ai!=NULL ? -1 : 1;
+    } else if (al!=NULL) {
+        // both are leaf nodes
+        assert(bl!=NULL);
+        if (al->is_known() != bl->is_known()) {
+            // constants are greater than variables
+            return al->is_known() ? 1 : -1;
+        } else if (al->is_known()) {
+            // both are constants, sort by unsigned value
+            assert(bl->is_known());
+            return al->get_bits().compare(bl->get_bits());
+        } else if (al->is_variable() != bl->is_variable()) {
+            // variables are less than memory
+            return al->is_variable() ? -1 : 1;
+        } else {
+            // both are variables or both are memory; sort by variable name
+            assert((al->is_variable() && bl->is_variable()) || (al->is_memory() && bl->is_memory()));
+            if (al->get_name() != bl->get_name())
+                return al->get_name() < bl->get_name() ? -1 : 1;
+            return 0;
+        }
+    } else {
+        // both are internal nodes
+        assert(ai!=NULL && bi!=NULL);
+        if (ai->get_operator() != bi->get_operator())
+            return ai->get_operator() < bi->get_operator() ? -1 : 1;
+        for (size_t i=0; i<std::min(ai->nchildren(), bi->nchildren()); ++i) {
+            if (int cmp = expr_cmp(ai->child(i), bi->child(i)))
+                return cmp;
+        }
+        if (ai->nchildren() != bi->nchildren())
+            return ai->nchildren() < bi->nchildren() ? -1 : 1;
+        return 0;
+    }
+}
+
+static bool
+commutative_order(const TreeNodePtr &a, const TreeNodePtr &b)
+{
+    if (int cmp = expr_cmp(a, b))
+        return cmp<0;
+    return getRawPointer(a) < getRawPointer(b); // make it a strict ordering
 }
 
 InternalNodePtr
 InternalNode::commutative() const
 {
-    InternalNode *retval = new InternalNode(get_nbits(), op, get_comment());
-    TreeNodes internal, leaf;
-    bool modified = false;
-    for (TreeNodes::const_iterator ci=children.begin(); ci!=children.end(); ++ci) {
-        if (InternalNodePtr ichild = (*ci)->isInternalNode()) {
-            internal.push_back(ichild);
-            modified = !leaf.empty();
-        } else if (LeafNodePtr lchild = (*ci)->isLeafNode()) {
-            leaf.push_back(lchild);
-        } else {
-            assert(!"unhandled expression node type");
-            abort();
-        }
-    }
-    if (!modified) {
-        delete retval;
-        return shared_from_this()->isInternalNode();
-    }
-    retval->children.insert(retval->children.end(), internal.begin(), internal.end());
-    retval->children.insert(retval->children.end(), leaf.begin(), leaf.end());
-    return InternalNodePtr(retval);
+    const TreeNodes &orig_operands = get_children();
+    TreeNodes sorted_operands = orig_operands;
+    std::sort(sorted_operands.begin(), sorted_operands.end(), commutative_order);
+    if (std::equal(sorted_operands.begin(), sorted_operands.end(), orig_operands.begin()))
+        return isInternalNode();
+
+    // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
+    InternalNode *inode = new InternalNode(get_nbits(), get_operator(), sorted_operands, get_comment());
+    return InternalNodePtr(inode);
 }
 
 TreeNodePtr
 InternalNode::involutary() const
 {
     if (InternalNodePtr inode = isInternalNode()) {
-        if (1==inode->size()) {
+        if (1==inode->nchildren()) {
             if (InternalNodePtr sub1 = inode->child(0)->isInternalNode()) {
-                if (sub1->get_operator() == inode->get_operator() && 1==sub1->size()) {
+                if (sub1->get_operator() == inode->get_operator() && 1==sub1->nchildren()) {
                     return sub1->child(0);
                 }
             }
         }
     }
-    return shared_from_this();
+    return sharedFromThis();
+}
+
+// simplifies things like:
+//   (shift a (shift b x)) ==> (shift (add a b) x)
+// making sure a and b are extended to the same width
+TreeNodePtr
+InternalNode::additive_nesting() const
+{
+    InternalNodePtr nested = child(1)->isInternalNode();
+    if (nested!=NULL && nested->get_operator()==get_operator()) {
+        assert(nested->nchildren()==nchildren());
+        assert(nested->get_nbits()==get_nbits());
+        size_t additive_nbits = std::max(child(0)->get_nbits(), nested->child(0)->get_nbits());
+
+        // The two addends must be the same width, so zero-extend them if necessary (or should we sign extend?)
+        // Note that the first argument (new width) of the UEXTEND operator is not actually used.
+        TreeNodePtr a = child(0)->get_nbits()==additive_nbits ? child(0) :
+                        InternalNode::create(additive_nbits, OP_UEXTEND, LeafNode::create_integer(8, additive_nbits),
+                                             child(0));
+        TreeNodePtr b = nested->child(0)->get_nbits()==additive_nbits ? nested->child(0) :
+                        InternalNode::create(additive_nbits, OP_UEXTEND, LeafNode::create_integer(8, additive_nbits),
+                                             nested->child(0));
+        
+        // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
+        InternalNode *inode = new InternalNode(get_nbits(), get_operator(),
+                                               InternalNode::create(additive_nbits, OP_ADD, a, b),
+                                               nested->child(1), get_comment());
+        return InternalNodePtr(inode);
+    }
+    return isInternalNode();
 }
 
 TreeNodePtr
@@ -311,19 +463,29 @@ InternalNode::identity(uint64_t ident) const
     bool modified = false;
     for (TreeNodes::const_iterator ci=children.begin(); ci!=children.end(); ++ci) {
         LeafNodePtr leaf = (*ci)->isLeafNode();
-        if (leaf && leaf->is_known() && leaf->get_value()==(ident & IntegerOps::genMask<uint64_t>(leaf->get_nbits()))) {
-            // skip this arg
-            modified = true;
+        if (leaf && leaf->is_known()) {
+            Sawyer::Container::BitVector identBv = Sawyer::Container::BitVector(leaf->get_nbits()).fromInteger(ident);
+            if (0==leaf->get_bits().compare(identBv)) {
+                // skip this arg
+                modified = true;
+            } else {
+                args.push_back(*ci);
+            }
         } else {
             args.push_back(*ci);
         }
     }
     if (!modified)
-        return shared_from_this();
+        return sharedFromThis();
     if (args.empty())
         return LeafNode::create_integer(get_nbits(), ident, get_comment());
-    if (1==args.size())
+    if (1==args.size()) {
+        if (args.front()->get_nbits()!=get_nbits())
+            return InternalNode::create(get_nbits(), OP_UEXTEND, LeafNode::create_integer(8, get_nbits()), args.front());
         return args.front();
+    }
+    
+    // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
     InternalNode *retval = new InternalNode(get_nbits(), get_operator(), get_comment());
     retval->children.insert(retval->children.end(), args.begin(), args.end());
     return InternalNodePtr(retval);
@@ -332,7 +494,7 @@ InternalNode::identity(uint64_t ident) const
 TreeNodePtr
 InternalNode::unaryNoOp() const
 {
-    return 1==size() ? child(0) : shared_from_this();
+    return 1==nchildren() ? child(0) : sharedFromThis();
 }
 
 TreeNodePtr
@@ -340,7 +502,7 @@ InternalNode::rewrite(const Simplifier &simplifier) const
 {
     if (TreeNodePtr simplified = simplifier.rewrite(this))
         return simplified;
-    return shared_from_this();
+    return sharedFromThis();
 }
 
 TreeNodePtr
@@ -367,9 +529,9 @@ InternalNode::constant_folding(const Simplifier &simplifier) const
     }
     if (!modified) {
         delete retval;
-        return shared_from_this()->isInternalNode();
+        return isInternalNode();
     }
-    if (1==retval->size()) {
+    if (1==retval->nchildren()) {
         TreeNodePtr tmp = TreeNodePtr(retval->child(0)); // need to hold this pointer while we delete
         delete retval;
         return tmp;
@@ -380,78 +542,105 @@ InternalNode::constant_folding(const Simplifier &simplifier) const
 TreeNodePtr
 AddSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = (*begin)->get_nbits();
-    uint64_t result = 0;
+    Sawyer::Container::BitVector accumulator((*begin)->get_nbits());
     for (/*void*/; begin!=end; ++begin)
-        result += (*begin)->isLeafNode()->get_value();
-    return LeafNode::create_integer(nbits, result);
+        accumulator.add((*begin)->isLeafNode()->get_bits());
+    return LeafNode::create_constant(accumulator);
 }
 
 TreeNodePtr
 AddSimplifier::rewrite(const InternalNode *inode) const
 {
+    // A and B are duals if they have one of the following forms:
+    //    (1) A = x           AND  B = (negate x)
+    //    (2) A = x           AND  B = (invert x)   [adjust constant]
+    //    (3) A = (negate x)  AND  B = x
+    //    (4) A = (invert x)  AND  B = x            [adjust constant]
+    //
+    // This makes use of the relationship:
+    //   (add (negate x) -1) == (invert x)
+    // by decrementing adjustment. The adjustment, whose width is the same as A and B, is allowed to overflow.  For example,
+    // consider the expression, where all values are two bits wide:
+    //   (add v1 (invert v1) v2 (invert v2) v3 (invert v3))            by substitution for invert:
+    //   (add v1 (negate v1) -1 v2 (negate v2) -1 v3 (negate v3) -1)   canceling duals gives:
+    //   (add -1 -1 -1)                                                rewriting as 2's complement (2 bits wide):
+    //   (add 3 3 3)                                                   constant folding modulo 4:
+    //   1
+    // compare with v1=0, v2=1, v3=2 (i.e., -2 in two's complement):
+    //   (add 0 3 1 2 2 1) == 1 mod 4
     struct are_duals {
-        bool operator()(TreeNodePtr a, TreeNodePtr b) {
-            if (a==NULL || b==NULL)
+        bool operator()(TreeNodePtr a, TreeNodePtr b, Sawyer::Container::BitVector &adjustment/*in,out*/) {
+            assert(a!=NULL && b!=NULL);
+            assert(a->get_nbits()==b->get_nbits());
+
+            // swap A and B if necessary so we have form (1) or (2).
+            if (b->isInternalNode()==NULL)
+                std::swap(a, b);
+            if (b->isInternalNode()==NULL)
                 return false;
-            InternalNodePtr negate_a = a->isInternalNode();
-            if (negate_a!=NULL && OP_NEGATE!=negate_a->get_operator())
-                negate_a.reset();
-            InternalNodePtr negate_b = b->isInternalNode();
-            if (negate_b!=NULL && OP_NEGATE!=negate_b->get_operator())
-                negate_b.reset();
-            if ((negate_a==NULL) xor (negate_b==NULL)) {
-                if (negate_a==NULL)
-                    std::swap(negate_a, negate_b);
-                assert(1==negate_a->size());
-                return negate_a->child(0)->equivalent_to(b);
+
+            InternalNodePtr bi = b->isInternalNode();
+            if (bi->get_operator()==OP_NEGATE) {
+                // form (3)
+                assert(1==bi->nchildren());
+                return a->equivalent_to(bi->child(0));
+            } else if (bi->get_operator()==OP_INVERT) {
+                // form (4) and ninverts is small enough
+                if (a->equivalent_to(bi->child(0))) {
+                    adjustment.decrement();
+                    return true;
+                }
             }
             return false;
         }
     };
-    
+
     // Arguments that are negated cancel out similar arguments that are not negated
+    bool had_duals = false;
+    Sawyer::Container::BitVector adjustment(inode->get_nbits());
     TreeNodes children = inode->get_children();
     for (size_t i=0; i<children.size(); ++i) {
-        for (size_t j=i+1; j<children.size(); ++j) {
-            if (are_duals()(children[i], children[j])) {
-                children[i].reset();
-                children[j].reset();
-                break;
+        if (children[i]!=NULL) {
+            for (size_t j=i+1; j<children.size() && children[j]!=NULL; ++j) {
+                if (children[j]!=NULL && are_duals()(children[i], children[j], adjustment/*in,out*/)) {
+                    children[i] = Sawyer::Nothing();
+                    children[j] = Sawyer::Nothing();
+                    had_duals = true;
+                    break;
+                }
             }
         }
     }
-    children.erase(std::remove(children.begin(), children.end(), TreeNodePtr()), children.end());
+    if (!had_duals)
+        return TreeNodePtr();
 
-    // Create a new node if we removed any children. */
-    if (children.size()!=inode->size()) {
-        if (children.empty())
-            return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
-        if (children.size()==1)
-            return children[0];
-        return InternalNode::create(inode->get_nbits(), OP_ADD, children, inode->get_comment());
-    }
-                  
-    return TreeNodePtr();
+    // Build the new expression
+    children.erase(std::remove(children.begin(), children.end(), TreeNodePtr()), children.end());
+    if (!adjustment.isEqualToZero())
+        children.push_back(LeafNode::create_constant(adjustment));
+    if (children.empty())
+        return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
+    if (children.size()==1)
+        return children[0];
+    return InternalNode::create(inode->get_nbits(), OP_ADD, children, inode->get_comment());
 }
 
 TreeNodePtr
 AndSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = (*begin)->get_nbits();
-    uint64_t result = (*begin)->isLeafNode()->get_value();
-    for (++begin; begin!=end; ++begin)
-        result &= (*begin)->isLeafNode()->get_value();
-    return LeafNode::create_integer(nbits, result);
+    Sawyer::Container::BitVector accumulator((*begin)->get_nbits(), true);
+    for (/*void*/; begin!=end; ++begin)
+        accumulator.bitwiseAnd((*begin)->isLeafNode()->get_bits());
+    return LeafNode::create_constant(accumulator);
 }
 
 TreeNodePtr
 AndSimplifier::rewrite(const InternalNode *inode) const
 {
     // Result is zero if any argument is zero
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         LeafNodePtr child = inode->child(i)->isLeafNode();
-        if (child && child->is_known() && 0==child->get_value())
+        if (child && child->is_known() && child->get_bits().isEqualToZero())
             return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
     }
     return TreeNodePtr();
@@ -460,22 +649,20 @@ AndSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 OrSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = (*begin)->get_nbits();
-    uint64_t result = 0;
+    Sawyer::Container::BitVector accumulator((*begin)->get_nbits());
     for (/*void*/; begin!=end; ++begin)
-        result |= (*begin)->isLeafNode()->get_value();
-    return LeafNode::create_integer(nbits, result);
+        accumulator.bitwiseOr((*begin)->isLeafNode()->get_bits());
+    return LeafNode::create_constant(accumulator);
 }
 
 TreeNodePtr
 OrSimplifier::rewrite(const InternalNode *inode) const
 {
     // Result has all bits set if any argument has all bits set
-    uint64_t allset = IntegerOps::genMask<uint64_t>(inode->get_nbits());
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         LeafNodePtr child = inode->child(i)->isLeafNode();
-        if (child && child->is_known() && child->get_value()==allset)
-            return LeafNode::create_integer(inode->get_nbits(), allset, inode->get_comment());
+        if (child && child->is_known() && child->get_bits().isAllSet())
+            return LeafNode::create_constant(child->get_bits(), inode->get_comment());
     }
     return TreeNodePtr();
 }
@@ -483,11 +670,10 @@ OrSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 XorSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = (*begin)->get_nbits();
-    uint64_t result = (*begin)->isLeafNode()->get_value();
+    Sawyer::Container::BitVector accumulator((*begin)->get_nbits());
     for (++begin; begin!=end; ++begin)
-        result ^= (*begin)->isLeafNode()->get_value();
-    return LeafNode::create_integer(nbits, result);
+        accumulator.bitwiseXor((*begin)->isLeafNode()->get_bits());
+    return LeafNode::create_constant(accumulator);
 }
 
 TreeNodePtr
@@ -496,12 +682,12 @@ XorSimplifier::rewrite(const InternalNode *inode) const
     SMTSolver *solver = NULL;   // FIXME
 
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
-    std::vector<bool> removed(inode->size(), false);
+    std::vector<bool> removed(inode->nchildren(), false);
     bool modified = false;
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         if (removed[i])
             continue;
-        for (size_t j=i+1; j<inode->size(); ++j) {
+        for (size_t j=i+1; j<inode->nchildren(); ++j) {
             if (!removed[j] && inode->child(i)->must_equal(inode->child(j), solver)) {
                 removed[i] = removed[j] = modified = true;
                 break;
@@ -511,7 +697,7 @@ XorSimplifier::rewrite(const InternalNode *inode) const
     if (!modified)
         return TreeNodePtr();
     TreeNodes newargs;
-    for (size_t i=0; i<inode->size(); ++i) {
+    for (size_t i=0; i<inode->nchildren(); ++i) {
         if (!removed[i])
             newargs.push_back(inode->child(i));
     }
@@ -524,48 +710,60 @@ TreeNodePtr
 SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
     size_t nbits = (*begin)->get_nbits();
-    int64_t result = (*begin)->isLeafNode()->get_value();
-    for (++begin; begin!=end; ++begin) {
-        LeafNodePtr leaf = (*begin)->isLeafNode();
-        result *= (int64_t)leaf->get_value();
-        nbits += leaf->get_nbits();
+    if (nbits <= 64) {
+        int64_t result = (*begin)->isLeafNode()->get_value();
+        for (++begin; begin!=end; ++begin) {
+            LeafNodePtr leaf = (*begin)->isLeafNode();
+            result *= (int64_t)leaf->get_value();
+            nbits += leaf->get_nbits();
+        }
+        assert(nbits<=8*sizeof result);
+        return LeafNode::create_integer(nbits, result);
+    } else {
+        // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than
+        // 64-bits because Sawyer::Container::BitVector does not provide a multiplication method.
+        return TreeNodePtr();
     }
-    assert(nbits<=8*sizeof result);
-    return LeafNode::create_integer(nbits, result);
 }
 
 TreeNodePtr
 UmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
     size_t nbits = (*begin)->get_nbits();
-    uint64_t result = (*begin)->isLeafNode()->get_value();
-    for (++begin; begin!=end; ++begin) {
-        LeafNodePtr leaf = (*begin)->isLeafNode();
-        result *= leaf->get_value();
-        nbits += leaf->get_nbits();
+    if (nbits <= 64) {
+        uint64_t result = (*begin)->isLeafNode()->get_value();
+        for (++begin; begin!=end; ++begin) {
+            LeafNodePtr leaf = (*begin)->isLeafNode();
+            result *= leaf->get_value();
+            nbits += leaf->get_nbits();
+        }
+        assert(nbits>0 && nbits<=8*sizeof result);
+        return LeafNode::create_integer(nbits, result);
+    } else {
+        // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than
+        // 64-bits because Sawyer::Container::BitVector does not provide a multiplication method.
+        return TreeNodePtr();
     }
-    assert(nbits>0 && nbits<=8*sizeof result);
-    return LeafNode::create_integer(nbits, result);
 }
 
 TreeNodePtr
 ConcatSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    uint64_t result = 0;
-
     // first arg is high-order bits. Although this is nice to look at, it makes the operation a bit more difficult.
     size_t nbits = 0;
     for (TreeNodes::const_iterator ti=begin; ti!=end; ++ti)
         nbits += (*ti)->get_nbits();
+    Sawyer::Container::BitVector accumulator(nbits);
 
+    // Copy bits into wherever they belong in the accumulator
     for (size_t sa=nbits; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
         sa -= leaf->get_nbits();
-        result |= IntegerOps::shiftLeft2(leaf->get_value(), sa);
+        typedef Sawyer::Container::BitVector::BitRange BitRange;
+        BitRange destination = BitRange::hull(sa, sa + leaf->get_nbits() - 1);
+        accumulator.copy(destination, leaf->get_bits(), leaf->get_bits().hull());
     }
-
-    assert(nbits>0 && nbits<=8*sizeof result);
-    return LeafNode::create_integer(nbits, result);
+    return LeafNode::create_constant(accumulator);
 }
 
 TreeNodePtr
@@ -584,15 +782,16 @@ ConcatSimplifier::rewrite(const InternalNode *inode) const
     //   v2
     TreeNodePtr retval;
     size_t offset = 0;
-    for (size_t i=inode->size(); i>0; --i) { // process args in little endian order
+    for (size_t i=inode->nchildren(); i>0; --i) { // process args in little endian order
         InternalNodePtr extract = inode->child(i-1)->isInternalNode();
         if (!extract || OP_EXTRACT!=extract->get_operator())
             break;
         LeafNodePtr from_node = extract->child(0)->isLeafNode();
+        ASSERT_require(from_node->get_nbits() <= 8*sizeof offset);
         if (!from_node || !from_node->is_known() || from_node->get_value()!=offset ||
             extract->child(2)->get_nbits()!=inode->get_nbits())
             break;
-        if (inode->size()==i) {
+        if (inode->nchildren()==i) {
             retval = extract->child(2);
         } else if (!extract->child(2)->must_equal(retval, solver)) {
             break;
@@ -610,6 +809,8 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr from_node = inode->child(0)->isLeafNode();
     LeafNodePtr to_node   = inode->child(1)->isLeafNode();
     TreeNodePtr operand   = inode->child(2);
+    ASSERT_require(!from_node->is_known() || from_node->get_nbits() <= 8*sizeof(size_t));
+    ASSERT_require(!to_node->is_known()   || to_node->get_nbits() <= 8*sizeof(size_t));
     size_t from = from_node && from_node->is_known() ? from_node->get_value() : 0;
     size_t to = to_node && to_node->is_known() ? to_node->get_value() : 0;
 
@@ -620,9 +821,11 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     if (from_node && to_node && from_node->is_known() && to_node->is_known() &&
         operand->isLeafNode() && operand->isLeafNode()->is_known()) {
-        uint64_t val = operand->isLeafNode()->get_value();
-        val = IntegerOps::shiftRightLogical2(val, from) & IntegerOps::genMask<uint64_t>(to-from);
-        return LeafNode::create_integer(to-from, val, inode->get_comment());
+        Sawyer::Container::BitVector result(to-from);
+        typedef Sawyer::Container::BitVector::BitRange BitRange;
+        BitRange source = BitRange::hull(from, to-1);
+        result.copy(result.hull(), operand->isLeafNode()->get_bits(), source);
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // Extracting the whole thing is a no-op
@@ -634,7 +837,7 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
     InternalNodePtr ioperand = operand->isInternalNode();
     if (ioperand && OP_CONCAT==ioperand->get_operator()) {
         size_t offset = ioperand->get_nbits(); // most significant bits are in concat's first argument
-        for (size_t i=0; i<ioperand->size() && offset>=from; ++i) {
+        for (size_t i=0; i<ioperand->nchildren() && offset>=from; ++i) {
             offset -= ioperand->child(i)->get_nbits();
             if (offset==from && ioperand->child(i)->get_nbits()==to-from)
                 return ioperand->child(i);
@@ -656,21 +859,33 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
         }
     }
 
+    // Simplifications for (extract 0 a (uextend b c))
+    if (from_node && to_node && from_node->is_known() && 0==from && to_node->is_known()) {
+        size_t a=to, b=operand->get_nbits();
+        // (extract[a] 0 a (uextend[b] b c[a])) => c when b>=a
+        if (ioperand && OP_UEXTEND==ioperand->get_operator() && b>=a && ioperand->child(1)->get_nbits()==a)
+            return ioperand->child(1);
+    }
+
+
     return TreeNodePtr();
 }
 
 TreeNodePtr
 AsrSimplifier::rewrite(const InternalNode *inode) const
 {
+    assert(2==inode->nchildren());
+
     // Constant folding
-    LeafNodePtr shift_node   = inode->child(0)->isLeafNode();
-    LeafNodePtr operand_node = inode->child(1)->isLeafNode();
-    if (shift_node==NULL || operand_node==NULL || !shift_node->is_known() || !operand_node->is_known())
-        return TreeNodePtr();
-    size_t sa = shift_node->get_value();
-    uint64_t val = operand_node->get_value();
-    val = IntegerOps::shiftRightArithmetic2(val, sa, inode->get_nbits());
-    return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+    LeafNodePtr shift_leaf   = inode->child(0)->isLeafNode();
+    LeafNodePtr operand_leaf = inode->child(1)->isLeafNode();
+    if (shift_leaf!=NULL && operand_leaf!=NULL && shift_leaf->is_known() && operand_leaf->is_known()) {
+        size_t sa = shift_leaf->get_value();
+        Sawyer::Container::BitVector result = operand_leaf->get_bits();
+        result.shiftRightArithmetic(sa);
+        return LeafNode::create_constant(result, inode->get_comment());
+    }
+    return TreeNodePtr();
 }
 
 TreeNodePtr
@@ -680,8 +895,9 @@ InvertSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr operand_node = inode->child(0)->isLeafNode();
     if (operand_node==NULL || !operand_node->is_known())
         return TreeNodePtr();
-    uint64_t val = ~(operand_node->get_value());
-    return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+    Sawyer::Container::BitVector result = operand_node->get_bits();
+    result.invert();
+    return LeafNode::create_constant(result, inode->get_comment());
 }
 
 TreeNodePtr
@@ -691,8 +907,9 @@ NegateSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr operand_node = inode->child(0)->isLeafNode();
     if (operand_node==NULL || !operand_node->is_known())
         return TreeNodePtr();
-    uint64_t val = ~(operand_node->get_value()) + 1;
-    return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+    Sawyer::Container::BitVector result = operand_node->get_bits();
+    result.negate();
+    return LeafNode::create_constant(result, inode->get_comment());
 }
 
 TreeNodePtr
@@ -715,7 +932,7 @@ IteSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 NoopSimplifier::rewrite(const InternalNode *inode) const
 {
-    if (1==inode->size())
+    if (1==inode->nchildren())
         return inode->child(0);
     return TreeNodePtr();
 }
@@ -727,8 +944,9 @@ RolSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr sa_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr val_leaf = inode->child(1)->isLeafNode();
     if (sa_leaf && val_leaf && sa_leaf->is_known() && val_leaf->is_known()) {
-        uint64_t val = IntegerOps::rotateLeft2(val_leaf->get_value(), sa_leaf->get_value(), inode->get_nbits());
-        return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+        Sawyer::Container::BitVector result = val_leaf->get_bits();
+        result.rotateLeft(sa_leaf->get_value());
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // If the shift amount is known and is a multiple of the operand size, then this is a no-op
@@ -744,8 +962,9 @@ RorSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr sa_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr val_leaf = inode->child(1)->isLeafNode();
     if (sa_leaf && val_leaf && sa_leaf->is_known() && val_leaf->is_known()) {
-        uint64_t val = IntegerOps::rotateRight2(val_leaf->get_value(), sa_leaf->get_value(), inode->get_nbits());
-        return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+        Sawyer::Container::BitVector result = val_leaf->get_bits();
+        result.rotateRight(sa_leaf->get_value());
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // If the shift amount is known and is a multiple of the operand size, then this is a no-op
@@ -766,8 +985,11 @@ UextendSimplifier::rewrite(const InternalNode *inode) const
 
     // Constant folding
     LeafNodePtr val_leaf = inode->child(1)->isLeafNode();
-    if (val_leaf && val_leaf->is_known())
-        return LeafNode::create_integer(newsize, val_leaf->get_value(), inode->get_comment());
+    if (val_leaf && val_leaf->is_known()) {
+        Sawyer::Container::BitVector result = val_leaf->get_bits();
+        result.resize(newsize);
+        return LeafNode::create_constant(result, inode->get_comment());
+    }
 
     // If the new size is smaller than the old size, use OP_EXTRACT instead.
     if (newsize<oldsize) {
@@ -793,8 +1015,9 @@ SextendSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr val_leaf = inode->child(1)->isLeafNode();
     if (val_leaf && val_leaf->is_known()) {
-        uint64_t val = IntegerOps::signExtend2(val_leaf->get_value(), oldsize, newsize);
-        return LeafNode::create_integer(newsize, val, inode->get_comment());
+        Sawyer::Container::BitVector result(inode->get_nbits());
+        result.signExtend(val_leaf->get_bits());
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // Downsizing should be represented as an extract operation
@@ -816,9 +1039,8 @@ SgeSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int64_t));
-        int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int64_t));
-        return LeafNode::create_integer(1, a>=b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compareSigned(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp>=0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -831,9 +1053,8 @@ SgtSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int64_t));
-        int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int64_t));
-        return LeafNode::create_integer(1, a>b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compareSigned(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp>0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -846,9 +1067,8 @@ SleSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int64_t));
-        int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int64_t));
-        return LeafNode::create_integer(1, a<=b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compareSigned(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp<=0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -861,9 +1081,8 @@ SltSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int64_t));
-        int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int64_t));
-        return LeafNode::create_integer(1, a<b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compareSigned(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp<0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -876,9 +1095,8 @@ UgeSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        uint64_t a = a_leaf->get_value();
-        uint64_t b = b_leaf->get_value();
-        return LeafNode::create_integer(1, a>=b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compare(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp>=0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -891,9 +1109,8 @@ UgtSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        uint64_t a = a_leaf->get_value();
-        uint64_t b = b_leaf->get_value();
-        return LeafNode::create_integer(1, a>b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compare(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp>0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -906,9 +1123,8 @@ UleSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        uint64_t a = a_leaf->get_value();
-        uint64_t b = b_leaf->get_value();
-        return LeafNode::create_integer(1, a<=b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compare(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp<=0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -921,9 +1137,8 @@ UltSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
-        uint64_t a = a_leaf->get_value();
-        uint64_t b = b_leaf->get_value();
-        return LeafNode::create_integer(1, a<b ? 1 : 0, inode->get_comment());
+        int cmp = a_leaf->get_bits().compare(b_leaf->get_bits());
+        return LeafNode::create_boolean(cmp<0, inode->get_comment());
     }
 
     return TreeNodePtr();
@@ -935,7 +1150,7 @@ ZeropSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->is_known())
-        return LeafNode::create_integer(1, 0==a_leaf->get_value() ? 1 : 0, inode->get_comment());
+        return LeafNode::create_boolean(a_leaf->get_bits().isEqualToZero(), inode->get_comment());
 
     return TreeNodePtr();
 }
@@ -947,11 +1162,15 @@ SdivSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
-        int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int8_t));
-        int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int8_t));
-        return LeafNode::create_integer(a_leaf->get_nbits(), a/b, inode->get_comment());
+        if (a_leaf->get_nbits() <= 64 && b_leaf->get_nbits() <= 64) {
+            int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int8_t));
+            int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int8_t));
+            return LeafNode::create_integer(a_leaf->get_nbits(), a/b, inode->get_comment());
+        } else {
+            // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
+            // does not currently define division.
+        }
     }
-
     return TreeNodePtr();
 }
 
@@ -962,9 +1181,14 @@ SmodSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
-        int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int8_t));
-        int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int8_t));
-        return LeafNode::create_integer(b_leaf->get_nbits(), a%b, inode->get_comment());
+        if (a_leaf->get_nbits() <= 64 && b_leaf->get_nbits() <= 64) {
+            int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int8_t));
+            int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int8_t));
+            return LeafNode::create_integer(b_leaf->get_nbits(), a%b, inode->get_comment());
+        } else {
+            // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
+            // does not currently define division.
+        }
     }
 
     return TreeNodePtr();
@@ -977,9 +1201,14 @@ UdivSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
-        uint64_t a = a_leaf->get_value();
-        uint64_t b = b_leaf->get_value();
-        return LeafNode::create_integer(a_leaf->get_nbits(), a/b, inode->get_comment());
+        if (a_leaf->get_nbits() <= 64 && b_leaf->get_nbits() <= 64) {
+            uint64_t a = a_leaf->get_value();
+            uint64_t b = b_leaf->get_value();
+            return LeafNode::create_integer(a_leaf->get_nbits(), a/b, inode->get_comment());
+        } else {
+            // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
+            // does not currently define division.
+        }
     }
 
     return TreeNodePtr();
@@ -992,9 +1221,14 @@ UmodSimplifier::rewrite(const InternalNode *inode) const
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
     if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
-        uint64_t a = a_leaf->get_value();
-        uint64_t b = b_leaf->get_value();
-        return LeafNode::create_integer(b_leaf->get_nbits(), a%b, inode->get_comment());
+        if (a_leaf->get_nbits() <= 64 && b_leaf->get_nbits() <= 64) {
+            uint64_t a = a_leaf->get_value();
+            uint64_t b = b_leaf->get_value();
+            return LeafNode::create_integer(b_leaf->get_nbits(), a%b, inode->get_comment());
+        } else {
+            // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
+            // does not currently define division.
+        }
     }
 
     return TreeNodePtr();
@@ -1039,11 +1273,9 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
     if (sa_leaf && val_leaf && sa_leaf->is_known() && val_leaf->is_known()) {
         uint64_t sa = sa_leaf->get_value();
         sa = std::min((uint64_t)inode->get_nbits(), sa);
-        uint64_t val = val_leaf->get_value();
-        val = IntegerOps::shiftLeft2(val, sa, inode->get_nbits());
-        if (newbits)
-            val |= IntegerOps::genMask<uint64_t>(sa);
-        return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+        Sawyer::Container::BitVector result = val_leaf->get_bits();
+        result.shiftLeft(sa, newbits);
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
@@ -1057,8 +1289,8 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
     
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
-        uint64_t val = newbits ? -1 : 0;
-        return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+        Sawyer::Container::BitVector result(inode->get_nbits(), newbits);
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // If the shift amount is zero then this is a no-op
@@ -1077,11 +1309,9 @@ ShrSimplifier::rewrite(const InternalNode *inode) const
     if (sa_leaf && val_leaf && sa_leaf->is_known() && val_leaf->is_known()) {
         uint64_t sa = sa_leaf->get_value();
         sa = std::min((uint64_t)inode->get_nbits(), sa);
-        uint64_t val = val_leaf->get_value();
-        val = IntegerOps::shiftRightLogical2(val, sa, inode->get_nbits());
-        if (newbits)
-            val |= IntegerOps::genMask<uint64_t>(sa);
-        return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+        Sawyer::Container::BitVector result = val_leaf->get_bits();
+        result.shiftRight(sa, newbits);
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
@@ -1095,8 +1325,8 @@ ShrSimplifier::rewrite(const InternalNode *inode) const
     
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
-        uint64_t val = newbits ? -1 : 0;
-        return LeafNode::create_integer(inode->get_nbits(), val, inode->get_comment());
+        Sawyer::Container::BitVector result(inode->get_nbits(), newbits);
+        return LeafNode::create_constant(result, inode->get_comment());
     }
 
     // If the shift amount is zero then this is a no-op
@@ -1112,11 +1342,8 @@ LssbSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->is_known()) {
-        uint64_t a = a_leaf->get_value();
-        for (size_t i=0; i<a_leaf->get_nbits(); ++i) {
-            if (a & IntegerOps::shl1<uint64_t>(i))
-                return LeafNode::create_integer(inode->get_nbits(), i, inode->get_comment());
-        }
+        if (Sawyer::Optional<size_t> idx = a_leaf->get_bits().leastSignificantSetBit())
+            return LeafNode::create_integer(inode->get_nbits(), *idx, inode->get_comment());
         return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
     }
 
@@ -1129,11 +1356,8 @@ MssbSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     if (a_leaf && a_leaf->is_known()) {
-        uint64_t a = a_leaf->get_value();
-        for (size_t i=a_leaf->get_nbits(); i>0; --i) {
-            if (a & IntegerOps::shl1<uint64_t>(i-1))
-                return LeafNode::create_integer(inode->get_nbits(), i-1, inode->get_comment());
-        }
+        if (Sawyer::Optional<size_t> idx = a_leaf->get_bits().mostSignificantSetBit())
+            return LeafNode::create_integer(inode->get_nbits(), *idx, inode->get_comment());
         return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
     }
 
@@ -1143,7 +1367,7 @@ MssbSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 InternalNode::simplifyTop() const
 {
-    TreeNodePtr node = shared_from_this();
+    TreeNodePtr node = sharedFromThis();
     while (InternalNodePtr inode = node->isInternalNode()) {
         TreeNodePtr newnode = node;
         switch (inode->get_operator()) {
@@ -1163,7 +1387,9 @@ InternalNode::simplifyTop() const
                     newnode = inode->rewrite(AndSimplifier());
                 break;
             case OP_ASR:
-                newnode = inode->rewrite(AsrSimplifier());
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(AsrSimplifier());
                 break;
             case OP_BV_XOR:
                 newnode = inode->nonassociative()->commutative()->constant_folding(XorSimplifier());
@@ -1236,16 +1462,24 @@ InternalNode::simplifyTop() const
                 newnode = inode->rewrite(SgtSimplifier());
                 break;
             case OP_SHL0:
-                newnode = inode->rewrite(ShlSimplifier(false));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShlSimplifier(false));
                 break;
             case OP_SHL1:
-                newnode = inode->rewrite(ShlSimplifier(true));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShlSimplifier(true));
                 break;
             case OP_SHR0:
-                newnode = inode->rewrite(ShrSimplifier(false));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShrSimplifier(false));
                 break;
             case OP_SHR1:
-                newnode = inode->rewrite(ShrSimplifier(true));
+                newnode = inode->additive_nesting();
+                if (newnode==node)
+                    newnode = inode->rewrite(ShrSimplifier(true));
                 break;
             case OP_SLE:
                 newnode = inode->rewrite(SleSimplifier());
@@ -1281,7 +1515,9 @@ InternalNode::simplifyTop() const
                 newnode = inode->rewrite(UmodSimplifier());
                 break;
             case OP_UMUL:
-                newnode = inode->nonassociative()->commutative()->constant_folding(UmulSimplifier());
+                newnode = inode->nonassociative()->commutative()->identity(1);
+                if (newnode==node)
+                    newnode = inode->constant_folding(UmulSimplifier());
                 break;
             case OP_WRITE:
                 // no simplifications
@@ -1320,7 +1556,19 @@ LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment)
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
     node->leaf_type = CONSTANT;
-    node->ival = n & IntegerOps::genMask<uint64_t>(nbits);
+    node->bits = Sawyer::Container::BitVector(nbits).fromInteger(n);
+    LeafNodePtr retval(node);
+    return retval;
+}
+
+/* class method */
+LeafNodePtr
+LeafNode::create_constant(const Sawyer::Container::BitVector &bits, std::string comment)
+{
+    LeafNode *node = new LeafNode(comment);
+    node->nbits = bits.size();
+    node->leaf_type = CONSTANT;
+    node->bits = bits;
     LeafNodePtr retval(node);
     return retval;
 }
@@ -1346,8 +1594,16 @@ LeafNode::is_known() const
 uint64_t
 LeafNode::get_value() const
 {
+    ASSERT_require(is_known());
+    ASSERT_require(get_nbits() <= 64);
+    return bits.toInteger();
+}
+
+const Sawyer::Container::BitVector&
+LeafNode::get_bits() const
+{
     assert(is_known());
-    return ival;
+    return bits;
 }
 
 bool
@@ -1370,9 +1626,9 @@ LeafNode::get_name() const
 }
 
 void
-LeafNode::print(std::ostream &o, Formatter &formatter) const
+LeafNode::print(std::ostream &o, Formatter &formatter) const 
 {
-    print_as_signed(o, formatter, true);
+    print_as_signed(o, formatter);
 }
 
 void
@@ -1380,29 +1636,35 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
 {
     bool showed_comment = false;
     if (is_known()) {
-        if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
-            // The value is probably an address, so print it like one.
-            if (formatter.use_hexadecimal) {
-                o <<StringUtility::unsignedToHex2(ival, nbits);
+        if (bits.size() <= 64) {
+            uint64_t ival = bits.toInteger();
+            if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
+                // The value is probably an address, so print it like one.
+                if (formatter.use_hexadecimal) {
+                    o <<StringUtility::unsignedToHex2(ival, nbits);
+                } else {
+                    // The old behavior (which is enabled when formatter.use_hexadecimal is false) was to print only the
+                    // hexadecimal format and not the decimal format, so we'll emulate that. [Robb P. Matzke 2013-12-26]
+                    o <<StringUtility::addrToString(ival, nbits);
+                }
+            } else if (as_signed) {
+                if (formatter.use_hexadecimal) {
+                    o <<StringUtility::toHex2(ival, nbits); // show as signed and unsigned
+                } else if (IntegerOps::signBit2(ival, nbits)) {
+                    o <<(int64_t)IntegerOps::signExtend2(ival, nbits, 64);
+                } else {
+                    o <<ival;
+                }
             } else {
-                // The old behavior (which is enabled when formatter.use_hexadecimal is false) was to print only the
-                // hexadecimal format and not the decimal format, so we'll emulate that. [Robb P. Matzke 2013-12-26]
-                o <<StringUtility::addrToString(ival, nbits);
-            }
-        } else if (as_signed) {
-            if (formatter.use_hexadecimal) {
-                o <<StringUtility::toHex2(ival, nbits); // show as signed and unsigned
-            } else if (IntegerOps::signBit2(ival, nbits)) {
-                o <<(int64_t)IntegerOps::signExtend2(ival, nbits, 64);
-            } else {
-                o <<ival;
+                if (formatter.use_hexadecimal) {
+                    o <<StringUtility::unsignedToHex2(ival, nbits); // show only as unsigned
+                } else {
+                    o <<ival;
+                }
             }
         } else {
-            if (formatter.use_hexadecimal) {
-                o <<StringUtility::unsignedToHex2(ival, nbits); // show only as unsigned
-            } else {
-                o <<ival;
-            }
+            // FIXME[Robb P. Matzke 2014-05-05]: we should change StringUtility functions to handle BitVector arguments
+            o <<"0x" <<bits.toHex();
         }
     } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment.empty()) {
         o <<comment;
@@ -1410,7 +1672,7 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
     } else {
         uint64_t renamed = name;
         if (formatter.do_rename) {
-            Formatter::RenameMap::iterator found = formatter.renames.find(name);
+            RenameMap::iterator found = formatter.renames.find(name);
             if (found==formatter.renames.end() && formatter.add_renames) {
                 renamed = formatter.renames.size();
                 formatter.renames.insert(std::make_pair(name, renamed));
@@ -1442,16 +1704,16 @@ LeafNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other==NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x must_equal (not (not x))" which is true.
         if (solver) {
-            TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+            TreeNodePtr assertion = InternalNode::create(1, OP_NE, sharedFromThis(), other_);
             retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
     } else if (is_known()) {
-        retval = other->is_known() && ival==other->ival;
+        retval = other->is_known() && 0==bits.compare(other->bits);
     } else {
         retval = !other->is_known() && name==other->name;
     }
@@ -1463,18 +1725,36 @@ LeafNode::may_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other==NULL) {
         // We need an SMT solver to figure out things like "x may_equal (add y 1))", which is true.
         if (solver) {
-            TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
+            TreeNodePtr assertion = InternalNode::create(1, OP_EQ, sharedFromThis(), other_);
             retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
         }
-    } else if (!is_known() || !other->is_known() || ival==other->ival) {
+    } else if (!is_known() || !other->is_known() || 0==bits.compare(other->bits)) {
         retval = true;
     }
     return retval;
+}
+
+int
+LeafNode::structural_compare(const TreeNodePtr &other_) const
+{
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==getRawPointer(other)) {
+        return 0;
+    } else if (other==NULL) {
+        return -1;                                      // leaf nodes < internal nodes
+    } else if (get_nbits() != other->get_nbits()) {
+        return get_nbits() < other->get_nbits() ? -1 : 1;
+    } else if (is_known() != other->is_known()) {
+        return is_known() ? -1 : 1;                     // concrete values < non-concrete
+    } else if (name != other->name) {
+        return name < other->name ? -1 : 1;
+    }
+    return 0;
 }
 
 bool
@@ -1482,11 +1762,11 @@ LeafNode::equivalent_to(const TreeNodePtr &other_) const
 {
     bool retval = false;
     LeafNodePtr other = other_->isLeafNode();
-    if (this==other.get()) {
+    if (this==getRawPointer(other)) {
         retval = true;
     } else if (other && get_nbits()==other->get_nbits()) {
         if (is_known()) {
-            retval = other->is_known() && ival==other->ival;
+            retval = other->is_known() && 0==bits.compare(other->bits);
         } else {
             retval = !other->is_known() && name==other->name;
         }
@@ -1500,19 +1780,23 @@ LeafNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
     assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
     if (equivalent_to(from))
         return to;
-    return shared_from_this();
+    return sharedFromThis();
 }
 
-void
-LeafNode::depth_first_visit(Visitor *v) const
+VisitAction
+LeafNode::depth_first_traversal(Visitor &v) const
 {
-    assert(v!=NULL);
-    (*v)(shared_from_this());
+    TreeNodePtr self = sharedFromThis();
+    VisitAction retval = v.preVisit(self);
+    if (TERMINATE!=retval)
+        retval = v.postVisit(self);
+    return retval;
 }
 
 std::ostream&
 operator<<(std::ostream &o, const TreeNode &node) {
-    node.print(o);
+    Formatter fmt;
+    node.print(o, fmt);
     return o;
 }
 
@@ -1524,4 +1808,6 @@ operator<<(std::ostream &o, const TreeNode::WithFormatter &w)
 }
 
 
+} // namespace
+} // namespace
 } // namespace

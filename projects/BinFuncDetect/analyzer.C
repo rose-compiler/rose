@@ -21,6 +21,9 @@ int main()
 #include "BinaryFunctionCall.h"                 /* function call graphs */
 #include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 class IdaFile {
 public:
     IdaFile(int id): id(id) {}
@@ -543,7 +546,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
 }
 
 struct WritableRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment) {
+    virtual bool operator()(const MemoryMap*, const AddressInterval&, const MemoryMap::Segment &segment) {
         return 0 != (segment.get_mapperms() & MemoryMap::MM_PROT_WRITE);
     }
 } writable_region;
@@ -551,10 +554,10 @@ struct WritableRegion: public MemoryMap::Visitor {
 /* Returns true for any anonymous memory region containing more than a certain size. */
 static rose_addr_t large_anonymous_region_limit = 8192;
 struct LargeAnonymousRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const Extent &range, const MemoryMap::Segment &segment) {
+    virtual bool operator()(const MemoryMap*, const AddressInterval &range, const MemoryMap::Segment &segment) {
         if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
             fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                    range.first(), range.size(), range.last()+1);
+                    range.least(), range.size(), range.greatest()+1);
             return true;
         }
         return false;
@@ -620,14 +623,14 @@ main(int argc, char *argv[])
             if (isec) {
                 rose_addr_t addr = isec->get_mapped_actual_va();
                 size_t size = isec->get_mapped_size();
-                map->mprotect(Extent(addr, size), MemoryMap::MM_PROT_READ, true/*relax*/);
+                map->mprotect(AddressInterval::baseSize(addr, size), MemoryMap::MM_PROT_READ, true/*relax*/);
             }
 
             SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
             if (idir && idir->get_iat_rva().get_rva()!=0) {
                 rose_addr_t iat_va = idir->get_iat_rva().get_va();
                 size_t iat_sz = idir->get_iat_nalloc();
-                map->mprotect(Extent(iat_va, iat_sz), MemoryMap::MM_PROT_READ, true/*relax*/);
+                map->mprotect(AddressInterval::baseSize(iat_va, iat_sz), MemoryMap::MM_PROT_READ, true/*relax*/);
             }
         }
     };

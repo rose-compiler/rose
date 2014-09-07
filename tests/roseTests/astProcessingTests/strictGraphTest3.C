@@ -2,7 +2,9 @@
 #include <fstream>
 //#include <rose.h>
 #include <string>
+#ifndef MSC_VER
 #include <err.h>
+#endif
 #include <boost/graph/adjacency_list.hpp>
 #include "graphProcessing.h"
 #include <assert.h>

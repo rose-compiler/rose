@@ -2,6 +2,7 @@
 #include "TraceSemantics2.h"
 #include "AsmUnparser_compat.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace TraceSemantics {
@@ -597,7 +598,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics:
 {
     before("shiftLeft", a, b);
     try {
-        return check_width(after(subdomain->rotateLeft(a, b)), a->get_width());
+        return check_width(after(subdomain->shiftLeft(a, b)), a->get_width());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;
@@ -890,11 +891,11 @@ RiscOperators::writeRegister(const RegisterDescriptor &a, const BaseSemantics::S
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
-                          size_t d)
+                          const BaseSemantics::SValuePtr &d)
 {
     before("readMemory", a, b, c, d);
     try {
-        return check_width(after(subdomain->readMemory(a, b, c, d)), d);
+        return check_width(after(subdomain->readMemory(a, b, c, d)), c->get_width());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;
@@ -921,6 +922,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &a, const BaseSemantics::SVa
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

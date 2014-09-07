@@ -11,6 +11,8 @@ HEADER_NODE_PREDECLARATION_START
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <sawyer/Interval.h>
+#include <sawyer/IntervalSet.h>
 
 #include "Cxx_Grammar.h"
 
@@ -33,27 +35,25 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
-/* This is similar to rose_addr_t except instead of representing any kind of address (file offset, virtual address, relative
- * virtual address, etc.) it represents only a relative virtual address. The only significant difference between storing
- * a relative virtual address (RVA) in a rose_addr_t and a rose_rva_t is that the latter allows the address to be associated
- * with an SgAsmGenericSection so that if the section address (mapped_rva) is changed then all rose_rva_t objects bound to
- * that section are also automatically adjusted. */
+// This is all documented in Rva.C since doxygen can't pick of documentation from this file.
 class rose_rva_t {
 	public:
-		rose_rva_t() : addr(0), section(0) {}
-		rose_rva_t(const rose_rva_t &rva) : addr(rva.addr), section(rva.section) {}
-		rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
-		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
+		rose_rva_t();
+		rose_rva_t(const rose_rva_t&);
+		rose_rva_t operator=(const rose_rva_t&);
+		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section=NULL); //implicit
+		static rose_rva_t section_relative(SgAsmGenericSection *section, rose_addr_t offset);
+		bool is_bound() const;
 		rose_addr_t get_rva() const;
-		rose_addr_t get_va() const;
-		rose_addr_t get_rel() const;	/* returns address relative to linked section */
-		rose_addr_t get_rel(SgAsmGenericSection*); /*returns address relative to specified section*/
 		rose_rva_t& set_rva(rose_addr_t rva);
 		SgAsmGenericSection *get_section() const;
 		rose_rva_t& set_section(SgAsmGenericSection *section);
 		rose_rva_t& bind(SgAsmGenericHeader*);
-		std::string to_string() const;
+		rose_addr_t get_va() const;
+		rose_addr_t get_rel() const;
+		rose_addr_t get_rel(SgAsmGenericSection*);
 		void increment(rose_addr_t amount);
+		std::string to_string() const;
 	private:
 		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
 		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
@@ -76,12 +76,21 @@ bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
 #endif
 
+/** An interval of virtual addresses. */
+typedef Sawyer::Container::Interval<rose_addr_t> AddressInterval;
+std::ostream& operator<<(std::ostream&, const AddressInterval&);
+
+/** A set of virtual addresses. This is optimized for cases when many addresses are contiguous. */
+typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
+
+// deprecated. Use AddressInterval instead for all new code.
 typedef Range<rose_addr_t> Extent;
 
 /** Specialized printing for ROSE addresses. */
 template<>
 void Range<rose_addr_t>::print(std::ostream &o) const;
 
+// deprecated. Use AddressSet instead for all new code.
 class ExtentMap: public RangeMap<Extent> {
 public:
 	ExtentMap(): RangeMap<Extent>() {}
@@ -93,9 +102,15 @@ public:
 	void allocate_at(const Extent &request);
 	Extent allocate_best_fit(const rose_addr_t size);
 	Extent allocate_first_fit(const rose_addr_t size);
+	void dump_extents(std::ostream&, const std::string &prefix="", const std::string &label="") const;
 	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
+// deprecated. Conversion functions, to be deleted when the old types are no longer needed.
+Extent toExtent(const AddressInterval&);
+AddressInterval toAddressInterval(const Extent&);
+ExtentMap toExtentMap(const AddressIntervalSet&);
+AddressIntervalSet toAddressIntervalSet(const ExtentMap&);
 
 // #ifndef ROSE_USE_SWIG_SUPPORT
 
@@ -116,6 +131,7 @@ struct HexdumpFormat {
     /* Settings for numeric output of bytes */
     bool show_numeric;		/**< Show numeric format of bytes (default true). */
     const char *numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
+    std::map<unsigned char,std::string> numeric_fmt_special; /**< Special formatting for certain values. */
     const char *numeric_sep;    /**< String to print between numeric values (default " "). */
     bool pad_numeric;           /**< Pad numeric part of output with spaces for partial final line (default true). */
 
@@ -601,6 +617,28 @@ typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrLis
 // DQ (1/13/2014): Added support for Java annotations.
 typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
 typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
+
+// DQ (3/6/2014): Added support for Untyped IR nodes.
+class SgUntypedInitializedName;
+typedef Rose_STL_Container<SgUntypedInitializedName*> SgUntypedInitializedNamePtrList;
+typedef SgUntypedInitializedNamePtrList*              SgUntypedInitializedNamePtrListPtr;
+
+class SgUntypedStatement;
+typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;
+typedef SgUntypedStatementPtrList*              SgUntypedStatementPtrListPtr;
+
+class SgUntypedDeclarationStatement;
+typedef Rose_STL_Container<SgUntypedDeclarationStatement*> SgUntypedDeclarationStatementPtrList;
+typedef SgUntypedDeclarationStatementPtrList*              SgUntypedDeclarationStatementPtrListPtr;
+
+class SgUntypedFunctionDeclaration;
+typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
+typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
+
+class SgAsmRegisterReferenceExpression;
+typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
+typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
+
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;

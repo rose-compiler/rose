@@ -19,9 +19,23 @@ make check
 
 
 
+March 5, 2014:
+   Updated fortran support using newest work from OFP git repository.
+A clone of this repository is at: 
+     /home/dquinlan/ROSE/FORTRAN_LLNL/OFP-SDF/ofp-sdf
 
+cd to ofp-sdf/fortran/rose_traverse
 
+Modified Makefile in ofp-sdf/fortran/rose_traverse/Makefile
+   1) removed -ferror-limit=5
+   2) reset ATERM_ROOT:
+         ATERM_ROOT = /home/dquinlan/bin/aterm-2.5-install-64bit
+   3) reset ARCH:
+         ARCH =
 
+(added aterm install directory to my LD_LIBRARY_PATH: done in .cshrc.linux)
 
+Ran "make"
 
+cp ofp-sdf/fortran/syntax/* to src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14
 

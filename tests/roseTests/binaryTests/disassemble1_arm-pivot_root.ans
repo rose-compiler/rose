@@ -20,7 +20,6 @@ using this memory map for disassembly:
     va 0x000106b4 + 0x00000008 = 0x000106bc rw-p at anon aca     + 0x00000000 arm-pivot_root(.bss)
     va 0x000106bc + 0x000004bc = 0x00010b78 rw-p at anon aal     + 0x00000008 arm-pivot_root(LOAD#3)
     va 0x00010b78 + 0x00000488 = 0x00011000 rw-p at anon aak     + 0x00000000 arm-pivot_root(LOAD#3)
-disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 
 
 0x000082e8: ================================== Function (symbol) <perror>
@@ -98,7 +97,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x00008350: 10 00 9f e5             |....    |   ldral  r0, [r15, #+16]
 0x00008354: 10 30 9f e5             |.0..    |   ldral  r3, [r15, #+16]
 0x00008358: 04 c0 2d e5             |..-.    |   stral  r12, [r13, #-4]!
-0x0000835c: f1 ff ff eb             |....    |   blal   0x8328
+0x0000835c: f1 ff ff eb             |....    |   blal   0x00008328
 0x0000835c: Successor blocks: 0x00008328<__libc_start_main>
 
 0x00008360: ec ff ff eb e4 84 00 00 |........|
@@ -505,7 +504,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x00008fe8: 00 00 00 00 00 00 00 00 |........|
 0x00008ff0: 00 00 00 00 00 00 00 00 |........|
 0x00008ff8: 00 00 00 00 00 00 00 00 |........| 3232 bytes untyped data beginning at 0x00008360
-0x00008360: ec ff ff eb             |....    | (data)   blal   0x8318
+0x00008360: ec ff ff eb             |....    | (data)   blal   0x00008318
 0x00008364: e4 84 00 00             |....    | (data)   andeq  r8, r0, r4, ror #9
 0x00008368: 38 84 00 00             |8...    | (data)   andeq  r8, r0, r8, lsr r4
 0x0000836c: a0 84 00 00             |....    | (data)   andeq  r8, r0, r0, lsr #9
@@ -530,7 +529,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x000083b8: 00 30 94 e5             |.0..    | (data)   ldral  r3, [r4, #+0]
 0x000083bc: 00 20 93 e5             |. ..    | (data)   ldral  r2, [r3, #+0]
 0x000083c0: 00 00 52 e3             |..R.    | (data)   cmpal  r2, #0
-0x000083c4: 08 00 00 0a             |....    | (data)   beq    0x83ec
+0x000083c4: 08 00 00 0a             |....    | (data)   beq    0x000083ec
 0x000083c8: 00 30 94 e5             |.0..    | (data)   ldral  r3, [r4, #+0]
 0x000083cc: 04 30 83 e2             |.0..    | (data)   addal  r3, r3, #4
 0x000083d0: 00 30 84 e5             |.0..    | (data)   stral  r3, [r4, #+0]
@@ -539,7 +538,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x000083dc: 00 30 94 e5             |.0..    | (data)   ldral  r3, [r4, #+0]
 0x000083e0: 00 20 93 e5             |. ..    | (data)   ldral  r2, [r3, #+0]
 0x000083e4: 00 00 52 e3             |..R.    | (data)   cmpal  r2, #0
-0x000083e8: f6 ff ff 1a             |....    | (data)   bne    0x83c8
+0x000083e8: f6 ff ff 1a             |....    | (data)   bne    0x000083c8
 0x000083ec: 01 30 a0 e3             |.0..    | (data)   moval  r3, #1
 0x000083f0: 00 30 c5 e5             |.0..    | (data)   stralb r3, [r5, #+0]
 0x000083f4: 30 80 bd e8             |0...    | (data)   ldmalia r13, {r4, r5, r15}
@@ -554,7 +553,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x00008418: 0c 30 9f e5             |.0..    | (data)   ldral  r3, [r15, #+12]
 0x0000841c: 00 00 53 e3             |..S.    | (data)   cmpal  r3, #0
 0x00008420: 0e f0 a0 01             |....    | (data)   moveq  r15, r14
-0x00008424: f5 de ff ea             |....    | (data)   bal    0x0
+0x00008424: f5 de ff ea             |....    | (data)   bal    0x00000000
 0x00008428: 8c 06 01 00             |....    | (data)   andeq  r0, r1, r12, lsl #13
 0x0000842c: 00 00 00 00             |....    | (data)   andeq  r0, r0, r0
 0x00008430: 04 e0 2d e5             |..-.    | (data)   stral  r14, [r13, #-4]!
@@ -566,27 +565,27 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x00008448: 04 e0 2d e5             |..-.    | (data)   stral  r14, [r13, #-4]!
 0x0000844c: da 00 80 e2             |....    | (data)   addal  r0, r0, #218
 0x00008450: 3c 10 9f e5             |<...    | (data)   ldral  r1, [r15, #+60]
-0x00008454: 05 00 00 0a             |....    | (data)   beq    0x8470
+0x00008454: 05 00 00 0a             |....    | (data)   beq    0x00008470
 0x00008458: 38 30 9f e5             |80..    | (data)   ldral  r3, [r15, #+56]
 0x0000845c: 00 20 9c e5             |. ..    | (data)   ldral  r2, [r12, #+0]
 0x00008460: 00 00 93 e5             |....    | (data)   ldral  r0, [r3, #+0]
-0x00008464: a3 ff ff eb             |....    | (data)   blal   0x82f8
+0x00008464: a3 ff ff eb             |....    | (data)   blal   0x000082f8
 0x00008468: 01 00 a0 e3             |....    | (data)   moval  r0, #1
 0x0000846c: 04 f0 9d e4             |....    | (data)   ldral  r15, [r13], #+4
 0x00008470: 06 00 9c e9             |....    | (data)   ldmalib r12, {r1, r2}
-0x00008474: a3 ff ff eb             |....    | (data)   blal   0x8308
+0x00008474: a3 ff ff eb             |....    | (data)   blal   0x00008308
 0x00008478: 00 30 a0 e1             |.0..    | (data)   moval  r3, r0
 0x0000847c: 00 00 53 e3             |..S.    | (data)   cmpal  r3, #0
 0x00008480: 14 00 9f e5             |....    | (data)   ldral  r0, [r15, #+20]
 0x00008484: 00 00 a0 a3             |....    | (data)   movge  r0, #0
 0x00008488: 04 f0 9d a4             |....    | (data)   ldrge  r15, [r13], #+4
-0x0000848c: 95 ff ff eb             |....    | (data)   blal   0x82e8
-0x00008490: f4 ff ff ea             |....    | (data)   bal    0x8468
+0x0000848c: 95 ff ff eb             |....    | (data)   blal   0x000082e8
+0x00008490: f4 ff ff ea             |....    | (data)   bal    0x00008468
 0x00008494: 7c 85 00 00             ||...    | (data)   andeq  r8, r0, r12, ror r5
 0x00008498: b4 06 01 00             |....    | (data)   streqh r0, [r1], -r4
 0x0000849c: 98 85 00 00             |....    | (data)   muleq  r0, r8, r5
 0x000084a0: 70 40 2d e9             |p@-.    | (data)   stmaldb r13, {r4, r5, r6, r14}
-0x000084a4: 86 ff ff eb             |....    | (data)   blal   0x82c4
+0x000084a4: 86 ff ff eb             |....    | (data)   blal   0x000082c4
 0x000084a8: 2c 60 9f e5             |,`..    | (data)   ldral  r6, [r15, #+44]
 0x000084ac: 2c 30 9f e5             |,0..    | (data)   ldral  r3, [r15, #+44]
 0x000084b0: 00 40 a0 e3             |.@..    | (data)   moval  r4, #0
@@ -598,7 +597,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x000084c8: 04 f1 96 e7             |....    | (data)   ldral  r15, [r6, #+1]
 0x000084cc: 01 40 84 e2             |.@..    | (data)   addal  r4, r4, #1
 0x000084d0: 45 01 54 e1             |E.T.    | (data)   cmpal  r4, r5, asr #2
-0x000084d4: fa ff ff 3a             |...:    | (data)   blo    0x84c4
+0x000084d4: fa ff ff 3a             |...:    | (data)   blo    0x000084c4
 0x000084d8: 70 80 bd e8             |p...    | (data)   ldmalia r13, {r4, r5, r6, r15}
 0x000084dc: a8 05 01 00             |....    | (data)   andeq  r0, r1, r8, lsr #11
 0x000084e0: a8 05 01 00             |....    | (data)   andeq  r0, r1, r8, lsr #11
@@ -609,15 +608,15 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x000084f4: 43 41 a0 e1             |CA..    | (data)   moval  r4, r3, asr #2
 0x000084f8: 00 00 54 e3             |..T.    | (data)   cmpal  r4, #0
 0x000084fc: 01 40 44 e2             |.@D.    | (data)   subal  r4, r4, #1
-0x00008500: 01 00 00 1a             |....    | (data)   bne    0x850c
+0x00008500: 01 00 00 1a             |....    | (data)   bne    0x0000850c
 0x00008504: 30 40 bd e8             |0@..    | (data)   ldmalia r13, {r4, r5, r14}
-0x00008508: 17 00 00 ea             |....    | (data)   bal    0x856c
+0x00008508: 17 00 00 ea             |....    | (data)   bal    0x0000856c
 0x0000850c: 0f e0 a0 e1             |....    | (data)   moval  r14, r15
 0x00008510: 04 f1 95 e7             |....    | (data)   ldral  r15, [r5, #+1]
 0x00008514: 00 00 54 e3             |..T.    | (data)   cmpal  r4, #0
 0x00008518: 01 40 44 e2             |.@D.    | (data)   subal  r4, r4, #1
-0x0000851c: fa ff ff 1a             |....    | (data)   bne    0x850c
-0x00008520: f7 ff ff ea             |....    | (data)   bal    0x8504
+0x0000851c: fa ff ff 1a             |....    | (data)   bne    0x0000850c
+0x00008520: f7 ff ff ea             |....    | (data)   bal    0x00008504
 0x00008524: a8 05 01 00             |....    | (data)   andeq  r0, r1, r8, lsr #11
 0x00008528: a8 05 01 00             |....    | (data)   andeq  r0, r1, r8, lsr #11
 0x0000852c: 10 40 2d e9             |.@-.    | (data)   stmaldb r13, {r4, r14}
@@ -631,13 +630,13 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x0000854c: 03 f0 a0 e1             |....    | (data)   moval  r15, r3
 0x00008550: 04 30 34 e5             |.04.    | (data)   ldral  r3, [r4, #-4]!
 0x00008554: 01 00 73 e3             |..s.    | (data)   cmnal  r3, #1
-0x00008558: fa ff ff 1a             |....    | (data)   bne    0x8548
+0x00008558: fa ff ff 1a             |....    | (data)   bne    0x00008548
 0x0000855c: 10 80 bd e8             |....    | (data)   ldmalia r13, {r4, r15}
 0x00008560: 80 06 01 00             |....    | (data)   andeq  r0, r1, r0, lsl #13
 0x00008564: 04 e0 2d e5             |..-.    | (data)   stral  r14, [r13, #-4]!
 0x00008568: 04 f0 9d e4             |....    | (data)   ldral  r15, [r13], #+4
 0x0000856c: 04 e0 2d e5             |..-.    | (data)   stral  r14, [r13, #-4]!
-0x00008570: 8a ff ff eb             |....    | (data)   blal   0x83a0
+0x00008570: 8a ff ff eb             |....    | (data)   blal   0x000083a0
 0x00008574: 04 f0 9d e4             |....    | (data)   ldral  r15, [r13], #+4
 0x00008578: 01 00 02 00             |....    | (data)   andeq  r0, r2, r1
 0x00008580: 65 3a 20 25             |e: %    | (data)   strhs  r3, [r0, #-2661]!
@@ -745,7 +744,7 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 0x00008760: 6d 69 63 00             |mic.    | (data)   rsbeq  r6, r3, r13, ror #18
 0x00008764: 2e 63 74 6f             |.cto    | (data)   swivs  #7627566
 0x0000876c: 64 74 6f 72             |dtor    | (data)   rsbvc  r7, r15, #1677721600
-0x00008770: 73 00 2e 6a             |s..j    | (data)   bvs    0xb88944
+0x00008770: 73 00 2e 6a             |s..j    | (data)   bvs    0x00b88944
 0x00008778: 67 6f 74 00             |got.    | (data)   rsbeqs r6, r4, r7, ror #30
 0x0000877c: 2e 62 73 73             |.bss    | (data)   cmnvc  r3, #3758096386
 0x00008784: 75 5f 64 65             |u_de    | (data)   strvsb r5, [r4, #-3957]!
@@ -1293,4 +1292,3 @@ disassembled 873 instructions and 2639 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

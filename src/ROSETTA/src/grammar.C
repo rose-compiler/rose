@@ -2780,7 +2780,7 @@ Grammar::buildCode ()
      ROSE_ArrayGrammarHeaderFile << buildStorageClassDeclarations();
 
      ROSE_ArrayGrammarHeaderFile << "\n\n";
-     ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
+     ROSE_ArrayGrammarHeaderFile << "ROSE_DLL_API std::ostream& operator<<(std::ostream&, const SgName&);\n\n";
 
   // DQ (12/6/2003): Added output function for SgBitVector objects
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::vector<bool>&);\n\n";
@@ -3184,8 +3184,9 @@ Grammar::buildCode ()
      ROSE_treeTraversalClassHeaderFile <<  naiveTraverseGrammar(*rootNode, &Grammar::EnumStringForNode);
      cout << "finished." << endl;
 
-  // MS: not really needed because of typeid(node).name()
-  // MS: generation of VariantName Strings
+  // --------------------------------------------
+  // generate code for variantT enum names
+  // --------------------------------------------
      string variantEnumNamesFileName = string(getGrammarName())+"VariantEnumNames.C";
      ofstream variantEnumNamesFile(string(target_directory+"/"+variantEnumNamesFileName).c_str());
      ROSE_ASSERT(variantEnumNamesFile.good() == true);     
@@ -3194,6 +3195,9 @@ Grammar::buildCode ()
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
      variantEnumNamesFile << "\n#include \"rosedll.h\"\n ROSE_DLL_API const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
 
+  // --------------------------------------------
+  // generate code for RTI support
+  // --------------------------------------------
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
      StringUtility::FileWithLineNumbers rtiFile;
      rtiFile << includeHeaderString;
@@ -3215,6 +3219,19 @@ Grammar::buildCode ()
      ROSE_TransformationSupportFile << transformationSupportString;
      ROSE_TransformationSupportFile.close();
 #endif
+
+  // ---------------------------------------------------------------------------
+  // generate grammar representations (from class hierarchy and node attributes)
+  // ---------------------------------------------------------------------------
+     // MS: 2002: Generate the grammar that defines the set of all ASTs as dot and latex file
+     ofstream GrammarDotFile("grammar.dot");
+     ROSE_ASSERT (GrammarDotFile.good());
+     buildGrammarDotFile(rootNode, GrammarDotFile);
+     cout << "DONE: buildGrammarDotFile" << endl;
+     ofstream AbstractTreeGrammarFile("generated_abstractcppgrammar.atg");
+     ROSE_ASSERT (AbstractTreeGrammarFile.good());
+     buildAbstractTreeGrammarFile(rootNode, AbstractTreeGrammarFile);
+     cout << "DONE: buildAbstractTreeGrammarFile" << endl;
 
 #if 1
    // JH (01/18/2006)
@@ -3301,7 +3318,7 @@ Grammar::buildCode ()
      ofstream ROSE_outputClassesAndFieldsSourceFile(string(target_directory+"/"+outputClassesAndFieldsSourceFileName).c_str());
      ROSE_ASSERT (ROSE_outputClassesAndFieldsSourceFile.good() == true);
 
-     printf ("Calling outputClassesAndFields() \n");
+     printf ("Building OutputClassesAndFields() \n");
   // outputClassesAndFields ( *rootNode, ROSE_outputClassesAndFieldsSourceFile);
      ROSE_outputClassesAndFieldsSourceFile << outputClassesAndFields ( *rootNode );
 #endif
@@ -3332,7 +3349,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
    // possibly other pointers to containers.
    // if( (stype.find("*") == string::npos) // not found, not a pointer
    // && (stype.find("List") == stype.size()-4) ) // postfix
-      if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
+   // MS 2013: fixed: Pointers to containers are not containers but singleDataMembers instead)
+   //   if (isSTLContainerPtr(stype.c_str()) || isSTLContainer(stype.c_str())) {
+      if (isSTLContainer(stype.c_str())) {
         info.numContainerMembers++;
       } else {
         info.numSingleDataMembers++;
@@ -3356,7 +3375,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
     std::string nodeName = grammarnode->getName();
 
  // DQ (2/7/2011): Added message to report which nodes are in violation of ROSETTA rules.
-    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s \n",nodeName.c_str());
+    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
 
  // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
  // Liao I made more exceptions for some OpenMP specific nodes for now
@@ -3380,6 +3399,8 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   }
   return info;
 }
+
+#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //
@@ -3712,9 +3733,12 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                               outputFile << "case " << StringUtility::numberToString(counter++) << ": "
                                          << "return compute_classDefinition();\n";
                             }
-                         else
+                           else
                             {
-                              outputFile << "case " << StringUtility::numberToString(counter++) << ": " << "return p_" << memberVariableName << ";\n";
+                           // DQ (4/22/2014): Added code to allow valgrind to detect unitialized variables.
+                           // outputFile << "case " << StringUtility::numberToString(counter++) << ": " << "return p_" << memberVariableName << ";\n";
+                              outputFile << "case " << StringUtility::numberToString(counter++) << ": " 
+                                         << "ROSE_ASSERT(p_" << memberVariableName << " == NULL || p_" << memberVariableName << " != NULL); return p_" << memberVariableName << ";\n";
                             }
                        }
                  // Reaching the default case is an error.
@@ -3878,7 +3902,7 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
        // GB (09/25/2007): Added implementations for the new methods get_numberOfTraversalSuccessors, get_traversalSuccessorByIndex, and get_childIndex.
           outputFile << "size_t\n" << node.getName() << "::get_numberOfTraversalSuccessors() {\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
-                     << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
+                     << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  this = \" << this << \" = \" << this->sage_class_name() << endl;\n"
                      << "cerr << \"Aborting ...\" << endl;\n"
                      << "ROSE_ASSERT(false);\n"
                      << "return 42;\n }\n\n";

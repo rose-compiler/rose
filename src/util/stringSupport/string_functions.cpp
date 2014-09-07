@@ -41,6 +41,7 @@
 
 #include "string_functions.h"
 
+#include <boost/foreach.hpp>
 // DQ (8/31/2009): This now compiles properly (at least for analysis, it might still fail for the code generation).
 // #ifndef USE_ROSE
 #include <boost/lexical_cast.hpp>
@@ -473,7 +474,9 @@ StringUtility::numberToString ( double x )
    }
 
 #ifndef _MSC_VER
-  #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+// #if !defined(__STRICT_ANSI__) && defined(_GLIBCXX_USE_INT128)
+// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
+   #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
 // DQ (2/22/2014): Required code for GNU versions greater than 4.6.
 string
 StringUtility::numberToString ( __int128 x )
@@ -482,8 +485,68 @@ StringUtility::numberToString ( __int128 x )
      long long temp_x = (long long) x;
      return boost::lexical_cast<std::string>(temp_x);
    }
-  #endif
+
+string
+StringUtility::numberToString ( unsigned __int128 x )
+   {
+  // DQ (2/22/2014): I don't think that the boost::lexical_cast can support __int128 yet.
+     unsigned long long temp_x = (unsigned long long) x;
+     return boost::lexical_cast<std::string>(temp_x);
+   }
+   #endif
 #endif
+
+std::string
+StringUtility::cEscape(const std::string &s) {
+    std::string result;
+    BOOST_FOREACH (char ch, s) {
+        switch (ch) {
+            case '\a':
+                result += "\\a";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\v':
+                result += "\\v";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            default:
+                if (isprint(ch)) {
+                    result += ch;
+                } else {
+                    char buf[8];
+                    sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                    result += buf;
+                }
+                break;
+        }
+    }
+    return result;
+}
+
+unsigned
+StringUtility::hexadecimalToInt(char ch) {
+    if (isxdigit(ch)) {
+        if (isdigit(ch))
+            return ch-'0';
+        if (isupper(ch))
+            return ch-'A'+10;
+        return ch-'a'+10;
+    }
+    return 0;
+}
 
 // DQ (2/23/2014): Fixed conflict in commit for 128 bit integer support.
 // string StringUtility::addrToString(uint64_t value, size_t nbits, bool is_signed)

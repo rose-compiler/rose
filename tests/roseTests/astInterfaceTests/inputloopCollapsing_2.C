@@ -2,17 +2,20 @@ int a[11][11];
 int main(void)
 {
 
-  for (int i=1;i<10;i+=1)
+    int lb = 1;
+    int ub = 10;
+    int inc = 3;
+
+  for (int i=lb;i<ub;i+=inc)
   {
-     for (int j=1;j<10;j+=1)
+     for (int j=lb;j<ub;j+=inc)
         {
-            int k=3;
-            int l=3;
-            int z=3;
-		    a[i][j]=i+j+l+k+z;	
+                int k=3;
+                int z=3;
+                a[i][j]=i+j+k+z;	
 	 }
   }
- 
-    return 0;
+
+  return 0;
 }
 

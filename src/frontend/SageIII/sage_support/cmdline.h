@@ -23,7 +23,7 @@ namespace Cmdline {
     REMOVE_OPTION_FROM_ARGV = 1   ///< Remove the CLI option from the input argv
   };
 
-  extern int verbose;
+  extern ROSE_DLL_API int verbose;
 
   void
   makeSysIncludeList(
@@ -67,6 +67,26 @@ namespace Cmdline {
   void
   ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
+  namespace Unparser {
+    static const std::string option_prefix = "-rose:unparser:";
+
+    /** @returns true if the Unparser option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    StripRoseOptions (std::vector<std::string>& argv);
+
+    /** Process all Unparser-specific commandline options, i.e. -rose:unparser.
+     */
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv);
+  } // namespace ::Rose::Cmdline::Unparser
+
   namespace Fortran {
     static const std::string option_prefix = "-rose:fortran:";
 
@@ -90,26 +110,26 @@ namespace Cmdline {
     /** Targeted for src/frontend/OpenFortranParser_SAGE_Connection/jserver.C,
      */
     namespace Ofp {
-      extern std::list<std::string> jvm_options;
+      extern ROSE_DLL_API std::list<std::string> jvm_options;
 
-      void
+      ROSE_DLL_API void
       StripRoseOptions (std::vector<std::string>& argv);
 
-      std::string
+      ROSE_DLL_API std::string
       GetRoseClasspath();
 
-      void
+      ROSE_DLL_API void
       Process (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:fortran:ofp:jvm_options
        */
-      void
+      ROSE_DLL_API void
       ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:fortran:ofp:enable_remote_debugging
        *  Enable remote debugging of the Java Virtual Machine (JVM).
        */
-      void
+      ROSE_DLL_API void
       ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
     } // namespace Rose::Cmdline::Fortran::OpenFortranParser
   } // namespace Rose::Cmdline::Fortran
@@ -222,29 +242,113 @@ namespace Cmdline {
     void
     ProcessSourceDestdir (SgProject* project, std::vector<std::string>& argv);
 
+    /** Specify destination directory for generated source files.
+     *
+     * > -s dir
+     * >    Specify  the  directory where to place generated source files. The directory must already exist; javac will not create it. If a class is part of a package, the compiler puts the source file in a
+     * >    subdirectory reflecting the package name, creating directories as needed. For example, if you specify -s /home/mysrc and the class is called com.mypackage.MyClass, then the source file  will  be
+     * >    placed in /home/mysrc/com/mypackage/MyClass.java.
+     */
+    void
+    ProcessS (SgProject* project, std::vector<std::string>& argv);
+
+    /** Specify the input Java source version.
+     *
+     * See `man javac(1)`:
+     *
+     * > -source <release>
+     * >    Specifies the version of source code accepted.
+     *
+     * Example versions: 1.3, 1.4, 1.5, 5, 1.6, 6, 1.7, 7
+     */
+    void
+    ProcessSource (SgProject* project, std::vector<std::string>& argv);
+
+    /** Specify the output Java source version.
+     *
+     * See `man javac(1)`:
+     *
+     * > -source <release>
+     * >    Generate  class files that target a specified version of the
+     * >    VM. Class files will run on the specified target and on later
+     * >    versions, but not on earlier versions of the VM. Valid targets
+     * >    are 1.1, 1.2, 1.3, 1.4, 1.5 (also 5), 1.6 (also 6), and 1.7
+     * >    (also 7).
+     *
+     * Default depends on -source.
+     *
+     * Example versions: 1.3, 1.4, 1.5, 5, 1.6, 6, 1.7, 7
+     */
+    void
+    ProcessTarget (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessEncoding (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessG (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessNoWarn (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessVerbose (SgProject* project, std::vector<std::string>& argv);
+
+    void
+    ProcessDeprecation (SgProject* project, std::vector<std::string>& argv);
+
+   /** -bootclasspath bootclasspath
+    *     Cross-compile against the specified set of boot classes. As with the
+    *     user class path, boot class path entries are separated by colons (:)
+    *     and can be directories, JAR archives, or ZIP archives.
+    *     [http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html]
+    */
+    void
+    ProcessBootclasspath (SgProject* project, std::vector<std::string>& argv);
+
+    // @filename used by Java
+    std::vector<std::string>
+    GetListFromFile (const std::string& filename);
+
+    // Returns a list of file names extracted from @arglist.
+    // @arglist includes the leading '@'.
+    Rose_STL_Container<std::string>
+    ExpandArglist (const std::string& arglist);
+
+    // Return a copy of argv with Java's @arglist expanded in-place
+    // with the actual filenames in the specified file.
+    Rose_STL_Container<std::string>
+    ExpandArglist (const Rose_STL_Container<std::string>& argv);
+
     /** Targeted for src/frontend/ECJ_ROSE_Connection/jserver.C,
      */
     namespace Ecj {
-      extern std::list<std::string> jvm_options;
+      extern ROSE_DLL_API bool batch_mode;
+      extern ROSE_DLL_API std::list<std::string> jvm_options;
 
-      void
+      ROSE_DLL_API void
       StripRoseOptions (std::vector<std::string>& argv);
 
-      std::string
+      ROSE_DLL_API std::string
       GetRoseClasspath();
 
-      void
+      ROSE_DLL_API void
       Process (SgProject* project, std::vector<std::string>& argv);
+
+      /** -rose:java:ecj:batch_mode
+       */
+      ROSE_DLL_API void
+      ProcessBatchMode (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:jvm_options
        */
-      void
+      ROSE_DLL_API void
       ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
 
       /** -rose:java:ecj:enable_remote_debugging
        *  Enable remote debugging of the Java Virtual Machine (JVM).
        */
-      void
+      ROSE_DLL_API void
       ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
     }
   } // namespace Rose::Cmdline::Java
@@ -258,6 +362,22 @@ namespace Cmdline {
     // -rose:x10
     void
     ProcessX10Only (SgProject* project, std::vector<std::string>& argv);
+
+    namespace X10c {
+
+    extern std::list<std::string> jvm_options;
+
+    std::string
+    GetRoseClasspath();
+
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    /** -rose:java:ecj:jvm_options
+     */
+    void
+    ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv);
+    } // namespace Rose::Cmdline::X10::X10c
   } // namespace Rose::Cmdline::X10
 
 } // namespace Rose::Cmdline

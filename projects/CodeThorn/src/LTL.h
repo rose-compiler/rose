@@ -55,10 +55,13 @@ namespace LTL {
   class Until;
   class WeakUntil;
   class Release;
+  class True;
+  class False;
 
   enum NodeType { 
     e_Error=0, 
     e_InputSymbol, e_OutputSymbol, e_NegInputSymbol, e_NegOutputSymbol, 
+    e_True, e_False,
     e_Not, e_Next, e_Eventually, e_Globally, e_And, e_Or, e_Until,
     e_WeakUntil, e_Release };
 
@@ -80,6 +83,8 @@ namespace LTL {
     virtual void visit(const Until* e) {}
     virtual void visit(const WeakUntil* e) {}
     virtual void visit(const Release* e) {}
+    virtual void visit(const True* e) {}
+    virtual void visit(const False* e) {}
   };
 
   /**
@@ -88,19 +93,21 @@ namespace LTL {
    */
   class TopDownVisitor {
   public:
-    virtual IAttr visit(InputSymbol* e,        IAttr a) { return a; }
+    virtual IAttr visit(InputSymbol* e,     IAttr a) { return a; }
     virtual IAttr visit(OutputSymbol* e,    IAttr a) { return a; }
     virtual IAttr visit(NegInputSymbol* e,  IAttr a) { return a; }
     virtual IAttr visit(NegOutputSymbol* e, IAttr a) { return a; }
-    virtual IAttr visit(Not* e,            IAttr a) { return a; }
-    virtual IAttr visit(Next* e,        IAttr a) { return a; }
-    virtual IAttr visit(Eventually* e,        IAttr a) { return a; }
+    virtual IAttr visit(Not* e,             IAttr a) { return a; }
+    virtual IAttr visit(Next* e,            IAttr a) { return a; }
+    virtual IAttr visit(Eventually* e,      IAttr a) { return a; }
     virtual IAttr visit(Globally* e,        IAttr a) { return a; }
-    virtual IAttr visit(And* e,            IAttr a) { return a; }
-    virtual IAttr visit(Or* e,            IAttr a) { return a; }
-    virtual IAttr visit(Until* e,        IAttr a) { return a; }
-    virtual IAttr visit(WeakUntil* e,        IAttr a) { return a; }
-    virtual IAttr visit(Release* e,        IAttr a) { return a; }
+    virtual IAttr visit(And* e,             IAttr a) { return a; }
+    virtual IAttr visit(Or* e,              IAttr a) { return a; }
+    virtual IAttr visit(Until* e,           IAttr a) { return a; }
+    virtual IAttr visit(WeakUntil* e,       IAttr a) { return a; }
+    virtual IAttr visit(Release* e,         IAttr a) { return a; }
+    virtual IAttr visit(True* e,            IAttr a) { return a; }
+    virtual IAttr visit(False* e,           IAttr a) { return a; }
   };
 
 #define LTL_ATOMIC_VISITOR                        \
@@ -220,6 +227,28 @@ namespace LTL {
       std::stringstream s;
       s << "neg_output("<<std::string(1, c)<<")";//^"<<label;
       id = s.str();
+    }
+    LTL_ATOMIC_VISITOR
+  };
+
+  /// atom true
+  class True : public Expr {
+  public:
+    True() {
+      label = ltl_label++;
+      type = e_True;
+      id = "true";
+    }
+    LTL_ATOMIC_VISITOR
+  };
+
+  /// atom false
+  class False : public Expr {
+  public:
+    False() {
+      label = ltl_label++;
+      type = e_False;
+      id = "false";
     }
     LTL_ATOMIC_VISITOR
   };
@@ -346,6 +375,9 @@ namespace LTL {
         IAttr visit(Not* e,        IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
         IAttr visit(And* e,        IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
         IAttr visit(Or* e,         IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
+
+        IAttr visit(True* e,       IAttr a)  { e->quantified=getAttr(a)->quantified; return a; }
+        IAttr visit(False* e,      IAttr a) { e->quantified=getAttr(a)->quantified; return a; }
 
       };
 

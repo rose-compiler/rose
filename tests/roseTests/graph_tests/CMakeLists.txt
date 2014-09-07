@@ -10,7 +10,7 @@ kde4_add_executable(hash_multimap ${hash_multimap_SRCS})
 
 target_link_libraries(hash_multimap ${KDE4_KDECORE_LIBS})
 
-install(TARGETS hash_multimap ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS hash_multimap DESTINATION bin)
 
 
 ########### next target ###############
@@ -21,7 +21,7 @@ kde4_add_executable(graph_test_1 ${graph_test_1_SRCS})
 
 target_link_libraries(graph_test_1 ${KDE4_KDECORE_LIBS})
 
-install(TARGETS graph_test_1 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS graph_test_1 DESTINATION bin)
 
 
 ########### next target ###############
@@ -32,7 +32,7 @@ kde4_add_executable(graph_test_2 ${graph_test_2_SRCS})
 
 target_link_libraries(graph_test_2 ${KDE4_KDECORE_LIBS})
 
-install(TARGETS graph_test_2 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS graph_test_2 DESTINATION bin)
 
 
 ########### next target ###############
@@ -43,7 +43,7 @@ kde4_add_executable(graph_test_3 ${graph_test_3_SRCS})
 
 target_link_libraries(graph_test_3 ${KDE4_KDECORE_LIBS})
 
-install(TARGETS graph_test_3 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS graph_test_3 DESTINATION bin)
 
 
 ########### next target ###############
@@ -54,7 +54,7 @@ kde4_add_executable(graph_test_4 ${graph_test_4_SRCS})
 
 target_link_libraries(graph_test_4 ${KDE4_KDECORE_LIBS})
 
-install(TARGETS graph_test_4 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS graph_test_4 DESTINATION bin)
 
 
 ########### next target ###############
@@ -65,7 +65,7 @@ kde4_add_executable(graph_test_5 ${graph_test_5_SRCS})
 
 target_link_libraries(graph_test_5 ${KDE4_KDECORE_LIBS})
 
-install(TARGETS graph_test_5 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS graph_test_5 DESTINATION bin)
 
 
 ########### next target ###############
@@ -76,7 +76,7 @@ kde4_add_executable(graph_test_6 ${graph_test_6_SRCS})
 
 target_link_libraries(graph_test_6 ${KDE4_KDECORE_LIBS})
 
-install(TARGETS graph_test_6 ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS graph_test_6 DESTINATION bin)
 
 
 ########### install files ###############

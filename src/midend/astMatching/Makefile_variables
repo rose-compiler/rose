@@ -1,6 +1,6 @@
 # Non-recursive Makefile
 
-mAstMatching_built_sources=matcherparser.C
+mAstMatching_built_sources=matcherparser.C 
 
 mAstMatching_la_sources=\
 	matcherparser.C \
@@ -19,7 +19,11 @@ mAstMatching_includeHeaders=\
 
 mAstMatching_extraDist=\
 	$(mAstMatchingPath)/CMakeLists.txt \
-	$(mAstMatchingPath)/AstMatching.docs
+	$(mAstMatchingPath)/AstMatching.docs \
+	$(mAstMatchingPath)/matcherlexer.ll \
+	$(mAstMatchingPath)/matcherparser.yy \
+	$(builddir)/matcherparser.C \
+	$(builddir)/matcherparser.h
 
 mAstMatching_cleanLocal=\
 	rm -rf \
@@ -42,3 +46,10 @@ matcherparser.C: $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll $(srcdir)/$(mAstM
 	@mv y.tab.h matcherparser.h
 	@cat lex.yy.c y.tab.c > matcherparser.C
 	@rm lex.yy.c y.tab.c
+matcherparser.h: matcherparser.C
+
+install-exec-hook:
+	INCLUDEDIR="$(DESTDIR)$(includedir)/rose/midend/astMatching" && \
+	mkdir -p "$${INCLUDEDIR}" && \
+	for header in $(mAstMatching_includeHeaders); do \
+          $(LN_S) --force "$(DESTDIR)/$(includedir)/$$(basename $${header})" "$${INCLUDEDIR}/$$(basename $${header})"; done

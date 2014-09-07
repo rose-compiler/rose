@@ -25,7 +25,7 @@ target_link_libraries(outlinePreproc ROSE_DLL ${Boost_LIBRARIES})
 
 ########### install files ###############
 
-install(TARGETS outline ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS outline DESTINATION bin)
 
 
 #original Makefile.am contents follow:

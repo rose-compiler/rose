@@ -6,6 +6,7 @@
 #include "rose.h"
 #include <set>
 #include <inttypes.h>
+#include <sawyer/IntervalSet.h>
 
 // SEMANTIC_DOMAIN values
 #define NULL_DOMAIN 1
@@ -29,37 +30,37 @@
 #   error "SEMANTIC_API must be defined on the compiler command line"
 #elif SEMANTIC_API == OLD_API
 #   include "x86InstructionSemantics.h"
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace rose::BinaryAnalysis::InstructionSemantics;
 #elif SEMANTIC_API == NEW_API
 #   include "DispatcherX86.h"
 #   include "TestSemantics2.h"
-    using namespace BinaryAnalysis::InstructionSemantics2;
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
 #else
 #   error "invalid value for SEMANTIC_API"
 #endif
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
 #   include "SMTSolver.h"
-    SMTSolver *make_solver() { return NULL; }
+    rose::BinaryAnalysis::SMTSolver *make_solver() { return NULL; }
 #elif SMT_SOLVER == YICES_LIB
 #   include "YicesSolver.h"
-    SMTSolver *make_solver() {
-        YicesSolver *solver = new YicesSolver;
-        solver->set_linkage(YicesSolver::LM_LIBRARY);
+    rose::BinaryAnalysis::SMTSolver *make_solver() {
+        rose::BinaryAnalysis::YicesSolver *solver = new rose::BinaryAnalysis::YicesSolver;
+        solver->set_linkage(rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
         return solver;
     }
 #elif SMT_SOLVER == YICES_EXE
 #   include "YicesSolver.h"
-    SMTSolver *make_solver() {
-        YicesSolver *solver = new YicesSolver;
-        solver->set_linkage(YicesSolver::LM_EXECUTABLE);
+    rose::BinaryAnalysis::SMTSolver *make_solver() {
+        rose::BinaryAnalysis::YicesSolver *solver = new rose::BinaryAnalysis::YicesSolver;
+        solver->set_linkage(rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
         return solver;
     }
 #else
 #   error "invalid value for SMT_SOLVER"
 #endif
 
-const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
+const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
 
 #include "TraceSemantics2.h"
 
@@ -73,15 +74,15 @@ static bool do_usedef = true;
 
 #if SEMANTIC_API == OLD_API
 #   include "NullSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::NullSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
 #else
 #   include "NullSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
         TestSemantics<
-            NullSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr, BaseSemantics::MemoryCellListPtr,
+            NullSemantics::SValuePtr, NullSemantics::RegisterStatePtr, NullSemantics::MemoryStatePtr,
             BaseSemantics::StatePtr, NullSemantics::RiscOperatorsPtr> tester;
         tester.test(retval);
         return retval;
@@ -92,9 +93,9 @@ static bool do_usedef = true;
 #elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
 #if SEMANTIC_API == OLD_API
 #   include "PartialSymbolicSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
 #else
 #   include "PartialSymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
@@ -112,9 +113,9 @@ static bool do_usedef = true;
 
 #if SEMANTIC_API == OLD_API
 #   include "SymbolicSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
 #else
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
@@ -132,9 +133,9 @@ static bool do_usedef = true;
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
 #if SEMANTIC_API == OLD_API
 #   include "IntervalSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
+#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
+#   define MyState     rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
+#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
 #else
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
@@ -184,15 +185,15 @@ static bool do_usedef = true;
 
 #if SEMANTIC_API == OLD_API
 #   include "findConstants.h"
-#   define MyValueType XVariablePtr
-    struct MyPolicy: public FindConstantsPolicy {
+#   define MyValueType rose::BinaryAnalysis::FindConstants::XVariablePtr
+    struct MyPolicy: public rose::BinaryAnalysis::FindConstants::FindConstantsPolicy {
         void startInstruction(SgAsmInstruction *insn) {
             addr = insn->get_address();
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
             cur_state = rsets[addr];
-            currentInstruction = isSgAsmx86Instruction(insn);
+            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmx86Instruction(insn);
         }
         void print(std::ostream &out) {
             out <<cur_state <<"    ip = " <<newIp <<"\n";
@@ -208,15 +209,15 @@ static bool do_usedef = true;
 
 #if SEMANTIC_API == OLD_API
 #   include "findConstants.h"
-#   define MyValueType XVariablePtr
-    struct MyPolicy: public FindConstantsABIPolicy {
+#   define MyValueType rose::BinaryAnalysis::FindConstants::XVariablePtr
+    struct MyPolicy: public rose::BinaryAnalysis::FindConstants::FindConstantsABIPolicy {
         void startInstruction(SgAsmInstruction *insn) {
             addr = insn->get_address();
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
             cur_state = rsets[addr];
-            currentInstruction = isSgAsmx86Instruction(insn);
+            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmx86Instruction(insn);
         }
         void print(std::ostream &out) {
             out <<cur_state <<"    ip = " <<newIp <<"\n";
@@ -365,6 +366,12 @@ analyze_interp(SgAsmInterpretation *interp)
             dispatcher = DispatcherX86::instance(operators);
         }
         operators->set_solver(make_solver());
+
+        // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
+        if (const RegisterDescriptor *REG_FPSTATUS_TOP = regdict->lookup("fpstatus_top")) {
+            BaseSemantics::SValuePtr st_top = operators->number_(REG_FPSTATUS_TOP->get_nbits(), 0);
+            operators->writeRegister(*REG_FPSTATUS_TOP, st_top);
+        }
 #else   // OLD_API
         typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
         MyPolicy operators;
@@ -423,7 +430,7 @@ analyze_interp(SgAsmInterpretation *interp)
                 std::cout <<e <<"\n";
                 break;
 #   endif
-            } catch (const SMTSolver::Exception &e) {
+            } catch (const rose::BinaryAnalysis::SMTSolver::Exception &e) {
                 std::cout <<e <<" [ "<<unparseInstructionWithAddress(insn) <<"]\n";
                 break;
             }
@@ -533,5 +540,15 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
     }
+
+#if SEMANTIC_API == NEW_API
+    std::ostream &info = std::cerr; // do not include in answer because objects vary in size per architecture
+    info <<"Before vacuum...\n";
+    BaseSemantics::SValue::allocator.printStatistics(info);
+    BaseSemantics::SValue::allocator.vacuum();
+    info <<"After vacuum...\n";
+    BaseSemantics::SValue::allocator.printStatistics(info);
+#endif
+
     return 0;
 }

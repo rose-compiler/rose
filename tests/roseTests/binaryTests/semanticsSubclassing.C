@@ -4,7 +4,7 @@
 #include "rose.h"
 #include "SymbolicSemantics2.h"
 
-using namespace BinaryAnalysis::InstructionSemantics2;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,11 +20,11 @@ class MyMemoryState: public SymbolicSemantics::MemoryState {
     // Implement the same real c'tors as the super class. No need to document these since they're private and they would have
     // mostly the same documentation as the corresponding static allocating constructor.
 protected:
-    MyMemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
-        : SymbolicSemantics::MemoryState(protocell, protoval) {}
+    MyMemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+        : SymbolicSemantics::MemoryState(protocell) {}
 
-    explicit MyMemoryState(const BaseSemantics::SValuePtr &protoval)
-        : SymbolicSemantics::MemoryState(protoval) {}
+    explicit MyMemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : SymbolicSemantics::MemoryState(addrProtoval, valProtoval) {}
 
     MyMemoryState(const MyMemoryState &other)
         : SymbolicSemantics::MemoryState(other) {}
@@ -34,13 +34,13 @@ protected:
     // super class.
 public:
     /** Instantiate a new memory state from ... */
-    static MyMemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
-        return MyMemoryStatePtr(new MyMemoryState(protocell, protoval));
+    static MyMemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MyMemoryStatePtr(new MyMemoryState(protocell));
     }
 
     /** Instantiate a new memory state from ... */
-    static MyMemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
-        return MyMemoryStatePtr(new MyMemoryState(protoval));
+    static MyMemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MyMemoryStatePtr(new MyMemoryState(addrProtoval, valProtoval));
     }
 
     /** Instantiate a new memory state by deep-copying an existing state. */
@@ -54,13 +54,13 @@ public:
     // to distinguish between a virtual default constructor that takes no arguments, and the virtual copy constructor which
     // also takes no arguments.  No need for doxygen comments since they're documented in the base class.
 public:
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
-                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protocell, protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+        return instance(protocell);
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
     }
 
     virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
@@ -101,26 +101,28 @@ typedef boost::shared_ptr<class MyRiscOperators> MyRiscOperatorsPtr;
 class MyRiscOperators: public SymbolicSemantics::RiscOperators {
     // Real constructors
 protected:
-    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval, rose::BinaryAnalysis::SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(protoval, solver) {}
-    explicit MyRiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit MyRiscOperators(const BaseSemantics::StatePtr &state, rose::BinaryAnalysis::SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(state, solver) {}
 
     // Static allocating constructors
 public:
-    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return MyRiscOperatorsPtr(new MyRiscOperators(protoval, solver));
     }
-    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return MyRiscOperatorsPtr(new MyRiscOperators(state, solver));
     }
 
     // Virtual constructors
 public:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) const {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(protoval, solver);
     }
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) const {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(state, solver);
     }
 
@@ -167,11 +169,11 @@ int main()
     // Build the RiscOperators.  Since we're wanting to use our shiny new classes, we need to build the lattice manually.
     // Refer to SymbolicSemantics::RiscOperators::instance() to see what parts are required, and substitute our class names
     // where appropriate.
-    SMTSolver *solver = NULL;
+    rose::BinaryAnalysis::SMTSolver *solver = NULL;
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
     BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
     BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval);
+    BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     BaseSemantics::RiscOperatorsPtr ops = MyRiscOperators::instance(state, solver);
 

@@ -35,6 +35,8 @@
 #include "RSIM_Linux32.h"
 #include "SignAnalysisExample.h"
 
+using namespace rose;
+
 /** Runs sign analysis.
  *
  *  Since this demo runs the sign analysis in synchrony with the simulation, all we need to do is attach the sign analysis to

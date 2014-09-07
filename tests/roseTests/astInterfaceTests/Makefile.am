@@ -28,7 +28,7 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage
+    buildJavaPackage createAbstractHandles
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -86,6 +86,7 @@ insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 loopCollapsing_SOURCES                    = loopCollapsing.C
+createAbstractHandles_SOURCES             = createAbstractHandles.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -144,11 +145,12 @@ generatedCodeExamples = \
   rose_inputinsertBeforeUsingCommaOp.C \
   rose_inputinsertAfterUsingCommaOp.C \
   rose_inputdeepCopy.C\
+  rose_inputloopCollapsing_1.C\
   rose_inputloopCollapsing_2.C\
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
-  buildJavaPackage.passed
+  buildJavaPackage.passed 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -201,7 +203,8 @@ group1 =						\
 	rose_inputbuildAbstractHandle.C			\
 	rose_inputbuildTypedefDeclaration.C		\
 	rose_inputgetDependentDecls.C			\
-	rose_inputreplaceWithPattern.C
+	rose_inputreplaceWithPattern.C                  \
+	rose_inputcreateAbstractHandles.C
 
 $(group1): rose_input%.C: input%.C %
 	@$(RTH_RUN) \
@@ -237,7 +240,7 @@ rose_inputBlank2.C: inputBlank2.C buildNondefiningFunction
 rose_inputbuildFunctionCalls.C: inputbuildFunctionCalls.C buildFunctionCalls
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/buildFunctionCalls$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -I$(srcdir)" \
+		FLAGS="$(TEST_CXXFLAGS) -I$(abs_srcdir)" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -380,10 +383,18 @@ rose_inputloopUnrolling2.C: inputloopUnrolling.C loopUnrolling
 endif
 
 if ROSE_USE_INDENT
-rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+
+rose_inputloopCollapsing_1.C: inputloopCollapsing_1.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,5>' -rose:loopcollapse:factor 2" \
+		INPUT=$(abspath $<) \
+		INDENT=yes \
+		$(srcdir)/astInterface.conf $@.passed
+rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 2" \
 		INPUT=$(abspath $<) \
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
@@ -409,10 +420,18 @@ rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 		INDENT=yes \
 		$(srcdir)/astInterface.conf $@.passed
 else
-rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+
+rose_inputloopCollapsing_1.C: inputloopCollapsing_1.C loopCollapsing
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,5>' -rose:loopcollapse:factor 2" \
+		INPUT=$(abspath $<) \
+		INDENT=no \
+		$(srcdir)/astInterface.conf $@.passed
+rose_inputloopCollapsing_2.C: inputloopCollapsing_2.C loopCollapsing
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/loopCollapsing$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:loopcollapse:abstract_handle 'Statement<position,9>' -rose:loopcollapse:factor 2" \
 		INPUT=$(abspath $<) \
 		INDENT=no \
 		$(srcdir)/astInterface.conf $@.passed
@@ -468,7 +487,7 @@ rose_inputreplaceMacroCalls.C: inputreplaceMacroCalls.C replaceMacroCalls
 rose_inputinsertStatementBeforeFunction.C: inputinsertStatementBeforeFunction.C insertStatementBeforeFunction $(srcdir)/inputinsertStatementBeforeFunction_1.h
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/insertStatementBeforeFunction$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -I$(srcdir)" \
+		FLAGS="$(TEST_CXXFLAGS) -I$(abs_srcdir)" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -490,7 +509,7 @@ group3_headers = 						\
 $(group3): rose_%: % $(group3_headers)
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/removeStatementCommentRelocation$(EXEEXT)" \
-		FLAGS="$(TEST_CXX_FLAGS) -I$(srcdir)" \
+		FLAGS="$(TEST_CXX_FLAGS) -I$(abs_srcdir)" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -499,7 +518,7 @@ $(group3): rose_%: % $(group3_headers)
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(abspath $<)" \
+		CMD="$$(pwd)/buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(abs_srcdir) -c $(abspath $<)"  \
 		$(TEST_EXIT_STATUS) $@
 
 # MUST keep this up-to-date!!
@@ -529,8 +548,9 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C					\
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f				\
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
-       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C \
-       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
+       inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
+       inputbuildJavaPackage.C inputloopCollapsing_1.C
 
 
 #------------------------------------------------------------------------------------------------------------------------

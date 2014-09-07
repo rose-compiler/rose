@@ -4,6 +4,7 @@
 #include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis { // documented elsewhere
 namespace InstructionSemantics2 { // documented elsewhere
         
@@ -95,6 +96,109 @@ public:
     virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const /*override*/ {
         stream <<"VOID[" <<get_width() <<"]";
     }
+};
+
+
+/*******************************************************************************************************************************
+ *                                      Registers
+ *******************************************************************************************************************************/
+
+typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
+
+/** Null register state.
+ *
+ *  This register state does not store any values.  Read operations always return (new) undefined values. */
+class RegisterState: public BaseSemantics::RegisterState {
+protected:
+    RegisterState(const RegisterState &other)
+        : BaseSemantics::RegisterState(other) {}
+
+    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict)
+        : BaseSemantics::RegisterState(protoval, regdict) {}
+
+public:
+    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict) {
+        return RegisterStatePtr(new RegisterState(protoval, regdict));
+    }
+
+    virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   const RegisterDictionary *regdict) const /*override*/ {
+        return instance(protoval, regdict);
+    }
+
+    virtual BaseSemantics::RegisterStatePtr clone() const /*override*/ {
+        return RegisterStatePtr(new RegisterState(*this));
+    }
+    
+    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from) {
+        RegisterStatePtr retval = boost::dynamic_pointer_cast<RegisterState>(from);
+        assert(retval!=NULL);
+        return retval;
+    }
+
+    virtual void clear() /*override*/ {}
+    virtual void zero() /*override*/ {}
+
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) /*override*/ {
+        return get_protoval()->undefined_(reg.get_nbits());
+    }
+
+    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
+                               BaseSemantics::RiscOperators *ops) /*override*/ {}
+
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/ {}
+};
+
+
+/*******************************************************************************************************************************
+ *                                      Memory
+ *******************************************************************************************************************************/
+
+typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
+
+/** Null memory.
+ *
+ *  This memory state does not store any values. Read operations always return (new) undefined values. */
+class MemoryState: public BaseSemantics::MemoryState {
+protected:
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryState(addrProtoval, valProtoval) {}
+
+    MemoryState(const MemoryStatePtr &other)
+        : BaseSemantics::MemoryState(other) {}
+
+public:
+    static MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
+    }
+
+public:
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
+    }
+
+    virtual BaseSemantics::MemoryStatePtr clone() const {
+        return MemoryStatePtr(new MemoryState(*this));
+    }
+
+public:
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+        assert(x!=NULL);
+        return retval;
+    }
+
+public:
+    virtual void clear() /*override*/ {}
+    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators *addrOps,
+                                                BaseSemantics::RiscOperators *valOps) /*override*/ {
+        return dflt->copy();
+    }
+    virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) /*override*/ {}
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/ {}
 };
 
 /*******************************************************************************************************************************
@@ -227,8 +331,8 @@ public:
 
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond,
-                                                size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
 
     virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
@@ -236,8 +340,9 @@ public:
                              const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

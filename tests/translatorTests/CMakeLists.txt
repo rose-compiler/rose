@@ -12,10 +12,12 @@ ADD_TEST(
   COMMAND bug125 -c ${CMAKE_CURRENT_SOURCE_DIR}/inputbug125.C
 )
 
+if(HAVE_SYSTEM_TIME_H)
 ADD_TEST(
   NAME testqualifiedName
   COMMAND qualifiedName -c ${ROSE_TOP_SRC_DIR}/projects/autoTuning/tests/jacobi.c
 )
+endif()
 
 #include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #

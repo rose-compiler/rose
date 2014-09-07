@@ -17,6 +17,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
+	jacobi-collapse.c \
 	alignment.c \
 	array_init.c \
 	array_init_2.c \
@@ -64,12 +65,14 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	master.c \
 	masterSingle.c \
 	matrix_vector.c \
+	matrixmultiply.c \
 	md_open_mp.c \
 	multiple_return.c \
 	nestedpar1.c \
 	nestedpar.c \
 	omp1.c \
 	ompfor.c \
+	ompfor_c99.c \
 	ompfor2.c \
 	ompfor3.c \
 	ompfor4.c \
@@ -139,9 +142,11 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc2.c \
 	matrixmultiply-ompacc.c \
 	jacobi-ompacc.c \
-	jacobi-ompacc-opt1.c
+	jacobi-ompacc-opt1.c \
+	jacobi-ompacc-opt2.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+        jacobi-ompacc2.cpp \
 	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \
@@ -228,7 +233,8 @@ check-local:
 endif
 
 EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c \
-			 macroIds.c macroIds.h macroIdsDef.h
+			 macroIds.c macroIds.h macroIdsDef.h \
+			 collapse_2.c 
 
 clean-local:
 	rm -f *.o rose_*.* *.out

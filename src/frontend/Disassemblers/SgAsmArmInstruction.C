@@ -4,6 +4,8 @@
 #include "sage3basic.h"
 #include "Disassembler.h"
 
+using namespace rose;                                   // temporary until this lives in "rose"
+
 /* Returns true if the instruction modifies the instruction pointer (r15). */
 static bool modifies_ip(SgAsmArmInstruction *insn) 
 {
@@ -41,7 +43,7 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
                 ROSE_ASSERT(elist);
             }
             for (size_t i=0; i<elist->get_expressions().size(); i++) {
-                SgAsmArmRegisterReferenceExpression *reg = isSgAsmArmRegisterReferenceExpression(elist->get_expressions()[i]);
+                SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(elist->get_expressions()[i]);
                 ROSE_ASSERT(reg);
                 if (reg->get_descriptor().get_major()==arm_regclass_gpr && reg->get_descriptor().get_minor()==15) {
                     return true;
@@ -60,7 +62,7 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
         default: {
             const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
             if (exprs.size()>=1) {
-                SgAsmArmRegisterReferenceExpression *rre = isSgAsmArmRegisterReferenceExpression(exprs[0]);
+                SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(exprs[0]);
                 if (rre &&
                     rre->get_descriptor().get_major()==arm_regclass_gpr && rre->get_descriptor().get_minor()==15) {
                     return true;
@@ -72,9 +74,9 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
 }
 
 /** Return control flow successors. See base class for full documentation. */
-Disassembler::AddressSet
+BinaryAnalysis::Disassembler::AddressSet
 SgAsmArmInstruction::get_successors(bool *complete) {
-    Disassembler::AddressSet retval;
+    BinaryAnalysis::Disassembler::AddressSet retval;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
     *complete = true; /*assume retval is the complete set of successors for now*/
 
@@ -105,7 +107,7 @@ SgAsmArmInstruction::get_successors(bool *complete) {
              * not available. We only know the successor if the register is the instruction pointer, in which case the
              * successor is the fall-through address. */
             ROSE_ASSERT(exprs.size()==1);
-            SgAsmArmRegisterReferenceExpression *rre = isSgAsmArmRegisterReferenceExpression(exprs[0]);
+            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(exprs[0]);
             ROSE_ASSERT(rre);
             if (rre->get_descriptor().get_major()==arm_regclass_gpr && rre->get_descriptor().get_minor()==15) {
                 retval.insert(get_address()+4);

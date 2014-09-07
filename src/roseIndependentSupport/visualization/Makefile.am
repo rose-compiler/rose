@@ -49,7 +49,7 @@ dotgl_SOURCES = \
 DEPENDENCIES = 
 
 # Header files that need to be included in the distribution
-include_HEADERS = \
+pkginclude_HEADERS = \
      dotvisualizer.h \
      glcodegen.h \
      glf.h \

@@ -40,6 +40,11 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+/* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */
+#ifdef __INTEL_COMPILER
+  #define _OVERRIDE_COMPLEX_SPECIALIZATION_
+#endif
+
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__
 /* DQ (10/13/2010): This is a specific fix suggested by Cong Hou for an OSX problem. 
@@ -519,6 +524,11 @@ __builtin_fabsl
 __builtin_frame_address (IA-32 only)
 __builtin_return_address (IA-32 only)
 */
+
+/* EDG 4.8 when used with GNU 4.8.1 appears to require some additional builtin functions */
+int __builtin_abs (int __builtin__x);
+
+
 
 /* DQ (6/19/2007): For handling of offsetof macro we can't build a function 
 prototype so EDG provides a mechanism to support this (from the basics.h 
