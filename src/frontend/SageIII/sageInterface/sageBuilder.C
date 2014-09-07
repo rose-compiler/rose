@@ -4140,6 +4140,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
 #if 0
      printf ("In buildDefiningFunctionDeclaration_T(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+     printf ("In buildDefiningFunctionDeclaration_T(): buildTemplateDeclaration   = %s \n",buildTemplateDeclaration ? "true" : "false");
 #endif
 
   // DQ (8/11/2013): Check that the template argument lists are consistant.  The templateArgumentsList can then be considered redundant if this works.

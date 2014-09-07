@@ -7695,7 +7695,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      ROSE_ASSERT(template_stmt != NULL);
 
 #if 0
-     printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
+     printf ("Note: In unparseTemplateDeclarationStatment_support(): Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #endif
 
   // DQ (1/28/2013): This helps handle cases such as "#if 1 void foo () #endif { }"
@@ -7715,10 +7715,43 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // Output access modifiers
      unp->u_sage->printSpecifier1(template_stmt, info);
 
-  // printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
+#if 0
+     printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
+#endif
 
   // DQ (1/21/2004): Use the string class to simplify the previous version of the code
      string templateString = template_stmt->get_string().str();
+
+     bool string_represents_function_body = false;
+     SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(stmt);
+     SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(stmt);
+     if (templateFunctionDeclaration != NULL)
+        {
+       // printf ("This is a SgTemplateFunctionDeclaration \n");
+          string_represents_function_body = templateFunctionDeclaration->get_string_represents_function_body();
+        }
+       else
+        {
+          if (templateMemberFunctionDeclaration != NULL)
+             {
+            // printf ("This is a SgTemplateMemberFunctionDeclaration \n");
+               string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
+             }
+            else
+             {
+            // This is likely a SgTemplateClassDeclaration
+               if (isSgTemplateClassDeclaration(stmt) == NULL)
+                  {
+                    printf ("Error: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                  }
+             }
+        }
+
+  // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
+     if (string_represents_function_body == true)
+        {
+          return;
+        }
 
   // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
      if (template_stmt->get_declarationModifier().isExport())
@@ -7726,11 +7759,25 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
           curprint(string("export "));
         }
 
+     if (string_represents_function_body == true)
+        {
+       // Unparse a function prototype header as a prefix to the generated string.
+          printf ("Unparse a function prototype header as a prefix to the generated string \n");
+
+       // Temporary code.
+       // curprint ("void foobar()");
+
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(stmt);
+          ROSE_ASSERT(declaration != NULL);
+          SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
+          ROSE_ASSERT(declaration != nondefiningDeclaration);
+
+       // unparseStatement(nondefiningDeclaration,info);
+        }
+
   // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
      curprint ( string("\n" ) + templateString);
-
    }
-
  
  
 //#if USE_UPC_IR_NODES //TODO need this?
