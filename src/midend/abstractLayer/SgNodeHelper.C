@@ -1195,6 +1195,7 @@ bool SgNodeHelper::isFloatingPointType(SgType* type) {
   return isSgTypeFloat(type) || isSgTypeDouble(type) || isSgTypeLongDouble(type);
 }
 
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -1276,4 +1277,46 @@ void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mo
 void SgNodeHelper::replaceAstWithString(SgNode* node, string s) {
   AstUnparseAttribute* substituteNameAttribute=new AstUnparseAttribute(s,AstUnparseAttribute::e_replace);
   node->setAttribute("AstUnparseAttribute",substituteNameAttribute);
+}
+
+bool SgNodeHelper::isArrayAccess(SgNode* node) {
+  return isSgPntrArrRefExp(node)!=0;
+}
+
+bool SgNodeHelper::isPointerVariable(SgVarRefExp* var) {
+  if(var==0)
+    return false;
+  SgType* type=var->get_type();
+  return isSgPointerType(type)!=0;
+}
+
+bool SgNodeHelper::isArrayDeclaration(SgVariableDeclaration* decl) {
+// TODO: ensure that this is an array (check type)
+  return isAggregateDeclaration(decl);
+}
+
+bool SgNodeHelper::isAggregateDeclaration(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    SgInitializer* arrayInitializer=initName->get_initializer();
+    return isSgAggregateInitializer(arrayInitializer);
+  }
+  return false;
+}
+
+SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    SgInitializer* initializer=initName->get_initializer();
+    if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
+      SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+      SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+      return exprPtrList;
+    }
+  }
+  cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
+  exit(1);
 }

@@ -9,6 +9,9 @@
 
 using std::set;
 
+VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
+}
+
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
   SgSymbol* varSym=getSymbol(varId);
   return isSgVariableDeclaration(SgNodeHelper::findVariableDeclarationWithVariableSymbol(varSym));
@@ -27,6 +30,14 @@ bool VariableIdMapping::hasIntegerType(VariableId varId) {
 bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type);
+}
+bool VariableIdMapping::hasPointerType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgPointerType(type)!=0;
+}
+bool VariableIdMapping::hasArrayType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgArrayType(type)!=0;
 }
 /*! 
   * \author Markus Schordan
@@ -221,12 +232,23 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgSymbol* sym=0;
       bool found=false;
+      int arraySize=-1; // -1 denotes: not an array
       if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
         sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
-        if(sym)
+        if(sym) {
           found=true;
-        else
+          if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
+            //cout<<"INFO: found array decl: size: ";
+            SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
+            arraySize=initList.size();
+            //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
+            registerNewArraySymbol(sym,arraySize);
+            symbolSet.insert(sym);
+            found=false;
+          }
+        } else {
           cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
+        }
         assert(!isSgVariableDefinition(sym));
       }
       if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
@@ -247,12 +269,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           continue;
         }
 #endif        
-        string longName=SgNodeHelper::uniqueLongVariableName(sym);
+        //string longName=SgNodeHelper::uniqueLongVariableName(sym);
         
         // ensure all symbols are SgVariableSymbol
         SgVariableSymbol* finalvarsym=isSgVariableSymbol(sym);
         assert(finalvarsym);
-        MapPair pair=make_pair(longName,finalvarsym);
+        //MapPair pair=make_pair(longName,finalvarsym);
         if(symbolSet.find(finalvarsym)==symbolSet.end()) {
           assert(finalvarsym);
           registerNewSymbol(finalvarsym);
@@ -327,6 +349,14 @@ VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
     return VariableId(); // always defaults to a value different to all mapped values
 }
 
+VariableId VariableIdMapping::variableIdOfArrayElement(VariableId arrayVar, int elemIndex) {
+  int idCode=arrayVar.getIdCode();
+  int elemIdCode=idCode+elemIndex;
+  VariableId elemVarId;
+  elemVarId.setIdCode(elemIdCode);
+  return elemVarId;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -356,6 +386,22 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   VariableId newVarId=variableId(sym);
   temporaryVariableIdMapping.insert(make_pair(newVarId,name));
   return newVarId;
+}
+
+void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
+  ROSE_ASSERT(arraySize>0);
+  if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
+    // map symbol to var-id of array variable symbol
+    mappingSymToVarId[sym]=mappingVarIdToSym.size();
+    for(int i=0;i<arraySize;i++) {
+    // assign one var-id for each array element
+      //cout<<"registering "<<i<<endl;
+      mappingVarIdToSym.push_back(sym);
+    }
+  } else {
+    cerr<< "Error: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
+    exit(1);
+  }
 }
 
 void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
@@ -507,4 +553,9 @@ VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNo
       vset.insert(vid);
   }
   return vset;
+}
+
+SgExpressionPtrList& VariableIdMapping::getInitializerListOfArrayVariable(VariableId arrayVar) {
+  SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
+  return SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
 }
