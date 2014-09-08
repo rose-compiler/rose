@@ -21,3 +21,13 @@ void initialize()
                 - 2.0*(1.0-xx*xx)-2.0*(1.0-yy*yy);  
     }   
 }
+
+void foo(int len, float* compression, float* vnewc , float* delvc, float* compHalfStep)
+{
+  float vchalf ;  /* declared once, used once */
+  for (int zidx =0 ; zidx < len; ++zidx) {
+    compression[zidx] = 0.1 / vnewc[zidx] - 1.0;
+    vchalf = vnewc[zidx] - delvc[zidx] * 0.5;
+    compHalfStep[zidx] = 1.0 / vchalf - 1.0;
+  }
+}
