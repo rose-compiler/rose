@@ -24,6 +24,7 @@
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>
+#include <process.h>
 #endif
 
 #include "IncludedFilesUnparser.h"
