@@ -1450,7 +1450,8 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping.variableId(*i);
-      if(true || setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end()) {
+      // TODO: investigate why array variables get filtered (but should not)
+      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
         globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
         estate=analyzeVariableDeclaration(*i,estate,estate.label());
       } else {
