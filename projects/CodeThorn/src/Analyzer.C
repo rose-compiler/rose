@@ -563,20 +563,6 @@ const EState* Analyzer::addToWorkListIfNew(EState estate) {
   }
 }
 
-/* TODO: ADD ARRAY-INITIALIZERS
-            VariableId arrayVarId=mappingSymToVarId[sym];
-            for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-              SgExpression* exp=*i;
-              if(SgIntVal* intVal=isSgIntVal(exp)) {
-                int intVal=intValNode->get_value();
-              } else {
-                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<endl;
-                exit(1);
-              }
-            }
-
- */
-
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
   //cout << "INFO1: we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -594,7 +580,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       ConstraintSet cset=*currentEState.constraints();
       SgAssignInitializer* assignInitializer=0;
       if(initializer && isSgAggregateInitializer(initializer)) {
-        cout<<"DEBUG: array-initializer found:"<<initializer->unparseToString()<<endl;
+        //cout<<"DEBUG: array-initializer found:"<<initializer->unparseToString()<<endl;
         PState newPState=*currentEState.pstate();
         int elemIndex=0;
         SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
@@ -605,7 +591,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           SgIntVal* intValNode=0;
           if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
             int intVal=intValNode->get_value();
-            cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+            //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
             newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
           } else {
             cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<astTermWithNullValuesToString(exp)<<endl;
@@ -615,7 +601,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         }
         return createEState(targetLabel,newPState,cset);
       } else if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        cout << "DEBUG: initializer found:"<<initializer->unparseToString()<<endl;
+        //cout << "DEBUG: initializer found:"<<initializer->unparseToString()<<endl;
         SgExpression* rhs=assignInitializer->get_operand_i();
         assert(rhs);
         PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
@@ -1366,6 +1352,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
             newPState[lhsVar]=(*i).result;
+          } else if(variableIdMapping.hasPointerType(lhsVar)) {
+            // we assume here that only arrays (pointers to arrays) are assigned
+            // see CODE-POINT-1 in ExprAnalyzer.C
+            //cout<<"DEBUG: pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
+            newPState[lhsVar]=(*i).result;
           }
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
@@ -1459,7 +1450,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping.variableId(*i);
-      if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end()) {
+      if(true || setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end()) {
         globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
         estate=analyzeVariableDeclaration(*i,estate,estate.label());
       } else {
@@ -1517,7 +1508,8 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
     VariableId rhsVarId;
     isRhsVar=exprAnalyzer.variable(varRefExp,rhsVarId);
-    assert(isRhsVar);
+    ROSE_ASSERT(isRhsVar);
+    ROSE_ASSERT(rhsVarId.isValid());
     // x=y: constraint propagation for var1=var2 assignments
     // we do not perform this operation on assignments yet, as the constraint set could become inconsistent.
     //cset.addEqVarVar(lhsVar, rhsVarId);
@@ -1525,8 +1517,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState[rhsVarId].getValue();
     } else {
-      if(_variablesToIgnore.size()==0)
-        cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+      cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
       rhsIntVal=AType::Top();
       isRhsIntVal=true;
     }
@@ -1535,19 +1526,20 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 
   // handle pointer assignment/initialization
   if(variableIdMapping.hasPointerType(lhsVar)) {
-    cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
-    cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
+    //cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
+    //cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
     if(SgVarRefExp* rhsVarExp=isSgVarRefExp(rhs)) {
       VariableId rhsVarId=variableIdMapping.variableId(rhsVarExp);
       if(variableIdMapping.hasArrayType(rhsVarId)) {
-        cout<<" of array type.";
+        //cout<<" of array type.";
         // we use the id-code as int-value (points-to info)
         int idCode=rhsVarId.getIdCode();
         newPState.setVariableToValue(lhsVar,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(idCode)));
-        cout<<" id-code: "<<idCode;
+        //cout<<" id-code: "<<idCode;
+        return newPState;
       } else {
-        cout<<"RHS: unknown : type: ";
-        cout<<astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        cerr<<"Errpr: RHS: unknown : type: ";
+        cerr<<astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
         exit(1);
       }
       cout<<endl;

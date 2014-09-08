@@ -1,10 +1,10 @@
-// .--------------------------------------------------------.
-// | printf in functions replaced by global output variable |
-// *--------------------------------------------------------*
+// test for array/ptr mode
 int input;
 #include <stdio.h> 
 #include <assert.h>
-//edited by script: global output variable replacing printf in functions 
+#include <math.h>
+#include <stdlib.h>
+
 int output;
 // inputs
 int inputs[] = {(2), (10), (9), (6), (1), (7), (4), (5), (8), (3)};
@@ -25,11 +25,43 @@ int main()
     a433 = a42[1];
     a433 = a42[1+2];
     a433 = a42[a434+2];
-    if(a433==82) {
+    a434 = a116[1+2]+1;
+    int input;
+    scanf("%d",&input);
+    if(a433==a129[1] && a434==a116[3] && a68[1]==5) {
+      printf("%d",20);
+    }
+    if(input==1 && a433==82) {
     error_0: assert(0);
     }
-    if(a433==81) {
+    if(input==2 && a434==76) {
     error_1: assert(0);
+    }
+    if(input==3 && a116[0]==72) {
+    error_2: assert(0);
+    }
+    if(input==4 && a68[0]==72) {
+    error_3: assert(0);
+    }
+    if(input==5 && a68[1]==73) {
+    error_4: assert(0);
+    }
+    a68=a129;
+    if(input==6 && a68[0]==66) {
+    error_5: assert(0);
+    }
+    if(input==7 && a68[1]==67) {
+    error_6: assert(0);
+    }
+    if(input==8 && a68[1]!=66) {
+    error_7: assert(0);
+    }
+    // not reachable
+    if(input==9 && a68[1]==66) {
+    error_8: assert(0);
+    }
+    if(1) {
+    error_9: assert(0);
     }
   }
 }

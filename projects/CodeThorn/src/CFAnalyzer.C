@@ -110,11 +110,11 @@ InterFlow CFAnalyzer::interFlow(Flow& flow) {
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
       // we were not able to find the funDef in the AST
-      cout << "STATUS: External function ";
-      if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
-        cout << SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-      else
-        cout << "cannot be determined."<<endl;
+      //cout << "STATUS: External function ";
+      //if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
+      //  cout << SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+      //else
+      //  cout << "cannot be determined."<<endl;
       callLabel=*i;
       entryLabel=Labeler::NO_LABEL;
       exitLabel=Labeler::NO_LABEL;
@@ -574,7 +574,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(isSgFunctionDefinition(*i)) {
         i.skipChildrenOnForward();
-        cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;
+        //cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;
         tmpEdgeSet=flow(*i);
         edgeSet+=tmpEdgeSet;
       }

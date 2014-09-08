@@ -238,10 +238,10 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         if(sym) {
           found=true;
           if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
-            cout<<"INFO: found array decl: size: ";
+            //cout<<"INFO: found array decl: size: ";
             SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
             arraySize=initList.size();
-            cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
+            //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
             registerNewArraySymbol(sym,arraySize);
             symbolSet.insert(sym);
             found=false;
@@ -395,7 +395,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
     mappingSymToVarId[sym]=mappingVarIdToSym.size();
     for(int i=0;i<arraySize;i++) {
     // assign one var-id for each array element
-      cout<<"registering "<<i<<endl;
+      //cout<<"registering "<<i<<endl;
       mappingVarIdToSym.push_back(sym);
     }
   } else {

@@ -38,13 +38,15 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
     // 1) array variable id
     // 2) eval array-index expr
     // 3) if const then compute variable id otherwise return non-valid var id (would require set)
+#if 0
     VariableId arrayVarId;
     SgExpression* arrayIndexExpr=0;
     int arrayIndexInt=-1;
-    cout<<"ARRAY-ACCESS"<<astTermWithNullValuesToString(node)<<endl;
+    //cout<<"DEBUG: ARRAY-ACCESS"<<astTermWithNullValuesToString(node)<<endl;
     if(false) {
       varId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,arrayIndexInt);
     }
+#endif
     return false;
   }
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
@@ -81,7 +83,7 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
-  cout<<"DEBUG: evalConstInt: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
+  //cout<<"DEBUG: evalConstInt: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
   // guard: for floating-point expression: return immediately with most general result
   // TODO: refine to walk the tree, when assignments are allowed in sub-expressions
   // MS: 2014-06-27: this cannot run in parallel because exp->get_type() seg-faults 
@@ -376,23 +378,54 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         case V_SgPntrArrRefExp: {
           // assume top for array elements (array elements are not stored in state)
-          cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<endl;
+          //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<endl;
           if(rhsResult.value().isTop()) {
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
           } else {
             if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
-            
-              VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
-              VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,rhsResult.value().getIntValue());
-              cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<endl;
-
-              // read value of variable var id (same as for VarRefExp - TODO: reuse)
               const PState* pstate=estate.pstate();
+              PState pstate2=*pstate; // also removes constness
+              VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+              // two cases
+              if(_variableIdMapping->hasArrayType(arrayVarId)) {
+                // has already correct id
+                // nothing to do
+              } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
+                // in case it is a pointer retrieve pointer value
+                //cout<<"DEBUG: pointer-array access!"<<endl;
+                if(pstate->varExists(arrayVarId)) {
+                  AValue aValuePtr=pstate2[arrayVarId].getValue();
+                  // convert integer to VariableId
+                  int aValueInt=aValuePtr.getIntValue();
+                  // change arrayVarId to refered array!
+                  //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
+                  arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
+                  //cout<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
+                } else {
+                  cerr<<"Error: pointer variable does not exist in PState."<<endl;
+                  exit(1);
+                }
+              } else {
+                cerr<<"Error: unkown type of array or pointer."<<endl;
+                exit(1);
+              }
+              VariableId arrayElementId;
+              AValue aValue=rhsResult.value();
+              if(aValue.isConstInt()) {
+                int index=aValue.getIntValue();
+                arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
+                //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+              } else {
+                cerr<<"Error: array index cannot be evaluated to a constant. Not supported yet."<<endl;
+                exit(1);
+              }
+              ROSE_ASSERT(arrayElementId.isValid());
+              // read value of variable var id (same as for VarRefExp - TODO: reuse)
               if(pstate->varExists(arrayElementId)) {
-                PState pstate2=*pstate; // also removes constness
                 res.result=pstate2[arrayElementId].getValue();
+                //cout<<"DEBUG: retrieved value:"<<res.result<<endl;
                 if(res.result.isTop() && useConstraints) {
                   AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
                   res.result=val;
@@ -400,6 +433,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 return listify(res);
               } else {
                 cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+                cerr<<"array-element-id: "<<arrayElementId.toString()<<endl;
                 exit(1);
               }
             } else {
@@ -495,13 +529,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     const PState* pstate=estate.pstate();
     if(pstate->varExists(varId)) {
       PState pstate2=*pstate; // also removes constness
-      res.result=pstate2[varId].getValue();
+
+      if(_variableIdMapping->hasArrayType(varId)) {
+        // CODE-POINT-1
+        // for arrays (by default the address is used) return its pointer value (the var-id-code)
+        res.result=AType::ConstIntLattice(varId.getIdCode());
+      } else {
+        res.result=pstate2[varId].getValue(); // this include assignment of pointer values
+      }
       if(res.result.isTop() && useConstraints) {
         // in case of TOP we try to extract a possibly more precise value from the constraints
         AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
-        //if(!val.isTop())
-        // TODO: we will want to monitor this for statistics!
-        //  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
         // TODO: TOPIFY-MODE: most efficient here
         res.result=val;
       }
