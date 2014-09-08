@@ -31,6 +31,7 @@ class VariableIdMapping {
   */
 
  public:
+  VariableIdMapping();
   //typedef boost::unordered_set<VariableId> VariableIdSet;
   typedef set<VariableId> VariableIdSet;
 
@@ -65,12 +66,15 @@ class VariableIdMapping {
   VariableId variableId(SgInitializedName* initName);
   VariableId variableId(SgSymbol* sym);
   VariableId variableIdFromCode(int);
+  VariableId variableIdOfArrayElement(VariableId arrayVar, int elemIndex);
   SgSymbol* getSymbol(VariableId varId);
   SgType* getType(VariableId varId);
   // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
   bool hasIntegerType(VariableId varId);
   // returns true if this variable has any floating-point type (float,double,longdouble)
   bool hasFloatingPointType(VariableId varId);
+  bool hasPointerType(VariableId varId);
+  bool hasArrayType(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
@@ -78,6 +82,7 @@ class VariableIdMapping {
   string uniqueShortVariableName(VariableId varId);
 
   void registerNewSymbol(SgSymbol* sym);
+  void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(ostream& os);
   void generateDot(string filename,SgNode* astRoot);
 
@@ -86,6 +91,13 @@ class VariableIdMapping {
   VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls);
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
   VariableIdSet variableIdsOfAstSubTree(SgNode* node);
+
+  /* if this mode is activated variable ids are created for each element of arrays with fixed size
+     e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
+     this mode must be set before the mapping is computed with computeVariableSymbolMapping
+  */
+  void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
+  SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
 
  private:
 
@@ -99,6 +111,7 @@ class VariableIdMapping {
   // used for mapping in both directions
   vector<SgSymbol*> mappingVarIdToSym;
   map<SgSymbol*,size_t> mappingSymToVarId;
+  bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
 
  typedef VariableIdMapping::VariableIdSet VariableIdSet;
@@ -127,6 +140,7 @@ class VariableId {
   bool isValid() { return _id!=-1; }
  public:
   //SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
+
  private: 
   //SgSymbol* sym;
   int _id;

@@ -27,7 +27,7 @@
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
 #include "AnalysisAbstractionLayer.h"
-
+#include "ArrayElementAccessData.h"
 
 // test
 #include "Evaluator.h"
@@ -636,75 +636,6 @@ void extractArrayUpdateOperations(Analyzer* ana,
   
 }
 
-struct ArrayElementAccessData {
-  VariableId varId;
-  vector<int> subscripts;
-  VariableId getVariable();
-  int getSubscript(int numOfDimension);
-  int getDimensions();
-  ArrayElementAccessData();
-  ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping);
-  string toString(VariableIdMapping* variableIdMapping);
-  //! checks validity of data. The default value is not valid (does not correspond to any array) but can be used when creating STL containers.
-  bool isValid();
-  bool operator==(ArrayElementAccessData& other) {
-    for(size_t i=0;i<subscripts.size();++i)
-      if(subscripts[i]!=other.subscripts[i])
-        return false;
-    return varId==other.varId;
-  }
-};
-
-ArrayElementAccessData::ArrayElementAccessData() {
-}
-
-VariableId ArrayElementAccessData::getVariable() {
-  return varId;
-}
-
-int ArrayElementAccessData::getSubscript(int dimension) {
-  return subscripts.at(dimension);
-}
-
-int ArrayElementAccessData::getDimensions() {
-  return subscripts.size();
-}
-
-string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) {
-  if(isValid()) {
-    stringstream ss;
-    ss<< variableIdMapping->uniqueShortVariableName(varId);
-    for(vector<int>::iterator i=subscripts.begin();i!=subscripts.end();++i) {
-      ss<<"["<<*i<<"]";
-    }
-    return ss.str();
-  } else {
-    return "$non-valid-array-access$";
-  }
-}
-
-bool ArrayElementAccessData::isValid() {
-  return varId.isValid() && subscripts.size()>0;
-}
-
-ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping) {
-  // determine data
-  SgExpression* arrayNameExp;
-  std::vector<SgExpression*> subscriptsvec;
-  std::vector<SgExpression*> *subscripts=&subscriptsvec;
-  SageInterface::isArrayReference(ref, &arrayNameExp, &subscripts);
-  //cout<<"Name:"<<arrayNameExp->unparseToString()<<" arity"<<subscripts->size()<<"subscripts:";
-  varId=variableIdMapping->variableId(SageInterface::convertRefToInitializedName(ref));
-  //cout<<"NameCheck:"<<variableIdMapping->uniqueShortVariableName(access.varId)<<" ";
-  for(size_t i=0;i<(*subscripts).size();++i) {
-    //cout<<(*subscripts)[i]<<":"<<(*subscripts)[i]->unparseToString()<<" ";
-    if(SgIntVal* subscriptint=isSgIntVal((*subscripts)[i])) {
-      //cout<<"VAL:"<<subscriptint->get_value();
-      this->subscripts.push_back(subscriptint->get_value());
-    }
-  }
-  ROSE_ASSERT(this->subscripts.size()>0);
-}
 
 // searches the arrayUpdates vector backwards starting at pos, matches lhs array refs and returns a pointer to it (if not available it returns 0)
 SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping) {
@@ -981,6 +912,7 @@ void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename
   myfile.close();
 }
 
+#if 0
 SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping) {
   SgVariableDeclaration* decl=variableIdMapping->getVariableDeclaration(arrayVar);
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -997,7 +929,7 @@ SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, Vari
   cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
   exit(1);
 }
-    
+#endif    
 
 string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping) {
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -1034,19 +966,9 @@ string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* v
   }
 }
 
-bool isArrayAccess(SgNode* node) {
-  return isSgPntrArrRefExp(node)!=0;
-}
-
-bool isPointerVariable(SgVarRefExp* var) {
-  if(var==0)
-    return false;
-  SgType* type=var->get_type();
-  return isSgPointerType(type)!=0;
-}
 
 void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping) {
-  ROSE_ASSERT(isArrayAccess(node));
+  ROSE_ASSERT(SgNodeHelper::isArrayAccess(node));
   if(SgPntrArrRefExp* arrayAccessAst=isSgPntrArrRefExp(node)) {
     ArrayElementAccessData arrayAccess(arrayAccessAst,variableIdMapping);
     ROSE_ASSERT(arrayAccess.getDimensions()==1);
@@ -1163,7 +1085,7 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
         }
         if(SgVarRefExp* rhsInitVar=isSgVarRefExp(assignInitOperand)) {
           VariableId arrayVar=variableIdMapping->variableId(rhsInitVar);
-          SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(arrayVar,variableIdMapping);
+          SgExpressionPtrList& arrayInitializerList=variableIdMapping->getInitializerListOfArrayVariable(arrayVar);
           //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
           int num=0;
           stringstream ss;
@@ -1194,7 +1116,7 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(isSgAssignOp(*i)) {
       if(SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(*i))) {
-        if(isPointerVariable(lhsVar)) {
+        if(SgNodeHelper::isPointerVariable(lhsVar)) {
           //cout<<"DEBUG: pointer var on lhs :"<<(*i)->unparseToString()<<endl;
 
           SgExpression* rhsExp=isSgExpression(SgNodeHelper::getRhs(*i));
@@ -1206,7 +1128,7 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
           if(SgVarRefExp* rhsVar=isSgVarRefExp(rhsExp)) {
             VariableId lhsVarId=variableIdMapping->variableId(lhsVar);
             VariableId rhsVarId=variableIdMapping->variableId(rhsVar);
-            SgExpressionPtrList& arrayInitializerList=getInitializerListOfArrayVariable(rhsVarId,variableIdMapping);
+            SgExpressionPtrList& arrayInitializerList=variableIdMapping->getInitializerListOfArrayVariable(rhsVarId);
             //cout<<"DEBUG: rhs array:"<<arrayInitializerList.size()<<" elements"<<endl;
             int num=0;
             stringstream ss;
@@ -1230,7 +1152,7 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
         } else {
           RoseAst subAst(*i);
           for(RoseAst::iterator j=subAst.begin();j!=subAst.end();++j) {
-            if(isArrayAccess(*j)) {
+            if(SgNodeHelper::isArrayAccess(*j)) {
               //cout<<"DEBUG: arrays access on rhs of assignment :"<<(*i)->unparseToString()<<endl;
               transformArrayAccess(*j,analyzer->getVariableIdMapping());
             }
@@ -1241,7 +1163,7 @@ void transformArrayProgram(SgProject* root, Analyzer* analyzer) {
     if(SgNodeHelper::isCond(*i)) {
       RoseAst subAst(*i);
       for(RoseAst::iterator j=subAst.begin();j!=subAst.end();++j) {
-        if(isArrayAccess(*j)) {
+        if(SgNodeHelper::isArrayAccess(*j)) {
           transformArrayAccess(*j,analyzer->getVariableIdMapping());
         }
       }
@@ -1436,6 +1358,7 @@ int main( int argc, char * argv[] ) {
     ("with-counterexamples", po::value< string >(), "adds an input sequence to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
     ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
+    ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -1509,9 +1432,12 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
+
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
+
+  boolOptions.registerOption("minimize-states",false);
 
   boolOptions.processOptions();
 
@@ -1599,6 +1525,9 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
+  }
+  if(boolOptions["minimize-states"]) {
+    analyzer.setMinimizeStates(true);
   }
 
   int numberOfThreadsToUse=1;
@@ -1744,6 +1673,7 @@ int main( int argc, char * argv[] ) {
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
   //VariableIdMapping varIdMap;
+  analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
   analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
   cout << "STATUS: Variable<->Symbol mapping created."<<endl;
 #if 0

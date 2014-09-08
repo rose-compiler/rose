@@ -280,9 +280,20 @@ namespace SgNodeHelper {
   */
   bool isArrayElementAssignment(SgNode* node);
   bool isFloatingPointAssignment(SgNode* exp);
+  bool isArrayAccess(SgNode* node);
+  bool isPointerVariable(SgVarRefExp* var);
 
   // checks for float, double, long double
   bool isFloatingPointType(SgType* type);
+
+  // determines whether decl declares an array
+  bool isArrayDeclaration(SgVariableDeclaration* decl);
+
+  // determines whether decl is an array or a struct
+  bool isAggregateDeclaration(SgVariableDeclaration* decl);
+
+  // returns the list of initializers of an array or struct (e.g. for int a[]={1,2,3} it return the list 1,2,3)
+  SgExpressionPtrList& getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
 
   /* replaces expression e1 by expression e2. Currently it uses the SageInterface::rewriteExpression function
      but wraps around some addtional checks that significantly improve performance of the replace operation.

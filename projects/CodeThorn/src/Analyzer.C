@@ -132,9 +132,22 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   return ss.str();
 }
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),
-             _semanticFoldThreshold(5000),_solver(5),_analyzerMode(AM_ALL_STATES),
-                     _maxTransitions(-1),_maxTransitionsForcedTop(-1),_treatStdErrLikeFailedAssert(false),_skipSelectedFunctionCalls(false),_explorationMode(EXPL_BREADTH_FIRST) {
+Analyzer::Analyzer():
+  startFunRoot(0),
+  cfanalyzer(0),
+  _displayDiff(10000),
+  _numberOfThreadsToUse(1),
+  _ltlVerifier(2),
+  _semanticFoldThreshold(5000),
+  _solver(5),
+  _analyzerMode(AM_ALL_STATES),
+  _maxTransitions(-1),
+  _maxTransitionsForcedTop(-1),
+  _treatStdErrLikeFailedAssert(false),
+  _skipSelectedFunctionCalls(false),
+  _explorationMode(EXPL_BREADTH_FIRST),
+  _minimizeStates(false)
+ {
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -570,8 +583,29 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       //assert(initializer);
       ConstraintSet cset=*currentEState.constraints();
       SgAssignInitializer* assignInitializer=0;
-      if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        //cout << "initializer found:"<<endl;
+      if(initializer && isSgAggregateInitializer(initializer)) {
+        //cout<<"DEBUG: array-initializer found:"<<initializer->unparseToString()<<endl;
+        PState newPState=*currentEState.pstate();
+        int elemIndex=0;
+        SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
+        for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+          VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+          SgExpression* exp=*i;
+          SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+          SgIntVal* intValNode=0;
+          if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
+            int intVal=intValNode->get_value();
+            //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+            newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
+          } else {
+            cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<astTermWithNullValuesToString(exp)<<endl;
+            exit(1);
+          }
+          elemIndex++;
+        }
+        return createEState(targetLabel,newPState,cset);
+      } else if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
+        //cout << "DEBUG: initializer found:"<<initializer->unparseToString()<<endl;
         SgExpression* rhs=assignInitializer->get_operand_i();
         assert(rhs);
         PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
@@ -1326,6 +1360,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
             newPState[lhsVar]=(*i).result;
+          } else if(variableIdMapping.hasPointerType(lhsVar)) {
+            // we assume here that only arrays (pointers to arrays) are assigned
+            // see CODE-POINT-1 in ExprAnalyzer.C
+            //cout<<"DEBUG: pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
+            newPState[lhsVar]=(*i).result;
           }
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
@@ -1339,6 +1378,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             PState oldPState=*estate.pstate();
             ConstraintSet oldcset=*estate.constraints();            
             estateList.push_back(createEState(edge.target,oldPState,oldcset));            
+            cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
+            exit(1);
           } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
@@ -1417,7 +1458,8 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping.variableId(*i);
-      if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end()) {
+      // TODO: investigate why array variables get filtered (but should not)
+      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
         globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
         estate=analyzeVariableDeclaration(*i,estate,estate.label());
       } else {
@@ -1451,7 +1493,6 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
 
 // TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
 // TODO: currently all rhs which are not a variable are evaluated to top by this function
-// TODO: x=x eliminates constraints of x but it should not.
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   assert(isSgExpression(rhs));
   AValue rhsIntVal=AType::Top();
@@ -1466,7 +1507,6 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       isRhsIntVal=true;
     }
   }
-
   // extracted info: isRhsIntVal:rhsIntVal 
   if(SgIntVal* intValNode=isSgIntVal(rhs)) {
     // found integer on rhs
@@ -1477,7 +1517,8 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
     VariableId rhsVarId;
     isRhsVar=exprAnalyzer.variable(varRefExp,rhsVarId);
-    assert(isRhsVar);
+    ROSE_ASSERT(isRhsVar);
+    ROSE_ASSERT(rhsVarId.isValid());
     // x=y: constraint propagation for var1=var2 assignments
     // we do not perform this operation on assignments yet, as the constraint set could become inconsistent.
     //cset.addEqVarVar(lhsVar, rhsVarId);
@@ -1485,13 +1526,35 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState[rhsVarId].getValue();
     } else {
-      if(_variablesToIgnore.size()==0)
-        cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+      cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
       rhsIntVal=AType::Top();
       isRhsIntVal=true;
     }
   }
   PState newPState=currentPState;
+
+  // handle pointer assignment/initialization
+  if(variableIdMapping.hasPointerType(lhsVar)) {
+    //cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
+    //cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
+    if(SgVarRefExp* rhsVarExp=isSgVarRefExp(rhs)) {
+      VariableId rhsVarId=variableIdMapping.variableId(rhsVarExp);
+      if(variableIdMapping.hasArrayType(rhsVarId)) {
+        //cout<<" of array type.";
+        // we use the id-code as int-value (points-to info)
+        int idCode=rhsVarId.getIdCode();
+        newPState.setVariableToValue(lhsVar,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(idCode)));
+        //cout<<" id-code: "<<idCode;
+        return newPState;
+      } else {
+        cerr<<"Errpr: RHS: unknown : type: ";
+        cerr<<astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        exit(1);
+      }
+      cout<<endl;
+    }
+  }
+
   if(newPState.varExists(lhsVar)) {
     if(!isRhsIntVal && !isRhsVar) {
       rhsIntVal=AType::Top();
@@ -2503,6 +2566,8 @@ void Analyzer::runSolver5() {
   {
     threadNum=omp_get_thread_num();
     while(!all_false(workVector)) {
+      bool oneSuccessorOnly=false;
+      EState newEStateBackupForOneSuccessorOnly;
       //cout<<"DEBUG: running : WL:"<<estateWorkList.size()<<endl;
       if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
         printStatusMessage(true);
@@ -2544,7 +2609,7 @@ void Analyzer::runSolver5() {
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         assert(currentEStatePtr);
-      
+      shortcut:      
         if(variableValueMonitor.isActive()) {
           cout<<"DEBUG: varmon is active."<<endl;
           VariableIdSet hotVariables=variableValueMonitor.getHotVariables(this,currentEStatePtr);
@@ -2552,6 +2617,7 @@ void Analyzer::runSolver5() {
         }
         
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+        oneSuccessorOnly=(edgeSet.size()==1);
         //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
@@ -2567,6 +2633,7 @@ void Analyzer::runSolver5() {
             cout << "DEBUG: EState: "<<(*newEStateList.begin()).toString(&variableIdMapping)<<endl;
           }
 #endif
+          oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
@@ -2592,6 +2659,11 @@ void Analyzer::runSolver5() {
             }
 
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+              if(oneSuccessorOnly && _minimizeStates && (newEState.io.isNonIO())) {
+                newEStateBackupForOneSuccessorOnly=newEState;
+                currentEStatePtr=&newEStateBackupForOneSuccessorOnly;
+                goto shortcut;
+              }
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)

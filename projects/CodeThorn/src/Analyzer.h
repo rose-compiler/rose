@@ -307,6 +307,7 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
+    void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
     PropertyValueTable reachabilityResults;
@@ -347,6 +348,7 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     list<FailedAssertion> _firstAssertionOccurences;
+    bool _minimizeStates;
   }; // end of class analyzer
   
 } // end of namespace CodeThorn
