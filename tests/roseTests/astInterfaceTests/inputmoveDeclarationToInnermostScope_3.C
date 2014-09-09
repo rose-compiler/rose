@@ -25,3 +25,23 @@ void func1(int len)
     /* … */
   }
 }
+
+void func2(int len)
+{
+  int i; /* declared once, used multiple times as loop index variable*/ 
+  int tmp ; /* declared once, used multiple times */
+  {
+    for (i=0; i<len; ++i) {
+      tmp = f(i) ;
+      x = foo(tmp) ;
+      /* … */
+    }
+
+    for (i=0; i<len; ++i) {
+      tmp = g(i) + tmp ; // here is live in!
+      y = goo(tmp) ;
+
+      /* … */
+    }
+  }
+}
