@@ -1844,8 +1844,9 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
         if (method_declaration -> get_name().getString().compare(function_name.getString()) == 0) {
 ROSE_ASSERT(method_declaration -> get_parent() == class_definition);
 // TODO: REMOVE THIS !
-//cout << "Found a match for function " << function_name.getString() << " in class " << class_definition -> get_qualified_name().getString() << endl;
-//cout.flush();
+// MH-20140909 remove comment out
+cout << "Found a match for function " << function_name.getString() << " in class " << class_definition -> get_qualified_name().getString() << endl;
+cout.flush();
             vector<SgInitializedName *> args = method_declaration -> get_args();
             if (args.size() == num_arguments) {
                 list<SgType *>::const_iterator j = types.begin();
@@ -2023,7 +2024,7 @@ cout.flush();
     SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(symbol);
     ROSE_ASSERT(function_symbol);
 
-	cout << "Leaving findFunctionSymbolInClass : " << function_symbol << ", " << symbol << endl;
+    cout << "Leaving findFunctionSymbolInClass : " << function_symbol << ", " << symbol << endl;
 
     return function_symbol;
 }

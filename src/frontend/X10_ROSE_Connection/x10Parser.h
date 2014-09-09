@@ -202,10 +202,10 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationHeader
 /*
  * Class:     x10rose_visit_JNI
  * Method:    cactionTypeDeclarationEnd
- * Signature: (LX10Token;)V
+ * Signature: (jboolean, LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationEnd
-  (JNIEnv *, jclass, jobject);
+  (JNIEnv *, jclass, jboolean, jobject);
 
 /*
  * Class:     x10rose_visit_JNI

@@ -132,6 +132,7 @@ namespace Frontend {
 namespace X10 {
 namespace X10c {
   extern SgSourceFile* X10c_globalFilePointer;
+  extern std::list<std::string> classNames;
 }// ::Rose::Frontend::X10::X10c
 }// ::Rose::Frontend::X10
 }// ::Rose::Frontend

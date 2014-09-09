@@ -3240,20 +3240,33 @@ JNIEXPORT void JNICALL cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_
 
     SgBasicBlock *method_body = astX10ScopeStack.popBasicBlock(); // pop the body block
     for (int i = 0; i < num_statements; i++) {
-		if (astX10ComponentStack.size() == 0) 
-			break;
-         SgStatement *statement = astX10ComponentStack.popStatement();
-		// TODO: MH (7/7/2014) : Currently string comparison is neccessary but should be fixed
-		if (statement->class_name() == "SgClassDefinition") {
-			cout << "statement->class_name() equals SgClassDefinition" << endl;
-			continue;
-		}
-         if (SgProject::get_verbose() > 2) {
-             cerr << "(4) Adding statement "
-                  << statement -> class_name()
-                  << " to a method declaration block"
-                  << endl;
-             cerr.flush();
+	if (astX10ComponentStack.size() == 0) 
+		break;
+	// TODO: MH (9/9/2014) : Currently popStatement() throws an error because astX10ComponentStack unintentionally includes
+	//   			 SgClassDefinition and SgClassType, but should fix this
+#if 0
+        SgStatement *statement = astX10ComponentStack.popStatement();
+#else
+        SgNode *statement0= astX10ComponentStack.pop();
+#endif
+	// TODO: MH (7/7/2014) : Currently string comparison is neccessary but should fix this
+	if (statement0->class_name() == "SgClassDefinition") {
+		cout << "statement->class_name() equals SgClassDefinition" << endl;
+		continue;
+	}
+	if (statement0->class_name() == "SgClassType") {
+		cout << "statement->class_name() equals SgClassType" << endl;
+		continue;
+	}
+#if 1 // TODO: MH (9/9/2014) : Remove this when astX10CompontStack does not include SgClassDefinition or SgClassType
+	SgStatement *statement = (SgStatement *)statement0;
+#endif
+        if (SgProject::get_verbose() > 2) {
+        	cerr << "(4) Adding statement "
+                << statement -> class_name()
+                << " to a method declaration block"
+                << endl;
+		cerr.flush();
         }
         method_body -> prepend_statement(statement);
     }
@@ -3262,7 +3275,7 @@ JNIEXPORT void JNICALL cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_
     SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
 
     if (num_annotations > 0) {
-        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+	AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
         for (int i = num_annotations - 1; i >= 0; i--) {
             SgExpression *annotation = astX10ComponentStack.popExpression();
             annotation -> set_parent(method_declaration);

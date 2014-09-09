@@ -23,6 +23,9 @@
 
 using namespace std;
 
+#include "sage_support.h"
+using namespace Rose::Frontend::X10::X10c;
+
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_DEBUGGING_FUNCTION_INTERNALS  0
 #define OUTPUT_DEBUGGING_UNPARSE_INFO        0
@@ -183,7 +186,8 @@ cout.flush();
 */
 
      curprint_indented("", info);
-	cout << "V=" << stmt->variantT() << endl;
+// Remove this! MH-20140908
+//	cout << "V=" << stmt->variantT() << endl;
      switch (stmt->variantT())
         {
        // DQ (3/14/2011): Need to move the X10 specific unparse member functions from the base class to this function.
@@ -1386,9 +1390,22 @@ Unparse_X10::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 // TODO: Remove this!
 /*
 */
-cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name().str()
+cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name().str() 
 << endl;
 cout.flush();
+
+	bool shouldPrint = false;
+    for (list<string>::iterator i = Rose::Frontend::X10::X10c::classNames.begin(); i != Rose::Frontend::X10::X10c::classNames.end(); i++) {
+        string class_name = *i; //StringUtility::getAbsolutePathFromRelativePath(*i);
+		if (class_name == classdecl_stmt -> get_qualified_name().str()) {
+			shouldPrint = true;	
+			break;
+		}
+    }
+	if (!shouldPrint) 
+		return;
+/* 
+*/
 
      AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
      if (annotations_attribute) {
