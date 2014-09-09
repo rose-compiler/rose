@@ -1237,8 +1237,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     }
     if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
       {
-    newio.recordVariable(InputOutput::STDOUT_VAR,varId);
-    assert(newio.var==varId);
+        newio.recordVariable(InputOutput::STDOUT_VAR,varId);
+        assert(newio.var==varId);
       }
       if(boolOptions["report-stdout"]) {
         cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
@@ -1254,12 +1254,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     {
       int constvalue;
       if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
-    {
-      newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
-    }
-    if(boolOptions["report-stdout"]) {
-      cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
-    }
+        {
+          newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+        }
+        if(boolOptions["report-stdout"]) {
+          cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
+        }
       }
     }
     if(getLabeler()->isStdErrLabel(lab,&varId)) {
@@ -1408,6 +1408,29 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           ConstraintSet cset=*estate.constraints();
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
+#if 1
+            if(isActiveGlobalTopify()) {
+              // TODO: CHECK OUTPUT-OUTPUT HERE
+              string varName=variableIdMapping.variableName(lhsVar);
+              if(varName=="output") {
+                AType::CppCapsuleConstIntLattice  checkValCapsule=newPState[lhsVar];
+                AType::ConstIntLattice checkVal=checkValCapsule.getValue();
+                AValue newVal=(*i).result;
+                if(!newVal.isTop()) {
+                  int newInt=newVal.getIntValue();
+                  if(checkVal.isConstInt()) {
+                    int checkInt=checkVal.getIntValue();
+                    if(checkInt!=-1 && checkInt!=-2 && newInt!=-1 && newInt!=-2) {
+                      // detected 2nd assignment of output variable
+                      // do not add a new state
+                      //cout<<"INFO: detected output-output path."<<endl;
+                      return estateList;
+                    }
+                  }
+                }
+              }
+            }
+#endif
             newPState[lhsVar]=(*i).result;
           } else if(variableIdMapping.hasPointerType(lhsVar)) {
             // we assume here that only arrays (pointers to arrays) are assigned
