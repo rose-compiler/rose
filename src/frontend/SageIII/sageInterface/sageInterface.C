@@ -18870,7 +18870,7 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
 
 #if 1 
     // replace variable references
-    replaceVariableReferences  (sym, new_sym, adjusted_scope);
+    SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
 #endif 
   } //end for all scopes
 
@@ -18959,6 +18959,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   // for a scope tree with two or more nodes  
   Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
 
+  // the scopes to be moved into
   std::vector <SgScopeStatement *> target_scopes; 
   // Step 2: simplest case, only a single use place
   // -----------------------------------------------------
@@ -18967,49 +18968,59 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   {
     SgScopeStatement* bottom_scope = first_branch_node->scope;
     target_scopes.push_back(bottom_scope);
-    moveVariableDeclaration (decl, target_scopes);
-
-    //TODO    delete scope_tree;
-    return true;
   } // end the single decl-use path case
-  else { 
-  //Step 3: multiple scopes
-  // -----------------------------------------------------
+  else 
+  { 
+    //Step 3: multiple scopes
+    // -----------------------------------------------------
     // there are multiple (0 to n - 1 )child scopes in which the variable is used. 
     // if for all scope 1, 2, .., n-1
     //  the variable is defined before being used (not live)
     //  Then we can move the variable into each child scope
     // Conversely, if any of scope has liveIn () for the declared variable, we cannot move
-   bool isMoveable = true ; 
-   
-   for (size_t i =1; i< (first_branch_node->children).size(); i++)
-   {
+    bool moveToMultipleScopes= true ; 
+
+    for (size_t i =1; i< (first_branch_node->children).size(); i++)
+    {
       SgVariableSymbol * var_sym = SageInterface::getFirstVarSym (decl); 
       ROSE_ASSERT (var_sym != NULL);
       SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
       ROSE_ASSERT (current_child_scope != NULL); 
       if (isLiveIn (var_sym, current_child_scope))
-        isMoveable = false;
-   }  // end for all scopes
+        moveToMultipleScopes = false;
+    }  // end for all scopes
 
-   if (isMoveable)
-   {
-     if (true)
-       cout<<"Found a movable declaration for multiple child scopes"<<endl;
-
-     for (size_t i =0; i< (first_branch_node->children).size(); i++)
-     {
-       SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
-       ROSE_ASSERT (current_child_scope != NULL);
-       target_scopes.push_back (current_child_scope);
-     }
-     moveVariableDeclaration (decl, target_scopes);
-     return true;
-   }
-
+    if (moveToMultipleScopes)
+    {
+      if (true)
+        cout<<"Found a movable declaration for multiple child scopes"<<endl;
+      for (size_t i =0; i< (first_branch_node->children).size(); i++)
+      {
+        SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
+        ROSE_ASSERT (current_child_scope != NULL);
+        target_scopes.push_back (current_child_scope);
+      }
+    }
+    else // we still can move it to the innermost common scope
+    {
+      SgScopeStatement* bottom_scope = first_branch_node->scope;
+      if (decl->get_scope() != bottom_scope)
+      {
+        target_scopes.push_back(bottom_scope);
+      }
+    } // end else
   } // end else multiple scopes
 
-//TODO  delete scope_tree;
-  return false;  
+  if (target_scopes.size()>=0)
+  {
+    moveVariableDeclaration (decl, target_scopes);
+    //TODO    delete scope_tree;
+    return true;
+  }
+  else 
+  {
+    //TODO  delete scope_tree;
+    return false;  
+  }
 }
 
