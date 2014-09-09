@@ -1636,6 +1636,10 @@ ROSE_DLL_API void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, b
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 ROSE_DLL_API SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 
+//! Replace all variable references to an old symbol in a scope to being references to a new symbol.
+// Essentially replace variable a with b. 
+ROSE_DLL_API void replaceVariableReferences(SgVariableSymbol* old_sym, SgVariableSymbol* new_sym, SgScopeStatement * scope )
+
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
 * that expression. Then, the var reference expression returned can be used instead of the original
 * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
