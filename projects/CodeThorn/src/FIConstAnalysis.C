@@ -713,6 +713,7 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
     else
       myfile<<"CA_UNKNOWN";
     myfile<<",";    
+    //myfile<<arraySize<<",";
 #if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
