@@ -9,10 +9,10 @@ class X
              {
                public:
                     S x;
-#if 0
-                    A(int x);
+#if 1
+                    A();
 #else
-                    A(int x) 
+                    A() 
                        { 
                          int a_value;
                        }
@@ -38,18 +38,18 @@ template < typename T >
 X<T>::X () { int x_value; }
 #endif
 
-#if 0
+#if 1
 // If we treat this as name qualification then it has to be seperated into two parts (to leave space for the return type).
 // It might be better to NOT treat this as name qualification and form the qualified name directly with the template 
 // function name (and parameter list).  Template names are then treated differenty than non-template function names.
 template < typename T >
 template < typename S >
-X<T>::A<S>::A (int x) { int a_value; }
+X<T>::A<S>::A () { int a_value; }
 #endif
 
 void foo()
    {
       X<int> a;
-      X<int>::A<int> b(4);
+      X<int>::A<int> b;
    }
 

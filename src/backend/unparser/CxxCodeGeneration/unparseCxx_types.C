@@ -3010,6 +3010,10 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
   // So this code needs to be refactored.
 
+#if 0
+      printf ("In outputType(): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+#endif
+
      SgUnparse_Info newInfo(info);
 
   // info.set_isTypeFirstPart();
@@ -3049,9 +3053,9 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
   // ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
 #if 0
-     printf ("In unparseTemplateArgument(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
-     printf ("In unparseTemplateArgument(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
-     printf ("In unparseTemplateArgument(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
+     printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
+     printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
+     printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
 #endif
 
      SgTemplateArgument* templateArgument = isSgTemplateArgument(referenceNode);
@@ -3104,11 +3108,17 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
+#if 0
+     curprint("\n/* outputType(): output the 1st part of the type */ \n");
+#endif
+
   // unparseType(tmp_type, info);
   // unp->u_type->unparseType(tmp_type, ninfo_for_type);
      unp->u_type->unparseType(referenceNodeType, ninfo_for_type);
 
-  // curprint( "\n/* DONE - unparse_helper(): output the 1st part of the type */ \n");
+#if 0
+     curprint("\n/* DONE - outputType(): output the 1st part of the type */ \n");
+#endif
 
      SgInitializedName* initializedName = isSgInitializedName(referenceNode);
      if (initializedName != NULL)

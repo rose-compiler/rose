@@ -60,7 +60,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 
 # Use options to turn on C11 and process using just the frontend for now.
-C11_OPTIONS = -rose:C11 -rose:skip_translation_from_edg_ast_to_rose_ast
+# C11_OPTIONS = -rose:C11 -rose:skip_translation_from_edg_ast_to_rose_ast
+C11_OPTIONS = -rose:C11 
 
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = $(C11_OPTIONS) --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)

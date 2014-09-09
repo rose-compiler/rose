@@ -574,7 +574,32 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
         {
           case SgTemplateParameter::type_parameter:
              {
-#if 1
+            // DQ (9/7/2014): Added support for case SgTemplateParameter::type_parameter.
+               SgType* type = templateParameter->get_type();
+               ROSE_ASSERT(type != NULL);
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+               SgTemplateType* templateType = isSgTemplateType(type);
+               ROSE_ASSERT(templateType != NULL);
+
+               string name = templateType->get_name();
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
+#endif
+            // unp->u_exprStmt->curprint(" typename ");
+               curprint(name);
+
+               SgType* default_type = templateParameter->get_defaultTypeParameter();
+               if (default_type != NULL)
+                  {
+                 // Need to add the default type.
+                    curprint("=");
+
+                    SgUnparse_Info ninfo(info);
+                    unp->u_type->unparseType(default_type,ninfo);
+                  }
+#if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: Sorry, not implemented! \n");
                ROSE_ASSERT(false);
 #endif

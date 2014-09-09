@@ -897,7 +897,18 @@ declarationHasTranslationUnitScope (const SgDeclarationStatement* decl)
    {
      ROSE_ASSERT(decl != NULL);
      SgNode *declParent = decl->get_parent();
+
+  // DQ (9/8/2014): This now fails as a result of new template declaration handling.
+     if (declParent == NULL)
+        {
+#if 0
+          printf ("WARNING: In declarationHasTranslationUnitScope(): (declParent == NULL): decl = %p = %s (using non-defining declaration parent) \n",decl,decl->class_name().c_str());
+#endif
+          ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
+          declParent = decl->get_firstNondefiningDeclaration()->get_parent();
+        }
      ROSE_ASSERT(declParent != NULL);
+
      VariantT declParentV = declParent->variantT();
 
      if (declParentV == V_SgGlobal || declParentV == V_SgNamespaceDefinitionStatement)
@@ -934,7 +945,7 @@ mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
   // Additionally, when the file_id() is a negative number (e.g. for compiler generated code) then the name
   // mangling also fails the test (for mangled names to be useable as identifiers) since "-" appears in the name.
 
-     if (declarationHasTranslationUnitScope(decl))
+     if (declarationHasTranslationUnitScope(decl) == true)
         {
        // TV (04/22/11): I think 'decl' will refer to the same file_id than is enclosing file.
        //         And as in EDGrose file and global scope are linked after the building of the global scope...
