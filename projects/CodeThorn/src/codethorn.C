@@ -1354,7 +1354,10 @@ int main( int argc, char * argv[] ) {
     ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
     ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
-    ("spot-counter-example", po::value< string >(), "adds a third column to ltl results. It contains counter example input sequences for formulae that could be falsified. [=yes|no]")
+    ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
+    ("with-counterexamples", po::value< string >(), "adds an input sequence to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
+    ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
+    ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
     ;
 
@@ -1429,7 +1432,11 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
-  boolOptions.registerOption("spot-counter-example",false);
+
+  boolOptions.registerOption("with-counterexamples",false);
+  boolOptions.registerOption("determine-prefix-depth",false);
+  boolOptions.registerOption("incomplete-stg",false);
+
   boolOptions.registerOption("minimize-states",false);
 
   boolOptions.processOptions();
@@ -1751,6 +1758,28 @@ int main( int argc, char * argv[] ) {
   }
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
+  cout << "=============================================================="<<endl;
+
+  double extractAssertionTracesTime= 0;
+  int maxOfShortestAssertInput = -1;
+  if ( boolOptions["with-counterexamples"]) {
+    timer.start();
+    maxOfShortestAssertInput = analyzer.extractAssertionTraces();
+    extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
+    if (maxOfShortestAssertInput > -1) {
+      cout << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAssertInput << endl;
+    } else {
+      cout << "STATUS: determining maximum of shortest assert counterexamples not possible. " << endl;
+    }
+  }
+
+  double determinePrefixDepthTime= 0;
+  int inputSeqLengthCovered = -1;
+  if ( boolOptions["determine-prefix-depth"]) {
+    cout << "ERROR: option \"determine-prefix-depth\" currenlty deactivated." << endl;
+    return 1;
+  }
+  double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
   // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
 #if 0
@@ -1759,8 +1788,8 @@ int main( int argc, char * argv[] ) {
 #endif
 
   cout << "=============================================================="<<endl;
-
-    analyzer.reachabilityResults.printResults();
+  bool withCe = boolOptions["with-counterexamples"];
+  analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
 #if 0
   // TODO: reachability in presence of semantic folding
   if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
@@ -1771,7 +1800,7 @@ int main( int argc, char * argv[] ) {
 #endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
-    analyzer.reachabilityResults.writeFile(filename.c_str());
+    analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
     cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
 #if 0  //result tables of different sizes are now handled by the PropertyValueTable object itself
     switch(resultsFormat) {
@@ -1815,8 +1844,6 @@ int main( int argc, char * argv[] ) {
     //}
   cout << "=============================================================="<<endl;
 
-  double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
-
   long pstateSetSize=analyzer.getPStateSet()->size();
   long pstateSetBytes=analyzer.getPStateSet()->memorySize();
   long pstateSetMaxCollisions=analyzer.getPStateSet()->maxCollisions();
@@ -1839,27 +1866,45 @@ int main( int argc, char * argv[] ) {
   long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
   long numOfConstEStates=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
   long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
-  
+
+  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+
+  double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
+
   cout <<color("white");
+  cout << "=============================================================="<<endl;
+  cout <<color("normal")<<"STG generation and assertion analysis complete"<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
   cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
   cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
   cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
   cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
   cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
   cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
-
   cout << "=============================================================="<<endl;
   cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
   cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
-  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
   cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
   cout << "=============================================================="<<endl;
   cout <<color("normal");
+  //printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
 
+  long pstateSetSizeInf = 0;
+  long eStateSetSizeInf = 0;
+  long transitionGraphSizeInf = 0;
+  long eStateSetSizeStgInf = 0;
+  //long numOfconstraintSetsInf = 0;
+  //long numOfStdinEStatesInf = 0;
+  //long numOfStdoutVarEStatesInf = 0;
+  //long numOfStdoutConstEStatesInf = 0;
+  //long numOfStdoutEStatesInf = 0;
+  //long numOfStderrEStatesInf = 0;
+  //long numOfFailedAssertEStatesInf = 0;
+  //long numOfConstEStatesInf = 0;
   double infPathsOnlyTime = 0;
   double stdIoOnlyTime = 0;
 
@@ -1868,17 +1913,33 @@ int main( int argc, char * argv[] ) {
     timer.start();
     analyzer.pruneLeavesRec();
     infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+
+    pstateSetSizeInf=analyzer.getPStateSet()->size();
+    eStateSetSizeInf = analyzer.getEStateSet()->size();
+    transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
+    eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
+    //numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
+    //numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+    //numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+    //numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+    //numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+    //numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+    //numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+    //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
   }
   
   if(boolOptions["std-io-only"]) {
     cout << "STATUS: bypassing all non standard I/O states."<<endl;
     timer.start();
-    analyzer.removeNonIOStates();
+    //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
+    analyzer.reduceGraphInOutWorklistOnly();
     stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
   }
 
+  long eStateSetSizeIoOnly = 0;
+  long transitionGraphSizeIoOnly = 0;
   double spotLtlAnalysisTime = 0;
-  
+
   if (args.count("check-ltl")) {
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
@@ -1887,17 +1948,36 @@ int main( int argc, char * argv[] ) {
         timer.start();
         analyzer.pruneLeavesRec();
         infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+
+        pstateSetSizeInf=analyzer.getPStateSet()->size();
+        eStateSetSizeInf = analyzer.getEStateSet()->size();
+        transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
+        eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
+        //numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
+        //numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+        //numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+        //numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+        //numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+        //numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+        //numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+        //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
       }
       if (!boolOptions["std-io-only"]) {
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
         timer.start();
-        analyzer.removeNonIOStates();
+        //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
+        analyzer.reduceGraphInOutWorklistOnly();
         stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+
+        eStateSetSizeIoOnly = (analyzer.getTransitionGraph())->estateSet().size();
+        transitionGraphSizeIoOnly = (analyzer.getTransitionGraph())->size();
+        cout << "STATUS: number of transitions remaining after reduction to I/O/(worklist) states only: " << transitionGraphSizeIoOnly << endl;
+        cout << "STATUS: number of states remaining after reduction to I/O/(worklist) states only: " <<eStateSetSizeIoOnly << endl;
       }
     }
-    bool withCounterExample = false;
-    if(boolOptions["spot-counter-example"]) {  //output a counter-example input sequence for falsified formulae
-      withCounterExample = true;
+    bool withCounterexample = false;
+    if(boolOptions["with-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
+      withCounterexample = true;
     }
     timer.start();
     std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
@@ -1916,22 +1996,25 @@ int main( int argc, char * argv[] ) {
     }
     cout << "STATUS: generating LTL results"<<endl;
     SpotConnection spotConnection(ltl_filename);
-    spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterExample);
+    spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample);
+    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
     PropertyValueTable* ltlResults = spotConnection.getLtlResults();
-    ltlResults->printLtlResults();
+    ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
+    cout << "=============================================================="<<endl;
     ltlResults->printResultsStatistics();
+    cout << "=============================================================="<<endl;
     if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
       std::string csv_filename = args["csv-spot-ltl"].as<string>();
       cout << "STATUS: writing ltl results to file: " << csv_filename << endl;
-      ltlResults->writeFile(csv_filename.c_str());
+      ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
     }
     delete ltlResults;
     ltlResults = NULL;
-    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
-    cout << "=============================================================="<<endl;
-  }
 
-  totalRunTime += infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
+    //temporaryTotalRunTime = totalRunTime + infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
+    //printAnalyzerStatistics(analyzer, temporaryTotalRunTime, "LTL check complete. Reduced transition system:");
+  }
+  double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
   // TEST
   if (boolOptions["generate-assertions"]) {
@@ -2001,7 +2084,9 @@ int main( int argc, char * argv[] ) {
     }
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
   }
-  
+
+  double overallTime =totalRunTime + totalInputTracesTime + totalLtlRunTime;
+
   if(args.count("csv-stats")) {
     string filename=args["csv-stats"].as<string>().c_str();
     stringstream text;
@@ -2027,10 +2112,15 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(arrayUpdateExtractionRunTime)<<", "
         <<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
         <<readableruntime(sortingAndIORunTime)<<", "
+        <<readableruntime(totalRunTime)<<", "
+        <<readableruntime(extractAssertionTracesTime)<<", "
+        <<readableruntime(determinePrefixDepthTime)<<", "
+        <<readableruntime(totalInputTracesTime)<<", "
         <<readableruntime(infPathsOnlyTime)<<", "
         <<readableruntime(stdIoOnlyTime)<<", "
         <<readableruntime(spotLtlAnalysisTime)<<", "
-        <<readableruntime(totalRunTime)<<endl;
+        <<readableruntime(totalLtlRunTime)<<", "
+        <<readableruntime(overallTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
@@ -2039,7 +2129,15 @@ int main( int argc, char * argv[] ) {
         <<arrayUpdateExtractionRunTime<<", "
         <<arrayUpdateSsaNumberingRunTime<<", "
         <<sortingAndIORunTime<<", "
-        <<totalRunTime<<endl;
+        <<totalRunTime<<", "
+        <<extractAssertionTracesTime<<", "
+        <<determinePrefixDepthTime<<", "
+        <<totalInputTracesTime<<", "
+        <<infPathsOnlyTime<<", "
+        <<stdIoOnlyTime<<", "
+        <<spotLtlAnalysisTime<<", "
+        <<totalLtlRunTime<<", "
+        <<overallTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
         <<eStateSetMaxCollisions<<", "
@@ -2060,6 +2158,23 @@ int main( int argc, char * argv[] ) {
         <<rewriteSystem.dump1_stats.numVariableElim<<", "
         <<rewriteSystem.dump1_stats.numConstExprElim
         <<endl;
+    text<<"infinite-paths-size,"<<pstateSetSizeInf<<", "
+        <<eStateSetSizeInf<<", "
+        <<transitionGraphSizeInf<<", "
+        <<eStateSetSizeStgInf<<endl;
+        //<<numOfconstraintSetsInf<<", "
+        //<< numOfStdinEStatesInf<<", "
+        //<< numOfStdoutEStatesInf<<", "
+        //<< numOfStderrEStatesInf<<", "
+        //<< numOfFailedAssertEStatesInf<<", "
+        //<< numOfConstEStatesInf<<endl;
+    text<<"states & transitions after only-I/O-reduction,"
+        <<eStateSetSizeIoOnly<<", "
+        <<transitionGraphSizeIoOnly<<endl;
+    text<<"input length coverage & longest minimal assert input,"
+        <<inputSeqLengthCovered<<", "
+        <<maxOfShortestAssertInput<<endl;
+    
     write_file(filename,text.str());
     cout << "generated "<<filename<<endl;
   }
@@ -2257,5 +2372,54 @@ int main( int argc, char * argv[] ) {
     return 1;
  }
   return 0;
+}
+
+//currently not used. conceived due to different statistics after LTL evaluation that could be printed in the same way as above.
+void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime, string title) {
+  long pstateSetSize=analyzer.getPStateSet()->size();
+  long pstateSetBytes=analyzer.getPStateSet()->memorySize();
+  long pstateSetMaxCollisions=analyzer.getPStateSet()->maxCollisions();
+  long pstateSetLoadFactor=analyzer.getPStateSet()->loadFactor();
+  long eStateSetSize=analyzer.getEStateSet()->size();
+  long eStateSetBytes=analyzer.getEStateSet()->memorySize();
+  long eStateSetMaxCollisions=analyzer.getEStateSet()->maxCollisions();
+  double eStateSetLoadFactor=analyzer.getEStateSet()->loadFactor();
+  long transitionGraphSize=analyzer.getTransitionGraph()->size();
+  long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
+  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOf();
+  long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
+  long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
+  double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
+
+  long numOfStdinEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+  long numOfStdoutVarEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+  long numOfStdoutConstEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+  long numOfStderrEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+  long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+  long numOfConstEStates=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+  //long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
+  
+  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+
+  cout <<color("white");
+  cout << "=============================================================="<<endl;
+  cout <<color("normal")<<title<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
+  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
+  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
+  cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
+  cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
+  cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
+  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout <<color("normal");
 }
 

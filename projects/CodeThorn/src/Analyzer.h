@@ -15,6 +15,8 @@
 
 #include <omp.h>
 
+#include <boost/unordered_set.hpp>
+
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalyzer.h"
@@ -59,6 +61,7 @@ namespace CodeThorn {
   };
 
   typedef list<const EState*> EStateWorkList;
+  typedef pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class Analyzer;
@@ -149,6 +152,14 @@ namespace CodeThorn {
     // cuts off all paths in the transition graph that lead to leaves 
     // (recursively until only paths of infinite length remain)
     void pruneLeavesRec();
+    // connects start, input, output and worklist states according to possible paths in the transition graph. 
+    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions.
+    void reduceGraphInOutWorklistOnly();
+    // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
+    // stores results in PropertyValueTable "reachabilityResults".
+    // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
+    // shortest ones leading to the individual failing assertion (returns -1 otherwise).
+    int extractAssertionTraces();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -167,6 +178,24 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+
+    //returns a list of transitions representing existing paths from "startState" to all possible input/output/worklist states (no output -> output)
+    // the returned set has to be deleted by the calling function.
+    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* startState);                                                          
+    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
+                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited);
+    // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
+    // counterexample input sequence.
+    int addCounterexample(int assertCode, const EState* assertEState);
+    // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
+    list<const EState*>reverseInputSequenceBreadthFirst(const EState* source, const EState* target);
+    // returns a list of EStates from source to target (shortest input path). 
+    // please note: target has to be a predecessor of source (reversed trace)
+    list<const EState*> reverseInputSequenceDijkstra(const EState* source, const EState* target);
+    list<const EState*> filterStdInOnly(list<const EState*>& states) const;
+    string reversedInputRunToString(list<const EState*>& run);
+    //returns the shortest possible number of input states on the path leading to "target".
+    int inputSequenceLength(const EState* target);
     
   public:
     SgNode* getCond(SgNode* node);
@@ -174,6 +203,8 @@ namespace CodeThorn {
     string generateSpotSTG();
   private:
     void generateSpotTransition(stringstream& ss, const Transition& t);
+    //less than comarisions on two states according to (#input transitions * #output transitions)
+    bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
   public:
     //! requires init
     void runSolver1();
@@ -293,6 +324,7 @@ namespace CodeThorn {
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
     ExprAnalyzer* getExprAnalyzer();
+    list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
     
   private:
     set<int> _inputVarValues;
@@ -319,6 +351,7 @@ namespace CodeThorn {
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
+    list<FailedAssertion> _firstAssertionOccurences;
     bool _minimizeStates;
     bool _topifyModeActive;
   }; // end of class analyzer
