@@ -18,10 +18,10 @@ using namespace CodeThorn;
 #include "CollectionOperators.h"
 
 bool VariableValueMonitor::isActive() {
-  return _threshold>0;
+  return _threshold!=-1;
 }
 
-VariableValueMonitor::VariableValueMonitor():_threshold(0){
+VariableValueMonitor::VariableValueMonitor():_threshold(-1){
 }
 
 // in combination with adaptive-top mode
@@ -74,7 +74,8 @@ VariableIdSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const ES
   return getHotVariables(analyzer,pstate);
 }
 
-void VariableValueMonitor::update(Analyzer* analyzer,EState* estate, VariableIdSet& hotVariables) {
+void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
+  VariableIdSet hotVariables=getHotVariables(analyzer,estate);
   const PState* pstate=estate->pstate();
   if(pstate->size()!=_variablesMap.size()) {
     //cerr<<"WARNING: variable map size mismatch (probably local var)"<<endl;
@@ -96,21 +97,45 @@ void VariableValueMonitor::update(Analyzer* analyzer,EState* estate, VariableIdS
   }
 }
 
+VariableIdSet VariableValueMonitor::getVariables() {
+  VariableIdSet vset;
+  for(map<VariableId,VariableMode>::iterator i=_variablesModeMap.begin();
+      i!=_variablesModeMap.end();
+      ++i) {
+    vset.insert((*i).first);
+  }
+  return vset;
+}
+
 bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, VariableId varId) {
   // TODO: provide set of variables to ignore
   string name=SgNodeHelper::symbolToString(analyzer->getVariableIdMapping()->getSymbol(varId));
-  if(name=="input" || name=="output") 
+  switch(_variablesModeMap[varId]) {
+  case VariableValueMonitor::VARMODE_FORCED_TOP:
+    return true;
+  case VariableValueMonitor::VARMODE_ADAPTIVE_TOP: {
+    if(name=="input" || name=="output") 
+      return false;
+    else
+      return _threshold!=-1 && ((long int)_variablesMap[varId]->size())>=_threshold;
+  }
+  case VariableValueMonitor::VARMODE_PRECISE:
     return false;
-  return _threshold>0 && _variablesMap[varId]->size()>=_threshold;
+  default:
+    cerr<<"Error: unknown variable monitor mode."<<endl;
+    exit(1);
+  }
 }
 
+#if 0
 bool VariableValueMonitor::isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId) {
   // TODO: provide set of variables to ignore
   string name=SgNodeHelper::symbolToString(analyzer->getVariableIdMapping()->getSymbol(varId));
   if(name=="input" || name=="output") 
     return false;
-  return _threshold>0 && _variablesMap[varId]->size()>=_threshold;
+  return _threshold!=-1 && ((long int)_variablesMap[varId]->size())>=_threshold;
 }
+#endif
 
 string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   stringstream ss;
@@ -142,7 +167,8 @@ Analyzer::Analyzer():
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
-  _minimizeStates(false)
+  _minimizeStates(false),
+  _topifyModeActive(false)
  {
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
@@ -293,6 +319,15 @@ void Analyzer::addToWorkList(const EState* estate) {
     switch(_explorationMode) {
     case EXPL_DEPTH_FIRST: estateWorkList.push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkList.push_back(estate);break;
+    case EXPL_LOOP_AWARE: {
+      SgNode* node=getLabeler()->getNode(estate->label());
+      if(SgNodeHelper::isLoopCond(node)) {
+        estateWorkList.push_back(estate);
+      } else {
+        estateWorkList.push_front(estate);
+      }
+      break;
+    }
     default:
       cerr<<"Error: unknown exploration mode."<<endl;
       exit(1);
@@ -303,12 +338,32 @@ void Analyzer::addToWorkList(const EState* estate) {
 bool Analyzer::isActiveGlobalTopify() {
   if(_maxTransitionsForcedTop==-1)
     return false;
-  bool isActive=(long int)transitionGraph.size()>=_maxTransitionsForcedTop;
-  if(isActive) {
-    boolOptions.registerOption("rers-binary",false);
+  if(_topifyModeActive) {
     return true;
+  } else {
+    if((long int)transitionGraph.size()>=_maxTransitionsForcedTop) {
+      _topifyModeActive=true;
+      eventGlobalTopifyTurnedOn();
+      boolOptions.registerOption("rers-binary",false);
+      return true;
+    }
   }
   return false;
+}
+
+void Analyzer::eventGlobalTopifyTurnedOn() {
+  VariableIdSet vset=variableValueMonitor.getVariables();
+  int n=0;
+  int nt=0;
+  for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
+    string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
+    if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
+      variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
+      n++;
+    }
+    nt++;
+  }
+  cout<<"STATUS: switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
 }
 
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
@@ -322,14 +377,16 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId va
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
-  VariableIdSet hotVarSet;
   if(isActiveGlobalTopify()) {
-    hotVarSet=pstate.getVariableIds();
-    for(VariableIdSet::iterator i=hotVarSet.begin();i!=hotVarSet.end();++i) {
-      topifyVariable(pstate, cset, *i);
+    VariableIdSet varSet=pstate.getVariableIds();
+    for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
+      if(variableValueMonitor.isHotVariable(this,*i)) {
+        topifyVariable(pstate, cset, *i);
+      }
     }
   }
   if(variableValueMonitor.isActive()) {
+    VariableIdSet hotVarSet;
 #pragma omp critical (VARIABLEVALUEMONITOR)
     hotVarSet=variableValueMonitor.getHotVariables(this,&pstate);
     for(VariableIdSet::iterator i=hotVarSet.begin();i!=hotVarSet.end();++i) {
@@ -1180,8 +1237,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     }
     if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
       {
-    newio.recordVariable(InputOutput::STDOUT_VAR,varId);
-    assert(newio.var==varId);
+        newio.recordVariable(InputOutput::STDOUT_VAR,varId);
+        assert(newio.var==varId);
       }
       if(boolOptions["report-stdout"]) {
         cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
@@ -1197,12 +1254,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     {
       int constvalue;
       if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
-    {
-      newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
-    }
-    if(boolOptions["report-stdout"]) {
-      cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
-    }
+        {
+          newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+        }
+        if(boolOptions["report-stdout"]) {
+          cout << "REPORT: stdoutconst:"<<constvalue<<":"<<estate->toString()<<endl;
+        }
       }
     }
     if(getLabeler()->isStdErrLabel(lab,&varId)) {
@@ -1351,6 +1408,29 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           ConstraintSet cset=*estate.constraints();
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
+#if 1
+            if(isActiveGlobalTopify()) {
+              // TODO: CHECK OUTPUT-OUTPUT HERE
+              string varName=variableIdMapping.variableName(lhsVar);
+              if(varName=="output") {
+                AType::CppCapsuleConstIntLattice  checkValCapsule=newPState[lhsVar];
+                AType::ConstIntLattice checkVal=checkValCapsule.getValue();
+                AValue newVal=(*i).result;
+                if(!newVal.isTop()) {
+                  int newInt=newVal.getIntValue();
+                  if(checkVal.isConstInt()) {
+                    int checkInt=checkVal.getIntValue();
+                    if(checkInt!=-1 && checkInt!=-2 && newInt!=-1 && newInt!=-2) {
+                      // detected 2nd assignment of output variable
+                      // do not add a new state
+                      //cout<<"INFO: detected output-output path."<<endl;
+                      return estateList;
+                    }
+                  }
+                }
+              }
+            }
+#endif
             newPState[lhsVar]=(*i).result;
           } else if(variableIdMapping.hasPointerType(lhsVar)) {
             // we assume here that only arrays (pointers to arrays) are assigned
@@ -2470,9 +2550,7 @@ void Analyzer::runSolver5() {
         assert(currentEStatePtr);
       shortcut:      
         if(variableValueMonitor.isActive()) {
-          cout<<"DEBUG: varmon is active."<<endl;
-          VariableIdSet hotVariables=variableValueMonitor.getHotVariables(this,currentEStatePtr);
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr),hotVariables);
+          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
         }
         
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
@@ -2767,8 +2845,7 @@ void Analyzer::runSolver7() {
         assert(currentEStatePtr);
       
         if(variableValueMonitor.isActive()) {
-          VariableIdSet hotVariables=variableValueMonitor.getHotVariables(this,currentEStatePtr);
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr),hotVariables);
+          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
         }
         
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
