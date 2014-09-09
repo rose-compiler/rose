@@ -61,6 +61,7 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/BasicTypes.h		\
 	Partitioner2/ControlFlowGraph.h		\
 	Partitioner2/DataBlock.h		\
+	Partitioner2/Engine.h			\
 	Partitioner2/Exception.h		\
 	Partitioner2/Function.h			\
 	Partitioner2/InstructionProvider.h	\
