@@ -152,6 +152,7 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_5.C\
   rose_inputmoveDeclarationToInnermostScope_1.C \
   rose_inputmoveDeclarationToInnermostScope_2.C \
+  rose_inputmoveDeclarationToInnermostScope_3.C \
   buildJavaPackage.passed 
 
 # Liao 8/17/2010
@@ -468,6 +469,13 @@ rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostSc
 		$(srcdir)/astInterface.conf $@.passed
 
 rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS)" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_3.C: inputmoveDeclarationToInnermostScope_3.C moveDeclarationToInnermostScope
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS)" \
