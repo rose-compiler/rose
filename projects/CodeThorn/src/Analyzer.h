@@ -75,16 +75,19 @@ namespace CodeThorn {
     void init(const PState* pstate);
     VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
     VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
+    VariableIdSet getVariables();
     void setVariableMode(VariableMode,VariableId);
     VariableMode getVariableMode(VariableId);
-    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
-    void update(Analyzer* analyzer, EState* estate, VariableIdSet& hotVariables);
+    void update(Analyzer* analyzer, EState* estate);
     bool isHotVariable(Analyzer* analyzer, VariableId varId);
     string toString(VariableIdMapping* variableIdMapping);
+#if 0
+    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
+#endif
   private:
     map<VariableId,set<int>* > _variablesMap;
     map<VariableId,VariableMode> _variablesModeMap;
-    size_t _threshold;
+    long int _threshold;
   };
 
 /*! 
@@ -276,6 +279,7 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
+    void eventGlobalTopifyTurnedOn();
     void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
@@ -316,6 +320,7 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _minimizeStates;
+    bool _topifyModeActive;
   }; // end of class analyzer
   
 } // end of namespace CodeThorn
