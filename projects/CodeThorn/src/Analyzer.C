@@ -319,6 +319,15 @@ void Analyzer::addToWorkList(const EState* estate) {
     switch(_explorationMode) {
     case EXPL_DEPTH_FIRST: estateWorkList.push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkList.push_back(estate);break;
+    case EXPL_LOOP_AWARE: {
+      SgNode* node=getLabeler()->getNode(estate->label());
+      if(SgNodeHelper::isLoopCond(node)) {
+        estateWorkList.push_back(estate);
+      } else {
+        estateWorkList.push_front(estate);
+      }
+      break;
+    }
     default:
       cerr<<"Error: unknown exploration mode."<<endl;
       exit(1);

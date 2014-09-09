@@ -1336,7 +1336,7 @@ int main( int argc, char * argv[] ) {
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first)")
+    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware)")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
@@ -1500,10 +1500,12 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("exploration-mode")) {
     string explorationMode=args["exploration-mode"].as<string>();
-    if(explorationMode=="depth-first")
+    if(explorationMode=="depth-first") {
       analyzer.setExplorationMode(Analyzer::EXPL_DEPTH_FIRST);
-    else if(explorationMode=="breadth-first") {
+    } else if(explorationMode=="breadth-first") {
       analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
+    } else if(explorationMode=="loop-aware") {
+      analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE);
     } else {
       cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
