@@ -278,6 +278,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
 
+  // DQ (9/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
   // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
@@ -607,6 +610,9 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 
+  // DQ (9/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
   // DQ (1/18/2014): This is a better implementation than setting the source position info on the function
   // parameters.  See test2014_35.c for an example that requires this solution using a new data member.
      if (funcdecl_stmt->get_prototypeIsWithoutParameters() == true )
@@ -792,12 +798,21 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
         }
 #endif
 
+  // DQ (9/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
      SgUnparse_Info ninfo2(info);
      ninfo2.set_inArgList();
 
   // DQ (5/14/2003): Never output the class definition in the argument list.
   // Using this C++ constraint avoids building a more complex mechanism to turn it off.
      ninfo2.set_SkipClassDefinition();
+
+  // DQ (9/7/2014): Also set the associated flag to supress output of enum definitions.
+     ninfo2.set_SkipEnumDefinition();
+
+  // DQ (9/7/2014): These should have been setup to be the same.
+     ROSE_ASSERT(ninfo2.SkipClassDefinition() == ninfo2.SkipEnumDefinition());
 
      curprint("(");
 
@@ -3634,6 +3649,130 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
 #endif
 
 
+
+
+void
+Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgType* & rtype, SgUnparse_Info& ninfo)
+   {
+  // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
+  // Note that we pass a reference to the return type so that we can call unparseType a second time to unparse the second part 
+  // (not yet refactored, since it is much simpler).
+
+     SgClassDefinition *parent_class = isSgClassDefinition(funcdecl_stmt->get_parent());
+
+       // This is a test for if the member function is structurally in the class where it is defined.
+       // printf ("parent_class = %p mfuncdecl_stmt->get_scope() = %p \n",parent_class,mfuncdecl_stmt->get_scope());
+
+       // DQ (11/5/2007): This test is not good enough (does not handle case of nested classes and the definition
+       // of member function outside of the nested class and inside of another class.
+       // if (parent_class)
+          if (parent_class == funcdecl_stmt->get_scope())
+             {
+            // JJW 10-23-2007 This member function is declared inside the
+            // class, so its name should never be qualified
+
+            // printf ("mfuncdecl_stmt->get_declarationModifier().isFriend() = %s \n",mfuncdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
+               if (funcdecl_stmt->get_declarationModifier().isFriend() == false)
+                  {
+                 // printf ("Setting SkipQualifiedNames (this is a member function located in its own class) \n");
+                    ninfo.set_SkipQualifiedNames();
+                  }
+             }
+
+          ninfo.set_SkipClassDefinition();
+          ninfo.set_SkipEnumDefinition();
+
+       // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
+       // the declaration (so that exceptions to qualification can be tracked).
+          ninfo.set_declstatement_ptr(NULL);
+          ninfo.set_declstatement_ptr(funcdecl_stmt);
+
+       // if (!(mfuncdecl_stmt->isConstructor() || mfuncdecl_stmt->isDestructor() || mfuncdecl_stmt->isConversion()))
+          if ( !( funcdecl_stmt->get_specialFunctionModifier().isConstructor() || 
+                  funcdecl_stmt->get_specialFunctionModifier().isDestructor()  ||
+                  funcdecl_stmt->get_specialFunctionModifier().isConversion() ) )
+             {
+            // printf ("In unparser: NOT a constructor, destructor or conversion operator \n");
+
+            // printf ("mfuncdecl_stmt->get_orig_return_type() = %p \n",mfuncdecl_stmt->get_orig_return_type());
+
+               if (funcdecl_stmt->get_orig_return_type() != NULL)
+                  {
+                 // printf ("mfuncdecl_stmt->get_orig_return_type() = %p = %s \n",mfuncdecl_stmt->get_orig_return_type(),mfuncdecl_stmt->get_orig_return_type()->sage_class_name());
+                    rtype = funcdecl_stmt->get_orig_return_type();
+                  }
+                 else
+                  {
+                    printf ("In unparseMFuncDeclStmt: (should not happen) funcdecl_stmt->get_type()->get_return_type() = %p = %s \n",
+                         funcdecl_stmt->get_type()->get_return_type(),funcdecl_stmt->get_type()->get_return_type()->class_name().c_str());
+                    rtype = funcdecl_stmt->get_type()->get_return_type();
+                  }
+            // printf ("rtype = %p = %s \n",rtype,rtype->class_name().c_str());
+
+               ninfo.set_isTypeFirstPart();
+               ninfo.set_SkipClassSpecifier();
+
+               SgUnparse_Info ninfo_for_type(ninfo);
+
+       // DQ (5/30/2011): Added support for name qualification.
+          ninfo_for_type.set_reference_node_for_qualification(funcdecl_stmt);
+          ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
+
+          ninfo_for_type.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length_for_return_type());
+          ninfo_for_type.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required_for_return_type());
+          ninfo_for_type.set_type_elaboration_required(funcdecl_stmt->get_type_elaboration_required_for_return_type());
+
+            // DQ (6/10/2007): set the declaration pointer so that the name qualification can see if this is 
+            // the declaration (so that exceptions to qualification can be tracked).
+               ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
+
+            // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
+            // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
+            // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
+            // printf ("mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
+            // curprint ( string("\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " + (mfuncdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") + " */ \n";
+               if (funcdecl_stmt->get_requiresNameQualificationOnReturnType() == true)
+                  {
+                 // Output the name qualification for the type in the variable declaration.
+                 // But we have to do so after any modifiers are output, so in unp->u_type->unparseType().
+                 // printf ("In Unparse_ExprStmt::unparseMemberFunctionDeclaration(): This return type requires a global qualifier \n");
+
+                 // Note that general qualification of types is separated from the use of globl qualification.
+                 // ninfo2.set_forceQualifiedNames();
+                    ninfo_for_type.set_requiresGlobalNameQualification();
+                  }
+
+            // DQ (5/30/2011): Added support for name qualification.
+               ninfo_for_type.set_reference_node_for_qualification(funcdecl_stmt);
+               ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
+
+               ninfo_for_type.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length_for_return_type());
+               ninfo_for_type.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required_for_return_type());
+               ninfo_for_type.set_type_elaboration_required(funcdecl_stmt->get_type_elaboration_required_for_return_type());
+
+            // unp->u_type->unparseType(rtype, ninfo);
+               unp->u_type->unparseType(rtype, ninfo_for_type);
+
+               ninfo.unset_SkipClassSpecifier();
+            // printf ("In unparser: DONE with NOT a constructor, destructor or conversion operator \n");
+             }
+            else
+             {
+            // DQ (9/17/2004): What can we assume about the return type of a constructor, destructor, or conversion operator?
+               if (funcdecl_stmt->get_orig_return_type() == NULL)
+                  {
+                    printf ("funcdecl_stmt->get_orig_return_type() == NULL funcdecl_stmt = %p = %s = %s \n",
+                         funcdecl_stmt,funcdecl_stmt->class_name().c_str(),funcdecl_stmt->get_name().str());
+                  }
+
+               ROSE_ASSERT(funcdecl_stmt->get_orig_return_type() != NULL);
+               ROSE_ASSERT(funcdecl_stmt->get_type()->get_return_type() != NULL);
+             }
+   }
+                
+
+
+
 void
 Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -3814,6 +3953,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // SgUnparse_Info ninfo(info);
           SgType *rtype = NULL;
 
+#if 1
+       // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
+          unparseReturnType (mfuncdecl_stmt,rtype,ninfo);
+#else
        // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
        // ninfo.set_forceQualifiedNames();
 #if 0
@@ -3923,6 +4066,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(mfuncdecl_stmt->get_orig_return_type() != NULL);
                ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type() != NULL);
              }
+#endif
 
           ROSE_ASSERT (mfuncdecl_stmt != NULL);
 
@@ -7664,14 +7808,14 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnp
    {
 #if 0
      printf ("In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);
-     curprint("/* In unparseTemplateMemberFunctionDeclStmt() */ \n ");
+     curprint("/* In unparseTemplateMemberFunctionDeclStmt() */ \n");
 #endif
 
      unparseTemplateDeclarationStatment_support<SgTemplateMemberFunctionDeclaration>(stmt,info);
 
 #if 0
      printf ("DONE: In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);
-     curprint("/* DONE: In unparseTemplateMemberFunctionDeclStmt() */ \n ");
+     curprint("/* DONE: In unparseTemplateMemberFunctionDeclStmt() */ \n");
 #endif
    }
 
@@ -7680,6 +7824,31 @@ Unparse_ExprStmt::unparseTemplateVariableDeclStmt(SgStatement* stmt, SgUnparse_I
    {
      unparseTemplateDeclarationStatment_support<SgTemplateVariableDeclaration>(stmt,info);
    }
+
+
+void
+Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info)
+   {
+  // DQ (9/7/2014): Support for unparsing of the template header within template declarations 
+  // (I think this only applies to template member and non-member functions).  If this applies
+  // to other declarations then we should make this a template function to refactor the support.
+
+#if 0
+     printf ("In unparseTemplateHeader(): functionDeclaration->get_name_qualification_length() = %d \n",functionDeclaration->get_name_qualification_length());
+#endif
+
+     SgName template_header = functionDeclaration->get_template_header();
+
+#if 0
+     printf ("In unparseTemplateHeader(): template_header = %s \n",template_header.str());
+#endif
+
+  // curprint("\n ");
+  // curprint(template_header.str());
+     curprint(string("\n\n") + template_header + "\n");
+  // curprint("\n");
+   }
+
 
 template<class T>
 void
@@ -7715,12 +7884,11 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // Output access modifiers
      unp->u_sage->printSpecifier1(template_stmt, info);
 
-#if 0
-     printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
-#endif
-
-  // DQ (1/21/2004): Use the string class to simplify the previous version of the code
-     string templateString = template_stmt->get_string().str();
+  // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
+     if (template_stmt->get_declarationModifier().isExport())
+        {
+          curprint(string("export "));
+        }
 
      bool string_represents_function_body = false;
      SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(stmt);
@@ -7736,6 +7904,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              {
             // printf ("This is a SgTemplateMemberFunctionDeclaration \n");
                string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
+            // template_function_name = templateMemberFunctionDeclaration->get_name();
              }
             else
              {
@@ -7747,22 +7916,180 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              }
         }
 
+#if 0
+     printf ("string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
+#endif
+
+#if 0
+     printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
+#endif
+
+  // DQ (1/21/2004): Use the string class to simplify the previous version of the code
+     string templateString = template_stmt->get_string().str();
+
   // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
      if (string_represents_function_body == true)
         {
+       // DQ (9/7/2014): This is the special case (to output template member and non-member function declarations after EDG normalization 
+       // to move then out of a template class declaration.
+
+       // Output the name qualified function name with function parameters (and then append the saved text string for the function body).
+       // To find the template parameters, we have to ge them from the class.
+#if 0
+          printf ("template_stmt = %p = %s \n",template_stmt,template_stmt->class_name().c_str());
+#endif
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(template_stmt);
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+#if 0
+       // DQ (9/7/2014): Try this in case it works best (this will unparse the defining template declaration, but I don't want to support that yet).
+          unparseMFuncDeclStmt(functionDeclaration, info);
+#else
+
+#if 1
+       // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
+          printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
           return;
-        }
+#endif
 
-  // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
-     if (template_stmt->get_declarationModifier().isExport())
+       // DQ (9/7/2014): Now unparse the template header (saved as a string in the globalQualifiedNameMapForTemplateHeaders 
+       // as part of support for name qualification).
+          unparseTemplateHeader(functionDeclaration,info);
+
+       // Output the function return type (if not a constructor or destructor).
+          SgUnparse_Info ninfo(info);
+
+#if 1
+          SgType *rtype = NULL;
+
+       // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
+       // unparseReturnType (functionDeclaration,rtype,ninfo);
+       // ROSE_ASSERT(templateMemberFunctionDeclaration != NULL);
+       // unparseReturnType (templateMemberFunctionDeclaration,rtype,ninfo);
+          unparseReturnType (functionDeclaration,rtype,ninfo);
+#else
+          SgType *rtype = functionDeclaration->get_orig_return_type();
+          if (rtype != NULL)
+             {
+               rtype = functionDeclaration->get_type()->get_return_type();
+             }
+
+#error "DEAD CODE!"
+
+          ninfo.set_isTypeFirstPart();
+
+          SgUnparse_Info ninfo_for_type(ninfo);
+
+       // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
+       // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
+       // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
+       // printf ("funcdecl_stmt->get_requiresNameQualificationOnReturnType() = %s \n",funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false");
+       // curprint ( string("\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " + (funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") + " */ \n";
+          if (functionDeclaration->get_requiresNameQualificationOnReturnType() == true)
+             {
+            // Output the name qualification for the type in the variable declaration.
+            // But we have to do so after any modifiers are output, so in unp->u_type->unparseType().
+            // printf ("In Unparse_ExprStmt::unparseFunctionDeclaration(): This return type requires a global qualifier \n");
+
+            // Note that general qualification of types is separated from the use of globl qualification.
+            // ninfo2.set_forceQualifiedNames();
+               ninfo_for_type.set_requiresGlobalNameQualification();
+             }
+
+#error "DEAD CODE!"
+
+       // output the return type
+#define OUTPUT_FUNCTION_DECLARATION_DATA 0
+#if OUTPUT_FUNCTION_DECLARATION_DATA
+          curprint ("\n/* output the return type */ \n");
+#endif
+
+       // DQ (5/30/2011): Added support for name qualification.
+          ninfo_for_type.set_reference_node_for_qualification(functionDeclaration);
+          ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
+
+#error "DEAD CODE!"
+
+          ninfo_for_type.set_name_qualification_length(functionDeclaration->get_name_qualification_length_for_return_type());
+          ninfo_for_type.set_global_qualification_required(functionDeclaration->get_global_qualification_required_for_return_type());
+          ninfo_for_type.set_type_elaboration_required(functionDeclaration->get_type_elaboration_required_for_return_type());
+
+       // unp->u_type->unparseType(rtype, ninfo);
+          unp->u_type->unparseType(rtype, ninfo_for_type);
+
+       // output the rest of the function declaration
+#if OUTPUT_FUNCTION_DECLARATION_DATA
+          curprint ("/* after unparsing the return type */");
+#endif
+
+#error "DEAD CODE!"
+
+#endif
+
+#if 0
+          SgScopeStatement* scope = template_stmt->get_scope();
+          ROSE_ASSERT(scope != NULL);
+          SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
+          ROSE_ASSERT(templateClassDefinition != NULL);
+          SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
+          ROSE_ASSERT(templateClassDeclaration != NULL);
+
+          string template_function_name = functionDeclaration->get_name();
+          printf ("function name = %s \n",template_function_name.c_str());
+#endif
+
+#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("calling unparse_helper \n");
+          curprint ("/* calling unparse_helper */");
+#endif
+
+       // DQ (9/7/2014): Set the reference to the SgFunctionDeclaration.
+          ninfo.set_declstatement_ptr(NULL);
+          ninfo.set_declstatement_ptr(functionDeclaration);
+
+          unparse_helper(functionDeclaration, ninfo);
+
+       // DQ (10/15/2006): Matching call to unset the stored declaration.
+          ninfo.set_declstatement_ptr(NULL);
+
+#if 0
+          printf ("DONE: calling unparse_helper \n");
+          curprint ("/* DONE: calling unparse_helper */");
+#endif
+#endif
+
+       // Note: In more general cases we have to output the second part of the type.
+          if (rtype != NULL)
+             {
+               SgUnparse_Info ninfo3(ninfo);
+               ninfo3.set_isTypeSecondPart();
+
+               unp->u_type->unparseType(rtype, ninfo3);
+             }
+
+       // DQ (9/7/2014): There may be a collection of function modifiers that need to be unparsed here (refactor from other membr function unparse functions).
+
+       // This will be the partial substring representing the function body.
+          curprint(string("\n") + templateString);
+
+       // Put a CR after the function.
+          curprint("\n ");
+        }
+       else
         {
-          curprint(string("export "));
+       // DQ (9/7/2014): This is the typical case.
+
+       // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
+          curprint(string("\n") + templateString);
         }
 
+#if 0
      if (string_represents_function_body == true)
         {
        // Unparse a function prototype header as a prefix to the generated string.
           printf ("Unparse a function prototype header as a prefix to the generated string \n");
+
+#error "DEAD CODE!"
 
        // Temporary code.
        // curprint ("void foobar()");
@@ -7772,11 +8099,14 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
           SgDeclarationStatement* nondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
           ROSE_ASSERT(declaration != nondefiningDeclaration);
 
+#error "DEAD CODE!"
+
        // unparseStatement(nondefiningDeclaration,info);
         }
 
   // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
      curprint ( string("\n" ) + templateString);
+#endif
    }
  
  

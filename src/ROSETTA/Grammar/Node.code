@@ -1876,6 +1876,23 @@ HEADER_START
        */
           static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
 
+      /*! \brief Access function for name qualification support (for template headers in template declarations).
+
+          This name is stored with reference to where the template declaration is used (as required) instead
+          of with the IR node (where it could be incorrect).  This design allows it to be computed as needed.
+          Note that template headers are the substrings "template<typename T>" that apepar in header declarations.
+          These can be repeated as required for deeply nested templated classes and thus are associated with
+          name qualification of template declarations (along with the more common form of name qualication
+          that also applies to template declarations).
+       */
+          static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTemplateHeaders();
+
+      /*! \brief Access function for name qualification support (for template headers in template declarations).
+
+          See documentation in get_globalQualifiedNameMapForTemplateHeaders() (above).
+       */
+          static void set_globalQualifiedNameMapForTemplateHeaders ( const std::map<SgNode*,std::string> & X );
+
       /*! \brief Access function for name qualification support (for names of types).
 
           This type name is stored with reference to where the type is used (as required) instead
@@ -2244,6 +2261,7 @@ std::map<std::string,int> SgNode::p_shortMangledNameCache;
 // qualified name support.
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
+std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
 std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 
 // DQ (7/22/2011): array dimensions may include expressions that require name qualification.
@@ -2415,6 +2433,20 @@ void
 SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
    {
      p_globalQualifiedNameMapForTypes = X;
+   }
+
+// DQ (5/28/2011): Added support for holding the name qualification map.
+std::map<SgNode*,std::string> &
+SgNode::get_globalQualifiedNameMapForTemplateHeaders()
+   {
+     return p_globalQualifiedNameMapForTemplateHeaders;
+   }
+
+// DQ (5/28/2011): Added support for holding the name qualification map.
+void
+SgNode::set_globalQualifiedNameMapForTemplateHeaders(const std::map<SgNode*,std::string> & X)
+   {
+     p_globalQualifiedNameMapForTemplateHeaders = X;
    }
 
 // DQ (6/3/2011): Added support for holding the map of type names that require qualification and at this position dependent.

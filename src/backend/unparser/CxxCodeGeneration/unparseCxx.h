@@ -366,10 +366,16 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseTemplateVariableDeclStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateFunctionDefnStmt       (SgStatement* stmt, SgUnparse_Info& info);
 
+       // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
+          virtual void unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgType* & rtype, SgUnparse_Info& info);
+
+       // DQ (9/7/2014): Support for unparsing of the template header within template declarations (I think this only applies to template member and non-member functions).
+          virtual void unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info);
+
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);
 
-//        virtual void unparseNullStatement    (SgStatement* stmt, SgUnparse_Info& info);
+       // virtual void unparseNullStatement    (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (7/21/2006): Added support for GNU statement expression extension.
           virtual void unparseStatementExpression (SgExpression* expr, SgUnparse_Info& info);

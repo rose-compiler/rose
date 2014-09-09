@@ -75,6 +75,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           std::map<SgNode*,std::string> & qualifiedNameMapForNames;
           std::map<SgNode*,std::string> & qualifiedNameMapForTypes;
 
+       // DQ (9/7/2014): Modified to handle template header map (for template declarations).
+          std::map<SgNode*,std::string> & qualifiedNameMapForTemplateHeaders;
+
        // DQ (6/3/2011): This is to save the names of types where they can be named differently when referenced 
        // from different locations in the source code.
           std::map<SgNode*,std::string> & typeNameMap;
@@ -105,7 +108,13 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
      public:
        // HiddenListTraversal();
        // HiddenListTraversal(SgNode* root);
-          NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet);
+
+       // DQ (9/7/2014): Modified to handle template header map (for template declarations).
+          NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, 
+                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, 
+                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders, 
+                                     std::map<SgNode*,std::string> & input_typeNameMap, 
+                                     std::set<SgNode*> & input_referencedNameSet);
 
        // DQ (7/23/2011): This permits recursive calls to the traversal AND specification of the current scope
        // used to support name qualification on expressions where we can't backout the current scope.  Used 
@@ -190,6 +199,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // Supporting function for different overloaded versions of the setNameQualification() function.
           std::string setNameQualificationSupport ( SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation );
  
+       // DQ (9/7/2014): Added template header support (associated with name qualification for template declarations.
+          std::string setTemplateHeaderNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength );
+
        // DQ (5/14/2011): type elaboration only works between non-types and types.  Different types must be distinquished using name qualification.
           bool requiresTypeElaboration(SgSymbol* symbol);
 
@@ -199,6 +211,7 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (5/28/2011): Added support to set the global qualified name map.
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForNames() const;
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForTypes() const;
+          const std::map<SgNode*,std::string> & get_qualifiedNameMapForTemplateHeaders() const;
 
        // DQ (6/3/2011): Evaluate types to permit the strings representing unparsing the types 
        // are saved in a separate map associated with the IR node referencing the type.  This 
