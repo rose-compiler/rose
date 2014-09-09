@@ -83,6 +83,52 @@ MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
     return true;
 }
 
+// Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
+bool
+MatchAbbreviatedPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
+    SgAsmx86Instruction *insn = NULL;
+    // Look for MOV EDI, EDI
+    {
+        static const RegisterDescriptor REG_EDI(x86_regclass_gpr, x86_gpr_di, 0, 32);
+        rose_addr_t moveVa = anchor;
+        if (partitioner->instructionExists(moveVa))
+            return false;                               // already in the CFG/AUM
+        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
+        if (!insn || insn->get_kind()!=x86_mov)
+            return false;
+        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+        if (opands.size()!=2)
+            return false;
+        SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
+        if (!dst || dst->get_descriptor()!=REG_EDI)
+            return false;
+        SgAsmDirectRegisterExpression *src = isSgAsmDirectRegisterExpression(opands[1]);
+        if (!src || dst->get_descriptor()!=src->get_descriptor())
+            return false;
+    }
+
+    // Look for PUSH ESI
+    {
+        static const RegisterDescriptor REG_ESI(x86_regclass_gpr, x86_gpr_si, 0, 32);
+        rose_addr_t pushVa = insn->get_address() + insn->get_size();
+        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
+        if (partitioner->instructionExists(pushVa))
+            return false;                               // already in the CFG/AUM
+        if (!insn || insn->get_kind()!=x86_push)
+            return false;
+        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+        if (opands.size()!=1)
+            return false;                               // crazy operands!
+        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
+        if (!rre || rre->get_descriptor()!=REG_ESI)
+            return false;
+    }
+
+    // Seems good!
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    return true;
+}
+
 bool
 MatchEnterPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     ASSERT_not_null(partitioner);

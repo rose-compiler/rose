@@ -204,8 +204,13 @@ namespace Partitioner2 {
  *  into functions begins. During function partitioning phase, the CFG is static -- basic blocks, instructions, and edges are
  *  neither inserted nor removed. [FIXME[Robb P. Matzke 2014-07-30]: to be written later] */
 class Partitioner {
+public:
+    typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
+    typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
+    typedef std::vector<FunctionPrologueMatcher::Ptr> FunctionPrologueMatchers; /**< See @ref functionPrologueMatchers. */
+    typedef std::vector<FunctionPaddingMatcher::Ptr> FunctionPaddingMatchers; /**< See @ref functionPaddingMatchers. */
 private:
-    InstructionProvider instructionProvider_;           // cache for all disassembled instructions
+    InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     VertexIndex vertexIndex_;                           // Vertex-by-address index for the CFG
@@ -216,7 +221,13 @@ private:
     Functions functions_;                               // List of all attached functions by entry address
     bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
 
-    // Special CFG vertices
+    // Callback lists
+    CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
+    BasicBlockCallbacks basicBlockCallbacks_;
+    FunctionPrologueMatchers functionPrologueMatchers_;
+    FunctionPaddingMatchers functionPaddingMatchers_;
+
+    // Special CFG vertices.
     ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
     ControlFlowGraph::VertexNodeIterator indeterminateVertex_;
     ControlFlowGraph::VertexNodeIterator nonexistingVertex_;
@@ -227,9 +238,17 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : instructionProvider_(InstructionProvider(disassembler, map)), memoryMap_(map), solver_(NULL),
-          progressTotal_(0), isReportingProgress_(true), useSemantics_(true) {
-        init();
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(true) {
+        init(disassembler, map);
+    }
+
+    Partitioner(const Partitioner &other)
+        : instructionProvider_(other.instructionProvider_), memoryMap_(other.memoryMap_), cfg_(other.cfg_),
+          aum_(other.aum_), solver_(other.solver_), progressTotal_(other.progressTotal_),
+          isReportingProgress_(other.isReportingProgress_), functions_(other.functions_), useSemantics_(other.useSemantics_),
+          cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_), basicBlockCallbacks_(other.basicBlockCallbacks_),
+          functionPrologueMatchers_(other.functionPrologueMatchers_), functionPaddingMatchers_(other.functionPaddingMatchers_) {
+        init(other);                                    // copies graph iterators, etc.
     }
 
     static void initDiagnostics();
@@ -243,8 +262,8 @@ public:
 public:
     /** Returns the instruction provider.
      *  @{ */
-    InstructionProvider& instructionProvider() { return instructionProvider_; }
-    const InstructionProvider& instructionProvider() const { return instructionProvider_; }
+    InstructionProvider& instructionProvider() { return *instructionProvider_; }
+    const InstructionProvider& instructionProvider() const { return *instructionProvider_; }
     /** @} */
 
     /** Returns the memory map.
@@ -932,13 +951,20 @@ public:
      *  user directly through its API. Attempting to detach a function that is already detached has no effect. */
     void detachFunction(const Function::Ptr&);
 
-    /** Insert a data block into an attached or detached function.
+    /** Attach a data block into an attached or detached function.
      *
      *  @todo This is certainly not the final API.  The final API will likely describe data as an address and type rather than
      *  an address and size.  It is also likely that attaching data to a function will try to adjust an existing data block's
      *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
-     *  as we learn more about how it is accessed. */
-    void attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes);
+     *  as we learn more about how it is accessed.
+     *
+     *  Returns the data block that has been attached to the function. */
+    DataBlock::Ptr attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes);
+
+    /** Attach a data block to an attached or detached function.
+     *
+     *  Causes the specified function to become an owner of the specified data block. */
+    void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&);
 
     /** Finds the function that owns the specified basic block.
      *
@@ -970,13 +996,24 @@ public:
     std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const;
     /** @} */
 
+    /** Scans the CFG to find function calls.
+     *
+     *  Scans the CFG without modifying it and looks for edges that are marked as being function calls.  A function is created
+     *  at each call if one doesn't already exist in the CFG/AUM, and the list of created functions is returned.  None of the
+     *  created functions are added to the CFG/AUM.
+     *
+     *  See also @ref discoverFunctionEntryVertices which returns a superset of the functions returned by this method. */
+    std::vector<Function::Ptr> discoverCalledFunctions() const;
+
     /** Scans the CFG to find function entry basic blocks.
      *
      *  Scans the CFG without modifying it in order to find vertices (basic blocks and basic block placeholders) that are the
      *  entry points of functions.  A vertex is a function entry point if it has an incoming edge that is a function call or if
      *  it is the entry block of a function that already exists.
      *
-     *  The returned function pointers are sorted by function entry address. */
+     *  The returned function pointers are sorted by function entry address.
+     *
+     *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method. */
     std::vector<Function::Ptr> discoverFunctionEntryVertices() const;
 
     /** Adds basic blocks to a function.
@@ -1043,34 +1080,26 @@ public:
      * @endcode
      *
      *  @{ */
-    typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks;
     CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() { return cfgAdjustmentCallbacks_; }
     const CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() const { return cfgAdjustmentCallbacks_; }
     /** @} */
 
-private:
-    CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
-
-public:
     /** Callbacks for adjusting basic block during discovery.
      *
      *  Each time an instruction is appended to a basic block these callbacks are invoked to make adjustments to the block.
      *  See @ref BasicBlockCallback and @ref discoverBasicBlock for details.
      *
      *  @{ */
-    typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks;
     BasicBlockCallbacks& basicBlockCallbacks() { return basicBlockCallbacks_; }
     const BasicBlockCallbacks& basicBlockCallbacks() const { return basicBlockCallbacks_; }
     /** @} */
 
-private:
-    BasicBlockCallbacks basicBlockCallbacks_;
-
 public:
     /** Ordered list of function prologue matchers.
      *
+     *  @sa nextFunctionPrologue
+     *
      *  @{ */
-    typedef std::vector<FunctionPrologueMatcher::Ptr> FunctionPrologueMatchers;
     FunctionPrologueMatchers& functionPrologueMatchers() { return functionPrologueMatchers_; }
     const FunctionPrologueMatchers& functionPrologueMatchers() const { return functionPrologueMatchers_; }
     /** @} */
@@ -1091,8 +1120,20 @@ public:
      *  If no match is found then a null pointer is returned. */
     Function::Ptr nextFunctionPrologue(rose_addr_t startVa);
 
-private:
-    FunctionPrologueMatchers functionPrologueMatchers_;
+public:
+    /** Ordered list of function padding matchers.
+     *
+     * @{ */
+    FunctionPaddingMatchers& functionPaddingMatchers() { return functionPaddingMatchers_; }
+    const FunctionPaddingMatchers& functionPaddingMatchers() const { return functionPaddingMatchers_; }
+    /** @} */
+
+    /** Finds function padding.
+     *
+     *  Scans backward from the specified function's entry address by invoking each function padding matcher in the order
+     *  returned by @ref functionPaddingMatchers until one of them finds some padding.  Once found, a data block is created and
+     *  returned.  If no padding is found then the null pointer is returned. */
+    DataBlock::Ptr matchFunctionPadding(const Function::Ptr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner conversion to AST
@@ -1215,7 +1256,8 @@ public:
     //                                  Partitioner internal utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void init();
+    void init(Disassembler*, const MemoryMap&);
+    void init(const Partitioner&);
     void reportProgress() const;
 
 public:
@@ -1226,6 +1268,11 @@ public:
     BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const;
 
 private:
+    // Convert a CFG vertex iterator from one partitioner to another.  This is called during copy construction when the source
+    // and destination CFGs are identical.
+    ControlFlowGraph::VertexNodeIterator convertFrom(const Partitioner &other,
+                                                     ControlFlowGraph::ConstVertexNodeIterator otherIter);
+    
     // Adjusts edges for a placeholder vertex. This method erases all outgoing edges for the specified placeholder vertex and
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */
     ControlFlowGraph::EdgeNodeIterator adjustPlaceholderEdges(const ControlFlowGraph::VertexNodeIterator &placeholder);

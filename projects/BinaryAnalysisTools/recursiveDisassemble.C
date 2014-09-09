@@ -9,12 +9,9 @@
 #include <DisassemblerMips.h>
 #include <DisassemblerX86.h>
 #include <DisassemblerM68k.h>
-#include <Partitioner2/ModulesElf.h>
+#include <Partitioner2/Engine.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
-#include <Partitioner2/ModulesX86.h>
-#include <Partitioner2/Partitioner.h>
-#include <Partitioner2/Utility.h>
 
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
@@ -295,54 +292,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Map-adjusting functions
-//
-// These functions make adjustments to the memory map before any disassembly even starts.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Removes execute permission any time we find at least some number of consecutive executable zero bytes.
-static void
-deExecuteZeros(MemoryMap &map /*in,out*/, const size_t threshold) {
-    if (0==threshold)
-        return;
-    rose_addr_t va = 0;
-    AddressInterval zeros;
-    uint8_t buf[4096];
-    while (AddressInterval accessed = map.atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
-        size_t nRead = accessed.size();
-        size_t firstZero = 0;
-        while (firstZero < nRead) {
-            while (firstZero<nRead && buf[firstZero]!=0) ++firstZero;
-            if (firstZero < nRead) {
-                size_t nZeros = 1;
-                while (firstZero+nZeros < nRead && buf[firstZero+nZeros]==0) ++nZeros;
-
-                if (zeros.isEmpty()) {
-                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
-                } else if (zeros.greatest()+1 == va+firstZero) {
-                    zeros = AddressInterval::baseSize(zeros.least(), zeros.size()+nZeros);
-                } else {
-                    if (zeros.size() >= threshold) {
-                        P2::mlog[INFO] <<"removing execute permission for " <<StringUtility::plural(zeros.size(), "zeros")
-                                       <<" at " <<StringUtility::addrToString(zeros.least()) <<"\n";
-                        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-                    }
-                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
-                }
-
-                firstZero += nZeros+1;
-            }
-        }
-        va += nRead;
-    }
-    if (zeros.size()>=threshold) {
-        P2::mlog[INFO] <<"removing execute permission for " <<StringUtility::plural(zeros.size(), "zeros")
-                       <<" at " <<StringUtility::addrToString(zeros.least()) <<"\n";
-        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Callbacks
 //
 // Callbacks are a way of adapting the partitioner to a particular task, architecture, etc. They are different than subclassing
@@ -371,166 +320,20 @@ public:
     }
 };
 
-// Example of making adjustments to basic block successors.  If this callback is registered with the partitioner, then it will
-// add ghost edges (non-taken side of branches with opaque predicates) to basic blocks as their instructions are discovered.
-// An alternative method is to investigate (but not attach) ghost edges after functions are discovered in order to find dead
-// code.
-class AddGhostSuccessors: public P2::BasicBlockCallback {
-public:
-    static Ptr instance() { return Ptr(new AddGhostSuccessors); }
-
-    virtual bool operator()(bool chain, const Args &args) {
-        if (chain) {
-            size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits();
-            BOOST_FOREACH (rose_addr_t successorVa, args.partitioner->basicBlockGhostSuccessors(args.bblock)) {
-                args.bblock->insertSuccessor(successorVa, nBits);
-                P2::mlog[INFO] <<"opaque predicate at "
-                               <<StringUtility::addrToString(args.bblock->instructions().back()->get_address())
-                               <<": branch " <<StringUtility::addrToString(successorVa) <<" never taken\n";
-            }
-        }
-        return chain;
-    }
-};
-
-// Example successor callback that forces basic blocks to terminate at unconditional branch instructions whose target is not
-// the fall-through address of the branch.
-class PreventDiscontiguousBlocks: public P2::BasicBlockCallback {
-public:
-    static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
-
-    virtual bool operator()(bool chain, const Args &args) {
-        if (chain) {
-            bool complete;
-            std::vector<rose_addr_t> successors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &complete);
-            if (complete && 1==successors.size() && successors[0]!=args.bblock->fallthroughVa())
-                args.results.terminate = TERMINATE_NOW;
-        }
-        return chain;
-    }
-};
-
-// Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
-class X86AbbreviatedPrologue: public P2::FunctionPrologueMatcher {
-protected:
-    P2::Function::Ptr function_;
-public:
-    static Ptr instance() { return Ptr(new X86AbbreviatedPrologue); }
-    virtual P2::Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const P2::Partitioner *partitioner, rose_addr_t anchor) /*override*/ {
-        SgAsmx86Instruction *insn = NULL;
-        // Look for MOV EDI, EDI
-        {
-            static const RegisterDescriptor REG_EDI(x86_regclass_gpr, x86_gpr_di, 0, 32);
-            rose_addr_t moveVa = anchor;
-            if (partitioner->instructionExists(moveVa))
-                return false;                               // already in the CFG/AUM
-            insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
-            if (!insn || insn->get_kind()!=x86_mov)
-                return false;
-            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-            if (opands.size()!=2)
-                return false;
-            SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
-            if (!dst || dst->get_descriptor()!=REG_EDI)
-                return false;
-            SgAsmDirectRegisterExpression *src = isSgAsmDirectRegisterExpression(opands[1]);
-            if (!src || dst->get_descriptor()!=src->get_descriptor())
-                return false;
-        }
-
-        // Look for PUSH ESI
-        {
-            static const RegisterDescriptor REG_ESI(x86_regclass_gpr, x86_gpr_si, 0, 32);
-            rose_addr_t pushVa = insn->get_address() + insn->get_size();
-            insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
-            if (partitioner->instructionExists(pushVa))
-                return false;                               // already in the CFG/AUM
-            if (!insn || insn->get_kind()!=x86_push)
-                return false;
-            const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-            if (opands.size()!=1)
-                return false;                               // crazy operands!
-            SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-            if (!rre || rre->get_descriptor()!=REG_ESI)
-                return false;
-        }
-
-        // Seems good!
-        function_ = P2::Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
-        return true;
-    }
-};
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                              "marking" functions
+//                                              Function-making
 //
-// The following functions look for certain features in the specimen memory or its ELF/PE container and decide where we might
-// want to start disassembling functions.  These are all greedy implementations -- they mark as many locations as possible in
-// one shot.  An alternative could be to write non-greedy versions or to have the greedy versions create prioritized work lists
-// rather than immediately attaching functions to the CFG/UAM.
-//
-// Most of the functions in the various Module name spaces are overloaded to operate on a single ELF/PE file header (from a
-// single specimen file) or an Interpretation containing compatible headers from multiple files (like an executable plus all
-// its dynamic libraries).
-//
+// These functions demonstrate how to make a function at a particular address. See also the "make*" functions in
+// rose::BinaryAnalysis::Partitioner2::Engine.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// Make functions at specimen entry addresses
-static void
-markEntryFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
-            BOOST_FOREACH (const rose_rva_t &rva, fileHeader->get_entry_rvas()) {
-                rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
-                partitioner.attachOrMergeFunction(P2::Function::instance(va, SgAsmFunction::FUNC_ENTRY_POINT));
-            }
-        }
-    }
-}
-
-// Make functions at error handling addresses
-static void
-markErrorHandlingFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesElf::findErrorHandlingFunctions(interp))
-        partitioner.attachOrMergeFunction(function);
-}
-
-// Make functions at import trampolines
-static void
-markImportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    // Windows PE imports
-    P2::ModulesPe::rebaseImportAddressTables(partitioner, P2::ModulesPe::getImportIndex(interp));
-    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesPe::findImportFunctions(partitioner, interp))
-        partitioner.attachOrMergeFunction(function);
-    
-    // ELF imports
-    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesElf::findPltFunctions(partitioner, interp))
-        partitioner.attachOrMergeFunction(function);
-}
-
-// Make functions at export addresses
-static void
-markExportFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    BOOST_FOREACH (const P2::Function::Ptr &function, P2::ModulesPe::findExportFunctions(partitioner, interp))
-        partitioner.attachOrMergeFunction(function);
-}
-
-// Make functions that have symbols
-static void
-markSymbolFunctions(P2::Partitioner &partitioner, SgAsmInterpretation *interp) {
-    BOOST_FOREACH (const P2::Function::Ptr &function, P2::Modules::findSymbolFunctions(partitioner, interp))
-        partitioner.attachOrMergeFunction(function);
-}
 
 // Make functions for any x86 CALL instruction. This is intended to be a demonstration of how to search for specific
 // instruction patterns and do something when the pattern is found, and probably isn't all that useful since function calls in
 // reachable code are already detected anyway as part of Partitioner::discoverBasicBlock.
-static void
-markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
+void
+makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
     std::set<rose_addr_t> targets;                      // distinct call targets
 
     // Iterate over every executable address in the memory map
@@ -558,172 +361,8 @@ markCallTargets(P2::Partitioner &partitioner, size_t alignment=1) {
     }
 }
 
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                              "finding" functions
-//
-// The following functions build on the basic partitioner API (discovering information about a specimen and attaching it to the
-// CFG/AUM) to provide operations that are a bit higher level.  Our partitioner engine will be implemented in terms of these
-// operations, all of which return non-zero when they did some work.
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// Looks for one basic block that hasn't been discovered and tries to find instructions for it.  Returns true if a basic block
-// was processed, false if not.
-static bool
-findBasicBlock(P2::Partitioner &partitioner) {
-    P2::ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
-    if (worklist->nInEdges() > 0) {
-        P2::ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
-        P2::mlog[WHERE] <<"\n  processing block " <<partitioner.vertexName(*placeholder) <<"\n";
-        P2::BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
-        partitioner.attachBasicBlock(placeholder, bb);
-        return true;
-    }
-    return false;
-}
-
-// Looks for a function prologue at or above the specified starting address.  If one is found, then create a new function, add
-// it to the partitioner, increment the starting address, and return true.  Otherwise do nothing and return false.
-static bool
-findFunctionPrologue(P2::Partitioner &partitioner, rose_addr_t &startVa /*in,out*/) {
-    if (P2::Function::Ptr function = partitioner.nextFunctionPrologue(startVa)) {
-        P2::mlog[WHERE] <<"\nFound prologue for " <<partitioner.functionName(function) <<"\n";
-        startVa = function->address() + 1;              // advance the search point past the start of the function
-        partitioner.attachFunction(function);           // also adds the function entry address to our work list
-        return true;
-    }
-    return false;
-}
-
-// Tries to assign basic blocks to functions.  Returns the number of functions that were successfully processed.  Get a list of
-// functions (those we already found, and those created due to function call edges), and discover basic blocks for each. Attach
-// the functions and their blocks to the CFG.  The discoverFunctionEntryVertices returns a list of functions, some of which are
-// already attached to the CFG/AUM and some which are detached.  Before we add new basic blocks to a function we must detach it
-// from the CFG/AUM.
-static size_t
-findFunctionBlocks(P2::Partitioner &partitioner) {
-    size_t nProcessed = 0;
-    std::vector<P2::Function::Ptr> functions = partitioner.discoverFunctionEntryVertices();
-    BOOST_FOREACH (const P2::Function::Ptr &function, functions)
-        partitioner.attachFunction(function);
-    BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
-        P2::mlog[WHERE] <<"Discovering blocks for " <<partitioner.functionName(function) <<"\n";
-        partitioner.detachFunction(function);
-        if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL))
-            ++nProcessed;
-        partitioner.attachFunction(function);
-    }
-    return nProcessed;
-}
-
-static size_t
-findDeadCode(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    ASSERT_not_null(function);
-    size_t nProcessed = 0;
-    while (1) {
-        std::set<rose_addr_t> ghosts = partitioner.functionGhostSuccessors(function);
-        if (ghosts.empty())
-            break;
-        partitioner.detachFunction(function);           // so we can modify its basic block ownership list
-        BOOST_FOREACH (rose_addr_t ghost, ghosts) {
-            P2::mlog[INFO] <<partitioner.functionName(function) <<" has dead code at "
-                           <<StringUtility::addrToString(ghost) <<"\n";
-            partitioner.insertPlaceholder(ghost);       // ensure a basic block gets created here
-            function->insertBasicBlock(ghost);          // the function will own this basic block
-        }
-        while (findBasicBlock(partitioner))/*void*/;    // discover basic blocks recursively
-        if (partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
-            P2::mlog[WARN] <<"cannot create " <<partitioner.functionName(function) <<"\n";
-            break;
-        }
-        partitioner.attachFunction(function);           // reattach the function to the CFG/AUM
-        ++nProcessed;
-    }
-    return nProcessed;
-}
-
-// Finds dead code and adds it to the function to which it seems to belong.
-static size_t
-findDeadCode(P2::Partitioner &partitioner) {
-    size_t nProcessed = 0;
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
-        nProcessed += findDeadCode(partitioner, function);
-    return nProcessed;
-}
-
-// Find padding that appears before the entry address of a function that aligns the entry address on a 4-byte boundary.
-// For m68k, padding is either 2-byte TRAPF instructions (0x51 0xfc) or zero bytes.  Patterns we've seen are 51 fc, 51 fc 00
-// 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
-static size_t
-findFunctionPadding(P2::Partitioner &partitioner) {
-    size_t nProcessed = 0;
-    const MemoryMap &m = partitioner.memoryMap();
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
-        rose_addr_t entryVa = function->address();
-        if (0==entryVa)
-            break;
-        rose_addr_t padMax=entryVa-1, padMin=entryVa;
-        uint8_t buf[2];
-        while (AddressInterval accessed = m.at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE).read(buf, m.BACKWARD)) {
-            if (2==accessed.size() && ((0==buf[0] && 0==buf[1]) || (0x51==buf[0] && 0xfc==buf[1]))) {
-                padMin = accessed.least();
-            } else if (2==accessed.size() && 0==buf[1]) {
-                padMin = accessed.least() + 1;
-            } else if (1==accessed.size() && 0==buf[0]) {
-                padMin = accessed.least();
-            } else {
-                break;
-            }
-        }
-        if (padMin <= padMax) {
-            partitioner.attachFunctionDataBlock(function, padMin, padMax-padMin+1);
-            ++nProcessed;
-        }
-    }
-    return nProcessed;
-}
-
-// Finds unused areas that are surrounded by a function and adds them as static data to the function.
-static size_t
-findIntraFunctionData(P2::Partitioner &partitioner, const AddressIntervalSet &executableSpace)
-{
-    size_t nProcessed = 0;
-    AddressIntervalSet unused = partitioner.aum().unusedExtent(executableSpace);
-    BOOST_FOREACH (const AddressInterval &interval, unused.intervals()) {
-        if (interval.least()<=executableSpace.least() || interval.greatest()>=executableSpace.greatest())
-            continue;
-        typedef std::vector<P2::Function::Ptr> Functions;
-        Functions beforeFuncs = partitioner.functionsOverlapping(interval.least()-1);
-        Functions afterFuncs = partitioner.functionsOverlapping(interval.greatest()+1);
-
-        // What functions are in both sets?
-        Functions enclosingFuncs(beforeFuncs.size());
-        Functions::iterator final = std::set_intersection(beforeFuncs.begin(), beforeFuncs.end(),
-                                                          afterFuncs.begin(), afterFuncs.end(), enclosingFuncs.begin());
-        enclosingFuncs.resize(final-enclosingFuncs.begin());
-
-        // Add the data block to all enclosing functions
-        if (!enclosingFuncs.empty()) {
-            BOOST_FOREACH (const P2::Function::Ptr &function, enclosingFuncs) {
-                P2::mlog[INFO] <<partitioner.functionName(function) <<" has "
-                               <<StringUtility::plural(interval.size(), "bytes") <<" of static data at "
-                               <<StringUtility::addrToString(interval.least()) <<"\n";
-                partitioner.attachFunctionDataBlock(function, interval.least(), interval.size());
-            }
-            ++nProcessed;
-        }
-    }
-    return nProcessed;
-}
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 int main(int argc, char *argv[]) {
     // Do this explicitly since librose doesn't do this automatically yet
@@ -742,10 +381,15 @@ int main(int argc, char *argv[]) {
     if (!settings.isaName.empty())
         disassembler = getDisassembler(settings.isaName);// do this before we check for positional arguments (for --isa=list)
     if (positionalArgs.empty())
-        throw std::runtime_error("no file name specified; see --help");
+        throw std::runtime_error("no specimen specified; see --help");
     if (positionalArgs.size()>1)
-        throw std::runtime_error("too many files specified; see --help");
+        throw std::runtime_error("too many specimens specified; see --help");
     std::string specimenName = positionalArgs[0];
+
+    // Create an engine to drive the partitioning.  This is entirely optional.  All an engine does is define the sequence of
+    // partitioning calls that need to be made in order to recognize instructions, basic blocks, data blocks, and functions.
+    // We instantiate the engine early because it has some nice methods that we can use.
+    P2::Engine engine;
 
     // Load the specimen as raw data or an ELF or PE container
     SgAsmInterpretation *interp = NULL;
@@ -768,12 +412,9 @@ int main(int argc, char *argv[]) {
         if (interps.empty())
             throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
         interp = interps.back();    // windows PE is always after DOS
-        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
-        loader->remap(interp);
+        disassembler = engine.loadSpecimen(interp, disassembler);
         ASSERT_not_null(interp->get_map());
         map = *interp->get_map();
-        if (!disassembler && !(disassembler = Disassembler::lookup(interp)))
-            throw std::runtime_error("an instruction set architecture could not be discerned");
     }
     disassembler->set_progress_reporting(-1.0);         // turn it off
 
@@ -788,8 +429,9 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
-
+    // Remove execute permission from regions of memory that contain only zero.  This will prevent them from being disassembled
+    // since they're almost always padding at the end of sections (e.g., MVC pads all sections to 256 bytes by appending zeros).
+    P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
 
     // Some analyses need to know what part of the address space is being disassembled.
     AddressIntervalSet executableSpace;
@@ -798,86 +440,46 @@ int main(int argc, char *argv[]) {
             executableSpace.insert(node.key());
     }
 
-    // Create and configure the partitioner
-    P2::Partitioner partitioner(disassembler, map);
+    // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
+    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
     partitioner.enableSymbolicSemantics(settings.useSemantics);
-
-    partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchHotPatchPrologue::instance());
-    partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchStandardPrologue::instance());
-    partitioner.functionPrologueMatchers().push_back(X86AbbreviatedPrologue::instance());
-    partitioner.functionPrologueMatchers().push_back(P2::ModulesM68k::MatchLink::instance());
-    partitioner.functionPrologueMatchers().push_back(P2::ModulesX86::MatchEnterPrologue::instance());
-
     if (settings.findSwitchCases)
         partitioner.basicBlockCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
-        partitioner.basicBlockCallbacks().append(AddGhostSuccessors::instance());
+        partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
-        partitioner.basicBlockCallbacks().append(PreventDiscontiguousBlocks::instance());
+        partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
     if (false)
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
+    if (false)
+        makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
+    partitioner.memoryMap().dump(std::cout);            // show what we'll be working on
 
-    // Find interesting places at which to disassemble
-    markEntryFunctions(partitioner, interp);            // make functions at program entry points
-    markErrorHandlingFunctions(partitioner, interp);    // make functions based on exception handling information
-    markImportFunctions(partitioner, interp);           // make functions for things that are imported
-    markExportFunctions(partitioner, interp);           // make functions for things that are exported
-    markSymbolFunctions(partitioner, interp);           // make functions for symbols in the symbol table
-    //markCallTargets(partitioner);                     // make functions at all CALL targets
+    // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
+    // specimen entry points, exception handling, imports and exports, and symbol tables.
+    engine.makeContainerFunctions(partitioner, interp);
 
     // Do an initial pass to discover functions and partition them into basic blocks and functions. Functions for which the CFG
     // is a bit wonky won't get assigned any basic blocks (other than the entry blocks we just added above).
-    rose_addr_t prologueVa = 0;
-    partitioner.memoryMap().dump(std::cout);
-    while (findBasicBlock(partitioner) || findFunctionPrologue(partitioner, prologueVa /*in,out*/)) /*void*/;
-    findFunctionBlocks(partitioner);                    // organize existing basic blocks into functions
+    engine.discoverFunctions(partitioner);
+
+    // Various fix-ups
     if (settings.findDeadCode)
-        findDeadCode(partitioner);                      // find unreachable code and add it to functions
+        engine.attachDeadCodeToFunctions(partitioner);  // find unreachable code and add it to functions
     if (settings.findFunctionPadding)
-        findFunctionPadding(partitioner);               // find function alignment padding before entry points
+        engine.attachPaddingToFunctions(partitioner);   // find function alignment padding before entry points
     if (settings.intraFunctionData)
-        findIntraFunctionData(partitioner, executableSpace); // find data areas that are enclosed by functions
-    
-    // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow. This is
-    // pretty much the same as findFunctionBlocks except it will issue warning messages.
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
-        P2::EdgeList inwardConflictEdges, outwardConflictEdges;
-        partitioner.detachFunction(function);           // temporarily detach so we can call discoverFunctionBasicBlocks
-        if (0==partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges)) {
-            partitioner.attachFunction(function);
-        } else {
-            P2::mlog[WARN] <<"discovery for " <<partitioner.functionName(function)
-                           <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
-                           <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
-            BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges) {
-                using namespace P2;                     // to pick up operator<< for *edge
-                P2::mlog[WARN] <<"  inward conflict " <<*edge
-                               <<" from " <<partitioner.functionName(edge->source()->value().function()) <<"\n";
-            }
-            BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNodeIterator &edge, outwardConflictEdges) {
-                using namespace P2;                     // to pick up operator<< for *edge
-                P2::mlog[WARN] <<"  outward conflict " <<*edge
-                               <<" to " <<partitioner.functionName(edge->target()->value().function()) <<"\n";
-            }
-#if 0 // [Robb P. Matzke 2014-08-13]
-            // Forcibly insert the target vertex for inward-conflicting edges and try again.
-            BOOST_FOREACH (P2::ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges)
-                function->insertBasicBlock(edge->target()->value().address());
-            if (0==partitioner.discoverFunctionBasicBlocks(function, NULL, NULL)) {
-                P2::mlog[WARN] <<"  conflicts have been overridden\n";
-                partitioner.insertFunction(function);
-            }
-#endif
-        }
-    }
+        engine.attachSurroundedDataToFunctions(partitioner); // find data areas that are enclosed by functions
+
+    // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
+    engine.attachBlocksToFunctions(partitioner, true/*emit warnings*/);
 
     // Now that the partitioner's work is all done, try to give names to some things.  Most functions will have been given
     // names when we marked their locations, but import thunks can be scattered all over the place and its nice if we give them
     // the same name as the imported function to which they point.  This is especially important if there's no basic block at
     // the imported function's address (i.e., the dynamic linker hasn't run) because ROSE's AST can't represent basic blocks
     // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
-    if (interp)
-        P2::ModulesPe::nameImportThunks(partitioner, interp);
+    engine.postPartitionFixups(partitioner, interp);
 
     SgAsmBlock *globalBlock = NULL;
 

@@ -156,7 +156,8 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
 
 void
 nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
-    ASSERT_not_null(interp);
+    if (interp==NULL)
+        return;
     std::vector<Function::Ptr> functions = partitioner.functions();
 
     // Get the addresses for the PE Import Address Tables

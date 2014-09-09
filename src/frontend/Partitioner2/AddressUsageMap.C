@@ -147,6 +147,17 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     }
 }
 
+std::vector<SgAsmInstruction*>
+AddressUsers::instructions() const {
+    std::vector<SgAsmInstruction*> insns;
+    BOOST_FOREACH (const AddressUser &user, users_) {
+        if (SgAsmInstruction *insn = user.insn())
+            insns.push_back(insn);
+    }
+    ASSERT_require(isSorted(insns, sortInstructionsByAddress, true));
+    return insns;
+}
+
 std::vector<BasicBlock::Ptr>
 AddressUsers::basicBlocks() const {
     std::vector<BasicBlock::Ptr> bblocks;
