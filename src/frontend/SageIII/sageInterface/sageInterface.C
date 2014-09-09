@@ -18743,6 +18743,204 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
 
 }
 
+//! Replace all variable references to an old symbol in a scope to being references to a new symbol.
+// Essentially replace variable a with b. 
+void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVariableSymbol* new_sym, SgScopeStatement * scope )
+{
+  ROSE_ASSERT  (old_sym != NULL);
+  ROSE_ASSERT  (new_sym != NULL);
+  ROSE_ASSERT (old_sym != new_sym);
+  ROSE_ASSERT  (scope != NULL);
+
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(scope, V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp(*i);
+    if (vRef->get_symbol() == old_sym)
+      vRef->set_symbol(new_sym);
+  }
+}
+
+// Move a single declaration into multiple scopes. 
+// 1. Copy the decl to be local decl , insert into each of the target_scopes, replace variable references to the new copies, erase the original decl 
+// if the target scope is a For loop && the variable is index variable,  merge the decl to be for( int i=.., ...).
+void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes)
+{
+  ROSE_ASSERT (decl!= NULL);
+  ROSE_ASSERT (scopes.size() != 0);
+  SgInitializedName* i_name = SageInterface::getFirstInitializedName (decl);
+  ROSE_ASSERT (i_name != NULL);
+  SgVariableSymbol * sym = SageInterface::getFirstVarSym(decl);
+  ROSE_ASSERT (sym != NULL);
+  SgScopeStatement* orig_scope = sym->get_scope();
+
+  for (size_t i = 0; i< scopes.size(); i++)
+  {
+    SgScopeStatement* target_scope = scopes[i]; 
+    ROSE_ASSERT (target_scope != decl->get_scope());
+
+    SgScopeStatement* adjusted_scope = target_scope; 
+    SgVariableDeclaration * decl_copy = SageInterface::deepCopy(decl);
+
+    switch (target_scope->variantT())
+    {
+      case V_SgBasicBlock:
+        {
+          SageInterface::prependStatement (decl_copy, adjusted_scope);
+          break;
+        }
+      case V_SgForStatement:
+        {
+          SgForStatement* stmt = isSgForStatement (target_scope);
+          ROSE_ASSERT (stmt != NULL);
+          // target scope is a for loop and the declaration declares its index variable.
+          if (i_name == SageInterface::getLoopIndexVariable (stmt))
+          {
+            // we move int i; to be for (int i=0; ...);
+            SgStatementPtrList& stmt_list = stmt->get_init_stmt();
+            // Try to match a pattern like for (i=0; ...) here
+            // assuming there is only one assignment like i=0
+            // We don't yet handle more complex cases
+            if (stmt_list.size() !=1)
+            {
+              cerr<<"Error in moveVariableDeclaration(): only single init statement is handled for SgForStatement now."<<endl;
+              ROSE_ASSERT (stmt_list.size() ==1);
+            }
+            SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
+            ROSE_ASSERT (exp_stmt != NULL);
+            SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+            ROSE_ASSERT (assign_op != NULL);
+
+            // remove the existing i=0; preserve its right hand operand
+            SgExpression * rhs = SageInterface::copyExpression(assign_op->get_rhs_operand());
+            stmt_list.clear();
+            SageInterface::deepDelete (exp_stmt);
+
+            // modify the decl's rhs to be the new one
+            SgInitializedName * copy_name = SageInterface::getFirstInitializedName (decl_copy);
+            SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs);
+            if (copy_name->get_initptr() != NULL)
+              SageInterface::deepDelete (copy_name->get_initptr());
+            copy_name->set_initptr(initor);
+            initor->set_parent(copy_name);
+            stmt_list.insert (stmt_list.begin(),  decl_copy);
+            decl_copy->set_parent(stmt->get_for_init_stmt());
+            ROSE_ASSERT (decl_copy->get_parent() != NULL); 
+          } //
+          else 
+          {
+            SgBasicBlock* loop_body = SageInterface::ensureBasicBlockAsBodyOfFor (stmt);
+            adjusted_scope = loop_body;
+            SageInterface::prependStatement (decl_copy, adjusted_scope);
+          }
+          break;
+        }
+      default:
+        {
+          cerr<<"Error. Unhandled target scope type:"<<target_scope->class_name()<<endl;
+          ROSE_ASSERT  (false);
+        }
+    }
+#if 1 
+    // check what is exactly copied:
+    // Symbol is not copies. It is shared instead
+    SgVariableSymbol * new_sym = SageInterface::getFirstVarSym (decl_copy);
+
+    // init name is copied, but its scope is not changed!
+    // but the symbol cannot be find by calling init_name->get_symbol_from_symbol_table ()
+    SgInitializedName* init_name_copy = SageInterface::getFirstInitializedName (decl_copy);
+    init_name_copy->set_scope (adjusted_scope);
+
+    //ROSE_ASSERT (false);
+    if (orig_scope != adjusted_scope)
+    {
+      // SageInterface::fixVariableDeclaration() cannot switch the scope for init name.
+      // it somehow always reuses previously associated scope.
+      ROSE_ASSERT (i_name != init_name_copy);
+      // we have to manually copy the symbol and insert it
+      SgName sname = sym->get_name();
+      adjusted_scope->insert_symbol(sname, new SgVariableSymbol (init_name_copy));
+    }
+    new_sym = SageInterface::getFirstVarSym (decl_copy);
+    ROSE_ASSERT (sym!=new_sym);
+    // This is difficult since C++ variables have namespaces
+    // Details are in SageInterface::fixVariableDeclaration()
+    ROSE_ASSERT (adjusted_scope->symbol_exists(new_sym));
+#endif     
+
+#if 1 
+    // replace variable references
+    replaceVariableReferences  (sym, new_sym, adjusted_scope);
+#endif 
+  } //end for all scopes
+
+  // remove the original declaration 
+  SageInterface::removeStatement(decl);
+  //TODO deepDelete is problematic
+  //SageInterface::deepDelete(decl);  // symbol is not deleted?
+  //orig_scope->remove_symbol(sym);
+  //delete i_name;
+}
+
+//! Check if a variable (symbol) is live in for a scope
+// TODO A real solution is to check liveness analysis result here. However, the analysis is not ready for production use.
+// The current workaround is to use a syntactic analysis: 
+//
+//    The opposite of dead:  !dead, not first defined
+//    check if the first reference (in a pre-order traversal) to the variable is a definition (write access) only, exclude a reference which is both read and write, like a+=1; 
+//    first defined means the variable is the lhs of a= rhs_exp; and it does not show up on rhs_exp; 
+static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
+{
+  SgVarRefExp * first_ref = NULL; 
+  Rose_STL_Container <SgNode*> testList = NodeQuery::querySubTree (scope, V_SgVarRefExp);
+  for (size_t i=0; i< testList.size(); i++)
+  {
+    SgVarRefExp * current_exp = isSgVarRefExp (testList[i]);
+    ROSE_ASSERT (current_exp != NULL);
+    if (current_exp->get_symbol() == var_sym)
+    {
+      first_ref = current_exp; 
+      break;
+    }
+  } // end for search
+
+  // No reference at all?  Not liveIn
+  if (first_ref == NULL) return false; 
+
+  // Now go through common cases for finding definitions. 
+  // 1. We don't care about declarations since the variables will be different from var_sym!
+  // 2. For unary operations: ++ or --,  they must read the variables first then change the values
+  // 3. Binary operations: only SgAssignOp does not read lhs oprand (define only )
+  // 4. Function call parameters: addressOf(a): cannot move, is live
+
+  // if a = rhs_exp;  and a does not show up in rhs_exp; 
+  // then it is not live in (return false).
+// TODO : handle casting
+// TODO: handle rare case like (t=i)=8; 
+  SgNode* parent = first_ref ->get_parent();
+  ROSE_ASSERT (parent != NULL);
+  if ( (isSgAssignOp(parent) && isSgAssignOp(parent)->get_lhs_operand()==first_ref) )
+  {
+    // check if it shows up on the rhs
+    bool onRhs = false; 
+    Rose_STL_Container <SgNode*> rhs_vars = NodeQuery::querySubTree (isSgAssignOp(parent)->get_rhs_operand(), V_SgVarRefExp);
+    for (size_t i=0; i< rhs_vars.size(); i++)
+    {
+      SgVarRefExp * current_var = isSgVarRefExp (rhs_vars[i]);
+      ROSE_ASSERT (current_var != NULL);
+      if (current_var->get_symbol() == var_sym)
+      {
+        onRhs = true;
+        break;
+      }
+    } // end for search
+    if (!onRhs ) return false; 
+  }
+
+  //All other cases, we conservatively assume the variable is live in for the scope
+  return true; 
+}
+
 bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
@@ -18761,15 +18959,55 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   // for a scope tree with two or more nodes  
   Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
 
-  // simplest case, only a single use place
+  std::vector <SgScopeStatement *> target_scopes; 
+  // Step 2: simplest case, only a single use place
+  // -----------------------------------------------------
   // the first branch node is also the bottom node
   if ((first_branch_node->children).size() ==0)
   {
     SgScopeStatement* bottom_scope = first_branch_node->scope;
-    moveVariableDeclaration (decl, bottom_scope);
+    target_scopes.push_back(bottom_scope);
+    moveVariableDeclaration (decl, target_scopes);
+
     //TODO    delete scope_tree;
     return true;
   } // end the single decl-use path case
+  else { 
+  //Step 3: multiple scopes
+  // -----------------------------------------------------
+    // there are multiple (0 to n - 1 )child scopes in which the variable is used. 
+    // if for all scope 1, 2, .., n-1
+    //  the variable is defined before being used (not live)
+    //  Then we can move the variable into each child scope
+    // Conversely, if any of scope has liveIn () for the declared variable, we cannot move
+   bool isMoveable = true ; 
+   
+   for (size_t i =1; i< (first_branch_node->children).size(); i++)
+   {
+      SgVariableSymbol * var_sym = SageInterface::getFirstVarSym (decl); 
+      ROSE_ASSERT (var_sym != NULL);
+      SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
+      ROSE_ASSERT (current_child_scope != NULL); 
+      if (isLiveIn (var_sym, current_child_scope))
+        isMoveable = false;
+   }  // end for all scopes
+
+   if (isMoveable)
+   {
+     if (true)
+       cout<<"Found a movable declaration for multiple child scopes"<<endl;
+
+     for (size_t i =0; i< (first_branch_node->children).size(); i++)
+     {
+       SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
+       ROSE_ASSERT (current_child_scope != NULL);
+       target_scopes.push_back (current_child_scope);
+     }
+     moveVariableDeclaration (decl, target_scopes);
+     return true;
+   }
+
+  } // end else multiple scopes
 
 //TODO  delete scope_tree;
   return false;  
