@@ -1178,7 +1178,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationHeader(JNIEn
         cactionTypeDeclarationHeader(env, clz, x10_has_super_class, num_interfaces, num_parameters, x10Token);
 }
 
-JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationEnd(JNIEnv *env, jclass clz, jobject x10Token) 
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationEnd(JNIEnv *env, jclass clz, jboolean is_user_defined, jobject x10Token) 
 { 
 #if 0
         cactionTypeDeclarationEnd(env, clz, x10Token);
@@ -1355,6 +1355,12 @@ cout << "    "
 << endl;
 cout.flush();
 }
+
+	if (is_user_defined == JNI_TRUE) {
+		string replaced = class_declaration -> get_qualified_name();
+		replaceString(replaced, ".", "::");
+		Rose::Frontend::X10::X10c::classNames.push_back(replaced);
+	}
 
     ROSE_ASSERT(astX10ScopeStack.top() != NULL);
     if (SgProject::get_verbose() > 0)
@@ -1780,7 +1786,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMessageSendEnd(JNIEnv *env,
                                                              jint x10_number_of_parameters,
                                                              jint numTypeArguments,
                                                              jint numArguments,
-//															 jobject x10Visitor, 
+//							     jobject x10Visitor, 
                                                              jobject x10Token) 
 {
 #if 0
@@ -1863,6 +1869,7 @@ cout.flush();
 #if 1
     SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(targetClassScope, function_name, function_parameter_types, env);
 #else
+    // MH : For lazy lookup, but not finish the mechanism for going up to lookup the exact function defined along the class hierarchy
     SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(targetClassScope, function_name, function_parameter_types, env, x10Visitor);
 #endif
     ROSE_ASSERT(function_symbol);

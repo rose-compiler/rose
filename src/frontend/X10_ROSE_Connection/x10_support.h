@@ -31,6 +31,8 @@ std::string markAndGetQualifiedTypeName(SgClassType *class_type);
 
 bool hasConflicts(SgClassDeclaration *class_declaration);
 
+void replaceString (std::string&, const std::string&, const std::string&);
+
 std::string getPrimitiveTypeName(SgType *);
 std::string getWildcardTypeName(SgJavaWildcardType *);
 std::string getUnionTypeName(SgJavaUnionType *);
