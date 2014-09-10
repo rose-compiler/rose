@@ -57,6 +57,7 @@ EXTRA_DIST = CMakeLists.txt frontend.docs
 
 nobase_pkginclude_HEADERS=			\
 	Partitioner2/AddressUsageMap.h		\
+	Partitioner2/Attribute.h		\
 	Partitioner2/BasicBlock.h		\
 	Partitioner2/BasicTypes.h		\
 	Partitioner2/ControlFlowGraph.h		\
