@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_Partitioner_H
 
 #include <Partitioner2/AddressUsageMap.h>
+#include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/ControlFlowGraph.h>
@@ -203,7 +204,7 @@ namespace Partitioner2 {
  *  Eventually the CFG construction phase of the partitioner will complete, and then the task of partitioning the basic blocks
  *  into functions begins. During function partitioning phase, the CFG is static -- basic blocks, instructions, and edges are
  *  neither inserted nor removed. [FIXME[Robb P. Matzke 2014-07-30]: to be written later] */
-class Partitioner {
+class Partitioner: public Attribute::StoredValues {
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */

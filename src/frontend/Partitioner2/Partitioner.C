@@ -1705,7 +1705,7 @@ Partitioner::buildDataBlockAst(const DataBlock::Ptr &dblock, bool relaxed) const
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
     size_t nRead = memoryMap_.at(dblock->address()).read(rawBytes).size();
-    ASSERT_require(nRead==dblock->size());
+    ASSERT_always_require(nRead==dblock->size());
     SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
 
     // Build the data block IR node pointing to the static item

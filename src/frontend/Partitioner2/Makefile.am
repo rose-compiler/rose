@@ -10,6 +10,7 @@ noinst_LTLIBRARIES = libPartitioner.la
 
 libPartitioner_la_SOURCES =			\
 	AddressUsageMap.C			\
+	Attribute.C				\
 	BasicBlock.C				\
 	ControlFlowGraph.C			\
 	DataBlock.C				\
