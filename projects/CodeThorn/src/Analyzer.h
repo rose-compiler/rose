@@ -293,7 +293,18 @@ namespace CodeThorn {
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
     ExprAnalyzer* getExprAnalyzer();
-    
+    void incIterations() {
+      if(isPrecise()) {
+#pragma omp atomic
+        _iterations+=1;
+      } else {
+#pragma omp atomic
+        _approximated_iterations+=1;
+      }
+    }
+    bool isLoopCondLabel(Label lab);
+    int getApproximatedIterations() { return _approximated_iterations; }
+    int getIterations() { return _iterations; }
   private:
     set<int> _inputVarValues;
     list<int> _inputSequence;
@@ -321,7 +332,11 @@ namespace CodeThorn {
     ExplorationMode _explorationMode;
     bool _minimizeStates;
     bool _topifyModeActive;
-  }; // end of class analyzer
+    int _iterations;
+    int _approximated_iterations;
+    int _curr_iteration_cnt;
+    int _next_iteration_cnt;
+  }; // end of class Analyzer
   
 } // end of namespace CodeThorn
 

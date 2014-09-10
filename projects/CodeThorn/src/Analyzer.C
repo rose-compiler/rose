@@ -168,7 +168,11 @@ Analyzer::Analyzer():
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
   _minimizeStates(false),
-  _topifyModeActive(false)
+  _topifyModeActive(false),
+  _iterations(0),
+  _approximated_iterations(0),
+  _curr_iteration_cnt(0),
+  _next_iteration_cnt(0)
  {
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
@@ -287,7 +291,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
   // report we are alife
   stringstream ss;
   if(forceDisplay) {
-    ss <<color("white")<<"Number of pstates/estates/trans/csets/wl: ";
+    ss <<color("white")<<"Number of pstates/estates/trans/csets/wl/iter: ";
     ss <<color("magenta")<<pstateSet.size()
        <<color("white")<<"/"
        <<color("cyan")<<estateSet.size()
@@ -296,7 +300,9 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<color("yellow")<<constraintSetMaintainer.size()
        <<color("white")<<"/"
-       <<estateWorkList.size();
+       <<estateWorkList.size()
+       <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
+      ;
     ss<<endl;
     cout<<ss.str();
   }
@@ -307,6 +313,11 @@ bool Analyzer::isInWorkList(const EState* estate) {
     if(*i==estate) return true;
   }
   return false;
+}
+
+bool Analyzer::isLoopCondLabel(Label lab) {
+  SgNode* node=getLabeler()->getNode(lab);
+  return SgNodeHelper::isLoopCond(node);
 }
 
 void Analyzer::addToWorkList(const EState* estate) { 
@@ -320,9 +331,13 @@ void Analyzer::addToWorkList(const EState* estate) {
     case EXPL_DEPTH_FIRST: estateWorkList.push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkList.push_back(estate);break;
     case EXPL_LOOP_AWARE: {
-      SgNode* node=getLabeler()->getNode(estate->label());
-      if(SgNodeHelper::isLoopCond(node)) {
+      if(isLoopCondLabel(estate->label())) {
         estateWorkList.push_back(estate);
+        if(_curr_iteration_cnt==0 && _next_iteration_cnt==0) {
+          _curr_iteration_cnt=1; // initialization
+        } else {
+          _next_iteration_cnt++;
+        }
       } else {
         estateWorkList.push_front(estate);
       }
@@ -479,11 +494,24 @@ const EState* Analyzer::popWorkList() {
   {
     if(estateWorkList.size()>0)
       estate=*estateWorkList.begin();
-    if(estate)
+    if(estate) {
       estateWorkList.pop_front();
+      if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {
+        //cout<<"DEBUG: popFromWorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
+        _curr_iteration_cnt--;
+        if(_curr_iteration_cnt==0) {
+          _curr_iteration_cnt=_next_iteration_cnt;
+          _next_iteration_cnt=0;
+          incIterations();
+          //cout<<"STATUS: Started analyzing loop iteration "<<_iterations<<"-"<<_approximated_iterations<<endl;
+        }
+      }
+    }
   }
   return estate;
 }
+
+// not used anywhere
 const EState* Analyzer::takeFromWorkList() {
   const EState* co=0;
 #pragma omp critical(ESTATEWL)
@@ -2496,7 +2524,7 @@ bool all_false(vector<bool>& v) {
 void Analyzer::runSolver5() {
   flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  cerr<<"DEBUG: num of error labels: "<<reachabilityResults.size()<<endl;
+  cerr<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
   int workers=_numberOfThreadsToUse;
