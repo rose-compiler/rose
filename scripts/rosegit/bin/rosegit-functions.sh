@@ -44,9 +44,16 @@ rosegit_environment () {
     [ -d "$ROSEGIT_SRC" ] || rosegit_die "no source directory"
     [ -d "$ROSEGIT_BLD" ] || rosegit_die "no build directory"
 
+    # Remove all ROSE paths if possible and we'll add them back later
+    type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/)
+
     if [ -d "$BOOST_ROOT" ]; then
-	type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
-	[ -d "$BOOST_ROOT" ] && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
+	type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /boost_)
+	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
+    fi
+    if [ -d "$WT_ROOT" ]; then
+	type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /wt-)
+	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$WT_ROOT/lib"
     fi
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/.libs"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/libltdl/.libs"
@@ -351,17 +358,25 @@ rosegit_show_environment () {
     echo "    $((tex --version || echo tex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $((latex --version || echo latex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $(swig -version |grep -i version)"
-    if [ -n "$BOOST_HOME" ]; then
-	echo -n "    boost (in $BOOST_HOME) "
+    if [ -n "$BOOST_ROOT" ]; then
+	echo -n "    boost (in $BOOST_ROOT) "
 	if [ -n "$BOOST_VERSION" ]; then
 	    echo "$BOOST_VERSION"
-	elif [ -f "$BOOST_HOME/include/boost/version.hpp" ]; then
-	    echo $(sed -n '/#.*BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' <"$BOOST_HOME/include/boost/version.hpp" | tr _ .)
+	elif [ -f "$BOOST_ROOT/include/boost/version.hpp" ]; then
+	    echo $(sed -n '/#.*BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' <"$BOOST_ROOT/include/boost/version.hpp" | tr _ .)
 	else
 	    echo "unknown"
         fi
     else
 	echo "    boost: not in /usr/include (see configure output for version)"
+    fi
+    if [ -n "$WT_ROOT" ]; then
+	echo -n "    Wt (in $WT_ROOT) "
+	if [ -f "$WT_ROOT/include/Wt/WConfig.h" ]; then
+	    echo $(sed -n '/#define WT_VERSION_STR/s/.*"\(.*)"/\1/p' <"$WT_ROOT/include/Wt/WConfig.h")
+	else
+	    echo "unknown"
+	fi
     fi
 
     echo "PATH:"
