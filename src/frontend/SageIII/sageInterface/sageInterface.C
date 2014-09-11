@@ -174,7 +174,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
 #endif
                  // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
@@ -191,7 +191,14 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // It allows a boost issue specific to a revisited SgTypedefDeclaration pass, but I still
                  // don't understand the problem.  so this needs a better fix.
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL);
-                    ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+                 // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+                    bool isInTemplateDeclaration = ( (isSgTemplateClassDefinition(decl->get_parent()) != NULL) ||
+                                                     (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) || 
+                                                     (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) || 
+                                                     (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) || 
+                                                     (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
+
+                    ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
 #endif
 
                     if (ignore_error == true)

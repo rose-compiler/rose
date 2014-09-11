@@ -2925,11 +2925,14 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgName name = template_type->get_name();
 #endif
 
+  // Add a space to seperate the type from other syntax.
+     name += " ";
+
 #if 0
      printf ("In unparseTemplateType(): Unparsing the SgTemplateType as name = %s \n",name.str());
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseTemplateType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
@@ -2947,7 +2950,10 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
        else
         {
        // This is the case where it is called from within the unparser.
-          if (info.isTypeSecondPart() == true)
+
+       // DQ (9/9/2014): Fixing this to unparse as part of first part (when either is true) and not the second part.
+       // if (info.isTypeSecondPart() == true)
+          if (info.isTypeFirstPart() == true)
              {
                curprint(name);
              }
@@ -3011,7 +3017,17 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // So this code needs to be refactored.
 
 #if 0
-      printf ("In outputType(): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+     printf ("In outputType(): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+     curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+#endif
+
+#if 0
+  // DQ (9/10/2014): debugging code!
+     if (isSgInitializedName(referenceNode) != NULL && isSgTypeInt(referenceNodeType) != NULL)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      SgUnparse_Info newInfo(info);
@@ -3148,7 +3164,9 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // unp->u_type->unparseType(templateArgumentType, info);
      unp->u_type->unparseType(referenceNodeType, newInfo);
 
-  // printf ("DONE: unparse_helper(): output the 2nd part of the type \n");
-  // curprint( "\n/* DONE: unparse_helper(): output the 2nd part of the type */ \n");
+#if 0
+     printf ("DONE: outputType(): \n");
+     curprint( "\n/* DONE: outputType(): */ \n");
+#endif
    }
 
