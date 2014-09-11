@@ -738,13 +738,12 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
                 string funcName = mfunc_ref->get_symbol()->get_name(); 
                 string parse = "Long_parse";
                 if (funcName == "Rail_size") {
-                unparseExpression(func_call->get_args()->get_expressions()[0], info);
+                        unparseExpression(func_call->get_args()->get_expressions()[0], info);
                         curprint(".size");
                 }
-//              else if (funcName == "Long_parse") {
                 else if (funcName.compare(0, parse.length(), parse) == 0) {
-//                      curprint("Long.parse(");
-                        curprint(funcName);
+                        curprint("Long.parse(");
+  //                      curprint(funcName);
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
                         curprint(")");
                 }
