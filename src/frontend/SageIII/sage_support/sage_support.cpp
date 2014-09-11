@@ -3661,7 +3661,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           experimentalFrontEndCommandLine.push_back(parseTableOption);
 
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 

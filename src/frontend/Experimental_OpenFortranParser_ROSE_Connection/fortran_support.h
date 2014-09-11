@@ -25,6 +25,9 @@ extern "C" {
 
 
 
+#include "aterm_traversal/traversal.hpp"
+#include "aterm_traversal/OFPUnparser.hpp"
+#include "UntypedASTBuilder.hpp"
 
 
 
