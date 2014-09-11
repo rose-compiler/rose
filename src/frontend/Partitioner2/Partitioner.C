@@ -1641,6 +1641,20 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
     return ghosts;
 }
 
+FunctionCallGraph
+Partitioner::functionCallGraph() const {
+    FunctionCallGraph cg;
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, cfg_.edges()) {
+        if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
+            Function::Ptr source = edge.source()->value().function();
+            Function::Ptr target = edge.target()->value().function();
+            if (source!=NULL && target!=NULL && (source!=target || edge.value().type()==E_FUNCTION_CALL))
+                cg.insert(source, target);
+        }
+    }
+    return cg;
+}
+
 SgAsmBlock*
 Partitioner::buildBasicBlockAst(const BasicBlock::Ptr &bb, bool relaxed) const {
     ASSERT_not_null(bb);

@@ -1,4 +1,8 @@
+#define BOOST_FILESYSTEM_VERSION 3
+
 #include <rose.h>
+#include <rose_getline.h>
+#include <rose_strtoull.h>
 #include <rosePublicConfig.h>
 #include <AsmFunctionIndex.h>
 #include <AsmUnparser.h>
@@ -20,15 +24,21 @@
 #include <sawyer/ProgressBar.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/foreach.hpp>
 #include <boost/graph/graphviz.hpp>
 
 #include <Wt/WAbstractTableModel>
 #include <Wt/WApplication>
 #include <Wt/WContainerWidget>
+#include <Wt/WImage>
+#include <Wt/WLink>
+#include <Wt/WRectArea>
 #include <Wt/WString>
+#include <Wt/WTable>
 #include <Wt/WTableView>
-
+#include <Wt/WText>
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
@@ -214,30 +224,280 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     
     Parser parser;
     parser
-        .purpose("tests new partitioner architecture")
+        .purpose("binary ROSE on-line workbench for specimen exploration")
         .doc("synopsis",
              "@prop{programName} [@v{switches}] @v{specimen_name}")
         .doc("description",
-             "This program tests the new partitioner architecture by disassembling the specified file.");
+             "This is a web server for viewing the contents of a binary specimen.");
     
     return parser.with(gen).with(dis).with(server).parse(argc, argv).apply();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-P2::Attribute::Id ATTR_FUNCTION_SIZE(-1);
+// Attributes initialized by the first construction of a Context object (where they are documented)
+P2::Attribute::Id ATTR_NBYTES(-1);
+P2::Attribute::Id ATTR_NINSNS(-1);
+P2::Attribute::Id ATTR_CFG_DOTFILE(-1);
+P2::Attribute::Id ATTR_CFG_IMAGE(-1);
+P2::Attribute::Id ATTR_CFG_COORDS(-1);
+P2::Attribute::Id ATTR_CG(-1);
 
-
+// Context passed around to pretty much all the widgets.
 class Context {
 public:
     P2::Partitioner &partitioner;
+    P2::Function::Ptr function;                         // current function
 
     Context(P2::Partitioner &partitioner): partitioner(partitioner) {
-        if (ATTR_FUNCTION_SIZE == P2::Attribute::INVALID_ID) {
-            ATTR_FUNCTION_SIZE = P2::Attribute::registerName("Function size in bytes");
+        if (ATTR_NBYTES == P2::Attribute::INVALID_ID) {
+            ATTR_NBYTES         = P2::Attribute::registerName("Size in bytes");
+            ATTR_NINSNS         = P2::Attribute::registerName("Number of instructions");
+            ATTR_CFG_DOTFILE    = P2::Attribute::registerName("CFG GraphViz file name");
+            ATTR_CFG_IMAGE      = P2::Attribute::registerName("CFG JPEG file name");
+            ATTR_CFG_COORDS     = P2::Attribute::registerName("CFG vertex coordinates");
+            ATTR_CG             = P2::Attribute::registerName("Function call graph");
         }
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Count function size in bytes and cache as the function's ATTR_NBYTES attribute
+static size_t
+functionNBytes(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    size_t nBytes = 0;
+    if (function && !function->attr<size_t>(ATTR_NBYTES).assignTo(nBytes)) {
+        nBytes = partitioner.functionExtent(function).size();
+        function->attr(ATTR_NBYTES, nBytes);
+    }
+    return nBytes;
+}
+
+// Count number of instructions in function and cache as the function's ATTR_NINSNS attribute
+static size_t
+functionNInsns(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    size_t nInsns = 0;
+    if (function && !function->attr<size_t>(ATTR_NINSNS).assignTo(nInsns)) {
+        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
+            if (P2::BasicBlock::Ptr bblock = partitioner.basicBlockExists(bblockVa))
+                nInsns += bblock->nInstructions();
+        }
+        function->attr(ATTR_NINSNS, nInsns);
+    }
+    return nInsns;
+}
+
+static boost::filesystem::path
+uniquePath(const std::string &extension) {
+#if 0 // [Robb P. Matzke 2014-09-10]
+    return boost::filesystem::temp_directory_path() / boost::filesystem::unique_path("ROSE-%%%%%%%%%%%%%%%%"+extension);
+#else
+    return boost::filesystem::path("tmp") /  boost::filesystem::unique_path("ROSE-%%%%%%%%%%%%%%%%"+extension);
+#endif
+}
+
+// Generate a GraphViz file describing a function's control flow graph and store the name of the file as the function's
+// ATTR_CFG_DOTFILE attribute.
+static boost::filesystem::path
+functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    boost::filesystem::path fileName;
+    if (function && !function->attr<boost::filesystem::path>(ATTR_CFG_DOTFILE).assignTo(fileName)) {
+
+        // Write to the "dot" command, which will add layout information to our graph.
+        // FIXME[Robb P. Matzke 2014-09-10]: how to do this on Windows?
+        fileName = uniquePath(".dot");
+        std::string dotCmd = "dot /proc/self/fd/0 >" + fileName.native();
+        FILE *dot = popen(dotCmd.c_str(), "w");
+        if (NULL==dot) {
+            mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
+            return boost::filesystem::path();
+        }
+
+        // Vertices
+        std::set<size_t> vertices;
+        fprintf(dot, "digraph G {\n");
+        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
+            P2::ControlFlowGraph::ConstVertexNodeIterator placeholder = partitioner.findPlaceholder(bblockVa);
+            ASSERT_require(placeholder != partitioner.cfg().vertices().end());
+            if (bblockVa == function->address()) {
+                // Entry vertex: light green
+                fprintf(dot, "%zu [ shape=plaintext, label=\"0x%08"PRIx64"\", href=\"0x%"PRIx64"\""
+                        ", style=filled, fillcolor=\"0.455,0.1,1\" ];\n",
+                        placeholder->id(), bblockVa, bblockVa);
+            } else if (0==placeholder->nInEdges()) {
+                // Non-reachable vertex: light red
+                fprintf(dot, "%zu [ shape=plaintext, label=\"0x%08"PRIx64"\", href=\"0x%"PRIx64"\""
+                        ", style=filled, fillcolor=\"0,0.051,1\" ];\n",
+                        placeholder->id(), bblockVa, bblockVa);
+            } else {
+                // Normal function vertex: no fill color
+                fprintf(dot, "%zu [ shape=plaintext, label=\"0x%08"PRIx64"\", href=\"0x%"PRIx64"\" ];\n",
+                        placeholder->id(), bblockVa, bblockVa);
+            }
+            vertices.insert(placeholder->id());
+        }
+
+        // Edges and special vertices
+        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
+            P2::ControlFlowGraph::ConstVertexNodeIterator placeholder = partitioner.findPlaceholder(bblockVa);
+            BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, placeholder->outEdges()) {
+                P2::ControlFlowGraph::ConstVertexNodeIterator target = edge.target();
+                if (vertices.find(target->id())==vertices.end()) {
+                    if (target==partitioner.undiscoveredVertex()) {
+                        fprintf(dot, "%zu [ label=\"undiscovered\" ];\n", target->id());
+                    } else if (target==partitioner.indeterminateVertex()) {
+                        fprintf(dot, "%zu [ label=\"indeterminate\" ];\n", target->id());
+                    } else if (target==partitioner.nonexistingVertex()) {
+                        fprintf(dot, "%zu [ label=\"non-existing\" ];\n", target->id());
+                    } else if (P2::Function::Ptr targetFunction = target->value().function()) {
+                        // Function call. Use the address and first few characters of the function name.
+                        std::string label = StringUtility::addrToString(targetFunction->address());
+                        if (!targetFunction->name().empty()) {
+                            if (targetFunction->name().size() > 12) {
+                                label += "\\n" + StringUtility::cEscape(targetFunction->name()).substr(0, 12) + "...";
+                            } else {
+                                label += "\\n" + StringUtility::cEscape(targetFunction->name());
+                            }
+                        }
+                        fprintf(dot, "%zu [ shape=box, label=\"%s\", href=\"0x%"PRIx64"\" ];\n",
+                                target->id(), label.c_str(), targetFunction->address());
+                    } else {
+                        // non-call, inter-function edge
+                        fprintf(dot, "%zu [ label=\"0x%08"PRIx64"\", style=filled, fillcolor=yellow ];\n",
+                                target->id(), target->value().address());
+                    }
+                    vertices.insert(target->id());
+                }
+                fprintf(dot, "%zu->%zu;\n", placeholder->id(), target->id());
+            }
+        }
+        fprintf(dot, "}\n");
+        fclose(dot); dot=NULL;
+        function->attr(ATTR_CFG_DOTFILE, fileName);
+    }
+    return fileName;
+}
+
+// Generate a JPEG image of the function's CFG
+static boost::filesystem::path
+functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    boost::filesystem::path imageName;
+    if (function && !function->attr<boost::filesystem::path>(ATTR_CFG_IMAGE).assignTo(imageName)) {
+        boost::filesystem::path srcName = functionCfgGraphvizFile(partitioner, function);
+        if (srcName.empty())
+            return boost::filesystem::path();
+        imageName = uniquePath(".jpg");
+        std::string dotCmd = "dot -Tjpg -o" + imageName.native() + " " + srcName.native();
+        if (0!=system(dotCmd.c_str())) {
+            mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
+            return boost::filesystem::path();
+        }
+        function->attr(ATTR_CFG_IMAGE, imageName);
+    }
+    return imageName;
+}
+
+// Obtain coordinates for all the vertices in a CFG GraphViz file and cache them as the ATTR_CFG_COORDS attribute of the
+// function.
+struct Box { int x, y, dx, dy; };
+typedef Sawyer::Container::Map<rose_addr_t, Box> CfgVertexCoords;
+static CfgVertexCoords
+functionCfgVertexCoords(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    // Things that need to be cleaned up on error
+    struct Locals {
+        FILE *coordFile;
+        char *line;
+        size_t linesz;
+        Locals(): coordFile(NULL), line(NULL), linesz(0) {}
+        ~Locals() {
+            if (coordFile)
+                fclose(coordFile);
+            if (line)
+                free(line);
+        }
+    } my;
+
+    CfgVertexCoords coords;
+    if (function && !function->attr<CfgVertexCoords>(ATTR_CFG_COORDS).assignTo(coords)) {
+        boost::filesystem::path sourcePath = functionCfgGraphvizFile(partitioner, function);
+        if (sourcePath.empty())
+            throw std::runtime_error("CFG not available");
+        std::string dotCmd = "dot -Timap_np -o/proc/self/fd/1 " + sourcePath.native();
+        my.coordFile = popen(dotCmd.c_str(), "r");
+        size_t linenum = 0;
+        while (rose_getline(&my.line, &my.linesz, my.coordFile)>0) {
+            ++linenum;
+            if (!strncmp(my.line, "base referer", 12)) {
+                // file always starts with this line; ignore it
+            } else if (!strncmp(my.line, "rect ", 5)) {
+                // example: "rect 0x401959 73,5 215,53"
+                char *s=my.line+5, *t=NULL;
+                Box box;
+
+                errno = 0;
+                rose_addr_t va = rose_strtoull(s, &t, 0);
+                if (t==s || errno!=0) {
+                    throw std::runtime_error("problem parsing line "+StringUtility::numberToString(linenum)+": "+
+                                             StringUtility::trim(my.line));
+                }
+
+                s = t;
+                errno = 0;
+                box.x = strtol(s, &t, 0);
+                if (t==s || errno!=0 || *t!=',') {
+                    throw std::runtime_error("problem parsing line "+StringUtility::numberToString(linenum)+": "+
+                                             StringUtility::trim(my.line));
+                }
+
+                s = ++t;
+                errno = 0;
+                box.y = strtol(s, &t, 0);
+                if (t==s || errno!=0 || *t!=' ') {
+                    throw std::runtime_error("problem parsing line "+StringUtility::numberToString(linenum)+": "+
+                                             StringUtility::trim(my.line));
+                }
+                
+                s = t;
+                errno = 0;
+                int x2 = strtol(s, &t, 0);
+                if (t==s || errno!=0 || *t!=',') {
+                    throw std::runtime_error("problem parsing line "+StringUtility::numberToString(linenum)+": "+
+                                             StringUtility::trim(my.line));
+                }
+
+                s = ++t;
+                errno = 0;
+                int y2 = strtol(s, &t, 0);
+                if (t==s || errno!=0) {
+                    throw std::runtime_error("problem parsing line "+StringUtility::numberToString(linenum)+": "+
+                                             StringUtility::trim(my.line));
+                }
+
+                if (box.x > x2 || box.y > y2) {
+                    throw std::runtime_error("invalid box coords at line "+StringUtility::numberToString(linenum)+": "+
+                                             StringUtility::trim(my.line));
+                }
+                box.dx = x2 - box.x + 1;
+                box.dy = y2 - box.y + 1;
+                coords.insert(va, box);
+            }
+        }
+        function->attr(ATTR_CFG_COORDS, coords);
+    }
+    return coords;
+}
+
+// Generate a function call graph and cache it on the partitioner.
+P2::FunctionCallGraph*
+functionCallGraph(P2::Partitioner &partitioner) {
+    P2::FunctionCallGraph *cg = NULL;
+    if (!partitioner.attr<P2::FunctionCallGraph*>(ATTR_CG).assignTo(cg)) {
+        cg = new P2::FunctionCallGraph(partitioner.functionCallGraph());
+        partitioner.attr(ATTR_CG, cg);
+    }
+    return cg;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -255,14 +515,13 @@ public:
 
     // Construct a model having the list of all functions in the partitioner
     FunctionListModel(Context &ctx): ctx_(ctx) {
-        BOOST_FOREACH (const P2::Function::Ptr &function, ctx.partitioner.functions()) {
-            size_t nBytes;                              // cached size of function in bytes (code + data)
-            if (!function->attr<size_t>(ATTR_FUNCTION_SIZE).assignTo(nBytes)) {
-                nBytes = ctx.partitioner.functionExtent(function).size();
-                function->attr(ATTR_FUNCTION_SIZE, nBytes);
-            }
+        BOOST_FOREACH (const P2::Function::Ptr &function, ctx.partitioner.functions())
             functions_.push_back(function);
-        }
+    }
+
+    // Returns the function at the specified index, or null
+    P2::Function::Ptr functionAt(size_t idx) {
+        return idx<functions_.size() ? functions_[idx] : P2::Function::Ptr();
     }
 
     virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
@@ -299,7 +558,7 @@ public:
                 case C_NAME:
                     return Wt::WString(StringUtility::cEscape(function->name()));
                 case C_SIZE:
-                    return function->attr<size_t>(ATTR_FUNCTION_SIZE).orElse(0);
+                    return functionNBytes(ctx_.partitioner, function);
                 default:
                     ASSERT_not_reachable("invalid column number");
             }
@@ -320,10 +579,10 @@ public:
         return a->name() > b->name();
     }
     static bool sortByAscendingSize(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
-        return a->attr<size_t>(ATTR_FUNCTION_SIZE).orElse(0) < b->attr<size_t>(ATTR_FUNCTION_SIZE).orElse(0);
+        return a->attr<size_t>(ATTR_NBYTES).orElse(0) < b->attr<size_t>(ATTR_NBYTES).orElse(0);
     }
     static bool sortByDescendingSize(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
-        return a->attr<size_t>(ATTR_FUNCTION_SIZE).orElse(0) > b->attr<size_t>(ATTR_FUNCTION_SIZE).orElse(0);
+        return a->attr<size_t>(ATTR_NBYTES).orElse(0) > b->attr<size_t>(ATTR_NBYTES).orElse(0);
     }
     
     void sort(int column, Wt::SortOrder order) {
@@ -336,6 +595,8 @@ public:
                 sorter = Wt::AscendingOrder==order ? sortByAscendingName : sortByDescendingName;
                 break;
             case C_SIZE:
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
+                    (void) functionNBytes(ctx_.partitioner, function); // make sure sizes are cached for all functions
                 sorter = Wt::AscendingOrder==order ? sortByAscendingSize : sortByDescendingSize;
                 break;
             default:
@@ -350,14 +611,15 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Presents a list of functions
 class WFunctionList: public Wt::WContainerWidget {
     FunctionListModel *model_;
     Wt::WTableView *tableView_;
+    Wt::Signal<P2::Function::Ptr> clicked_;
 public:
-    WFunctionList(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), model_(NULL) {
-        model_ = new FunctionListModel(ctx);
+    WFunctionList(FunctionListModel *model, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), model_(model) {
+        ASSERT_not_null(model);
         tableView_ = new Wt::WTableView(this);
         tableView_->setModel(model_);
         tableView_->setRowHeaderCount(1); // this must be first property set
@@ -369,28 +631,234 @@ public:
         tableView_->setColumnWidth(1, 50);
         tableView_->setColumnWidth(1, 420);
         tableView_->setColumnResizeEnabled(true);
-        tableView_->setSelectionMode(Wt::ExtendedSelection);
+        tableView_->setSelectionMode(Wt::SingleSelection);
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
+        tableView_->clicked().connect(this, &WFunctionList::selectRow);
+    }
+
+    // Emitted when a row of the table is clicked
+    Wt::Signal<P2::Function::Ptr>& clicked() {
+        return clicked_;
+    }
+
+private:
+    void selectRow(const Wt::WModelIndex &idx) {
+        if (idx.isValid()) {
+            P2::Function::Ptr function = model_->functionAt(idx.row());
+            clicked_.emit(function);
+        }
     }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Presents function summary information
+class WFunctionSummary: public Wt::WContainerWidget {
+    Context &ctx_;
+    P2::Function::Ptr function_;
+    Wt::WTable *table_;
+    Wt::WText *wName_, *wEntry_, *wBBlocks_, *wDBlocks_, *wInsns_, *wBytes_, *wDiscontig_, *wCallers_, *wCallsInto_;
+    Wt::WText *wCallees_, *wCallsOut_, *wRecursive_;
+public:
+    typedef std::pair<Wt::WText*, Wt::WText*> FieldPair;
+    Wt::WText* field(std::vector<FieldPair> &fields, const std::string &label, const std::string &toolTip) {
+        Wt::WText *wLabel = new Wt::WText(label+":");
+        if (toolTip!="")
+            wLabel->setToolTip(toolTip);
+        Wt::WText *wValue = new Wt::WText();
+        fields.push_back(std::make_pair(wLabel, wValue));
+        return wValue;
+    }
+
+    WFunctionSummary(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), ctx_(ctx), table_(NULL), wName_(NULL), wEntry_(NULL), wBBlocks_(NULL), wDBlocks_(NULL),
+          wInsns_(NULL), wBytes_(NULL), wDiscontig_(NULL), wCallers_(NULL), wCallsInto_(NULL), wCallees_(NULL),
+          wCallsOut_(NULL), wRecursive_(NULL) {
+        std::vector<FieldPair> fields;
+        wName_          = field(fields, "Name",           "Function name");
+        wEntry_         = field(fields, "Entry VA",       "Primary entry virtual address");
+        wBBlocks_       = field(fields, "Basic blocks",   "Number of basic blocks");
+        wDBlocks_       = field(fields, "Data blocks",    "Number of data blocks");
+        wInsns_         = field(fields, "Instructions",   "Number of instructions");
+        wBytes_         = field(fields, "Bytes",          "Number of distinct addresses with code and/or data");
+        wDiscontig_     = field(fields, "Address regions","Number of discontiguous regions in the address space");
+        wCallers_       = field(fields, "Callers",        "Number of distinct functions that call this function");
+        wCallsInto_     = field(fields, "Calls into",     "Number of call sites calling this function");
+        wCallees_       = field(fields, "Callees",        "Number of distinct functions this function calls.");
+        wCallsOut_      = field(fields, "Calls out",      "Number of function call sites in this function");
+        wRecursive_     = field(fields, "Recursive",      "Does this function call itself directly?");
+
+        table_ = new Wt::WTable(this);
+        table_->setWidth("100%");
+        size_t nrows = (fields.size()+1) / 2;
+        for (size_t col=0, i=0; col<2; ++col) {
+            for (size_t row=0; row<nrows && i<fields.size(); ++row) {
+                table_->elementAt(row, 2*col+0)->addWidget(fields[i].first);// label
+                table_->elementAt(row, 2*col+1)->addWidget(fields[i].second);// value
+                ++i;
+            }
+        }
+    }
+
+    void changeFunction(const P2::Function::Ptr &function) {
+        if (function == function_)
+            return;
+        function_ = function;
+        if (function) {
+            size_t nInsns = functionNInsns(ctx_.partitioner, function);
+            size_t nBytes = functionNBytes(ctx_.partitioner, function);
+            size_t nIntervals = ctx_.partitioner.functionExtent(function).nIntervals();
+            const P2::FunctionCallGraph *cg = functionCallGraph(ctx_.partitioner);
+            ASSERT_not_null(cg);
+            wName_      ->setText(function->name());
+            wEntry_     ->setText(StringUtility::addrToString(function->address()));
+            wBBlocks_   ->setText(StringUtility::plural(function->basicBlockAddresses().size(), "basic blocks"));
+            wDBlocks_   ->setText(StringUtility::plural(function->dataBlocks().size(), "data blocks"));
+            wInsns_     ->setText(StringUtility::plural(nInsns, "instructions"));
+            wBytes_     ->setText(StringUtility::plural(nBytes, "bytes"));
+            wDiscontig_ ->setText(nIntervals<=1 ? "Contiguous" : StringUtility::plural(nIntervals, "intervals"));
+            wCallers_   ->setText(StringUtility::plural(cg->nCallers(function), "distinct functions"));
+            wCallsInto_ ->setText(StringUtility::plural(cg->nCallsIn(function), "calls")+" incoming");
+            wCallees_   ->setText(StringUtility::plural(cg->nCallees(function), "distinct functions"));
+            wCallsOut_  ->setText(StringUtility::plural(cg->nCallsOut(function), "calls")+" outgoing");
+            wRecursive_ ->setText(cg->nCalls(function, function)?"yes":"no");
+        } else {
+            wName_      ->setText("");
+            wEntry_     ->setText("");
+            wBBlocks_   ->setText("");
+            wDBlocks_   ->setText("");
+            wInsns_     ->setText("");
+            wBytes_     ->setText("");
+            wDiscontig_ ->setText("");
+            wCallers_   ->setText("");
+            wCallsInto_ ->setText("");
+            wCallees_   ->setText("");
+            wCallsOut_  ->setText("");
+            wRecursive_ ->setText("");
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Control flow graph for a function
+
+class WFunctionCfg: public Wt::WContainerWidget {
+    Context &ctx_;
+    P2::Function::Ptr function_;                        // currently-displayed function
+    Wt::WImage *wImage_;                                // image for the CFG
+    Wt::WText *wMessage_;
+    std::vector<std::pair<Wt::WRectArea*, rose_addr_t> > areas_;
+public:
+    WFunctionCfg(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), ctx_(ctx), wImage_(NULL) {
+        wMessage_ = new Wt::WText("No function.", this);
+    }
+
+    void changeFunction(const P2::Function::Ptr &function) {
+        if (function_ == function)
+            return;
+        function_ = function;
+
+        // We need to create a new wImage each time because we're adding WRectArea.  See limitation documented for the
+        // WImage::addArea method in Wt-3.3.3 [Robb P. Matzke 2014-09-10]
+        areas_.clear();
+        delete wImage_;
+        wImage_ = new Wt::WImage(this);
+
+        // Get the CFG image
+        if (NULL==function_) {
+            wMessage_->setText("No function.");
+            wMessage_->show();
+            wImage_->hide();
+            return;
+        }
+        boost::filesystem::path imagePath = functionCfgImage(ctx_.partitioner, function);
+        if (imagePath.empty()) {
+            wMessage_->setText("CFG not available.");
+            wMessage_->show();
+            wImage_->hide();
+            return;
+        }
+        wImage_->setImageLink(Wt::WLink(imagePath.native()));
+
+        // Add sensitive areas to the image.
+        try {
+            if (!function)
+                throw std::runtime_error("No function");
+            CfgVertexCoords coords = functionCfgVertexCoords(ctx_.partitioner, function);
+            BOOST_FOREACH (const CfgVertexCoords::Node &node, coords.nodes()) {
+                rose_addr_t va = node.key();
+                Wt::WRectArea *area = new Wt::WRectArea(node.value().x, node.value().y, node.value().dx, node.value().dy);
+                P2::Function::Ptr callee = ctx_.partitioner.functionExists(va);
+                if (callee && callee!=function) {
+                    if (!callee->name().empty())
+                        area->setToolTip(callee->name());
+                    area->clicked().connect(this, &WFunctionCfg::selectFunction);
+                } else if (P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(va)) {
+                    // Tooltip is the instructions, but be careful not to abuse the size
+                    std::string toolTip;
+                    bool exitEarly = bblock->nInstructions()>10;
+                    for (size_t i=0; (i<9 || (!exitEarly && i<10)) && i<bblock->nInstructions(); ++i)
+                        toolTip += (i?"\n":"") + unparseInstruction(bblock->instructions()[i]);
+                    if (bblock->nInstructions()>10)
+                        toolTip += "\nand " + StringUtility::numberToString(bblock->nInstructions()-9) + " more...";
+                    area->setToolTip(toolTip);
+                    area->clicked().connect(this, &WFunctionCfg::selectBasicBlock);
+                }
+                wImage_->addArea(area);
+                areas_.push_back(std::make_pair(area, va));
+            }
+        } catch (const std::runtime_error &e) {
+            wMessage_->setText(e.what());
+            wMessage_->show();
+            wImage_->hide();
+            return;
+        }
+
+        wMessage_->hide();
+        wImage_->show();
+        return;
+    }
+
+private:
+    void selectBasicBlock(const Wt::WMouseEvent &event) {
+        mlog[INFO] <<"ROBB: clicked basic block at (" <<event.widget().x <<"," <<event.widget().y <<")\n";
+    }
+    void selectFunction(const Wt::WMouseEvent &event) {
+        mlog[INFO] <<"ROBB: clicked function at (" <<event.widget().x <<"," <<event.widget().y <<")\n";
+    }
+};
+        
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Application: public Wt::WApplication {
+    Context ctx_;
+    WFunctionList *wFunctionList_;                      // list of all functions
+    WFunctionSummary *wFunctionSummary_;                // summary of current function
+    WFunctionCfg *wFunctionCfg_;                        // control flow graph
 public:
-    Application(Context &ctx, const Wt::WEnvironment &env): Wt::WApplication(env) {
+    Application(P2::Partitioner &partitioner, const Wt::WEnvironment &env): Wt::WApplication(env), ctx_(partitioner) {
         setTitle("bROwSE");
         setCssTheme("polished");
-        new WFunctionList(ctx, root());
+
+        wFunctionList_ = new WFunctionList(new FunctionListModel(ctx_), root());
+        wFunctionList_->clicked().connect(this, &Application::setCurrentFunction);
+        wFunctionSummary_ = new WFunctionSummary(ctx_, root());
+        wFunctionCfg_ = new WFunctionCfg(ctx_, root());
+    }
+
+    void setCurrentFunction(const P2::Function::Ptr &function) {
+        ctx_.function = function;
+        wFunctionSummary_->changeFunction(function);
+        wFunctionCfg_->changeFunction(function);
     }
 };
 
 class ApplicationCreator {
-    Context ctx_;
+    P2::Partitioner &partitioner_;
 public:
-    ApplicationCreator(P2::Partitioner &partitioner): ctx_(partitioner) {}
+    ApplicationCreator(P2::Partitioner &partitioner): partitioner_(partitioner) {}
     Wt::WApplication* operator()(const Wt::WEnvironment &env) {
-        return new Application(ctx_, env);
+        return new Application(partitioner_, env);
     }
 };
 

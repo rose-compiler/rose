@@ -137,6 +137,7 @@ Engine::discoverFunctions(Partitioner &partitioner) {
     }
 
     // Try to attach basic blocks to functions and return the list of failures.
+    makeCalledFunctions(partitioner);
     return attachBlocksToFunctions(partitioner);
 }
 

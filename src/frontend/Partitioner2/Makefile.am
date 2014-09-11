@@ -17,6 +17,7 @@ libPartitioner_la_SOURCES =			\
 	Engine.C				\
 	Exception.C				\
 	Function.C				\
+	FunctionCallGraph.C			\
 	InstructionProvider.C			\
 	Modules.C				\
 	ModulesElf.C				\

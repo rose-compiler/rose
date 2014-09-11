@@ -8,6 +8,7 @@
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/InstructionProvider.h>
 #include <Partitioner2/Modules.h>
 
@@ -1060,6 +1061,9 @@ public:
      *  Returns the set of basic block starting addresses that are naive successors for the basic blocks of a function but
      *  which are not actual control flow successors due to the presence of opaque predicates. */
     std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const;
+
+    /** Returns a function call graph. */
+    FunctionCallGraph functionCallGraph() const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
