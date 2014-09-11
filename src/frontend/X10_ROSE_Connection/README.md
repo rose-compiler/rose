@@ -62,7 +62,7 @@ Since you will be asked "(y/N)?" several times, please observe the progress for 
 
 ## How to run X10/ROSE Connection
 
-First of all, you need a driver code to handle X10 file(s). For example, you can use **identityTranslator** that is located in rose/build/commit-***/exampleTranslators/documentedExamples/simpleTranslatorExamples/. It  invokes ROSE functions **frontend()** and **backend()** in its main(). (Source code identityTranslator.C is located in edg4x-rose/exampleTranslators/documentedExamples/simpleTranslatorExamples.)
+First of all, you need a driver code to handle X10 file(s). For example, you can use **identityTranslator** that is located in rose/build/commit-*/exampleTranslators/documentedExamples/simpleTranslatorExamples/. It  invokes ROSE functions **frontend()** and **backend()** in its main(). (Source code identityTranslator.C is located in edg4x-rose/exampleTranslators/documentedExamples/simpleTranslatorExamples.)
 
 The frontend() runs the X10 compiler, parses a polyglot AST that the X10 compiler creates, and copies the polyglot AST to an ROSE-based AST. The backend() generatesX10 source code from the ROSE AST.
 
@@ -72,7 +72,7 @@ You can find simple examples in /home/michihiro/x10rose/rose/edg4x-rose/src/fron
 
 ### Try to run X10/Rose Connection!
 
->$cd rose/build/commit-***/exampleTranslators/documentedExamples/simpleTranslatorExamples
+>$cd rose/build/commit-*/exampleTranslators/documentedExamples/simpleTranslatorExamples
 
 >$./identityTranslator Fibonacci.x10 >> log 2>> log        # Currently, many debugging info is printed
 
