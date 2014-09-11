@@ -1951,53 +1951,53 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_defin
 #if 1
         method_declaration = lookupMemberFunctionDeclarationInClassScope(ObjectClassDefinition, function_name, formal_types);
 #else
-		string member_name = "";
-		string class_name = class_definition->get_qualified_name();
-		ROSE_ASSERT(class_name.length() > 2);
-		class_name = class_name.substr(2);
-		replaceString(class_name, "::", ".");
-//		cout << "class name=" << class_name << ", func_name=" << function_name.getString() << "(";
-		member_name += function_name.getString() + "(";
-		std::list<SgType*>::iterator i = formal_types.begin();
-		if (i != formal_types.end()) {
-			string typeName = getTypeName(*i);
-			replaceString(typeName, "::", ".");
-			if (typeName.at(0) == '.')
-				typeName = typeName.substr(1);
-			cout << typeName;
-			member_name += typeName;
-			for (i++; i != formal_types.end(); i++) {
-				typeName = getTypeName(*i);
-				replaceString(typeName, "::", ".");
-				if (typeName.at(0) == '.') 
-					typeName = typeName.substr(1);
-//				cout << ", " << typeName;
-				member_name += ", " + typeName;
-			}
-		}
-//		cout << ")" << endl;
-		member_name += ")";
+                string member_name = "";
+                string class_name = class_definition->get_qualified_name();
+                ROSE_ASSERT(class_name.length() > 2);
+                class_name = class_name.substr(2);
+                replaceString(class_name, "::", ".");
+//              cout << "class name=" << class_name << ", func_name=" << function_name.getString() << "(";
+                member_name += function_name.getString() + "(";
+                std::list<SgType*>::iterator i = formal_types.begin();
+                if (i != formal_types.end()) {
+                        string typeName = getTypeName(*i);
+                        replaceString(typeName, "::", ".");
+                        if (typeName.at(0) == '.')
+                                typeName = typeName.substr(1);
+                        cout << typeName;
+                        member_name += typeName;
+                        for (i++; i != formal_types.end(); i++) {
+                                typeName = getTypeName(*i);
+                                replaceString(typeName, "::", ".");
+                                if (typeName.at(0) == '.') 
+                                        typeName = typeName.substr(1);
+//                              cout << ", " << typeName;
+                                member_name += ", " + typeName;
+                        }
+                }
+//              cout << ")" << endl;
+                member_name += ")";
 
-		int len = class_name.length();
-		char *class_name2 = new char[len + 1];
-		memcpy(class_name2, class_name.c_str(), len + 1);
-		len = member_name.length();
-		char *member_name2 = new char[len + 1];
-		memcpy(member_name2, member_name.c_str(), len + 1);
+                int len = class_name.length();
+                char *class_name2 = new char[len + 1];
+                memcpy(class_name2, class_name.c_str(), len + 1);
+                len = member_name.length();
+                char *member_name2 = new char[len + 1];
+                memcpy(member_name2, member_name.c_str(), len + 1);
 
-		// Invoke RoseTranslator
-    	jclass cls = env->GetObjectClass(x10Visitor);
-    	jmethodID method_id = env->GetMethodID(cls, "handleMethodPreVisit", "(Ljava/lang/String;Ljava/lang/String;)V");
-		env->CallIntMethod(x10Visitor, method_id, env->NewStringUTF(class_name2), env->NewStringUTF(member_name2));
+                // Invoke RoseTranslator
+        jclass cls = env->GetObjectClass(x10Visitor);
+        jmethodID method_id = env->GetMethodID(cls, "handleMethodPreVisit", "(Ljava/lang/String;Ljava/lang/String;)V");
+                env->CallIntMethod(x10Visitor, method_id, env->NewStringUTF(class_name2), env->NewStringUTF(member_name2));
 
 /*
-		int len = currentTypeName.length();
-		char *typeName = new char[len + 1];
-		memcpy(typeName, currentTypeName.c_str(), len + 1);
+                int len = currentTypeName.length();
+                char *typeName = new char[len + 1];
+                memcpy(typeName, currentTypeName.c_str(), len + 1);
 
-		jstring class_name = env->NewStringUTF(typeName);	
+                jstring class_name = env->NewStringUTF(typeName);       
 */
-    	method_declaration = findMemberFunctionDeclarationInClass(class_definition, function_name, formal_types);
+        method_declaration = findMemberFunctionDeclarationInClass(class_definition, function_name, formal_types);
         method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, formal_types);
 #endif
     }
@@ -2893,14 +2893,14 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
             // If the class_symbol still has not been found and no package was specified, look for the type
             // in x10.lang.
             if (class_symbol == NULL && package_name.getString().size() == 0) {
-            	class_symbol = lookupClassSymbolInScope(::x10LangPackageDefinition, type_name);
+                class_symbol = lookupClassSymbolInScope(::x10LangPackageDefinition, type_name);
             }
-			if (class_symbol==NULL)
-				return NULL;
+                        if (class_symbol==NULL)
+                                return NULL;
 
-        	type = class_symbol -> get_type();
+                type = class_symbol -> get_type();
 
-			return type;
+                        return type;
 
 #if 0
         SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
@@ -2961,7 +2961,7 @@ cout.flush();
 #endif
         }
 // MH-20140825
-		if (class_symbol == NULL)
+                if (class_symbol == NULL)
             class_symbol = lookupTypeSymbol(type_name);
 
         type = class_symbol -> get_type();
