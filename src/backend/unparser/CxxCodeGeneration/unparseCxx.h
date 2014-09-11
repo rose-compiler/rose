@@ -369,6 +369,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
           virtual void unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgType* & rtype, SgUnparse_Info& info);
 
+       // DQ (9/9/2014): Refactoring support for member function modifiers (so that they can be used to unparse template membr functions).
+          virtual void unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* mfuncdecl_stmt, SgUnparse_Info& info);
+
        // DQ (9/7/2014): Support for unparsing of the template header within template declarations (I think this only applies to template member and non-member functions).
           virtual void unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info);
 
