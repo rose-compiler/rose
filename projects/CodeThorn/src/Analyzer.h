@@ -253,6 +253,7 @@ namespace CodeThorn {
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
+    int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
