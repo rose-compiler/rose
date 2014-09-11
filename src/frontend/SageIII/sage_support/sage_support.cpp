@@ -3677,7 +3677,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
           printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
           frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) \n");
+          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
+          if (frontendErrorLevel == 0)
+             {
+               printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
+               exit(0);
+             }
+            else
+             {
+               printf ("Error returned from call to experimental_openFortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
+               exit(1);
+             }
         }
        else
         {
