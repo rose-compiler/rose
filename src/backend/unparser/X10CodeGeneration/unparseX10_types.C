@@ -86,9 +86,9 @@ Unparse_X10::unparseClassType(SgClassType *type, SgUnparse_Info& info)
          curprint(type -> get_name().getString());
      }
      else {
-		string t = type -> get_qualified_name().getString();
-		string shorten = t.substr(2);
-		replaceString(shorten, "::", ".");
+                string t = type -> get_qualified_name().getString();
+                string shorten = t.substr(2);
+                replaceString(shorten, "::", ".");
 //         curprint(type -> get_qualified_name().getString());
          curprint(shorten);
      }
@@ -282,9 +282,9 @@ Unparse_X10::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
 
 void
 Unparse_X10::unparseArrayType(SgArrayType *array_type, SgUnparse_Info& info) {
-	curprint("Rail[");
+        curprint("Rail[");
     unparseType(array_type->get_base_type(), info);
-	curprint("]");
+        curprint("]");
 //    curprint("[]");
 }
 

@@ -87,8 +87,8 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         case V_SgJavaNormalAnnotation:       { unparseX10NormalAnnotation(expr, info); break; }
 
         case V_SgJavaTypeExpression:         { unparseX10TypeExpression(expr, info); break; }
-		// MH-20140730
-        case V_SgHereExp:	{ unparseHereExpression(expr, info); break; }
+                // MH-20140730
+        case V_SgHereExp:       { unparseHereExpression(expr, info); break; }
 
 
         default: {
@@ -724,39 +724,39 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
     }
 */
 
-	bool isConnectionUtil = 0;
-	if (func_call -> attributeExists("prefix")) {
-		AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
-		string class_name("X10RoseUtility");
-		string expr = attribute->expression;
-		if (expr.compare(0, class_name.length(), class_name) == 0) {
-			isConnectionUtil = 1;
-		}
-	}
-	if (isConnectionUtil) {
-		SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
-		string funcName = mfunc_ref->get_symbol()->get_name(); 
-		string parse = "Long_parse";
-		if (funcName == "Rail_size") {
-    		unparseExpression(func_call->get_args()->get_expressions()[0], info);
-			curprint(".size");
-		}
+        bool isConnectionUtil = 0;
+        if (func_call -> attributeExists("prefix")) {
+                AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
+                string class_name("X10RoseUtility");
+                string expr = attribute->expression;
+                if (expr.compare(0, class_name.length(), class_name) == 0) {
+                        isConnectionUtil = 1;
+                }
+        }
+        if (isConnectionUtil) {
+                SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
+                string funcName = mfunc_ref->get_symbol()->get_name(); 
+                string parse = "Long_parse";
+                if (funcName == "Rail_size") {
+                unparseExpression(func_call->get_args()->get_expressions()[0], info);
+                        curprint(".size");
+                }
 //              else if (funcName == "Long_parse") {
                 else if (funcName.compare(0, parse.length(), parse) == 0) {
 //                      curprint("Long.parse(");
                         curprint(funcName);
-    			unparseExpression(func_call->get_args()->get_expressions()[0], info);
-			curprint(")");
-		}
+                        unparseExpression(func_call->get_args()->get_expressions()[0], info);
+                        curprint(")");
+                }
 
-		return;
-	}
+                return;
+        }
 
-	if (func_call -> attributeExists("prefix")) {
-		AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
-		curprint(attribute -> expression);
-		curprint(".");
-	}
+        if (func_call -> attributeExists("prefix")) {
+                AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
+                curprint(attribute -> expression);
+                curprint(".");
+        }
 
     if (func_call -> attributeExists("function_parameter_types")) {
         AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("function_parameter_types");
@@ -863,7 +863,7 @@ Unparse_X10::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     unparseExpression(cast->get_operand(), info);
     curprint(") ");
 
-	curprint("as ");
+        curprint("as ");
     AstRegExAttribute *attribute = (AstRegExAttribute *) cast -> getAttribute("type");
     if (attribute) {
         curprint(attribute -> expression);
@@ -981,7 +981,7 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 // TODO: Remove this!
 //             unparseType(pointer_type -> get_base_type(), info);
 
-			curprint("Rail[");
+                        curprint("Rail[");
              AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
              if (attribute) {
                  curprint(attribute -> expression);
@@ -993,7 +993,7 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
                  } while (isSgArrayType(type));
                  unparseType(type, info);
              }
-				curprint("]");
+                                curprint("]");
 //         }
 
          bool has_aggregate_initializer = new_op -> attributeExists("initializer");
@@ -1383,12 +1383,12 @@ Unparse_X10::unparseCompoundAssignOp(SgCompoundAssignOp* op,
 void
 Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
                               SgUnparse_Info & info) {
-	// MH-20140807
-	if (requiresParentheses(op, info)) 
-		curprint("(");
+        // MH-20140807
+        if (requiresParentheses(op, info)) 
+                curprint("(");
 
 //cout << "BINARY LEFT=" << op->get_lhs_operand()->get_type()->get_mangled().str() << endl;
-   	unparseExpression(op->get_lhs_operand(), info);
+        unparseExpression(op->get_lhs_operand(), info);
 
     switch (op->variantT()) {
         case V_SgAddOp:                curprint(" + ");   break;
@@ -1421,8 +1421,8 @@ Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
     }
     unparseExpression(op->get_rhs_operand(), info);
 
-	if (requiresParentheses(op, info)) 
-		curprint(")");
+        if (requiresParentheses(op, info)) 
+                curprint(")");
 }
 
 void

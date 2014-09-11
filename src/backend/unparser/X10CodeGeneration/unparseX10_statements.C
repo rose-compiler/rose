@@ -187,7 +187,7 @@ cout.flush();
 
      curprint_indented("", info);
 // Remove this! MH-20140908
-//	cout << "V=" << stmt->variantT() << endl;
+//      cout << "V=" << stmt->variantT() << endl;
      switch (stmt->variantT())
         {
        // DQ (3/14/2011): Need to move the X10 specific unparse member functions from the base class to this function.
@@ -237,9 +237,9 @@ cout.flush();
 
        // case V_SgAsmStmt:                unparseAsmStmt(stmt, info);          break;
 #if 0
-			case V_SgFinishStmt:           unparseFinishStmt((SgFinishStmt *)stmt, info);           break;
-			case V_SgAtStmt:               unparseAtStmt((SgAtStmt *)stmt, info);           break;
-			case V_SgAsyncStmt:            unparseAsyncStmt((SgAsyncStmt *)stmt, info);        break;
+                        case V_SgFinishStmt:           unparseFinishStmt((SgFinishStmt *)stmt, info);           break;
+                        case V_SgAtStmt:               unparseAtStmt((SgAtStmt *)stmt, info);           break;
+                        case V_SgAsyncStmt:            unparseAsyncStmt((SgAsyncStmt *)stmt, info);        break;
 #endif
 
           case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
@@ -276,26 +276,26 @@ cout.flush();
           default:
              {
                printf("Unparse_X10::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-				if (stmt->sage_class_name() == "SgFinishStmt") {
-//					cout << "SgFinishStmt found" << endl;
-					SgFinishStmt *finish = (SgFinishStmt *) stmt;
-     				curprint_indented("finish ", info);
-    				unparseStatement(finish->get_body(), info);
-				}
-				else if (stmt->sage_class_name() == "SgAsyncStmt") {
-					SgAsyncStmt *async = (SgAsyncStmt *) stmt;
-     				curprint_indented("async ", info);
-    				unparseStatement(async->get_body(), info);
-				}
-				else if (stmt->sage_class_name() == "SgAtStmt") {
-					cout << "SgAtStmt found" << endl;
-					SgAtStmt *at = (SgAtStmt *) stmt;
-     				curprint_indented("at (", info);
-    				unparseExpression(at->get_expression(), info);
-     				curprint_indented(") ", info);
-    				unparseStatement(at->get_body(), info);
-				}
-				// MH-20140716 comment out until unparseFinishStmt etc. is implemented
+                                if (stmt->sage_class_name() == "SgFinishStmt") {
+//                                      cout << "SgFinishStmt found" << endl;
+                                        SgFinishStmt *finish = (SgFinishStmt *) stmt;
+                                curprint_indented("finish ", info);
+                                unparseStatement(finish->get_body(), info);
+                                }
+                                else if (stmt->sage_class_name() == "SgAsyncStmt") {
+                                        SgAsyncStmt *async = (SgAsyncStmt *) stmt;
+                                curprint_indented("async ", info);
+                                unparseStatement(async->get_body(), info);
+                                }
+                                else if (stmt->sage_class_name() == "SgAtStmt") {
+                                        cout << "SgAtStmt found" << endl;
+                                        SgAtStmt *at = (SgAtStmt *) stmt;
+                                curprint_indented("at (", info);
+                                unparseExpression(at->get_expression(), info);
+                                curprint_indented(") ", info);
+                                unparseStatement(at->get_body(), info);
+                                }
+                                // MH-20140716 comment out until unparseFinishStmt etc. is implemented
 //               ROSE_ASSERT(false);
                break;
              }
@@ -321,9 +321,9 @@ cout.flush();
             case V_SgDefaultOptionStmt:
             case V_SgJavaLabelStatement:
             case V_SgJavaSynchronizedStatement:
-			case V_SgFinishStmt:
-			case V_SgAsyncStmt:
-			case V_SgAtStmt:
+                        case V_SgFinishStmt:
+                        case V_SgAsyncStmt:
+                        case V_SgAtStmt:
 
                 printSemicolon = false;
                 break;
@@ -833,23 +833,23 @@ cout.flush();
 }
 */
 
-	// MH (7/7/2014) : Added
+        // MH (7/7/2014) : Added
     unparseName(init_name -> get_name(), info);
     curprint(" : ");
 
     AstRegExAttribute *attribute = (AstRegExAttribute *) init_name -> getAttribute("type");
     if (attribute) {
-		string exp = attribute->expression;
-		int length = exp.length();
-		if (length > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
-			exp = exp.substr(2);
-			replaceString(exp, "::", ".");
-		}
-		length = exp.length();
-		if (length > 2 && exp.at(length-2) == '[' && exp.at(length-1) == ']') {
-			exp = exp.substr(0, length-2);
-			exp = "Rail[" + exp + "]";
-		}
+                string exp = attribute->expression;
+                int length = exp.length();
+                if (length > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                        exp = exp.substr(2);
+                        replaceString(exp, "::", ".");
+                }
+                length = exp.length();
+                if (length > 2 && exp.at(length-2) == '[' && exp.at(length-1) == ']') {
+                        exp = exp.substr(0, length-2);
+                        exp = "Rail[" + exp + "]";
+                }
         curprint(exp);
 //        curprint(attribute -> expression);
     }
@@ -1036,25 +1036,25 @@ Unparse_X10::trimGlobalScopeQualifier ( string qualifiedName )
 void
 //Unparse_X10::unparseFinishStmt(SgStatement* stmt, SgUnparse_Info& info) {
 Unparse_X10::unparseFinishStmt(SgFinishStmt* stmt, SgUnparse_Info& info) {
-	curprint("finish {");
+        curprint("finish {");
     unparseStatement(stmt->get_body(), info);
-	curprint("}");
-}	
+        curprint("}");
+}       
 void
 //Unparse_X10::unparseAtStmt(SgStatement* stmt, SgUnparse_Info& info) {
 Unparse_X10::unparseAtStmt(SgAtStmt* stmt, SgUnparse_Info& info) {
-	curprint("at {");
+        curprint("at {");
     unparseStatement(stmt->get_body(), info);
-	curprint("}");
-}	
+        curprint("}");
+}       
 
 void
 //Unparse_X10::unparseAsyncStmt(SgStatement* stmt, SgUnparse_Info& info) {
 Unparse_X10::unparseAsyncStmt(SgAsyncStmt* stmt, SgUnparse_Info& info) {
-	curprint("async {");
+        curprint("async {");
     unparseStatement(stmt->get_body(), info);
-	curprint("}");
-}	
+        curprint("}");
+}       
 #endif
 
 void
@@ -1066,26 +1066,26 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          return;
      }
 
-	// MH (7/7/2014) : Remove this
-//	cout << "NAME=" << mfuncdecl_stmt->get_name() << ", CLASS_NAME=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name() 
-//				<< ", MANGLED=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_mangled_name() << endl;
-	// MH (7/7/2014) : Added 
-	string str = mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name().getString();
-	string shorten = str.substr(2);
-	str = shorten + "$$this$" + shorten;
-	replaceString(str, "::", "$");
-	int isUnparse = 1;
-	if (mfuncdecl_stmt->get_name().getString() ==  str) {
-//		cout << mfuncdecl_stmt->get_name().getString() << " equals " << str << endl;
-		curprint("\n// Comment out. Dees not support the constrainted type so far. \n");
-		curprint("/*\n");
-		isUnparse = 0;	
-	}
+        // MH (7/7/2014) : Remove this
+//      cout << "NAME=" << mfuncdecl_stmt->get_name() << ", CLASS_NAME=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name() 
+//                              << ", MANGLED=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_mangled_name() << endl;
+        // MH (7/7/2014) : Added 
+        string str = mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name().getString();
+        string shorten = str.substr(2);
+        str = shorten + "$$this$" + shorten;
+        replaceString(str, "::", "$");
+        int isUnparse = 1;
+        if (mfuncdecl_stmt->get_name().getString() ==  str) {
+//              cout << mfuncdecl_stmt->get_name().getString() << " equals " << str << endl;
+                curprint("\n// Comment out. Dees not support the constrainted type so far. \n");
+                curprint("/*\n");
+                isUnparse = 0;  
+        }
 
-	int isConstructor = 0;
-	// if constructor
-	if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
-		isConstructor = 1;
+        int isConstructor = 0;
+        // if constructor
+        if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
+                isConstructor = 1;
 
     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
     if (annotations_attribute) {
@@ -1133,7 +1133,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseTypeParameters(type_list, info);
      }
 
-		curprint("def");
+                curprint("def");
 
 #if 0
      //
@@ -1166,11 +1166,11 @@ curprint(">");
 #endif
 
          curprint(" ");
-		if (isConstructor)
-        	unparseName("this", info);
-		else	
-        	unparseName(mfuncdecl_stmt->get_name(), info);
-		curprint("(");
+                if (isConstructor)
+                unparseName("this", info);
+                else    
+                unparseName(mfuncdecl_stmt->get_name(), info);
+                curprint("(");
 
 
 #if 0 /* There's no need to call unparseStatement() to unparse the parameter list because that's done in the next
@@ -1193,7 +1193,7 @@ curprint(">");
                  curprint(" ");
              }
          }
-		
+                
          unparseInitializedName(*name_it, info);
      }
 
@@ -1219,16 +1219,16 @@ curprint(">");
 */
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
          if (attribute) {
-			if (attribute -> expression != "void") {
-         		curprint(": ");
-             	curprint(attribute -> expression);
-			} 
+                        if (attribute -> expression != "void") {
+                        curprint(": ");
+                curprint(attribute -> expression);
+                        } 
          }
          else {
-			if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
-         		curprint(": ");
-             	unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-			}
+                        if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
+                        curprint(": ");
+                unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+                        }
          }
          curprint(" ");
      }
@@ -1266,17 +1266,17 @@ curprint(">");
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
          if (attribute) {
 //             curprint(attribute -> expression);
-			if (attribute -> expression != "void") {
-         		curprint(": ");
-             	curprint(attribute -> expression);
-			} 
+                        if (attribute -> expression != "void") {
+                        curprint(": ");
+                curprint(attribute -> expression);
+                        } 
          }
          else {
 //             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-			if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
-         		curprint(": ");
-             	unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-			}
+                        if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
+                        curprint(": ");
+                unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+                        }
          }
          curprint(" ");
      }
@@ -1292,9 +1292,9 @@ curprint(">");
 //
          unparseBasicBlockStmt(function_definition -> get_body(), info);
      }
-	
-	if (!isUnparse)
-		curprint("\n*/\n");
+        
+        if (!isUnparse)
+                curprint("\n*/\n");
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
      printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
@@ -1318,7 +1318,7 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
         }
     }
 //    unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
-	SgDeclarationModifier& mod = vardecl_stmt->get_declarationModifier();
+        SgDeclarationModifier& mod = vardecl_stmt->get_declarationModifier();
     if (mod.isJavaAbstract()) curprint("abstract ");
     if (mod.isFinal()) curprint("val ");
     else curprint("var ");
@@ -1394,16 +1394,16 @@ cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name(
 << endl;
 cout.flush();
 
-	bool shouldPrint = false;
+        bool shouldPrint = false;
     for (list<string>::iterator i = Rose::Frontend::X10::X10c::classNames.begin(); i != Rose::Frontend::X10::X10c::classNames.end(); i++) {
         string class_name = *i; //StringUtility::getAbsolutePathFromRelativePath(*i);
-		if (class_name == classdecl_stmt -> get_qualified_name().str()) {
-			shouldPrint = true;	
-			break;
-		}
+                if (class_name == classdecl_stmt -> get_qualified_name().str()) {
+                        shouldPrint = true;     
+                        break;
+                }
     }
-	if (!shouldPrint) 
-		return;
+        if (!shouldPrint) 
+                return;
 /* 
 */
 

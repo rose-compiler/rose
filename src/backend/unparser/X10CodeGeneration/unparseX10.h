@@ -158,9 +158,9 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
           virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseAsmStmt          (SgStatement* stmt, SgUnparse_Info& info);
 #if 0
-          virtual void unparseFinishStmt    	(SgFinishStmt* stmt, SgUnparse_Info& info);
-          virtual void unparseAtStmt    		(SgAtStmt* stmt, SgUnparse_Info& info);
-          virtual void unparseAsyncStmt    		(SgAsyncStmt* stmt, SgUnparse_Info& info);
+          virtual void unparseFinishStmt        (SgFinishStmt* stmt, SgUnparse_Info& info);
+          virtual void unparseAtStmt                    (SgAtStmt* stmt, SgUnparse_Info& info);
+          virtual void unparseAsyncStmt                 (SgAsyncStmt* stmt, SgUnparse_Info& info);
 #endif
           virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateDeclStmt (SgStatement* stmt, SgUnparse_Info& info);

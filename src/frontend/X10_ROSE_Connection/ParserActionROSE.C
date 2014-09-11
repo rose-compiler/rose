@@ -336,7 +336,7 @@ cout.flush();
 //ROSE_ASSERT(class_symbol == NULL);
 */
     if (outer_scope -> lookup_class_symbol(name) != NULL)
-		return;
+                return;
 
     SgClassDeclaration *parameter_declaration = SageBuilder::buildJavaDefiningClassDeclaration(outer_scope, name, SgClassDeclaration::e_java_parameter);
     ROSE_ASSERT(parameter_declaration -> get_parent() == outer_scope);
@@ -623,19 +623,19 @@ cout.flush();
     // Process the interfaces for this type, if any.
     //
     for (int i = 0; i < number_of_interfaces; i++) {
-		// MH (6/24/2014) : get an appropriate component stack for a given interface
-		jstring interface = (jstring) env->GetObjectArrayElement(array_interfaces, i);
-   		string interface_name = convertJavaStringToCxxString(env, interface);
+                // MH (6/24/2014) : get an appropriate component stack for a given interface
+                jstring interface = (jstring) env->GetObjectArrayElement(array_interfaces, i);
+                string interface_name = convertJavaStringToCxxString(env, interface);
 #if 0
-	    map<string, ComponentStack>::iterator it2 = componentMap.find(interface_name);
-	    if (it2 != componentMap.end()) {
-   			astX10ComponentStack = it2->second;
-			cout << "FOUND existing componentMap for " << interface_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
-   		}
-   		else 
-			cout << "NOT FOUND existing componentMap for " << interface_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
-	SgClassDefinition *def = (SgClassDefinition *) astX10ComponentStack.top();
-	cout << "DEF===" << def->get_qualified_name().getString() << endl;
+            map<string, ComponentStack>::iterator it2 = componentMap.find(interface_name);
+            if (it2 != componentMap.end()) {
+                        astX10ComponentStack = it2->second;
+                        cout << "FOUND existing componentMap for " << interface_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+                }
+                else 
+                        cout << "NOT FOUND existing componentMap for " << interface_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+        SgClassDefinition *def = (SgClassDefinition *) astX10ComponentStack.top();
+        cout << "DEF===" << def->get_qualified_name().getString() << endl;
 #endif
         SgNamedType *type = (SgNamedType *) astX10ComponentStack.popType();
 // TODO: Remove this!!!
@@ -662,9 +662,9 @@ cout.flush();
          class_definition -> prepend_inheritance(base);
 
 #if 0
-		// MH (6/24/2014) : push back 
-		astX10ComponentStack.push(type);
-		componentMap[interface_name] = astX10ComponentStack;
+                // MH (6/24/2014) : push back 
+                astX10ComponentStack.push(type);
+                componentMap[interface_name] = astX10ComponentStack;
 #endif
     }
 
@@ -672,15 +672,15 @@ cout.flush();
     // Add Super class to the current Class definition.
     //
     if (has_super_class) {
-   		string superclass_name = convertJavaStringToCxxString(env, super_class_name);
+                string superclass_name = convertJavaStringToCxxString(env, super_class_name);
 #if 0
-	    map<string, ComponentStack>::iterator it2 = componentMap.find(superclass_name);
-	    if (it2 != componentMap.end()) {
-   			astX10ComponentStack = it2->second;
-			cout << "FOUND existing componentMap for " << superclass_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
-   		}
-   		else 
-			cout << "NOT FOUND existing componentMap for " << superclass_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+            map<string, ComponentStack>::iterator it2 = componentMap.find(superclass_name);
+            if (it2 != componentMap.end()) {
+                        astX10ComponentStack = it2->second;
+                        cout << "FOUND existing componentMap for " << superclass_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+                }
+                else 
+                        cout << "NOT FOUND existing componentMap for " << superclass_name << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
 #endif
         SgNamedType *type = (SgNamedType *) astX10ComponentStack.popType();
 // TODO: Remove this!!!
@@ -702,36 +702,36 @@ cout.flush();
         base -> set_parent(class_definition);
         class_definition -> prepend_inheritance(base);
 #if 0
-		// MH (6/24/2014) : push back 
-		astX10ComponentStack.push(type);
-		componentMap[superclass_name] = astX10ComponentStack;
+                // MH (6/24/2014) : push back 
+                astX10ComponentStack.push(type);
+                componentMap[superclass_name] = astX10ComponentStack;
 #endif
     }
 
     if (number_of_type_parameters > 0) {
         list<SgTemplateParameter *> parameter_list;
         for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
-			
-			// MH (6/24/2014) : get an appropriate component stack for typeParameterName
-			jstring typeParameter = (jstring) env->GetObjectArrayElement(array_type_parameters, i);
-    		string typeParameterName = convertJavaStringToCxxString(env, typeParameter);
+                        
+                        // MH (6/24/2014) : get an appropriate component stack for typeParameterName
+                        jstring typeParameter = (jstring) env->GetObjectArrayElement(array_type_parameters, i);
+                string typeParameterName = convertJavaStringToCxxString(env, typeParameter);
 #if 1
-		    map<string, ComponentStack>::iterator it2 = componentMap.find(typeParameterName);
-		    if (it2 != componentMap.end()) {
-       			astX10ComponentStack = it2->second;
-				cout << "FOUND existing componentMap for " << typeParameterName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
-    		}
-    		else 
-				cout << "NOT FOUND existing componentMap for " << typeParameterName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+                    map<string, ComponentStack>::iterator it2 = componentMap.find(typeParameterName);
+                    if (it2 != componentMap.end()) {
+                        astX10ComponentStack = it2->second;
+                                cout << "FOUND existing componentMap for " << typeParameterName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+                }
+                else 
+                                cout << "NOT FOUND existing componentMap for " << typeParameterName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
 #endif
             SgClassDeclaration *parameter_decl = isSgClassDeclaration(astX10ComponentStack.pop());
             ROSE_ASSERT(parameter_decl);
             SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
             parameter_list.push_front(parameter);
 #if 1
-			// MH (6/24/2014) : push back 
-			astX10ComponentStack.push(parameter_decl);
-			componentMap[typeParameterName] = astX10ComponentStack;
+                        // MH (6/24/2014) : push back 
+                        astX10ComponentStack.push(parameter_decl);
+                        componentMap[typeParameterName] = astX10ComponentStack;
 #endif
         }
 
@@ -757,11 +757,11 @@ cout.flush();
 #if 1
     map<string, ComponentStack>::iterator it2 = componentMap.find(currentTypeName);
     if (it2 != componentMap.end()) {
-		astX10ComponentStack = it2->second;
-		cout << "FOUND existing componentMap for " << currentTypeName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
-   	}
-	else 
-		cout << "NOT FOUND existing componentMap for " << currentTypeName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+                astX10ComponentStack = it2->second;
+                cout << "FOUND existing componentMap for " << currentTypeName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
+        }
+        else 
+                cout << "NOT FOUND existing componentMap for " << currentTypeName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
 #endif
 // TODO: Remove this!!!
 /*
@@ -1677,8 +1677,8 @@ JNIEXPORT void JNICALL cactionBuildInitializerSupport(JNIEnv *env, jclass, jbool
 #if 0
         AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
 #else
-		// MH-20140801 "class_members" is used instead of "method-members-map" in x10ActionROSE.C 
-    	AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("class_members");
+                // MH-20140801 "class_members" is used instead of "method-members-map" in x10ActionROSE.C 
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("class_members");
 #endif
         ROSE_ASSERT(attribute);
         attribute -> setNode(initializer_definition, initializer_index);
@@ -1970,7 +1970,7 @@ cout.flush();
 /*
 */
     ROSE_ASSERT(isSgClassDefinition(astX10ScopeStack.top()));
-	ROSE_ASSERT(isSgJavaPackageDeclaration(isSgClassDefinition(astX10ScopeStack.top()) -> get_declaration()));
+        ROSE_ASSERT(isSgJavaPackageDeclaration(isSgClassDefinition(astX10ScopeStack.top()) -> get_declaration()));
     ROSE_ASSERT(isSgClassDefinition(astX10ScopeStack.top()) && isSgJavaPackageDeclaration(isSgClassDefinition(astX10ScopeStack.top()) -> get_declaration()));
 
     astX10ScopeStack.popClassDefinition();
@@ -2041,7 +2041,7 @@ JNIEXPORT void JNICALL cactionCompilationUnitList(JNIEnv *env, jclass) {
         printf ("Rose::Frontend::X10::X10c::X10c_globalFilePointer = %s \n", Rose::Frontend::X10::X10c::X10c_globalFilePointer -> class_name().c_str());
     // TODO: We need the next line for EDG4 [DONE]
     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
-	
+        
     SgSourceFile *sourcefile = isSgSourceFile(Rose::Frontend::X10::X10c::X10c_globalFilePointer);
 //MH-20140428
 printf("cactionCompilationUnitList():sourceFile=%p\n", sourcefile);
@@ -3240,33 +3240,33 @@ JNIEXPORT void JNICALL cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_
 
     SgBasicBlock *method_body = astX10ScopeStack.popBasicBlock(); // pop the body block
     for (int i = 0; i < num_statements; i++) {
-	if (astX10ComponentStack.size() == 0) 
-		break;
-	// TODO: MH (9/9/2014) : Currently popStatement() throws an error because astX10ComponentStack unintentionally includes
-	//   			 SgClassDefinition and SgClassType, but should fix this
+        if (astX10ComponentStack.size() == 0) 
+                break;
+        // TODO: MH (9/9/2014) : Currently popStatement() throws an error because astX10ComponentStack unintentionally includes
+        //                       SgClassDefinition and SgClassType, but should fix this
 #if 0
         SgStatement *statement = astX10ComponentStack.popStatement();
 #else
         SgNode *statement0= astX10ComponentStack.pop();
 #endif
-	// TODO: MH (7/7/2014) : Currently string comparison is neccessary but should fix this
-	if (statement0->class_name() == "SgClassDefinition") {
-		cout << "statement->class_name() equals SgClassDefinition" << endl;
-		continue;
-	}
-	if (statement0->class_name() == "SgClassType") {
-		cout << "statement->class_name() equals SgClassType" << endl;
-		continue;
-	}
+        // TODO: MH (7/7/2014) : Currently string comparison is neccessary but should fix this
+        if (statement0->class_name() == "SgClassDefinition") {
+                cout << "statement->class_name() equals SgClassDefinition" << endl;
+                continue;
+        }
+        if (statement0->class_name() == "SgClassType") {
+                cout << "statement->class_name() equals SgClassType" << endl;
+                continue;
+        }
 #if 1 // TODO: MH (9/9/2014) : Remove this when astX10CompontStack does not include SgClassDefinition or SgClassType
-	SgStatement *statement = (SgStatement *)statement0;
+        SgStatement *statement = (SgStatement *)statement0;
 #endif
         if (SgProject::get_verbose() > 2) {
-        	cerr << "(4) Adding statement "
+                cerr << "(4) Adding statement "
                 << statement -> class_name()
                 << " to a method declaration block"
                 << endl;
-		cerr.flush();
+                cerr.flush();
         }
         method_body -> prepend_statement(statement);
     }
@@ -3275,7 +3275,7 @@ JNIEXPORT void JNICALL cactionMethodDeclarationEnd(JNIEnv *env, jclass, int num_
     SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
 
     if (num_annotations > 0) {
-	AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
+        AstSgNodeListAttribute *annotations_attribute = new AstSgNodeListAttribute();
         for (int i = num_annotations - 1; i >= 0; i--) {
             SgExpression *annotation = astX10ComponentStack.popExpression();
             annotation -> set_parent(method_declaration);
@@ -5454,7 +5454,7 @@ JNIEXPORT void JNICALL cactionInitializer(JNIEnv *env, jclass, jboolean x10_is_s
 #if 0
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("method-members-map");
 #else 
-	// MH-20140801 "class_members" is used instead of "method-members-map" in x10ActionROSE.C 
+        // MH-20140801 "class_members" is used instead of "method-members-map" in x10ActionROSE.C 
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("class_members");
 #endif
     ROSE_ASSERT(attribute);
@@ -6663,7 +6663,7 @@ JNIEXPORT void JNICALL cactionTryStatementEnd(JNIEnv *env, jclass, jint num_reso
     SgTryStmt *try_statement = SageBuilder::buildTryStmt(try_body, finally_body);
     setX10SourcePosition(try_statement, env, x10Token);
     try_statement -> set_parent(astX10ScopeStack.top());
-	
+        
     if (num_resources > 0) {
         AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
         for (int i = num_resources - 1; i >= 0; i--) { // pop declarations from the stack and place them on the list in proper order.

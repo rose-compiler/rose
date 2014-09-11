@@ -4418,7 +4418,7 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
     cout << "Filename from GFP=" << Rose::Frontend::X10::X10c::X10c_globalFilePointer->getFileName()  << endl;
     for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
         string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-		cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
+                cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
     }
 */
 #endif
