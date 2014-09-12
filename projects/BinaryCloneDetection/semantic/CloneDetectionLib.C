@@ -948,7 +948,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
                     loader->add_directories(paths);
                 }
                 loader->link(interp);
-            } else {
+            } else if (isSgAsmElfFileHeader(spec_header)) {
                 // If we didn't link with the standard C library, then link with our own library.  Our own library is much
                 // smaller and is intended to provide the same semantics as the C library for those few functions that GCC
                 // occassionally inlines because the function is built into GCC.  This allows us to compare non-optimized
