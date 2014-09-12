@@ -239,6 +239,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // If a declaration has not been defined in a location (scope) which could support its declaration then it can be qualified (any qualification would be ambigous).
           bool skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(SgDeclarationStatement* declaration);
 
+       // DQ (9/12/2014): Refactored support for building part of the template declaration header so it could be called recursively for template template parameters.
+          std::string buildTemplateHeaderString(SgTemplateParameterPtrList & templateParameterList);
+
        // DQ (3/31/2014): Adding support for global qualifiction.
           size_t depthOfGlobalNameQualification(SgDeclarationStatement* declaration);
    };
