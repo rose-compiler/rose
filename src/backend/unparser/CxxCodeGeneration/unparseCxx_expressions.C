@@ -670,7 +670,31 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 
           case SgTemplateParameter::template_parameter:
              {
-#if 1
+               ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
+               SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
+               ROSE_ASSERT(templateDeclaration != NULL);
+#if 0
+            // This is a part of the template header that is not output here.
+               SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+               SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+               curprint(" template < ");
+               while (i != templateParameterList.end())
+                  {
+                    SgUnparse_Info newInfo(info);
+                    curprint(" typename ");
+                    unparseTemplateParameter(*i,newInfo);
+                 // curprint(" SgTemplateDeclaration_name ");
+
+                    i++;
+
+                    if (i != templateParameterList.end())
+                         curprint(",");
+                  }
+
+               curprint(" > ");
+#endif
+               curprint(templateDeclaration->get_name());
+#if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");
                ROSE_ASSERT(false);
 #endif
