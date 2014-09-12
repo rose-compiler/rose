@@ -1886,6 +1886,10 @@ int main( int argc, char * argv[] ) {
   cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
+  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+    cout << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
+  }
+
   cout << "=============================================================="<<endl;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
   cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
@@ -2149,6 +2153,15 @@ int main( int argc, char * argv[] ) {
     text<<"threads,"<<numberOfThreadsToUse<<endl;
     //    text<<"abstract-and-const-states,"
     //    <<"";
+
+    // iterations (currently only supported for sequential analysis)
+    text<<"iterations,";
+    if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE)
+      text<<analyzer.getIterations()<<","<<analyzer.getApproximatedIterations();
+    else
+      text<<"-1,-1";
+    text<<endl;
+
     text<<"rewrite-stats, "
         <<rewriteSystem.dump1_stats.numArrayUpdates<<", "
         <<rewriteSystem.dump1_stats.numElimMinusOperator<<", "

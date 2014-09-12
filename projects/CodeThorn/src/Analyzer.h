@@ -284,6 +284,7 @@ namespace CodeThorn {
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
+    int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
@@ -325,7 +326,18 @@ namespace CodeThorn {
     }
     ExprAnalyzer* getExprAnalyzer();
     list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
-    
+    void incIterations() {
+      if(isPrecise()) {
+#pragma omp atomic
+        _iterations+=1;
+      } else {
+#pragma omp atomic
+        _approximated_iterations+=1;
+      }
+    }
+    bool isLoopCondLabel(Label lab);
+    int getApproximatedIterations() { return _approximated_iterations; }
+    int getIterations() { return _iterations; }
   private:
     set<int> _inputVarValues;
     list<int> _inputSequence;
@@ -354,7 +366,11 @@ namespace CodeThorn {
     list<FailedAssertion> _firstAssertionOccurences;
     bool _minimizeStates;
     bool _topifyModeActive;
-  }; // end of class analyzer
+    int _iterations;
+    int _approximated_iterations;
+    int _curr_iteration_cnt;
+    int _next_iteration_cnt;
+  }; // end of class Analyzer
   
 } // end of namespace CodeThorn
 
