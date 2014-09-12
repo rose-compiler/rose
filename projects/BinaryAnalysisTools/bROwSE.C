@@ -31,13 +31,17 @@
 
 #include <Wt/WAbstractTableModel>
 #include <Wt/WApplication>
+#include <Wt/WBreak>
 #include <Wt/WContainerWidget>
+#include <Wt/WEnvironment>
+#include <Wt/WGridLayout>
 #include <Wt/WImage>
 #include <Wt/WLink>
 #include <Wt/WRectArea>
 #include <Wt/WString>
 #include <Wt/WTable>
 #include <Wt/WTableView>
+#include <Wt/WTabWidget>
 #include <Wt/WText>
 
 using namespace rose;
@@ -94,10 +98,11 @@ struct Settings {
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     std::string httpAddress;                            // IP address at which to listen for HTTP connections
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
+    std::string docRoot;                                // document root directory for HTTP server
     Settings()
         : mapVa(NO_ADDRESS), deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
-          httpAddress("0.0.0.0"), httpPort(9090) {}
+          httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };
 
 // Describe and parse the command-line
@@ -221,7 +226,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                   .argument("TCP-port", nonNegativeIntegerParser(settings.httpPort))
                   .doc("TCP port at which the HTTP server will listen. The default is " +
                        boost::lexical_cast<std::string>(settings.httpPort) + "."));
-    
+    server.insert(Switch("docroot")
+                  .argument("directory", anyParser(settings.docRoot))
+                  .doc("Name of root directory for serving HTTP documents.  The default is \"" + settings.docRoot + "\"."));
+
     Parser parser;
     parser
         .purpose("binary ROSE on-line workbench for specimen exploration")
@@ -247,9 +255,9 @@ P2::Attribute::Id ATTR_CG(-1);
 class Context {
 public:
     P2::Partitioner &partitioner;
-    P2::Function::Ptr function;                         // current function
+    Wt::WApplication *application;                      // Wt probably has a method to get this, but I can't find it
 
-    Context(P2::Partitioner &partitioner): partitioner(partitioner) {
+    Context(P2::Partitioner &partitioner, Wt::WApplication *app): partitioner(partitioner), application(app) {
         if (ATTR_NBYTES == P2::Attribute::INVALID_ID) {
             ATTR_NBYTES         = P2::Attribute::registerName("Size in bytes");
             ATTR_NINSNS         = P2::Attribute::registerName("Number of instructions");
@@ -288,13 +296,10 @@ functionNInsns(const P2::Partitioner &partitioner, const P2::Function::Ptr &func
     return nInsns;
 }
 
+// Generates a unique path relative to the doc root (--docroot switch).
 static boost::filesystem::path
 uniquePath(const std::string &extension) {
-#if 0 // [Robb P. Matzke 2014-09-10]
-    return boost::filesystem::temp_directory_path() / boost::filesystem::unique_path("ROSE-%%%%%%%%%%%%%%%%"+extension);
-#else
     return boost::filesystem::path("tmp") /  boost::filesystem::unique_path("ROSE-%%%%%%%%%%%%%%%%"+extension);
-#endif
 }
 
 // Generate a GraphViz file describing a function's control flow graph and store the name of the file as the function's
@@ -510,6 +515,8 @@ public:
         C_ENTRY,                                        // function's primary entry address
         C_NAME,                                         // name if known, else empty string
         C_SIZE,                                         // size of function extent (code and data)
+        C_IMPORT,                                       // is function an import
+        C_EXPORT,                                       // is function an export
         C_NCOLS                                         // must be last
     };
 
@@ -540,6 +547,8 @@ public:
                 case C_ENTRY:   return Wt::WString("Entry");
                 case C_NAME:    return Wt::WString("Name");
                 case C_SIZE:    return Wt::WString("Size (bytes)");
+                case C_IMPORT:  return Wt::WString("Import");
+                case C_EXPORT:  return Wt::WString("Export");
                 default:        return boost::any();
             }
         }
@@ -559,6 +568,10 @@ public:
                     return Wt::WString(StringUtility::cEscape(function->name()));
                 case C_SIZE:
                     return functionNBytes(ctx_.partitioner, function);
+                case C_IMPORT:
+                    return Wt::WString((function->reasons() & SgAsmFunction::FUNC_IMPORT)!=0 ? "yes" : "no");
+                case C_EXPORT:
+                    return Wt::WString((function->reasons() & SgAsmFunction::FUNC_EXPORT)!=0 ? "yes" : "no");
                 default:
                     ASSERT_not_reachable("invalid column number");
             }
@@ -584,7 +597,27 @@ public:
     static bool sortByDescendingSize(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
         return a->attr<size_t>(ATTR_NBYTES).orElse(0) > b->attr<size_t>(ATTR_NBYTES).orElse(0);
     }
-    
+    static bool sortByAscendingImport(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        unsigned aa = a->reasons() & SgAsmFunction::FUNC_IMPORT;
+        unsigned bb = b->reasons() & SgAsmFunction::FUNC_IMPORT;
+        return aa < bb;
+    }
+    static bool sortByDescendingImport(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        unsigned aa = a->reasons() & SgAsmFunction::FUNC_IMPORT;
+        unsigned bb = b->reasons() & SgAsmFunction::FUNC_IMPORT;
+        return aa > bb;
+    }
+    static bool sortByAscendingExport(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        unsigned aa = a->reasons() & SgAsmFunction::FUNC_EXPORT;
+        unsigned bb = b->reasons() & SgAsmFunction::FUNC_EXPORT;
+        return aa < bb;
+    }
+    static bool sortByDescendingExport(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        unsigned aa = a->reasons() & SgAsmFunction::FUNC_EXPORT;
+        unsigned bb = b->reasons() & SgAsmFunction::FUNC_EXPORT;
+        return aa > bb;
+    }
+
     void sort(int column, Wt::SortOrder order) {
         bool(*sorter)(const P2::Function::Ptr&, const P2::Function::Ptr&) = NULL;
         switch (column) {
@@ -598,6 +631,12 @@ public:
                 BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                     (void) functionNBytes(ctx_.partitioner, function); // make sure sizes are cached for all functions
                 sorter = Wt::AscendingOrder==order ? sortByAscendingSize : sortByDescendingSize;
+                break;
+            case C_IMPORT:
+                sorter = Wt::AscendingOrder==order ? sortByAscendingImport : sortByDescendingImport;
+                break;
+            case C_EXPORT:
+                sorter = Wt::AscendingOrder==order ? sortByAscendingExport : sortByDescendingExport;
                 break;
             default:
                 ASSERT_not_reachable("invalid column number");
@@ -616,6 +655,7 @@ class WFunctionList: public Wt::WContainerWidget {
     FunctionListModel *model_;
     Wt::WTableView *tableView_;
     Wt::Signal<P2::Function::Ptr> clicked_;
+    Wt::Signal<P2::Function::Ptr> doubleClicked_;
 public:
     WFunctionList(FunctionListModel *model, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), model_(model) {
@@ -626,14 +666,14 @@ public:
         tableView_->setHeaderHeight(28);
         tableView_->setSortingEnabled(true);
         tableView_->setAlternatingRowColors(true);
-        tableView_->setRowHeight(28);
         tableView_->setHeight(500);
         tableView_->setColumnWidth(1, 50);
         tableView_->setColumnWidth(1, 420);
         tableView_->setColumnResizeEnabled(true);
         tableView_->setSelectionMode(Wt::SingleSelection);
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
-        tableView_->clicked().connect(this, &WFunctionList::selectRow);
+        tableView_->clicked().connect(this, &WFunctionList::clickRow);
+        tableView_->doubleClicked().connect(this, &WFunctionList::doubleClickRow);
     }
 
     // Emitted when a row of the table is clicked
@@ -641,11 +681,24 @@ public:
         return clicked_;
     }
 
+    // Emitted when a row of the table is double clicked
+    Wt::Signal<P2::Function::Ptr>& doubleClicked() {
+        return doubleClicked_;
+    }
+    
+
 private:
-    void selectRow(const Wt::WModelIndex &idx) {
+    void clickRow(const Wt::WModelIndex &idx) {
         if (idx.isValid()) {
             P2::Function::Ptr function = model_->functionAt(idx.row());
             clicked_.emit(function);
+        }
+    }
+
+    void doubleClickRow(const Wt::WModelIndex &idx) {
+        if (idx.isValid()) {
+            P2::Function::Ptr function = model_->functionAt(idx.row());
+            doubleClicked_.emit(function);
         }
     }
 };
@@ -659,13 +712,11 @@ class WFunctionSummary: public Wt::WContainerWidget {
     Wt::WText *wName_, *wEntry_, *wBBlocks_, *wDBlocks_, *wInsns_, *wBytes_, *wDiscontig_, *wCallers_, *wCallsInto_;
     Wt::WText *wCallees_, *wCallsOut_, *wRecursive_;
 public:
-    typedef std::pair<Wt::WText*, Wt::WText*> FieldPair;
-    Wt::WText* field(std::vector<FieldPair> &fields, const std::string &label, const std::string &toolTip) {
-        Wt::WText *wLabel = new Wt::WText(label+":");
-        if (toolTip!="")
-            wLabel->setToolTip(toolTip);
+    Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
         Wt::WText *wValue = new Wt::WText();
-        fields.push_back(std::make_pair(wLabel, wValue));
+        if (toolTip!="")
+            wValue->setToolTip(toolTip);
+        fields.push_back(wValue);
         return wValue;
     }
 
@@ -673,29 +724,27 @@ public:
         : Wt::WContainerWidget(parent), ctx_(ctx), table_(NULL), wName_(NULL), wEntry_(NULL), wBBlocks_(NULL), wDBlocks_(NULL),
           wInsns_(NULL), wBytes_(NULL), wDiscontig_(NULL), wCallers_(NULL), wCallsInto_(NULL), wCallees_(NULL),
           wCallsOut_(NULL), wRecursive_(NULL) {
-        std::vector<FieldPair> fields;
-        wName_          = field(fields, "Name",           "Function name");
-        wEntry_         = field(fields, "Entry VA",       "Primary entry virtual address");
-        wBBlocks_       = field(fields, "Basic blocks",   "Number of basic blocks");
-        wDBlocks_       = field(fields, "Data blocks",    "Number of data blocks");
-        wInsns_         = field(fields, "Instructions",   "Number of instructions");
-        wBytes_         = field(fields, "Bytes",          "Number of distinct addresses with code and/or data");
-        wDiscontig_     = field(fields, "Address regions","Number of discontiguous regions in the address space");
-        wCallers_       = field(fields, "Callers",        "Number of distinct functions that call this function");
-        wCallsInto_     = field(fields, "Calls into",     "Number of call sites calling this function");
-        wCallees_       = field(fields, "Callees",        "Number of distinct functions this function calls.");
-        wCallsOut_      = field(fields, "Calls out",      "Number of function call sites in this function");
-        wRecursive_     = field(fields, "Recursive",      "Does this function call itself directly?");
+        std::vector<Wt::WText*> fields;
+        wName_      = field(fields, "Function name");
+        wEntry_     = field(fields, "Primary entry virtual address");
+        wBBlocks_   = field(fields, "Number of basic blocks");
+        wDBlocks_   = field(fields, "Number of data blocks");
+        wInsns_     = field(fields, "Number of instructions");
+        wBytes_     = field(fields, "Number of distinct addresses with code and/or data");
+        wDiscontig_ = field(fields, "Number of discontiguous regions in the address space");
+        wCallers_   = field(fields, "Number of distinct functions that call this function");
+        wCallsInto_ = field(fields, "Number of call sites calling this function");
+        wCallees_   = field(fields, "Number of distinct functions this function calls.");
+        wCallsOut_  = field(fields, "Number of function call sites in this function");
+        wRecursive_ = field(fields, "Does this function call itself directly?");
 
         table_ = new Wt::WTable(this);
         table_->setWidth("100%");
-        size_t nrows = (fields.size()+1) / 2;
-        for (size_t col=0, i=0; col<2; ++col) {
-            for (size_t row=0; row<nrows && i<fields.size(); ++row) {
-                table_->elementAt(row, 2*col+0)->addWidget(fields[i].first);// label
-                table_->elementAt(row, 2*col+1)->addWidget(fields[i].second);// value
-                ++i;
-            }
+        static const size_t ncols = 4;
+        size_t nrows = (fields.size()+ncols-1) / ncols;
+        for (size_t col=0, i=0; col<ncols; ++col) {
+            for (size_t row=0; row<nrows && i<fields.size(); ++row)
+                table_->elementAt(row, col)->addWidget(fields[i++]);
         }
     }
 
@@ -709,18 +758,19 @@ public:
             size_t nIntervals = ctx_.partitioner.functionExtent(function).nIntervals();
             const P2::FunctionCallGraph *cg = functionCallGraph(ctx_.partitioner);
             ASSERT_not_null(cg);
-            wName_      ->setText(function->name());
-            wEntry_     ->setText(StringUtility::addrToString(function->address()));
+            wName_      ->setText(function->name()==""?std::string("(no name)"):function->name());
+            wEntry_     ->setText("entry "+StringUtility::addrToString(function->address()));
             wBBlocks_   ->setText(StringUtility::plural(function->basicBlockAddresses().size(), "basic blocks"));
             wDBlocks_   ->setText(StringUtility::plural(function->dataBlocks().size(), "data blocks"));
             wInsns_     ->setText(StringUtility::plural(nInsns, "instructions"));
             wBytes_     ->setText(StringUtility::plural(nBytes, "bytes"));
-            wDiscontig_ ->setText(nIntervals<=1 ? "Contiguous" : StringUtility::plural(nIntervals, "intervals"));
-            wCallers_   ->setText(StringUtility::plural(cg->nCallers(function), "distinct functions"));
+            wDiscontig_ ->setText(StringUtility::plural(nIntervals, "contiguous intervals"));
+            wCallers_   ->setText(StringUtility::plural(cg->nCallers(function), "distinct callers"));
             wCallsInto_ ->setText(StringUtility::plural(cg->nCallsIn(function), "calls")+" incoming");
-            wCallees_   ->setText(StringUtility::plural(cg->nCallees(function), "distinct functions"));
+            wCallees_   ->setText(StringUtility::plural(cg->nCallees(function), "distinct callees"));
             wCallsOut_  ->setText(StringUtility::plural(cg->nCallsOut(function), "calls")+" outgoing");
-            wRecursive_ ->setText(cg->nCalls(function, function)?"yes":"no");
+            wRecursive_ ->setText(cg->nCalls(function, function)?"recursive":"non-recursive");
+            table_->show();
         } else {
             wName_      ->setText("");
             wEntry_     ->setText("");
@@ -734,6 +784,7 @@ public:
             wCallees_   ->setText("");
             wCallsOut_  ->setText("");
             wRecursive_ ->setText("");
+            table_->hide();
         }
     }
 };
@@ -746,13 +797,22 @@ class WFunctionCfg: public Wt::WContainerWidget {
     P2::Function::Ptr function_;                        // currently-displayed function
     Wt::WImage *wImage_;                                // image for the CFG
     Wt::WText *wMessage_;
-    std::vector<std::pair<Wt::WRectArea*, rose_addr_t> > areas_;
+    typedef std::pair<Wt::WRectArea*, rose_addr_t> AreaAddr;
+    std::vector<AreaAddr> areas_;
+    Wt::Signal<P2::BasicBlock::Ptr> basicBlockClicked_;
+    Wt::Signal<P2::Function::Ptr> functionClicked_;
 public:
     WFunctionCfg(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), wImage_(NULL) {
         wMessage_ = new Wt::WText("No function.", this);
     }
 
+    // Returns currently displayed function
+    P2::Function::Ptr function() const {
+        return function_;
+    }
+
+    // Display information for the specified function
     void changeFunction(const P2::Function::Ptr &function) {
         if (function_ == function)
             return;
@@ -794,14 +854,20 @@ public:
                         area->setToolTip(callee->name());
                     area->clicked().connect(this, &WFunctionCfg::selectFunction);
                 } else if (P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(va)) {
-                    // Tooltip is the instructions, but be careful not to abuse the size
-                    std::string toolTip;
-                    bool exitEarly = bblock->nInstructions()>10;
-                    for (size_t i=0; (i<9 || (!exitEarly && i<10)) && i<bblock->nInstructions(); ++i)
-                        toolTip += (i?"\n":"") + unparseInstruction(bblock->instructions()[i]);
-                    if (bblock->nInstructions()>10)
-                        toolTip += "\nand " + StringUtility::numberToString(bblock->nInstructions()-9) + " more...";
-                    area->setToolTip(toolTip);
+                    // Gecko agents (e.g., firefox) don't like multi-line tooltips--they rewrap the tip as they see fit.
+                    // Therefore, on such agents just indicate the number of instructions.  For other agents, create a tooltip
+                    // with up to 10 lines listing the instructions.
+                    if (ctx_.application->environment().agentIsGecko()) {
+                        area->setToolTip(StringUtility::plural(bblock->nInstructions(), "instructions"));
+                    } else {
+                        std::string toolTip;
+                        bool exitEarly = bblock->nInstructions()>10;
+                        for (size_t i=0; (i<9 || (!exitEarly && i<10)) && i<bblock->nInstructions(); ++i)
+                            toolTip += (i?"\n":"") + unparseInstruction(bblock->instructions()[i]);
+                        if (bblock->nInstructions()>10)
+                            toolTip += "\nand " + StringUtility::numberToString(bblock->nInstructions()-9) + " more...";
+                        area->setToolTip(toolTip);
+                    }
                     area->clicked().connect(this, &WFunctionCfg::selectBasicBlock);
                 }
                 wImage_->addArea(area);
@@ -819,37 +885,327 @@ public:
         return;
     }
 
+    // Emitted when a basic block vertex is clicked.
+    Wt::Signal<P2::BasicBlock::Ptr>& basicBlockClicked() {
+        return basicBlockClicked_;
+    }
+
+    // Emitted when a function vertex is clicked.
+    Wt::Signal<P2::Function::Ptr>& functionClicked() {
+        return functionClicked_;
+    }
+    
 private:
     void selectBasicBlock(const Wt::WMouseEvent &event) {
-        mlog[INFO] <<"ROBB: clicked basic block at (" <<event.widget().x <<"," <<event.widget().y <<")\n";
+        BOOST_FOREACH (const AreaAddr &pair, areas_) {
+            Wt::WRectArea *area = pair.first;
+            if (event.widget().x >= area->x() && event.widget().x <= area->x() + area->width() &&
+                event.widget().y >= area->y() && event.widget().y <= area->y() + area->height()) {
+                P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(pair.second);
+                if (bblock)
+                    basicBlockClicked_.emit(bblock);
+                return;
+            }
+        }
     }
+
     void selectFunction(const Wt::WMouseEvent &event) {
-        mlog[INFO] <<"ROBB: clicked function at (" <<event.widget().x <<"," <<event.widget().y <<")\n";
+        BOOST_FOREACH (const AreaAddr &pair, areas_) {
+            Wt::WRectArea *area = pair.first;
+            if (event.widget().x >= area->x() && event.widget().x <= area->x() + area->width() &&
+                event.widget().y >= area->y() && event.widget().y <= area->y() + area->height()) {
+                P2::Function::Ptr function = ctx_.partitioner.functionExists(pair.second);
+                if (function)
+                    functionClicked_.emit(function);
+                return;
+            }
+        }
     }
 };
-        
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Model holding instructions
+
+class InstructionListModel: public Wt::WAbstractTableModel {
+    Context &ctx_;
+    std::vector<SgAsmInstruction*> insns_;
+public:
+    enum Column {
+        C_ADDR,                                         // instruction address
+        C_BYTES,                                        // instruction bytes in hexadecimal
+        C_CHARS,                                        // instruction printable characters
+        C_NAME,                                         // instruction mnemonic
+        C_ARGS,                                         // instruction operands
+        C_COMMENT,                                      // arbitrary text
+        C_NCOLS                                         // MUST BE LAST
+    };
+
+    explicit InstructionListModel(Context &ctx): ctx_(ctx) {}
+
+    void changeInstructions(const std::vector<SgAsmInstruction*> &insns) {
+        layoutAboutToBeChanged().emit();
+        insns_ = insns;
+        layoutChanged().emit();
+    }
+
+    void clear() {
+        layoutAboutToBeChanged().emit();
+        insns_.clear();
+        layoutChanged().emit();
+    }
+    
+    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+        return parent.isValid() ? 0 : insns_.size();
+    }
+
+    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+        return parent.isValid() ? 0 : C_NCOLS;
+    }
+
+    virtual boost::any headerData(int column, Wt::Orientation orientation=Wt::Horizontal,
+                                  int role=Wt::DisplayRole) const /*override*/ {
+        if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
+            switch (column) {
+                case C_ADDR:    return Wt::WString("Address");
+                case C_BYTES:   return Wt::WString("Bytes");
+                case C_CHARS:   return Wt::WString("ASCII");
+                case C_NAME:    return Wt::WString("Mnemonic");
+                case C_ARGS:    return Wt::WString("Operands");
+                case C_COMMENT: return Wt::WString("Comments");
+                default:        return boost::any();
+            }
+        }
+        return boost::any();
+    }
+
+    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const /*override*/ {
+        ASSERT_require(index.isValid());
+        ASSERT_require(index.row()>=0 && (size_t)index.row() < insns_.size());
+        SgAsmInstruction *insn = insns_[index.row()];
+        if (Wt::DisplayRole == role) {
+            switch (index.column()) {
+                case C_ADDR: {
+                    return Wt::WString(StringUtility::addrToString(insn->get_address()));
+                }
+                case C_BYTES: {
+                    std::string s;
+                    for (size_t i=0; i<insn->get_raw_bytes().size(); ++i) {
+                        uint8_t byte = insn->get_raw_bytes()[i];
+                        char buf[32];
+                        sprintf(buf, "%02x", byte);
+                        s += std::string(i?" ":"") + buf;
+                    }
+                    return Wt::WString(s);
+                }
+                case C_CHARS: {
+                    std::string s;
+                    for (size_t i=0; i<insn->get_raw_bytes().size(); ++i) {
+                        char ch = insn->get_raw_bytes()[i];
+                        s += std::string(i?" ":"") + (isgraph(ch) ? std::string(1, ch) : std::string(" "));
+                    }
+                    return Wt::WString(s);
+                }
+                case C_NAME: {
+                    return Wt::WString(unparseMnemonic(insn));
+                }
+                case C_ARGS: {
+                    std::string s;
+                    const RegisterDictionary *regs = ctx_.partitioner.instructionProvider().registerDictionary();
+                    const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+                    for (size_t i=0; i<operands.size(); ++i)
+                        s += (i?", ":"") + unparseExpression(operands[i], NULL, regs);
+                    return Wt::WString(s);
+                }
+                case C_COMMENT: {
+                    return Wt::WString(insn->get_comment());
+                }
+                default:        ASSERT_not_reachable("invalid column number");
+            }
+        }
+        return boost::any();
+    }
+};
+
+class WInstructionList: public Wt::WContainerWidget {
+    InstructionListModel *model_;
+    Wt::WTableView *tableView_;
+public:
+    WInstructionList(InstructionListModel *model, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), model_(model) {
+        ASSERT_not_null(model);
+        tableView_ = new Wt::WTableView(this);
+        tableView_->setModel(model_);
+        tableView_->setRowHeaderCount(1);               // this must be first property set
+        tableView_->setHeaderHeight(28);
+        tableView_->setSortingEnabled(false);
+        tableView_->setAlternatingRowColors(true);
+        tableView_->setHeight(500);
+        tableView_->setColumnWidth(InstructionListModel::C_ADDR,     Wt::WLength(6, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_BYTES,    Wt::WLength(12, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_CHARS,    Wt::WLength(4, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_NAME,     Wt::WLength(5, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_ARGS,     Wt::WLength(30, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_COMMENT,  Wt::WLength(50, Wt::WLength::FontEm));
+        tableView_->setColumnResizeEnabled(true);
+        tableView_->setSelectionMode(Wt::SingleSelection);
+        tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Basic block
+class WBasicBlock: public Wt::WContainerWidget {
+    P2::BasicBlock::Ptr bblock_;                        // currently displayed basic block
+    InstructionListModel *model_;
+    WInstructionList *insnList_;
+public:
+    WBasicBlock(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : WContainerWidget(parent), model_(NULL), insnList_(NULL) {
+        model_ = new InstructionListModel(ctx);
+        insnList_ = new WInstructionList(model_, this);
+    }
+
+    void changeBasicBlock(const P2::BasicBlock::Ptr &bblock) {
+        if (bblock == bblock_)
+            return;
+        bblock_ = bblock;
+        if (NULL==bblock) {
+            model_->clear();
+            return;
+        }
+        model_->changeInstructions(bblock->instructions());
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// All information about functions, CFGs, basic blocks, instructions...
+class WFunctions: public Wt::WContainerWidget {
+public:
+    enum Tab { LIST_TAB, CFG_TAB, BB_TAB };
+private:
+    Context ctx_;
+    Wt::WTabWidget *wTabs_;                             // function list; function details
+    Wt::WContainerWidget *wListTab_, *wCfgTab_, *wBbTab_; // tabs in the tab widget
+    WFunctionList *wFunctionList_;                      // list of all functions
+    WFunctionSummary *wSummary1_, *wSummary2_;          // function summary info (in two different tabs)
+    WFunctionCfg *wFunctionCfg_;                        // control flow graph
+    WBasicBlock *wBasicBlock_;                          // basic block display
+    P2::Function::Ptr function_;                        // current function
+    P2::BasicBlock::Ptr bblock_;                        // current basic block
+public:
+    WFunctions(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), ctx_(ctx), wTabs_(NULL), wListTab_(NULL), wCfgTab_(NULL), wBbTab_(NULL),
+          wFunctionList_(NULL), wSummary1_(NULL), wSummary2_(NULL), wFunctionCfg_(NULL), wBasicBlock_(NULL) {
+        wTabs_ = new Wt::WTabWidget(this);
+        wTabs_->currentChanged().connect(this, &WFunctions::setCurrentTab);
+
+        // List tab
+        ASSERT_require(LIST_TAB==0);
+        wListTab_ = new Wt::WContainerWidget(this);
+        wListTab_->hide();                              // working around bug with all tabs' widges visible on creation
+        (void) new Wt::WBreak(wListTab_);               // otherwise table headers overlap with tab buttons
+        wFunctionList_ = new WFunctionList(new FunctionListModel(ctx_), wListTab_);
+        wFunctionList_->clicked().connect(this, &WFunctions::showFunctionSummary);
+        wFunctionList_->doubleClicked().connect(this, &WFunctions::showFunctionCfg);
+        (void) new Wt::WBreak(wListTab_);
+        wSummary1_ = new WFunctionSummary(ctx_, wListTab_);
+        wTabs_->addTab(wListTab_, "Functions");
+
+        // CFG tab
+        ASSERT_require(CFG_TAB==1);
+        wCfgTab_ = new Wt::WContainerWidget(this);
+        wCfgTab_->hide();
+        (void) new Wt::WBreak(wCfgTab_);
+        wSummary2_ = new WFunctionSummary(ctx_, wCfgTab_);
+        wFunctionCfg_ = new WFunctionCfg(ctx_, wCfgTab_);
+        wFunctionCfg_->functionClicked().connect(this, &WFunctions::showFunctionCfg);
+        wFunctionCfg_->basicBlockClicked().connect(this, &WFunctions::showBasicBlock);
+        wTabs_->addTab(wCfgTab_, "CFG");
+
+        // Basic block tab
+        ASSERT_require(BB_TAB==2);
+        wBbTab_ = new Wt::WContainerWidget(this);
+        wBbTab_->hide();
+        (void) new Wt::WBreak(wBbTab_);
+        wBasicBlock_ = new WBasicBlock(ctx_, wBbTab_);
+        wTabs_->addTab(wBbTab_, "Block");
+
+        setCurrentTab(LIST_TAB);
+    }
+
+    void setCurrentTab(int idx) {
+        switch (idx) {
+            case LIST_TAB:
+                wSummary1_->changeFunction(function_);
+                wSummary1_->setHidden(function_==NULL);
+                break;
+            case CFG_TAB:
+                wSummary2_->changeFunction(function_);
+                wFunctionCfg_->changeFunction(function_);
+                wFunctionCfg_->setHidden(function_==NULL);
+                break;
+            case BB_TAB:
+                wBasicBlock_->changeBasicBlock(bblock_);
+                break;
+        }
+
+        // When changing away from the CFG_TAB and our current function is something other than what that tab is displaying,
+        // hide the CFG image so it doesn't flash an old one when we change back to the tab. The flashing would happen because
+        // we don't generate and update the image, which is expensive, until the last possible moment.
+        if (idx!=CFG_TAB)
+            wFunctionCfg_->setHidden(function_ != wFunctionCfg_->function());
+        wTabs_->setCurrentIndex(idx);
+        wTabs_->widget(idx)->show();
+    }
+    
+private:
+    // Show the function list and summary of selected function
+    void showFunctionSummary(const P2::Function::Ptr &function) {
+        function_ = function;
+        bblock_ = P2::BasicBlock::Ptr();
+        setCurrentTab(LIST_TAB);
+    }
+
+    // display function details
+    void showFunctionCfg(const P2::Function::Ptr &function) {
+        function_ = function;
+        bblock_ = P2::BasicBlock::Ptr();
+        setCurrentTab(CFG_TAB);
+    }
+
+    // display basic block details
+    void showBasicBlock(const P2::BasicBlock::Ptr &bblock) {
+        bblock_ = bblock;
+        setCurrentTab(BB_TAB);
+    }
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Application: public Wt::WApplication {
     Context ctx_;
-    WFunctionList *wFunctionList_;                      // list of all functions
-    WFunctionSummary *wFunctionSummary_;                // summary of current function
-    WFunctionCfg *wFunctionCfg_;                        // control flow graph
+    Wt::WContainerWidget *wContainer_;
+    Wt::WGridLayout *wGrid_;
+    WFunctions *wFunctions_;
 public:
-    Application(P2::Partitioner &partitioner, const Wt::WEnvironment &env): Wt::WApplication(env), ctx_(partitioner) {
+    Application(P2::Partitioner &partitioner, const Wt::WEnvironment &env)
+        : Wt::WApplication(env), ctx_(partitioner, this),  wFunctions_(NULL) {
         setTitle("bROwSE");
         setCssTheme("polished");
 
-        wFunctionList_ = new WFunctionList(new FunctionListModel(ctx_), root());
-        wFunctionList_->clicked().connect(this, &Application::setCurrentFunction);
-        wFunctionSummary_ = new WFunctionSummary(ctx_, root());
-        wFunctionCfg_ = new WFunctionCfg(ctx_, root());
-    }
 
-    void setCurrentFunction(const P2::Function::Ptr &function) {
-        ctx_.function = function;
-        wFunctionSummary_->changeFunction(function);
-        wFunctionCfg_->changeFunction(function);
+        wContainer_ = new Wt::WContainerWidget(root());
+        wContainer_->setHeight(600);
+        wContainer_->setLayout(wGrid_ = new Wt::WGridLayout());
+        wGrid_->setRowStretch(1, 1);
+        wGrid_->setColumnStretch(1, 1);
+
+        Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/compassrose.jpg");
+        wGrid_->addWidget(compassRose, 0, 0);
+
+        wFunctions_ = new WFunctions(ctx_);
+        wGrid_->addWidget(wFunctions_, 1, 1);
+        
     }
 };
 
@@ -936,7 +1292,7 @@ int main(int argc, char *argv[]) {
     char *wtArgv[8];
     wtArgv[wtArgc++] = strdup(argv[0]);
     wtArgv[wtArgc++] = strdup("--docroot");
-    wtArgv[wtArgc++] = strdup(".");
+    wtArgv[wtArgc++] = strdup(settings.docRoot.c_str());
     wtArgv[wtArgc++] = strdup("--http-address");
     wtArgv[wtArgc++] = strdup(settings.httpAddress.c_str());
     wtArgv[wtArgc++] = strdup("--http-port");
