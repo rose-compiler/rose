@@ -35,14 +35,17 @@
 #include <Wt/WContainerWidget>
 #include <Wt/WEnvironment>
 #include <Wt/WGridLayout>
+#include <Wt/WHBoxLayout>
 #include <Wt/WImage>
 #include <Wt/WLink>
 #include <Wt/WRectArea>
+#include <Wt/WScrollArea>
 #include <Wt/WString>
 #include <Wt/WTable>
 #include <Wt/WTableView>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
+#include <Wt/WVBoxLayout>
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
@@ -660,13 +663,20 @@ public:
     WFunctionList(FunctionListModel *model, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), model_(model) {
         ASSERT_not_null(model);
+#if 1 // DEBUGGING [Robb P. Matzke 2014-09-12]
+        Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;
+        //setHeight(500);
+        setLayout(hbox);
+        tableView_ = new Wt::WTableView;
+#else
         tableView_ = new Wt::WTableView(this);
+#endif
         tableView_->setModel(model_);
         tableView_->setRowHeaderCount(1); // this must be first property set
         tableView_->setHeaderHeight(28);
         tableView_->setSortingEnabled(true);
         tableView_->setAlternatingRowColors(true);
-        tableView_->setHeight(500);
+        //tableView_->setHeight(500);
         tableView_->setColumnWidth(1, 50);
         tableView_->setColumnWidth(1, 420);
         tableView_->setColumnResizeEnabled(true);
@@ -674,6 +684,9 @@ public:
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
         tableView_->clicked().connect(this, &WFunctionList::clickRow);
         tableView_->doubleClicked().connect(this, &WFunctionList::doubleClickRow);
+#if 1 // DEBUGGING [Robb P. Matzke 2014-09-12]
+        hbox->addWidget(tableView_);
+#endif
     }
 
     // Emitted when a row of the table is clicked
@@ -1039,7 +1052,6 @@ public:
         tableView_->setHeaderHeight(28);
         tableView_->setSortingEnabled(false);
         tableView_->setAlternatingRowColors(true);
-        tableView_->setHeight(500);
         tableView_->setColumnWidth(InstructionListModel::C_ADDR,     Wt::WLength(6, Wt::WLength::FontEm));
         tableView_->setColumnWidth(InstructionListModel::C_BYTES,    Wt::WLength(12, Wt::WLength::FontEm));
         tableView_->setColumnWidth(InstructionListModel::C_CHARS,    Wt::WLength(4, Wt::WLength::FontEm));
@@ -1096,28 +1108,36 @@ public:
     WFunctions(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), wTabs_(NULL), wListTab_(NULL), wCfgTab_(NULL), wBbTab_(NULL),
           wFunctionList_(NULL), wSummary1_(NULL), wSummary2_(NULL), wFunctionCfg_(NULL), wBasicBlock_(NULL) {
-        wTabs_ = new Wt::WTabWidget(this);
+
+        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+        setLayout(vbox);
+
+        vbox->addWidget(wTabs_ = new Wt::WTabWidget());
         wTabs_->currentChanged().connect(this, &WFunctions::setCurrentTab);
 
-        // List tab
+        // Function list tab.
         ASSERT_require(LIST_TAB==0);
         wListTab_ = new Wt::WContainerWidget(this);
         wListTab_->hide();                              // working around bug with all tabs' widges visible on creation
-        (void) new Wt::WBreak(wListTab_);               // otherwise table headers overlap with tab buttons
-        wFunctionList_ = new WFunctionList(new FunctionListModel(ctx_), wListTab_);
+        Wt::WVBoxLayout *wListTabLayout = new Wt::WVBoxLayout;
+        wListTab_->setLayout(wListTabLayout);
+        wListTabLayout->addWidget(wFunctionList_ = new WFunctionList(new FunctionListModel(ctx_)), 1);
         wFunctionList_->clicked().connect(this, &WFunctions::showFunctionSummary);
         wFunctionList_->doubleClicked().connect(this, &WFunctions::showFunctionCfg);
-        (void) new Wt::WBreak(wListTab_);
-        wSummary1_ = new WFunctionSummary(ctx_, wListTab_);
+        wListTabLayout->addWidget(wSummary1_ = new WFunctionSummary(ctx_));
         wTabs_->addTab(wListTab_, "Functions");
 
         // CFG tab
         ASSERT_require(CFG_TAB==1);
         wCfgTab_ = new Wt::WContainerWidget(this);
         wCfgTab_->hide();
-        (void) new Wt::WBreak(wCfgTab_);
-        wSummary2_ = new WFunctionSummary(ctx_, wCfgTab_);
-        wFunctionCfg_ = new WFunctionCfg(ctx_, wCfgTab_);
+        Wt::WVBoxLayout *wCfgTabLayout = new Wt::WVBoxLayout;
+        wCfgTab_->setLayout(wCfgTabLayout);
+        wCfgTabLayout->addWidget(new Wt::WBreak);
+        wCfgTabLayout->addWidget(wSummary2_ = new WFunctionSummary(ctx_));
+        Wt::WScrollArea *sa = new Wt::WScrollArea;
+        wCfgTabLayout->addWidget(sa, 1);
+        sa->setWidget(wFunctionCfg_ = new WFunctionCfg(ctx_));
         wFunctionCfg_->functionClicked().connect(this, &WFunctions::showFunctionCfg);
         wFunctionCfg_->basicBlockClicked().connect(this, &WFunctions::showBasicBlock);
         wTabs_->addTab(wCfgTab_, "CFG");
@@ -1126,11 +1146,14 @@ public:
         ASSERT_require(BB_TAB==2);
         wBbTab_ = new Wt::WContainerWidget(this);
         wBbTab_->hide();
-        (void) new Wt::WBreak(wBbTab_);
-        wBasicBlock_ = new WBasicBlock(ctx_, wBbTab_);
+        Wt::WVBoxLayout *wBbTabLayout = new Wt::WVBoxLayout;
+        wBbTab_->setLayout(wBbTabLayout);
+        wBbTabLayout->addWidget(wBasicBlock_ = new WBasicBlock(ctx_));
+        wBbTabLayout->addWidget(new Wt::WText, 1);
         wTabs_->addTab(wBbTab_, "Block");
 
         setCurrentTab(LIST_TAB);
+
     }
 
     void setCurrentTab(int idx) {
@@ -1184,7 +1207,6 @@ private:
 
 class Application: public Wt::WApplication {
     Context ctx_;
-    Wt::WContainerWidget *wContainer_;
     Wt::WGridLayout *wGrid_;
     WFunctions *wFunctions_;
 public:
@@ -1194,9 +1216,7 @@ public:
         setCssTheme("polished");
 
 
-        wContainer_ = new Wt::WContainerWidget(root());
-        wContainer_->setHeight(600);
-        wContainer_->setLayout(wGrid_ = new Wt::WGridLayout());
+        root()->setLayout(wGrid_ = new Wt::WGridLayout());
         wGrid_->setRowStretch(1, 1);
         wGrid_->setColumnStretch(1, 1);
 
@@ -1205,6 +1225,16 @@ public:
 
         wFunctions_ = new WFunctions(ctx_);
         wGrid_->addWidget(wFunctions_, 1, 1);
+
+#if 1 // DEBUGGING [Robb P. Matzke 2014-09-12]
+        wGrid_->addWidget(new Wt::WText("North"), 0, 1);
+        wGrid_->addWidget(new Wt::WText("NE"),    0, 2);
+        wGrid_->addWidget(new Wt::WText("West"),  1, 0);
+        wGrid_->addWidget(new Wt::WText("East"),  1, 2);
+        wGrid_->addWidget(new Wt::WText("SW"),    2, 0);
+        wGrid_->addWidget(new Wt::WText("South"), 2, 1);
+        wGrid_->addWidget(new Wt::WText("SE"),    2, 2);
+#endif
         
     }
 };
