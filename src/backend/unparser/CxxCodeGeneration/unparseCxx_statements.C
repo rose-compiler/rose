@@ -8078,7 +8078,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
         }
 
 #if 0
-     printf ("string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
+     printf ("In unparseTemplateDeclarationStatment_support(): string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
 #endif
 
 #if 0
@@ -8120,7 +8120,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              }
             else
              {
-#if 1
+#if 0
             // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
             // printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
                return;
@@ -8245,6 +8245,10 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 
   // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
      curprint ( string("\n" ) + templateString);
+#endif
+
+#if 0
+      printf ("Leaving unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
 #endif
    }
  

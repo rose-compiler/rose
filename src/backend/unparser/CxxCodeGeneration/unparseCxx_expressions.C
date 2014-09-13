@@ -470,8 +470,9 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
    }
 
 
+
 void
-Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & templateArgListPtr, SgUnparse_Info& info)
    {
   // DQ (7/23/2012): This is one of three locations where the template arguments are assembled and where 
   // the name generated identically (in each case) is critical.  Not clear how to best refactor this code.
@@ -562,6 +563,39 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
+   }
+
+
+void
+Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info)
+   {
+#if 0
+     printf ("In unparseTemplateParameterList(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+
+     if (templateParameterList.empty() == false)
+        {
+          curprint ("< ");
+          SgTemplateParameterPtrList::const_iterator i = templateParameterList.begin();
+          while (i != templateParameterList.end())
+             {
+               SgTemplateParameter* templateParameter = *i;
+               ROSE_ASSERT(templateParameter != NULL);
+#if 0
+               printf ("In unparseTemplateParameterList(): templateParameter = %p \n",templateParameter);
+#endif
+               unparseTemplateParameter(templateParameter,info);
+
+               i++;
+
+               if (i != templateParameterList.end())
+                  {
+                    curprint (",");
+                  }
+             }
+
+          curprint ("> ");
+        }
    }
 
 
@@ -673,6 +707,9 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
                SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
                ROSE_ASSERT(templateDeclaration != NULL);
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: output name = %s \n",templateDeclaration->get_name().str());
+#endif
 #if 0
             // This is a part of the template header that is not output here.
                SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();

@@ -65,7 +65,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (6/21/2011): Refactored support for unparing names with template arguments.
           void unparseTemplateFunctionName ( SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration, SgUnparse_Info& info );
-          void unparseTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info );
+          void unparseTemplateArgumentList ( const SgTemplateArgumentPtrList  & templateArgListPtr,    SgUnparse_Info& info );
+
+       // DQ (9/13/2014): Added as part of refactoring support for name qualification.
+          void unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info);
 
        // DQ (5/25/2013): Added support for unparsing the name of the template member function.
           void unparseTemplateMemberFunctionName ( SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration, SgUnparse_Info& info );

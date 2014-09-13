@@ -10046,7 +10046,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
                   {
                     if (isSgTemplateInstantiationDecl(classDeclaration) != NULL)
                        {
-#if 1
+// DQ (9/13/2014): Clean up this output when not printing developer warnings.
+// #if 1
+#if PRINT_DEVELOPER_WARNINGS
                          printf ("RARE ISSUE #1: In SageInterface::appendStatement(): This template instantiation has previously been added to the scope, so avoid doing so again (see test2013_198.C): classDeclaration = %p = %s scope = %p = %s \n",
                               classDeclaration,classDeclaration->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
