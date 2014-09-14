@@ -78,3 +78,56 @@ SageBuilder::buildUntypedModuleScope(SgUntypedDeclarationList* declaration_list,
      return returnNode;
    }
 
+
+void setupMembers(SgUntypedFunctionDeclaration* functionNode, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement)
+   {
+  // Set the data members
+     functionNode->set_parameters(parameters);
+     functionNode->set_type(type);
+     functionNode->set_scope(scope);
+     functionNode->set_end_statement(end_statement);
+
+  // Set the parents
+     parameters->set_parent(functionNode);
+     type->set_parent(functionNode);
+     scope->set_parent(functionNode);
+     end_statement->set_parent(functionNode);
+
+  // Not clear what to do with the source position information.
+  // Since a SgUntypedNode is a SgLocatedNode we internally have a place to store source position information.
+     setSourcePosition(functionNode);
+   }
+
+SgUntypedFunctionDeclaration*
+SageBuilder::buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement)
+   {
+     SgUntypedFunctionDeclaration* returnNode = new SgUntypedFunctionDeclaration(name);
+     ROSE_ASSERT(returnNode != NULL);
+
+     setupMembers(returnNode,parameters,type,scope,end_statement);
+
+     return returnNode;
+   }
+
+SgUntypedProgramHeaderDeclaration*
+SageBuilder::buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement)
+   {
+     SgUntypedProgramHeaderDeclaration* returnNode = new SgUntypedProgramHeaderDeclaration(name);
+     ROSE_ASSERT(returnNode != NULL);
+
+     setupMembers(returnNode,parameters,type,scope,end_statement);
+
+     return returnNode;
+   }
+
+SgUntypedSubroutineDeclaration*
+SageBuilder::buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement)
+   {
+     SgUntypedSubroutineDeclaration* returnNode = new SgUntypedSubroutineDeclaration(name);
+     ROSE_ASSERT(returnNode != NULL);
+
+     setupMembers(returnNode,parameters,type,scope,end_statement);
+
+     return returnNode;
+   }
+
