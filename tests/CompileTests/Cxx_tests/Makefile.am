@@ -252,6 +252,14 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_224.C \
    test2014_225.C \
    test2014_226.C \
+   test2014_226.C \
+   test2014_226.C \
+   test2014_226.C \
+   test2014_230.C \
+   test2014_231.C \
+   test2014_232.C \
+   test2014_233.C \
+   test2014_234.C \
    lulesh.C \
    luleshTALC.C
 

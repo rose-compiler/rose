@@ -8120,7 +8120,8 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              }
             else
              {
-#if 0
+#if 1
+            // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
             // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
             // printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
                return;
