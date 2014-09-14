@@ -38,7 +38,13 @@ testTranslator: ../../../testTranslator
 
 SGLRI_WITH_PATH = /home/dquinlan/bin/strategoxt-0.17-install-32bit/bin/sglri
 
-$(TEST_F90_Objects): ../../../testTranslator
+# DQ (9/14/2014): This forces the relinking of the testTranslator, which is a work 
+# around until the OFP and ATerm support is included in ROSE using shared libraries.
+recompile_translator:
+	rm ../../../testTranslator
+	$(MAKE) ../../../testTranslator
+
+$(TEST_F90_Objects): recompile_translator ../../../testTranslator
 #	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm

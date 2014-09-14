@@ -10,6 +10,20 @@
 #include <assert.h>
 #include <stdio.h>
 
+// DQ (9/14/2014): This file contains the function that are called by the OFP file:
+//    src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/ofp_traverse_productions.cpp
+// These function use OFP class defined in:
+//    src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/traverse.hpp
+// These functions (in this file) must implement the calls to the ROSE build functions
+// to build up the ROSE AST for Untyped Nodes.
+//
+// To support this we need to:
+//   1) build the SageBuilder build functions to build the ROSE Untyped IR nodes.
+//   2) Then we have to modify these functions to call those ROSE build API functions.
+//   3) Once we have the Untyped AST using ROSE Untyped IR nodes, then we can worry about the  
+//      translation of these IR nodes to the usual ROSE IR nodes to define a proper ROSE AST 
+//      (defining a new Fortran frontend for ROSE).
+
 #define UNPARSER_AVAILABLE 0
 #define OFP_BUILD_DEBUG
 
