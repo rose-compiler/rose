@@ -1515,7 +1515,7 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_CHAR:
           case T_UNSIGNED_SHORT:
           case T_UNSIGNED_INT:
-
+          case T_UNSIGNED_LONG:
        // DQ (3/24/2014): Added support for 128 bit integers.
           case T_UNSIGNED_LONG_LONG:
           case T_UNSIGNED_128BIT_INTEGER:

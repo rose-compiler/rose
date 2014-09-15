@@ -460,69 +460,69 @@ TESTCODE_CURRENTLY_FAILING =
 # This source files are listed as unused source files and thus violate 
 # the unused source file ploicy so let's list them explicitly here:
 UNMENTIONED_SOURCE_FILES = \
-c++trick.C \
-sgnodee.hpp \
-test2006_136.h \
-test2007_113.h \
-test2007_114.h \
-test2007_40.h \
-test2007_95.C \
-test2008_07.C \
-test2008_15.C \
-test2009_23.C \
-test2009_26.C \
-test2010_20.C \
-test2010_21.C \
-test2010_23.C \
-test2011_102.C \
-test2011_103.C \
-test2011_104.C \
-test2011_105.C \
-test2011_106.C \
-test2011_107.C \
-test2011_108.C \
-test2011_109.C \
-test2011_112.C \
-test2011_122.C \
-test2011_123.C \
-test2011_124.C \
-test2011_125.C \
-test2011_126.C \
-test2011_127.C \
-test2011_128.C \
-test2011_129.C \
-test2011_130.C \
-test2011_131.C \
-test2011_132.C \
-test2011_134.C \
-test2011_144.C \
-test2011_145.C \
-test2011_148.C \
-test2012_139.C \
-test2012_140.C \
-test2012_178.h \
-test2012_189.C \
-test2013_13.C \
-test2013_14.C \
-test2013_15.C \
+	c++trick.C				\
+	sgnodee.hpp				\
+	test2006_136.h				\
+	test2007_113.h				\
+	test2007_114.h				\
+	test2007_40.h				\
+	test2007_95.C				\
+	test2008_07.C				\
+	test2008_15.C				\
+	test2009_23.C				\
+	test2009_26.C				\
+	test2010_20.C				\
+	test2010_21.C				\
+	test2010_23.C				\
+	test2011_102.C				\
+	test2011_103.C				\
+	test2011_104.C				\
+	test2011_105.C				\
+	test2011_106.C				\
+	test2011_107.C				\
+	test2011_108.C				\
+	test2011_109.C				\
+	test2011_112.C				\
+	test2011_122.C				\
+	test2011_123.C				\
+	test2011_124.C				\
+	test2011_125.C				\
+	test2011_126.C				\
+	test2011_127.C				\
+	test2011_128.C				\
+	test2011_129.C				\
+	test2011_130.C				\
+	test2011_131.C				\
+	test2011_132.C				\
+	test2011_134.C				\
+	test2011_144.C				\
+	test2011_145.C				\
+	test2011_148.C				\
+	test2012_139.C				\
+	test2012_140.C				\
+	test2012_178.h				\
+	test2012_189.C				\
+	test2013_13.C				\
+	test2013_14.C				\
+	test2013_15.C				\
 test2013_16.C \
 test2013_17.C \
-test2013_19.C \
-test2013_24.C \
-test2013_30.C \
-test2013_35.C \
-test2013_41.C \
-test2013_42.C \
-test2013_43.C \
-test2013_45.C \
-test2013_49.C \
-test_gnu.C 
+	test2013_19.C				\
+	test2013_24.C				\
+	test2013_30.C				\
+	test2013_35.C				\
+	test2013_41.C				\
+	test2013_42.C				\
+	test2013_43.C				\
+	test2013_45.C				\
+	test2013_49.C				\
+	test_gnu.C 
 
 
 
 
 # DQ (8/6/2012): These are the previously failing test with the older version of ROSE (115 of the 183 old failing tests pass now: 68 left...).
-PASSING_PREVIOUSLY_FAILING_TESTS = \
+PASSING_PREVIOUSLY_FAILING_TESTS =											\
 certSignalExample.C \
 longFile.C \
 test2005_151.C \
@@ -628,7 +628,7 @@ test2010_15.C
 
 # DQ (8/6/2012): This is the list of test code that were failing before the move to EDG 4.3 (failing with the use of EDG 3.3)
 # DQ (8/6/2012): Original count is 183 failing tests that have never passed previously.
-NEVER_PASING_TESTCODE_CURRENTLY_FAILING = \
+NEVER_PASING_TESTCODE_CURRENTLY_FAILING = 										\
 lexPhase2003_02.C \
 test2004_25.C \
 test2005_69.C \
@@ -875,10 +875,15 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
-PASSING_TEST_Objects = ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o}
-PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed} ${ROSE__CXX_TESTS__BOOST:.C=.C.passed}
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
-TEST_Sources = ${ALL_TESTCODES:.C=.C.passed}
+TESTS_THAT_FAIL =
+
+# This test fails on Debian, GCC-4.4.5, boost-1.47.0 in buildTemplateClassDeclaration_nfi with the error message "detected
+# isSgClassType(nondefdecl->get_type())->get_declaration() != isSgDeclarationStatement(nondefdecl) (problem with Boost code
+# in ROSE compiling ROSE)"
+TESTS_THAT_FAIL = test2013_242.C
+
+TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(ALL_TESTCODES)))
+PASSING_TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(TESTCODES) $(ROSE__CXX_TESTS__BOOST)))
 
 # DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
 TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
@@ -911,14 +916,12 @@ TEST_TRANSLATOR = ../../testTranslator
 # 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
 # endif
 
-# $(TEST_Sources_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
-# $(TEST_Sources): %.passed: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
-$(TEST_Sources): %.passed: $(TEST_TRANSLATOR)
+$(TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
-#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
-#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
@@ -928,6 +931,12 @@ else
 #	rm -f testTranslator_$(@:.o=)
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
 endif
+
+FAILING_TEST_targets = $(addsuffix .passed, $(TESTS_THAT_FAIL))
+$(FAILING_TEST_targets): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@$(RTH_RUN) CMD=false TITLE="testTranslator $(notdir $<) [$@]" \
+		DISABLED="this test is disabled because it does not pass reliably" \
+		$(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
 $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
@@ -1111,9 +1120,8 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 
-check-local:
-#	@$(MAKE) $(PASSING_TEST_Objects)
-	@$(MAKE) $(PASSING_TEST_Sources)
+check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+#	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
 	@$(MAKE) test_common_configure_test_with_link_part_1.passed

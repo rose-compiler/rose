@@ -871,6 +871,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+  //
+  // appendPID
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","appendPID",false) == true )
+        {
+#if 0
+          printf ("detected use of appendPID mode \n");
+#endif
+          set_appendPID(true);
+        }
   //
   // specify compilation only option (new style command line processing)
   //
@@ -3231,6 +3242,9 @@ SgFile::usage ( int status )
 "     -rose:noclobber_if_different_output_file\n"
 "                             force error on rewrite of existing output file only if result\n"
 "                             if a different output file (default: false). \n"
+"     -rose:appendPID\n"
+"                             append PID into the temporary output name. \n"
+"                             This can avoid issues in parallel compilation (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -5073,6 +5087,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      optionCount = sla(argv, "-rose:", "($)", "noclobber_if_different_output_file",1);
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
