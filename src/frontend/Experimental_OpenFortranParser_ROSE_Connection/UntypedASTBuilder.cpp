@@ -78,7 +78,17 @@ void UntypedASTBuilder::build_Program(Program * program)
    printf("build_Program: ..................... %lu\n", declList->get_decl_list().size());
 #endif
 #else
-   printf ("UntypedASTBuilder::build_Program(): commented out! \n");
+   printf ("UntypedASTBuilder::build_Program(): calling ROSE build functions \n");
+
+   SgUntypedDeclarationList* declaration_list      = NULL;
+   SgUntypedStatementList* statement_list          = NULL;
+   SgUntypedFunctionDeclarationList* function_list = NULL;
+
+   SgUntypedGlobalScope* globalScope = SageBuilder::buildUntypedGlobalScope(declaration_list,statement_list,function_list);
+
+   SgUntypedFile* file = SageBuilder::buildUntypedFile(globalScope);
+
+   program->setPayload(file);
 #endif
 }
 
@@ -1126,6 +1136,13 @@ void UntypedASTBuilder::build_Icon(Icon* icon)
    unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(icon->getPayload()));  printf("\n");
 #endif
 #endif
+
+#if 0
+   printf ("Error: In UntypedASTBuilder::build_Icon(): Built a SgUntypedValueExpression (need to call SageBuilder API) \n");
+   ROSE_ASSERT(false);
+#else
+   printf ("WARNING: In UntypedASTBuilder::build_Icon(): Built a SgUntypedValueExpression (need to call SageBuilder API) \n");
+#endif
 }
 
 void UntypedASTBuilder::build_Ident(Ident* ident)
@@ -1138,6 +1155,13 @@ void UntypedASTBuilder::build_Ident(Ident* ident)
 #if UNPARSER_AVAILABLE
    unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(ident->getPayload()));  printf("\n");
 #endif
+#endif
+
+#if 0
+   printf ("Error: In UntypedASTBuilder::build_Ident(): Built a SgUntypedValueExpression (need to call SageBuilder API) \n");
+   ROSE_ASSERT(false);
+#else
+   printf ("WARNING: In UntypedASTBuilder::build_Ident(): Built a SgUntypedValueExpression (need to call SageBuilder API) \n");
 #endif
 }
 

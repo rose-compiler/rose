@@ -244,7 +244,10 @@ experimental_openFortranParser_main(int argc, char **argv)
      printf ("In experimental_openFortranParser_main(): Calling OFP::setUnparser() \n");
 #endif
 
+#if 0
+  // DQ (9/15/2014): Skipping the unparser for now since I don't have a handle or control over that code.
      OFP::setUnparser(unparser);
+#endif
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Calling ofp_traverse_Program() \n");
@@ -272,9 +275,12 @@ experimental_openFortranParser_main(int argc, char **argv)
      printf ("In experimental_openFortranParser_main(): calling OFP unparser \n");
 #endif
 
+#if 0
+  // DQ (9/15/2014): Skipping the unparser for now since I don't have a handle or control over that code.
      if (ofs == NULL) printf("----------------------------\n");
      unparser->unparseNode(Program.getPayload());
      if (ofs == NULL) printf("----------------------------\n\n");
+#endif
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): cleanup and exiting normally \n");

@@ -21,6 +21,8 @@ void OFP::FortranTextUnparser::unparseNode(SgUntypedNode * node)
                SgUntypedFile * file = isSgUntypedFile(node);  assert(file);
                SgUntypedGlobalScope* scope = file->get_scope();
 
+               ROSE_ASSERT(scope != NULL);
+               ROSE_ASSERT(scope->get_declaration_list() != NULL);
                SgUntypedDeclarationStatementPtrList programUnitList = scope->get_declaration_list()->get_decl_list();
                for (int i = 0; i < programUnitList.size(); i++) {
                   SgUntypedDeclarationStatement * decl = isSgUntypedDeclarationStatement(programUnitList.at(i));  assert(decl);

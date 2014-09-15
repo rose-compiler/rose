@@ -3680,8 +3680,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
           if (frontendErrorLevel == 0)
              {
+#if 0
                printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
                exit(0);
+#else
+               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCESS! \n");
+#endif
              }
             else
              {
