@@ -38,8 +38,8 @@ public:
     typedef T Value;
     typedef AddressSegment<A, T> Segment;
 
-    bool merge(const Interval<Address> &leftInterval, Segment &leftSegment,
-               const Interval<Address> &rightInterval, Segment &rightSegment) {
+    bool merge(const Sawyer::Container::Interval<Address> &leftInterval, Segment &leftSegment,
+               const Sawyer::Container::Interval<Address> &rightInterval, Segment &rightSegment) {
         ASSERT_forbid(leftInterval.isEmpty());
         ASSERT_forbid(rightInterval.isEmpty());
         ASSERT_require(leftInterval.greatest() + 1 == rightInterval.least());
@@ -49,7 +49,7 @@ public:
                 leftSegment.offset() + leftInterval.size() == rightSegment.offset());
     }
 
-    Segment split(const Interval<Address> &interval, Segment &segment, Address splitPoint) {
+    Segment split(const Sawyer::Container::Interval<Address> &interval, Segment &segment, Address splitPoint) {
         ASSERT_forbid(interval.isEmpty());
         ASSERT_require(interval.isContaining(splitPoint));
         Segment right = segment;
@@ -57,7 +57,7 @@ public:
         return right;
     }
 
-    void truncate(const Interval<Address> &interval, Segment &segment, Address splitPoint) {
+    void truncate(const Sawyer::Container::Interval<Address> &interval, Segment &segment, Address splitPoint) {
         ASSERT_forbid(interval.isEmpty());
         ASSERT_require(interval.isContaining(splitPoint));
     }
@@ -149,7 +149,7 @@ public:
             none();
         return *this;
     }
-    AddressMapConstraints& at(const Interval<Address> &x) {
+    AddressMapConstraints& at(const Sawyer::Container::Interval<Address> &x) {
         anchored_ = anchored_ ? *anchored_ & x : x;
         return anchored_->isEmpty() ? none() : atOrAfter(x.least()).atOrBefore(x.greatest());
     }
@@ -472,7 +472,7 @@ public:
     template<class IM>
     class MatchedConstraints {
         friend class AddressMap;
-        Interval<A> interval_;
+        Sawyer::Container::Interval<A> interval_;
         typedef typename AddressMapTraits<IM>::NodeIterator NodeIterator;
         boost::iterator_range<NodeIterator> nodes_;
     };
@@ -558,10 +558,10 @@ public:
      *  does not satisfy the constraints) then nothing is read.
      *
      * @{ */
-    AddressMapConstraints<const AddressMap> at(const Interval<Address> &x) const {
+    AddressMapConstraints<const AddressMap> at(const Sawyer::Container::Interval<Address> &x) const {
         return AddressMapConstraints<const AddressMap>(this).at(x);
     }
-    AddressMapConstraints<AddressMap> at(const Interval<Address> &x) {
+    AddressMapConstraints<AddressMap> at(const Sawyer::Container::Interval<Address> &x) {
         return AddressMapConstraints<AddressMap>(this).at(x);
     }
     /** @} */
@@ -611,10 +611,10 @@ public:
      *  Constrains matched addresses so they are all within the specified interval.
      *
      * @{ */
-    AddressMapConstraints<const AddressMap> within(const Interval<Address> &x) const {
+    AddressMapConstraints<const AddressMap> within(const Sawyer::Container::Interval<Address> &x) const {
         return AddressMapConstraints<const AddressMap>(this).within(x);
     }
-    AddressMapConstraints<AddressMap> within(const Interval<Address> &x) {
+    AddressMapConstraints<AddressMap> within(const Sawyer::Container::Interval<Address> &x) {
         return AddressMapConstraints<AddressMap>(this).within(x);
     }
     /** @} */
@@ -1163,7 +1163,7 @@ public:
      *
      * @sa keep */
     void prune(const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
-        IntervalSet<Interval<Address> > toErase;
+        IntervalSet<Sawyer::Container::Interval<Address> > toErase;
         if (0==(flags & (CONTIGUOUS|NONCONTIGUOUS)))
             flags |= NONCONTIGUOUS;
         MatchedConstraints<AddressMap> m = matchConstraints(*this, c.addressConstraints(), flags);
@@ -1171,7 +1171,7 @@ public:
             if (isSatisfied(node, c))
                 toErase.insert(node.key() & m.interval_);
         }
-        BOOST_FOREACH (const Interval<Address> &interval, toErase.intervals())
+        BOOST_FOREACH (const Sawyer::Container::Interval<Address> &interval, toErase.intervals())
             this->erase(interval);
     }
 
@@ -1191,14 +1191,14 @@ public:
     void keep(const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
         if (0==(flags & (CONTIGUOUS|NONCONTIGUOUS)))
             flags |= NONCONTIGUOUS;
-        IntervalSet<Interval<Address> > toKeep;
+        IntervalSet<Sawyer::Container::Interval<Address> > toKeep;
         MatchedConstraints<AddressMap> m = matchConstraints(*this, c.addressConstraints(), flags);
         BOOST_FOREACH (const Node &node, m.nodes_) {
             if (isSatisfied(node, c))
                 toKeep.insert(node.key() & m.interval_);
         }
         toKeep.invert();
-        BOOST_FOREACH (const Interval<Address> &interval, toKeep.intervals())
+        BOOST_FOREACH (const Sawyer::Container::Interval<Address> &interval, toKeep.intervals())
             this->erase(interval);
     }
 
@@ -1225,14 +1225,14 @@ public:
                       MatchFlags flags=0) {
         if (0==(flags & (CONTIGUOUS|NONCONTIGUOUS)))
             flags |= NONCONTIGUOUS;
-        typedef std::pair<Interval<Address>, Segment> ISPair;
+        typedef std::pair<Sawyer::Container::Interval<Address>, Segment> ISPair;
         std::vector<ISPair> newSegments;
         MatchedConstraints<AddressMap> m = matchConstraints(*this, c.addressConstraints(), flags);
         BOOST_FOREACH (Node &node, m.nodes_) {
             Segment &segment = node.value();
             if (isSatisfied(node, c)) {
                 unsigned newAccess = (segment.accessibility() | requiredAccess) & ~prohibitedAccess;
-                Interval<Address> toChange = node.key() & m.interval_;
+                Sawyer::Container::Interval<Address> toChange = node.key() & m.interval_;
                 if (toChange == node.key()) {           // all addresses in segment are selected; change segment in place
                     segment.accessibility(newAccess);
                 } else {                                // insert a new segment, replacing part of the existing one
@@ -1405,7 +1405,7 @@ private:
         }
 
         // Build the result
-        retval.interval_ = Interval<Address>::hull(minAddr, maxAddr);
+        retval.interval_ = Sawyer::Container::Interval<Address>::hull(minAddr, maxAddr);
         retval.nodes_ = boost::iterator_range<Iterator>(begin, end);
         return retval;
     }
@@ -1480,7 +1480,7 @@ private:
         }
 
         // Build the result
-        retval.interval_ = Interval<Address>::hull(minAddr, maxAddr);
+        retval.interval_ = Sawyer::Container::Interval<Address>::hull(minAddr, maxAddr);
         retval.nodes_ = boost::iterator_range<Iterator>(begin, end);
         return retval;
     }
