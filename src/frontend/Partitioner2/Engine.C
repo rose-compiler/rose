@@ -34,6 +34,7 @@ Engine::createGenericPartitioner(Disassembler *disassembler, const MemoryMap &ma
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
+    p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     return p;
 }
 
@@ -50,6 +51,7 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+        p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         return p;
     }
 

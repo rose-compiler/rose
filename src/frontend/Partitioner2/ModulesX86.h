@@ -63,6 +63,18 @@ public:
     virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
 };
 
+/** Basic block callback to detect function returns.
+ *
+ *  The architecture agnostic isFunctionReturn test for basic blocks does not detect x86 "RET N" (N!=0) instructions as
+ *  returning from a function because such instructions have side effects that apply after the return-to address is popped from
+ *  the stack.  Therefore this basic block callback looks for such instructions and sets the isFunctionReturn property for the
+ *  basic block. */
+class FunctionReturnDetector: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new FunctionReturnDetector); } /**< Allocating constructor. */
+    virtual bool operator()(bool chain, const Args&) /*override*/;
+};
+
 } // namespace
 } // namespace
 } // namespace

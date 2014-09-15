@@ -17,7 +17,15 @@ enum VertexType {
 enum EdgeType {
     E_NORMAL,                                           /**< Normal control flow edge, nothing special. */
     E_FUNCTION_CALL,                                    /**< Edge is a function call. */
-    E_CALL_RETURN,                                      /**< Edge is a function return from the call site. */
+    E_FUNCTION_RETURN,                                  /**< Edge is a function return. Such edges represent the actual
+                                                         *   return-to-caller and usually originate from a return instruction
+                                                         *   (e.g., x86 @c RET, m68k @c RTS, etc.). */
+    E_CALL_RETURN,                                      /**< Edge is a function return from the call site. Such edges are from
+                                                         *   a caller basic block to (probably) the fall-through address of the
+                                                         *   call and don't actually exist directly in the specimen.  The
+                                                         *   represent the fact that the called function eventually returns
+                                                         *   even if the instructions for the called function are not available
+                                                         *   to analyze. */
 };
 
 class Partitioner;

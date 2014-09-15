@@ -404,13 +404,20 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
 
     bblock->freeze();
     bool isFunctionCall = basicBlockIsFunctionCall(bblock);
+    bool isFunctionReturn = basicBlockIsFunctionReturn(bblock);
 
     // Make sure placeholders exist for the concrete successors
     bool hadIndeterminate = false;
     typedef std::pair<ControlFlowGraph::VertexNodeIterator, CfgEdge> VertexEdgePair;
     std::vector<VertexEdgePair> successors;
     BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bblock)) {
-        CfgEdge edge(isFunctionCall ? E_FUNCTION_CALL : E_NORMAL);
+        EdgeType edgeType = E_NORMAL;
+        if (isFunctionCall) {
+            edgeType = E_FUNCTION_CALL;
+        } else if (isFunctionReturn) {
+            edgeType = E_FUNCTION_RETURN;
+        }
+        CfgEdge edge(edgeType);
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
         } else if (!hadIndeterminate) {
@@ -419,7 +426,10 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
         }
     }
 
-    // Function calls get an additional return edge because we assume they return to the fall-through address
+    // Function calls get an additional return edge because we assume they return to the fall-through address. This edge
+    // doesn't exist explicitly in the specimen, but we must add it to the partitioner's CFG because if the called function
+    // does not exist (e.g., it's in a dynamically loaded library that is not present) then this edge is the only way to
+    // indicate that the called function eventually returns.
     if (isFunctionCall)
         successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), CfgEdge(E_CALL_RETURN)));
 
@@ -591,7 +601,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     bool retval = false;
 
     if (bb->isEmpty() || bb->isFunctionCall().getOptional().assignTo(retval))
-        return retval;
+        return retval;                                  // already cached
 
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
@@ -600,9 +610,9 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
         // Is the block fall-through address equal to the value on the top of the stack?
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
-        RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
+        const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
+        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+        const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
         rose_addr_t returnVa = bb->fallthroughVa();
         BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
         BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
@@ -635,13 +645,63 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     return retval;
 }
 
+bool
+Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
+    ASSERT_not_null(bb);
+    bool retval = false;
+
+    if (bb->isEmpty() || bb->isFunctionReturn().getOptional().assignTo(retval))
+        return retval;                                  // already cached
+
+    SgAsmInstruction *lastInsn = bb->instructions().back();
+
+#if 1 // DEBUGGING [Robb P. Matzke 2014-09-15]
+    Stream debug(mlog[DEBUG]);
+    debug.enable(isSgAsmx86Instruction(lastInsn) && isSgAsmx86Instruction(lastInsn)->get_kind()==x86_ret);
+#endif
+
+    // Use our own semantics if we have them.
+    if (BaseSemantics::StatePtr state = bb->finalState()) {
+        // This is a function return if the instruction pointer has the same value as the memory for one past the end of the
+        // stack pointer.  The assumption is that a function return pops the return-to address off the top of the stack and
+        // unconditionally branches to it.  It may pop other things from the stack as well.  Assuming stacks grow down.
+        ASSERT_not_null(bb->dispatcher());
+        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+        const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
+        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+        const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
+        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP),
+                                                       ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8)));
+        BaseSemantics::SValuePtr retAddr = ops->undefined_(REG_IP.get_nbits());
+        retAddr = ops->readMemory(REG_SS, retAddrPtr, retAddr, ops->boolean_(true));
+        BaseSemantics::SValuePtr isEqual = ops->equalToZero(ops->add(retAddr, ops->negate(ops->readRegister(REG_IP))));
+        retval = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
+        bb->isFunctionReturn() = retval;
+#if 1 // DEBUGGING [Robb P. Matzke 2014-09-15]
+        if (debug) {
+            debug <<"retAddrPtr  = " <<*retAddrPtr <<"\n";
+            debug <<"retAddr     = " <<*retAddr <<"\n";
+            debug <<"ip          = " <<*ops->readRegister(REG_IP) <<"\n";
+            debug <<"retAddr==ip = " <<*isEqual <<"\n";
+            debug <<"result      = " <<(retval?"true":"false") <<"\n";
+        }
+#endif
+        return retval;
+    }
+
+    // No semantics, so delegate to SgAsmInstruction subclasses (which might try some other semantics)
+    retval = lastInsn->is_function_return(bb->instructions());
+    bb->isFunctionReturn() = retval;
+    return retval;
+}
+
 BaseSemantics::SValuePtr
 Partitioner::basicBlockStackDelta(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
 
     BaseSemantics::SValuePtr delta;
     if (bb->stackDelta().getOptional().assignTo(delta))
-        return delta;
+        return delta;                                   // already cached
 
     if (bb->finalState() != NULL) {
         ASSERT_not_null(bb->initialState());
@@ -1103,6 +1163,9 @@ Partitioner::edgeNameDst(const ControlFlowGraph::EdgeNode &edge) {
         case E_FUNCTION_CALL:
             retval += "<fcall>";
             break;
+        case E_FUNCTION_RETURN:
+            retval += "<return>";
+            break;
         case E_CALL_RETURN:
             retval += "<callret>";
             break;
@@ -1121,6 +1184,9 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) {
         case E_FUNCTION_CALL:
             retval += "<fcall>";
             break;
+        case E_FUNCTION_RETURN:
+            retval += "<return>";
+            break;
         case E_CALL_RETURN:
             retval += "<callret>";
             break;
@@ -1138,6 +1204,9 @@ Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
         case E_FUNCTION_CALL:
             retval += "(fcall)";
             break;
+        case E_FUNCTION_RETURN:
+            retval += "(return)";
+            break;
         case E_CALL_RETURN:
             retval += "(callret)";
             break;
@@ -1146,7 +1215,7 @@ Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
 }
 
 void
-Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBlocks) const {
+Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBlocks, bool computeProperties) const {
     AsmUnparser unparser;
     const std::string insnPrefix = prefix + "    ";
     unparser.insnRawBytes.fmt.prefix = insnPrefix.c_str();
@@ -1194,19 +1263,41 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             }
         }
 
-        // Warn if instruction semantics failed
+        // Show some basic block properties
         if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             if (bb->finalState()==NULL)
                 out <<prefix <<"  semantics failed\n";
-        }
 
-        // Stack delta
-        if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            BaseSemantics::SValuePtr delta = basicBlockStackDelta(bb);
-            if (delta == NULL) {
-                out <<prefix <<"  stack delta: not available\n";
+            // call semantics?
+            out <<prefix <<"  is function call? ";
+            if (computeProperties)
+                basicBlockIsFunctionCall(bb);
+            bool b=false;
+            if (bb->isFunctionCall().getOptional().assignTo(b)) {
+                out <<(b ? "yes" : "no") <<"\n";
             } else {
-                out <<prefix <<"  stack delta: " <<*delta <<"\n";
+                out <<"not computed\n";
+            }
+
+            // return semantics?
+            out <<prefix <<"  is function return? ";
+            if (computeProperties)
+                basicBlockIsFunctionReturn(bb);
+            if (bb->isFunctionReturn().getOptional().assignTo(b)) {
+                out <<(b ? "yes" : "no") <<"\n";
+            } else {
+                out <<"not computed\n";
+            }
+            
+            // stack delta
+            out <<prefix <<"  stack delta: ";
+            if (computeProperties)
+                basicBlockStackDelta(bb);
+            BaseSemantics::SValuePtr delta;
+            if (bb->stackDelta().getOptional().assignTo(delta) && delta!=NULL) {
+                out <<*delta <<"\n";
+            } else {
+                out <<"not computed\n";
             }
         }
         

@@ -739,6 +739,16 @@ public:
      *  patterns at the callee address if known, etc. The basic block caches the result of this analysis. */
     bool basicBlockIsFunctionCall(const BasicBlock::Ptr&) const;
 
+    /** Determine if a basic block looks like a function return.
+     *
+     *  If the basic block appears by some analysis to be a return from a function call, then this function returns true.  The
+     *  anlaysis may use instruction semantics to look at the stack, it may look at the kind of instructions in the lbock, it
+     *  may look for patterns, etc.  The basic block caches the result of this analysis.
+     *
+     *  @todo Partitioner::basicBlockIsFunctionReturn does not currently detect callee-cleanup returns because the return
+     *  address is not the last thing popped from the stack. FIXME[Robb P. Matzke 2014-09-15] */
+    bool basicBlockIsFunctionReturn(const BasicBlock::Ptr&) const;
+
     /** Return the stack delta expression.
      *
      *  The stack delta is the difference between the stack pointer register at the end of the block and the stack pointer
@@ -1208,8 +1218,10 @@ public:
      *  addresses, and the suffix "[P]" means the address is a basic block placeholder, and the suffix "[X]" means the basic
      *  block was discovered to be non-existing (i.e., no executable memory for the first instruction).
      *
-     *  A @p prefix can be specified to be added to the beginning of each line of output. */
-    void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true) const;
+     *  A @p prefix can be specified to be added to the beginning of each line of output. If @p showBlocks is set then the
+     *  instructions are shown for each basic block. If @p computeProperties is set then various properties are computed and
+     *  cached rather than only consulting the cache. */
+    void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true, bool computeProperties=true) const;
 
     /** Name of a vertex. */
     static std::string vertexName(const ControlFlowGraph::VertexNode&);

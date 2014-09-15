@@ -69,12 +69,14 @@ private:
     Sawyer::Cached<Successors> successors_;             // control flow successors out of final instruction
     Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
+    Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
     Sawyer::Cached<BaseSemantics::SValuePtr> stackDelta_;// change in stack pointer from beginning to end of block
 
     void clearCache() const {
         successors_.clear();
         ghostSuccessors_.clear();
         isFunctionCall_.clear();
+        isFunctionReturn_.clear();
         stackDelta_.clear();
     }
 
@@ -280,6 +282,13 @@ public:
      *  with a specific CALL instruction, nor are all CALL instructions actually function calls.  This property is
      *  typically computed in the partitioner and cached in the basic block. */
     const Sawyer::Cached<bool>& isFunctionCall() const { return isFunctionCall_; }
+
+    /** Is a function return?
+     *
+     *  This property indicates whether the basic block appears to be a return from a function call.  A block is a return from
+     *  a function call if, after the block is executed, the instruction pointer contains the value stored in memory one past
+     *  the top of the stack. */
+    const Sawyer::Cached<bool>& isFunctionReturn() const { return isFunctionReturn_; }
 
     /** Stack delta.
      *

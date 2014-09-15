@@ -148,6 +148,36 @@ MatchEnterPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     return true;
 }
 
+bool
+FunctionReturnDetector::operator()(bool chain, const Args &args) {
+    if (chain) {
+        if (args.bblock->isFunctionReturn().isCached()) // property is already computed?
+            return chain;
+        if (args.bblock->isEmpty()) {
+            args.bblock->isFunctionReturn() = false;    // empty blocks are never considered returns
+            return chain;
+        }
+        SgAsmx86Instruction *lastInsn = isSgAsmx86Instruction(args.bblock->instructions().back());
+        if (NULL==lastInsn)
+            return chain;                               // defer if not x86
+        if (lastInsn->get_kind()!=x86_ret && lastInsn->get_kind()!=x86_retf)
+            return chain;                               // defer if not a return instruction
+
+        // A RET/RETF that has a single successor that is concrete probably isn't a real function return. Sometimes these
+        // instructions are used to hide unconditional branches, like "PUSH label; RET".
+        bool isComplete = false;
+        std::vector<rose_addr_t> concreteSuccessors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &isComplete);
+        if (1==concreteSuccessors.size() && isComplete) {
+            args.bblock->isFunctionReturn() = false;
+            return chain;
+        }
+
+        // Must be a function return
+        args.bblock->isFunctionReturn() = true;
+    }
+    return chain;
+};
+
 } // namespace
 } // namespace
 } // namespace
