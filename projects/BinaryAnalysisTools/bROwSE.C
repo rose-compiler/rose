@@ -253,6 +253,8 @@ P2::Attribute::Id ATTR_CFG_DOTFILE(-1);
 P2::Attribute::Id ATTR_CFG_IMAGE(-1);
 P2::Attribute::Id ATTR_CFG_COORDS(-1);
 P2::Attribute::Id ATTR_CG(-1);
+P2::Attribute::Id ATTR_NCALLERS(-1);
+P2::Attribute::Id ATTR_NRETURNS(-1);
 
 // Context passed around to pretty much all the widgets.
 class Context {
@@ -268,6 +270,8 @@ public:
             ATTR_CFG_IMAGE      = P2::Attribute::registerName("CFG JPEG file name");
             ATTR_CFG_COORDS     = P2::Attribute::registerName("CFG vertex coordinates");
             ATTR_CG             = P2::Attribute::registerName("Function call graph");
+            ATTR_NCALLERS       = P2::Attribute::registerName("Number of call sites from whence function is called");
+            ATTR_NRETURNS       = P2::Attribute::registerName("Number of returning basic blocks");
         }
     }
 };
@@ -351,6 +355,7 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
             P2::ControlFlowGraph::ConstVertexNodeIterator placeholder = partitioner.findPlaceholder(bblockVa);
             BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, placeholder->outEdges()) {
                 P2::ControlFlowGraph::ConstVertexNodeIterator target = edge.target();
+                // Vertices that weren't emitted above
                 if (vertices.find(target->id())==vertices.end()) {
                     if (target==partitioner.undiscoveredVertex()) {
                         fprintf(dot, "%zu [ label=\"undiscovered\" ];\n", target->id());
@@ -377,7 +382,12 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
                     }
                     vertices.insert(target->id());
                 }
-                fprintf(dot, "%zu->%zu;\n", placeholder->id(), target->id());
+
+                // Emit the edge
+                fprintf(dot, "%zu->%zu", placeholder->id(), target->id());
+                if (edge.value().type() == P2::E_FUNCTION_RETURN)
+                    fprintf(dot, " [ label=\"return\" ]");
+                fprintf(dot, ";\n");
             }
         }
         fprintf(dot, "}\n");
@@ -507,6 +517,38 @@ functionCallGraph(P2::Partitioner &partitioner) {
     return cg;
 }
 
+// Calculate the number of places from whence a function is called and cache it in the function.
+size_t
+functionNCallers(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    size_t nCallers = 0;
+    if (function && !function->attr<size_t>(ATTR_NCALLERS).assignTo(nCallers)) {
+        P2::FunctionCallGraph *cg = functionCallGraph(partitioner);
+        ASSERT_not_null(cg);
+        nCallers = cg->nCallsIn(function);
+        function->attr(ATTR_NCALLERS, nCallers);
+    }
+    return nCallers;
+}
+
+// Calculates the number of function return edges and caches it in the function
+size_t
+functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    size_t nReturns = 0;
+    if (function && !function->attr<size_t>(ATTR_NRETURNS).assignTo(nReturns)) {
+        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
+            P2::ControlFlowGraph::ConstVertexNodeIterator vertex = partitioner.findPlaceholder(bblockVa);
+            if (vertex != partitioner.cfg().vertices().end()) {
+                BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, vertex->outEdges()) {
+                    if (edge.value().type() == P2::E_FUNCTION_RETURN)
+                        ++nReturns;
+                }
+            }
+        }
+        function->attr(ATTR_NRETURNS, nReturns);
+    }
+    return nReturns;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Model storing a list of functions.
@@ -514,10 +556,13 @@ class FunctionListModel: public Wt::WAbstractTableModel {
     Context &ctx_;
     std::vector<P2::Function::Ptr> functions_;
 public:
+    // To change the order of columns in the table, just change them in this enum.
     enum Column {
         C_ENTRY,                                        // function's primary entry address
         C_NAME,                                         // name if known, else empty string
         C_SIZE,                                         // size of function extent (code and data)
+        C_NCALLERS,                                     // number of incoming calls
+        C_NRETURNS,                                     // how many return edges, i.e., might the function return?
         C_IMPORT,                                       // is function an import
         C_EXPORT,                                       // is function an export
         C_NCOLS                                         // must be last
@@ -547,12 +592,14 @@ public:
                                   int role=Wt::DisplayRole) const /*override*/ {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
-                case C_ENTRY:   return Wt::WString("Entry");
-                case C_NAME:    return Wt::WString("Name");
-                case C_SIZE:    return Wt::WString("Size (bytes)");
-                case C_IMPORT:  return Wt::WString("Import");
-                case C_EXPORT:  return Wt::WString("Export");
-                default:        return boost::any();
+                case C_ENTRY:    return Wt::WString("Entry");
+                case C_NAME:     return Wt::WString("Name");
+                case C_SIZE:     return Wt::WString("Size (bytes)");
+                case C_IMPORT:   return Wt::WString("Import");
+                case C_EXPORT:   return Wt::WString("Export");
+                case C_NCALLERS: return Wt::WString("NCalls");
+                case C_NRETURNS: return Wt::WString("NReturns");
+                default:         return boost::any();
             }
         }
         return boost::any();
@@ -575,6 +622,10 @@ public:
                     return Wt::WString((function->reasons() & SgAsmFunction::FUNC_IMPORT)!=0 ? "yes" : "no");
                 case C_EXPORT:
                     return Wt::WString((function->reasons() & SgAsmFunction::FUNC_EXPORT)!=0 ? "yes" : "no");
+                case C_NCALLERS:
+                    return functionNCallers(ctx_.partitioner, function);
+                case C_NRETURNS:
+                    return functionNReturns(ctx_.partitioner, function);
                 default:
                     ASSERT_not_reachable("invalid column number");
             }
@@ -620,6 +671,19 @@ public:
         unsigned bb = b->reasons() & SgAsmFunction::FUNC_EXPORT;
         return aa > bb;
     }
+    static bool sortByAscendingCallers(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return a->attr<size_t>(ATTR_NCALLERS).orElse(0) < b->attr<size_t>(ATTR_NCALLERS).orElse(0);
+    }
+    static bool sortByDescendingCallers(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return a->attr<size_t>(ATTR_NCALLERS).orElse(0) > b->attr<size_t>(ATTR_NCALLERS).orElse(0);
+    }
+    static bool sortByAscendingReturns(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return a->attr<size_t>(ATTR_NRETURNS).orElse(0) < b->attr<size_t>(ATTR_NRETURNS).orElse(0);
+    }
+    static bool sortByDescendingReturns(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return a->attr<size_t>(ATTR_NRETURNS).orElse(0) > b->attr<size_t>(ATTR_NRETURNS).orElse(0);
+    }
+
 
     void sort(int column, Wt::SortOrder order) {
         bool(*sorter)(const P2::Function::Ptr&, const P2::Function::Ptr&) = NULL;
@@ -640,6 +704,16 @@ public:
                 break;
             case C_EXPORT:
                 sorter = Wt::AscendingOrder==order ? sortByAscendingExport : sortByDescendingExport;
+                break;
+            case C_NCALLERS:
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
+                    (void) functionNCallers(ctx_.partitioner, function); // make sure they're all cached before sorting
+                sorter = Wt::AscendingOrder==order ? sortByAscendingCallers : sortByDescendingCallers;
+                break;
+            case C_NRETURNS:
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
+                    (void) functionNReturns(ctx_.partitioner, function); // make sure they're all cached
+                sorter = Wt::AscendingOrder==order ? sortByAscendingReturns : sortByDescendingReturns;
                 break;
             default:
                 ASSERT_not_reachable("invalid column number");
@@ -663,14 +737,8 @@ public:
     WFunctionList(FunctionListModel *model, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), model_(model) {
         ASSERT_not_null(model);
-#if 1 // DEBUGGING [Robb P. Matzke 2014-09-12]
-        Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;
-        //setHeight(500);
-        setLayout(hbox);
+
         tableView_ = new Wt::WTableView;
-#else
-        tableView_ = new Wt::WTableView(this);
-#endif
         tableView_->setModel(model_);
         tableView_->setRowHeaderCount(1); // this must be first property set
         tableView_->setHeaderHeight(28);
@@ -684,9 +752,10 @@ public:
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
         tableView_->clicked().connect(this, &WFunctionList::clickRow);
         tableView_->doubleClicked().connect(this, &WFunctionList::doubleClickRow);
-#if 1 // DEBUGGING [Robb P. Matzke 2014-09-12]
+
+        Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;
+        setLayout(hbox);
         hbox->addWidget(tableView_);
-#endif
     }
 
     // Emitted when a row of the table is clicked
@@ -725,7 +794,7 @@ class WFunctionSummary: public Wt::WContainerWidget {
     Wt::WText *wName_, *wEntry_, *wBBlocks_, *wDBlocks_, *wInsns_, *wBytes_, *wDiscontig_, *wCallers_, *wCallsInto_;
     Wt::WText *wCallees_, *wCallsOut_, *wRecursive_;
 public:
-    Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
+    static Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
         Wt::WText *wValue = new Wt::WText();
         if (toolTip!="")
             wValue->setToolTip(toolTip);
@@ -1065,14 +1134,14 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Basic block
-class WBasicBlock: public Wt::WContainerWidget {
+// The instructions for a basic block
+class WBasicBlockInsns: public Wt::WContainerWidget {
     P2::BasicBlock::Ptr bblock_;                        // currently displayed basic block
     InstructionListModel *model_;
     WInstructionList *insnList_;
 public:
-    WBasicBlock(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : WContainerWidget(parent), model_(NULL), insnList_(NULL) {
+    WBasicBlockInsns(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), model_(NULL), insnList_(NULL) {
         model_ = new InstructionListModel(ctx);
         insnList_ = new WInstructionList(model_, this);
     }
@@ -1086,6 +1155,103 @@ public:
             return;
         }
         model_->changeInstructions(bblock->instructions());
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Summary information about a basic block
+class WBasicBlockSummary: public Wt::WContainerWidget {
+    Context &ctx_;
+    P2::BasicBlock::Ptr bblock_;
+    Wt::WTable *table_;
+    Wt::WText *wHasOpaquePredicates_;                   // FIXME[Robb P. Matzke 2014-09-15]: should be a bb list
+    Wt::WText *wDataBlocks_;                            // FIXME[Robb P. Matzke 2014-09-15]: should be a db list
+    Wt::WText *wIsFunctionCall_;                        // does this block look like a function call?
+    Wt::WText *wIsFunctionReturn_;                      // does this block appear to return from a function call?
+    Wt::WText *wStackDelta_;                            // symbolic expression for the block's stack delta
+public:
+    static Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
+        Wt::WText *wValue = new Wt::WText();
+        if (toolTip!="")
+            wValue->setToolTip(toolTip);
+        fields.push_back(wValue);
+        return wValue;
+    }
+
+    WBasicBlockSummary(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), ctx_(ctx), table_(NULL),
+          wHasOpaquePredicates_(NULL), wDataBlocks_(NULL), wIsFunctionCall_(NULL), wIsFunctionReturn_(NULL),
+          wStackDelta_(NULL) {
+        std::vector<Wt::WText*> fields;
+        wHasOpaquePredicates_   = field(fields, "Block has conditional branches that are never taken?");
+        wDataBlocks_            = field(fields, "Number of data blocks owned by this basic block.");
+        wIsFunctionCall_        = field(fields, "Does this block appear to call a function?");
+        wIsFunctionReturn_      = field(fields, "Does this block appear to return from a function call?");
+        wStackDelta_            = field(fields, "Stack pointer delta within this one basic block.");
+
+        table_ = new Wt::WTable(this);
+        table_->setWidth("100%");
+        static const size_t ncols = 1;
+        size_t nrows = (fields.size()+ncols-1) / ncols;
+        for (size_t col=0, i=0; col<ncols; ++col) {
+            for (size_t row=0; row<nrows && i<fields.size(); ++row)
+                table_->elementAt(row, col)->addWidget(fields[i++]);
+        }
+    }
+
+    void changeBasicBlock(const P2::BasicBlock::Ptr &bblock) {
+        if (bblock == bblock_)
+            return;
+        bblock_ = bblock;
+        if (bblock) {
+            std::set<rose_addr_t> ghostSuccessors = ctx_.partitioner.basicBlockGhostSuccessors(bblock);
+            wHasOpaquePredicates_->setText(StringUtility::plural(ghostSuccessors.size(), "opaque predicates"));
+
+            wDataBlocks_->setText(StringUtility::plural(bblock->dataBlocks().size(), "data blocks"));
+
+            wIsFunctionCall_->setText(ctx_.partitioner.basicBlockIsFunctionCall(bblock) ?
+                                      "appears to have function call semantics" : "lacks function call semantics");
+
+            wIsFunctionReturn_->setText(ctx_.partitioner.basicBlockIsFunctionReturn(bblock) ?
+                                        "appears to be a function return" : "lacks function return semantics");
+
+            InstructionSemantics2::BaseSemantics::SValuePtr stackDelta = ctx_.partitioner.basicBlockStackDelta(bblock);
+            if (stackDelta!=NULL) {
+                std::ostringstream stackDeltaStream;
+                stackDeltaStream <<*stackDelta;
+                wStackDelta_->setText("stack delta: " + stackDeltaStream.str());
+            } else {
+                wStackDelta_->setText("stack delta not computed");
+            }
+            
+            table_->show();
+        } else {
+            wHasOpaquePredicates_->setText("");
+            wStackDelta_->setText("");
+            table_->hide();
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// All information about basic blocks
+class WBasicBlock: public Wt::WContainerWidget {
+    P2::BasicBlock::Ptr bblock_;                        // currently displayed basic block
+    WBasicBlockInsns *wInsns_;                          // instruction list for the basic block
+    WBasicBlockSummary *wSummary_;                      // summary information for the basic block
+public:
+    WBasicBlock(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), wInsns_(NULL), wSummary_(NULL) {
+        wInsns_ = new WBasicBlockInsns(ctx, this);
+        wSummary_ = new WBasicBlockSummary(ctx, this);
+    }
+
+    void changeBasicBlock(const P2::BasicBlock::Ptr &bblock) {
+        if (bblock == bblock_)
+            return;
+        bblock_ = bblock;
+        wSummary_->changeBasicBlock(bblock);
+        wInsns_->changeBasicBlock(bblock);
     }
 };
 
