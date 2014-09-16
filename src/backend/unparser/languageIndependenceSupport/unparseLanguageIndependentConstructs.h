@@ -393,6 +393,9 @@ class UnparseLanguageIndependentConstructs
       // DQ (1/23/2014): This function support detecting when the supress the output of the SgDotExp
       // in the access of data members from un-named unions.
          bool isDotExprWithAnonymousUnion(SgExpression* expr);
+
+      // DQ (9/3/2014): Adding support to supress output of SgThisExp as part of support for C++11 lambda functions code generation.
+         bool isImplicitArrowExpWithinLambdaFunction(SgExpression* expr, SgUnparse_Info& info);
    };
 
 #endif

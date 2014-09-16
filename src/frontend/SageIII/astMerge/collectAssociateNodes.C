@@ -2006,6 +2006,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              }
 #endif
 
+       // DQ (9/3/2014): Added support for C++11 Lambda expressions.
+       // case V_SgLambdaExp:
+          case V_SgLambdaCapture:
+          case V_SgLambdaCaptureList:
+
        // DQ (4/16/2011): Added support for another IR node.
           case V_SgJavaImportStatement:
           case V_SgJavaPackageStatement:

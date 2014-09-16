@@ -1931,7 +1931,6 @@ HEADER_TYPE_TABLE_START
 HEADER_TYPE_TABLE_END
 
 
-
 SOURCE_ATTRIBUTE_SUPPORT_START
 
 #if 0
@@ -6221,6 +6220,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
                b_supressArrayBound = 46, /*!< Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax for secondary (prototype) declarations (e.g. int array[];). */
 
+            // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+               b_supressImplicitThisOperator = 47, /*!< Supress output of SgThisExp (required to support lambda function code generation). */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6465,6 +6467,11 @@ HEADER_UNPARSE_INFO_START
           bool supressArrayBound() const;
           void set_supressArrayBound();
           void unset_supressArrayBound();
+
+       // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+          bool supressImplicitThisOperator() const;
+          void set_supressImplicitThisOperator();
+          void unset_supressImplicitThisOperator();
 
 
 #if 0
@@ -17560,6 +17567,17 @@ void SgUnparse_Info::unset_supressArrayBound()
    { unsetBit(b_supressArrayBound); }
 
 
+// DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+bool SgUnparse_Info::supressImplicitThisOperator() const
+   { return checkBit(b_supressImplicitThisOperator); }
+
+void SgUnparse_Info::set_supressImplicitThisOperator()
+   { setBit(b_supressImplicitThisOperator); }
+
+void SgUnparse_Info::unset_supressImplicitThisOperator()
+   { unsetBit(b_supressImplicitThisOperator); }
+
+
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
@@ -17642,6 +17660,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
      printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
+     printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
@@ -19260,3 +19279,5 @@ SgTypeTable::lookup_type(const SgName& n)
    }
 
 SOURCE_TYPE_TABLE_END
+
+
