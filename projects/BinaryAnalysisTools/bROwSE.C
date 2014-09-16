@@ -594,11 +594,11 @@ public:
             switch (column) {
                 case C_ENTRY:    return Wt::WString("Entry");
                 case C_NAME:     return Wt::WString("Name");
-                case C_SIZE:     return Wt::WString("Size (bytes)");
+                case C_SIZE:     return Wt::WString("Size");
                 case C_IMPORT:   return Wt::WString("Import");
                 case C_EXPORT:   return Wt::WString("Export");
-                case C_NCALLERS: return Wt::WString("NCalls");
-                case C_NRETURNS: return Wt::WString("NReturns");
+                case C_NCALLERS: return Wt::WString("Calls");
+                case C_NRETURNS: return Wt::WString("Returns");
                 default:         return boost::any();
             }
         }
@@ -744,9 +744,13 @@ public:
         tableView_->setHeaderHeight(28);
         tableView_->setSortingEnabled(true);
         tableView_->setAlternatingRowColors(true);
-        //tableView_->setHeight(500);
-        tableView_->setColumnWidth(1, 50);
-        tableView_->setColumnWidth(1, 420);
+        tableView_->setColumnWidth(FunctionListModel::C_ENTRY,          Wt::WLength( 6, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(FunctionListModel::C_NAME,           Wt::WLength(30, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(FunctionListModel::C_SIZE,           Wt::WLength( 5, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(FunctionListModel::C_NCALLERS,       Wt::WLength( 5, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(FunctionListModel::C_NRETURNS,       Wt::WLength( 5, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(FunctionListModel::C_IMPORT,         Wt::WLength( 5, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(FunctionListModel::C_EXPORT,         Wt::WLength( 5, Wt::WLength::FontEm));
         tableView_->setColumnResizeEnabled(true);
         tableView_->setSelectionMode(Wt::SingleSelection);
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
