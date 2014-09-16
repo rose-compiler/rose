@@ -42,7 +42,8 @@ MatchFunctionPadding::match(const Partitioner *partitioner, rose_addr_t anchor) 
     // Read backward from the anchor, skipping over padding as we go
     rose_addr_t padMin = anchor;
     uint8_t buf[2];                                     // reading two bytes at a time
-    while (AddressInterval accessed = m.at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE).read(buf, m.BACKWARD)) {
+    while (AddressInterval accessed = m.at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE)
+           .read(buf, Sawyer::Container::MATCH_BACKWARD)) {
 
         // Match zero byte or (0x51 0xfc) pair
         AddressInterval matched;

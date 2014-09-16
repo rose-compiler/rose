@@ -67,7 +67,7 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
     rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
 
     // Minimum address at which to map
-    AddressInterval freeSpace = map->unmapped(AddressInterval::whole().greatest(), map->BACKWARD);
+    AddressInterval freeSpace = map->unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
     if (freeSpace.isEmpty())
         throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
     rose_addr_t map_base_va = ALIGN_UP(freeSpace.least(), maximum_alignment);

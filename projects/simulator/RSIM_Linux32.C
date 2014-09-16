@@ -3734,7 +3734,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
     RTS_WRITE(t->get_process()->rwlock()) {
         if (0==shmaddr) {
             const MemoryMap &mm = t->get_process()->get_memory();
-            AddressInterval freeArea = mm.unmapped(AddressInterval::whole().greatest(), mm.BACKWARD);
+            AddressInterval freeArea = mm.unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
             assert(!freeArea.isEmpty());
             shmaddr = freeArea.least();
         } else if (shmflg & SHM_RND) {

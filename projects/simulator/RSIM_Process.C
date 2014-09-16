@@ -262,7 +262,7 @@ public:
         ROSE_ASSERT(isSgAsmElfFileHeader(fhdr)!=NULL);
         rose_addr_t entry_rva = fhdr->get_entry_rva();
 
-        AddressInterval freeArea = map->unmapped(AddressInterval::whole().greatest(), map->BACKWARD);
+        AddressInterval freeArea = map->unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
         assert(!freeArea.isEmpty());
         vdso_mapped_va = ALIGN_UP(freeArea.least(), PAGE_SIZE);
         vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
