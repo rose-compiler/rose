@@ -34,8 +34,10 @@ class UntypedASTBuilder : public ASTBuilder
    virtual void build_FunctionStmt(FunctionStmt* functionStmt);
    virtual void build_EndFunctionStmt(EndFunctionStmt* endFunctionStmt);
 
+   virtual void build_InitialSpecPart(InitialSpecPart * initialSpecPart);
    virtual void build_SpecificationPart(SpecificationPart * specificationPart);
    virtual void build_ImplicitPart(ImplicitPart * implicitPart);
+   virtual void build_SpecAndExecPart(SpecAndExecPart * specAndExecPart);
    virtual void build_ExecutionPart(ExecutionPart * executionPart);
    virtual void build_InternalSubprogramPart(InternalSubprogramPart* internalSubprogramPart);
    virtual void build_DeclarationTypeSpec(DeclarationTypeSpec * declarationTypeSpec);
