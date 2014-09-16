@@ -201,7 +201,7 @@ Engine::makeImportFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
     std::vector<Function::Ptr> retval;
 
     // Windows PE imports
-    ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(interp));
+    ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
     BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp))
         insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
     
