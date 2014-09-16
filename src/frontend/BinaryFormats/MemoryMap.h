@@ -80,6 +80,21 @@ private:
     ByteOrder::Endianness endianness_;
 
 public:
+
+    // Whoever pollutes all namespaces with these common word proprocessor symbols is a lunatic!
+#   if defined(READABLE) || defined(WRITABLE) || defined(EXECUTABLE) || defined(IMMUTABLE) || defined(PRIVATE)
+#    ifdef _MSC_VER
+#     pragma message("Undefining common words from the global namespace: READABLE, WRITABLE, EXECUTABLE, IMMUTABLE, PRIVATE")
+#    else
+#     warning "Undefining common words from the global namespace: READABLE, WRITABLE, EXECUTABLE, IMMUTABLE, PRIVATE"
+#    endif
+#    undef READABLE
+#    undef WRITABLE
+#    undef EXECUTABLE
+#    undef IMMUTABLE
+#    undef PRIVATE
+#   endif
+
     // Accessibility flags
     static const unsigned READABLE = Sawyer::Access::READABLE;
     static const unsigned WRITABLE = Sawyer::Access::WRITABLE;
