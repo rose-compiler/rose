@@ -61,6 +61,9 @@ Grammar::setUpExpressions ()
   // favor of this newer (more language independent) IR node.
      NEW_TERMINAL_MACRO (TypeExpression, "TypeExpression", "TYPE_EXPRESSION");
 
+  // DQ (9/2/2014): Adding support for C++11 Lambda expressions.
+     NEW_TERMINAL_MACRO (LambdaExp,      "LambdaExp",  "LAMBDA_EXP" );
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -351,7 +354,7 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp | FunctionParameterRefExp, "Expression", "ExpressionTag", false);
+          ClassExp            | FunctionParameterRefExp | LambdaExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -732,6 +735,9 @@ Grammar::setUpExpressions ()
   // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
      FunctionParameterRefExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
+  // DQ (9/2/2014): Adding support for C++11 lambda functions.
+     LambdaExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SuperExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -924,6 +930,9 @@ Grammar::setUpExpressions ()
 
   // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
      FunctionParameterRefExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (not sure if these are correct values)
@@ -1297,6 +1306,25 @@ Grammar::setUpExpressions ()
   // parameter_levels_up values.
      FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
+     LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "capture_default", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "default_is_by_reference", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "explicit_return_type", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "has_parameter_decl", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      StringVal.setFunctionPrototype ( "HEADER_STRING_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2426,6 +2454,9 @@ Grammar::setUpExpressions ()
 
   // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
      FunctionParameterRefExp.setFunctionSource ( "SOURCE_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );

@@ -705,6 +705,22 @@ ROSE_DLL_API SgTypeExpression *buildTypeExpression(SgType* type);
 ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp(int parameter_number, int parameter_level );
 ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp_nfi(int parameter_number, int parameter_level );
 
+
+// DQ (9/3/2014): Adding support for C++11 Lambda expressions
+ROSE_DLL_API SgLambdaExp* buildLambdaExp    (SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function);
+ROSE_DLL_API SgLambdaExp* buildLambdaExp_nfi(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function);
+
+#if 0
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture    (SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable);
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable);
+#else
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture    (SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable);
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable);
+#endif
+
+ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
+ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
+
 //@}
 
 //--------------------------------------------------------------

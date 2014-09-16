@@ -9555,6 +9555,144 @@ SageBuilder::buildFunctionParameterRefExp_nfi(int parameter_number, int paramete
      return expr;
    }
 
+// DQ (9/3/2014): Adding support for C++11 Lambda expressions
+SgLambdaExp*
+SageBuilder::buildLambdaExp(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function)
+   {
+     SgLambdaExp *expr = new SgLambdaExp(lambda_capture_list,lambda_closure_class,lambda_function);
+     ROSE_ASSERT(expr != NULL);
+
+  // Set the parents
+     if (lambda_capture_list != NULL)
+        {
+          lambda_capture_list->set_parent(expr);
+        }
+
+     if (lambda_closure_class != NULL)
+        {
+          lambda_closure_class->set_parent(expr);
+        }
+
+     if (lambda_function != NULL)
+        {
+#if 1
+          lambda_function->set_parent(expr);
+#else
+          if (lambda_closure_class != NULL)
+             {
+               lambda_function->set_parent(lambda_closure_class);
+             }
+            else
+             {
+               printf ("Warning: In SageBuilder::buildLambdaExp(): lambda_closure_class == NULL: lambda_function parent not set! \n");
+             }
+#endif
+        }
+
+     setSourcePosition(expr);
+     return expr;
+   }
+
+SgLambdaExp*
+SageBuilder::buildLambdaExp_nfi(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function)
+   {
+     SgLambdaExp *expr = new SgLambdaExp(lambda_capture_list,lambda_closure_class,lambda_function);
+     ROSE_ASSERT(expr != NULL);
+
+  // Set the parents
+     if (lambda_capture_list != NULL)
+        {
+          lambda_capture_list->set_parent(expr);
+        }
+
+     if (lambda_closure_class != NULL)
+        {
+          lambda_closure_class->set_parent(expr);
+        }
+
+     if (lambda_function != NULL)
+        {
+#if 1
+          lambda_function->set_parent(expr);
+#else
+          if (lambda_closure_class != NULL)
+             {
+               lambda_function->set_parent(lambda_closure_class);
+             }
+            else
+             {
+               printf ("Warning: In SageBuilder::buildLambdaExp(): lambda_closure_class == NULL: lambda_function parent not set! \n");
+             }
+#endif
+        }
+
+     setOneSourcePositionNull(expr);
+     return expr;
+   }
+
+#if 0
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable)
+   {
+      SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setSourcePosition(lambdaCapture);
+     return lambdaCapture;
+   }
+
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture_nfi(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable)
+   {
+     SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setOneSourcePositionNull(lambdaCapture);
+     return lambdaCapture;
+   }
+#else
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable)
+   {
+      SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setSourcePosition(lambdaCapture);
+     return lambdaCapture;
+   }
+
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture_nfi(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable)
+   {
+     SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setOneSourcePositionNull(lambdaCapture);
+     return lambdaCapture;
+   }
+#endif
+
+SgLambdaCaptureList*
+SageBuilder::buildLambdaCaptureList()
+   {
+     SgLambdaCaptureList *lambdaCaptureList = new SgLambdaCaptureList(NULL);
+     ROSE_ASSERT(lambdaCaptureList != NULL);
+
+     setSourcePosition(lambdaCaptureList);
+     return lambdaCaptureList;
+   }
+
+SgLambdaCaptureList*
+SageBuilder::buildLambdaCaptureList_nfi()
+   {
+     SgLambdaCaptureList *lambdaCaptureList = new SgLambdaCaptureList(NULL);
+     ROSE_ASSERT(lambdaCaptureList != NULL);
+
+     setOneSourcePositionNull(lambdaCaptureList);
+     return lambdaCaptureList;
+   }
+
+
 
 SgNamespaceDefinitionStatement*
 SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)

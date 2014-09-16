@@ -4317,26 +4317,36 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // Note that test2005_63.C presents an example that triggers this case and so might be a relevant.
             // This is also the reason why test2005_73.C is failing!!!  Fix it tomorrow!!! (SgTemplateInstantiationDirectiveStatement)
                SgDeclarationStatement* currentStatement = isSgDeclarationStatement(memberFunctionDeclaration->get_parent());
-               ROSE_ASSERT(currentStatement != NULL);
-               SgScopeStatement* currentScope = isSgScopeStatement(currentStatement->get_parent());
-               if (currentScope != NULL)
+
+            // DQ (9/4/2014): Lambda functions (in SgLambdaExp) are an example where this fails.
+            // ROSE_ASSERT(currentStatement != NULL);
+               if (currentStatement != NULL)
                   {
-                    int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
+                    SgScopeStatement* currentScope = isSgScopeStatement(currentStatement->get_parent());
+                    if (currentScope != NULL)
+                       {
+                         int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                         printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-                    setNameQualification(memberFunctionDeclaration,amountOfNameQualificationRequired);
+                         setNameQualification(memberFunctionDeclaration,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+                         printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through parent SgDeclarationStatement, not clear why! \n");
+                         ROSE_ASSERT(false);
+                       }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available, not clear why! \n");
+#endif
+                 // ROSE_ASSERT(false);
                   }
                  else
                   {
-                    printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through parent SgDeclarationStatement, not clear why! \n");
-                    ROSE_ASSERT(false);
+                 // This should only be a lambda function defined in a SgLambdaExp.
+                    ROSE_ASSERT(isSgLambdaExp(memberFunctionDeclaration->get_parent()) != NULL);
                   }
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available, not clear why! \n");
-#endif
-            // ROSE_ASSERT(false);
              }
         }
 

@@ -2172,6 +2172,15 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+        // DQ (9/3/2014): Added support for C++11 lambda expressions.
+           case V_SgLambdaExp:
+             {
+               const SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
+               ROSE_ASSERT (lambdaExp != NULL);
+               name = "lambda_expression_";
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -2211,15 +2220,26 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                returnName += n->get_use_name().str();
                break;
              }
-          case V_SgInitializedName:
-          {
-            const SgInitializedName * n = isSgInitializedName (node);
-            ROSE_ASSERT (n != NULL);
-            returnName = "initialized_name_";
-            returnName += n->get_name().str();
 
-            break;
-          }
+          case V_SgInitializedName:
+             {
+               const SgInitializedName* n = isSgInitializedName(node);
+               ROSE_ASSERT (n != NULL);
+               returnName = "initialized_name_";
+               returnName += n->get_name().str();
+               break;
+             }
+
+        // DQ (9/3/2014): Added support for C++11 lambda expressions.
+           case V_SgLambdaCapture:
+             {
+               const SgLambdaCapture* n = isSgLambdaCapture(node);
+               ROSE_ASSERT (n != NULL);
+               returnName = "lambda_capture_";
+            // returnName += n->get_name().str();
+               break;
+             }
+
 #if 0
           case V_SgInterfaceBody:
              {

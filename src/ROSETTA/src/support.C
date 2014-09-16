@@ -217,6 +217,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (JavaImportStatementList,  "JavaImportStatementList", "JavaImportStatementListTag" );
      NEW_TERMINAL_MACRO (JavaClassDeclarationList, "JavaClassDeclarationList", "JavaClassDeclarationListTag" );
 
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -238,19 +239,17 @@ Grammar::setUpSupport ()
 // /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
 // #if OLD_GRAPH_NODES == 1
      NEW_NONTERMINAL_MACRO (Support,
-          Modifier              | Name                      | SymbolTable         | 
-          Attribute             | File_Info                 | File                | Project              |
-          Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
-          TemplateParameter     | TemplateArgument          | Directory           | FileList             |
-          DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
+          Modifier              | Name                      | SymbolTable              | 
+          Attribute             | File_Info                 | File                     | Project              |
+          Options               | Unparse_Info              | BaseClass                | TypedefSeq           |
+          TemplateParameter     | TemplateArgument          | Directory                | FileList             |
+          DirectoryList         | FunctionParameterTypeList | QualifiedName            | TemplateArgumentList |
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
-          Graph                 | GraphNode                 | GraphEdge           |
-
-          GraphNodeList         | GraphEdgeList             | TypeTable           |
-
-          NameGroup             | DimensionObject     | FormatItem           |
-          FormatItemList        | DataStatementGroup        | DataStatementObject | 
-          DataStatementValue    | JavaImportStatementList | JavaClassDeclarationList,
+          Graph                 | GraphNode                 | GraphEdge                |
+          GraphNodeList         | GraphEdgeList             | TypeTable                |
+          NameGroup             | DimensionObject           | FormatItem               |
+          FormatItemList        | DataStatementGroup        | DataStatementObject      | 
+          DataStatementValue    | JavaImportStatementList   | JavaClassDeclarationList,
           "Support", "SupportTag", false);
 //#endif
 

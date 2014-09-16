@@ -2668,6 +2668,36 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
    }
 
 
+bool
+UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgExpression* expr, SgUnparse_Info& info)
+   {
+     bool suppressOutputOfImplicitArrowExp = false;
+
+     if (info.supressImplicitThisOperator() == true)
+        {
+          SgArrowExp* arrowExp = isSgArrowExp(expr);
+          if (arrowExp != NULL)
+             {
+
+                SgExpression* lhs = arrowExp->get_lhs_operand();
+                ROSE_ASSERT(lhs != NULL);
+                SgThisExp* thisExp = isSgThisExp(lhs);
+                if (thisExp != NULL)
+                   {
+                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
+                        {
+                          suppressOutputOfImplicitArrowExp = true;
+                        }
+                   }
+             }
+        }
+
+#if 0
+     printf ("In isImplicitArrowExpWithinLambdaFunction(): suppressOutputOfImplicitArrowExp = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+
+     return suppressOutputOfImplicitArrowExp;
+   }
 
 
 #if 0
@@ -2771,7 +2801,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
    // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
-      bool suppressOutputOfDotExp = isDotExprWithAnonymousUnion(expr);
+      bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
+      bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
 
 #if DEBUG_BINARY_OPERATORS
    // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
@@ -2790,7 +2821,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
   // ROSE_ASSERT(possibleFunctionCall != NULL);
      bool parent_is_a_function_call                    = false;
      bool parent_function_call_uses_operator_syntax    = false;
-     bool parent_function_is_overloaded_arrow_operator = false;
+//   bool parent_function_is_overloaded_arrow_operator = false;
      bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
@@ -2811,10 +2842,12 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #if DEBUG_BINARY_OPERATORS
                     printf ("--- parent function is: functionName = %s \n",functionName.c_str());
 #endif
+#if 0
                     if (functionName == "operator->")
                        {
                          parent_function_is_overloaded_arrow_operator = true;
                        }
+#endif
                   }
 #endif
              }
@@ -2825,7 +2858,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #if DEBUG_BINARY_OPERATORS
   // printf ("In unparseBinaryExpr(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
      printf ("In unparseBinaryExpr(): suppressOutputOfDotExp                       = %s \n",suppressOutputOfDotExp     ? "true" : "false");
-     printf ("In unparseBinaryExpr(): parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
+  // printf ("In unparseBinaryExpr(): parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
 #endif
 
   // DQ (4/13/13): Checking the current level function call expression.
@@ -3019,7 +3052,12 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           printf ("STARTING LHS: Calling unparseExpression(): for LHS = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
 #endif
 
-          unparseExpression(binary_op->get_lhs_operand(), info);
+       // DQ (9/3/2014): Adding support to supress the output if this operators in lambda functions.
+       // unparseExpression(binary_op->get_lhs_operand(), info);
+          if (suppressOutputOfImplicitArrowExp == false)
+             {
+               unparseExpression(binary_op->get_lhs_operand(), info);
+             }
 
 #if DEBUG_BINARY_OPERATORS
           curprint ("/* FINISHED LHS: Calling unparseExpression(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
@@ -3092,7 +3130,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
        // DQ: This is handling that is specific to anonomous unions.
-          if (suppressOutputOfDotExp == false)
+       // if (suppressOutputOfDotExp == false)
+          if (suppressOutputOfDotExp == false && suppressOutputOfImplicitArrowExp == false)
              {
                if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
                        isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
@@ -3164,7 +3203,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
 #if DEBUG_BINARY_OPERATORS
           printf ("parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
-          printf ("parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
+       // printf ("parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
           printf ("is_currently_a_function_call                 = %s \n",is_currently_a_function_call ? "true" : "false");
           printf ("current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
 #endif
