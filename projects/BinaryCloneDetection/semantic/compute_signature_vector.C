@@ -309,7 +309,8 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
     bool operand_pair      = (std::find(sc.begin(), sc.end(), "operand_pair") != sc.end());
     bool apply_log         = (std::find(sc.begin(), sc.end(), "apply_log") != sc.end());
 
-    numberOperands(&insns[0], insnCount, valueNumbers);
+    if (!insns.empty())
+        numberOperands(&insns[0], insnCount, valueNumbers);
 
     std::string normalizedUnparsedInstructions;
 
