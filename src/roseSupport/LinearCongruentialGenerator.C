@@ -59,7 +59,8 @@ LinearCongruentialGenerator::next(size_t nbits, size_t niter)
 #else
     // multiplier and addend are from java.util.Random and we avoid the low-order bits
     uint64_t retval = 0;
-    static const uint64_t a=25214903917, c=11;
+    static const uint64_t a = ((uint64_t)(0x5de)<<24) | ((uint64_t)0xece66d); // 25214903917
+    static const uint64_t c = 11;
     for (size_t i=0; i<niter; ++i) {
         value_ = a * value_ + c;
         uint64_t v = (value_ >> 17) & 0x3fffff; // 22 bits: 17 (inclusive) through 39 (exclusive)
