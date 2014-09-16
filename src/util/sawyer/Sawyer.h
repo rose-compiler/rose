@@ -243,6 +243,7 @@ SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
 # define SAWYER_ATTR_NORETURN /*noreturn*/
 # define SAWYER_PRETTY_FUNCTION __FUNCSIG__
 # define SAWYER_MAY_ALIAS /*void*/
+# define SAWYER_STATIC_INIT /*void*/
 
 // MVC doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector, which will be
 // cleaned up propertly at end of scope or exceptions.
@@ -255,6 +256,9 @@ SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
 # define SAWYER_ATTR_NORETURN __attribute__((noreturn))
 # define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
 # define SAWYER_MAY_ALIAS __attribute__((may_alias))
+
+// Sawyer globals need to be initialized after the C++ standard runtime
+# define SAWYER_STATIC_INIT __attribute__((init_priority(65534)))
 
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     TYPE NAME[SIZE];

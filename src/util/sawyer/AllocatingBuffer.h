@@ -5,6 +5,7 @@
 #include <sawyer/Sawyer.h>
 
 #include <boost/lexical_cast.hpp>
+#include <cstring>                                      // memcpy
 #include <string>
 #include <vector>
 

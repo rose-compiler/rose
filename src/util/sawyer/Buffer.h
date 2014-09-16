@@ -39,7 +39,7 @@ public:
      *  Returns a new buffer containing the same data as the old buffer.  Some buffer types cannot make an exact copy, in which
      *  case they should return an AllocatingBuffer that holds a snapshot of the source buffer's data as it existed at the time
      *  of this operation. */
-    virtual Ptr copy() const = 0;
+    virtual Buffer::Ptr copy() const = 0;
 
     /** Distance to end of buffer.
      *
