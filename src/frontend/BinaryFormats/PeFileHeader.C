@@ -546,7 +546,7 @@ SgAsmPEFileHeader::create_table_sections()
         rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
         MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
-        if (!map->baseSize(pair_va, pair->get_e_size()).exists(map->WHOLE)) {
+        if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
                     " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname.c_str());
