@@ -2310,6 +2310,9 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
 
+// JP (9/17/14): Added function to test whether two SgType* are equivalent or not
+   bool checkTypesAreEqual(SgType *typeA, SgType *typeB);
+
 //--------------------------------Java interface functions ---------------------
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
       ROSE_DLL_API std::string getTempDirectory(SgProject *project);
