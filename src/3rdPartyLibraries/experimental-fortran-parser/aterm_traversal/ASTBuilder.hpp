@@ -38,8 +38,10 @@ class ASTBuilder
    virtual void build_FunctionStmt(FunctionStmt* functionStmt) = 0;
    virtual void build_EndFunctionStmt(EndFunctionStmt* endFunctionStmt) = 0;
 
+   virtual void build_InitialSpecPart(InitialSpecPart * initialSpecPart) = 0;
    virtual void build_SpecificationPart(SpecificationPart * specificationPart) = 0;
    virtual void build_ImplicitPart(ImplicitPart * implicitPart) = 0;
+   virtual void build_SpecAndExecPart(SpecAndExecPart * specAndExecPart) = 0;
    virtual void build_ExecutionPart(ExecutionPart * executionPart) = 0;
    virtual void build_InternalSubprogramPart(InternalSubprogramPart* internalSubprogramPart) = 0;
    virtual void build_DeclarationTypeSpec(DeclarationTypeSpec * declarationTypeSpec) = 0;
