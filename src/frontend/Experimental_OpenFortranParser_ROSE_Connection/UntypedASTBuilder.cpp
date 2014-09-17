@@ -164,6 +164,7 @@ void UntypedASTBuilder::build_SpecificationPart(SpecificationPart * specificatio
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_ImplicitPart(ImplicitPart* implicitPart)
 {
+#if 0
    SgUntypedDeclarationStatement * decl = NULL;
 
    SgUntypedDeclarationList * sgDeclList = new SgUntypedDeclarationList(NULL);
@@ -180,6 +181,7 @@ void UntypedASTBuilder::build_ImplicitPart(ImplicitPart* implicitPart)
 
 #ifdef OFP_BUILD_DEBUG
    printf("build_ImplicitPart: ................ %lu\n", sgDeclList->get_decl_list().size());
+#endif
 #endif
 }
 
@@ -229,6 +231,7 @@ void UntypedASTBuilder::build_ExecutionPart(ExecutionPart * executionPart)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_InternalSubprogramPart(InternalSubprogramPart* internalSubprogramPart)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedStatement * stmt = NULL;
    SgUntypedFunctionDeclaration * fdecl = NULL;
@@ -255,6 +258,7 @@ void UntypedASTBuilder::build_InternalSubprogramPart(InternalSubprogramPart* int
 #ifdef OFP_BUILD_DEBUG
    printf("build_InternalSubprogramPart: ...... %lu\n", scope->get_function_list()->get_func_list().size());
 #endif
+#endif
 }
 
 //========================================================================================  
@@ -262,6 +266,7 @@ void UntypedASTBuilder::build_InternalSubprogramPart(InternalSubprogramPart* int
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_DeclarationTypeSpec(DeclarationTypeSpec * declarationTypeSpec)
 {
+#if 0
    std::string name = "";
    Sg_File_Info * start = NULL;
    SgUntypedType * node = NULL;
@@ -327,6 +332,7 @@ void UntypedASTBuilder::build_DeclarationTypeSpec(DeclarationTypeSpec * declarat
    }
    
    declarationTypeSpec->setPayload(node);
+#endif
 }
  
 //========================================================================================
@@ -334,6 +340,7 @@ void UntypedASTBuilder::build_DeclarationTypeSpec(DeclarationTypeSpec * declarat
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_IntLiteralConstant(IntLiteralConstant * intLiteralConstant)
 {
+#if 0
    OFP::KindParam * kindParam = intLiteralConstant->getKindParam();
 
    SgUntypedValueExpression * expr = dynamic_cast<SgUntypedValueExpression*>(intLiteralConstant->getPayload());
@@ -354,6 +361,7 @@ void UntypedASTBuilder::build_IntLiteralConstant(IntLiteralConstant * intLiteral
    unparser->unparseExpr(expr);  printf("\n");
 #endif
 #endif
+#endif
 }
 
 //========================================================================================
@@ -361,6 +369,7 @@ void UntypedASTBuilder::build_IntLiteralConstant(IntLiteralConstant * intLiteral
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDeclarationStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedType * type  = NULL;
    SgUntypedVariableDeclaration * stmt = NULL;
@@ -408,6 +417,7 @@ void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDecl
 #endif
 
    typeDeclarationStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================  
@@ -415,6 +425,7 @@ void UntypedASTBuilder::build_TypeDeclarationStmt(TypeDeclarationStmt * typeDecl
 //----------------------------------------------------------------------------------------  
 void UntypedASTBuilder::build_EntityDecl(EntityDecl * entityDecl)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedType * type = NULL;
    SgUntypedInitializedName * node = NULL;
@@ -429,6 +440,7 @@ void UntypedASTBuilder::build_EntityDecl(EntityDecl * entityDecl)
    //TODO Initialization;
 
    entityDecl->setPayload(node);
+#endif
 }
 
 //========================================================================================
@@ -436,6 +448,7 @@ void UntypedASTBuilder::build_EntityDecl(EntityDecl * entityDecl)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_ImplicitStmt(ImplicitStmt * implicitStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedImplicitDeclaration * stmt = NULL;
 
@@ -462,6 +475,7 @@ void UntypedASTBuilder::build_ImplicitStmt(ImplicitStmt * implicitStmt)
    }
 
    implicitStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================
@@ -469,6 +483,7 @@ void UntypedASTBuilder::build_ImplicitStmt(ImplicitStmt * implicitStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_DataRef(DataRef * dataRef)
 {
+#if 0
    // TODO - handle PartRef list instead of just grabbing first element
    dataRef->inheritPayload(dataRef->getPartRefList()->front());
 
@@ -478,6 +493,7 @@ void UntypedASTBuilder::build_DataRef(DataRef * dataRef)
    unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(dataRef->getPayload()));  printf("\n");
 #endif
 #endif
+#endif
 }
 
 //========================================================================================
@@ -485,6 +501,7 @@ void UntypedASTBuilder::build_DataRef(DataRef * dataRef)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_PartRef(PartRef * partRef)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedReferenceExpression* expr = NULL;
 
@@ -499,6 +516,7 @@ void UntypedASTBuilder::build_PartRef(PartRef * partRef)
    unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(partRef->getPayload()));  printf("\n");
 #endif
 #endif
+#endif
 }
 
 //========================================================================================
@@ -506,6 +524,7 @@ void UntypedASTBuilder::build_PartRef(PartRef * partRef)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_AssignmentStmt(AssignmentStmt * assignmentStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedAssignmentStatement * stmt = NULL;
 
@@ -518,6 +537,7 @@ void UntypedASTBuilder::build_AssignmentStmt(AssignmentStmt * assignmentStmt)
    if (assignmentStmt->getLabel()) stmt->set_label_string(assignmentStmt->getLabel()->getValue());
 
    assignmentStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================
@@ -642,6 +662,7 @@ void UntypedASTBuilder::build_EndProgramStmt(EndProgramStmt * endProgramStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_Module(Module* module)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedNamedStatement * endStmt = NULL;
    SgUntypedDeclarationList * sgDeclList = NULL;
@@ -698,6 +719,7 @@ void UntypedASTBuilder::build_Module(Module* module)
 #endif
 
    module->setPayload(sgModule);
+#endif
 }
 
 //========================================================================================
@@ -705,6 +727,7 @@ void UntypedASTBuilder::build_Module(Module* module)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_ModuleStmt(ModuleStmt* moduleStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedModuleDeclaration * module = NULL;
 
@@ -717,6 +740,7 @@ void UntypedASTBuilder::build_ModuleStmt(ModuleStmt* moduleStmt)
 #endif
 
    moduleStmt->setPayload(module);
+#endif
 }
 
 //========================================================================================
@@ -724,6 +748,7 @@ void UntypedASTBuilder::build_ModuleStmt(ModuleStmt* moduleStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_EndModuleStmt(EndModuleStmt* endModuleStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedNamedStatement * stmt = new SgUntypedNamedStatement(start);
    stmt->set_statement_enum(SgToken::FORTRAN_END_MODULE);
@@ -732,6 +757,7 @@ void UntypedASTBuilder::build_EndModuleStmt(EndModuleStmt* endModuleStmt)
    if (endModuleStmt->getModuleName()) stmt->set_statement_name(endModuleStmt->getModuleName()->getIdent()->getValue());
 
    endModuleStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================
@@ -739,6 +765,7 @@ void UntypedASTBuilder::build_EndModuleStmt(EndModuleStmt* endModuleStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_ModuleSubprogramPart(ModuleSubprogramPart* moduleSubprogramPart)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedStatement * stmt = NULL;
    SgUntypedFunctionDeclaration * fdecl = NULL;
@@ -765,6 +792,7 @@ void UntypedASTBuilder::build_ModuleSubprogramPart(ModuleSubprogramPart* moduleS
 #ifdef OFP_BUILD_DEBUG
    printf("build_ModuleSubprogramPart: ...... %lu\n", scope->get_function_list()->get_func_list().size());
 #endif
+#endif
 }
 
 //========================================================================================
@@ -772,6 +800,7 @@ void UntypedASTBuilder::build_ModuleSubprogramPart(ModuleSubprogramPart* moduleS
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_FunctionSubprogram(FunctionSubprogram* functionSubprogram)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedNamedStatement * stmt = NULL;
    SgUntypedDeclarationList* sgDeclList = NULL;
@@ -836,6 +865,7 @@ void UntypedASTBuilder::build_FunctionSubprogram(FunctionSubprogram* functionSub
 #endif
 
    functionSubprogram->setPayload(function);
+#endif
 }
 
 //========================================================================================
@@ -843,6 +873,7 @@ void UntypedASTBuilder::build_FunctionSubprogram(FunctionSubprogram* functionSub
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_FunctionStmt(FunctionStmt* functionStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedFunctionDeclaration * function = NULL;
 
@@ -854,6 +885,7 @@ void UntypedASTBuilder::build_FunctionStmt(FunctionStmt* functionStmt)
    //TODO-CER-2014.4.11 - handle prefix, arguments, language-binding
 
    functionStmt->setPayload(function);
+#endif
 }
 
 //========================================================================================
@@ -861,6 +893,7 @@ void UntypedASTBuilder::build_FunctionStmt(FunctionStmt* functionStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_EndFunctionStmt(EndFunctionStmt* endFunctionStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedNamedStatement * stmt = new SgUntypedNamedStatement(start);
    stmt->set_statement_enum(SgToken::FORTRAN_END_FUNCTION);
@@ -873,6 +906,7 @@ void UntypedASTBuilder::build_EndFunctionStmt(EndFunctionStmt* endFunctionStmt)
    }
 
    endFunctionStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================
@@ -880,6 +914,7 @@ void UntypedASTBuilder::build_EndFunctionStmt(EndFunctionStmt* endFunctionStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_SubroutineSubprogram(SubroutineSubprogram * subroutineSubprogram)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedNamedStatement * stmt = NULL;
    SgUntypedDeclarationList* sgDeclList = NULL;
@@ -941,6 +976,7 @@ void UntypedASTBuilder::build_SubroutineSubprogram(SubroutineSubprogram * subrou
 #endif
 
    subroutineSubprogram->setPayload(subroutine);
+#endif
 }
 
 //========================================================================================
@@ -948,6 +984,7 @@ void UntypedASTBuilder::build_SubroutineSubprogram(SubroutineSubprogram * subrou
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_SubroutineStmt(SubroutineStmt * subroutineStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedSubroutineDeclaration * subroutine = NULL;
 
@@ -959,6 +996,7 @@ void UntypedASTBuilder::build_SubroutineStmt(SubroutineStmt * subroutineStmt)
    //TODO-CER-2014.3.24 - handle prefix, arguments, language-binding
 
    subroutineStmt->setPayload(subroutine);
+#endif
 }
 
 //========================================================================================
@@ -966,6 +1004,7 @@ void UntypedASTBuilder::build_SubroutineStmt(SubroutineStmt * subroutineStmt)
 //----------------------------------------------------------------------------------------
 void  UntypedASTBuilder::build_EndSubroutineStmt(EndSubroutineStmt * endSubroutineStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedNamedStatement * stmt = new SgUntypedNamedStatement(start);
    stmt->set_statement_enum(SgToken::FORTRAN_END_SUBROUTINE);
@@ -978,6 +1017,7 @@ void  UntypedASTBuilder::build_EndSubroutineStmt(EndSubroutineStmt * endSubrouti
    }
 
    endSubroutineStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================
@@ -1097,6 +1137,7 @@ void UntypedASTBuilder::build_EndMpSubprogramStmt(EndMpSubprogramStmt* endMpSubp
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_ContainsStmt(ContainsStmt* containsStmt)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedStatement * stmt = new SgUntypedStatement(start);
    stmt->set_statement_enum(SgToken::FORTRAN_CONTAINS);
@@ -1109,6 +1150,7 @@ void UntypedASTBuilder::build_ContainsStmt(ContainsStmt* containsStmt)
    }
 
    containsStmt->setPayload(stmt);
+#endif
 }
 
 //========================================================================================
@@ -1116,6 +1158,7 @@ void UntypedASTBuilder::build_ContainsStmt(ContainsStmt* containsStmt)
 //----------------------------------------------------------------------------------------
 void UntypedASTBuilder::build_BinaryOp(Expr * expr, SgToken::ROSE_Fortran_Operators op, std::string name)
 {
+#if 0
    Sg_File_Info * start = NULL;
    SgUntypedBinaryOperator * binop = NULL;
 
@@ -1135,6 +1178,7 @@ void UntypedASTBuilder::build_BinaryOp(Expr * expr, SgToken::ROSE_Fortran_Operat
    //TODO-DQ-2014.3.7 I don't think a Fortran enum should be in constructor
    binop = new SgUntypedBinaryOperator(start, SgToken::FORTRAN_UNKNOWN, op, name, lhs, rhs); 
    expr->setPayload(binop);
+#endif
 }
 
 //========================================================================================
@@ -1166,6 +1210,7 @@ void UntypedASTBuilder::build_Scon(Scon* scon)
 
 void UntypedASTBuilder::build_Icon(Icon* icon)
 {
+#if 0
    //TODO-CER-2014.3.7 set (or request) SgToken::FORTRAN_INTEGER);
    SgUntypedType*             type = new SgUntypedType(NULL, "INTEGER");
    SgUntypedValueExpression* value = new SgUntypedValueExpression(NULL, SgToken::FORTRAN_INTEGER, icon->getValue(), type);
@@ -1184,10 +1229,12 @@ void UntypedASTBuilder::build_Icon(Icon* icon)
 #else
    printf ("WARNING: In UntypedASTBuilder::build_Icon(): Built a SgUntypedValueExpression (need to call SageBuilder API) \n");
 #endif
+#endif
 }
 
 void UntypedASTBuilder::build_Ident(Ident* ident)
 {
+#if 0
    SgUntypedValueExpression* value = new SgUntypedValueExpression(NULL, SgToken::FORTRAN_UNKNOWN, ident->getValue(), NULL);
    ident->setPayload(value);
 
@@ -1203,6 +1250,7 @@ void UntypedASTBuilder::build_Ident(Ident* ident)
    ROSE_ASSERT(false);
 #else
    printf ("WARNING: In UntypedASTBuilder::build_Ident(): Built a SgUntypedValueExpression (need to call SageBuilder API) \n");
+#endif
 #endif
 }
 
