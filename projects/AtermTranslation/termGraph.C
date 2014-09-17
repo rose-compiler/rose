@@ -14,6 +14,11 @@
 #include <string>
 #include <iomanip>
 
+// DQ (9/17/2014): Added to fine strdup() function on RH 6 systems.
+// #include <stdio.h>
+// #include <stdlib.h>
+#include <string.h>
+
 #if 0
 // These tests are here to make sure that the ATerm library is setup for use by 64 vs. 32 bit machines.
 #ifdef SIZEOF_LONG
