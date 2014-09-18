@@ -24,7 +24,10 @@
 using namespace std;
 
 #include "sage_support.h"
+
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
 using namespace Rose::Frontend::X10::X10c;
+#endif
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_DEBUGGING_FUNCTION_INTERNALS  0
@@ -1394,6 +1397,7 @@ cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name(
 << endl;
 cout.flush();
 
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
         bool shouldPrint = false;
     for (list<string>::iterator i = Rose::Frontend::X10::X10c::classNames.begin(); i != Rose::Frontend::X10::X10c::classNames.end(); i++) {
         string class_name = *i; //StringUtility::getAbsolutePathFromRelativePath(*i);
@@ -1404,6 +1408,7 @@ cout.flush();
     }
         if (!shouldPrint) 
                 return;
+#endif
 /* 
 */
 
