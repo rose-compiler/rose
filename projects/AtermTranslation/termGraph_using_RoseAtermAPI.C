@@ -996,6 +996,13 @@ main(int argc, char* argv[])
      ATerm_Graph::graph_aterm_ast(term,file_basename);
 
 #if 0
+  // DQ (9/17/2014): Adding test for conversion of Aterm back to AST.
+     printf ("Testing the reverse process to generate the ROSE AST from the Aterm \n");
+     SgNode* rootOfAST = convertAtermToNode(term);
+     printf ("rootOfAST = %p = %s \n",rootOfAST,rootOfAST->class_name().c_str());
+#endif
+
+#if 0
      printf ("Program Terminated Normally \n");
 #endif
 
