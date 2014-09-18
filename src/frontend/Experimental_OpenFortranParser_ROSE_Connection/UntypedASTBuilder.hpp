@@ -1,5 +1,5 @@
-#ifndef	ROSE_BUILDER_HPP
-#define	ROSE_BUILDER_HPP
+#ifndef ROSE_BUILDER_HPP
+#define ROSE_BUILDER_HPP
 
 #include "ASTBuilder.hpp"
 
