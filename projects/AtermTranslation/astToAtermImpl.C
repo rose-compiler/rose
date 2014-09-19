@@ -13,8 +13,8 @@
 using namespace std;
 
 // Note that setting this to true was the original setting.
-#define LAZY_WRAPPING_MACRO true
-// #define LAZY_WRAPPING_MACRO false
+// #define LAZY_WRAPPING_MACRO true
+#define LAZY_WRAPPING_MACRO false
 
 std::string uniqueId(SgNode* n)
    {
@@ -22,10 +22,17 @@ std::string uniqueId(SgNode* n)
   // return intToHex(n);
 
      ROSE_ASSERT(n != NULL);
+
+  // DQ (9/18/2014): Ignore the different between defining vs. non-defining declarations (in generation of unique names).
+  // string returnString = SageInterface::generateUniqueName(n, false);
+     string returnString = SageInterface::generateUniqueName(n, true);
+
 #if 0
-     printf ("In uniqueId(): n = %p = %s \n",n,n->class_name().c_str());
+     printf ("In uniqueId(): n = %p = %s returnString = %s \n",n,n->class_name().c_str(),returnString.c_str());
 #endif
-     return SageInterface::generateUniqueName(n, false);
+
+  // return SageInterface::generateUniqueName(n, false);
+     return returnString;
    }
 
 ATerm convertFileInfoToAterm(Sg_File_Info* fi) 
@@ -66,7 +73,13 @@ ATerm convertSgNodeRangeToAterm(Iter b, Iter e)
      if ( (b != e) && (*b != NULL) )
         {
           SgNode* parent = (*b)->get_parent();
-          ROSE_ASSERT(parent != NULL);
+#if 0
+          if (parent == NULL)
+             {
+               printf ("warning: parent == NULL: *b = %p = %s \n",*b,(*b)->class_name().c_str());
+             }
+#endif
+       // ROSE_ASSERT(parent != NULL);
 #if 0
           printf ("Building an ATerm list for (*b)->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
 #endif
@@ -427,6 +440,37 @@ ATerm convertNodeToAterm(SgNode* n)
                break;
              }
 
+          case V_SgMemberFunctionDeclaration:
+             {
+            // This is mostly a copy of the case for SgFunctionDeclaration
+            // Special case needed to include name
+               SgMemberFunctionDeclaration* fd = isSgMemberFunctionDeclaration(n);
+               ATerm child_term_1 = NULL;
+               ATerm child_term_2 = NULL;
+               ATerm child_term_3 = NULL;
+               if (lazyWrapping == true)
+                  {
+                    child_term_1 = ATmake("lazyWrap(<str>)","lazyWrap");
+                    child_term_2 = ATmake("lazyWrap(<str>)","lazyWrap");
+                    child_term_3 = ATmake("lazyWrap(<str>)","lazyWrap");
+                  }
+                 else
+                  {
+                    child_term_1 = convertNodeToAterm(fd->get_orig_return_type());
+                    child_term_2 = convertSgNodeRangeToAterm(fd->get_args().begin(),fd->get_args().end());
+                    child_term_3 = convertNodeToAterm(fd->get_definition());
+                  }
+
+            // term = ATmake("Function(<str>, <term>, <term>, <term>)",fd->get_name().str(),convertNodeToAterm(fd->get_orig_return_type()),convertSgNodeRangeToAterm(fd->get_args().begin(),fd->get_args().end()),convertNodeToAterm(fd->get_definition()));
+               term = ATmake("MemberFunction(<str>, <term>, <term>, <term>)",fd->get_name().str(),child_term_1,child_term_2,child_term_3);
+#if 1
+               term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
+#else
+               printf ("In convertNodeToAterm(): Skipping annotation for uniqueId for term = %p node = %p = %s \n",term,n,n->class_name().c_str());
+#endif
+               break;
+             }
+
           case V_SgClassDeclaration: 
              {
             // Special case needed to distinguish forward/full definitions and to
@@ -541,7 +585,13 @@ ATerm convertNodeToAterm(SgNode* n)
             // Special case because types can't be traversed yet, and to get length
                SgType* type = isSgArrayType(n)->get_base_type();
                ATerm t = convertNodeToAterm(type);
-               term = ATmake("Array(<term>, <term>)", t, (isSgArrayType(n)->get_index() ? convertNodeToAterm((n->get_traversalSuccessorContainer())[4]) : ATmake("<str>", "NULL")));
+#if 0
+               printf ("isSgArrayType(n)->get_index() = %p \n",isSgArrayType(n)->get_index());
+               printf ("n->get_traversalSuccessorContainer().size() = %zu \n",n->get_traversalSuccessorContainer().size());
+#endif
+            // I think we just want the index in this case.
+            // term = ATmake("Array(<term>, <term>)", t, (isSgArrayType(n)->get_index() ? convertNodeToAterm((n->get_traversalSuccessorContainer())[4]) : ATmake("<str>", "NULL")));
+               term = ATmake("Array(<term>, <term>)", t, (isSgArrayType(n)->get_index() ? convertNodeToAterm(isSgArrayType(n)->get_index()) : ATmake("<str>", "NULL")));
                assert (term);
                break;
              }
@@ -748,11 +798,165 @@ ATerm convertNodeToAterm(SgNode* n)
                break;
              }
 
-        // DQ (9/17/2014): Added new case to address where we were using lazy wrapping previously.
-           case V_SgVariableDeclaration:
-              {
-             // Using the default case for the moment.
-              }
+       // DQ (9/17/2014): Added new case to address where we were using lazy wrapping previously.
+          case V_SgVariableDeclaration:
+             {
+            // Using the default case for the moment.
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(n);
+               SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
+               ROSE_ASSERT(initializedName != NULL);
+               
+            // const SgName& name = "x"; // isSgVariableDeclaration(n)->get_name();
+            // SgType* type = isSgVariableDeclaration(n)->get_type();
+            // ROSE_ASSERT(type != NULL);
+            // term = ATmake("VarDecl(<term>)",convertNodeToAterm(initializedName));
+               term = ATmake("VarDecl(<term>)", convertSgNodeRangeToAterm(variableDeclaration->get_variables().begin(),variableDeclaration->get_variables().end()));
+
+            // DQ (10/26/2013): This is required to avoid having ATerms be shared and interfering with the maximal sharing of ATerms (especially when we are using a lazy evaluation).
+               term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
+#if 0
+               printf ("Found correct form of VarDecl \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#if 0
+       // Handle these explicitly instead of via the default case.
+       // case V_SgBasicBlock:
+       // case V_SgGlobal:
+          case V_SgFunctionDefinition:
+       // case V_SgClassDefinition:
+             {
+               term = ATmake("<appl(<list>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(n));
+
+            // DQ (10/26/2013): This is required to avoid having ATerms be shared and interfering with the maximal sharing of ATerms (especially when we are using a lazy evaluation).
+               term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
+               break;
+             }
+#endif
+#if 0
+       // Handle these explicitly instead of via the default case.
+          case V_SgCtorInitializerList:
+          case V_SgFunctionParameterList:
+          case V_SgGlobal:
+          case V_SgBasicBlock:
+          case V_SgClassDefinition:
+          case V_SgFunctionDefinition:
+             {
+            // This kind of ATerm can support arity greater than 255 (so SgGlobal must be handled via this kind of ATerm).
+               term = ATmake("<appl(<term>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(n));
+
+            // DQ (10/26/2013): This is required to avoid having ATerms be shared and interfering with the maximal sharing of ATerms (especially when we are using a lazy evaluation).
+               term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
+               break;
+             }
+#endif
+       // TRUE CASE:
+       // Added this case to avoid processing via the default case.
+          case V_SgCtorInitializerList:
+          case V_SgFunctionParameterList:
+          case V_SgGlobal:
+          case V_SgBasicBlock:
+          case V_SgClassDefinition:
+          case V_SgTemplateClassDefinition:
+          case V_SgFunctionDefinition:
+          case V_SgTemplateFunctionDefinition:
+          case V_SgNamespaceDefinitionStatement:
+          case V_SgThisExp:
+          case V_SgExprListExp:
+          case V_SgStringVal:
+          case V_SgBoolValExp:
+          case V_SgLongIntVal:
+          case V_SgCharVal:
+          case V_SgFloatVal:
+          case V_SgLongDoubleVal:
+          case V_SgLongLongIntVal:
+          case V_SgWcharVal:
+          case V_SgNullExpression:
+          case V_SgBreakStmt:
+          case V_SgEnumVal:
+          case V_SgMemberFunctionRefExp:
+          case V_SgCatchStatementSeq:
+          case V_SgForInitStatement:
+          case V_SgTemplateInstantiationDefn:
+          case V_SgTemplateParameterVal:
+          case V_SgNamespaceAliasDeclarationStatement:
+          case V_SgUsingDeclarationStatement:
+          case V_SgUsingDirectiveStatement:
+          case V_SgTemplateFunctionRefExp:
+          case V_SgTemplateMemberFunctionRefExp:
+          case V_SgNullStatement:
+          case V_SgTypeTraitBuiltinOperator:
+          case V_SgPseudoDestructorRefExp:
+          case V_SgAsmStmt:
+             {
+               term = ATmake("<appl(<term>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(n));
+
+            // DQ (10/26/2013): This is required to avoid having ATerms be shared and interfering with the maximal sharing of ATerms (especially when we are using a lazy evaluation).
+               term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
+               break;
+             }
+
+       // FALSE CASE:
+       // Handle these explicitly instead of via the default case.
+          case V_SgReturnStmt:
+          case V_SgAssignInitializer:
+          case V_SgConstructorInitializer:
+          case V_SgAggregateInitializer:
+          case V_SgExprStatement:
+          case V_SgEqualityOp:
+          case V_SgFunctionCallExp:
+          case V_SgConditionalExp:
+          case V_SgArrowExp:
+          case V_SgAssignOp:
+          case V_SgDotExp:
+          case V_SgNotEqualOp:
+          case V_SgIfStmt:
+          case V_SgDefaultOptionStmt:
+          case V_SgSwitchStatement:
+          case V_SgCaseOptionStmt:
+          case V_SgAddOp:
+          case V_SgGreaterThanOp:
+          case V_SgNotOp:
+          case V_SgOrOp:
+          case V_SgDeleteExp:
+          case V_SgSizeOfOp:
+          case V_SgMultiplyOp:
+          case V_SgSubtractOp:
+          case V_SgMinusOp:
+          case V_SgVarArgStartOp:
+          case V_SgVarArgOp:
+          case V_SgVarArgEndOp:
+          case V_SgAddressOfOp:
+          case V_SgNewExp:
+          case V_SgPointerDerefExp:
+          case V_SgBitComplementOp:
+          case V_SgUnaryAddOp:
+          case V_SgThrowOp:
+          case V_SgCatchOptionStmt:
+          case V_SgTryStmt:
+          case V_SgForStatement:
+          case V_SgNamespaceDeclarationStatement:
+          case V_SgTemplateClassDeclaration:
+          case V_SgTemplateMemberFunctionDeclaration:
+          case V_SgTemplateFunctionDeclaration:
+          case V_SgTemplateVariableDeclaration:
+          case V_SgPragma:
+          case V_SgTemplateInstantiationMemberFunctionDecl:
+          case V_SgTemplateInstantiationFunctionDecl:
+          case V_SgTemplateInstantiationDirectiveStatement:
+          case V_SgPragmaDeclaration:
+          case V_SgWhileStmt:
+          case V_SgDoWhileStmt:
+          case V_SgStatementExpression:
+             {
+               term = ATmake("<appl(<list>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(n));
+
+            // DQ (10/26/2013): This is required to avoid having ATerms be shared and interfering with the maximal sharing of ATerms (especially when we are using a lazy evaluation).
+               term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
+               break;
+             }
 
           default:
              {
@@ -771,6 +975,22 @@ ATerm convertNodeToAterm(SgNode* n)
                term = ATsetAnnotation(term, ATmake("id"),ATmake("<str>", uniqueId(n).c_str()));
 #if 0
                printf ("In convertNodeToAterm(): default: n = %p = %s uniqueId(n) = %s \n",n,n->class_name().c_str(),uniqueId(n).c_str());
+#endif
+#if 1
+            // Allow types not handled explicitly above to be handled by the default.
+               if (isSgType(n) == NULL)
+                  {
+#if 0
+                    printf ("In convertNodeToAterm(): default: Processing the default case of container: n = %p = %s \n",n,n->class_name().c_str());
+                    printf ("In convertNodeToAterm(): default: isContainer = %s \n",isContainer ? "true" : "false");
+                    printf ("In convertNodeToAterm(): default: n = %p = %s uniqueId(n) = %s \n",n,n->class_name().c_str(),uniqueId(n).c_str());
+#endif
+                    if (isSgBinaryOp(n) == NULL)
+                       {
+                         printf ("We would like to avoid processing IR nodes using the default case n = %p = %s isContainer = %s uniqueId = %s \n",n,n->class_name().c_str(),isContainer ? "true" : "false",uniqueId(n).c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
 #endif
                break;
              }

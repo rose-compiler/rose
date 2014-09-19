@@ -887,8 +887,10 @@ $(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
 	cd ../..; $(MAKE) testTranslator
 
 
-test1: termGraph_using_RoseAtermAPI
-	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
+test1: testTranslation_AST_to_ATerm_to_AST
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
+	./testTranslation_AST_to_ATerm_to_AST $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
+
 
 test: termGraph
 	./termGraph atermFile.aterm
