@@ -103,7 +103,7 @@ check-local:
 EXTRA_DIST = CMakeLists.txt #astEquivalenceGraphForBinaryCode3.png
 
 clean-local:
-	rm -f *.o rose_*.[s] rose_*.? *.dot *.png *.pdf *~ *.ps *.out *.new *.dump sqlite-database-name.* *.stderr *.stdout *.exe testProgram rose_performance_report_lockfile.lock
+	rm -f output-local.dot output-rose.dot output1.png output2.png
 	rm -f testProgram_1  testProgram_2
 	rm -rf QMTest
 
