@@ -10,6 +10,7 @@
 #include "Disassembler.h"                               // rose::Disassembler
 #include "Partitioner.h"                                // rose::Partitioner
 #include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
+#include <EditDistance/TreeEditDistance.h>              // rose::TreeEditDistance
 
 #include <cstdarg>
 
@@ -53,6 +54,7 @@ void initialize() {
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
+        TreeEditDistance::initDiagnostics();
 
         // By default, only messages of informational importance and above are dispalyed.
         mfacilities.control("none, >=info");
