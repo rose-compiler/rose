@@ -5,5 +5,5 @@ install(FILES Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h
               Cached.h Callbacks.h CommandLine.h DefaultAllocator.h Graph.h GraphBoost.h IndexedList.h Interval.h
               IntervalMap.h IntervalSet.h Map.h MappedBuffer.h Markup.h MarkupPod.h Message.h NullBuffer.h Optional.h
               PoolAllocator.h ProgressBar.h Sawyer.h SharedPointer.h SmallObject.h Stack.h StaticBuffer.h
-	      WarningsOff.h WarningsRestore.h
+	      Stopwatch.h WarningsOff.h WarningsRestore.h
         DESTINATION ${INCLUDE_INSTALL_DIR}/sawyer)
