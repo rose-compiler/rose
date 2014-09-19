@@ -1,12 +1,8 @@
 #ifndef	OFP_NODES_H
 #define	OFP_NODES_H
 
-#define COMPILED_WITH_ROSE
-
-#ifdef  COMPILED_WITH_ROSE
-#include "rose.h"
-#else
-#include "UntypedNodes.h"
+#if COMPILED_WITH_ROSE==0
+//#include "UntypedNodes.h"
 #endif
 
 #include <aterm2.h>

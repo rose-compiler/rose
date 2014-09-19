@@ -16,6 +16,7 @@ libsageInterface_la_SOURCES      = \
      sageBuilder.C \
      sageBuilder_fortran.C \
      abiStuff.C \
+     sageBuilder_untypedNodes.C \
      typeEquivalenceChecker.cpp \
      simpleExpressionEvaluator.cpp
 #     highLevelInterface.C

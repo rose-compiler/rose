@@ -1,7 +1,7 @@
-#include "traversal.h"
+#include "traversal.hpp"
 #include "OFPUnparser.hpp"
 #include "UntypedASTBuilder.hpp"
-//#include "OFPNodes.h"
+//#include "OFPNodes.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,16 +39,18 @@ int main(int argc, char * argv[])
 
    Program.term = ATreadFromTextFile(file);
 
+#ifdef OFP_DEBUG
    printf("\n%s\n\n", ATwriteToString(Program.term));
+#endif
 
    OFP::setASTBuilder(&ast);
    OFP::setUnparser(unparser);
 
    if (ofp_traverse_Program(Program.term, &Program)) {
-      printf("\nWoot!\n");
+      if (ofs == NULL) printf("\nWoot!\n");
    } else return 1;
 
-   if (ofs == NULL) printf("\n\n----------------------------\n");
+   if (ofs == NULL) printf("----------------------------\n");
    unparser->unparseNode(Program.getPayload());
    if (ofs == NULL) printf("----------------------------\n\n");
 

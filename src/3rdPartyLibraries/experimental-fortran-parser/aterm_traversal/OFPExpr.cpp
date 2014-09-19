@@ -1,4 +1,15 @@
-#include "OFPExpr.h"
+#define COMPILED_WITH_ROSE 1
+
+#if COMPILED_WITH_ROSE
+#include "sage3basic.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+#endif
+
+#include "OFPExpr.hpp"
 #include "ASTBuilder.hpp"
 #include <assert.h>
 #include <string>
@@ -163,6 +174,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
    printf("Expr(W): %s\n", ATwriteToString(term));
 #endif
 
+   OFP::Primary Primary;
+   if (ofp_traverse_Primary(term, &Primary)) {
+      // MATCHED Primary
+      Expr->setOptionType(OFP::Expr::Primary_ot);
+      Expr->setPrimary(Primary.newPrimary());
+      Expr->inheritPayload(Expr->getPrimary());
+      return ATtrue;
+   }
+
  OFP::Expr Expr1, Expr2;
  OFP::DefinedBinaryOp DefinedBinaryOp;
  if (ATmatch(term, "DefBinExpr(<term>,<term>,<term>)", &Expr1.term, &DefinedBinaryOp.term, &Expr2.term)) {
@@ -183,12 +203,16 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
       } else return ATfalse;
 
    // MATCHED DefBinExpr
-   Expr->setOptionType(OFP::Expr::DefBinExpr);
+   Expr->setOptionType(OFP::Expr::DefBinExpr_ot);
+
+   //TODO-CER-2014.4.15 - implement defined binary operators
+   //   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_DEFINED_BINARY, "");
+   assert(0);
 
    return ATtrue;
  }
 
- if (ATmatch(term, "NotEqvExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "NEQV(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -200,13 +224,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED NotEqvExpr
-   Expr->setOptionType(OFP::Expr::NotEqvExpr);
+   // MATCHED NEQV
+   Expr->setOptionType(OFP::Expr::NEQV_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_NEQV, ".NEQV.");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "EqvExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "EQV(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -218,13 +244,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED EqvExpr
-   Expr->setOptionType(OFP::Expr::EqvExpr);
+   // MATCHED EQV
+   Expr->setOptionType(OFP::Expr::EQV_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_EQV, ".EQV.");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "OrExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "OR(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -236,13 +264,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED OrExpr
-   Expr->setOptionType(OFP::Expr::OrExpr);
+   // MATCHED OR
+   Expr->setOptionType(OFP::Expr::OR_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_OR, ".OR.");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "AndExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "AND(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -254,44 +284,30 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED AndExpr
-   Expr->setOptionType(OFP::Expr::AndExpr);
+   // MATCHED AND
+   Expr->setOptionType(OFP::Expr::AND_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_AND, ".AND.");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "NotExpr(<term>)", &Expr1.term)) {
+ if (ATmatch(term, "NOT(<term>)", &Expr1.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
          Expr->setExpr1(Expr1.newExpr());
       } else return ATfalse;
 
-   // MATCHED NotExpr
-   Expr->setOptionType(OFP::Expr::NotExpr);
+   // MATCHED NOT
+   Expr->setOptionType(OFP::Expr::NOT_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_NOT, ".NOT.");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "GE_Expr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
-
-      if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
-         // MATCHED Expr
-         Expr->setExpr1(Expr1.newExpr());
-      } else return ATfalse;
-
-      if (ofp_traverse_Expr(Expr2.term, &Expr2)) {
-         // MATCHED Expr
-         Expr->setExpr2(Expr2.newExpr());
-      } else return ATfalse;
-
-   // MATCHED GE_Expr
-   Expr->setOptionType(OFP::Expr::GE_Expr);
-
-   return ATtrue;
- }
-
- if (ATmatch(term, "GT_Expr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "GE(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -303,13 +319,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED GT_Expr
-   Expr->setOptionType(OFP::Expr::GT_Expr);
+   // MATCHED GE
+   Expr->setOptionType(OFP::Expr::GE_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_GE, ">=");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "LE_Expr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "GT(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -321,13 +339,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED LE_Expr
-   Expr->setOptionType(OFP::Expr::LE_Expr);
+   // MATCHED GT
+   Expr->setOptionType(OFP::Expr::GT_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_GT, ">");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "LT_Expr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "LE(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -339,15 +359,35 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED LT_Expr
-   Expr->setOptionType(OFP::Expr::LT_Expr);
+   // MATCHED LE
+   Expr->setOptionType(OFP::Expr::LE_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_LE, "<=");
+
+   return ATtrue;
+ }
+
+ if (ATmatch(term, "LT(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+
+      if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
+         // MATCHED Expr
+         Expr->setExpr1(Expr1.newExpr());
+      } else return ATfalse;
+
+      if (ofp_traverse_Expr(Expr2.term, &Expr2)) {
+         // MATCHED Expr
+         Expr->setExpr2(Expr2.newExpr());
+      } else return ATfalse;
+
+   // MATCHED LT
+   Expr->setOptionType(OFP::Expr::LT_ot);
 
    ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_LT, "<");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "NE_Expr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "NE(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -359,13 +399,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED NE_Expr
-   Expr->setOptionType(OFP::Expr::NE_Expr);
+   // MATCHED NE
+   Expr->setOptionType(OFP::Expr::NE_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_NE, "/=");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "EQ_Expr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "EQ(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -377,13 +419,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED EQ_Expr
-   Expr->setOptionType(OFP::Expr::EQ_Expr);
+   // MATCHED EQ
+   Expr->setOptionType(OFP::Expr::EQ_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_EQ, "==");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "ConcatExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "Concat(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -395,13 +439,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED ConcatExpr
-   Expr->setOptionType(OFP::Expr::ConcatExpr);
+   // MATCHED Concat
+   Expr->setOptionType(OFP::Expr::Concat_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_CONCAT, "//");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "MinusExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "Minus(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -413,17 +459,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED MinusExpr
-   Expr->setOptionType(OFP::Expr::MinusExpr);
-
-   printf("============will call build_BinaryOp %p\n", Expr);
+   // MATCHED Minus
+   Expr->setOptionType(OFP::Expr::Minus_ot);
 
    ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_MINUS, "-");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "PlusExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "Plus(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -435,39 +479,49 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED PlusExpr
-   Expr->setOptionType(OFP::Expr::PlusExpr);
+   // MATCHED Plus
+   Expr->setOptionType(OFP::Expr::Plus_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_PLUS, "+");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "UnaryMinusExpr(<term>)", &Expr1.term)) {
+ if (ATmatch(term, "UnaryMinus(<term>)", &Expr1.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
          Expr->setExpr1(Expr1.newExpr());
       } else return ATfalse;
 
-   // MATCHED UnaryMinusExpr
-   Expr->setOptionType(OFP::Expr::UnaryMinusExpr);
+   // MATCHED UnaryMinus
+   Expr->setOptionType(OFP::Expr::UnaryMinus_ot);
+
+   //TODO-CER-2014.4.15 - implement unary operators
+   //   ast->build_UnaryOp(Expr, SgToken::FORTRAN_INTRINSIC_UNARY_MINUS, "-");
+   assert(0);
 
    return ATtrue;
  }
 
- if (ATmatch(term, "UnaryPlusExpr(<term>)", &Expr1.term)) {
+ if (ATmatch(term, "UnaryPlus(<term>)", &Expr1.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
          Expr->setExpr1(Expr1.newExpr());
       } else return ATfalse;
 
-   // MATCHED UnaryPlusExpr
-   Expr->setOptionType(OFP::Expr::UnaryPlusExpr);
+   // MATCHED UnaryPlus
+   Expr->setOptionType(OFP::Expr::UnaryPlus_ot);
+
+   //TODO-CER-2014.4.15 - implement unary operators
+   //   ast->build_UnaryOp(Expr, SgToken::FORTRAN_INTRINSIC_UNARY_PLUS, "+");
+   assert(0);
 
    return ATtrue;
  }
 
- if (ATmatch(term, "DivExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "Div(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -479,15 +533,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED DivExpr
-   Expr->setOptionType(OFP::Expr::DivExpr);
+   // MATCHED Div
+   Expr->setOptionType(OFP::Expr::Div_ot);
 
    ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_DIVIDE, "/");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "MultExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "Mult(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -499,15 +553,15 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED MultExpr
-   Expr->setOptionType(OFP::Expr::MultExpr);
+   // MATCHED Mult
+   Expr->setOptionType(OFP::Expr::Mult_ot);
 
    ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_TIMES, "*");
 
    return ATtrue;
  }
 
- if (ATmatch(term, "PowerExpr(<term>,<term>)", &Expr1.term, &Expr2.term)) {
+ if (ATmatch(term, "Power(<term>,<term>)", &Expr1.term, &Expr2.term)) {
 
       if (ofp_traverse_Expr(Expr1.term, &Expr1)) {
          // MATCHED Expr
@@ -519,8 +573,10 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
          Expr->setExpr2(Expr2.newExpr());
       } else return ATfalse;
 
-   // MATCHED PowerExpr
-   Expr->setOptionType(OFP::Expr::PowerExpr);
+   // MATCHED Power
+   Expr->setOptionType(OFP::Expr::Power_ot);
+
+   ast->build_BinaryOp(Expr, SgToken::FORTRAN_INTRINSIC_POWER, "**");
 
    return ATtrue;
  }
@@ -539,22 +595,11 @@ ATbool ofp_traverse_Expr(ATerm term, OFP::Expr* Expr)
       } else return ATfalse;
 
    // MATCHED DefUnaryExpr
-   Expr->setOptionType(OFP::Expr::DefUnaryExpr);
+   Expr->setOptionType(OFP::Expr::DefUnaryExpr_ot);
 
-   return ATtrue;
- }
-
- OFP::Primary Primary;
- if (ATmatch(term, "Expr_P(<term>)", &Primary.term)) {
-
-      if (ofp_traverse_Primary(Primary.term, &Primary)) {
-         // MATCHED Primary
-         Expr->setPrimary(Primary.newPrimary());
-         Expr->inheritPayload(Expr->getPrimary());
-      } else return ATfalse;
-
-   // MATCHED Expr_P
-   Expr->setOptionType(OFP::Expr::Expr_P);
+   //TODO-CER-2014.4.15 - implement defined unary operators
+   //   ast->build_UnaryOp(Expr, SgToken::FORTRAN_INTRINSIC_DEFINED_UNARY, "");
+   assert(0);
 
    return ATtrue;
  }
