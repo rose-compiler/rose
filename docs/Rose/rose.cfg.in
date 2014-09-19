@@ -517,6 +517,7 @@ INPUT                  =										     \
 			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/simpleAnalyses	 	     \
 			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/state			     \
 			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/variables		     \
+			 @top_srcdir@/src/midend/programAnalysis/EditDistance				     \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs		     \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
                          @top_srcdir@/src/midend/astProcessing						     \
