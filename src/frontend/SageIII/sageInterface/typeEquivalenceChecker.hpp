@@ -1,7 +1,8 @@
 #ifndef TYPEEQUIVALENCE_TYPE_EQUIVALENCE_CHECKER_INCLUDE_GUARD
 # define TYPEEQUIVALENCE_TYPE_EQUIVALENCE_CHECKER_INCLUDE_GUARD_
 
-# include "rose.h"
+//# include "rose.h"
+#include "sageInterface.h"
 # include "RoseAst.h"
 # include "simpleExpressionEvaluator.hpp"
 

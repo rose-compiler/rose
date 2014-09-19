@@ -42,7 +42,11 @@ TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
 //        std::cout << c1->get_qualified_name() << std::endl;
         // XXX A function to check whether a named type is anonymous or not would speed
         // up this check, since we could get rid of this string compare.
-        if (c1->get_qualified_name().getString().find("__anonymous_") != std::string::npos) {
+//        if (c1->get_qualified_name().getString().find("__anonymous_") != std::string::npos) {
+        if(!c1->get_autonomous_declaration()){
+          return false;
+        }
+        if (!c2->get_autonomous_declaration()){
           return false;
         }
         if (c1->get_qualified_name() == c2->get_qualified_name()) {
