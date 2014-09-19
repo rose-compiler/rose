@@ -171,15 +171,15 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
     size_t ncopied = 0;
     while (ncopied < size) {
         rose_addr_t va = start_va + ncopied;
-        size_t nread = map->read1((uint8_t*)dst_buf+ncopied, va, size-ncopied, MemoryMap::MM_PROT_NONE);
+        size_t nread = map->at(va).limit(size-ncopied).singleSegment().read((uint8_t*)dst_buf+ncopied).size();
         if (0==nread) break;
 
         if (get_tracking_references()) {
-            assert(map->exists(va));
-            const MemoryMap::Segments::Node &me = map->at(va);
-            if (me.value().get_buffer()->get_data_ptr()==&(get_data()[0])) {
+            assert(map->at(va).exists());
+            const MemoryMap::Node &me = *(map->at(va).findNode());
+            if (me.value().buffer()->data()==&(get_data()[0])) {
                 /* We are tracking file reads and this segment does, indeed, point into the file. */
-                size_t file_offset = me.value().get_buffer_offset(me.key(), va);
+                size_t file_offset = me.value().offset() + va - me.key().least();
                 mark_referenced_extent(file_offset, nread);
             }
         }

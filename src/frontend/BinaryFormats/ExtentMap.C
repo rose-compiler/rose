@@ -16,7 +16,7 @@ AddressInterval toAddressInterval(const Extent &x) {
 
 ExtentMap toExtentMap(const AddressIntervalSet &x) {
     ExtentMap retval;
-    BOOST_FOREACH (const AddressInterval &interval, x.nodes())
+    BOOST_FOREACH (const AddressInterval &interval, x.intervals())
         retval.insert(toExtent(interval));
     return retval;
 }
