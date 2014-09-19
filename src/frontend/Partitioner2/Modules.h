@@ -66,7 +66,6 @@ public:
     virtual bool operator()(bool chain, const Args&) = 0;
 };
 
-
 /** Base class for matching an instruction pattern.
  *
  *  Instruction matchers are generally reference from the partitioner via shared-ownership pointers.  Subclasses must
@@ -117,11 +116,67 @@ public:
     virtual Function::Ptr function() const = 0;
 };
 
+
+/** Base class for matching function padding.
+ *
+ *  Function padding is bytes that appear immediately prior to the entry address of a function usually in order to align the
+ *  function on a suitable boundary.  Some assemblers emit zero bytes, others emit no-op instructions, and still others emit
+ *  combinations of no-ops and zeros.  It's conceivable that some compiler might even emit random garbage. */
+class FunctionPaddingMatcher: public Sawyer::SharedObject {
+public:
+    /** Shared-ownership pointer.  The partitioner never explicitly frees matches. Their pointers are copied when partitioners
+     *  are copied. */
+    typedef Sawyer::SharedPointer<FunctionPaddingMatcher> Ptr;
+
+    /** Attempt to match padding.
+     *
+     *  Attempts to match function padding that ends at the address immediately prior to @p anchor.  If a match is successful
+     *  then the return value is the starting address for the padding and must be less than @p anchor. When no match is found
+     *  then @p anchor is returned. The size of the matched padding is always <code>anchor-retval</code> where @c retval is
+     *  the returned value. */
+    virtual rose_addr_t match(const Partitioner*, rose_addr_t anchor) = 0;
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Generic modules
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Modules {
+
+/** Follow basic block ghost edges.
+ *
+ *  If this callback is registered as a partitioner basic block callback then the partitioner will follow ghost edges when
+ *  discovering instructions for basic blocks.  A ghost edge is a control flow edge whose target address is mentioned in the
+ *  machine instruction but which is never followed.  Examples are branch instructions with opaque predicates due to the
+ *  compiler not optimizing away the branch.
+ *
+ *  An alternative to following ghost edges as basic block instructions are discovered is to look for dead code after the
+ *  function is discovered.  That way the CFG does not contain edges into the dead code, which can make things like data flow
+ *  analysis faster. */
+class AddGhostSuccessors: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new AddGhostSuccessors); }
+    virtual bool operator()(bool chain, const Args &args) /*override*/;
+};
+
+/** Prevent discontiguous basic blocks.
+ *
+ *  This basic block callback causes the basic block to terminate when it encounters an unconditional branch, in effect causing
+ *  all basic blocks to have instructions that are contiguous in memory and ordered by their address.  ROSE normally does not
+ *  require such strict constraints: a basic block is normally one or more distinct instructions having a single entry point
+ *  and a single exit point and with control flowing linearly across all instructions. */
+class PreventDiscontiguousBlocks: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
+    virtual bool operator()(bool chain, const Args &args) /*override*/;
+};
+
+/** Remove execute permissions for zeros.
+ *
+ *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
+ *  access permissions were changed.  Only occurrences of at least @p threshold consecutive zeros are changed. If @p threshold
+ *  is zero then nothing happens. */
+AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold);
 
 /** Finds functions for which symbols exist.
  *

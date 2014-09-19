@@ -79,7 +79,7 @@ main(int argc, char *argv[]) {
     mlog[WHERE] <<"loading file into memory\n";
     std::string inputFileName = positionalArgs[0];
     MemoryMap map;
-    if (!map.insert_file(inputFileName, opts.startVa)) {
+    if (!map.insertFile(inputFileName, opts.startVa)) {
         mlog[FATAL] <<"problem reading file: " <<inputFileName <<"\n";
         exit(1);
     }

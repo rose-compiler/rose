@@ -43,6 +43,16 @@ public:
     virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
 };
 
+/** Matches an x86 <cde>MOV EDI,EDI; PUSH ESI</code> function prologe. */
+class MatchAbbreviatedPrologue: public FunctionPrologueMatcher {
+protected:
+    Function::Ptr function_;
+public:
+    static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
+    virtual Function::Ptr function() const /*override*/ { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+};
+
 /** Matches an x86 "ENTER xxx, 0" prologue. */
 class MatchEnterPrologue: public FunctionPrologueMatcher {
 protected:
@@ -51,6 +61,18 @@ public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
     virtual Function::Ptr function() const /*override*/ { return function_; }
     virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+};
+
+/** Basic block callback to detect function returns.
+ *
+ *  The architecture agnostic isFunctionReturn test for basic blocks does not detect x86 "RET N" (N!=0) instructions as
+ *  returning from a function because such instructions have side effects that apply after the return-to address is popped from
+ *  the stack.  Therefore this basic block callback looks for such instructions and sets the isFunctionReturn property for the
+ *  basic block. */
+class FunctionReturnDetector: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new FunctionReturnDetector); } /**< Allocating constructor. */
+    virtual bool operator()(bool chain, const Args&) /*override*/;
 };
 
 } // namespace

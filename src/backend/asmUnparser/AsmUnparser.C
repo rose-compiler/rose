@@ -978,8 +978,8 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
         SgUnsignedCharList data = args.data->get_raw_bytes();
         MemoryMap map;
         map.insert(AddressInterval::baseSize(args.data->get_address(), data.size()),
-                   MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
-                                      MemoryMap::MM_PROT_RX, "static data block"));
+                   MemoryMap::Segment::staticInstance(&data[0], data.size(), MemoryMap::READABLE|MemoryMap::EXECUTABLE,
+                                                      "static data block"));
         unparser->set_prefix_format(args.unparser->get_prefix_format());
         rose_addr_t offset=0, nskipped=0;
         while (offset < data.size()) {

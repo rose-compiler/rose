@@ -8568,23 +8568,20 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    {
      SgBasicBlock* body = isSgBasicBlock(deepCopy(fringe_loop->get_loop_body())); // normalized loop has a BB body
      ROSE_ASSERT(body);
-     // replace reference to ivar with ivar +/- step*i
-     SgExpression* new_exp = NULL;
      std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
      for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
      {
        SgVarRefExp* refexp = *iter;
        if (refexp->get_symbol()==ivar->get_symbol_from_symbol_table())
        {
-         //build replacement  expression if it is NULL
-         if (new_exp == NULL)
-         {
-           if (isPlus) //ivar +/- step * i
-           new_exp = buildAddOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
-           else
-           new_exp = buildSubtractOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
+         // replace reference to ivar with ivar +/- step*i
+         SgExpression* new_exp = NULL;
+         //build replacement  expression for every appearance 
+         if (isPlus) //ivar +/- step * i
+         new_exp = buildAddOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
+         else
+         new_exp = buildSubtractOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
 
-         }
          // replace it with the right one
          replaceExpression(refexp, new_exp);
        }

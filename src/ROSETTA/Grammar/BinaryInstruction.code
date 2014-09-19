@@ -2562,7 +2562,7 @@ HEADER_PE_EXPORT_SECTION_START
                 typedef uint16_t ExportOrdinal_disk;
 
                 SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
-                        : SgAsmPESection(fhdr)
+                        : SgAsmPESection(fhdr), p_export_dir(NULL), p_exports(NULL)
                         {ctor();}
                 virtual SgAsmPEExportSection *parse();
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;

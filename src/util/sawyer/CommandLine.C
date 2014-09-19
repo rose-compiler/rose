@@ -1600,7 +1600,7 @@ Parser::parseShortSwitch(Cursor &cursor, ParsedValues &parsedValues,
             }
         }
     }
-    return false;
+    return NULL;
 }
     
 SAWYER_EXPORT bool

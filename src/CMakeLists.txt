@@ -282,11 +282,14 @@ set(rose_support_src
      )
 
 set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUsageMap.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Attribute.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/BasicBlock.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ControlFlowGraph.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Engine.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Exception.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Function.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/FunctionCallGraph.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/InstructionProvider.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Modules.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesElf.C

@@ -95,7 +95,7 @@ main(int argc, char *argv[]) {
     // Load S-Records into memory
     mlog[WHERE] <<"loading S-Records into memory map\n";
     MemoryMap map;
-    rose_addr_t startAddr = BinaryAnalysis::SRecord::load(srecs, map, true/*create*/, MemoryMap::MM_PROT_RX);
+    rose_addr_t startAddr = BinaryAnalysis::SRecord::load(srecs, map, true/*create*/, MemoryMap::READABLE|MemoryMap::EXECUTABLE);
     std::cout <<"Memory map:\n";
     map.dump(std::cout, "    ");
     if (startAddr)
@@ -104,13 +104,13 @@ main(int argc, char *argv[]) {
     // Create binary files
     if (!opts.prefix.empty()) {
         mlog[WHERE] <<"dumping memory to binary files\n";
-        BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
+        BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
             const AddressInterval &interval = node.key();
             const MemoryMap::Segment &segment = node.value();
             std::string outputName = opts.prefix + StringUtility::addrToString(interval.least()).substr(2);// skip "0x"
             mlog[TRACE] <<"  dumping " <<StringUtility::plural(interval.size(), "bytes") <<" to " <<outputName <<"\n";
             std::ofstream output(outputName.c_str());
-            const char *data = (const char*)segment.get_buffer()->get_data_ptr();
+            const char *data = (const char*)segment.buffer()->data();
             if (data)
                 output.write(data, interval.size());
             if (!output.good())
@@ -124,10 +124,10 @@ main(int argc, char *argv[]) {
         HexdumpFormat fmt;
         fmt.numeric_fmt_special[0x00] = " .";           // make zeros less obtrusive
         fmt.numeric_fmt_special[0xff] = "##";           // make 0xff more obtrusive
-        BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
+        BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
             const AddressInterval &interval = node.key();
             const MemoryMap::Segment &segment = node.value();
-            const unsigned char *data = (const unsigned char*)segment.get_buffer()->get_data_ptr();
+            const unsigned char *data = (const unsigned char*)segment.buffer()->data();
             if (data) {
                 std::cout <<"\n\n";
                 SgAsmExecutableFileFormat::hexdump(std::cout, interval.least(), data, interval.size(), fmt);

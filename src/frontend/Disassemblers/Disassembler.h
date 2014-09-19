@@ -228,7 +228,7 @@ public:
     Disassembler()
         : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
           p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
-          p_protection(MemoryMap::MM_PROT_EXEC)
+          p_protection(MemoryMap::EXECUTABLE)
         {ctor();}
 
     virtual ~Disassembler() {}

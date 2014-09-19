@@ -1240,7 +1240,7 @@ public:
     rose_addr_t hash_if_string(rose_addr_t va, const MemoryMap *map) {
         rose_addr_t retval = va;
         static const size_t limit = 4096; // arbitrary
-        std::string str = map->read_string(va, limit, isascii);
+        std::string str = map->readString(va, limit, isascii);
         if (str.size()>=5 && str.size()<4096) {
             std::vector<uint8_t> digest = Combinatorics::sha1_digest(str);
             assert(20==digest.size());
@@ -1968,18 +1968,18 @@ public:
             } else if (ebp_is_stack_frame && addr>=ebp-8192 && addr<ebp+8) {
                 // This is probably a local stack variable
                 ivalue = next_input_value<nBits>(IQ_LOCAL, addr);
-            } else if (this->get_map() && this->get_map()->exists(AddressInterval::baseSize(addr, 4))) {
+            } else if (this->get_map() && this->get_map()->at(addr).limit(4).available()==4) {
                 // Memory is read only, so we don't need to consume a value.
                 int32_t buf=0;
-                this->get_map()->read(&buf, addr, 4);
+                this->get_map()->at(addr).limit(4).read((uint8_t*)&buf);
                 ivalue = ValueType<nBits>(buf);
-            } else if (map!=NULL && map->exists(addr)) {
+            } else if (map!=NULL && map->at(addr).exists()) {
                 // Memory mapped from a file, thus probably a global variable, function pointer, etc.
                 ivalue = next_input_value<nBits>(IQ_GLOBAL, addr);
             } else if (this->pointers!=NULL && this->pointers->is_pointer(SymbolicSemantics::ValueType<32>(addr))) {
                 // Pointer detection analysis says this address is a pointer
                 ivalue = next_input_value<nBits>(IQ_POINTER, addr);
-            } else if (address_hasher_initialized && map!=NULL && map->exists(addr)) {
+            } else if (address_hasher_initialized && map!=NULL && map->at(addr).exists()) {
                 // Use memory that was already initialized with values
                 ivalue = next_input_value<nBits>(IQ_MEMHASH, addr);
             } else {
