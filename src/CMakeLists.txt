@@ -124,7 +124,6 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
       ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
-      ${CMAKE_SOURCE_DIR}/src/util/Stopwatch.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
@@ -144,6 +143,7 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/SmallObject.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Stopwatch.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
