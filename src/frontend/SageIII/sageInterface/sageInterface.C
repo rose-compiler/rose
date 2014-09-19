@@ -4070,6 +4070,8 @@ SageInterface::getProject()
   return projectTraversal.project;
 #endif
   std::vector<SgProject* > resultlist = getSgNodeListFromMemoryPool<SgProject>();
+  if (resultlist.empty())
+      return NULL;
   ROSE_ASSERT(resultlist.size()==1);
   return resultlist[0];
 }
