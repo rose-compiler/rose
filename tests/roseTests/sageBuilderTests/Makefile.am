@@ -4,7 +4,8 @@ SUBDIRS = gtest
 
 bin_PROGRAMS=sageBuilderTest
 
-sageBuilderTest_SOURCES= buildTypeUnitTests.cpp
+sageBuilderTest_SOURCES= buildTypeUnitTests.cpp \
+                         buildExpressionUnitTests.cpp
 
 sageBuilderTest_CXXFLAGS= \
   -I$(srcdir)/gtest/include \
