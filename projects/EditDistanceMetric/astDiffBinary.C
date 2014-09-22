@@ -45,7 +45,7 @@ static int kind(Instruction *insn) {
 }
 
 // When can AST nodes be substituted?
-static struct: TreeEditDistance::SubstitutionPredicate {
+static struct: EditDistance::TreeEditDistance::SubstitutionPredicate {
     virtual bool operator()(SgNode *a, SgNode *b) /*override*/ {
         if (a->variantT()==b->variantT()) {
             if (SgAsmInstruction *ai = isSgAsmInstruction(a)) {
@@ -117,12 +117,12 @@ main(int argc, char *argv[]) {
     // Edit distance
     mlog[INFO] <<"Computing edit distance over instructions...\n";
     Sawyer::Stopwatch editDistanceTime;
-    TreeEditDistance editDistance;
+    EditDistance::TreeEditDistance::Analysis editDistance;
     editDistance.substitutionCost(0);
     editDistance.substitutionPredicate(&isSameType);
     editDistance.compute(gblock1, gblock2);
     mlog[INFO] <<"Edit distance computed in " <<editDistanceTime <<" seconds\n";
-    TreeEditDistance::Edits edits = editDistance.edits();
+    EditDistance::TreeEditDistance::Edits edits = editDistance.edits();
     std::cout <<"  Nodes in source tree: " <<editDistance.sourceTreeNodes().size() <<"\n"
               <<"  Nodes in target tree: " <<editDistance.targetTreeNodes().size() <<"\n"
               <<"  Graph vertices:       " <<editDistance.graphSize().first <<"\n"

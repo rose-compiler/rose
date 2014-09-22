@@ -92,19 +92,19 @@ main(int argc, char** argv)
 
      // This stuff uses the new edit distance analysis in librose
      std::cout <<"Using TreeEditDistance from librose:\n";
-     TreeEditDistance analysis;
+     EditDistance::TreeEditDistance::Analysis analysis;
      Sawyer::Stopwatch tedRoseTimer;
      analysis.compute(project->get_fileList()[0], project->get_fileList()[1],  // the subtrees to compare
                       project->get_fileList()[0], project->get_fileList()[1]); // their file restrictions
      std::cout <<"librose implementation of tree edit distance took " <<tedRoseTimer <<" seconds\n";
-     TreeEditDistance::Edits edits = analysis.edits();
+     EditDistance::TreeEditDistance::Edits edits = analysis.edits();
      std::cout <<"  Nodes in source tree: " <<analysis.sourceTreeNodes().size() <<"\n"
                <<"  Nodes in target tree: " <<analysis.targetTreeNodes().size() <<"\n"
                <<"  Number of edits:      " <<edits.size() <<"\n"
                <<"  Total cost of edits:  " <<analysis.cost() <<"\n"
                <<"  Relative cost:        " <<analysis.relativeCost() <<"\n"
                <<"  Individual edits:\n";
-     BOOST_FOREACH (const TreeEditDistance::Edit &edit, edits)
+     BOOST_FOREACH (const EditDistance::TreeEditDistance::Edit &edit, edits)
          std::cout <<"    " <<edit <<"\n";
      std::ofstream graphViz("output-rose.dot");
      analysis.emitGraphViz(graphViz);

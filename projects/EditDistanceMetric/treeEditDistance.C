@@ -1,4 +1,4 @@
-// This functionality has been moved into librose. See rose::TreeEditDistance
+// This functionality has been moved into librose. See rose::EditDistance::TreeEditDistance. [Robb P. Matzke 2014-09-22]
 
 
 
