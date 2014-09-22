@@ -1,6 +1,6 @@
 #include "sage3basic.h"
-#include "TreeEditDistance.h"
 #include "Diagnostics.h"
+#include <EditDistance/TreeEditDistance.h>
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <sstream>
@@ -8,25 +8,15 @@
 #include <vector>
 
 namespace rose {
+namespace EditDistance {
+namespace TreeEditDistance {
+
 using namespace Diagnostics;
 
 std::ostream&
-operator<<(std::ostream &out, const TreeEditDistance::Edit &x) {
+operator<<(std::ostream &out, const Edit &x) {
     x.print(out);
     return out;
-}
-
-Sawyer::Message::Facility TreeEditDistance::mlog;
-
-// class method
-void
-TreeEditDistance::initDiagnostics() {
-    static bool initialized = false;
-    if (!initialized) {
-        initialized = true;
-        mlog = Sawyer::Message::Facility("rose::TreeEditDistance", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
-    }
 }
 
 // A pre-order traversal that looks only at nodes that belong to the specified containingFile (if any) and whose depth in the
@@ -87,40 +77,42 @@ public:
     std::pair<size_t, size_t> index2d(size_t idx) const { return std::make_pair(idx/nCols_, idx%nCols_); }
 };
 
-void
-TreeEditDistance::setTree1(SgNode *ast, SgFile *file/*=NULL*/) {
+Analysis&
+Analysis::setTree1(SgNode *ast, SgFile *file/*=NULL*/) {
     ASSERT_not_null(ast);
     ast1_ = ast;
     nodes1_ = generateTraversalList(ast, depths1_/*out*/, file);
     nodes1_.insert(nodes1_.begin(), NULL);
     depths1_.insert(depths1_.begin(), 0);
+    return *this;
 }
 
-void
-TreeEditDistance::setTree2(SgNode *ast, SgFile *file/*=NULL*/) {
+Analysis&
+Analysis::setTree2(SgNode *ast, SgFile *file/*=NULL*/) {
     ASSERT_not_null(ast);
     ast2_ = ast;
     nodes2_ = generateTraversalList(ast, depths2_/*out*/, file);
     nodes2_.insert(nodes2_.begin(), NULL);
     depths2_.insert(depths2_.begin(), 0);
+    return *this;
 }
 
 // Compute results and store them in this object for subsequent queries
-TreeEditDistance&
-TreeEditDistance::compute(SgNode *sourceAst, SgNode *targetAst, SgFile *sourceFile/*=NULL*/, SgFile *targetFile/*=NULL*/) {
+Analysis&
+Analysis::compute(SgNode *sourceAst, SgNode *targetAst, SgFile *sourceFile/*=NULL*/, SgFile *targetFile/*=NULL*/) {
     setTree1(sourceAst, sourceFile);
     setTree2(targetAst, targetFile);
     return compute();
 }
 
-TreeEditDistance&
-TreeEditDistance::compute(SgNode *targetAst, SgFile *targetFile/*=NULL*/) {
+Analysis&
+Analysis::compute(SgNode *targetAst, SgFile *targetFile/*=NULL*/) {
     setTree2(targetAst, targetFile);
     return compute();
 }
 
-TreeEditDistance&
-TreeEditDistance::compute() {
+Analysis&
+Analysis::compute() {
     ASSERT_forbid(nodes1_.empty());
     ASSERT_forbid(nodes2_.empty());
 
@@ -160,7 +152,7 @@ TreeEditDistance::compute() {
 
 // Emit the graph to a GraphViz file
 void
-TreeEditDistance::emitGraphViz(std::ostream &out) const {
+Analysis::emitGraphViz(std::ostream &out) const {
     out <<"digraph \"Edge Graph\" {\n";
     Coord2d matrix(nodes1_.size(), nodes2_.size());
 
@@ -228,19 +220,19 @@ TreeEditDistance::emitGraphViz(std::ostream &out) const {
 }
 
 double
-TreeEditDistance::cost() const {
+Analysis::cost() const {
     ASSERT_forbid(totalCost_.empty());
     Coord2d matrix(nodes1_.size(), nodes2_.size());
     return totalCost_[matrix.size()-1];
 }
 
 double
-TreeEditDistance::relativeCost() const {
-    return cost() / nodes1_.size();
+Analysis::relativeCost() const {
+    return cost() / std::max(nodes1_.size(), nodes2_.size());
 }
 
-TreeEditDistance::Edits
-TreeEditDistance::edits() const {
+Edits
+Analysis::edits() const {
     Edits edits;
     if (totalCost_.empty())
         return edits;
@@ -277,12 +269,12 @@ TreeEditDistance::edits() const {
 }
 
 std::pair<size_t, size_t>
-TreeEditDistance::graphSize() const {
+Analysis::graphSize() const {
     return std::make_pair(boost::num_vertices(graph_), boost::num_edges(graph_));
 }
 
 void
-TreeEditDistance::Edit::print(std::ostream &out) const {
+Edit::print(std::ostream &out) const {
     switch (editType) {
         case INSERT:
             out <<"insert (" <<targetNode->class_name() <<"*)" <<targetNode;
@@ -298,4 +290,6 @@ TreeEditDistance::Edit::print(std::ostream &out) const {
     out <<" cost=" <<cost;
 }
     
+} // namespace
+} // namespace
 } // namespace
