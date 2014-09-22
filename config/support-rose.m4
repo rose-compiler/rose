@@ -2177,6 +2177,7 @@ tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
 tests/roseTests/sageBuilderTests/Makefile
 tests/roseTests/sageBuilderTests/gtest/Makefile
+tests/roseTests/sageInterfaceTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
