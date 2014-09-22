@@ -20,6 +20,32 @@ using namespace std;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
+// Returns command-line description for switches that should be always available.
+// Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
+// See header file for more documentation including examples.
+Sawyer::CommandLine::SwitchGroup
+CommandlineProcessing::genericSwitches() {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup gen("General switches");
+
+    gen.insert(Switch("help", 'h')
+               .doc("Show this documentation.")
+               .action(showHelpAndExit(0)));
+
+    gen.insert(Switch("log", 'L')
+               .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
+               .argument("config")
+               .whichValue(SAVE_ALL)
+               .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
+
+    extern std::string version_message();               // utility_functions.h cannot be included in this file w/out errors
+    gen.insert(Switch("version", 'V')
+               .action(showVersionAndExit(version_message(), 0))
+               .doc("Shows version information for various ROSE components and then exits."));
+
+    return gen;
+}
+
 // DQ (7/8/2005): 
 Rose_STL_Container<string>
 CommandlineProcessing::generateArgListFromString ( string commandline )
