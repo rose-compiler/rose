@@ -44,6 +44,18 @@ namespace EditDistance {                                // documented elsewhere
  *  query methods always return the same results until the next call to @c compute. */
 namespace TreeEditDistance {
 
+// Any header that #defines words that are this common is just plain stupid!
+#if defined(INSERT) || defined(DELETE) || defined(SUBSTITUTE)
+# ifdef _MSC_VER
+#  pragma message("Undefining common words from the global namespace: INSERT DELETE SUBSTITUTE")
+# else
+#  warning "Undefining common words from the global namespace: INSERT DELETE SUBSTITUTE"
+# endif
+# undef INSERT
+# undef DELETE
+# undef SUBSTITUTE
+#endif
+
 /** Type of edit operation. */
 enum EditType {
     INSERT,                                         /**< Insert a node from another tree. */
