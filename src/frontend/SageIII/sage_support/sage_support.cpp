@@ -174,6 +174,15 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+          case V_SgNullptrValExp:
+             {
+               const SgNullptrValExp* nullptrValueExpression = isSgNullptrValExp(this);
+               ROSE_ASSERT(nullptrValueExpression != NULL);
+               s = "nullptr";
+               break;
+             }
+
        // DQ (8/19/2009): Added case
           case V_SgBoolValExp:
              {
@@ -1707,6 +1716,10 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
   // printf ("In the SgSourceFile constructor \n");
+
+     this->p_package = NULL;
+     this->p_import_list = NULL;
+     this->p_class_list = NULL;
 
      set_globalScope(NULL);
 
