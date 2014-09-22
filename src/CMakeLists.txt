@@ -725,6 +725,7 @@ if (NOT enable-internalFrontendDevelopment)
   #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/ControlFlowGraph.C
   #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominanceFrontier.C
   #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominatorTree.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/EditDistance/EditDistance.C
   ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/EditDistance/TreeEditDistance.C
   )
 endif()
