@@ -17,6 +17,26 @@ using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
+Sawyer::CommandLine::ParserResult
+parseCommandLine(int argc, char *argv[], Settings &settings) {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup tool = toolCommandLineSwitches(settings);
+
+    Parser parser;
+    parser
+        .purpose("demonstrates tree edit distance")
+        .doc("synopsis",
+             "@prop{programName} [@v{switches}] @v{specimen1} @v{specimen2}")
+        .doc("description",
+             "This tool performs tree edit distance between two binary files a couple different ways in order to compare "
+             "the old, local implementation and the new librose implementation. See @s{use-old} for more details.  The "
+             "output of the old implementation and the new implementation are not usually identical because there are "
+             "usually multiple edit paths with the same total cost.");
+
+    return parser.with(gen).with(tool).parse(argc, argv).apply();
+}
+
 template<typename Instruction>
 static int kind(Instruction *insn) {
     if (Instruction *i = dynamic_cast<Instruction*>(insn))
@@ -38,6 +58,13 @@ static struct: TreeEditDistance::SubstitutionPredicate {
     }
 } isSameType;
 
+// Count nodes in subtree.
+struct NodeCounter: AstSimpleProcessing {
+    size_t n;
+    NodeCounter(): n(0) {}
+    void visit(SgNode*) { ++n; }
+};
+
 static Sawyer::Message::Facility mlog;
 
 int
@@ -50,7 +77,7 @@ main(int argc, char *argv[]) {
     // Parse command-line (see --help for usage)
     Settings settings;
     std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, settings).unreachedArgs();
-    ASSERT_always_require2(positionalArgs.size()==2, "see --help, except do not supply librose switches");
+    ASSERT_always_require2(positionalArgs.size()==2, "see --help");
 
     // Parse the ELF/PE containers for the two specimens
     mlog[INFO] <<"parsing and loading specimens...\n";
@@ -72,13 +99,20 @@ main(int argc, char *argv[]) {
     SgAsmBlock *gblock2 = Partitioner2::Engine().partition(interp2);
     mlog[INFO] <<"disassembled and partitioned in " <<partitionTime <<" seconds\n";
 
-#ifdef USE_OLD_TREE_EDIT_DISTANCE
+    // Some stats before we start.
+    NodeCounter nNodes1, nNodes2;
+    nNodes1.traverse(gblock1, preorder);
+    nNodes2.traverse(gblock2, preorder);
+    mlog[INFO] <<"specimen 1 has " <<StringUtility::plural(nNodes1.n, "nodes") <<"\n";
+    mlog[INFO] <<"specimen 2 has " <<StringUtility::plural(nNodes2.n, "nodes") <<"\n";
+
     // Original (local) implementation
-    mlog[INFO] <<"Computing edit distance using old method... (watch out -- lots of output coming!)\n";
-    Sawyer::Stopwatch oldTime;
-    tree_edit_distance(gblock1, gblock2);
-    mlog[INFO] <<"Old method took " <<oldTime <<" seconds\n";
-#endif
+    if (settings.useOldImplementation) {
+        mlog[INFO] <<"Computing edit distance using old method... (watch out -- lots of output coming!)\n";
+        Sawyer::Stopwatch oldTime;
+        tree_edit_distance(gblock1, gblock2);
+        mlog[INFO] <<"Old method took " <<oldTime <<" seconds\n";
+    }
 
     // Edit distance
     mlog[INFO] <<"Computing edit distance over instructions...\n";

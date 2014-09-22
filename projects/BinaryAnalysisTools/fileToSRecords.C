@@ -18,28 +18,18 @@ struct Options {
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Options &opts) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup switches;
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
-    switches.insert(Switch("help", 'h')
-                    .action(showHelpAndExit(0))
-                    .doc("Shows this documentation and exits."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
-    switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Diagnostics::mfacilities))
-                    .argument("logspec")
-                    .whichValue(SAVE_ALL)
-                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
-    switches.insert(Switch("addrsize")
-                    .argument("nbytes", nonNegativeIntegerParser(opts.addrSize))
-                    .doc("Number of bytes in which to encode addresses.  The default is " +
-                         StringUtility::numberToString(opts.addrSize) + ".  The program will fail if it encounters an "
-                         "address that is two wide to represent in the specified number of bytes."));
-    switches.insert(Switch("at")
-                    .argument("address", nonNegativeIntegerParser(opts.startVa))
-                    .doc("Virtual address at which the file is loaded.  The default is " +
-                         StringUtility::addrToString(opts.startVa)));
+    SwitchGroup tool("Tool-specific switches");
+    tool.insert(Switch("addrsize")
+                .argument("nbytes", nonNegativeIntegerParser(opts.addrSize))
+                .doc("Number of bytes in which to encode addresses.  The default is " +
+                     StringUtility::numberToString(opts.addrSize) + ".  The program will fail if it encounters an "
+                     "address that is two wide to represent in the specified number of bytes."));
+    tool.insert(Switch("at")
+                .argument("address", nonNegativeIntegerParser(opts.startVa))
+                .doc("Virtual address at which the file is loaded.  The default is " +
+                     StringUtility::addrToString(opts.startVa)));
 
     Parser parser;
     parser.errorStream(mlog[FATAL]);
@@ -51,7 +41,7 @@ parseCommandLine(int argc, char *argv[], Options &opts) {
                "Loads the @v{file} into memory at the address specified with the @s{at} switch and then produces "
                "Motorola S-Records on standard output.");
 
-    return parser.with(switches).parse(argc, argv).apply();
+    return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
 
 int

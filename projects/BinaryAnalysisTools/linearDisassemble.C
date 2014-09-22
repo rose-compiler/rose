@@ -73,19 +73,9 @@ static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings)
 {
     using namespace Sawyer::CommandLine;
-    SwitchGroup switches;
-    switches.insert(Switch("help", 'h')
-                    .doc("Show this documentation.")
-                    .action(showHelpAndExit(0)));
-    switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
-                    .argument("config")
-                    .whichValue(SAVE_ALL)
-                    .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
+    SwitchGroup switches("Tool-specific switches");
     switches.insert(Switch("isa")
                     .argument("architecture", anyParser(settings.isaName))
                     .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
@@ -119,7 +109,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "This program is a very simple disassembler that tries to disassemble an instruction at each address of "
              "the specimen file.");
     
-    return parser.with(switches).parse(argc, argv).apply();
+    return parser.with(generic).with(switches).parse(argc, argv).apply();
 }
 
 int main(int argc, char *argv[])

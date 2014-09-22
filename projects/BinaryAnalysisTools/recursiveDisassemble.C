@@ -109,18 +109,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     using namespace Sawyer::CommandLine;
 
     // Generic switches
-    SwitchGroup gen("General switches");
-    gen.insert(Switch("help", 'h')
-               .doc("Show this documentation.")
-               .action(showHelpAndExit(0)));
-    gen.insert(Switch("log", 'L')
-               .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
-               .argument("config")
-               .whichValue(SAVE_ALL)
-               .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
-    gen.insert(Switch("version", 'V')
-               .action(showVersionAndExit(version_message(), 0))
-               .doc("Shows version information for various ROSE components and then exits."));
+    SwitchGroup gen = CommandlineProcessing::genericSwitches();
     gen.insert(Switch("use-semantics")
                .intrinsicValue(true, settings.useSemantics)
                .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "

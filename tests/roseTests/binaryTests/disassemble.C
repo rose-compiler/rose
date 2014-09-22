@@ -704,6 +704,8 @@ static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
 int
 main(int argc, char *argv[]) 
 {
+    typedef Sawyer::CommandLine::Switch Switch;
+
     /*------------------------------------------------------------------------------------------------------------------------
      * Initialize ROSE and our own logging.  Our logging facility, "log", is tied into the librose logging facility so it
      * can be controlled by the same command-line switches that control ROSE.
@@ -713,265 +715,252 @@ main(int argc, char *argv[])
     rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     /*------------------------------------------------------------------------------------------------------------------------
-     * Declare command-line switches.
+     * Generic switches
      *------------------------------------------------------------------------------------------------------------------------*/
-    typedef Sawyer::CommandLine::Switch Switch;
-    Sawyer::CommandLine::SwitchGroup switches;
+    Sawyer::CommandLine::SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
-    bool do_ast_dot = false;
-    switches.insert(Switch("ast-dot")
-                    .intrinsicValue(true, do_ast_dot)
-                    .doc("Generate GraphViz dot files for the entire AST.  This switch is applicable only when the input "
-                         "file is a container such as ELF or PE.  The default is to not generate an AST dot file. Disabled "
-                         "by @s{no-ast-dot}."));
-    switches.insert(Switch("no-ast-dot")
-                    .key("ast-dot")
-                    .intrinsicValue(false, do_ast_dot)
-                    .hidden(true));
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Input switches
+     *------------------------------------------------------------------------------------------------------------------------*/
+    Sawyer::CommandLine::SwitchGroup input("Input switches");
 
     rose_addr_t rebase_va = (rose_addr_t)(-1);
-    switches.insert(Switch("base-va")
-                    .argument("addr", Sawyer::CommandLine::nonNegativeIntegerParser(rebase_va))
-                    .doc("Use the specified address as the base virtual address rather than the adress indicated in the "
-                         "file header."));
-
-    bool do_cfg_dot = false;
-    switches.insert(Switch("cfg-dot")
-                    .intrinsicValue(true, do_cfg_dot)
-                    .doc("Generate GraphViz dot file containing the control flow graph of each function.  These files will "
-                         "be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\" is a function entry address.  This switch also "
-                         "generates a function call graph with the name \"x-cg.dot\". These files can be converted to HTML "
-                         "with the generate_html script found in tests/roseTests/binaryTests. The default is to not generate "
-                         "these dot files.  This feature is disabled with @s{no-cfg-dot}."));
-    switches.insert(Switch("no-cfg-dot")
-                    .key("cfg-dot")
-                    .intrinsicValue(false, do_cfg_dot)
-                    .hidden(true));
-
-    DisassembleDriver do_disassemble = DDRIVE_PD;
-    switches.insert(Switch("disassemble")
-                    .argument("how", Sawyer::CommandLine::enumParser(do_disassemble)
-                              ->with("pd", DDRIVE_PD)
-                              ->with("dp", DDRIVE_DP)
-                              ->with("d", DDRIVE_D)
-                              ->with("none", DDRIVE_NONE),
-                              "dp")
-                    .doc("Determines the interrelationship between the disassembler and the paritioner. The @v{how} should "
-                         "be one of the following: \"pd\" runs the partitioner as the master driving the disassembler; "
-                         "\"dp\" runs the disassembler first and then hands the results to the partitioner; \"d\" runs only "
-                         "the disassembler and places all instructions in a single function; \"none\" skips both the "
-                         "disassembly and partitioner and is useful if all you want to do is parse the container."));
-
-    bool do_dos = false;
-    switches.insert(Switch("dos")
-                    .intrinsicValue(true, do_dos)
-                    .doc("Normally, when the disassembler is invoked on a Windows PE or related container file it will "
-                         "ignore the DOS interpretation. This switch causes the disassembler to use the DOS interpretation "
-                         "instead of the default PE interpretation. The @s{no-dos} switch disables this feature (i.e., uses "
-                         "the PE header)."));
-    switches.insert(Switch("no-dos")
-                    .key("dos")
-                    .intrinsicValue(false, do_dos)
-                    .hidden(true));
-
-    switches.insert(Switch("help", 'h')
-                    .action(Sawyer::CommandLine::userAction(showHelpAndExit))
-                    .doc("Shows this man page and then exits. See also, @s{rose-help}."));
-
-    std::string do_generate_ipd;
-    switches.insert(Switch("ipd")
-                    .argument("filename", Sawyer::CommandLine::anyParser(do_generate_ipd))
-                    .doc("Generate an IPD file from the disassembly results.  The IPD file can be modified by hand and then "
-                         "fed back into another disassembly with the \"-rose:partitioner_config @v{filename}\" switch.  The "
-                         "@s{no-ipd} disables this feature."));
-    switches.insert(Switch("no-ipd")
-                    .key("ipd")
-                    .intrinsicValue(std::string(), do_generate_ipd)
-                    .hidden(true));
-
-    std::string isa;
-    switches.insert(Switch("isa")
-                    .argument("architecture", Sawyer::CommandLine::anyParser(isa))
-                    .doc("Specify an instruction set architecture in order to choose a disassembler.  If an ISA is "
-                         "specified then it overrides the disassembler that would have been chosen based on the file format. "
-                         "Use \"@s{isa}=list\" to get a list of valid disassembler names."));
-    
-    bool do_linear = false;
-    switches.insert(Switch("linear")
-                    .intrinsicValue(true, do_linear)
-                    .doc("Causes output to be organized by address rather than hierarchically.  The output will be more "
-                         "like traditional disassemblers."));
+    input.insert(Switch("base-va")
+                 .argument("addr", Sawyer::CommandLine::nonNegativeIntegerParser(rebase_va))
+                 .doc("Use the specified address as the base virtual address rather than the adress indicated in the "
+                      "file header."));
 
     std::vector<std::string> library_paths;
-    switches.insert(Switch("link")
-                    .argument("paths", Sawyer::CommandLine::listParser(Sawyer::CommandLine::anyParser(library_paths)))
-                    .explosiveLists(true)
-                    .doc("Specifies the directories in which to search for shared libraries.  If any directories are "
-                         "specified, then the main executable will be linked with its required dynamic libraries "
-                         "disassembling. This argument may appear more than once, or the individual paths may be separated "
-                         "from one another by colons."));
-                    
-    switches.insert(Switch("log", 'L')
-                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::mfacilities))
-                    .argument("logspec")
-                    .whichValue(Sawyer::CommandLine::SAVE_ALL)
-                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
+    input.insert(Switch("link")
+                 .argument("paths", Sawyer::CommandLine::listParser(Sawyer::CommandLine::anyParser(library_paths)))
+                 .explosiveLists(true)
+                 .doc("Specifies the directories in which to search for shared libraries.  If any directories are "
+                      "specified, then the main executable will be linked with its required dynamic libraries "
+                      "disassembling. This argument may appear more than once, or the individual paths may be separated "
+                      "from one another by colons."));
 
     rose_addr_t anon_pages = 8;
-    switches.insert(Switch("omit-anon")
-                    .argument("npages", Sawyer::CommandLine::nonNegativeIntegerParser(anon_pages))
-                    .doc("If the memory being disassembled is anonymously mapped (contains all zero bytes), then the "
-                         "disassembler might spend substantial time creating code that's a single, large block of "
-                         "instructions.  This switch can be used to discard regions of memory that are anonymously mapped. "
-                         "Any distinct region larger than the specified size in kilobytes (1024 multiplier) will be "
-                         "unmapped before disassembly starts.  This filter does not remove neighboring regions which are "
-                         "individually smaller than the limit but whose combined size is larger.  The default is to omit "
-                         "anonymous regions larger than " + numberToString(anon_pages) + "kB. Setting @v{npages} to zero "
-                         "prevents any pages from being unmapped."));
+    input.insert(Switch("omit-anon")
+                 .argument("npages", Sawyer::CommandLine::nonNegativeIntegerParser(anon_pages))
+                 .doc("If the memory being disassembled is anonymously mapped (contains all zero bytes), then the "
+                      "disassembler might spend substantial time creating code that's a single, large block of "
+                      "instructions.  This switch can be used to discard regions of memory that are anonymously mapped. "
+                      "Any distinct region larger than the specified size in kilobytes (1024 multiplier) will be "
+                      "unmapped before disassembly starts.  This filter does not remove neighboring regions which are "
+                      "individually smaller than the limit but whose combined size is larger.  The default is to omit "
+                      "anonymous regions larger than " + numberToString(anon_pages) + "kB. Setting @v{npages} to zero "
+                      "prevents any pages from being unmapped."));
 
     std::string protection_string = "x";
-    switches.insert(Switch("protection")
-                    .argument("rwx", Sawyer::CommandLine::anyParser(protection_string))
-                    .doc("Normally the disassembler will only consider data in memory that has execute permission.  This "
-                         "switch allows the disassembler to use a different set of protection bits, all of which must be "
-                         "set on any memory which is being considered for disassembly.  The @v{rwx} argument is one or more "
-                         "of the letters: r (read), w (write), or x (execute), or '-' (ignored). @v{rwx} may be the word "
-                         "\"any\", which has the same effect as not supplying any letters."));
-
-    bool do_quiet = false;
-    switches.insert(Switch("quiet")
-                    .intrinsicValue(true, do_quiet)
-                    .doc("Suppresses the instruction listing that is normally emitted to the standard output stream.  The "
-                         "default is to not suppress, which is also the result when the @s{no-quiet} switch is used."));
-    switches.insert(Switch("no-quiet")
-                    .key("quiet")
-                    .intrinsicValue(false, do_quiet)
-                    .hidden(true));
+    input.insert(Switch("protection")
+                 .argument("rwx", Sawyer::CommandLine::anyParser(protection_string))
+                 .doc("Normally the disassembler will only consider data in memory that has execute permission.  This "
+                      "switch allows the disassembler to use a different set of protection bits, all of which must be "
+                      "set on any memory which is being considered for disassembly.  The @v{rwx} argument is one or more "
+                      "of the letters: r (read), w (write), or x (execute), or '-' (ignored). @v{rwx} may be the word "
+                      "\"any\", which has the same effect as not supplying any letters."));
 
     std::string raw_spec;
-    switches.insert(Switch("raw")
-                    .argument("entries", Sawyer::CommandLine::anyParser(raw_spec))
-                    .doc("Indicates that the specified file(s) contains raw machine instructions rather than a binary "
-                         "container such as ELF or PE.  The @v{entries} argument specifies virtual addresses where "
-                         "disassembly will be attempted. It is a comma-separated list of addresses or address ranges. An "
-                         "address range is a low and high address separated by a hyphen and the range includes both "
-                         "endpoints.  However, if the range is followed by a slash and an increment then assembly will be "
-                         "tried only at the low address and positive offsets from the low address in multiples of the "
-                         "increment.\n\n"
-                         "The non-switch, positional arguments are either the name of an index file that was created by "
-                         "MemoryMap::dump() (see documentation for MemoryMap::load() for details about the file format), or "
-                         "pairs of file names and virtual addresses where the file contents are to be mapped.  The virtual "
-                         "addresses can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x' (execute) to specify "
-                         "mapping permissions other than the default read and execute permission.  By default, ROSE will "
-                         "only disassemble instructions appearing in parts of the memory address space containing execute "
-                         "permission."));
-
-    bool do_reassemble = false;
-    switches.insert(Switch("reassemble")
-                    .intrinsicValue(true, do_reassemble)
-                    .doc("Assemble each disassembled instruction and compare the generated machine code with the bytes "
-                         "originally disassembled.  This switch is intended mostly to check the consistency of the "
-                         "disassembler with the assembler.  The default is to not reassemble. The @s{no-reassemble} switch "
-                         "disables this feature."));
-    switches.insert(Switch("no-reassemble")
-                    .key("reassemble")
-                    .intrinsicValue(false, do_reassemble)
-                    .hidden(true));
+    input.insert(Switch("raw")
+                 .argument("entries", Sawyer::CommandLine::anyParser(raw_spec))
+                 .doc("Indicates that the specified file(s) contains raw machine instructions rather than a binary "
+                      "container such as ELF or PE.  The @v{entries} argument specifies virtual addresses where "
+                      "disassembly will be attempted. It is a comma-separated list of addresses or address ranges. An "
+                      "address range is a low and high address separated by a hyphen and the range includes both "
+                      "endpoints.  However, if the range is followed by a slash and an increment then assembly will be "
+                      "tried only at the low address and positive offsets from the low address in multiples of the "
+                      "increment.\n\n"
+                      "The non-switch, positional arguments are either the name of an index file that was created by "
+                      "MemoryMap::dump() (see documentation for MemoryMap::load() for details about the file format), or "
+                      "pairs of file names and virtual addresses where the file contents are to be mapped.  The virtual "
+                      "addresses can be suffixed with the letters 'r' (read), 'w' (write), and/or 'x' (execute) to specify "
+                      "mapping permissions other than the default read and execute permission.  By default, ROSE will "
+                      "only disassemble instructions appearing in parts of the memory address space containing execute "
+                      "permission."));
 
     std::vector<rose_addr_t> reserved_vals;
-    switches.insert(Switch("reserve")
-                    .argument("addr/size",
-                              Sawyer::CommandLine::listParser(Sawyer::CommandLine::nonNegativeIntegerParser(reserved_vals)))
-                    .explosiveLists(true)
-                    .doc("Reserve the indicated virtual address range before attempting to load the specimen.  The memory is "
-                         "mapped with no access rights. This switch may appear multiple times to reserve discontiguous "
-                         "regions of the virtual address space."));
+    input.insert(Switch("reserve")
+                 .argument("addr/size",
+                           Sawyer::CommandLine::listParser(Sawyer::CommandLine::nonNegativeIntegerParser(reserved_vals)))
+                 .explosiveLists(true)
+                 .doc("Reserve the indicated virtual address range before attempting to load the specimen.  The memory is "
+                      "mapped with no access rights. This switch may appear multiple times to reserve discontiguous "
+                      "regions of the virtual address space."));
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Disassembly control switches
+     *------------------------------------------------------------------------------------------------------------------------*/
+    Sawyer::CommandLine::SwitchGroup ctrl("Disassembly control switches");
     
-    bool do_rose_help = false;
-    switches.insert(Switch("rose-help")
-                    .intrinsicValue(true, do_rose_help)
-                    .doc("Show the ROSE library-recognized command-line switch documentation and exit."));
+    DisassembleDriver do_disassemble = DDRIVE_PD;
+    ctrl.insert(Switch("disassemble")
+                .argument("how", Sawyer::CommandLine::enumParser(do_disassemble)
+                          ->with("pd", DDRIVE_PD)
+                          ->with("dp", DDRIVE_DP)
+                          ->with("d", DDRIVE_D)
+                          ->with("none", DDRIVE_NONE),
+                          "dp")
+                .doc("Determines the interrelationship between the disassembler and the paritioner. The @v{how} should "
+                     "be one of the following: \"pd\" runs the partitioner as the master driving the disassembler; "
+                     "\"dp\" runs the disassembler first and then hands the results to the partitioner; \"d\" runs only "
+                     "the disassembler and places all instructions in a single function; \"none\" skips both the "
+                     "disassembly and partitioner and is useful if all you want to do is parse the container."));
+
+    bool do_dos = false;
+    ctrl.insert(Switch("dos")
+                .intrinsicValue(true, do_dos)
+                .doc("Normally, when the disassembler is invoked on a Windows PE or related container file it will "
+                     "ignore the DOS interpretation. This switch causes the disassembler to use the DOS interpretation "
+                     "instead of the default PE interpretation. The @s{no-dos} switch disables this feature (i.e., uses "
+                     "the PE header)."));
+    ctrl.insert(Switch("no-dos")
+                .key("dos")
+                .intrinsicValue(false, do_dos)
+                .hidden(true));
+
+    std::string isa;
+    ctrl.insert(Switch("isa")
+                .argument("architecture", Sawyer::CommandLine::anyParser(isa))
+                .doc("Specify an instruction set architecture in order to choose a disassembler.  If an ISA is "
+                     "specified then it overrides the disassembler that would have been chosen based on the file format. "
+                     "Use \"@s{isa}=list\" to get a list of valid disassembler names."));
 
     std::string disassembler_search_str;
-    switches.insert(Switch("rose:disassembler_search")
-                    .longPrefix("-")                    // librose uses hyphens to introduce named switches
-                    .argument("how", Sawyer::CommandLine::anyParser(disassembler_search_str))
-                    .doc("The argument for this switch is passed along to the ROSE library. See @s{rose-help} for details. "
-                         "The use of this switch may or may not have any effect depending on how this tool calls the "
-                         "disassembler."));
+    ctrl.insert(Switch("rose:disassembler_search")
+                .longPrefix("-")                    // librose uses hyphens to introduce named switches
+                .argument("how", Sawyer::CommandLine::anyParser(disassembler_search_str))
+                .doc("The argument for this switch is passed along to the ROSE library. See @s{rose-help} for details. "
+                     "The use of this switch may or may not have any effect depending on how this tool calls the "
+                     "disassembler."));
 
     std::string partitioner_config;
-    switches.insert(Switch("rose:partitioner_config")
-                    .longPrefix("-")                    // librose uses hyphens to introduce named switches
-                    .argument("config", Sawyer::CommandLine::anyParser(partitioner_config))
-                    .doc("The argument for this switch is passed along to the ROSE library.  See @s{rose-help} for details. "
-                         "The use of this switch may or may not have any effect depending on how this tool calls the "
-                         "disassembler."));
+    ctrl.insert(Switch("rose:partitioner_config")
+                .longPrefix("-")                    // librose uses hyphens to introduce named switches
+                .argument("config", Sawyer::CommandLine::anyParser(partitioner_config))
+                .doc("The argument for this switch is passed along to the ROSE library.  See @s{rose-help} for details. "
+                     "The use of this switch may or may not have any effect depending on how this tool calls the "
+                     "disassembler."));
 
     std::string partitioner_search_str;
-    switches.insert(Switch("rose:partitioner_search")
-                    .longPrefix("-")                    // librose uses hyphens to introduce named switches
-                    .argument("how", Sawyer::CommandLine::anyParser(partitioner_search_str))
-                    .doc("The argument for this switch is passed along to the ROSE library. See @s{rose-help} for details. "
-                         "The use of this switch may or may not have any effect depending on how this tool calls the "
-                         "partitioner."));
-    
+    ctrl.insert(Switch("rose:partitioner_search")
+                .longPrefix("-")                    // librose uses hyphens to introduce named switches
+                .argument("how", Sawyer::CommandLine::anyParser(partitioner_search_str))
+                .doc("The argument for this switch is passed along to the ROSE library. See @s{rose-help} for details. "
+                     "The use of this switch may or may not have any effect depending on how this tool calls the "
+                     "partitioner."));
+
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Output switches
+     *------------------------------------------------------------------------------------------------------------------------*/
+    Sawyer::CommandLine::SwitchGroup output("Output switches");
+
+    bool do_ast_dot = false;
+    output.insert(Switch("ast-dot")
+                  .intrinsicValue(true, do_ast_dot)
+                  .doc("Generate GraphViz dot files for the entire AST.  This switch is applicable only when the input "
+                       "file is a container such as ELF or PE.  The default is to not generate an AST dot file. Disabled "
+                       "by @s{no-ast-dot}."));
+    output.insert(Switch("no-ast-dot")
+                  .key("ast-dot")
+                  .intrinsicValue(false, do_ast_dot)
+                  .hidden(true));
+
+    bool do_cfg_dot = false;
+    output.insert(Switch("cfg-dot")
+                  .intrinsicValue(true, do_cfg_dot)
+                  .doc("Generate GraphViz dot file containing the control flow graph of each function.  These files will "
+                       "be named \"x-FXXXXXXXX.dot\" where \"XXXXXXXX\" is a function entry address.  This switch also "
+                       "generates a function call graph with the name \"x-cg.dot\". These files can be converted to HTML "
+                       "with the generate_html script found in tests/roseTests/binaryTests. The default is to not generate "
+                       "these dot files.  This feature is disabled with @s{no-cfg-dot}."));
+    output.insert(Switch("no-cfg-dot")
+                  .key("cfg-dot")
+                  .intrinsicValue(false, do_cfg_dot)
+                  .hidden(true));
+
+    std::string do_generate_ipd;
+    output.insert(Switch("ipd")
+                  .argument("filename", Sawyer::CommandLine::anyParser(do_generate_ipd))
+                  .doc("Generate an IPD file from the disassembly results.  The IPD file can be modified by hand and then "
+                       "fed back into another disassembly with the \"-rose:partitioner_config @v{filename}\" switch.  The "
+                       "@s{no-ipd} disables this feature."));
+    output.insert(Switch("no-ipd")
+                  .key("ipd")
+                  .intrinsicValue(std::string(), do_generate_ipd)
+                  .hidden(true));
+
+    bool do_linear = false;
+    output.insert(Switch("linear")
+                  .intrinsicValue(true, do_linear)
+                  .doc("Causes output to be organized by address rather than hierarchically.  The output will be more "
+                       "like traditional disassemblers."));
+
+    bool do_quiet = false;
+    output.insert(Switch("quiet")
+                  .intrinsicValue(true, do_quiet)
+                  .doc("Suppresses the instruction listing that is normally emitted to the standard output stream.  The "
+                       "default is to not suppress, which is also the result when the @s{no-quiet} switch is used."));
+    output.insert(Switch("no-quiet")
+                  .key("quiet")
+                  .intrinsicValue(false, do_quiet)
+                  .hidden(true));
+
     bool show_bad = false;
-    switches.insert(Switch("show-bad")
-                    .intrinsicValue(true, show_bad)
-                    .doc("Show details about why instructions at certain addresses could not be disassembled.  The default "
-                         "is to not show these details.  The @s{no-show-bad} switch disables this feature."));
-    switches.insert(Switch("no-show-bad")
-                    .key("show-bad")
-                    .intrinsicValue(true, show_bad)
-                    .hidden(true));
+    output.insert(Switch("show-bad")
+                  .intrinsicValue(true, show_bad)
+                  .doc("Show details about why instructions at certain addresses could not be disassembled.  The default "
+                       "is to not show these details.  The @s{no-show-bad} switch disables this feature."));
+    output.insert(Switch("no-show-bad")
+                  .key("show-bad")
+                  .intrinsicValue(true, show_bad)
+                  .hidden(true));
 
     bool do_show_coverage = false;
-    switches.insert(Switch("show-coverage")
-                    .intrinsicValue(true, do_show_coverage)
-                    .doc("Show what percent of disassembly memory map was actually disassembled.  The default is to not show "
-                         "this information.  The @s{no-show-coverage} switch disables this feature."));
-    switches.insert(Switch("no-show-coverage")
-                    .key("show-coverage")
-                    .intrinsicValue(false, do_show_coverage)
-                    .hidden(true));
+    output.insert(Switch("show-coverage")
+                  .intrinsicValue(true, do_show_coverage)
+                  .doc("Show what percent of disassembly memory map was actually disassembled.  The default is to not show "
+                       "this information.  The @s{no-show-coverage} switch disables this feature."));
+    output.insert(Switch("no-show-coverage")
+                  .key("show-coverage")
+                  .intrinsicValue(false, do_show_coverage)
+                  .hidden(true));
 
     bool do_show_extents = false;
-    switches.insert(Switch("show-extents")
-                    .intrinsicValue(true, do_show_extents)
-                    .doc("Show detailed information about what parts of the file were accessed during container parsing "
-                         "and disassembly.  The default is to not show these details.  The @s{no-show-extents} switch "
-                         "disables this feature."));
-    switches.insert(Switch("no-show-extents")
-                    .key("show-extents")
-                    .intrinsicValue(false, do_show_extents)
-                    .hidden(true));
+    output.insert(Switch("show-extents")
+                  .intrinsicValue(true, do_show_extents)
+                  .doc("Show detailed information about what parts of the file were accessed during container parsing "
+                       "and disassembly.  The default is to not show these details.  The @s{no-show-extents} switch "
+                       "disables this feature."));
+    output.insert(Switch("no-show-extents")
+                  .key("show-extents")
+                  .intrinsicValue(false, do_show_extents)
+                  .hidden(true));
 
     bool do_show_functions = false;
-    switches.insert(Switch("show-functions")
-                    .intrinsicValue(true, do_show_functions)
-                    .doc("Display a list of functions in tabular format.  The default is to not show this information. The "
-                         "@s{no-show-functions} switch disables this feature."));
-    switches.insert(Switch("no-show-functions")
-                    .key("show-functions")
-                    .intrinsicValue(false, do_show_functions)
-                    .hidden(true));
+    output.insert(Switch("show-functions")
+                  .intrinsicValue(true, do_show_functions)
+                  .doc("Display a list of functions in tabular format.  The default is to not show this information. The "
+                       "@s{no-show-functions} switch disables this feature."));
+    output.insert(Switch("no-show-functions")
+                  .key("show-functions")
+                  .intrinsicValue(false, do_show_functions)
+                  .hidden(true));
 
     bool do_show_hashes = false;
-    switches.insert(Switch("show-hashes")
-                    .intrinsicValue(true, do_show_hashes)
-                    .doc("Display SHA1 hashes for basic blocks and functions in the assembly listing. These hashes are "
-                         "based on basic block semantics.  The default is to not show these hashes in the listing. "
-                         "Regardless of this switch, the hashes still appear in the function listing (@s{show-functions}) "
-                         "and the CFG dot files (@s{cfg-dot}) if they can be computed. The @s{no-show-hashes} switch "
-                         "disables this feature."));
-    switches.insert(Switch("no-show-hashes")
-                    .key("show-hashes")
-                    .intrinsicValue(false, do_show_hashes)
-                    .hidden(true));
+    output.insert(Switch("show-hashes")
+                  .intrinsicValue(true, do_show_hashes)
+                  .doc("Display SHA1 hashes for basic blocks and functions in the assembly listing. These hashes are "
+                       "based on basic block semantics.  The default is to not show these hashes in the listing. "
+                       "Regardless of this switch, the hashes still appear in the function listing (@s{show-functions}) "
+                       "and the CFG dot files (@s{cfg-dot}) if they can be computed. The @s{no-show-hashes} switch "
+                       "disables this feature."));
+    output.insert(Switch("no-show-hashes")
+                  .key("show-hashes")
+                  .intrinsicValue(false, do_show_hashes)
+                  .hidden(true));
 
     SyscallMethod do_syscall_names = SYSCALL_LINUX32;
-    switches.insert(Switch("syscalls")
+    output.insert(Switch("syscalls")
                     .argument("method", Sawyer::CommandLine::enumParser(do_syscall_names)
                               ->with("none", SYSCALL_NONE)
                               ->with("linux32", SYSCALL_LINUX32))
@@ -979,9 +968,27 @@ main(int argc, char *argv[])
                          "system call numbers and names for 32-bit Linux, while the value \"none\" means no attempt is made "
                          "to determine system call names."));
 
-    switches.insert(Switch("version", 'V')
-                    .action(Sawyer::CommandLine::showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
+    /*------------------------------------------------------------------------------------------------------------------------
+     * Miscellaneous switches
+     *------------------------------------------------------------------------------------------------------------------------*/
+    Sawyer::CommandLine::SwitchGroup misc("Miscellaneous switches");
+
+    bool do_reassemble = false;
+    misc.insert(Switch("reassemble")
+                .intrinsicValue(true, do_reassemble)
+                .doc("Assemble each disassembled instruction and compare the generated machine code with the bytes "
+                     "originally disassembled.  This switch is intended mostly to check the consistency of the "
+                     "disassembler with the assembler.  The default is to not reassemble. The @s{no-reassemble} switch "
+                     "disables this feature."));
+    misc.insert(Switch("no-reassemble")
+                .key("reassemble")
+                .intrinsicValue(false, do_reassemble)
+                .hidden(true));
+
+    bool do_rose_help = false;
+    misc.insert(Switch("rose-help")
+                .intrinsicValue(true, do_rose_help)
+                .doc("Show the ROSE library-recognized command-line switch documentation and exit."));
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse the command-line.
@@ -1013,7 +1020,14 @@ main(int argc, char *argv[])
                        "that can be passed to ROSE's frontend() function, if it's even called by this tool, is available "
                        "from this tool's @s{rose-help} switch.");
 
-    Sawyer::CommandLine::ParserResult cmdline = cmdline_parser.with(switches).parse(argc, argv).apply();
+    Sawyer::CommandLine::ParserResult cmdline = cmdline_parser
+                                                .with(generic)
+                                                .with(input)
+                                                .with(ctrl)
+                                                .with(output)
+                                                .with(misc)
+                                                .parse(argc, argv)
+                                                .apply();
 
     // Some switches require some extra parsing...  We could have written specific parsers for these and called them from
     // switch declarations above, but it's easier to just copy the code that previously existed...
