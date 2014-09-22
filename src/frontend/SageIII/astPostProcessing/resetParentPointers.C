@@ -1638,9 +1638,12 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
 
      SgLocatedNode* locatedNode = isSgLocatedNode(node);
      SgSupport*     support     = isSgSupport(node);
+     SgUntypedNode* untypedNode = isSgUntypedNode(node);
 
+  // DQ (9/15/2014): Skip checking of parent pointers here for SgUntypedNode IR nodes (handle this case seperately).
   // All types should have NULL parent pointers (because types can be shared)
-     if (locatedNode != NULL)
+  // if (locatedNode != NULL)
+     if (locatedNode != NULL && untypedNode == NULL)
         {
           if (locatedNode->get_startOfConstruct() == NULL)
              {
@@ -1769,6 +1772,15 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_file_info() == NULL);
                     break;
                   }
+             }
+        }
+
+  // DQ (9/15/2014): Specific checking of parent pointers here for SgUntypedNode IR nodes (skipped handle this case with all SgLocatedNode IR nodes above).
+     if (untypedNode != NULL)
+        {
+          if (untypedNode->get_startOfConstruct() == NULL)
+             {
+               printf ("Warning: untypedNode->get_startOfConstruct() == NULL (untypedNode = %p = %s) \n",untypedNode,untypedNode->class_name().c_str());
              }
         }
    }

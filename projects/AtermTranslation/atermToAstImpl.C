@@ -145,6 +145,11 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
      int tempint;
      double tempdouble;
 
+#if 0
+     string atermString = ATwriteToString(term);
+     printf ("In AtermToNodeConverter::convertAtermToNode(): atermString = %s \n",atermString.c_str());
+#endif
+
      if (ATmatch(term, "NULL") || ATmatch(term, "\"NULL\"")) 
         {
           result = 0;
@@ -455,6 +460,9 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
 
      if (ATmatch(term, "VarDecl([<list>])", &temp1)) 
         {
+#if 1
+          printf ("Matching VarDecl([<list>]) \n");
+#endif
           SgVariableDeclaration* vardecl = new SgVariableDeclaration(fi);
           vector<ATerm> terms = getAtermList(temp1);
           for (size_t i = 0; i < terms.size(); ++i)
@@ -556,6 +564,33 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
           mt->get_typeModifier().get_constVolatileModifier().setVolatile();
           result = mt;
           goto done;
+        }
+
+     if (ATmatch(term, "lazyWrap(<term>)", &temp1)) 
+        {
+       // This is a debugging step to handle some optionally generated untranslated subtrees, when lazyWrapping == true. 
+#if 1
+           printf ("Warning: detected generated generated lazyWrap(<term>): generating a SgNullStatement \n");
+#endif
+          SgNullStatement* ns = new SgNullStatement();
+          result = ns;
+          goto done;
+        }
+
+  // if (ATmatch(term, "VarDecl([<list>])", &temp1)) 
+  // if (ATmatch(term, "VarDecl(NULL,InitName(<term>,<term>Int{[ptr,"0x0265ec60"],[id,"i__type"]},NULL){[ptr,"0x7f6b39d626d0"],[id,"xi_in_scope___global____initialized_name"]}){[ptr,"0x7f6b39b2b010"],[id,"__global___variable_declaration__variable_type_i_variable_name_x_variable_name_x__public_access_/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/projects/AtermTranslation/test2013_01.C_1__variable"]})", &temp1))
+  // if (ATmatch(term, "VarDecl(<term>,<term>,<term>,<term>)", &temp1))
+  // if (ATmatch(term, "VarDecl(<term>,<term>,<term>)", &temp1))
+  // if (ATmatch(term, "VarDecl(<term>,<term>)", &temp1))
+  // if (ATmatch(term, "VarDecl(<term>)", &temp1))
+  // if (ATmatch(term, "VarDecl(<term>,<term>,<term>,<term>)", &temp1))
+     if (ATmatch(term, "VarDecl(<term>,[<list>])", &temp1)) 
+        {
+#if 1
+          printf ("Matching VarDecl(<term>,<term>,<term>,<term>) \n");
+#endif
+          printf ("Found correct form of VarDecl \n");
+          ROSE_ASSERT(false);
         }
 
      cerr << "Unrecognized term " << ATwriteToString(term) << endl;

@@ -12,7 +12,9 @@
 
 using namespace std;
 
+// Note that setting this to true was the original setting.
 #define LAZY_WRAPPING_MACRO true
+// #define LAZY_WRAPPING_MACRO false
 
 std::string uniqueId(SgNode* n)
    {
@@ -746,6 +748,11 @@ ATerm convertNodeToAterm(SgNode* n)
                break;
              }
 
+        // DQ (9/17/2014): Added new case to address where we were using lazy wrapping previously.
+           case V_SgVariableDeclaration:
+              {
+             // Using the default case for the moment.
+              }
 
           default:
              {
@@ -754,6 +761,9 @@ ATerm convertNodeToAterm(SgNode* n)
                printf ("In convertNodeToAterm(): default: Processing the default case of container: n = %p = %s \n",n,n->class_name().c_str());
 #endif
                bool isContainer = (AstTests::numSuccContainers(n) == 1) || (!isSgType(n) && (n->get_traversalSuccessorContainer().size() == 0));
+#if 0
+               printf ("In convertNodeToAterm(): default: isContainer = %s \n",isContainer ? "true" : "false");
+#endif
                term = ATmake((isContainer ? "<appl(<term>)>" : "<appl(<list>)>"), getShortVariantName((VariantT)(n->variantT())).c_str(),(isSgType(n) ? ATmake("[]") : getTraversalChildrenAsAterm(n)));
             // Special case for types is because of traversal problems
 

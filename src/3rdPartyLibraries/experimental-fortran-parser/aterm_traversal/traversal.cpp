@@ -1,10 +1,20 @@
-#include "traversal.h"
-#include "OFPNodes.h"
+#define COMPILED_WITH_ROSE 1
+
+#if COMPILED_WITH_ROSE
+#include "sage3basic.h"
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
+// Interestingly it must be at the top of the list of include files.
+#include "rose_config.h"
+#endif
+
+#include "traversal.hpp"
+#include "OFPNodes.hpp"
+#include "ASTBuilder.hpp"
 #include <string.h>
 
-#define DEBUG_PRINT
-#undef  DEBUG_OFP_CLIENT
-
+extern OFP::ASTBuilder * ast;
 
 /**
  * Perform any necessary initialization for this traversal
@@ -32,7 +42,7 @@ ATbool ofp_traverse_Dop(ATerm term, OFP::Dop* Dop)
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_HexConstant(ATerm term, OFP::HexConstant* HexConstant)
@@ -48,7 +58,7 @@ ATbool ofp_traverse_HexConstant(ATerm term, OFP::HexConstant* HexConstant)
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_OctalConstant(ATerm term, OFP::OctalConstant* OctalConstant)
@@ -64,7 +74,7 @@ ATbool ofp_traverse_OctalConstant(ATerm term, OFP::OctalConstant* OctalConstant)
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_BinaryConstant(ATerm term, OFP::BinaryConstant* BinaryConstant)
@@ -80,7 +90,7 @@ ATbool ofp_traverse_BinaryConstant(ATerm term, OFP::BinaryConstant* BinaryConsta
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_Rcon(ATerm term, OFP::Rcon* Rcon)
@@ -96,7 +106,7 @@ ATbool ofp_traverse_Rcon(ATerm term, OFP::Rcon* Rcon)
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_Scon(ATerm term, OFP::Scon* Scon)
@@ -112,7 +122,7 @@ ATbool ofp_traverse_Scon(ATerm term, OFP::Scon* Scon)
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_Icon(ATerm term, OFP::Icon* Icon)
@@ -126,22 +136,12 @@ ATbool ofp_traverse_Icon(ATerm term, OFP::Icon* Icon)
       // MATCHED Icon
       Icon->setValue(Icon_val);
 
-#ifdef OFP_CLIENT
-      //TODO-CER-2014.3.7 set (or request) SgToken::FORTRAN_INTEGER);
-      SgUntypedType*             type = new SgUntypedType(NULL, "INTEGER");
-      //TODO-CER-2014.3.7 set (or request) SgToken::FORTRAN_INTEGER);
-      SgUntypedValueExpression* value = new SgUntypedValueExpression(NULL, SgToken::FORTRAN_UNKNOWN, Icon->getValue(), type);
-      Icon->setPayload(value);
-#ifdef DEBUG_OFP_CLIENT
-      printf("ROSE Icon: .......................... ");
-      unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(Icon->getPayload()));  printf("\n");
-#endif
-#endif
+      ast->build_Icon(Icon);
 
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_Ident(ATerm term, OFP::Ident* Ident)
@@ -155,20 +155,12 @@ ATbool ofp_traverse_Ident(ATerm term, OFP::Ident* Ident)
       // MATCHED Ident
       Ident->setValue(Ident_val);
 
-#ifdef OFP_CLIENT 
-      //TODO-CER-2014.3.7 set (or request) SgToken::FORTRAN_INTEGER);
-      SgUntypedValueExpression* value = new SgUntypedValueExpression(NULL, SgToken::FORTRAN_INTEGER, Ident->getValue(), NULL);
-      Ident->setPayload(value);
-#ifdef DEBUG_OFP_CLIENT
-      printf("ROSE Ident: ......................... ");
-      unparser->unparseExpr(dynamic_cast<SgUntypedExpression*>(Ident->getPayload()));  printf("\n");
-#endif
-#endif
+      ast->build_Ident(Ident);
 
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_Letter(ATerm term, OFP::Letter* Letter)
@@ -181,10 +173,11 @@ ATbool ofp_traverse_Letter(ATerm term, OFP::Letter* Letter)
    if (ATmatch(term, "<str>", &Letter_val)) {
       // MATCHED Letter
       Letter->setValue(Letter_val);
+
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_Label(ATerm term, OFP::Label* Label)
@@ -197,10 +190,11 @@ ATbool ofp_traverse_Label(ATerm term, OFP::Label* Label)
    if (ATmatch(term, "<str>", &Label_val)) {
       // MATCHED Label
       Label->setValue(Label_val);
+
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_LblRef(ATerm term, OFP::LblRef* LblRef)
@@ -213,10 +207,11 @@ ATbool ofp_traverse_LblRef(ATerm term, OFP::LblRef* LblRef)
    if (ATmatch(term, "<str>", &LblRef_val)) {
       // MATCHED LblRef
       LblRef->setValue(LblRef_val);
+
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_StartCommentBlock(ATerm term, OFP::StartCommentBlock* StartCommentBlock)
@@ -229,10 +224,11 @@ ATbool ofp_traverse_StartCommentBlock(ATerm term, OFP::StartCommentBlock* StartC
    if (ATmatch(term, "<str>", &StartCommentBlock_val)) {
       // MATCHED StartCommentBlock
       StartCommentBlock->setValue(StartCommentBlock_val);
+
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
 
 ATbool ofp_traverse_EOS(ATerm term, OFP::EOS* EOS)
@@ -242,11 +238,12 @@ ATbool ofp_traverse_EOS(ATerm term, OFP::EOS* EOS)
 #endif
 
    char * EOS_val;
-   if (ATmatch(term, "<str>", &EOS_val)) {
+   if (ATmatch(term, "eos(<str>)", &EOS_val)) {
       // MATCHED EOS
       EOS->setValue(EOS_val);
+
       return ATtrue;
    } else return ATfalse;
 
-   return ATtrue;
+   return ATfalse;
 }
