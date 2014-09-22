@@ -9,6 +9,9 @@ TypeEquivalenceChecker::TypeEquivalenceChecker(bool profile): profile_(profile),
 bool
 TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
   bool equal = false;
+  if(t1 == NULL || t2 == NULL){
+    return equal;
+  }
   RoseAst subT1(t1);
   RoseAst subT2(t2);
 
@@ -64,6 +67,11 @@ TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
 
         return typesAreEqual(t1->get_base_type(), t2->get_base_type());
 
+      } else if(isSgReferenceType(nodeT1)){
+        SgReferenceType *t1 = isSgReferenceType(nodeT1);
+        SgReferenceType *t2 = isSgReferenceType(nodeT2);
+
+        return typesAreEqual(t1->get_base_type(), t2->get_base_type());
       } else if (isSgArrayType(nodeT1)) {
         if (profile_) {
           arrayType_++;
