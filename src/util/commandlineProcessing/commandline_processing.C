@@ -14,11 +14,36 @@
 // Use Brian Gunney's String List Assignent (SLA) library
 #include "sla.h"
 
+#ifdef _MSC_VER
+# include <boost/lexical_cast.hpp>
+#else
+# include <time.h>
+#endif
+
+
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users application (just not in header files).
 using namespace std;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
+
+// A version string function that doesn't depend on the rest of librose.
+static std::string
+utilVersionString() {
+    std::string s = std::string("ROSE-") + VERSION + " id " + ROSE_SCM_VERSION_ID;
+#ifdef _MSC_VER
+    s += " timestamp=" + boost::lexical_cast<std::string>(ROSE_SCM_VERSION_UNIX_DATE);
+#else
+    time_t t = ROSE_SCM_VERSION_UNIX_DATE;
+    struct tm *tm = localtime(&t);
+    char buf[256];
+    sprintf(buf, " %04d-%02d-%02d %02d:%02d:%02d %s",
+            tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+            tm->tm_hour, tm->tm_min, tm->tm_sec, tm->tm_zone);
+    s += buf;
+#endif
+    return s;
+}
 
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
@@ -38,9 +63,11 @@ CommandlineProcessing::genericSwitches() {
                .whichValue(SAVE_ALL)
                .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
 
-    extern std::string version_message();               // utility_functions.h cannot be included in this file w/out errors
+    // Since CommandlineProcessing::genericSwitches is inside src/util we cannot depend on functions in higher levels of
+    // librose being available.  In particular, ::version_message, which is defined in src/roseSupport/utility_functions.C.
+    // Therefore we'll have to use our own version string function.
     gen.insert(Switch("version", 'V')
-               .action(showVersionAndExit(version_message(), 0))
+               .action(showVersionAndExit(utilVersionString(), 0))
                .doc("Shows version information for various ROSE components and then exits."));
 
     return gen;
