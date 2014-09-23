@@ -22,10 +22,10 @@
 TEST(SageInterfaceTypeEquivalence, HandlesEmptyInput){
   ::SgTypeInt* int_t1 = SageBuilder::buildIntType();
   bool tcRes = SageInterface::checkTypesAreEqual(int_t1, NULL);
-  ASSERT_EQ(tcRes, false);
+  EXPECT_EQ(tcRes, false);
 
   tcRes = SageInterface::checkTypesAreEqual(NULL, int_t1);
-  ASSERT_EQ(tcRes, false);
+  EXPECT_EQ(tcRes, false);
 }
 
 /*
@@ -33,48 +33,71 @@ TEST(SageInterfaceTypeEquivalence, HandlesEmptyInput){
  * We construct all (yet a lot have to be added) built-int types
  * and check pairs of the same type
  */
-TEST(SageInterfaceTypeEquivalence, BuiltInTypesAreEqual) {
+TEST(SageInterfaceTypeEquivalence, BuiltInIntIsEqual) {
   ::SgTypeInt *int_t1 = SageBuilder::buildIntType();
   ::SgTypeInt *int_t2 = SageBuilder::buildIntType();
-
   bool tcRes = SageInterface::checkTypesAreEqual(int_t1, int_t2);
-  ASSERT_EQ(tcRes, true);
+  EXPECT_EQ(tcRes, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, BuiltInShortIsEqual){
   ::SgTypeShort* short_t1 = SageBuilder::buildShortType();
   ::SgTypeShort* short_t2 = SageBuilder::buildShortType();
-  tcRes = SageInterface::checkTypesAreEqual(short_t1, short_t2);
-  ASSERT_EQ(tcRes, true);
+  bool tcRes = SageInterface::checkTypesAreEqual(short_t1, short_t2);
+  EXPECT_EQ(tcRes, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, BuiltInBoolIsEqual){
   ::SgTypeBool* bool_t1 = SageBuilder::buildBoolType();
   ::SgTypeBool* bool_t2 = SageBuilder::buildBoolType();
-  tcRes = SageInterface::checkTypesAreEqual(bool_t1, bool_t2);
-  ASSERT_EQ(tcRes, true);
+  bool tcRes = SageInterface::checkTypesAreEqual(bool_t1, bool_t2);
+  EXPECT_EQ(tcRes, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, BuiltInVoidIsEqual){
   ::SgTypeVoid* void_t1 = SageBuilder::buildVoidType();
   ::SgTypeVoid* void_t2 = SageBuilder::buildVoidType();
-  tcRes = SageInterface::checkTypesAreEqual(void_t1, void_t2);
-  ASSERT_EQ(tcRes, true);
+  bool tcRes = SageInterface::checkTypesAreEqual(void_t1, void_t2);
+  EXPECT_EQ(tcRes, true);
+}
+
+TEST(SageInterfaceTypeEquivalence, BuiltInVolatileIntIntIsEqual){
+  ::SgModifierType* int_t3 = SageBuilder::buildVolatileType(SageBuilder::buildIntType());
+  ::SgTypeInt* int_t4 = SageBuilder::buildIntType();
+  bool tcRes = SageInterface::checkTypesAreEqual(int_t3, int_t4);
+  EXPECT_EQ(tcRes, true);
 }
 
 /*
  * We construct pairs of different types and check them.
  * The result for each test should of course be false
  */
-TEST(SageInterfaceTypeEquivalence, BuiltInTypesAreUnequal){
+TEST(SageInterfaceTypeEquivalence, BuiltInIntBoolAreUnequal){
   ::SgTypeInt* int_t1 = SageBuilder::buildIntType();
   ::SgTypeBool* bool_t2 = SageBuilder::buildBoolType();
   bool tcRes = SageInterface::checkTypesAreEqual(int_t1, bool_t2);
-  ASSERT_EQ(tcRes, false);
+  EXPECT_EQ(tcRes, false);
+}
 
+TEST(SageInterfaceTypeEquivalence, BuiltInShortIntAreUnequal){
   ::SgTypeShort* short_t1 = SageBuilder::buildShortType();
   ::SgTypeInt* int_t2 = SageBuilder::buildIntType();
-  tcRes = SageInterface::checkTypesAreEqual(short_t1, int_t2);
-  ASSERT_EQ(tcRes, false);
+  bool tcRes = SageInterface::checkTypesAreEqual(short_t1, int_t2);
+  EXPECT_EQ(tcRes, false);
+}
 
+TEST(SageInterfaceTypeEquivalence, BuiltInIntVoidAreUnequal){
   ::SgTypeInt* int_t3 = SageBuilder::buildIntType();
   ::SgTypeVoid* void_t2 = SageBuilder::buildVoidType();
-  tcRes = SageInterface::checkTypesAreEqual(int_t3, void_t2);
-  ASSERT_EQ(tcRes, false);
+  bool tcRes = SageInterface::checkTypesAreEqual(int_t3, void_t2);
+  EXPECT_EQ(tcRes, false);
+}
+
+TEST(SageInterfaceTypeEquivalence, BuiltInConstIntIntAreUnequal){
+  ::SgModifierType* int_t4 = SageBuilder::buildConstType(SageBuilder::buildIntType());
+  ::SgTypeInt* int_t5 = SageBuilder::buildIntType();
+  bool tcRes = SageInterface::checkTypesAreEqual(int_t4, int_t5);
+  EXPECT_EQ(tcRes, false);
 }
 
 /*
@@ -82,41 +105,60 @@ TEST(SageInterfaceTypeEquivalence, BuiltInTypesAreUnequal){
  * A lot of things need to be added here. But this is meant as a first
  * safety net.
  */
-TEST(SageInterfaceTypeEquivalence, PointerTypesAreEqual){
+TEST(SageInterfaceTypeEquivalence, IntPointerTypesAreEqual){
   ::SgPointerType* p_1 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
   ::SgPointerType* p_2 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
   bool tcRes = SageInterface::checkTypesAreEqual(p_1, p_2);
-  ASSERT_EQ(tcRes, true);
+  EXPECT_EQ(tcRes, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidPointerTypesAreEqual){
   ::SgPointerType* p_3 = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
   ::SgPointerType* p_4 = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
-  tcRes = SageInterface::checkTypesAreEqual(p_3, p_4);
-  ASSERT_EQ(tcRes, true);
+  bool tcRes = SageInterface::checkTypesAreEqual(p_3, p_4);
+  EXPECT_EQ(tcRes, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidPointerPointerTypesAreEqual){
+  ::SgPointerType* p_3 = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
+  ::SgPointerType* p_4 = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
   ::SgPointerType* p_5 = SageBuilder::buildPointerType(p_3);
   ::SgPointerType* p_6 = SageBuilder::buildPointerType(p_4);
-  tcRes = SageInterface::checkTypesAreEqual(p_5, p_6);
-  ASSERT_EQ(tcRes, true);
+  bool tcRes = SageInterface::checkTypesAreEqual(p_5, p_6);
+  EXPECT_EQ(tcRes, true);
 }
 
 /*
  * We construct pointer types to different base types.
  */
-TEST(SageInterfaceTypeEquivalence, PointerTypesAreUnequal){
+TEST(SageInterfaceTypeEquivalence, IntCharPointerTypesAreUnequal){
   ::SgPointerType* p_1 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
   ::SgPointerType* p_2 = SageBuilder::buildPointerType(SageBuilder::buildCharType());
   bool tcRes = SageInterface::checkTypesAreEqual(p_1, p_2);
-  ASSERT_EQ(tcRes, false);
+  EXPECT_EQ(tcRes, false);
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidIntPointerTypesAreUnequal){
   ::SgPointerType* p_3 = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
   ::SgPointerType* p_4 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
-  tcRes = SageInterface::checkTypesAreEqual(p_3, p_4);
-  ASSERT_EQ(tcRes, false);
+  bool tcRes = SageInterface::checkTypesAreEqual(p_3, p_4);
+  EXPECT_EQ(tcRes, false);
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidIntPointerPointerTypesAreUnequal){
+  ::SgPointerType* p_3 = SageBuilder::buildPointerType(SageBuilder::buildVoidType());
+  ::SgPointerType* p_4 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
   ::SgPointerType* p_5 = SageBuilder::buildPointerType(p_3);
   ::SgPointerType* p_6 = SageBuilder::buildPointerType(p_4);
-  tcRes = SageInterface::checkTypesAreEqual(p_5, p_6);
-  ASSERT_EQ(tcRes, false);
+  bool tcRes = SageInterface::checkTypesAreEqual(p_5, p_6);
+  EXPECT_EQ(tcRes, false);
+}
+
+TEST(SageInterfaceTypeEquivalence, ConstIntIntPointerTypesAreUnequal){
+  ::SgPointerType* p_7 = SageBuilder::buildPointerType(SageBuilder::buildConstType(SageBuilder::buildIntType()));
+  ::SgPointerType* p_8 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
+  bool tcRes = SageInterface::checkTypesAreEqual(p_7, p_8);
+  EXPECT_EQ(tcRes, false);
 }
 
 /*
@@ -126,68 +168,123 @@ TEST(SageInterfaceTypeEquivalence, ReferenceTypesAreEqual){
   ::SgReferenceType* r_1 = SageBuilder::buildReferenceType(SageBuilder::buildIntType());
   ::SgReferenceType* r_2 = SageBuilder::buildReferenceType(SageBuilder::buildIntType());
   bool tcRef = SageInterface::checkTypesAreEqual(r_1, r_2);
-  ASSERT_EQ(tcRef, true);
+  EXPECT_EQ(tcRef, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidReferenceTypesAreEqual){
   ::SgReferenceType* r_3 = SageBuilder::buildReferenceType(SageBuilder::buildVoidType());
   ::SgReferenceType* r_4 = SageBuilder::buildReferenceType(SageBuilder::buildVoidType());
-  tcRef = SageInterface::checkTypesAreEqual(r_3, r_4);
-  ASSERT_EQ(tcRef, true);
+  bool tcRef = SageInterface::checkTypesAreEqual(r_3, r_4);
+  EXPECT_EQ(tcRef, true);
 }
 
 TEST(SageInterfaceTypeEquivalence, ReferenceTypesAreUnequal){
   ::SgReferenceType* r_1 = SageBuilder::buildReferenceType(SageBuilder::buildIntType());
   ::SgReferenceType* r_2 = SageBuilder::buildReferenceType(SageBuilder::buildVoidType());
   bool tcRef = SageInterface::checkTypesAreEqual(r_1, r_2);
-  ASSERT_EQ(tcRef, false);
+  EXPECT_EQ(tcRef, false);
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidPointerReferenceVoidReferenceAreUnequal){
   ::SgReferenceType* r_3 = SageBuilder::buildReferenceType(SageBuilder::buildPointerType(SageBuilder::buildVoidType()));
   ::SgReferenceType* r_4 = SageBuilder::buildReferenceType(SageBuilder::buildVoidType());
-  tcRef = SageInterface::checkTypesAreEqual(r_3, r_4);
-  ASSERT_EQ(tcRef, false); 
+  bool tcRef = SageInterface::checkTypesAreEqual(r_3, r_4);
+  EXPECT_EQ(tcRef, false); 
 }
 
 /*
  * Array Types
  */
-TEST(SageInterfaceTypeEquivalence, ArrayTypesAreEqual){
+TEST(SageInterfaceTypeEquivalence, IntArrayTypesAreEqual){
   // type(int a[10]) == type(int a[v]) (with v being const int v = 10.
   ::SgArrayType* a_1 = SageBuilder::buildArrayType(SageBuilder::buildIntType(), SageBuilder::buildIntVal(3));
   ::SgArrayType* a_2 = SageBuilder::buildArrayType(SageBuilder::buildIntType(), SageBuilder::buildIntVal(3));
   bool tcRef = SageInterface::checkTypesAreEqual(a_1, a_2);
-  ASSERT_EQ(tcRef, true);
+  EXPECT_EQ(tcRef, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, CharArrayIsEqual){
   ::SgArrayType* a_3 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(100));
   ::SgArrayType* a_4 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(100));
-  tcRef = SageInterface::checkTypesAreEqual(a_3, a_4);
-  ASSERT_EQ(tcRef, true);
+  bool tcRef = SageInterface::checkTypesAreEqual(a_3, a_4);
+  EXPECT_EQ(tcRef, true);
+}
 
+TEST(SageInterfaceTypeEquivalence, CharArrayArrayIsEqual){
+  ::SgArrayType* a_3 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(100));
+  ::SgArrayType* a_4 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(100));
   ::SgArrayType* a_5 = SageBuilder::buildArrayType(a_3, SageBuilder::buildIntVal(100));
   ::SgArrayType* a_6 = SageBuilder::buildArrayType(a_4, SageBuilder::buildIntVal(100));
-  tcRef = SageInterface::checkTypesAreEqual(a_5, a_6);
-  ASSERT_EQ(tcRef, true);
+  bool tcRef = SageInterface::checkTypesAreEqual(a_5, a_6);
+  EXPECT_EQ(tcRef, true);
+}
 
 #if 0
+TEST(SageInterfaceTypeEquivalence, ConstVarIntLiteralArrayIsEqual){
+  ::SgGlobal *global = new SgGlobal();
   // build assign-initializer, build variable declaration, build varrefexp
   ::SgBasicBlock* bb = SageBuilder::buildBasicBlock();
+  bb->set_parent(global);
   ::SgAssignInitializer* init = SageBuilder::buildAssignInitializer(SageBuilder::buildIntVal(42), SageBuilder::buildIntType());
-  ::SgVariableDeclaration* vDecl = isSgVariableDeclaration(SageBuilder::buildVariableDeclaration(SgName("refVar"), SageBuilder::buildIntType(), init, bb));
-  vDecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+  ::SgVariableDeclaration* vDecl = isSgVariableDeclaration(SageBuilder::buildVariableDeclaration(SgName("refVar"), SageBuilder::buildConstType(SageBuilder::buildIntType()), init, bb));
+//  vDecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
   ::SgVarRefExp* vRef = SageBuilder::buildVarRefExp(vDecl);
   ::SgArrayType* a_7 = SageBuilder::buildArrayType(SageBuilder::buildIntType(), vRef);
   ::SgArrayType* a_8 = SageBuilder::buildArrayType(SageBuilder::buildIntType(), vRef);
-  tcRef = SageInterface::checkTypesAreEqual(a_7, a_8);
-  ASSERT_EQ(tcRef, true);
-#endif
+  bool tcRef = SageInterface::checkTypesAreEqual(a_7, a_8);
+  EXPECT_EQ(tcRef, true);
+  delete global;
 }
+#endif
 
-TEST(SageInterfaceTypeEquivalence, ArrayTypesAreUnequal){
+TEST(SageInterfaceTypeEquivalence, IntCharArrayTypesAreUnequal){
   ::SgArrayType* a_1 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(42));
   ::SgArrayType* a_2 = SageBuilder::buildArrayType(SageBuilder::buildIntType(), SageBuilder::buildIntVal(42));
   bool tcRef = SageInterface::checkTypesAreEqual(a_1, a_2);
-  ASSERT_EQ(tcRef, false);
+  EXPECT_EQ(tcRef, false);
+}
 
+TEST(SageInterfaceTypeEquivalence, IntArrayDifferentDimensionAreUnequal){
   ::SgArrayType* a_3 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(42));
   ::SgArrayType* a_4 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(21));
-  tcRef = SageInterface::checkTypesAreEqual(a_3, a_4);
-  ASSERT_EQ(tcRef, false);
+  bool tcRef = SageInterface::checkTypesAreEqual(a_3, a_4);
+  EXPECT_EQ(tcRef, false);
 }
+
+TEST(SageInterfaceTypeEquivalence, ConstCharArrayCharArrayAreUnequal){
+  ::SgArrayType* a_3 = SageBuilder::buildArrayType(SageBuilder::buildCharType(), SageBuilder::buildIntVal(42));
+  ::SgArrayType* a_5 = SageBuilder::buildArrayType(SageBuilder::buildConstType(SageBuilder::buildCharType()), SageBuilder::buildIntVal(42));
+  bool tcRef = SageInterface::checkTypesAreEqual(a_5, a_3);
+  EXPECT_EQ(tcRef, false);
+}
+
+
+/*
+ * Typedef tests
+ */
+TEST(SageInterfaceTypeEquivalence, TypedefTypesAreEqual){
+  ::SgGlobal* global = new SgGlobal();
+  ::SgBasicBlock *bb = SageBuilder::buildBasicBlock();
+  bb->set_parent(global);
+  ::SgTypedefDeclaration* t_1 = SageBuilder::buildTypedefDeclaration("MyInt", SageBuilder::buildIntType(), bb);
+  ::SgTypeInt* t_2 = SageBuilder::buildIntType();
+  bool tcRef = SageInterface::checkTypesAreEqual(t_1->get_type(), t_2);
+  EXPECT_EQ(tcRef, true);
+  delete global;
+}
+
+TEST(SageInterfaceTypeEquivalence, TypedefTypesAreUnequal){
+  ::SgGlobal* global = new SgGlobal();
+  ::SgBasicBlock* bb = SageBuilder::buildBasicBlock();
+  bb->set_parent(global);
+  ::SgTypedefDeclaration* t_1 = SageBuilder::buildTypedefDeclaration("MyInt", SageBuilder::buildIntType(), bb);
+  ::SgTypeChar* t_2 = SageBuilder::buildCharType();
+  bool tcRef = SageInterface::checkTypesAreEqual(t_1->get_type(), t_2);
+  EXPECT_EQ(tcRef, false);
+  delete global;
+}
+
+
+
+
+
