@@ -15,7 +15,7 @@
  *       Fortran types..?
  *       Python types...?
  */
-
+#include <cassert>
 #include "rose.h"
 #include "gtest/gtest.h"
 
@@ -284,7 +284,115 @@ TEST(SageInterfaceTypeEquivalence, TypedefTypesAreUnequal){
   delete global;
 }
 
+//#if 0
+/*
+ *
+ * We now test function type equivalence
+ *
+ * It is basically iterating over the types a function takes and
+ * returns. The naming convention is
+ * Returntype X FunctionArgType1FunctionArgType2Etc
+ * so void foo() has type VoidXVoidFunctionType
+ *
+ */
+TEST(SageInterfaceTypeEquivalence, VoidXIntAndVoidXIntEqual){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildIntType());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, true);
+  delete paramList;
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntIntEqual){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildIntType());
+  paramList->append_argument(SageBuilder::buildIntType());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, true);
+  delete paramList;
+}
 
+TEST(SageInterfaceTypeEquivalence, VoidXCharConstIntAndVoidXCharConstIntEqual){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  ::SgFunctionParameterTypeList *paramList2 = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildCharType());
+  paramList->append_argument(SageBuilder::buildConstType(SageBuilder::buildIntType()));
+  paramList2->append_argument(SageBuilder::buildCharType());
+  paramList2->append_argument(SageBuilder::buildConstType(SageBuilder::buildIntType()));
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList2);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, true);
+  delete paramList;
+}
 
+TEST(SageInterfaceTypeEquivalence, IntXVoidAndIntXVoidEqual){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildVoidType());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildIntType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildIntType(), paramList);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, true);
+  delete paramList;
+}
+
+/*
+ * Function types unequal start
+ */
+
+TEST(SageInterfaceTypeEquivalence, IntXVoidAndConstIntXVoidUnequal){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildVoidType());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildIntType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildConstType(SageBuilder::buildIntType()), paramList);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, false);
+  delete paramList;
+}
+
+TEST(SageInterfaceTypeEquivalence, VoidXVoidAndIntXVoidUnequal){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildVoidType());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildIntType(), paramList);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, false);
+  delete paramList;
+}
+//#endif
+TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntUnequal){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildIntType());
+  paramList->append_argument(SageBuilder::buildIntType());
+  ::SgFunctionParameterTypeList *paramList2 = new SgFunctionParameterTypeList();
+  paramList2->append_argument(SageBuilder::buildIntType());
+  assert(paramList->get_arguments().size() != paramList2->get_arguments().size());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList2);
+  assert(ft1 != ft2);
+  assert(ft1->get_arguments().size() != ft2->get_arguments().size());
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, false);
+  delete paramList;
+  delete paramList2;
+}
+
+TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntConstIntUnequal){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildIntType());
+  paramList->append_argument(SageBuilder::buildIntType());
+  ::SgFunctionParameterTypeList *paramList2 = new SgFunctionParameterTypeList();
+  paramList2->append_argument(SageBuilder::buildIntType());
+  paramList2->append_argument(SageBuilder::buildConstType(SageBuilder::buildIntType()));
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList2);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, false);
+  delete paramList;
+  delete paramList2;
+}
 

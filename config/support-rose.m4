@@ -2175,9 +2175,11 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
-tests/roseTests/sageBuilderTests/Makefile
-tests/roseTests/sageBuilderTests/gtest/Makefile
-tests/roseTests/sageInterfaceTests/Makefile
+tests/roseTests/unitTesting/Makefile
+tests/roseTests/unitTesting/testSupport/Makefile
+tests/roseTests/unitTesting/testSupport/gtest/Makefile
+tests/roseTests/unitTesting/sageBuilderTests/Makefile
+tests/roseTests/unitTesting/sageInterfaceTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
