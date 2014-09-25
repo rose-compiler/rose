@@ -2180,6 +2180,7 @@ tests/roseTests/unitTesting/testSupport/Makefile
 tests/roseTests/unitTesting/testSupport/gtest/Makefile
 tests/roseTests/unitTesting/sageBuilderTests/Makefile
 tests/roseTests/unitTesting/sageInterfaceTests/Makefile
+tests/roseTests/unitTesting/nodeHierarchyTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
