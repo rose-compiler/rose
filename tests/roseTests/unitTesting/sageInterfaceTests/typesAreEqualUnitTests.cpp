@@ -16,8 +16,7 @@
  *       Python types...?
  */
 #include <cassert>
-#include "rose.h"
-#include "gtest/gtest.h"
+#include "testSupport.h"
 
 TEST(SageInterfaceTypeEquivalence, HandlesEmptyInput){
   ::SgTypeInt* int_t1 = SageBuilder::buildIntType();
@@ -365,16 +364,32 @@ TEST(SageInterfaceTypeEquivalence, VoidXVoidAndIntXVoidUnequal){
 }
 //#endif
 TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntUnequal){
+  SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
+  ftt->print_functypetable();
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildIntType());
   paramList->append_argument(SageBuilder::buildIntType());
+  EXPECT_EQ(paramList->get_arguments().size(), 2);
+
   ::SgFunctionParameterTypeList *paramList2 = new SgFunctionParameterTypeList();
   paramList2->append_argument(SageBuilder::buildIntType());
-  assert(paramList->get_arguments().size() != paramList2->get_arguments().size());
+  EXPECT_EQ(paramList2->get_arguments().size(), 1);
+
+
+//  ASSERT_EQ(isNull(ftt), false);
+//  EXPECT_EQ(ftt->get_function_type_table()->size(), 0);
+
   ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+//  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
   ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList2);
-  assert(ft1 != ft2);
-  assert(ft1->get_arguments().size() != ft2->get_arguments().size());
+//  EXPECT_EQ(ftt->get_function_type_table()->size(), 2);
+
+  EXPECT_EQ(ft1->get_arguments().size(), 2);
+  EXPECT_EQ(ft2->get_arguments().size(), 1);
+
+  EXPECT_EQ(ft1->get_argument_list()->get_arguments().size(), 2);
+  EXPECT_EQ(ft2->get_argument_list()->get_arguments().size(), 1);
+
   bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
   EXPECT_EQ(tcRef, false);
   delete paramList;

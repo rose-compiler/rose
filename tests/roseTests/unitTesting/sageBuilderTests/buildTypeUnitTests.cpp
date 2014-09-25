@@ -1,18 +1,14 @@
 /*
  * Unit tests for the SageBuilder build type functions.
  */
-#include "rose.h"
-
-#include "gtest/gtest.h"
+#include "testSupport.h"
 
 TEST(BuildIntTypeTest, ReturnsNotNull){
-  ::SgTypeInt* _nullptr = NULL;
   ::SgTypeInt* t = SageBuilder::buildIntType();
-  EXPECT_NE(_nullptr,t);
+  EXPECT_EQ(isNull(t), false);
 }
 
 TEST(BuildIntTypeTest, IsIntTypeNotNull){
-  ::SgTypeInt* _nullptr = NULL;
   ::SgTypeInt* t = SageBuilder::buildIntType();
-  EXPECT_NE(_nullptr, isSgTypeInt(t));
+  EXPECT_EQ(is<SgTypeInt>(t), true);
 }
