@@ -3,11 +3,13 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 #include "rose_getline.h"
-#include "Combinatorics.h"
+#include <EditDistance/DamerauLevenshtein.h>
 
 #include <cerrno>
 
 #include "lsh.h"
+
+using namespace rose;
 
 std::string argv0;
 
@@ -318,7 +320,7 @@ public:
         vv1.insert(vv1.end(), values.begin(), values.end());
         vv2.insert(vv2.end(), other->values.begin(), other->values.end());
 
-        size_t dl = Combinatorics::damerau_levenshtein_distance(vv1, vv2);
+        size_t dl = EditDistance::damerauLevenshteinDistance(vv1, vv2);
         size_t dl_max = std::max(vv1.size(), vv2.size());
         if (0==dl && 0==dl_max) {
             assert(vv1.empty() && vv2.empty());

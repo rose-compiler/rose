@@ -96,15 +96,17 @@ void
 Partitioner::reportProgress() const {
     // All partitioners share a single progress bar.
     static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
-    if (!bar) {
-        if (0==progressTotal_) {
-            BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_.nodes()) {
-                if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
-                    progressTotal_ += node.key().size();
-            }
+
+    if (0==progressTotal_) {
+        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_.nodes()) {
+            if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
+                progressTotal_ += node.key().size();
         }
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "cfg");
     }
+    
+    if (!bar)
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "cfg");
+
     if (progressTotal_) {
         // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
         // appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also immediately

@@ -77,6 +77,7 @@ Engine::loadSpecimen(SgAsmInterpretation *interp, Disassembler *disassembler) {
         disassembler = Disassembler::lookup(interp);
         if (!disassembler)
             throw std::runtime_error("unable to find an appropriate disassembler");
+        disassembler = disassembler->clone();
     }
     return disassembler;
 }

@@ -19,27 +19,17 @@ struct Options {
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Options &opts) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup switches;
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
-    switches.insert(Switch("help", 'h')
-                    .action(showHelpAndExit(0))
-                    .doc("Shows this documentation and exits."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
-    switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Diagnostics::mfacilities))
-                    .argument("logspec")
-                    .whichValue(SAVE_ALL)
-                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
-    switches.insert(Switch("quiet", 'q')
-                    .intrinsicValue(true, opts.quiet)
-                    .doc("Suppresses the hexdump output."));
-    switches.insert(Switch("binary", 'b')
-                    .argument("prefix", anyParser(opts.prefix))
-                    .doc("Causes files to be created that contain the raw memory from loading the S-Records. The file "
-                         "names are constructed from the specified @v{prefix} and an 8-character hexadecimal string "
-                         "which is the starting address for a contiguous region of memory."));
+    SwitchGroup tool("Tool-specific switches");
+    tool.insert(Switch("quiet", 'q')
+                .intrinsicValue(true, opts.quiet)
+                .doc("Suppresses the hexdump output."));
+    tool.insert(Switch("binary", 'b')
+                .argument("prefix", anyParser(opts.prefix))
+                .doc("Causes files to be created that contain the raw memory from loading the S-Records. The file "
+                     "names are constructed from the specified @v{prefix} and an 8-character hexadecimal string "
+                     "which is the starting address for a contiguous region of memory."));
 
     Parser parser;
     parser.errorStream(mlog[FATAL]);
@@ -51,7 +41,7 @@ parseCommandLine(int argc, char *argv[], Options &opts) {
                "Reads the ASCII @v{SRecord_File} specified on the command-line, loads it into memory, and then produces "
                "a hexdump and/or binary files for the resulting memory.");
 
-    return parser.with(switches).parse(argc, argv).apply();
+    return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
 
 int

@@ -29,6 +29,9 @@ DisassemblerArm::init()
     set_alignment(4);
     set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_arm7()); // only a default
+
+    REG_IP = *get_registers()->lookup("r15");
+    REG_SP = *get_registers()->lookup("r13");
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the ArmDisassembler name space. */

@@ -115,19 +115,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     using namespace Sawyer::CommandLine;
 
     // Generic switches
-    SwitchGroup gen;
-    gen.doc("General switches:");
-    gen.insert(Switch("help", 'h')
-               .doc("Show this documentation.")
-               .action(showHelpAndExit(0)));
-    gen.insert(Switch("log", 'L')
-               .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
-               .argument("config")
-               .whichValue(SAVE_ALL)
-               .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
-    gen.insert(Switch("version", 'V')
-               .action(showVersionAndExit(version_message(), 0))
-               .doc("Shows version information for various ROSE components and then exits."));
+    SwitchGroup gen = CommandlineProcessing::genericSwitches();
     gen.insert(Switch("use-semantics")
                .intrinsicValue(true, settings.useSemantics)
                .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
@@ -140,8 +128,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .hidden(true));
 
     // Switches for disassembly
-    SwitchGroup dis;
-    dis.doc("Switches for disassembly:");
+    SwitchGroup dis("Disassembly switches");
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
@@ -220,8 +207,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "all, this tool assumes a value of " + StringUtility::plural(settings.deExecuteZeros, "bytes") + "."));
 
     // Switches for HTTP server
-    SwitchGroup server;
-    server.doc("Switches for the HTTP server:");
+    SwitchGroup server("Server switches");
     server.insert(Switch("http-address")
                   .argument("IP-address", anyParser(settings.httpAddress))
                   .doc("IP address to bind to server listening socket. The default is " + settings.httpAddress));

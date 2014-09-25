@@ -623,10 +623,10 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  *
  *  Most I/O methods require that constraints match only contiguous addresses.  If there is an intervening address that does
  *  not satisfy the constraint, including addresses that are not mapped, then the matched range terminates at the non-matching
- *  address.  However, the @ref MATCH_NONCONTIGUOUS flag can be used to relax this, in which case the matched interval of addresses
- *  may include addresses that are not mapped.  Regardless of whether contiguous addresses are required, the returned interval
- *  of addresses will never contain an address that is mapped and does not also satisfy the constraints. I/O operations (read
- *  and write) require contiguous addresses, but some other methods don't. For instance, the expressions
+ *  address.  However, the @c MATCH_NONCONTIGUOUS flag can be used to relax this, in which case the matched interval of
+ *  addresses may include addresses that are not mapped.  Regardless of whether contiguous addresses are required, the returned
+ *  interval of addresses will never contain an address that is mapped and does not also satisfy the constraints. I/O
+ *  operations (read and write) require contiguous addresses, but some other methods don't. For instance, the expressions
  *
  * @code
  *  Interval<Address> found1 = map.within(100,200).require(READABLE).available(MATCH_CONTIGUOUS);
@@ -1023,7 +1023,7 @@ public:
      *  Returns an iterator range for the first longest sequence of segments that all at least partly satisfy the specified
      *  constraints.  Constraints are always matched at the address level and the return value consists of those segments that
      *  contain at least one matched address. Constraints normally match contiguous addresses, and therefore the returned list
-     *  will be segments that are contiguous. Disabling the contiguous constraint with the @ref MATCH_NONCONTIGUOUS flag relaxes
+     *  will be segments that are contiguous. Disabling the contiguous constraint with the @c MATCH_NONCONTIGUOUS flag relaxes
      *  the requirement that addresses be contiguous, although it still enforces that the matched interval contains only
      *  addresses that satisfy the constraints or addresses that are not mapped.
      *
@@ -1072,7 +1072,7 @@ public:
      *  Returns an iterator range for the first longest sequence of interval/segment nodes that all at least partly satisfy the
      *  specified constraints.  Constraints are always matched at the address level and the return value consists of those
      *  nodes that contain at least one matched address. Constraints normally match contiguous addresses, and therefore the
-     *  returned list will be nodes that are contiguous. Disabling the contiguous constraint with the @ref MATCH_NONCONTIGUOUS
+     *  returned list will be nodes that are contiguous. Disabling the contiguous constraint with the @c MATCH_NONCONTIGUOUS
      *  flag relaxes the requirement that addresses be contiguous, although it still enforces that the matched interval
      *  contains only addresses that satisfy the constraints or addresses that are not mapped.
      *
@@ -1195,7 +1195,7 @@ public:
 
     /** Find unmapped interval.
      *
-     *  Searches for the lowest (or highest if direction is @ref MATCH_BACKWARD) interval that is not mapped and returns its
+     *  Searches for the lowest (or highest if direction is @c MATCH_BACKWARD) interval that is not mapped and returns its
      *  address and size.  The returned interval will not contain addresses that are less than (or greater than) than @p
      *  boundary.  If no such unmapped intervals exist then the empty interval is returned.
      *
