@@ -3655,7 +3655,7 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
         rose_addr_t unused_va = std::max(start_va, ui->first.first());
 
         // get the next mapped address, but it might not be unused
-        rose_addr_t mapped_unused_va;
+        rose_addr_t mapped_unused_va = 0;
         if (!map.atOrAfter(unused_va).next().assignTo(mapped_unused_va))
             return NOT_FOUND;                           // no higher mapped address
         if (unused.contains(Extent(mapped_unused_va)))
