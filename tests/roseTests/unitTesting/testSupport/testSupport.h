@@ -1,3 +1,6 @@
+#ifndef ROSETEST_UNITTESTING_TESTSUPPORT
+#define ROSETEST_UNITTESTING_TESTSUPPORT
+
 
 /*
  * File to include to make use of the ROSE unit testing support
@@ -8,28 +11,21 @@
 #include "gtest/gtest.h"
 
 template<typename T>
-bool isNull(SgNode* t){
- return (dynamic_cast<T*>(t) == NULL);
+bool is(SgNode* t){
+ return (dynamic_cast<T*>(t) != NULL);
 }
 
+bool isNull(SgNode* n);
 
 
-void foo(){
+#if 0
+/*
+ * Test fixture which is meant to be used if the user needs a SgProject
+ */
+class EmptyCMainFunctionClassFixture : public ::testing::Test {
+public:
 
-  SgTypeInt *p = SageBuilder::buildIntType();
-  if(isNull<SgTypeInt>(p)){
-    std::cout << "Is not of type int" << std::endl;
-  } else {
-    std::cout << "Is of type int" << std::endl;
-  }
+};
+#endif
 
-  SgTypeChar *pp = SageBuilder::buildCharType();
-  if(isNull<SgTypeInt>(pp)){
-    std::cout << "Is not of type int" << std::endl;
-  } else {
-    std::cout << "Is of type int" << std::endl;
-  }
-
-
-
-}
+#endif
