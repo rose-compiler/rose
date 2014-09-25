@@ -294,8 +294,20 @@ TEST(SageInterfaceTypeEquivalence, TypedefTypesAreUnequal){
  * so void foo() has type VoidXVoidFunctionType
  *
  */
-TEST(SageInterfaceTypeEquivalence, VoidXIntAndVoidXIntEqual){
+TEST_F(CleanFunctionTypeTableFixture, VoidXIntAndVoidXIntEqual){
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildIntType());
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
+  EXPECT_EQ(SgNode::get_globalFunctionTypeTable()->get_function_type_table()->size(), 1);
+  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
+  EXPECT_EQ(tcRef, true);
+  delete paramList;
+}
+
+TEST_F(CleanFunctionTypeTableFixture, VoidXIntIntAndVoidXIntIntEqual){
+  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
+  paramList->append_argument(SageBuilder::buildIntType());
   paramList->append_argument(SageBuilder::buildIntType());
   ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
   ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
@@ -304,18 +316,7 @@ TEST(SageInterfaceTypeEquivalence, VoidXIntAndVoidXIntEqual){
   delete paramList;
 }
 
-TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntIntEqual){
-  ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
-  paramList->append_argument(SageBuilder::buildIntType());
-  paramList->append_argument(SageBuilder::buildIntType());
-  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
-  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
-  bool tcRef = SageInterface::checkTypesAreEqual(ft1, ft2);
-  EXPECT_EQ(tcRef, true);
-  delete paramList;
-}
-
-TEST(SageInterfaceTypeEquivalence, VoidXCharConstIntAndVoidXCharConstIntEqual){
+TEST_F(CleanFunctionTypeTableFixture, VoidXCharConstIntAndVoidXCharConstIntEqual){
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   ::SgFunctionParameterTypeList *paramList2 = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildCharType());
@@ -329,7 +330,7 @@ TEST(SageInterfaceTypeEquivalence, VoidXCharConstIntAndVoidXCharConstIntEqual){
   delete paramList;
 }
 
-TEST(SageInterfaceTypeEquivalence, IntXVoidAndIntXVoidEqual){
+TEST_F(CleanFunctionTypeTableFixture, IntXVoidAndIntXVoidEqual){
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildVoidType());
   ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildIntType(), paramList);
@@ -343,7 +344,7 @@ TEST(SageInterfaceTypeEquivalence, IntXVoidAndIntXVoidEqual){
  * Function types unequal start
  */
 
-TEST(SageInterfaceTypeEquivalence, IntXVoidAndConstIntXVoidUnequal){
+TEST_F(CleanFunctionTypeTableFixture, IntXVoidAndConstIntXVoidUnequal){
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildVoidType());
   ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildIntType(), paramList);
@@ -353,7 +354,7 @@ TEST(SageInterfaceTypeEquivalence, IntXVoidAndConstIntXVoidUnequal){
   delete paramList;
 }
 
-TEST(SageInterfaceTypeEquivalence, VoidXVoidAndIntXVoidUnequal){
+TEST_F(CleanFunctionTypeTableFixture, VoidXVoidAndIntXVoidUnequal){
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildVoidType());
   ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
@@ -363,9 +364,9 @@ TEST(SageInterfaceTypeEquivalence, VoidXVoidAndIntXVoidUnequal){
   delete paramList;
 }
 //#endif
-TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntUnequal){
+TEST_F(CleanFunctionTypeTableFixture, VoidXIntIntAndVoidXIntUnequal){
   SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
-  ftt->print_functypetable();
+
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildIntType());
   paramList->append_argument(SageBuilder::buildIntType());
@@ -375,14 +376,8 @@ TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntUnequal){
   paramList2->append_argument(SageBuilder::buildIntType());
   EXPECT_EQ(paramList2->get_arguments().size(), 1);
 
-
-//  ASSERT_EQ(isNull(ftt), false);
-//  EXPECT_EQ(ftt->get_function_type_table()->size(), 0);
-
-  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList);
-//  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
-  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), paramList2);
-//  EXPECT_EQ(ftt->get_function_type_table()->size(), 2);
+  ::SgFunctionType *ft1 = SageBuilder::buildFunctionType(SageBuilder::buildBoolType(), paramList);
+  ::SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildBoolType(), paramList2);
 
   EXPECT_EQ(ft1->get_arguments().size(), 2);
   EXPECT_EQ(ft2->get_arguments().size(), 1);
@@ -396,7 +391,7 @@ TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntUnequal){
   delete paramList2;
 }
 
-TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntConstIntUnequal){
+TEST_F(CleanFunctionTypeTableFixture, VoidXIntIntAndVoidXIntConstIntUnequal){
   ::SgFunctionParameterTypeList *paramList = new SgFunctionParameterTypeList();
   paramList->append_argument(SageBuilder::buildIntType());
   paramList->append_argument(SageBuilder::buildIntType());
@@ -410,4 +405,5 @@ TEST(SageInterfaceTypeEquivalence, VoidXIntIntAndVoidXIntConstIntUnequal){
   delete paramList;
   delete paramList2;
 }
+
 

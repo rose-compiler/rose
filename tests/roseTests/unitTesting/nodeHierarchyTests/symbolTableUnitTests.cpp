@@ -1,11 +1,17 @@
 #include "testSupport.h"
 
-TEST(GlobalTypeTableTest, GetsConstructed){
+TEST_F(CleanFunctionTypeTableFixture, GetsConstructed){
   SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
   ASSERT_EQ(isNull(ftt), false);
 }
 
-TEST(GlobalTypeTableTest, ConstructFunctionTypeIncreasesSizeByOne){
+TEST(GlobalTypeTableTest, EmptyTypeTableCanPrintItself){
+  SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
+  ftt->print_functypetable();
+  SUCCEED();
+}
+
+TEST_F(CleanFunctionTypeTableFixture, ConstructFunctionTypeIncreasesSizeByOne){
   SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
   ASSERT_EQ(isNull(ftt), false);
   EXPECT_EQ(ftt->get_function_type_table()->size(), 0);
@@ -13,6 +19,19 @@ TEST(GlobalTypeTableTest, ConstructFunctionTypeIncreasesSizeByOne){
   params->append_argument(SageBuilder::buildIntType());
   SgFunctionType *ft = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params);
   EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
+}
+
+TEST_F(CleanFunctionTypeTableFixture, ConstructFunctionTypeTwiceIncreasesSizeByOne){
+  SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
+  ASSERT_EQ(isNull(ftt), false);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 0);
+  SgFunctionParameterTypeList *params = new SgFunctionParameterTypeList();
+  params->append_argument(SageBuilder::buildIntType());
+  SgFunctionType *ft = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
+  SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
+  EXPECT_EQ(ft, ft2);
 }
 
 TEST(SymbolTableTest, DefaultConstructorWorks){

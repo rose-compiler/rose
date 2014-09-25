@@ -9,6 +9,7 @@
 
 #include "rose.h"
 #include "gtest/gtest.h"
+#include <cassert>
 
 template<typename T>
 bool is(SgNode* t){
@@ -18,14 +19,23 @@ bool is(SgNode* t){
 bool isNull(SgNode* n);
 
 
-#if 0
 /*
- * Test fixture which is meant to be used if the user needs a SgProject
+ * This Fixture provides the user with a cleaned SgFunctionTypeTable
  */
-class EmptyCMainFunctionClassFixture : public ::testing::Test {
+class CleanFunctionTypeTableFixture : public ::testing::Test {
 public:
 
+  CleanFunctionTypeTableFixture(){
+    // Dirty hack to overcome the global variable in ROSE..
+    SgFunctionTypeTable *p = SgNode::get_globalFunctionTypeTable();
+    assert(p != NULL);
+    SgSymbolTable * pp = p->get_function_type_table();
+    while(pp->size() > 0){
+      pp->remove(pp->find_any());
+    }
+    assert(pp->size() == 0);
+  }
+
 };
-#endif
 
 #endif
