@@ -25,7 +25,7 @@
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
-#include "DisassemblerArm.h"
+#include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
@@ -44,39 +44,6 @@ static Sawyer::Message::Facility mlog; // diagnostics at the tool level; initial
 
 enum DisassembleDriver { DDRIVE_PD, DDRIVE_DP, DDRIVE_D, DDRIVE_NONE };
 enum SyscallMethod { SYSCALL_NONE, SYSCALL_LINUX32 };
-
-/* Return a suitable disassembler by name. */
-static Disassembler *
-get_disassembler(const std::string &name)
-{
-    if (0==name.compare("list")) {
-        std::cout <<"recognized disassembler names are:\n"
-                  <<"  arm      - ARM\n"
-                  <<"  ppc      - PowerPC\n"
-                  <<"  mips     - MIPS\n"
-                  <<"  i386     - Intel x86 32-bit\n"
-                  <<"  amd64    - Intel x86 64-bit\n"
-                  <<"  m68k     - Motorola M68040\n"
-                  <<"  coldfire - Freescale ColdFire\n";
-        exit(0);
-    } else if (0==name.compare("arm")) {
-        return new DisassemblerArm();
-    } else if (0==name.compare("ppc")) {
-        return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
-    } else if (0==name.compare("i386")) {
-        return new DisassemblerX86(4);
-    } else if (0==name.compare("amd64")) {
-        return new DisassemblerX86(8);
-    } else if (0==name.compare("m68k")) {
-        return new DisassemblerM68k(m68k_68040);
-    } else if (0==name.compare("coldfire")) {
-        return new DisassemblerM68k(m68k_freescale_emac);
-    } else {
-        return NULL;
-    }
-}
 
 /* Convert a SHA1 digest to a string. */
 std::string
@@ -1133,7 +1100,7 @@ main(int argc, char *argv[])
 
     Disassembler *disassembler = NULL;
     if (!isa.empty()) {
-        disassembler = get_disassembler(isa);
+        disassembler = Disassembler::lookup(isa);
         if (!disassembler) {
             mlog[ERROR] <<"invalid isa specified on command line: " <<isa <<"\n";
             exit(1);

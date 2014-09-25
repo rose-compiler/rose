@@ -210,6 +210,39 @@ Disassembler::lookup(SgAsmGenericHeader *header)
     throw Exception("no disassembler for architecture");
 }
 
+// Class method
+Disassembler *
+Disassembler::lookup(const std::string &name)
+{
+    if (0==name.compare("list")) {
+        std::cout <<"The following ISAs are supported:\n"
+                  <<"  amd64\n"
+                  <<"  arm\n"
+                  <<"  coldfire\n"
+                  <<"  i386\n"
+                  <<"  m68040\n"
+                  <<"  mips\n"
+                  <<"  ppc\n";
+        exit(0);
+    } else if (0==name.compare("arm")) {
+        return new DisassemblerArm();
+    } else if (0==name.compare("ppc")) {
+        return new DisassemblerPowerpc();
+    } else if (0==name.compare("mips")) {
+        return new DisassemblerMips();
+    } else if (0==name.compare("i386")) {
+        return new DisassemblerX86(4);
+    } else if (0==name.compare("amd64")) {
+        return new DisassemblerX86(8);
+    } else if (0==name.compare("m68040")) {
+        return new DisassemblerM68k(m68k_68040);
+    } else if (0==name.compare("coldfire")) {
+        return new DisassemblerM68k(m68k_freescale_emacb);
+    } else {
+        throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
+    }
+}
+
 /* High-level function for disassembling a whole interpretation. */
 void
 Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, BadMap *bad)

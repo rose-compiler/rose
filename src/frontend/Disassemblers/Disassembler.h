@@ -273,6 +273,10 @@ public:
      *  particularly the list of file headers referenced by the interpretation. */
     static Disassembler *lookup(SgAsmInterpretation*);
 
+    /** Finds a suitable disassembler.  Looks up a common disassembler by name.  If the name is the word "list" then a
+     *  list of known names is printed to <code>std::cout</code>. */
+    static Disassembler *lookup(const std::string&);
+
     /** Creates a new copy of a disassembler. The new copy has all the same settings as the original.
      *
      *  Thread safety: The thread safety of this virtual method depends on the implementation in the subclass. */
