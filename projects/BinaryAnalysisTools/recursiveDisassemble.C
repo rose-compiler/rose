@@ -4,11 +4,7 @@
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
 #include <BinaryLoader.h>
-#include <DisassemblerArm.h>
-#include <DisassemblerPowerpc.h>
-#include <DisassemblerMips.h>
-#include <DisassemblerX86.h>
-#include <DisassemblerM68k.h>
+#include <Disassembler.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
@@ -16,6 +12,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
+#include <sawyer/Stopwatch.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -42,44 +39,11 @@ using namespace rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
-static Disassembler *
-getDisassembler(const std::string &name)
-{
-    if (0==name.compare("list")) {
-        std::cout <<"The following ISAs are supported:\n"
-                  <<"  amd64\n"
-                  <<"  arm\n"
-                  <<"  coldfire\n"
-                  <<"  i386\n"
-                  <<"  m68040\n"
-                  <<"  mips\n"
-                  <<"  ppc\n";
-        exit(0);
-    } else if (0==name.compare("arm")) {
-        return new DisassemblerArm();
-    } else if (0==name.compare("ppc")) {
-        return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
-    } else if (0==name.compare("i386")) {
-        return new DisassemblerX86(4);
-    } else if (0==name.compare("amd64")) {
-        return new DisassemblerX86(8);
-    } else if (0==name.compare("m68040")) {
-        return new DisassemblerM68k(m68k_68040);
-    } else if (0==name.compare("coldfire")) {
-        return new DisassemblerM68k(m68k_freescale_emacb);
-    } else {
-        throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
-    }
-}
-
 static const rose_addr_t NO_ADDRESS(-1);
 
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;                                // instruction set architecture name
-    rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
     size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
     bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
@@ -96,7 +60,7 @@ struct Settings {
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
     Settings()
-        : mapVa(NO_ADDRESS), deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
+        : deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
           doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
           doShowStats(false), doListUnused(false) {}
@@ -126,11 +90,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-    dis.insert(Switch("map")
-               .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
-               .doc("If this switch is present, then the specimen is treated as raw data and mapped in its entirety "
-                    "into the address space beginning at the address specified for this switch. Otherwise the file "
-                    "is interpreted as an ELF or PE container."));
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
                .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
@@ -269,9 +228,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     parser
         .purpose("tests new partitioner architecture")
         .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_name}")
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
         .doc("description",
-             "This program tests the new partitioner architecture by disassembling the specified file.");
+             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
+        .doc("Specimens",
+             "The binary specimen can be constructed from files in two ways."
+             "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
+             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
+             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
+             "string. " + MemoryMap::insertFileDocumentation() + "}"
+             "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
+             "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.");
     
     return parser.with(gen).with(dis).with(out).parse(argc, argv).apply();
 }
@@ -362,45 +329,32 @@ int main(int argc, char *argv[]) {
     // Parse the command-line
     Settings settings;
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
+    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
     Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
-        disassembler = getDisassembler(settings.isaName);// do this before we check for positional arguments (for --isa=list)
-    if (positionalArgs.empty())
+        disassembler = Disassembler::lookup(settings.isaName);
+    if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
-    if (positionalArgs.size()>1)
-        throw std::runtime_error("too many specimens specified; see --help");
-    std::string specimenName = positionalArgs[0];
 
     // Create an engine to drive the partitioning.  This is entirely optional.  All an engine does is define the sequence of
     // partitioning calls that need to be made in order to recognize instructions, basic blocks, data blocks, and functions.
     // We instantiate the engine early because it has some nice methods that we can use.
     P2::Engine engine;
 
-    // Load the specimen as raw data or an ELF or PE container
-    SgAsmInterpretation *interp = NULL;
-    MemoryMap map;
-    if (settings.mapVa!=NO_ADDRESS) {
-        if (!disassembler)
+    // Load the specimen as raw data or an ELF or PE container.
+    MemoryMap map = engine.loadSpecimen(specimenNames);
+    SgAsmInterpretation *interp = SageInterface::getProject() ?
+                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
+                                  NULL;
+
+    // Obtain a suitable disassembler if none was specified on the command-line
+    if (!disassembler) {
+        if (!interp)
             throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        size_t nBytesMapped = map.insertFile(specimenName, settings.mapVa);
-        if (0==nBytesMapped)
-            throw std::runtime_error("problem reading file: " + specimenName);
-        map.at(settings.mapVa).limit(nBytesMapped).changeAccess(MemoryMap::EXECUTABLE, 0);
-    } else {
-        std::vector<std::string> args;
-        args.push_back(argv[0]);
-        args.push_back("-rose:binary");
-        args.push_back("-rose:read_executable_file_format_only");
-        args.push_back(specimenName);
-        SgProject *project = frontend(args);
-        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-        if (interps.empty())
-            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-        interp = interps.back();    // windows PE is always after DOS
-        disassembler = engine.loadSpecimen(interp, disassembler);
-        ASSERT_not_null(interp->get_map());
-        map = *interp->get_map();
+        disassembler = Disassembler::lookup(interp);
+        if (!disassembler)
+            throw std::runtime_error("unable to find an appropriate disassembler");
+        disassembler = disassembler->clone();
     }
     disassembler->set_progress_reporting(-1.0);         // turn it off
 
@@ -427,6 +381,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
+    Stream info(mlog[INFO] <<"Disassembling and partitioning");
+    Sawyer::Stopwatch partitionTime;
     P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
     partitioner.enableSymbolicSemantics(settings.useSemantics);
     if (settings.findSwitchCases)
@@ -439,7 +395,10 @@ int main(int argc, char *argv[]) {
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
     if (false)
         makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
-    partitioner.memoryMap().dump(std::cout);            // show what we'll be working on
+
+    // Show what we'll be working on (stdout for the record, and diagnostics also)
+    partitioner.memoryMap().dump(std::cout);
+    partitioner.memoryMap().dump(mlog[INFO]);
 
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.
@@ -467,6 +426,7 @@ int main(int argc, char *argv[]) {
     // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
     engine.postPartitionFixups(partitioner, interp);
 
+    info <<"; completed in " <<partitionTime <<" seconds.\n";
     SgAsmBlock *globalBlock = NULL;
 
     //-------------------------------------------------------------- 

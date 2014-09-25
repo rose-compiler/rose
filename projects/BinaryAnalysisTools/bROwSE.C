@@ -90,7 +90,6 @@ static const rose_addr_t NO_ADDRESS(-1);
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;                                // instruction set architecture name
-    rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
     size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
     bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
@@ -103,7 +102,7 @@ struct Settings {
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
     std::string docRoot;                                // document root directory for HTTP server
     Settings()
-        : mapVa(NO_ADDRESS), deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
+        : deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
           httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };
@@ -132,11 +131,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-    dis.insert(Switch("map")
-               .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
-               .doc("If this switch is present, then the specimen is treated as raw data and mapped in its entirety "
-                    "into the address space beginning at the address specified for this switch. Otherwise the file "
-                    "is interpreted as an ELF or PE container."));
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
                .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
@@ -223,9 +217,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     parser
         .purpose("binary ROSE on-line workbench for specimen exploration")
         .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_name}")
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
         .doc("description",
-             "This is a web server for viewing the contents of a binary specimen.");
+             "This is a web server for viewing the contents of a binary specimen.")
+        .doc("Specimens",
+             "The binary specimen can be constructed from files in two ways."
+             "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
+             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
+             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
+             "string. " + MemoryMap::insertFileDocumentation() + "}"
+             "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
+             "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.");
     
     return parser.with(gen).with(dis).with(server).parse(argc, argv).apply();
 }
@@ -1413,44 +1415,32 @@ int main(int argc, char *argv[]) {
     // Parse the command-line
     Settings settings;
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
+    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
     Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
         disassembler = getDisassembler(settings.isaName);// do this before we check for positional arguments (for --isa=list)
-    if (positionalArgs.empty())
+    if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
-    if (positionalArgs.size()>1)
-        throw std::runtime_error("too many specimens specified; see --help");
-    std::string specimenName = positionalArgs[0];
 
     // Load the specimen as raw data or an ELF or PE container
     P2::Engine engine;
-    SgAsmInterpretation *interp = NULL;
-    MemoryMap map;
-    if (settings.mapVa!=NO_ADDRESS) {
-        if (!disassembler)
+    MemoryMap map = engine.loadSpecimen(specimenNames);
+    P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
+    SgAsmInterpretation *interp = SageInterface::getProject() ?
+                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
+                                  NULL;
+
+    // Obtain a suitable disassembler if none was specified on the command-line
+    if (!disassembler) {
+        if (!interp)
             throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        size_t nBytesMapped = map.insertFile(specimenName, settings.mapVa);
-        if (0==nBytesMapped)
-            throw std::runtime_error("problem reading file: " + specimenName);
-        map.at(settings.mapVa).limit(nBytesMapped).changeAccess(MemoryMap::EXECUTABLE, 0);
-    } else {
-        std::vector<std::string> args;
-        args.push_back(argv[0]);
-        args.push_back("-rose:binary");
-        args.push_back("-rose:read_executable_file_format_only");
-        args.push_back(specimenName);
-        SgProject *project = frontend(args);
-        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-        if (interps.empty())
-            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-        interp = interps.back();    // windows PE is always after DOS
-        disassembler = engine.loadSpecimen(interp, disassembler);
-        ASSERT_not_null(interp->get_map());
-        map = *interp->get_map();
+        disassembler = Disassembler::lookup(interp);
+        if (!disassembler)
+            throw std::runtime_error("unable to find an appropriate disassembler");
+        disassembler = disassembler->clone();
     }
     disassembler->set_progress_reporting(-1.0);         // turn it off
-    P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
+
 
     // Create the partitioner
     P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
