@@ -28,8 +28,7 @@ libroseutil_la_SOURCES =			\
 	compilationFileDatabase.C		\
 	processSupport.C			\
 	rose_getline.C				\
-	rose_strtoull.C				\
-	Stopwatch.C
+	rose_strtoull.C
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
@@ -54,8 +53,7 @@ pkginclude_HEADERS =				\
 	rose_paths.h				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
-	setup.h						\
-	Stopwatch.h
+	setup.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
@@ -72,6 +70,7 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/ProgressBar.C			\
 	sawyer/Sawyer.C				\
 	sawyer/SmallObject.C			\
+	sawyer/Stopwatch.C			\
 	sawyer/useHeaders.C
 nobase_pkginclude_HEADERS   =			\
 	sawyer/Access.h				\
@@ -106,6 +105,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/SmallObject.h			\
 	sawyer/Stack.h				\
 	sawyer/StaticBuffer.h			\
+	sawyer/Stopwatch.h			\
 	sawyer/WarningsOff.h			\
 	sawyer/WarningsRestore.h
 EXTRA_DIST += sawyer/CMakeLists.txt
