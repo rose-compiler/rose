@@ -58,10 +58,47 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
     return createGenericPartitioner(disassembler, map);
 }
 
-Disassembler*
-Engine::loadSpecimen(SgAsmInterpretation *interp, Disassembler *disassembler) {
+MemoryMap
+Engine::loadSpecimen(const std::vector<std::string> &fileNames) {
+    MemoryMap map;
+    SgAsmInterpretation *interp = NULL;
+
+    // Load the binary container files with single call to frontend()
+    std::vector<std::string> frontendNames;
+    BOOST_FOREACH (const std::string &fileName, fileNames) {
+        if (!boost::starts_with(fileName, "map:"))
+            frontendNames.push_back(fileName);
+    }
+    if (!frontendNames.empty()) {
+        std::vector<std::string> frontendArgs;
+        frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
+        frontendArgs.push_back("-rose:binary");
+        frontendArgs.push_back("-rose:read_executable_file_format_only");
+        frontendArgs.insert(frontendArgs.end(), frontendNames.begin(), frontendNames.end());
+        SgProject *project = frontend(frontendArgs);
+        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
+        if (interps.empty())
+            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
+        interp = interps.back();    // windows PE is always after DOS
+        loadSpecimen(interp);
+        ASSERT_not_null(interp->get_map());
+        map = *interp->get_map();
+    }
+
+    // Load raw binary files
+    BOOST_FOREACH (const std::string &fileName, fileNames) {
+        if (boost::starts_with(fileName, "map:")) {
+            std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
+            map.insertFile(resource);
+        }
+    }
+
+    return map;
+}
+
+void
+Engine::loadSpecimen(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
-    // Load the specimen to map it into memory if necessary, but do not link (the user would have done that if they wanted it)
     if (NULL==interp->get_map()) {
         BinaryLoader *loader = BinaryLoader::lookup(interp);
         if (!loader)
@@ -71,15 +108,15 @@ Engine::loadSpecimen(SgAsmInterpretation *interp, Disassembler *disassembler) {
         ASSERT_not_null2(interp->get_map(), "BinaryLoader failed to produce a memory map");
         delete loader;
     }
+}
 
-    // Obtain a disassembler to provide us with instructions and architecture information
-    if (!disassembler) {
-        disassembler = Disassembler::lookup(interp);
-        if (!disassembler)
-            throw std::runtime_error("unable to find an appropriate disassembler");
-        disassembler = disassembler->clone();
-    }
-    return disassembler;
+Disassembler*
+Engine::allocateDisassembler(SgAsmInterpretation *interp) {
+    ASSERT_not_null(interp);
+    Disassembler *disassembler = Disassembler::lookup(interp);
+    if (!disassembler)
+        throw std::runtime_error("unable to find an appropriate disassembler");
+    return disassembler->clone();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +127,8 @@ SgAsmBlock*
 Engine::partition(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
 
-    Disassembler *disassembler = loadSpecimen(interp);
+    loadSpecimen(interp);
+    Disassembler *disassembler = allocateDisassembler(interp);
     disassembler->set_progress_reporting(-1.0);         // turn it off
 
     MemoryMap map = *interp->get_map();
@@ -146,7 +184,8 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
 void
 Engine::postPartitionFixups(Partitioner &partitioner, SgAsmInterpretation *interp) {
-    ModulesPe::nameImportThunks(partitioner, interp);
+    if (interp)
+        ModulesPe::nameImportThunks(partitioner, interp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,8 +230,10 @@ Engine::makeEntryFunctions(Partitioner &partitioner, SgAsmInterpretation *interp
 std::vector<Function::Ptr>
 Engine::makeErrorHandlingFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> retval;
-    BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findErrorHandlingFunctions(interp))
-        insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    if (interp) {
+        BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findErrorHandlingFunctions(interp))
+            insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    }
     return retval;
 }
 
@@ -200,16 +241,16 @@ Engine::makeErrorHandlingFunctions(Partitioner &partitioner, SgAsmInterpretation
 std::vector<Function::Ptr>
 Engine::makeImportFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> retval;
-
-    // Windows PE imports
-    ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
-    BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp))
-        insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    if (interp) {
+        // Windows PE imports
+        ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
+        BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp))
+            insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
     
-    // ELF imports
-    BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findPltFunctions(partitioner, interp))
-        insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
-
+        // ELF imports
+        BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findPltFunctions(partitioner, interp))
+            insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    }
     return retval;
 }
 
@@ -217,8 +258,10 @@ Engine::makeImportFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
 std::vector<Function::Ptr>
 Engine::makeExportFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> retval;
-    BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findExportFunctions(partitioner, interp))
-        insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    if (interp) {
+        BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findExportFunctions(partitioner, interp))
+            insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    }
     return retval;
 }
 
@@ -226,8 +269,10 @@ Engine::makeExportFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
 std::vector<Function::Ptr>
 Engine::makeSymbolFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> retval;
-    BOOST_FOREACH (const Function::Ptr &function, Modules::findSymbolFunctions(partitioner, interp))
-        insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    if (interp) {
+        BOOST_FOREACH (const Function::Ptr &function, Modules::findSymbolFunctions(partitioner, interp))
+            insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+    }
     return retval;
 }
 
