@@ -2,16 +2,16 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS=gtest
 
-bin_PROGRAMS= testSupportTest
+lib_LTLIBRARIES = libroseUnitTestSupport.la
 
-testSupportTest_SOURCES=testSupportTest.cpp
+libroseUnitTestSupport_la_SOURCES= \
+  testSupport.cpp
 
-testSupportTest_CXXFLAGS= \
+libroseUnitTestSupport_la_CXXFLAGS= \
   -I$(srcdir) \
   -I$(srcdir)/gtest/include \
   $(ROSE_INCLUDES)
 
-testSupportTest_LDADD= \
-  $(builddir)/gtest/lib/libgtest.la \
-  $(builddir)/gtest/lib/libgtest_main.la \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+libroseUnitTestSupport_la_LIBADD= \
+  $(builddir)/gtest/lib/libgtest.la
+
