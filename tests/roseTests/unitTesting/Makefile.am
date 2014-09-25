@@ -5,3 +5,8 @@ SUBDIRS = \
   sageBuilderTests \
   sageInterfaceTests \
   nodeHierarchyTests
+
+TESTS = \
+  sageBuilderTests/sageBuilderTest \
+  sageInterfaceTests/sageInterfaceTest \
+  nodeHierarchyTests/nodeHierarchyTest

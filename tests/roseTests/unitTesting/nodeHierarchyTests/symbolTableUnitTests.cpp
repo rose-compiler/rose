@@ -52,7 +52,5 @@ TEST(SymbolTableTest, InsertNameWithNullSymbol){
   SgSymbolTable *p = new SgSymbolTable();
   const SgName foo("foo");
   EXPECT_EQ(p->size(), 0);
-  p->insert(foo, NULL);
-  EXPECT_EQ(p->size(), 1);
-  EXPECT_EQ(p->exists(foo), true);
+  EXPECT_DEATH(p->insert(foo, NULL), "");
 }
