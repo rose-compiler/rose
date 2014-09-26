@@ -63,7 +63,7 @@ class Data {
     static bool equal(Data * d1, Data * d2);
 
   public:
-    Data(SgVariableSymbol * variable, size_t dims = 0);
+    Data(SgVariableSymbol * variable, SgType * base_type);
     virtual ~Data();
 
     void addSection(const section_t & section) { p_sections.push_back(section); }
@@ -120,61 +120,13 @@ void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::s
 //////////////////////////////////////////////////////////////////////////////////////
 
 template <class Annotation>
-Data<Annotation>::Data(SgVariableSymbol * variable, size_t dims) :
+Data<Annotation>::Data(SgVariableSymbol * variable, SgType * base_type) :
   p_variable_symbol(variable),
-  p_base_type(NULL),
+  p_base_type(base_type),
   p_sections(),
   p_data_distribution(),
   annotations()
-{
-  p_base_type = p_variable_symbol->get_type();
-
-  size_t nbr_dims = dims;
-
-  if (nbr_dims == 0) {
-    SgPointerType * ptr_type = isSgPointerType(p_base_type);
-    SgArrayType   * arr_type = isSgArrayType(p_base_type);
-    size_t cnt = 0;
-
-    while (ptr_type != NULL || arr_type != NULL) {
-      assert(ptr_type != NULL xor arr_type != NULL);
-
-      if (ptr_type != NULL) {
-        section_t section;
-          section.lower_bound = SageBuilder::buildIntVal(0);
-          section.size = NULL;
-          section.stride = NULL;
-        p_base_type = ptr_type->get_base_type();
-      }
-      if (arr_type != NULL) {
-        section_t section;
-          section.lower_bound = SageBuilder::buildIntVal(0);
-          section.size = arr_type->get_index();
-          section.stride = NULL;
-        p_base_type = arr_type->get_base_type();
-      }
-
-      ptr_type = isSgPointerType(p_base_type);
-      arr_type = isSgArrayType(p_base_type);
-      cnt++;
-    }
-  }
-  else {
-    SgPointerType * ptr_type = isSgPointerType(p_base_type);
-    SgArrayType   * arr_type = isSgArrayType(p_base_type);
-    size_t cnt = 0;
-
-    while ((ptr_type != NULL || arr_type != NULL) && cnt < nbr_dims) {
-      assert(ptr_type != NULL xor arr_type != NULL);
-      if (ptr_type != NULL) p_base_type = ptr_type->get_base_type();
-      if (arr_type != NULL) p_base_type = arr_type->get_base_type();
-      ptr_type = isSgPointerType(p_base_type);
-      arr_type = isSgArrayType(p_base_type);
-      cnt++;
-    }
-    assert(cnt == nbr_dims);
-  }
-}
+{}
 
 template <class Annotation>
 Data<Annotation>::~Data() {}
