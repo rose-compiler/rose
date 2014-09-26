@@ -25,16 +25,7 @@ bool isNull(SgNode* n);
 class CleanFunctionTypeTableFixture : public ::testing::Test {
 public:
 
-  CleanFunctionTypeTableFixture(){
-    // Dirty hack to overcome the global variable in ROSE..
-    SgFunctionTypeTable *p = SgNode::get_globalFunctionTypeTable();
-    assert(p != NULL);
-    SgSymbolTable * pp = p->get_function_type_table();
-    while(pp->size() > 0){
-      pp->remove(pp->find_any());
-    }
-    assert(pp->size() == 0);
-  }
+  CleanFunctionTypeTableFixture();
 
 };
 

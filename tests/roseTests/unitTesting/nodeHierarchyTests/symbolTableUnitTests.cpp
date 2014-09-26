@@ -34,6 +34,35 @@ TEST_F(CleanFunctionTypeTableFixture, ConstructFunctionTypeTwiceIncreasesSizeByO
   EXPECT_EQ(ft, ft2);
 }
 
+TEST_F(CleanFunctionTypeTableFixture, ConstructFunctionTypeWithTwoArgumentsTwiceIncreasesSizeByOne){
+  SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
+  ASSERT_EQ(isNull(ftt), false);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 0);
+  SgFunctionParameterTypeList *params = new SgFunctionParameterTypeList();
+  params->append_argument(SageBuilder::buildIntType());
+  params->append_argument(SageBuilder::buildIntType());
+  SgFunctionType *ft = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
+  SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
+  EXPECT_EQ(ft, ft2);
+}
+
+TEST_F(CleanFunctionTypeTableFixture, ConstructTwoDifferentFunctionsIncreasesSizeByTwo){
+  SgFunctionTypeTable *ftt = SgNode::get_globalFunctionTypeTable();
+  ASSERT_EQ(isNull(ftt), false);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 0);
+  SgFunctionParameterTypeList *params = new SgFunctionParameterTypeList();
+  params->append_argument(SageBuilder::buildIntType());
+  params->append_argument(SageBuilder::buildIntType());
+  SgFunctionType *ft = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 1);
+  SgFunctionParameterTypeList *params2 = new SgFunctionParameterTypeList();
+  params->append_argument(SageBuilder::buildIntType());
+  SgFunctionType *ft2 = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), params2);
+  EXPECT_EQ(ftt->get_function_type_table()->size(), 2);
+}
+
 TEST(SymbolTableTest, DefaultConstructorWorks){
   SgSymbolTable *p = new SgSymbolTable();
   ASSERT_EQ(isNull(p), false);
