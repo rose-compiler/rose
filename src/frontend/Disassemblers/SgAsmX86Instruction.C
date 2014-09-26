@@ -13,6 +13,11 @@
 using namespace rose;                                   // temporary until this lives in "rose"
 using namespace rose::Diagnostics;
 
+unsigned
+SgAsmx86Instruction::get_anyKind() const {
+    return p_kind;
+}
+
 // see base class
 bool
 SgAsmx86Instruction::terminates_basic_block() {

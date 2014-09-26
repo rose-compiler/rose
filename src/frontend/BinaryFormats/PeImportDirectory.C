@@ -91,7 +91,7 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
     /* Read the import directory from disk via loader map. */
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    size_t nread = fhdr->get_loader_map()->read(&disk, idir_va, sizeof disk);
+    size_t nread = fhdr->get_loader_map()->readQuick(&disk, idir_va, sizeof disk);
     if (nread!=sizeof disk) {
         SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read (%zu byte%s) of directory "
                                           "at va 0x%08"PRIx64" (needed %zu bytes)\n",
