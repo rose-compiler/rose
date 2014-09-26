@@ -1,20 +1,36 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+noinst_PROGRAMS =
 
 INCLUDES = $(ROSE_INCLUDES) 
 
-noinst_PROGRAMS = astDiff
+#---------------------------------------------------------
+# Source demo
 
-# shortestPathBoostExample
+noinst_PROGRAMS += astDiff
+astDiff_SOURCES =				\
+        astDiff.C 				\
+        sequenceGeneration.C 			\
+        treeIsomorphism.C 			\
+        sequenceAlignment.C 			\
+        heatMap.C 				\
+        attributeSupport.C 			\
+        treeEditDistance.C			\
+        commandLine.C
+astDiff_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-astDiff_SOURCES = astDiff.C sequenceGeneration.C treeIsomorphism.C sequenceAlignment.C heatMap.C attributeSupport.C treeEditDistance.C
+#---------------------------------------------------------
+# Binary demo
 
-# Files not required:
-# treeDiff.C
-# labelTrace.C
+noinst_PROGRAMS += astDiffBinary
+astDiffBinary_SOURCES =				\
+	astDiffBinary.C				\
+	sequenceGeneration.C			\
+	treeEditDistance.C			\
+	commandLine.C
 
-astDiff_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+astDiffBinary_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-
+#---------------------------------------------------------
 # shortestPathBoostExample_SOURCES = shortestPathBoostExample.C
 # shortestPathBoostExample_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
@@ -103,7 +119,7 @@ check-local:
 EXTRA_DIST = CMakeLists.txt #astEquivalenceGraphForBinaryCode3.png
 
 clean-local:
-	rm -f *.o rose_*.[s] rose_*.? *.dot *.png *.pdf *~ *.ps *.out *.new *.dump sqlite-database-name.* *.stderr *.stdout *.exe testProgram rose_performance_report_lockfile.lock
+	rm -f output-local.dot output-rose.dot output1.png output2.png
 	rm -f testProgram_1  testProgram_2
 	rm -rf QMTest
 

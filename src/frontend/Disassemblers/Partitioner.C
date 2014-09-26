@@ -237,7 +237,7 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
             this->ro_map = *ro_map;
         } else {
             this->ro_map = *map;
-            this->ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
+            this->ro_map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
         }
     } else {
         this->ro_map.clear();
@@ -294,13 +294,13 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                 rose_addr_t base_va = cell->get_address()->get_number();
                 size_t nentries = 0;
                 while (1) {
-                    size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+                    size_t nread = ro_map.readQuick(buf, base_va+nentries*entry_size, entry_size);
                     if (nread!=entry_size)
                         break;
                     rose_addr_t target_va = 0;
                     for (size_t i=0; i<entry_size; i++)
                         target_va |= buf[i] << (i*8);
-                    if (!map->exists(target_va, MemoryMap::MM_PROT_EXEC))
+                    if (!map->at(target_va).require(MemoryMap::EXECUTABLE).exists())
                         break;
                     successors.insert(target_va);
                     ++nentries;
@@ -377,7 +377,7 @@ Partitioner::update_analyses(BasicBlock *bb)
                 rose_addr_t successor_va = *si;
                 if (find_instruction(successor_va)) {                   // category 1
                     ++si;                            
-                } else if (map->exists(successor_va)) {                 // category 2
+                } else if (map->at(successor_va).exists()) {            // category 2
                     bb->cache.sucs.erase(si++);
                 } else if (successor_va > largest_ordinal) {            // category 3
                     ++si;
@@ -1172,25 +1172,29 @@ Partitioner::mark_ipd_configuration()
             mlog[DEBUG] <<"  loading the program...\n";
 
             /* Load the instructions to execute */
-            rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
-            MemoryMap::Segment text_sgmt(MemoryMap::ExternBuffer::create(&(bconf->sucs_program[0]), bconf->sucs_program.size()),
-                                         0, MemoryMap::MM_PROT_RX, block_name + " successors program text");
-            map->insert(AddressInterval::baseSize(text_va, bconf->sucs_program.size()), text_sgmt);
+            rose_addr_t text_va = *map->findFreeSpace(bconf->sucs_program.size(), 4096);
+            AddressInterval textInterval = AddressInterval::baseSize(text_va, bconf->sucs_program.size());
+            map->insert(textInterval, 
+                        MemoryMap::Segment::staticInstance(&bconf->sucs_program[0], bconf->sucs_program.size(),
+                                                           MemoryMap::READABLE | MemoryMap::EXECUTABLE,
+                                                           "successors program text"));
 
             /* Create a stack */
             static const size_t stack_size = 8192;
-            rose_addr_t stack_va = map->find_free(text_va+bconf->sucs_program.size()+1, stack_size, 4096);
-            MemoryMap::Segment stack_sgmt(MemoryMap::AnonymousBuffer::create(stack_size), 0,
-                                          MemoryMap::MM_PROT_RW, block_name + " successors stack");
-            map->insert(AddressInterval::baseSize(stack_va, stack_size), stack_sgmt);
+            rose_addr_t stack_va = *map->findFreeSpace(stack_size, stack_size, 4096);
+            AddressInterval stackInterval = AddressInterval::baseSize(stack_va, stack_size);
+            map->insert(stackInterval,
+                        MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
+                                                              block_name + " successors stack"));
             rose_addr_t stack_ptr = stack_va + stack_size;
 
             /* Create an area for the returned vector of successors */
             static const size_t svec_size = 8192;
-            rose_addr_t svec_va = map->find_free(stack_va+stack_size+1, svec_size, 4096);
-            MemoryMap::Segment svec_sgmt(MemoryMap::AnonymousBuffer::create(svec_size), 0,
-                                         MemoryMap::MM_PROT_RW, block_name + " successors vector");
-            map->insert(AddressInterval::baseSize(svec_va, svec_size), svec_sgmt);
+            rose_addr_t svec_va = *map->findFreeSpace(text_va, svec_size, 4096);
+            AddressInterval svecInterval = AddressInterval::baseSize(svec_va, svec_size);
+            map->insert(svecInterval,
+                        MemoryMap::Segment::anonymousInstance(svec_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
+                                                              block_name + " successors vector"));
 
             /* What is the "return" address. Eventually the successors program will execute a "RET" instruction that will
              * return to this address.  We can choose something arbitrary as long as it doesn't conflict with anything else.
@@ -1277,9 +1281,9 @@ Partitioner::mark_ipd_configuration()
 
             /* Unmap the program */
             mlog[DEBUG] <<"  unmapping the program...\n";
-            map->erase(text_sgmt);
-            map->erase(stack_sgmt);
-            map->erase(svec_sgmt);
+            map->erase(textInterval);
+            map->erase(stackInterval);
+            map->erase(svecInterval);
 
             mlog[DEBUG] <<"  done.\n";
         }
@@ -1718,7 +1722,7 @@ Partitioner::mark_func_patterns()
                 rose_addr_t va = args.range.first();
                 while (va<=args.range.last()) {
                     size_t nbytes = std::min(args.range.last()+1-va, (rose_addr_t)sizeof buf);
-                    size_t nread = args.restrict_map->read(buf, va, nbytes);
+                    size_t nread = args.restrict_map->readQuick(buf, va, nbytes);
                     for (size_t i=0; i<nread; ++i) {
                         if (i+5<nread &&                                // x86:
                             0x8b==buf[i+0] && 0xff==buf[i+1] &&         //   mov edi, edi
@@ -1906,8 +1910,8 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
     if (restrict_map) {
-        AddressIntervalSet nonmappedAddrs = restrict_map->va_extents();
-        nonmappedAddrs.invert(AddressInterval::hull(0, (rose_addr_t)(-1)));
+        AddressIntervalSet nonmappedAddrs(*restrict_map);
+        nonmappedAddrs.invert();
         ExtentMap toRemove = toExtentMap(nonmappedAddrs);
         unassigned.erase_ranges(toRemove);
     }
@@ -2029,7 +2033,7 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
     if (range.size() > maximum_range_size)
         return true;
     MemoryMap *map = args.restrict_map ? args.restrict_map : &p->ro_map;
-    SgUnsignedCharList buf = map->read(range.first(), range.size());
+    SgUnsignedCharList buf = map->readVector(range.first(), range.size());
     if (ends_contiguously && buf.size()<range.size())
         return true;
     range.resize(buf.size());
@@ -2278,7 +2282,7 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
         data_blocks[start_va] = db;
     }
 
-    SgUnsignedCharList raw_bytes = map->read(start_va, size, MemoryMap::MM_PROT_NONE);
+    SgUnsignedCharList raw_bytes = map->readVector(start_va, size, 0);
     ASSERT_require(raw_bytes.size()==size);
     SgAsmStaticData *datum = new SgAsmStaticData;
     datum->set_address(start_va);
@@ -3652,7 +3656,7 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
 
         // get the next mapped address, but it might not be unused
         rose_addr_t mapped_unused_va;
-        if (!map.next(unused_va).assignTo(mapped_unused_va))
+        if (!map.atOrAfter(unused_va).next().assignTo(mapped_unused_va))
             return NOT_FOUND;                           // no higher mapped address
         if (unused.contains(Extent(mapped_unused_va)))
             return mapped_unused_va;                    // found
@@ -3668,7 +3672,7 @@ void
 Partitioner::discover_post_padding_functions(const MemoryMap &map)
 {
     Stream debug = mlog[DEBUG];
-    if (map.empty())
+    if (map.isEmpty())
         return;
 
     std::vector<uint8_t> padding_bytes;
@@ -3691,14 +3695,14 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
         // Find the next occurrence of padding bytes.
         Extent search_limits = Extent::inin(unused_va, map.hull().greatest());
         rose_addr_t padding_va;
-        if (!map.find_any(search_limits, padding_bytes).assignTo(padding_va))
+        if (!map.findAny(search_limits, padding_bytes).assignTo(padding_va))
             break;
 
         // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).
         rose_addr_t candidate_va = padding_va;
         while (1) {
             uint8_t byte;
-            if (1!=map.read1(&byte, candidate_va, 1) ||
+            if (1!=map.at(candidate_va).limit(1).singleSegment().read(&byte).size() ||
                 std::find(padding_bytes.begin(), padding_bytes.end(), byte)==padding_bytes.end())
                 break;
             ++candidate_va;
@@ -3720,7 +3724,7 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
         if (NULL==find_instruction(candidate_va))
             continue;                                   // can't be a function if there's no instruction
         uint8_t buf[64];                                // arbitrary
-        size_t nread = map.read(buf, candidate_va, sizeof buf);
+        size_t nread = map.readQuick(buf, candidate_va, sizeof buf);
         if (nread < 5)                                  // arbitrary
             continue;                                   // too small to be a function
         size_t nzeros = 0, nprint = 0;
@@ -3759,7 +3763,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
     MemoryMap exe_map = *map;
-    exe_map.prune(MemoryMap::MM_PROT_EXEC);
+    exe_map.require(MemoryMap::EXECUTABLE).keep();
 
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
@@ -3797,7 +3801,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
         /* Scan only executable regions of memory. */
         MemoryMap exe_map = *map;
-        exe_map.prune(MemoryMap::MM_PROT_EXEC);
+        exe_map.require(MemoryMap::EXECUTABLE).keep();
         scan_interfunc_bytes(&cb, &exe_map);
     }
 

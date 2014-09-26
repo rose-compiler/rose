@@ -13,6 +13,8 @@
 
 using namespace std;
 using namespace boost;
+using namespace rose;
+
 class DeleteAST : public SgSimpleProcessing
    {
      public:

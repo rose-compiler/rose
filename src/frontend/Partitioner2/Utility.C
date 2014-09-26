@@ -97,6 +97,13 @@ sortBlocksForAst(SgAsmBlock *a, SgAsmBlock *b) {
     return false;
 }
 
+bool
+sortInstructionsByAddress(SgAsmInstruction *a, SgAsmInstruction *b) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
+    return a->get_address() < b->get_address();
+}
+
 std::ostream&
 operator<<(std::ostream &out, const ControlFlowGraph::VertexNode &x) {
     out <<Partitioner::vertexName(x);

@@ -6,6 +6,11 @@
 
 using namespace rose;                                   // temporary until this lives in "rose"
 
+unsigned
+SgAsmPowerpcInstruction::get_anyKind() const {
+    return p_kind;
+}
+
 // Return control flow successors. See base class for full documentation.
 BinaryAnalysis::Disassembler::AddressSet
 SgAsmPowerpcInstruction::get_successors(bool *complete) {

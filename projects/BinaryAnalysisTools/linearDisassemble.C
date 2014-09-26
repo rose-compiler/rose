@@ -73,19 +73,9 @@ static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings)
 {
     using namespace Sawyer::CommandLine;
-    SwitchGroup switches;
-    switches.insert(Switch("help", 'h')
-                    .doc("Show this documentation.")
-                    .action(showHelpAndExit(0)));
-    switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
-                    .argument("config")
-                    .whichValue(SAVE_ALL)
-                    .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
+    SwitchGroup switches("Tool-specific switches");
     switches.insert(Switch("isa")
                     .argument("architecture", anyParser(settings.isaName))
                     .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
@@ -119,7 +109,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "This program is a very simple disassembler that tries to disassemble an instruction at each address of "
              "the specimen file.");
     
-    return parser.with(switches).parse(argc, argv).apply();
+    return parser.with(generic).with(switches).parse(argc, argv).apply();
 }
 
 int main(int argc, char *argv[])
@@ -134,7 +124,7 @@ int main(int argc, char *argv[])
     // Obtain a disassembler (do this before opening the specimen so "--isa=list" has a chance to run)
     Disassembler *disassembler = getDisassembler(settings.isaName);
     ASSERT_not_null(disassembler);
-    disassembler->set_protection(MemoryMap::MM_PROT_READ); // we map the file read-only, so disassemble that part
+    disassembler->set_protection(MemoryMap::READABLE); // we map the file read-only, so disassemble that part
 
     // Open the file that needs to be disassembled
     if (positionalArgs.empty())
@@ -143,7 +133,7 @@ int main(int argc, char *argv[])
         throw std::runtime_error("too many files specified; see --help");
     std::string specimenName = positionalArgs[0];
     MemoryMap map;
-    if (!map.insert_file(specimenName, settings.mapVa))
+    if (!map.insertFile(specimenName, settings.mapVa))
         throw std::runtime_error("problem reading file: " + specimenName);
     map.dump(std::cerr);                                // debugging so the user can see the map
 
@@ -159,7 +149,7 @@ int main(int argc, char *argv[])
 
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = settings.startVa;
-    while (map.next(va).assignTo(va)) {
+    while (map.atOrAfter(va).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
         try {
             SgAsmInstruction *insn = disassembler->disassembleOne(&map, va);
