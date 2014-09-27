@@ -1,7 +1,8 @@
 #ifndef TYPEEQUIVALENCE_SIMPLE_EXPRESSION_EVALUATER_INCLUDE_GUARD
 # define TYPEEQUIVALENCE_SIMPLE_EXPRESSION_EVALUATER_INCLUDE_GUARD
 
-# include "rose.h"
+//# include "rose.h"
+#include "sage3basic.h"
 
 // XXX Should we have this as template, so that it is extendable?
 

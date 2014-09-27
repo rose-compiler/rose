@@ -90,13 +90,13 @@ TEST(SymbolTableTest, LookUpOfNameInEmptyTableReturnsFalseNullOrZero){
   EXPECT_EQ(isNull(p->find_label(foo)), true);
   EXPECT_EQ(isNull(p->find_java_label(foo)), true);
   EXPECT_EQ(isNull(p->find_namespace(foo)), true);
-//  EXPECT_EQ(isNull(p->find_template(foo)), true); error: no matching function for call to ‘SgSymbolTable::find_template(const SgName&)’ FIXME WTF?
+//  EXPECT_EQ(isNull(p->find_aliased_symbol(foo)), true);
   EXPECT_EQ(p->count(foo), 0);
   EXPECT_EQ(p->count_aliases(foo), 0);
   EXPECT_EQ(p->get_symbols().size(), 0);
 }
 
-TEST(SymbolTableTest, InsertNameWithNullSymbol){
+TEST(SymbolTableTest, InsertNameWithNullSymbolAborts){
   SgSymbolTable *p = new SgSymbolTable();
   const SgName foo("foo");
   EXPECT_EQ(p->size(), 0);

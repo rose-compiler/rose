@@ -2,7 +2,8 @@
 # define TYPEEQUIVALENCE_TYPE_EQUIVALENCE_CHECKER_INCLUDE_GUARD_
 
 //# include "rose.h"
-#include "sageInterface.h"
+//#include "sageInterface.h"
+# include "sage3basic.h"
 # include "RoseAst.h"
 # include "simpleExpressionEvaluator.hpp"
 
@@ -23,6 +24,7 @@ class TypeEquivalenceChecker {
   int getArrayTypeCount();
   int getFunctionTypeCount();
  private:
+  SgNode * getBasetypeIfApplicable(SgNode *t);
   bool profile_;
   int namedType_, pointerType_, arrayType_, functionType_;
 };

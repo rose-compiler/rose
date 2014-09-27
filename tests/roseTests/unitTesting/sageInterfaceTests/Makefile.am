@@ -2,7 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 bin_PROGRAMS=sageInterfaceTest
 
-sageInterfaceTest_SOURCES= typesAreEqualUnitTests.cpp 
+sageInterfaceTest_SOURCES= \
+  typesAreEqualUnitTests.cpp \
+  simpleExpressionEvaluatorUnitTests.cpp
 
 sageInterfaceTest_CXXFLAGS= \
   -I$(top_srcdir)/tests/roseTests/unitTesting/testSupport \

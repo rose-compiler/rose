@@ -76,8 +76,7 @@ SimpleExpressionEvaluator::evaluateVariableReference(SgVarRefExp *vRef) {
   if (isSgModifierType(vRef->get_type()) == NULL) {
     return EvaluatorExpressionRepresentation();
   }
-  if (isSgModifierType(vRef->get_type())->get_typeModifier().
-      get_constVolatileModifier().isConst()) {
+  if (isSgModifierType(vRef->get_type())->get_typeModifier().get_constVolatileModifier().isConst()) {
     // We know that the var value is const, so get the initialized name and evaluate it
     SgVariableSymbol *sym = vRef->get_symbol();
     SgInitializedName *iName = sym->get_declaration();
@@ -95,9 +94,7 @@ SimpleExpressionEvaluator::evaluateVariableReference(SgVarRefExp *vRef) {
 
 
 EvaluatorExpressionRepresentation
-SimpleExpressionEvaluator::evaluateSynthesizedAttribute(SgNode *node,
-    SynthesizedAttributesList
-    synList) {
+SimpleExpressionEvaluator::evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
   if (isSgExpression(node)) {
     if (isSgValueExp(node)) {
       return this->getValueExpressionValue(isSgValueExp(node));
@@ -110,8 +107,7 @@ SimpleExpressionEvaluator::evaluateSynthesizedAttribute(SgNode *node,
     // Early break out for assign initializer // other possibility?
     if (isSgAssignInitializer(node)) {
       if (synList.at(0).isEvalutable()) {
-        std::cout << "Returning an evaluated value of: " << synList.
-                  at(0).getValue() << " from a SgAssignInitializer node" << std::endl;
+        std::cout << "Returning an evaluated value of: " << synList.at(0).getValue() << " from a SgAssignInitializer node" << std::endl;
         return EvaluatorExpressionRepresentation(synList.at(0).getValue());
       } else {
         return EvaluatorExpressionRepresentation();
@@ -124,10 +120,8 @@ SimpleExpressionEvaluator::evaluateSynthesizedAttribute(SgNode *node,
       evaluatedValue = 1;  // XXX More elegant way..?
     }
 
-    std::cout << "Node: " << node->class_name() << ":" << synList.
-              size() << std::endl;
-    for (SynthesizedAttributesList::iterator it = synList.begin();
-         it != synList.end(); ++it) {
+    std::cout << "Node: " << node->class_name() << ":" << synList.size() << std::endl;
+    for (SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it) {
       if ((*it).isEvalutable()) {
         // XXX For all these binary ops it should be safe to have hardcoded two operands..
         // This would make some operations a lot easier
@@ -142,15 +136,14 @@ SimpleExpressionEvaluator::evaluateSynthesizedAttribute(SgNode *node,
         } else if (isSgModOp(node)) {
           std::cout << "Not yet implemented" << std::endl;
         }
+        // What about the ternary operator?
 
       } else {
         std::cout << "Expression is not evaluatable" << std::endl;
         return EvaluatorExpressionRepresentation();
       }
     }
-    std::
-    cout << "Returning evaluated expression with value: " << evaluatedValue
-         << std::endl;
+    std::cout << "Returning evaluated expression with value: " << evaluatedValue << std::endl;
     return EvaluatorExpressionRepresentation(evaluatedValue);
 
   }
@@ -167,7 +160,6 @@ main(int argc, char **argv) {
   SgProject *project = frontend(argc, argv);
 
   eval.traverse(project);
-
 
   return 0;
 }

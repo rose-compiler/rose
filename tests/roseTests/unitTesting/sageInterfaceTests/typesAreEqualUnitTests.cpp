@@ -27,6 +27,7 @@ TEST(SageInterfaceTypeEquivalence, HandlesEmptyInput){
   EXPECT_EQ(tcRes, false);
 }
 
+
 /*
  * We rely on the build mechanism that SageBuilder provides
  * We construct all (yet a lot have to be added) built-int types
@@ -66,7 +67,6 @@ TEST(SageInterfaceTypeEquivalence, BuiltInVolatileIntIntIsEqual){
   bool tcRes = SageInterface::checkTypesAreEqual(int_t3, int_t4);
   EXPECT_EQ(tcRes, true);
 }
-
 /*
  * We construct pairs of different types and check them.
  * The result for each test should of course be false
@@ -124,6 +124,13 @@ TEST(SageInterfaceTypeEquivalence, VoidPointerPointerTypesAreEqual){
   ::SgPointerType* p_5 = SageBuilder::buildPointerType(p_3);
   ::SgPointerType* p_6 = SageBuilder::buildPointerType(p_4);
   bool tcRes = SageInterface::checkTypesAreEqual(p_5, p_6);
+  EXPECT_EQ(tcRes, true);
+}
+
+TEST(SageInterfaceTypeEquivalence, RestrictIntPointerIntPointerIsEqual){
+  ::SgModifierType* int_t3 = SageBuilder::buildRestrictType(SageBuilder::buildPointerType(SageBuilder::buildIntType()));
+  ::SgPointerType* int_t4 = SageBuilder::buildPointerType(SageBuilder::buildIntType());
+  bool tcRes = SageInterface::checkTypesAreEqual(int_t3, int_t4);
   EXPECT_EQ(tcRes, true);
 }
 

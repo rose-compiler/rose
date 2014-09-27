@@ -1,9 +1,37 @@
-
+#include <cassert>
 #include "typeEquivalenceChecker.hpp"
 
 TypeEquivalenceChecker::TypeEquivalenceChecker(bool profile): profile_(profile),
   namedType_(0), pointerType_(0),
   arrayType_(0), functionType_(0) {
+}
+
+SgNode * TypeEquivalenceChecker::getBasetypeIfApplicable(SgNode *t){
+  SgNode * node = t;
+  if (isSgTypedefType(t)) {
+    std::cout << "This is a typedef nodeT1. We strip everything away and compare the hidden types." << std::endl;
+    node = isSgTypedefType(t)->stripType(SgType::STRIP_TYPEDEF_TYPE);
+  }
+  if(isSgModifierType(t)){
+    SgModifierType *modType = isSgModifierType(t);
+    ROSE_ASSERT(modType != NULL);
+    // We need to check for Volatile/Restrict types. These are modelled as ModifierTypes, but are equal (in some cases)
+    // volatile seems to make no difference for basic (built in) types like int, bool etc. But it has an impact on types
+    // like classes
+    // restrict seems to have no impact on the type itself.
+     if(SageInterface::isVolatileType(modType)){
+      // handle volatile case
+      std::cout << "Hit volatile type, stripping of modifier type" << std::endl;
+      node = modType->get_base_type();
+    }
+    if(SageInterface::isRestrictType(modType)){
+      // handle restrict case
+      std::cout << "Hit restrict type, stripping of modifier type" << std::endl;
+      node = modType->get_base_type();
+    }
+  }
+  ROSE_ASSERT(node != NULL);
+  return node;
 }
 
 bool
@@ -21,17 +49,10 @@ TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
     SgNode *nodeT2 = *j;
 
 //    std::cout << "nodeT1: " << nodeT1->class_name() << " nodeT2: " << nodeT2->class_name() << std::endl;
+   nodeT1 = getBasetypeIfApplicable(nodeT1);
+   nodeT2 = getBasetypeIfApplicable(nodeT2);
 
-    if (isSgTypedefType(nodeT1)) {
-      std::cout << "This is a typedef nodeT1. We strip everything away and compare the hidden types." << std::endl;
-      nodeT1 = isSgTypedefType(nodeT1)->stripType(SgType::STRIP_TYPEDEF_TYPE);
-    }
-    if (isSgTypedefType(nodeT2)) {
-      std::cout << "This is a typedef nodeT2. We strip everything away and compare the hidden types." << std::endl;
-      nodeT2 = isSgTypedefType(nodeT2)->stripType(SgType::STRIP_TYPEDEF_TYPE);
-    }
-
-    if (nodeT1->variantT() == nodeT2->variantT()) {
+   if (nodeT1->variantT() == nodeT2->variantT()) {
 
       if (isSgNamedType(nodeT1)) {      // Two different names -> Must be two different things
         if (profile_) {
@@ -92,16 +113,22 @@ TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
         }
         SgFunctionType *funcTypeA = isSgFunctionType(nodeT1);
         SgFunctionType *funcTypeB = isSgFunctionType(nodeT2);
+//        assert(funcTypeA != funcTypeB);
         if(typesAreEqual(funcTypeA->get_return_type(), funcTypeB->get_return_type())) {
           // If functions don't have the same number of arguments, they are not type-equal
           if(funcTypeA->get_arguments().size() != funcTypeB->get_arguments().size()) {
             return false;
           }
+          if(funcTypeA->get_argument_list()->get_arguments().size() != funcTypeB->get_argument_list()->get_arguments().size()){
+            return false;
+          }
+
           for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
               jj = funcTypeB->get_arguments().begin();
               ii != funcTypeA->get_arguments().end(),
               jj != funcTypeB->get_arguments().end();
               ++ii, ++jj) {
+//            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
             // For all argument types check whether they are equal
             if(!typesAreEqual((*ii), (*jj))) {
               return false;
