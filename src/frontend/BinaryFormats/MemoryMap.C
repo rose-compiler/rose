@@ -308,11 +308,11 @@ MemoryMap::insertFile(const std::string &locatorString) {
         optionalAccess = READABLE | WRITABLE;
 #else
         unsigned a = 0;
-        if (0==access(fileName.c_str(), R_OK))
+        if (0==::access(fileName.c_str(), R_OK))
             a |= READABLE;
-        if (0==access(fileName.c_str(), W_OK))
+        if (0==::access(fileName.c_str(), W_OK))
             a |= WRITABLE;
-        if (0==access(fileName.c_str(), X_OK))
+        if (0==::access(fileName.c_str(), X_OK))
             a |= EXECUTABLE;
         optionalAccess = a;
 #endif
