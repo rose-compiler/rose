@@ -111,6 +111,49 @@ std::ostream& operator<<(std::ostream&, const ControlFlowGraph::VertexNode&);
 std::ostream& operator<<(std::ostream&, const ControlFlowGraph::EdgeNode&);
 
 
+/** Trigger based on number of times called. */
+class Trigger {
+public:
+    typedef Sawyer::Container::Interval<size_t> SizeInterval;
+private:
+    size_t nCalls_;                                     // number of times called
+    SizeInterval when_;                                 // when to trigger based on nCalls_
+public:
+    /** Trigger not armed. */
+    Trigger(): nCalls_(0) {}
+
+    /** Armed for triggering when number of calls falls within @p when. */
+    explicit Trigger(const SizeInterval &when): nCalls_(0), when_(when) {}
+
+    /** Armed for triggering after @p nSkip calls but not more than @p nTimes times. */
+    Trigger(size_t nSkip, size_t nTimes): nCalls_(0), when_(nTimes?SizeInterval::baseSize(nSkip, nTimes):SizeInterval()) {}
+
+    /** Armed for one call. */
+    static Trigger once() { return Trigger(0, 1); }
+
+    /** Armed to always trigger. */
+    static Trigger always() { return Trigger(0, size_t(-1)); }
+
+    /** Armed to never trigger. */
+    static Trigger never() { return Trigger(); }
+
+    /** True if trigger is armed. */
+    bool isArmed() const { return !when_.isEmpty() && nCalls_<=when_.greatest(); }
+
+    /** Increment calls and return true if triggering. */
+    bool shouldTrigger() { return when_.isContaining(nCalls_++); }
+
+    /** Number of times called. */
+    size_t nCalls() const { return nCalls_; }
+
+    /** Reset number of calls to zero. */
+    void reset() { nCalls_ = 0; }
+};
+
+/** Return the next serial number. */
+size_t serialNumber();
+
+
 
 } // namespace
 } // namespace

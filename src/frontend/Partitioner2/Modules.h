@@ -1,9 +1,11 @@
-#ifndef ROSE_Partitioner2_Modules_H
+#ifndef ROSE_Partitioner2_Modules_H 
 #define ROSE_Partitioner2_Modules_H
 
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/Utility.h>
 
 #include <sawyer/SharedPointer.h>
 
@@ -169,6 +171,52 @@ class PreventDiscontiguousBlocks: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
     virtual bool operator()(bool chain, const Args &args) /*override*/;
+};
+
+/** List some instructions at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class InstructionLister: public CfgAdjustmentCallback {
+    AddressInterval where_;                             // what basic block(s) we should we monitor (those starting within)
+    Trigger when_;                                      // once found, how often we produce a list
+    AddressInterval what_;                              // what instructions to list (those overlapping)
+protected:
+    InstructionLister(const AddressInterval &where, const Trigger &when, const AddressInterval &what)
+        : where_(where), when_(when), what_(what) {}
+public:
+    static Ptr instance(const AddressInterval &where, const Trigger &when, const AddressInterval &what) {
+        return Ptr(new InstructionLister(where, when, what));
+    }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
+};
+
+/** Produce a GraphViz file for the CFG at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class CfgGraphVizDumper: public CfgAdjustmentCallback {
+    AddressInterval where_;                             // what basic block(s) we should monitor (those starting within)
+    Trigger when_;                                      // once found, which event triggers the output
+    AddressInterval what_;                              // which basic blocks should be in the output
+    bool showNeighbors_;                                // should neighbor blocks be included in the output?
+    std::string fileName_;                              // name of output; '%' gets expanded to a distinct identifier
+protected:
+    CfgGraphVizDumper(const AddressInterval &where, const Trigger &when, const AddressInterval &what,
+                      bool showNeighbors, const std::string &fileName)
+        : where_(where), when_(when), what_(what), showNeighbors_(showNeighbors), fileName_(fileName) {}
+public:
+    static Ptr instance(const AddressInterval &where, const Trigger &when, const AddressInterval &what,
+                        bool showNeighbors, const std::string &fileName) {
+        return Ptr(new CfgGraphVizDumper(where, when, what, showNeighbors, fileName));
+    }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
 };
 
 /** Remove execute permissions for zeros.

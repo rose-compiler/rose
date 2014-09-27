@@ -22,7 +22,6 @@ namespace Partitioner2 {
 Partitioner
 Engine::createBarePartitioner(Disassembler *disassembler, const MemoryMap &map) {
     Partitioner p(disassembler, map);
-    p.enableSymbolicSemantics();
     return p;
 }
 
@@ -35,6 +34,8 @@ Engine::createGenericPartitioner(Disassembler *disassembler, const MemoryMap &ma
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
+    p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
+    p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
     return p;
 }
 
@@ -43,6 +44,7 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
     if (dynamic_cast<DisassemblerM68k*>(disassembler)) {
         Partitioner p = createBarePartitioner(disassembler, map);
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
+        p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
         return p;
     }
     
@@ -52,6 +54,7 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
+        p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         return p;
     }
 

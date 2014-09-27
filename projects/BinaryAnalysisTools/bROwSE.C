@@ -53,38 +53,6 @@ using namespace rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
-static Disassembler *
-getDisassembler(const std::string &name)
-{
-    if (0==name.compare("list")) {
-        std::cout <<"The following ISAs are supported:\n"
-                  <<"  amd64\n"
-                  <<"  arm\n"
-                  <<"  coldfire\n"
-                  <<"  i386\n"
-                  <<"  m68040\n"
-                  <<"  mips\n"
-                  <<"  ppc\n";
-        exit(0);
-    } else if (0==name.compare("arm")) {
-        return new DisassemblerArm();
-    } else if (0==name.compare("ppc")) {
-        return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
-    } else if (0==name.compare("i386")) {
-        return new DisassemblerX86(4);
-    } else if (0==name.compare("amd64")) {
-        return new DisassemblerX86(8);
-    } else if (0==name.compare("m68040")) {
-        return new DisassemblerM68k(m68k_68040);
-    } else if (0==name.compare("coldfire")) {
-        return new DisassemblerM68k(m68k_freescale_emacb);
-    } else {
-        throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
-    }
-}
-
 static const rose_addr_t NO_ADDRESS(-1);
 
 // Convenient struct to hold settings from the command-line all in one place.
@@ -95,15 +63,14 @@ struct Settings {
     bool followGhostEdges;                              // do we ignore opaque predicates?
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findFunctionPadding;                           // look for pre-entry-point padding?
-    bool findSwitchCases;                               // search for C-like "switch" statement cases
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     std::string httpAddress;                            // IP address at which to listen for HTTP connections
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
     std::string docRoot;                                // document root directory for HTTP server
     Settings()
-        : deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
+        : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
+          findFunctionPadding(true), findDeadCode(true), intraFunctionData(true),
           httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };
 
@@ -173,15 +140,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("no-find-dead-code")
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
-               .hidden(true));
-    dis.insert(Switch("find-switch-cases")
-               .intrinsicValue(true, settings.findSwitchCases)
-               .doc("Scan for common encodings of C-like \"switch\" statements so that the cases can be disassembled. The "
-                    "@s{no-find-switch-cases} switch turns this off.  The default is " +
-                    std::string(settings.findSwitchCases?"true":"false") + "."));
-    dis.insert(Switch("no-find-switch-cases")
-               .key("find-switch-cases")
-               .intrinsicValue(false, settings.findSwitchCases)
                .hidden(true));
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
@@ -1418,7 +1376,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> specimenNames = cmdline.unreachedArgs();
     Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
-        disassembler = getDisassembler(settings.isaName);// do this before we check for positional arguments (for --isa=list)
+        disassembler = Disassembler::lookup(settings.isaName);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
@@ -1445,8 +1403,6 @@ int main(int argc, char *argv[]) {
     // Create the partitioner
     P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
     partitioner.enableSymbolicSemantics(settings.useSemantics);
-    if (settings.findSwitchCases)
-        partitioner.basicBlockCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)

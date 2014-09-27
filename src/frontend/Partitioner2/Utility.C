@@ -104,6 +104,12 @@ sortInstructionsByAddress(SgAsmInstruction *a, SgAsmInstruction *b) {
     return a->get_address() < b->get_address();
 }
 
+size_t
+serialNumber() {
+    static size_t nCalls = 0;
+    return ++nCalls;
+}
+
 std::ostream&
 operator<<(std::ostream &out, const ControlFlowGraph::VertexNode &x) {
     out <<Partitioner::vertexName(x);

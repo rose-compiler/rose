@@ -1,6 +1,12 @@
 #include "sage3basic.h"
+#include "AsmUnparser_compat.h"
+#include "Diagnostics.h"
+
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Utility.h>
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -177,6 +183,205 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
     }
     return chain;
 };
+
+std::vector<rose_addr_t>
+scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
+                     const AddressInterval &targetLimits, size_t tableEntrySize) {
+    ASSERT_require(tableEntrySize>0 && tableEntrySize<=sizeof(rose_addr_t));
+
+    std::vector<rose_addr_t> successors;
+    if (tableLimits.isEmpty() || targetLimits.isEmpty())
+        return successors;
+
+    const MemoryMap &map = partitioner.memoryMap();
+    while (1) {
+        // Read table entry to get target address
+        uint8_t bytes[sizeof(rose_addr_t)];
+        rose_addr_t tableEntryVa = tableLimits.least() + successors.size() * tableEntrySize;
+        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize)))
+            break;                                      // table entry is outside of table boundary
+        if (tableEntrySize != map.at(tableEntryVa).limit(tableEntrySize).access(MemoryMap::READABLE).read(bytes).size())
+            break;                                      // table entry is not entirely in read-only memory
+        rose_addr_t target = 0;
+        for (size_t i=0; i<tableEntrySize; ++i)
+            target |= bytes[i] << (8*i);
+
+        // Check target validity
+        if (!targetLimits.isContaining(target))
+            break;                                      // target is outside allowed interval
+        if (!map.at(target).require(MemoryMap::EXECUTABLE).exists())
+            break;                                      // target address is not executable
+
+        successors.push_back(target);
+    }
+
+    // Return values
+    if (successors.empty()) {
+        tableLimits = AddressInterval();
+    } else {
+        tableLimits = AddressInterval::baseSize(tableLimits.least(), successors.size()*tableEntrySize);
+    }
+    return successors;
+}
+
+Sawyer::Optional<rose_addr_t>
+findTableBase(SgAsmExpression *expr) {
+    ASSERT_not_null(expr);
+    rose_addr_t baseVa(-1);
+
+    // Strip of optional memory reference
+    if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr))
+        expr = mre->get_address();
+
+    // We need to have a sum whose operands are a base address and some kind of register expression
+    if (SgAsmBinaryAdd *sum = isSgAsmBinaryAdd(expr)) {
+        // Find the integer base for the sum; "expr" will be the other operand
+        SgAsmIntegerValueExpression *value = isSgAsmIntegerValueExpression(sum->get_lhs());
+        if (value) {
+            expr = sum->get_rhs();
+        } else if ((value = isSgAsmIntegerValueExpression(sum->get_rhs()))) {
+            expr = sum->get_lhs();
+        } else {
+            return Sawyer::Nothing();
+        }
+        baseVa = value->get_absoluteValue();
+
+        // Look at the other addend (the one that should have a register)
+        if (SgAsmBinaryMultiply *product = isSgAsmBinaryMultiply(expr)) {
+            // Register multiplied by a constant?
+            SgAsmDirectRegisterExpression *reg = isSgAsmDirectRegisterExpression(product->get_lhs());
+            if (reg) {
+                expr = product->get_rhs();
+            } else if ((reg = isSgAsmDirectRegisterExpression(product->get_rhs()))) {
+                expr = product->get_lhs();
+            } else {
+                return Sawyer::Nothing();               // no register
+            }
+            if (!isSgAsmIntegerValueExpression(expr))
+                return Sawyer::Nothing();
+        } else if (isSgAsmDirectRegisterExpression(expr)) {
+            // Bare register
+        } else {
+            return Sawyer::Nothing();
+        }
+    } else {
+        return Sawyer::Nothing();
+    }
+
+    return baseVa;
+}
+
+// A "switch" statement is a computed jump consisting of a base address and a register offset.
+bool
+SwitchSuccessors::operator()(bool chain, const Args &args) {
+    ASSERT_not_null(args.partitioner);
+    ASSERT_not_null(args.bblock);
+    static const rose_addr_t NO_ADDR(-1);
+    if (!chain)
+        return false;
+    size_t nInsns = args.bblock->nInstructions();
+    if (nInsns < 1)
+        return chain;
+
+    // Block always ends with JMP
+    SgAsmx86Instruction *jmp = isSgAsmx86Instruction(args.bblock->instructions()[nInsns-1]);
+    if (!jmp || jmp->get_kind()!=x86_jmp)
+        return chain;
+    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
+    if (jmpArgs.size()!=1)
+        return chain;
+
+    // Try to match a pattern
+    rose_addr_t tableVa = NO_ADDR;
+    do {
+        // Pattern 1: JMP [offset + reg * size]
+        if (findTableBase(jmpArgs[0]).assignTo(tableVa))
+            break;
+
+        // Other patterns are: MOV reg, ...; JMP reg
+        if (nInsns < 2)
+            return chain;
+        SgAsmx86Instruction *mov = isSgAsmx86Instruction(args.bblock->instructions()[nInsns-2]);
+        if (!mov || mov->get_kind()!=x86_mov)
+            return chain;
+        const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
+        if (movArgs.size()!=2)
+            return chain;
+
+        // First arg of MOV must be the same register as the first arg for JMP
+        SgAsmDirectRegisterExpression *reg1 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
+        SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(movArgs[0]);
+        if (!reg1 || !reg2 || reg1->get_descriptor()!=reg2->get_descriptor())
+            return chain;
+
+        // Pattern 2: MOV reg2, [offset + reg1 * size]; JMP reg2
+        if (findTableBase(movArgs[1]).assignTo(tableVa))
+            break;
+
+        // No match
+        return chain;
+    } while (0);
+    ASSERT_forbid(tableVa == NO_ADDR);
+
+    // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
+    // table-reading loop (like table is mapped read-only).
+    size_t wordSize = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSize));
+    AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
+
+    // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
+    // during the table-reading loop (like targets must be mapped with execute permission).
+    AddressInterval targetLimits = AddressInterval::hull(args.bblock->fallthroughVa(), whole.greatest());
+    
+    // If there's a function that follows us then the switch targets are almost certainly not after the beginning of that
+    // function.
+    {
+        Function::Ptr needle = Function::instance(args.bblock->fallthroughVa());
+        std::vector<Function::Ptr> functions = args.partitioner->functions();
+        std::vector<Function::Ptr>::iterator nextFunctionIter = std::lower_bound(functions.begin(), functions.end(),
+                                                                                 needle, sortFunctionsByAddress);
+        if (nextFunctionIter != functions.end()) {
+            Function::Ptr nextFunction = *nextFunctionIter;
+            if (args.bblock->fallthroughVa() == nextFunction->address())
+                return chain;                           // not even room for one case label
+            targetLimits = AddressInterval::hull(targetLimits.least(), nextFunction->address()-1);
+        }
+    }
+
+    // Read the table
+    std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(*args.partitioner, tableLimits /*in,out*/,
+                                                                 targetLimits, wordSize);
+    if (tableEntries.empty())
+        return chain;
+
+    // Replace basic block's successors with the new ones we found.
+    std::set<rose_addr_t> successors(tableEntries.begin(), tableEntries.end());
+    args.bblock->successors().clear();
+    BOOST_FOREACH (rose_addr_t va, successors)
+        args.bblock->insertSuccessor(va, wordSize*8);
+
+    // Create a data block for the offset table and attach it to the basic block
+    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableLimits.size());
+    args.bblock->insertDataBlock(addressTable);
+
+    // Debugging
+    if (mlog[DEBUG]) {
+        using namespace StringUtility;
+        mlog[DEBUG] <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
+        mlog[DEBUG] <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
+        mlog[DEBUG] <<"  instruction: " <<unparseInstructionWithAddress(args.bblock->instructions()[nInsns-1]) <<"\n";
+        mlog[DEBUG] <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
+        mlog[DEBUG] <<"  table size:  " <<plural(tableEntries.size(), "entries")
+                    <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
+        mlog[DEBUG] <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
+        mlog[DEBUG] <<"   ";
+        BOOST_FOREACH (rose_addr_t va, successors)
+            mlog[DEBUG] <<" " <<addrToString(va);
+        mlog[DEBUG] <<"\n";
+    }
+
+    return chain;
+}
 
 } // namespace
 } // namespace
