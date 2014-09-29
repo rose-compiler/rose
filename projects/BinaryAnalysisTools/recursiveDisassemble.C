@@ -269,10 +269,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
         .doc("Specimens",
              "The binary specimen can be constructed from files in two ways."
+
              "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
+             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory. All "
+             "such specimens are passed to \"frontend\" at once in a single call.}"
+
              "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
              "string. " + MemoryMap::insertFileDocumentation() + "}"
+
              "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
              "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.")
         .doc("Bugs", "[999]-bugs",

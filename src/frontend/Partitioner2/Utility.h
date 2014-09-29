@@ -110,23 +110,59 @@ std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
 std::ostream& operator<<(std::ostream&, const ControlFlowGraph::VertexNode&);
 std::ostream& operator<<(std::ostream&, const ControlFlowGraph::EdgeNode&);
 
+/** Parse an address interval.
+ *
+ *  An interval is specified in one of the following forms, where N and M are non-negative integers:
+ *
+ * @li "N" is a singleton interval.
+ * @li "N,M" is the min/max form specifying the two inclusive end points. M must not be less than N.
+ * @li "N-M" is the begin/end form where M is greater than N and not included in the interval.
+ * @li "N+M" is the base/size form where N is the minimum value and M is the number of items.
+ *
+ * The integers can be specified in decimal, octal, hexadecimal, or binary using the usual C/C++ syntax. */
+class AddressIntervalParser: public Sawyer::CommandLine::ValueParser {
+protected:
+    AddressIntervalParser() {}
+    AddressIntervalParser(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver)
+        : Sawyer::CommandLine::ValueParser(valueSaver) {}
+public:
+    typedef Sawyer::SharedPointer<AddressIntervalParser> Ptr;
+    static Ptr instance() {
+        return Ptr(new AddressIntervalParser);
+    }
+    static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
+        return Ptr(new AddressIntervalParser(valueSaver));
+    }
+private:
+    virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
+                                                        const Sawyer::CommandLine::Location &loc) /*override*/;
+};
+
+AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
+AddressIntervalParser::Ptr addressIntervalParser();
 
 /** Trigger based on number of times called. */
 class Trigger {
 public:
     typedef Sawyer::Container::Interval<size_t> SizeInterval;
+    struct Settings {
+        SizeInterval when;                              // when to trigger based on nCalls_
+        Settings(): when(0) {}
+    };
 private:
     size_t nCalls_;                                     // number of times called
-    SizeInterval when_;                                 // when to trigger based on nCalls_
+    Settings settings_;
 public:
-    /** Trigger not armed. */
+    /** Trigger armed for single call. */
     Trigger(): nCalls_(0) {}
 
     /** Armed for triggering when number of calls falls within @p when. */
-    explicit Trigger(const SizeInterval &when): nCalls_(0), when_(when) {}
+    explicit Trigger(const Settings &settings): nCalls_(0), settings_(settings) {}
 
     /** Armed for triggering after @p nSkip calls but not more than @p nTimes times. */
-    Trigger(size_t nSkip, size_t nTimes): nCalls_(0), when_(nTimes?SizeInterval::baseSize(nSkip, nTimes):SizeInterval()) {}
+    Trigger(size_t nSkip, size_t nTimes): nCalls_(0) {
+        settings_.when = nTimes ? SizeInterval::baseSize(nSkip, nTimes) : SizeInterval();
+    }
 
     /** Armed for one call. */
     static Trigger once() { return Trigger(0, 1); }
@@ -138,16 +174,22 @@ public:
     static Trigger never() { return Trigger(); }
 
     /** True if trigger is armed. */
-    bool isArmed() const { return !when_.isEmpty() && nCalls_<=when_.greatest(); }
+    bool isArmed() const { return !settings_.when.isEmpty() && nCalls_<=settings_.when.greatest(); }
 
     /** Increment calls and return true if triggering. */
-    bool shouldTrigger() { return when_.isContaining(nCalls_++); }
+    bool shouldTrigger() { return settings_.when.isContaining(nCalls_++); }
 
     /** Number of times called. */
     size_t nCalls() const { return nCalls_; }
 
     /** Reset number of calls to zero. */
     void reset() { nCalls_ = 0; }
+
+    /** Command-line switches to initialize settings. */
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+
+    /** Documentation for command-line switches. */
+    static std::string docString();
 };
 
 /** Return the next serial number. */

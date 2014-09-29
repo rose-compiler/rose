@@ -177,18 +177,23 @@ public:
  *
  *  See @ref docString for full documentation. */
 class InstructionLister: public CfgAdjustmentCallback {
-    AddressInterval where_;                             // what basic block(s) we should we monitor (those starting within)
-    Trigger when_;                                      // once found, how often we produce a list
-    AddressInterval what_;                              // what instructions to list (those overlapping)
-protected:
-    InstructionLister(const AddressInterval &where, const Trigger &when, const AddressInterval &what)
-        : where_(where), when_(when), what_(what) {}
 public:
-    static Ptr instance(const AddressInterval &where, const Trigger &when, const AddressInterval &what) {
-        return Ptr(new InstructionLister(where, when, what));
-    }
+    struct Settings {
+        AddressInterval where;                          // which basic block(s) we should we monitor
+        Trigger::Settings when;                         // once found, how often we produce a list
+        AddressInterval what;                           // what instructions to list
+        Settings(): what(AddressInterval::whole()) {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    explicit InstructionLister(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new InstructionLister(settings)); }
     static Ptr instance(const std::string &config);
     static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
@@ -198,22 +203,25 @@ public:
  *
  *  See @ref docString for full documentation. */
 class CfgGraphVizDumper: public CfgAdjustmentCallback {
-    AddressInterval where_;                             // what basic block(s) we should monitor (those starting within)
-    Trigger when_;                                      // once found, which event triggers the output
-    AddressInterval what_;                              // which basic blocks should be in the output
-    bool showNeighbors_;                                // should neighbor blocks be included in the output?
-    std::string fileName_;                              // name of output; '%' gets expanded to a distinct identifier
-protected:
-    CfgGraphVizDumper(const AddressInterval &where, const Trigger &when, const AddressInterval &what,
-                      bool showNeighbors, const std::string &fileName)
-        : where_(where), when_(when), what_(what), showNeighbors_(showNeighbors), fileName_(fileName) {}
 public:
-    static Ptr instance(const AddressInterval &where, const Trigger &when, const AddressInterval &what,
-                        bool showNeighbors, const std::string &fileName) {
-        return Ptr(new CfgGraphVizDumper(where, when, what, showNeighbors, fileName));
-    }
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) we should monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers the output
+        AddressInterval what;                           // which basic blocks should be in the output
+        bool showNeighbors;                             // should neighbor blocks be included in the output?
+        std::string fileName;                           // name of output; '%' gets expanded to a distinct identifier
+        Settings(): what(AddressInterval::whole()), showNeighbors(true), fileName("cfg-%.dot") {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    CfgGraphVizDumper(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new CfgGraphVizDumper(settings)); }
     static Ptr instance(const std::string &config);
     static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }

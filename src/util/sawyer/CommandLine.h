@@ -1039,7 +1039,7 @@ private:
 /** Parses a list of values.
  *
  *  Parses a list of values separated by specified regular expressions.  Each member of the list may have its own parser and
- *  following separator. The final parser and separated are reused as often as necessary. The return value is a ParsedValue
+ *  following separator. The final parser and separator are reused as often as necessary. The return value is a ParsedValue
  *  whose value is an STL @c list with members that are the ParsedValue objects return by the list element parsers.
  *
  * @sa parser_factories */
@@ -2310,6 +2310,9 @@ public:
 
     /** Insert a switch into the group.  The switch declaration is copied into the group. */
     SwitchGroup& insert(const Switch&);
+
+    /** Insert switches from another group into this one.  Other properties are not copied. */
+    SwitchGroup& insert(const SwitchGroup&);
 
     /** Remove a switch from the group. The <em>n</em>th switch is removed, as returned by @ref switches. */
     SwitchGroup& removeByIndex(size_t n);
