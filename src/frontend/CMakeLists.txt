@@ -1,3 +1,6 @@
+# TODO: move this back down to src/CMakeLists.txt
+add_definitions(-DROSE_DLL_EXPORTS)
+
 add_subdirectory(SageIII)
 add_subdirectory(BinaryDisassembly)
 add_subdirectory(BinaryLoader)
