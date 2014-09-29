@@ -34,6 +34,8 @@ execute_process(
           ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C
 )
 
+# needed to properly define ROSE_UTIL_API
+add_definitions(-DROSE_UTIL_EXPORTS)
 
 ######## build sub libraries ##########
 add_subdirectory(commandlineProcessing)
@@ -51,18 +53,18 @@ set(rose_util_src
   rose_getline.C
   rose_strtoull.C
   $<TARGET_OBJECTS:util_commandlineProcessing>
-  $<TARGET_OBJECTS:util_graphs>
   $<TARGET_OBJECTS:util_sawyer>
   $<TARGET_OBJECTS:util_stringSupport>
   $<TARGET_OBJECTS:util_support>
+  $<TARGET_OBJECTS:util_graphs>
 )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
   target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
-set_target_properties(roseutil PROPERTIES
-  DEFINE_SYMBOL ROSE_UTIL_EXPORTS
-)
+#set_target_properties(roseutil PROPERTIES
+#  DEFINE_SYMBOL ROSE_UTIL_EXPORTS
+#)
 install(TARGETS roseutil DESTINATION lib)
 
 
