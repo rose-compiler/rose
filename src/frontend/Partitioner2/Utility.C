@@ -49,6 +49,14 @@ sortFunctionsByAddress(const Function::Ptr &a, const Function::Ptr &b) {
     return a->address() < b->address();
 }
 
+bool
+sortFunctionNodesByAddress(const SgAsmFunction *a, const SgAsmFunction *b) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
+    return a->get_entry_va() < b->get_entry_va();
+}
+
+
 // Sort by the successor expressions. If both expressions are concrete then disregard their widths and treat them as unsigned
 // when comparing.
 bool

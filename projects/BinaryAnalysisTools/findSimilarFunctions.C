@@ -29,7 +29,7 @@ namespace P2 = rose::BinaryAnalysis::Partitioner2;
 static Sawyer::Message::Facility mlog;
 
 // Configuration information from the command-line
-enum EditDistanceMetric { METRIC_TREE, METRIC_LINEAR, METRIC_INSN, METRIC_SIZE };
+enum EditDistanceMetric { METRIC_TREE, METRIC_LINEAR, METRIC_INSN, METRIC_SIZE, METRIC_SIZE_ADDR };
 
 static std::string
 metricName(EditDistanceMetric m) {
@@ -38,6 +38,7 @@ metricName(EditDistanceMetric m) {
         case METRIC_INSN:       return "insn";
         case METRIC_LINEAR:     return "linear";
         case METRIC_SIZE:       return "size";
+        case METRIC_SIZE_ADDR:  return "sizeaddr";
     }
     ASSERT_not_reachable("invalid metric");
 }
@@ -67,7 +68,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                           ->with("tree", METRIC_TREE)
                           ->with("linear", METRIC_LINEAR)
                           ->with("insn", METRIC_INSN)
-                          ->with("size", METRIC_SIZE))
+                          ->with("size", METRIC_SIZE)
+                          ->with("sizeaddr", METRIC_SIZE_ADDR))
                 .doc("Metric to use when comparing two functions.  The following metrics are implemented:"
 
                      "@named{linear}{The \"linear\" method creates a list consisting of AST node types and, in the case "
@@ -83,7 +85,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                      "than the \"linear\" method and doesn't seem to give better results.}"
 
                      "@named{size}{Uses difference in AST size as the distance metric.  The difference between two functions "
-                     "is the absolute value of the difference in the size of their ASTs.}"
+                     "is the absolute value of the difference in the size of their ASTs. This is easily the fastest metric.}"
+
+                     "@named{sizeaddr}{Uses difference in AST size and difference in entry address as the distance metric. "
+                     "Functions are sorted into a vector according to their entry address and the difference in vector index "
+                     "contributes to the distance between two functions.}"
                      
                      "The default metric is \"" + metricName(settings.metric) + "\"."));
 
@@ -189,6 +195,42 @@ public:
     size_t cost() const { return size1_<size2_ ? size2_-size1_ : size1_-size2_; }
     double relativeCost() const { return (double)cost() / std::max(size1_, size2_); }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// A metric that compares size and address of two functions
+
+class SizeAddrDistance: public SizeDistance {
+    size_t pos1_, pos2_;                                // positions of functions being compared
+    typedef Sawyer::Container::Map<SgAsmFunction*, size_t> FMap;
+    FMap fmap1_, fmap2_; // maps function to position in executable
+public:
+    SizeAddrDistance(const std::vector<SgAsmFunction*> &functions1, const std::vector<SgAsmFunction*> &functions2)
+        : pos1_(0), pos2_(0) {
+        ASSERT_require(P2::isSorted(functions1, P2::sortFunctionNodesByAddress));
+        BOOST_FOREACH (SgAsmFunction *function, functions1)
+            fmap1_.insert(function, function->get_entry_va());
+        ASSERT_require(P2::isSorted(functions1, P2::sortFunctionNodesByAddress));
+        BOOST_FOREACH (SgAsmFunction *function, functions2)
+            fmap2_.insert(function, function->get_entry_va());
+    }
+    void setTree1(SgNode *ast) { SizeDistance::setTree1(ast); setTree(ast, fmap1_, pos1_/*out*/); }
+    void setTree2(SgNode *ast) { SizeDistance::setTree2(ast); setTree(ast, fmap2_, pos2_/*out*/); }
+    SizeDistance& compute(SgNode *ast) { setTree2(ast); return *this; }
+    SizeDistance& compute() {return *this; }
+    size_t cost() const { return SizeDistance::cost() + diffAbs(); }
+    double relativeCost() const { return (SizeDistance::relativeCost() + 7.0*diffRel()) / 8.0; }
+private:
+    size_t diffAbs() const { return pos1_ < pos2_ ? pos2_-pos1_ : pos1_-pos2_; }
+    size_t diffRel() const { return (double)diffAbs() / std::max(fmap1_.size(), fmap2_.size()); }
+    void setTree(SgNode *ast, const FMap &functions, size_t &pos) {
+        SgAsmFunction *function = isSgAsmFunction(ast);
+        ASSERT_not_null(function);
+        ASSERT_require(functions.exists(function));
+        pos = functions[function];
+    }
+};
+
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tree edit distance metric
@@ -458,6 +500,11 @@ main(int argc, char *argv[]) {
             initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
             break;
         }
+        case METRIC_SIZE_ADDR: {
+            SizeAddrDistance metric(functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            break;
+        }
     }
     info <<"; completed in " <<matrixInitTime <<" seconds\n";
 
@@ -478,35 +525,40 @@ main(int argc, char *argv[]) {
     std::cout <<"Relative cost: " <<(totalDistance / std::max(functions1.size(), functions2.size())) <<"\n";
 
     // Show the results
-    //                 0         1           2             3            4            5             6
-    SqlDatabase::Table<double,  rose_addr_t, size_t,       std::string, rose_addr_t, size_t,       std::string> results;
-    results.headers("Distance", "SourceVa", "SourceSize", "SourceName", "TargetVa", "TargetSize", "TargetName");
+    //                 0       1            2       3            4            5       6            7
+    SqlDatabase::Table<double, rose_addr_t, size_t, std::string, rose_addr_t, size_t, std::string, std::string> results;
+    results.headers("Distance", "SourceVa", "SourceSize", "SourceName", "TargetVa", "TargetSize", "TargetName", "NameClash");
     AddressRenderer renderAddress;
     results.renderers().r1 = &renderAddress;
     results.renderers().r4 = &renderAddress;
+    size_t nClashes = 0;
     for (size_t i=0; i<assignments.size(); ++i) {
         using namespace StringUtility;
         size_t j=assignments[i];
         if (i<functions1.size() && j<functions2.size()) {
+            bool nameClash = functions1[i]->get_name() != functions2[j]->get_name();
             results.insert(distance(i, j),
                            functions1[i]->get_entry_va(), treeSize(functions1[i]), cEscape(functions1[i]->get_name()), 
-                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()));
-#if 1 // DEBUGGING [Robb P. Matzke 2014-09-20]
-            if (functions1[i]->get_name() != functions2[j]->get_name()) {
-                mlog[WARN] <<"mismatch \"" <<cEscape(functions1[i]->get_name()) <<"\""
-                           <<" versus \"" <<cEscape(functions2[j]->get_name()) <<"\""
-                           <<" costing " <<distance(i, j) <<"\n";
-            }
-#endif
+                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()),
+                           nameClash?"clash":"");
+            if (nameClash)
+                ++nClashes;
         } else if (i<functions1.size()) {
             results.insert(0.0,
                            functions1[i]->get_entry_va(), treeSize(functions1[i]), cEscape(functions1[i]->get_name()), 
-                           0, 0, "");
+                           0, 0, "",
+                           "");
         } else {
             results.insert(0.0,
                            0, 0, "",
-                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()));
+                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()),
+                           "");
         }
     }
     results.print(std::cout);
+    if (nClashes>0) {
+        mlog[WARN] <<nClashes <<" of " <<StringUtility::plural(assignments.size(), "parings")
+                   <<" (" <<(100.0*nClashes/assignments.size()) <<" percent) "
+                   <<(1==nClashes?" was":" where") <<" between functions with different names\n";
+    }
 }

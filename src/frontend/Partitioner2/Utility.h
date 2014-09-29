@@ -22,6 +22,7 @@ void initDiagnostics();
 bool sortBasicBlocksByAddress(const BasicBlock::Ptr&, const BasicBlock::Ptr&);
 bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
 bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
+bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
 bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
 bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator&, const ControlFlowGraph::ConstVertexNodeIterator&);
 bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
