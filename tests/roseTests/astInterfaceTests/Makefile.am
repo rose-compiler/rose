@@ -9,7 +9,7 @@ INCLUDES =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsing
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsing moveDeclarationToInnermostScope
 
 #not for installation
 noinst_PROGRAMS = \
@@ -155,6 +155,7 @@ generatedCodeExamples = \
   rose_inputmoveDeclarationToInnermostScope_3.C \
   buildJavaPackage.passed 
 
+test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER

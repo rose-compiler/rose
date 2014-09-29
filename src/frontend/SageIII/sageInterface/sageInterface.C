@@ -18368,16 +18368,15 @@ class Scope_Node {
     std::string prettyPrint();
     //! Depth-first traverse to get all nodes within the current subtree
     void traverse_node(std::vector<Scope_Node* >& allnodes);
-    //! delete all children, grandchildren, etc.
+    //! Delete all children, grandchildren, etc.
     void deep_delete_children();
     //! Starting from the root, find the first node which has more than one children.
     // This is useful to identify the innermost common scope of all leaf scopes.
     Scope_Node * findFirstBranchNode();
-//TODO fix this : use depth first traversal   
-//    ~Scope_Node () {  deep_delete_children(); }
+    //~Scope_Node () {  deep_delete_children(); }
 
    private: 
-      //! recursive traverse the current subtree and write dot file information
+      //! Recursive traverse the current subtree and write dot file information
       void traverse_write (Scope_Node* n, std::ofstream & dotfile);
       std::string getLineNumberStr(){ int lineno = scope->get_file_info()->get_line(); return StringUtility::numberToString(lineno); } ;
       // Dot graph Node Id: unique memory address, prepend with "n_".
@@ -18420,21 +18419,24 @@ void Scope_Node::deep_delete_children()
     if (child != NULL)
     {
       delete child;
-      child = NULL;
+      allnodes[i] = NULL;
     }
   }
   // no children for the current node
   children.clear(); 
 }
+
 void Scope_Node::traverse_node(std::vector<Scope_Node* >& allnodes)
 {
   // action on current node, save to the vector
+  ROSE_ASSERT (this != NULL); // we should not push NULL pointers
   allnodes.push_back(this);
   std::vector < Scope_Node* > children = this->children;
   for (size_t i=0; i<children.size(); i++) 
   {
      Scope_Node* child = children[i];
-     child->traverse_node(allnodes);
+     if (child != NULL) // we may delete child nodes and have NULL pointers
+       child->traverse_node(allnodes);
   }
 }
 
@@ -18474,11 +18476,11 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
 //  To trim the tree , the inner scopes using the variable are removed if there is a use scope which enclosing the inner scopes. 
 //  Return the tree, can not be a NULL pointer. At least we return a node for the scope of the declaration
 //  Also return the leaf scopes represented by the tree
-//  TODO: make it a SageInterface function
-Scope_Node* generateScopeTree(SgDeclarationStatement* decl)//std::map <SgScopeStatement*, Scope_Node*>& ScopeTreeMap)
+//  TODO: make it a SageInterface function ?
+Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)//std::map <SgScopeStatement*, Scope_Node*>& ScopeTreeMap)
 {
   ScopeTreeMap.clear();
-  bool debug = true; // debugging flag
+//  bool debug = true; // debugging flag
   ROSE_ASSERT (decl != NULL);
   SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
   ROSE_ASSERT (var_decl != NULL);
@@ -18941,18 +18943,19 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
   return true; 
 }
 
-bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration)
+bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, bool debug = false)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
   ROSE_ASSERT (decl != NULL);
   // Step 1: generate a scope tree for the declaration
   // -----------------------------------------------------
-  Scope_Node* scope_tree = generateScopeTree (decl);
+  Scope_Node* scope_tree = generateScopeTree (decl, debug);
 
   // single node scope tree, nowhere to move into. 
   if ((scope_tree->children).size() == 0 )
   {
-//TODO    delete scope_tree;
+    scope_tree->deep_delete_children ();
+    delete scope_tree;
     return false; 
   }
 
@@ -19014,12 +19017,14 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   if (target_scopes.size()>=0)
   {
     moveVariableDeclaration (decl, target_scopes);
-    //TODO    delete scope_tree;
+    scope_tree->deep_delete_children ();
+    delete scope_tree;
     return true;
   }
   else 
   {
-    //TODO  delete scope_tree;
+    scope_tree->deep_delete_children ();
+    delete scope_tree;
     return false;  
   }
 }

@@ -6,7 +6,7 @@ by Liao, 9/3/2014
 #include "transformationTracking.h"
 #include <iostream>
 using namespace std;
-
+bool debug = false;
 class visitorTraversal : public AstSimpleProcessing
 {
   protected:
@@ -25,7 +25,7 @@ class visitorTraversal : public AstSimpleProcessing
           SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
           ROSE_ASSERT(decl!= NULL);
           bool result=false;
-          result = SageInterface::moveDeclarationToInnermostScope(decl);
+          result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
         }
       } // end if
     } // end visit()
@@ -34,7 +34,14 @@ class visitorTraversal : public AstSimpleProcessing
 int main(int argc, char * argv[])
 
 {
-  SgProject *project = frontend (argc, argv);
+  vector <string> argvList (argv, argv + argc);
+  // pass -rose:debug to turn on debugging mode
+  if (CommandlineProcessing::isOption (argvList,"-rose:debug","",true))
+  {
+    debug = true;
+    cout<<"Turing on debugging model..."<<endl;
+  }
+  SgProject *project = frontend (argvList);
   visitorTraversal exampleTraversal;
   exampleTraversal.traverseInputFiles(project,preorder);
 #if 0
