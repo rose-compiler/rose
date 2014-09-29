@@ -20,6 +20,7 @@
 using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
+using namespace StringUtility;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,13 +29,15 @@ namespace P2 = rose::BinaryAnalysis::Partitioner2;
 static Sawyer::Message::Facility mlog;
 
 // Configuration information from the command-line
-enum EditDistanceMetric { METRIC_TREE, METRIC_LINEAR };
+enum EditDistanceMetric { METRIC_TREE, METRIC_LINEAR, METRIC_INSN, METRIC_SIZE };
 
 static std::string
 metricName(EditDistanceMetric m) {
     switch (m) {
         case METRIC_TREE:       return "tree";
+        case METRIC_INSN:       return "insn";
         case METRIC_LINEAR:     return "linear";
+        case METRIC_SIZE:       return "size";
     }
     ASSERT_not_reachable("invalid metric");
 }
@@ -42,7 +45,8 @@ metricName(EditDistanceMetric m) {
 struct Settings {
     EditDistanceMetric metric;
     std::string isaName;
-    Settings(): metric(METRIC_LINEAR) {}
+    size_t nThreads;
+    Settings(): metric(METRIC_INSN), nThreads(sysconf(_SC_NPROCESSORS_ONLN)) {}
 };
 
 // Parse command-line and apply to settings.
@@ -61,16 +65,36 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     tool.insert(Switch("metric")
                 .argument("name", enumParser(settings.metric)
                           ->with("tree", METRIC_TREE)
-                          ->with("linear", METRIC_LINEAR))
+                          ->with("linear", METRIC_LINEAR)
+                          ->with("insn", METRIC_INSN)
+                          ->with("size", METRIC_SIZE))
                 .doc("Metric to use when comparing two functions.  The following metrics are implemented:"
+
                      "@named{linear}{The \"linear\" method creates a list consisting of AST node types and, in the case "
                      "of SgAsmInstruction nodes, the instruction kind (e.g., \"x86_pop\", \"x86_mov\", etc) for each function. "
                      "It then computes an edit distance for any pair of lists by using the Levenshtein algorithm and normalizes "
                      "the edit cost according to the size of the lists that were compared.}"
-                     "@named{tree}{The \"tree\" method is similar to the linear method but restricts edit operations "
+
+                     "@named{insn}{This is the same as the \"linear\" method but it computes the edit distance for only "
+                     "the instruction types without considering their operands.}"
+
+                     "@named{tree}{The \"tree\" method is similar to the \"linear\" method but restricts edit operations "
                      "according to the depth of the nodes in the functions' ASTs.  This method is orders of magnitude slower "
                      "than the \"linear\" method and doesn't seem to give better results.}"
+
+                     "@named{size}{Uses difference in AST size as the distance metric.  The difference between two functions "
+                     "is the absolute value of the difference in the size of their ASTs.}"
+                     
                      "The default metric is \"" + metricName(settings.metric) + "\"."));
+
+    tool.insert(Switch("threads")
+                .argument("n", nonNegativeIntegerParser(settings.nThreads))
+                .doc("Number of threads to use when initializing the distance matrx.  The distance matrix is a "
+                     "square matrix that is initialized with the distance between any two functions, one from each "
+                     "specimen. The matrix is padded with extra rows or columns if necessary to make it square.  Initializing "
+                     "this matrix is the dominant cost for this program, and therefore multiple threads are used. The default "
+                     "is to use as many threads as there are processor cores on this system (i.e., " +
+                     StringUtility::numberToString(settings.nThreads) + ")."));
 
     Parser parser;
     parser
@@ -98,6 +122,77 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+size_t treeSize(SgNode *ast) {
+    struct T1: AstSimpleProcessing {
+        size_t n;
+        T1(): n(0) {}
+        void visit(SgNode*) { ++n; }
+    } t1;
+    t1.traverse(ast, preorder);
+    return t1.n;
+}
+
+size_t treeSize(const std::vector<SgAsmFunction*> &functions) {
+    size_t n = 0;
+    BOOST_FOREACH (SgAsmFunction *function, functions)
+        n += treeSize(function);
+    return n;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// An edit distance metric that runs Levenshtein over a list of instruction types but does not include any of the
+// instruction operands.
+
+class InsnEditDistance {
+    std::vector<unsigned> list1_, list2_;
+    size_t cost_;
+public:
+    InsnEditDistance(): cost_(0) {}
+    void setTree1(SgNode *ast) { setTree(ast, list1_); }
+    void setTree2(SgNode *ast) { setTree(ast, list2_); }
+    InsnEditDistance& compute(SgNode *ast) {
+        setTree2(ast);
+        return compute();
+    }
+    InsnEditDistance& compute() {
+        cost_ = EditDistance::levenshteinDistance(list1_, list2_);
+        return *this;
+    }
+    size_t cost() const { return cost_; }
+    double relativeCost() const { return (double)cost_ / std::max(list1_.size(), list2_.size()); }
+private:
+    void setTree(SgNode *ast, std::vector<unsigned> &list) {
+        struct T1: AstSimpleProcessing {
+            std::vector<unsigned> &list;
+            T1(std::vector<unsigned> &list): list(list) {}
+            void visit(SgNode *node) {
+                if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                    list.push_back(insn->get_anyKind());
+            }
+        } t1(list);
+        list.clear();
+        t1.traverse(ast, preorder);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// A metric that just compares the size of two ASTs
+
+class SizeDistance {
+    size_t size1_, size2_;
+public:
+    SizeDistance(): size1_(0), size2_(0) {}
+    void setTree1(SgNode *ast) { size1_ = treeSize(ast); }
+    void setTree2(SgNode *ast) { size2_ = treeSize(ast); }
+    SizeDistance& compute(SgNode *ast) { setTree2(ast); return *this; }
+    SizeDistance& compute() { return *this; }
+    size_t cost() const { return size1_<size2_ ? size2_-size1_ : size1_-size2_; }
+    double relativeCost() const { return (double)cost() / std::max(size1_, size2_); }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Tree edit distance metric
+
 class SubstitutionPredicate: public EditDistance::TreeEditDistance::SubstitutionPredicate {
 public:
     virtual bool operator()(SgNode *source, SgNode *target) /*override*/ {
@@ -111,7 +206,9 @@ public:
     }
 };
 
-// A 2d region that needs to be initialized in a matrix.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stuff for initializing the distance matrix
+
 struct WorkItem {
     size_t iBegin, jBegin, iEnd, jEnd;
     WorkItem(size_t iBegin, size_t jBegin, size_t iEnd, size_t jEnd)
@@ -158,28 +255,44 @@ public:
 template<class Metric>
 class MatrixInitializer {
     MyWorkList &workList;
-    dlib::matrix<size_t> &matrix;                       // matrix(i,j) must be thread safe
+    dlib::matrix<double> &distance;                     // distance(i,j) must be thread safe
     const std::vector<SgAsmFunction*> &functions1, &functions2;
     Metric metric;
+    boost::thread thread;
 public:
     MatrixInitializer(MyWorkList &workList,
-                      dlib::matrix<size_t> &matrix,
+                      dlib::matrix<double> &distance,
                       const std::vector<SgAsmFunction*> &functions1,
                       const std::vector<SgAsmFunction*> &functions2,
                       Metric &metric)
-        : workList(workList), matrix(matrix), functions1(functions1), functions2(functions2), metric(metric) {}
+        : workList(workList), distance(distance), functions1(functions1), functions2(functions2), metric(metric) {}
 
-    void operator()() {
+    void start() {
+        thread = boost::thread(&MatrixInitializer::init, this);
+    }
+
+    void wait() {
+        thread.join();
+    }
+
+    // You'd think that work items that span entire rows rather than squarish 2d regions would be faster because they'd
+    // have fewer calls to metric.setTree1, but it turns out they're about 5% slower. [Robb P. Matzke 2014-09-27]
+    void init() {
         WorkItem toDo;
         while (workList.next().assignTo(toDo)) {
             for (size_t i=toDo.iBegin; i<toDo.iEnd; ++i) {
                 if (i<functions1.size()) {
                     metric.setTree1(functions1[i]);
-                    for (size_t j=toDo.jBegin; j<toDo.jEnd; ++j)
-                        matrix(i, j) = j<functions2.size() ? metric.compute(functions2[j]).cost() : 0;
+                    for (size_t j=toDo.jBegin; j<toDo.jEnd; ++j) {
+                        if (j<functions2.size()) {
+                            distance(i, j) = metric.compute(functions2[j]).relativeCost();
+                        } else {
+                            distance(i, j) = 0.0;
+                        }
+                    }
                 } else {
                     for (size_t j=toDo.jBegin; j<toDo.jEnd; ++j) {
-                        matrix(i, j) = 0;
+                        distance(i, j) = 0.0;
                     }
                 }
             }
@@ -189,66 +302,57 @@ public:
 
 template<class Metric>
 void
-initializeMatrix(dlib::matrix<size_t> &matrix, Metric &metric,
+initializeMatrix(dlib::matrix<double> &distance, Metric &metric, size_t nThreads,
                  const std::vector<SgAsmFunction*> &functions1, const std::vector<SgAsmFunction*> &functions2) {
     const size_t matrixSize = std::max(functions1.size(), functions2.size());
-    const size_t nThreads = 10;                         // number of threads to initialize matrix
-    const size_t nItems = 1000 * nThreads;              // since not all work items take an equal time
+    nThreads = std::max((size_t)1, nThreads);
+    MyWorkList workList(matrixSize, 1000*nThreads);
 
-    MyWorkList workList(matrixSize, nItems);
-    
-    MatrixInitializer<Metric> m0(workList, matrix, functions1, functions2, metric);
-    boost::thread t0(m0);
-    MatrixInitializer<Metric> m1(workList, matrix, functions1, functions2, metric);
-    boost::thread t1(m1);
-    MatrixInitializer<Metric> m2(workList, matrix, functions1, functions2, metric);
-    boost::thread t2(m2);
-    MatrixInitializer<Metric> m3(workList, matrix, functions1, functions2, metric);
-    boost::thread t3(m3);
-    MatrixInitializer<Metric> m4(workList, matrix, functions1, functions2, metric);
-    boost::thread t4(m4);
-    MatrixInitializer<Metric> m5(workList, matrix, functions1, functions2, metric);
-    boost::thread t5(m5);
-    MatrixInitializer<Metric> m6(workList, matrix, functions1, functions2, metric);
-    boost::thread t6(m6);
-    MatrixInitializer<Metric> m7(workList, matrix, functions1, functions2, metric);
-    boost::thread t7(m7);
-    MatrixInitializer<Metric> m8(workList, matrix, functions1, functions2, metric);
-    boost::thread t8(m8);
-    MatrixInitializer<Metric> m9(workList, matrix, functions1, functions2, metric);
-    boost::thread t9(m9);
+    std::vector<MatrixInitializer<Metric>*> workers;
 
-    t0.join();
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();
-    t5.join();
-    t6.join();
-    t7.join();
-    t8.join();
-    t9.join();
+    for (size_t i=0; i<nThreads; ++i) {
+        workers.push_back(new MatrixInitializer<Metric>(workList, distance, functions1, functions2, metric));
+        workers.back()->start();
+    }
+    for (size_t i=0; i<workers.size(); ++i)
+        workers[i]->wait();
 }
 
-// output(i,j) = max(input) - input(i,j) for all i,j
-// returns max(input)
-// matrix serves as both input and output
 template<typename T>
-static T
-flipCosts(dlib::matrix<T> &matrix) {
+static std::pair<T, T>
+minmax(const dlib::matrix<T> &matrix) {
     T maxValue = matrix(0, 0);
+    T minValue = matrix(0, 0);
     for (long i=0; i<matrix.nr(); ++i) {
         for (long j=0; j<matrix.nc(); ++j) {
             maxValue = std::max(maxValue, matrix(i, j));
+            minValue = std::min(minValue, matrix(i, j));
         }
     }
-    for (long i=0; i<matrix.nr(); ++i) {
-        for (long j=0; j<matrix.nc(); ++j) {
-            matrix(i, j) = maxValue - matrix(i, j);
-        }
-    }
-    return maxValue;
+    return std::make_pair(minValue, maxValue);
 }
+
+// Convert floating point matrix to integer and flip all the values so that dlib::max_cost_assignming is actually
+// computing a minimum instead of a maximum.
+template<typename T>
+static void
+munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out*/) {
+    ASSERT_require(dst.nr()==src.nr() && dst.nc()==src.nc());
+    std::pair<double, double> range = minmax(src);
+    if (range.first==range.second) {
+        for (long i=0; i<src.nr(); ++i) {
+            for (long j=0; j<dst.nc(); ++j)
+                dst(i, j) = 0;
+        }
+    } else {
+        for (long i=0; i<src.nr(); ++i) {
+            for (long j=0; j<dst.nc(); ++j)
+                dst(i, j) = round(((range.second-src(i, j)) / (range.second-range.first)) * scale);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::vector<SgAsmFunction*>
 loadFunctions(const std::string &fileName, Disassembler *disassembler) {
@@ -293,7 +397,7 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
 
 struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
     std::string operator()(const rose_addr_t &value, size_t width) const /*override*/ {
-        return StringUtility::addrToString(value);
+        return addrToString(value);
     }
 };
 
@@ -314,74 +418,94 @@ main(int argc, char *argv[]) {
         disassembler = Disassembler::lookup(settings.isaName);
     disassembler->set_progress_reporting(-1.0);         // turn it off
     ASSERT_always_require2(positionalArgs.size()==2, "see --help");
+    Stream info(mlog[INFO]);
     
     // Parse the ELF/PE containers for the two specimens
     std::vector<SgAsmFunction*> functions1 = loadFunctions(positionalArgs[0], disassembler);
     std::vector<SgAsmFunction*> functions2 = loadFunctions(positionalArgs[1], disassembler);
-    mlog[INFO] <<"specimen1 has " <<StringUtility::plural(functions1.size(), "functions") <<"\n";
-    mlog[INFO] <<"specimen2 has " <<StringUtility::plural(functions2.size(), "functions") <<"\n";
+    info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
+    info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())
         return 0;
 
-    // Build the matrix of costs {functions1} X {functions2}
-    mlog[INFO] <<"initializing cost matrix";
+    // Build the matrix of distances {functions1} X {functions2}
     Sawyer::Stopwatch matrixInitTime;
     size_t matrixSize = std::max(functions1.size(), functions2.size());
-    dlib::matrix<size_t> matrix(matrixSize, matrixSize);
+    info <<"distance matrix has " <<plural(matrixSize*matrixSize, "elements") <<"\n";
+    info <<"initializing \""+metricName(settings.metric)+"\" distance matrix with " <<plural(settings.nThreads, "threads");
+    dlib::matrix<double> distance(matrixSize, matrixSize);
     switch (settings.metric) {
         case METRIC_TREE: {
             EditDistance::TreeEditDistance::Analysis metric;
             SubstitutionPredicate canSubst;
             metric.substitutionCost(0);
             metric.substitutionPredicate(&canSubst);
-            initializeMatrix(matrix /*out*/, metric, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
             break;
         }
         case METRIC_LINEAR: {
             EditDistance::LinearEditDistance::Analysis<> metric;
-            initializeMatrix(matrix /*out*/, metric, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            break;
+        }
+        case METRIC_INSN: {
+            InsnEditDistance metric;
+            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            break;
+        }
+        case METRIC_SIZE: {
+            SizeDistance metric;
+            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
             break;
         }
     }
-    dlib::matrix<size_t> cost = matrix;                 // save actual costs before we adjust the matrix
-    flipCosts(matrix);                                  // flip values so we can minimize by calling max_cost_assignment
-    mlog[INFO] <<"; completed in " <<matrixInitTime <<" seconds\n";
+    info <<"; completed in " <<matrixInitTime <<" seconds\n";
 
     // Use the Kuhn-Munkres algorithm to find a minimum weight perfect matching for the bipartite graph (represented by the
     // matrix) in O(n^3) time.  Also called the "Hungarian method".  The resulting matrix will have one zero per row and one
     // zero per column to represent the perfect-match edges in the bipartite graph.
-    mlog[INFO] <<"Running Kuhn-Munkres";
+    info <<"Running Kuhn-Munkres";
     Sawyer::Stopwatch munkresTime;
-    std::vector<long> assignments = dlib::max_cost_assignment(matrix);
-    mlog[INFO] <<"; completed in " <<munkresTime <<" seconds\n";
+    dlib::matrix<unsigned long> cost(distance.nr(), distance.nc());
+    munkresCost(distance, 1000000ul, cost /*out*/);
+    std::vector<long> assignments = dlib::max_cost_assignment(cost);
+    info <<"; completed in " <<munkresTime <<" seconds\n";
+
+    double totalDistance = 0.0;
+    for (size_t i=0; i<assignments.size(); ++i)
+        totalDistance += distance(i, assignments[i]);
+    std::cout <<"Total cost:    " <<totalDistance <<"\n";
+    std::cout <<"Relative cost: " <<(totalDistance / std::max(functions1.size(), functions2.size())) <<"\n";
 
     // Show the results
+    //                 0         1           2             3            4            5             6
+    SqlDatabase::Table<double,  rose_addr_t, size_t,       std::string, rose_addr_t, size_t,       std::string> results;
+    results.headers("Distance", "SourceVa", "SourceSize", "SourceName", "TargetVa", "TargetSize", "TargetName");
     AddressRenderer renderAddress;
-    SqlDatabase::Table<size_t, rose_addr_t, std::string, rose_addr_t, std::string> results;
-    results.headers("Distance", "SourceVa", "SourceName", "TargetVa", "TargetName");
     results.renderers().r1 = &renderAddress;
-    results.renderers().r3 = &renderAddress;
+    results.renderers().r4 = &renderAddress;
     for (size_t i=0; i<assignments.size(); ++i) {
+        using namespace StringUtility;
         size_t j=assignments[i];
         if (i<functions1.size() && j<functions2.size()) {
-            results.insert(cost(i, j),
-                           functions1[i]->get_entry_va(), StringUtility::cEscape(functions1[i]->get_name()), 
-                           functions2[j]->get_entry_va(), StringUtility::cEscape(functions2[j]->get_name()));
+            results.insert(distance(i, j),
+                           functions1[i]->get_entry_va(), treeSize(functions1[i]), cEscape(functions1[i]->get_name()), 
+                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()));
 #if 1 // DEBUGGING [Robb P. Matzke 2014-09-20]
             if (functions1[i]->get_name() != functions2[j]->get_name()) {
-                mlog[WARN] <<"mismatch \"" <<StringUtility::cEscape(functions1[i]->get_name()) <<"\""
-                           <<" versus \"" <<StringUtility::cEscape(functions2[j]->get_name()) <<"\""
-                           <<" costing " <<cost(i, j) <<"\n";
+                mlog[WARN] <<"mismatch \"" <<cEscape(functions1[i]->get_name()) <<"\""
+                           <<" versus \"" <<cEscape(functions2[j]->get_name()) <<"\""
+                           <<" costing " <<distance(i, j) <<"\n";
             }
 #endif
         } else if (i<functions1.size()) {
-            results.insert(0,
-                           functions1[i]->get_entry_va(), StringUtility::cEscape(functions1[i]->get_name()), 
-                           0, "");
+            results.insert(0.0,
+                           functions1[i]->get_entry_va(), treeSize(functions1[i]), cEscape(functions1[i]->get_name()), 
+                           0, 0, "");
         } else {
-            results.insert(0,
-                           0, "",
-                           functions2[j]->get_entry_va(), StringUtility::cEscape(functions2[j]->get_name()));
+            results.insert(0.0,
+                           0, 0, "",
+                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()));
         }
     }
     results.print(std::cout);
