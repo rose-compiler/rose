@@ -1,0 +1,19 @@
+digraph runtime {
+S0-> S1 [label="initForwardEvent"];
+S1 [label="S1:currentEventRecord=new EventRecord();"];
+S1 -> S2;
+S2 [label="function"];
+S2 -> S2 [label="assignment\nregister-alloc\nregister-dealloc"];
+S2 -> S4 [label="finalizeForwardEvent:\n eventRecordQueue.push_back(currentEventRecord))"];
+S4 -> S5 [label="..."];
+S5 -> S6 [label="reverse:begin"];
+S6 -> S7 [label="restorationEventRecord\n=eventRecordQuque.pop_back()"];
+S7 -> S8 [label="EventRecord.loop-restore-addr-val()"];
+S8 -> S9 [label="EventRecord.loop-unregister()"];
+S9 -> S10 [label="reverse:end"];
+S10 -> S0;
+S5 -> S11 [label="commit:begin"];
+S11 -> S12 [label="commit:loop-deallocate-registered"];
+S12 -> S13 [label="commit:end"];
+S13 -> S0;
+}
