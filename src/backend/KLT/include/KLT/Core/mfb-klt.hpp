@@ -3,6 +3,7 @@
 #define __KLT_MFB_KLT_HPP__
 
 #include "KLT/Core/kernel.hpp"
+#include "KLT/Core/runtime.hpp"
 
 #include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/function-declaration.hpp"
@@ -77,6 +78,8 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
       typename KLT<Object>::Runtime
     >(object.kernel);
 
+  ::KLT::Runtime::get_exec_config<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(result->config, object.kernel);
+
   MFB::Sage<SgFunctionDeclaration>::object_desc_t kernel_function_desc(
     result->kernel_name,
     SageBuilder::buildVoidType(),
@@ -135,7 +138,7 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
   typename std::list<typename ::KLT::LoopTrees<typename KLT<Object>::Annotation>::node_t *>::const_iterator it_root;
   for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++)
     ::KLT::generateKernelBody<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(
-      *it_root, loop_cnt, tile_cnt, loop_descriptors_map, KLT<Object>::Runtime::default_execution_mode, object.tiling, local_symbol_maps, body
+      *it_root, loop_cnt, tile_cnt, loop_descriptors_map, (typename KLT<Object>::Runtime::exec_mode_t)0, result->config, object.tiling, local_symbol_maps, body
     );
 
   assert(result->loops.empty());

@@ -4,6 +4,7 @@ KLT_core_include_HEADERS= \
   cg-config.hpp \
   data.hpp \
   data-flow.hpp \
+  runtime.hpp \
   generator.hpp \
   loop-tiler.hpp \
   kernel.hpp \

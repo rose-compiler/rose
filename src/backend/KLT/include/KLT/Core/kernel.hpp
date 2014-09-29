@@ -66,7 +66,7 @@ class Kernel {
     struct a_kernel {
       std::string kernel_name;
 
-      typename Runtime::config_t config;
+      typename Runtime::exec_config_t config;
 
       std::vector<typename Runtime::a_loop> loops;
     };
@@ -180,8 +180,7 @@ SgFunctionParameterList * createParameterList(Kernel<Annotation, Language, Runti
 template <class Annotation, class Language, class Runtime>
 SgStatement * generateStatement(
   typename LoopTrees<Annotation>::stmt_t * stmt,
-  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
-  bool flatten_array_ref
+  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
 );
 
 template <class Annotation, class Language, class Runtime>
@@ -195,12 +194,37 @@ std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops(
 );
 
 template <class Annotation, class Language, class Runtime>
+typename Runtime::exec_mode_t changeExecutionMode(
+  const typename Runtime::exec_mode_t & exec_mode,
+  const typename Runtime::exec_config_t & exec_cfg,
+  typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t & tiling
+);
+
+template <class Annotation, class Language, class Runtime>
+void generateSynchronizations(
+  typename Runtime::exec_mode_t prev_exec_mode,
+  typename Runtime::exec_mode_t next_exec_mode,
+  const typename Runtime::exec_config_t & exec_cfg,
+  SgScopeStatement * scope,
+  const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
+);
+
+template <class Annotation, class Language, class Runtime>
+SgScopeStatement * generateExecModeGuards(
+  typename Runtime::exec_mode_t exec_mode,
+  const typename Runtime::exec_config_t & exec_cfg,
+  SgScopeStatement * scope,
+  const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
+);
+
+template <class Annotation, class Language, class Runtime>
 void generateKernelBody(
   typename ::KLT::LoopTrees<Annotation>::node_t * node,
   size_t & loop_cnt,
   size_t & tile_cnt,
   std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::a_loop> & loop_descriptors_map,
-  typename Runtime::exec_mode_e exec_mode,
+  typename Runtime::exec_mode_t exec_mode,
+  const typename Runtime::exec_config_t & exec_cfg,
   const std::map<
     typename ::KLT::LoopTrees<Annotation>::loop_t *,
     typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
@@ -232,15 +256,17 @@ void generateKernelBody(
     );
     SageInterface::appendStatement(sg_loop.first, scope);
 
+    typename Runtime::exec_mode_t next_exec_mode = changeExecutionMode<Annotation, Language, Runtime>(exec_mode, exec_cfg, *tiling);
+
     std::vector<SgScopeStatement *>::const_iterator it_scope;
     for (it_scope = sg_loop.second.begin(); it_scope != sg_loop.second.end(); it_scope++) {
 
-      /// \todo change the execution mode ('typename Runtime::exec_mode_e exec_mode') if needed
-
       generateKernelBody<Annotation, Language, Runtime>(
-        loop->block, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, *it_scope
+        loop->block, loop_cnt, tile_cnt, loop_descriptors_map, next_exec_mode, exec_cfg, tilings, local_symbol_maps, *it_scope
       );
     }
+
+    generateSynchronizations<Annotation, Language, Runtime>(next_exec_mode, exec_mode, exec_cfg, scope, local_symbol_maps);
   }
   else if (cond != NULL) {
 //  std::cout << "[generateKernelBody]  cond != NULL" << std::endl;
@@ -255,38 +281,35 @@ void generateKernelBody(
 
     if (cond->block_true != NULL)
       generateKernelBody<Annotation, Language, Runtime>(
-        cond->block_true, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, bb_true
+        cond->block_true, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, exec_cfg, tilings, local_symbol_maps, bb_true
       );
     if (cond->block_false != NULL)
       generateKernelBody<Annotation, Language, Runtime>(
-        cond->block_false, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, bb_false
+        cond->block_false, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, exec_cfg, tilings, local_symbol_maps, bb_false
       );
   }
   else if (block != NULL) {
 //  std::cout << "[generateKernelBody]  block != NULL" << std::endl;
-    /// \todo guard execution function of the current execution mode ('typename Runtime::exec_mode_e exec_mode')
 
-    if (block->children.size() == 1) {
-      generateKernelBody<Annotation, Language, Runtime>(
-        block->children[0], loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, scope
-      );
-    }
-    else if (block->children.size() > 1) {
-      SgBasicBlock * bb_scope = SageBuilder::buildBasicBlock();
+    SgScopeStatement * bb_scope = scope;
+    if (block->children.size() > 1) {
+      bb_scope = SageBuilder::buildBasicBlock();
       SageInterface::appendStatement(bb_scope, scope);
-
-      typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
-      for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
-        generateKernelBody<Annotation, Language, Runtime>(
-          *it_child, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, tilings, local_symbol_maps, bb_scope
-        );
     }
+
+    typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
+    for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
+      generateKernelBody<Annotation, Language, Runtime>(
+        *it_child, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, exec_cfg, tilings, local_symbol_maps, bb_scope
+      );
   }
   else if (stmt != NULL) {
 //  std::cout << "[generateKernelBody]  stmt != NULL" << std::endl;
-    SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps, true);
+    SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps);
 
-    SageInterface::appendStatement(sg_stmt, scope);
+    SgScopeStatement * bb_scope = generateExecModeGuards<Annotation, Language, Runtime>(exec_mode, exec_cfg, scope, local_symbol_maps);
+
+    SageInterface::appendStatement(sg_stmt, bb_scope);
   }
   else assert(false);
 }
