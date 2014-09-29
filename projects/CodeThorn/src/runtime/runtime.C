@@ -63,7 +63,7 @@ void Backstroke::RunTimeSystem::commitEvent() {
   EventRecord* commitEventRecord=eventRecordDeque.front();
   eventRecordDeque.pop_front();
   commitEventRecord->deallocateHeapQueue();
-  delete commitEventRecord;
+  delete commitEventRecord; // deallocateHeapQueue could be called by destructor
   commitEventRecord=0;
 }
 
