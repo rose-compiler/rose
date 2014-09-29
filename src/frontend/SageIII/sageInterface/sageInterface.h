@@ -2032,7 +2032,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
   bool hasTemplateSyntax( const SgName & name );
 
 //! Move a declaration to a scope which is the closest to the declaration's use places
-bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl);
+bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*= false */);
 
 #if 0
 
