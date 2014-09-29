@@ -1,60 +1,8 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
-########### next target ###############
-
+add_library(util_commandlineProcessing OBJECT
+  commandline_processing.C
+  sla++.C
+)
 
 ########### install files ###############
-
-install(FILES  sla.h commandline_processing.h DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
-
-#original Makefile.am contents follow:
-
-#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#
-## To keep compile commands tidy, please ONLY put required include flags here.
-#INCLUDES = $(ROSE_INCLUDES)
-#
-### Don't use the repository in ../src
-#CXX_TEMPLATE_REPOSITORY_PATH = .
-#
-## libRoseCommandlineUtilSources = commandline_processing.C sla.c sla++.C
-#libRoseCommandlineUtilSources = commandline_processing.C sla++.C
-#
-## lib_LIBRARIES = libRoseCommandlineUtil.a
-## libRoseCommandlineUtil_a_SOURCES  = $(libRoseCommandlineUtilSources)
-#
-#noinst_LTLIBRARIES = libRoseCommandlineUtil.la
-#libRoseCommandlineUtil_la_SOURCES = $(libRoseCommandlineUtilSources)
-#
-## We have to explicily build this rule since we want to avoid the use of "ar cru"
-## (need to use the C++ compiler so that templates will be built)
-## libRoseCommandlineUtil.a: $(libRoseCommandlineUtil_a_OBJECTS)
-##	-rm -f $@
-##	$(CXX_STATIC_LIB_UPDATE) $@ $(libRoseCommandlineUtil_a_OBJECTS)
-##	$(RANLIB) $@
-##	test -f $@ || exit 1
-#
-##libRoseCommandlineUtil.so: $(libRoseCommandlineUtil_so_OBJECTS)
-##	-rm -f $@
-##	$(CXX_SHARED_LIB_UPDATE) $@ $(libRoseCommandlineUtil_so_OBJECTS)
-##	test -f $@ || exit 1
-#
-#include_HEADERS = sla.h commandline_processing.h
-#
-#clean-local:
-#	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
-#
-#distclean-local:
-#	rm -rf Templates.DB
-#
-#EXTRA_DIST = commandlineProcessingDocumentation.docs
-#
-#
-#
-#
-#
-#
+install(FILES
+  sla.h commandline_processing.h DESTINATION ${INCLUDE_INSTALL_DIR})
