@@ -18390,6 +18390,8 @@ class Scope_Node {
         return rt; }
   };
 
+// topdown traverse a tree to find the first node with multiple children
+// Intuitively, the innermost common scope for a variable.
 Scope_Node*  Scope_Node::findFirstBranchNode()
 {
   Scope_Node* first_branch_node = this; 
@@ -18764,7 +18766,12 @@ void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVaria
 }
 
 // Move a single declaration into multiple scopes. 
-// 1. Copy the decl to be local decl , insert into each of the target_scopes, replace variable references to the new copies, erase the original decl 
+// For each target scope:
+// 1. Copy the decl to be local decl , 
+// 2. Insert into the target_scopes, 
+// 3. Replace variable references to the new copies
+// Finally, erase the original decl 
+//
 // if the target scope is a For loop && the variable is index variable,  merge the decl to be for( int i=.., ...).
 void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes)
 {
@@ -18839,7 +18846,10 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
         }
       default:
         {
-          cerr<<"Error. Unhandled target scope type:"<<target_scope->class_name()<<endl;
+          cerr<<"Error. Unhandled target scope type:"<<target_scope->class_name()
+            << " when moving decl at:"<< decl->get_file_info()->get_line()
+            << " for variable "<< sym->get_name()
+            << " to scope at:"<< target_scope->get_file_info()->get_line()<<endl;
           ROSE_ASSERT  (false);
         }
     }
@@ -18876,8 +18886,9 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
 #endif 
   } //end for all scopes
 
-  // remove the original declaration 
-  SageInterface::removeStatement(decl);
+  // remove the original declaration , must use false to turn of auto-relocate comments
+  // TODO: investigate why default behavior adds two extra comments in the end of the code
+  SageInterface::removeStatement(decl, false);
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
   //orig_scope->remove_symbol(sym);
@@ -18995,13 +19006,21 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
 
     if (moveToMultipleScopes)
     {
-      if (true)
+      if (debug)
         cout<<"Found a movable declaration for multiple child scopes"<<endl;
       for (size_t i =0; i< (first_branch_node->children).size(); i++)
       {
-        SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
-        ROSE_ASSERT (current_child_scope != NULL);
-        target_scopes.push_back (current_child_scope);
+        // we try to get the bottom for each branch, not just the upper scope
+        // This is good for the case like: "if () { for (i=0;..) {}}" and if-stmt's scope is a child of the first branch scope node
+        // TODO: one branch may fork multiple branches. Should we move further down on each grandchildren branch?
+        //       Not really, we then find the common inner most scope of that branch. just simply move decl there!
+        // Another thought: A better fix: we collect all leaf nodes of the scope tree! It has nothing to do with the first branch node!
+        //       this won't work. First branch node still matters. 
+        Scope_Node* current_child_scope = first_branch_node->children[i];     
+        Scope_Node* bottom_node = current_child_scope -> findFirstBranchNode ();
+        SgScopeStatement * bottom_scope = bottom_node->scope;
+        ROSE_ASSERT (bottom_scope!= NULL);
+        target_scopes.push_back (bottom_scope);
       }
     }
     else // we still can move it to the innermost common scope
