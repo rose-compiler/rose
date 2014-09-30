@@ -1,3 +1,10 @@
+set(mstl_SRC DOTGraphInterface.C)
+if (NOT enable-internalFrontendDevelopment)
+  list(APPEND mstl_SRC PDFGeneration.C)
+endif()
+add_library(mstl OBJECT ${mstl_SRC})
+
+
 install(
   FILES
     AttributeMechanism.h DOTGeneration.h DOTGenerationImpl.h DOTGraphInterface.h

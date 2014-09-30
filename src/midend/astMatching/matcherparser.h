@@ -34,6 +34,12 @@
    version 2.2 of Bison.  */
 
 /* Tokens.  */
+
+#ifdef _MSC_VER
+    #undef TRUE
+    #undef FALSE
+#endif
+
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
    /* Put the tokens into the symbol table, so that GDB and other debuggers
