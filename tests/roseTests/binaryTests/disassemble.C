@@ -663,11 +663,6 @@ simple_partitioner(SgAsmInterpretation *interp, const Disassembler::InstructionM
     return sp.partition(interp, insns, mmap);
 }
 
-static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
-    cmdline.parser().emitDocumentationToPager();
-    exit(0);
-}
-
 int
 main(int argc, char *argv[]) 
 {
