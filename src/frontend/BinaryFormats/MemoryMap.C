@@ -383,6 +383,10 @@ MemoryMap::eraseZeros(size_t minsize)
                 } else {
                     zeroInterval = AddressInterval::hull(zeroInterval.least(), zeroInterval.greatest()+1);
                 }
+            } else if (!zeroInterval.isEmpty()) {
+                if (zeroInterval.size() >= minsize)
+                    toRemove.insert(zeroInterval);
+                zeroInterval = AddressInterval();
             }
         }
         if (accessed.greatest() == hull().greatest())
