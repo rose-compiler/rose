@@ -1283,6 +1283,9 @@ protected:
     virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+
+    // Generate a name for initial values.
+    virtual std::string initialValueName(const RegisterDescriptor&) const;
 };
 
 

@@ -655,19 +655,45 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
  *                                      RegisterStateX86
  *******************************************************************************************************************************/
 
+std::string
+RegisterStateX86::initialValueName(const RegisterDescriptor &reg) const {
+    std::string s;
+    if (regdict!=NULL) {
+        s = regdict->lookup(reg);
+        if (!s.empty())
+            s += "_0";
+    }
+    return s;
+}
+
 void
 RegisterStateX86::clear()
 {
     ip = protoval->undefined_(32);
-    for (size_t i=0; i<n_gprs; ++i)
+    for (size_t i=0; i<n_gprs; ++i) {
+        const RegisterDescriptor reg(x86_regclass_gpr, i, 0, 32);
         gpr[i] = protoval->undefined_(32);
-    for (size_t i=0; i<n_segregs; ++i)
+        gpr[i]->set_comment(initialValueName(reg));
+    }
+    for (size_t i=0; i<n_segregs; ++i) {
+        const RegisterDescriptor reg(x86_regclass_segment, i, 0, 16);
         segreg[i] = protoval->undefined_(16);
-    for (size_t i=0; i<n_flags; ++i)
+        segreg[i]->set_comment(initialValueName(reg));
+    }
+    for (size_t i=0; i<n_flags; ++i) {
+        const RegisterDescriptor reg(x86_regclass_flags, x86_flags_status, i, 1);
         flag[i] = protoval->undefined_(1);
-    for (size_t i=0; i<n_st; ++i)
+        flag[i]->set_comment(initialValueName(reg));
+    }
+    for (size_t i=0; i<n_st; ++i) {
+        const RegisterDescriptor reg(x86_regclass_st, i, 0, 80);
         st[i] = protoval->undefined_(80);
+        st[i]->set_comment(initialValueName(reg));
+    }
+
+    const RegisterDescriptor reg(x86_regclass_flags, x86_flags_fpstatus, 0, 16);
     fpstatus = protoval->undefined_(16);
+    fpstatus->set_comment(initialValueName(reg));
 }
 
 void
