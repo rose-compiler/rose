@@ -636,10 +636,10 @@ SgAsmGenericFile::get_best_possible_section_by_va(rose_addr_t va)
         }
 
 #if 0
-     printf ("Select from %zu alternatives \n",possible.size());
+     printf ("Select from %" PRIuPTR " alternatives \n",possible.size());
      for (size_t i = 0; i < possible.size(); i++)
         {
-          printf ("   va = %p possible[%zu] id = %d name = %s \n",(void*)va,i,possible[i]->get_id(),possible[i]->get_name().c_str());
+          printf ("   va = %p possible[%" PRIuPTR "] id = %d name = %s \n",(void*)va,i,possible[i]->get_id(),possible[i]->get_name().c_str());
         }
 #endif
 
@@ -751,7 +751,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         } else if (space & ADDRSP_MEMORY) {
             space_s = "memory";
         }
-        sprintf(p, "SgAsmGenericFile::shift_extend[%zu]: ", ncalls++);
+        sprintf(p, "SgAsmGenericFile::shift_extend[%" PRIuPTR "]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
         fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
         fprintf(stderr, "%s    %s Sa=0x%08"PRIx64" (%"PRIu64"), Sn=0x%08"PRIx64" (%"PRIu64")\n", p, space_s, sa, sa, sn, sn);

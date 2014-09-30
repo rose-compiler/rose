@@ -1054,11 +1054,11 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                size_t numberOfSymbols      = currentScope->count_symbol(name); 
                size_t numberOfAliasSymbols = currentScope->count_alias_symbol(name); 
 
-               printf ("symbol = %p = %s aliasSymbol = %p numberOfSymbols = %zu \n",symbol,symbol->class_name().c_str(),aliasSymbol,numberOfSymbols);
+               printf ("symbol = %p = %s aliasSymbol = %p numberOfSymbols = %" PRIuPTR " \n",symbol,symbol->class_name().c_str(),aliasSymbol,numberOfSymbols);
 
-               printf ("numberOfSymbols = %zu numberOfAliasSymbols = %zu \n",numberOfSymbols,numberOfAliasSymbols);
+               printf ("numberOfSymbols = %" PRIuPTR " numberOfAliasSymbols = %" PRIuPTR " \n",numberOfSymbols,numberOfAliasSymbols);
                numberOfSymbols = numberOfSymbols - numberOfAliasSymbols;
-               printf ("Corrected numberOfSymbols = %zu \n",numberOfSymbols);
+               printf ("Corrected numberOfSymbols = %" PRIuPTR " \n",numberOfSymbols);
 
             // if (numberOfSymbols > 1)
             // if (numberOfSymbols > 1 || forceMoreNameQualification == true)
@@ -1551,7 +1551,7 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
      int counter = 0;
 
      printf ("\n\n*********************************************************************************************************************\n");
-     printf ("Inside of HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
+     printf ("Inside of HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " \n",templateArgumentList.size());
      printf ("*********************************************************************************************************************\n");
 
      SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
@@ -1635,7 +1635,7 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
         }
 
      printf ("*********************************************************************************************************************\n");
-     printf ("Leaving HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
+     printf ("Leaving HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " \n",templateArgumentList.size());
      printf ("*********************************************************************************************************************\n\n");
    }
 
@@ -2026,7 +2026,7 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
           if (typeNameString.length() > 2000)
              {
-               printf ("Error: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
+               printf ("Error: type names should not be this long... typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
                ROSE_ASSERT(false);
              }
 #endif
@@ -2129,7 +2129,7 @@ HiddenListTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp,
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
           if (functionNameString.length() > 2000)
              {
-               printf ("Error: function names should not be this long... functionNameString.length() = %zu \n",functionNameString.length());
+               printf ("Error: function names should not be this long... functionNameString.length() = %" PRIuPTR " \n",functionNameString.length());
                ROSE_ASSERT(false);
              }
 #endif
@@ -2163,7 +2163,7 @@ HiddenListTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDeclarationI
   // if (referencedNameSet.find(declaration->get_firstNondefiningDeclaration()) == referencedNameSet.end())
      if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())
         {
-          printf ("$$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %zu \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
+          printf ("$$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %" PRIuPTR " \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
           skipNameQualification = true;
         }
        else
@@ -2259,7 +2259,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
 
           SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
 
-          printf ("!!!!! Evaluate the derived classes: are they visible --- baseClassList.size() = %zu \n",baseClassList.size());
+          printf ("!!!!! Evaluate the derived classes: are they visible --- baseClassList.size() = %" PRIuPTR " \n",baseClassList.size());
 
 #if 0
           string declaration_name = classDefinition->get_declaration()->unparseToString();
@@ -3402,7 +3402,7 @@ HiddenListTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFu
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(functionRefExp,qualifier));
 
           printf ("Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",functionRefExp,functionRefExp->get_qualified_name_prefix().str());
-          printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+          printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
         }
        else
         {

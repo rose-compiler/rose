@@ -48,7 +48,7 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
-    fprintf(f, "%s%-*s = %zu", p, w, "", p_value);
+    fprintf(f, "%s%-*s = %" PRIuPTR "", p, w, "", p_value);
     switch (p_value) {
         case 0: fprintf(f, " (local)\n"); break;
         case 1: fprintf(f, " (global)\n"); break;
@@ -141,7 +141,7 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
     SgAsmElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "entries.size", p_entries->get_entries().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "entries.size", p_entries->get_entries().size());
     for (size_t i = 0; i < p_entries->get_entries().size(); i++) {
         p_entries->get_entries()[i]->dump(f, p, i);
     }
@@ -509,7 +509,7 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
     SgAsmElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "ElfSymverDefined.size", p_entries->get_entries().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "ElfSymverDefined.size", p_entries->get_entries().size());
     for (size_t i = 0; i < p_entries->get_entries().size(); i++) {
         p_entries->get_entries()[i]->dump(f, p, i);
     }
@@ -663,7 +663,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i=0; i<entries.size(); ++i) {
         SgAsmElfSymverNeededAux* aux = entries[i];
         char auxname[32];
-        sprintf(auxname, "aux[%zu]", i);
+        sprintf(auxname, "aux[%" PRIuPTR "]", i);
         fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, auxname, 
                 aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->get_string(true).c_str());
     }
@@ -845,7 +845,7 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
     SgAsmElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "ElfSymverNeeded.size", p_entries->get_entries().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "ElfSymverNeeded.size", p_entries->get_entries().size());
     for (size_t i = 0; i < p_entries->get_entries().size(); i++) {
         p_entries->get_entries()[i]->dump(f, p, i);
     }

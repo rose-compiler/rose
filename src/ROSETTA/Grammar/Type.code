@@ -1153,7 +1153,7 @@ SgTypeString::get_mangled (void) const
                   << mangled_length_name.str () // length
                   << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
 
-  // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %zu lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
+  // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %" PRIuPTR " lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
 
      return mangled_name;
 #endif
@@ -1800,7 +1800,7 @@ SgType::stripType(unsigned char bit_array) const
      while (true)
         {
 #if 0
-          printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+          printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
 #endif
           if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
@@ -1863,12 +1863,12 @@ SgType::stripType(unsigned char bit_array) const
        // DQ (7/4/2013): This should be a reasonable limit.
           if (counter >= 80)
              {
-               printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
              }
           if (counter >= 100)
              {
             // Exit loop and return the currentType... 
-               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %zu) this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %" PRIuPTR ") this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
 #if 0
                break;
 #endif
@@ -3747,7 +3747,7 @@ SgFunctionType::SgFunctionType(SgPartialFunctionType *ft)
 #endif
 
      SgTypePtrList::iterator p = ft->get_arguments().begin();
-  // printf ("PartialFunctionType->get_arguments().size() = %zu \n",ft->get_arguments().size());
+  // printf ("PartialFunctionType->get_arguments().size() = %" PRIuPTR " \n",ft->get_arguments().size());
      while(p != ft->get_arguments().end())
         {
        // printf ("     function argument = %p = %s \n",*p,(*p)->sage_class_name());

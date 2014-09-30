@@ -1107,7 +1107,7 @@ ROSE_ASSERT(false);
                                         it_VectorOfNamespaceInformation it_VecOfNamespInfo;
                                         Vector_Of_SymbolInformation::iterator it_VecSymbolInfo;
 
-                                     // printf ("this->NamespacesHashMap[namespace_name].size() = %zu \n",this->NamespacesHashMap[namespace_name].size());
+                                     // printf ("this->NamespacesHashMap[namespace_name].size() = %" PRIuPTR " \n",this->NamespacesHashMap[namespace_name].size());
                                      // int bound = this->NamespacesIteratorHashMap[ namespace_name ].it_vec_namesp_info - this->NamespacesHashMap[namespace_name].begin();
                                      // int bound = foundInIteratorHashMap->second.it_vec_namesp_info - find_it->second.begin();
                                      // int bound = this->NamespacesIteratorHashMap[ namespace_name ].it_vec_namesp_info - this->NamespacesHashMap[namespace_name].begin();
@@ -1122,7 +1122,7 @@ ROSE_ASSERT(false);
                                      // DQ (3/5/2009): This is the original code (which allows all the C++ test codes to pass).
                                      // This is required for test2005_206.C to pass, however it had to be modified to allow the outlining test to a separate file to pass.
 
-                                     // printf ("b = %d bound = %d find_it->second.size() = %zu \n",b,bound, find_it->second.size());
+                                     // printf ("b = %d bound = %d find_it->second.size() = %" PRIuPTR " \n",b,bound, find_it->second.size());
 
                                      // for(it_VecOfNamespInfo = this->NamespacesHashMap[namespace_name].begin(); (b <= bound); ++it_VecOfNamespInfo) {
                                      // for(it_VecOfNamespInfo = find_it->second.begin(); (b <= bound); ++it_VecOfNamespInfo)
@@ -1130,7 +1130,7 @@ ROSE_ASSERT(false);
                                         for(; (b <= bound) && (it_VecOfNamespInfo != find_it->second.end()); ++it_VecOfNamespInfo)
                                            {
                                           // if ((*it_VecOfNamespInfo).VectorOfSymbolInformation.empty() == false)
-                                          // printf ("(*it_VecOfNamespInfo).VectorOfSymbolInformation.size() = %zu \n",(*it_VecOfNamespInfo).VectorOfSymbolInformation.size());
+                                          // printf ("(*it_VecOfNamespInfo).VectorOfSymbolInformation.size() = %" PRIuPTR " \n",(*it_VecOfNamespInfo).VectorOfSymbolInformation.size());
 
                                           // DQ (3/5/2009): Make sure that the test of "b <= bound" does not cause us to iterate past the last element of the list.
                                              if (it_VecOfNamespInfo != find_it->second.end())

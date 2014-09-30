@@ -229,7 +229,7 @@ fixupTraversal( const ReplacementMapTraversal::ReplacementMapType & replacementM
      TimingPerformance timer ("Reset the AST to share IR nodes:");
 
      if (SgProject::get_verbose() > 0)
-          printf ("In fixupTraversal(): replacementMap.size() = %zu deleteList.size() = %zu \n",replacementMap.size(),deleteList.size());
+          printf ("In fixupTraversal(): replacementMap.size() = %" PRIuPTR " deleteList.size() = %" PRIuPTR " \n",replacementMap.size(),deleteList.size());
 
      FixupTraversal traversal(replacementMap,deleteList);
 
@@ -360,7 +360,7 @@ fixupSubtreeTraversal( SgNode* subtree, const ReplacementMapTraversal::Replaceme
    {
      TimingPerformance timer ("Reset the AST to share IR nodes:");
 
-  // printf ("In fixupSubtreeTraversal(): replacementMap.size() = %zu deleteList.size() = %zu \n",replacementMap.size(),deleteList.size());
+  // printf ("In fixupSubtreeTraversal(): replacementMap.size() = %" PRIuPTR " deleteList.size() = %" PRIuPTR " \n",replacementMap.size(),deleteList.size());
      FixupSubtreeTraversal traversal(replacementMap,deleteList);
      traversal.traverse(subtree,preorder);
    }

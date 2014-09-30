@@ -206,7 +206,7 @@ SgAsmPESectionTable::parse()
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
         if (entsize!=read_content_local(i * entsize, &disk, entsize, false))
-            fprintf(stderr, "SgAsmPESectionTable::parse: warning: section table entry %zu at file offset 0x%08"PRIx64
+            fprintf(stderr, "SgAsmPESectionTable::parse: warning: section table entry %" PRIuPTR " at file offset 0x%08"PRIx64
                     " extends beyond end of defined section table.\n",
                     i, get_offset()+i*entsize);
         SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry(&disk);

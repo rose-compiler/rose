@@ -655,7 +655,7 @@ InheritedAttributeForNamespacesAndClassTraversal NamespacesAndClassTraversal :: 
 
                                                      // DQ (5/31/2007): TODO: Please consider an implementation using "switch"
 #if 0
-                                                        printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): i = %d inherited_symbol_table.size() = %zu symb = %p \n",i,inherited_symbol_table.size(),symb);
+                                                        printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): i = %d inherited_symbol_table.size() = %" PRIuPTR " symb = %p \n",i,inherited_symbol_table.size(),symb);
                                                         printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): symb = %p = %s \n",symb,symb->class_name().c_str());
 #endif
                                                      // check if this symbols are private, if yes -> don't make an update with them

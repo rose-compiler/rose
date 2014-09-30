@@ -105,7 +105,7 @@ initializeNodeListToCorrectSize ()
           treeFragementListArray.push_back(tempList);
         }
 
-  // printf ("treeFragementListArray.size() = %zu \n",treeFragementListArray.size());
+  // printf ("treeFragementListArray.size() = %" PRIuPTR " \n",treeFragementListArray.size());
      ROSE_ASSERT ( unsigned(ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG) == 
                    treeFragementListArray.size() );
    }
@@ -134,7 +134,7 @@ operator+= ( const AST_FragmentIdentificationSynthesizedAttributeType & X )
              {
 #if 0
             // If not empty then what is there
-               printf ("treeFragementListArray[d].size() = %zu \n",i,treeFragementListArray[i].size());
+               printf ("treeFragementListArray[d].size() = %" PRIuPTR " \n",i,treeFragementListArray[i].size());
                if (treeFragementListArray[i].size() != 0)
                   {
                     list<SgStatement*>::iterator j;
@@ -148,7 +148,7 @@ operator+= ( const AST_FragmentIdentificationSynthesizedAttributeType & X )
                ROSE_ASSERT(treeFragementListArray[i].size() == 0);
             // Since the existing list is empty we can just use the assignment operator to fill it
                treeFragementListArray[i] = X.treeFragementListArray[i];
-//             printf ("In operator+=(): treeFragementListArray[%d].size() = %zu \n",i,treeFragementListArray[i].size());
+//             printf ("In operator+=(): treeFragementListArray[%d].size() = %" PRIuPTR " \n",i,treeFragementListArray[i].size());
              }
         }
 
@@ -186,7 +186,7 @@ display ( std::string s ) const
           std::string positionName = ASTNodeCollection::markerStrings[i][0] + "/" + 
                                 ASTNodeCollection::markerStrings[i][1];
           ROSE_ASSERT (positionName.c_str() != NULL);
-          printf ("     treeFragementListArray[%2d:%80s].size() = %zu \n",
+          printf ("     treeFragementListArray[%2d:%80s].size() = %" PRIuPTR " \n",
                i,positionName.c_str(),treeFragementListArray[i].size());
 
 #if 1

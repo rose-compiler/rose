@@ -93,7 +93,7 @@ computeSetDifference(const set<SgNode*> & listToDelete, const set<SgNode*> & req
    {
      set<SgNode*> setDifferenceResult;
 
-  // printf ("In computeSetDifference(): listToDelete.size() = %zu requiredNodesTest.size() = %zu \n",listToDelete.size(),requiredNodesTest.size());
+  // printf ("In computeSetDifference(): listToDelete.size() = %" PRIuPTR " requiredNodesTest.size() = %" PRIuPTR " \n",listToDelete.size(),requiredNodesTest.size());
 
   // Use set difference to compute the list of IR nodes to be deleted 
   // (we might want to do this to compute those to graph as well).
@@ -115,7 +115,7 @@ computeSetIntersection(const set<SgNode*> & listToDelete, const set<SgNode*> & r
    {
      set<SgNode*> setIntersectionResult;
 
-  // printf ("In computeSetIntersection(): listToDelete.size() = %zu requiredNodesTest.size() = %zu \n",listToDelete.size(),requiredNodesTest.size());
+  // printf ("In computeSetIntersection(): listToDelete.size() = %" PRIuPTR " requiredNodesTest.size() = %" PRIuPTR " \n",listToDelete.size(),requiredNodesTest.size());
 
   // What is the intersection! Since these nodes could be a problem when they are evaluated (SgClassType get_mangled() required definition
   // but only the SgClassType was removed in the set difference and not the SgClassDeclaration).

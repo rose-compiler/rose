@@ -112,7 +112,7 @@ deleteSetErrorCheck( SgProject* project, const set<SgNode*> & listToDelete )
      if (SgProject::get_verbose() > 0)
         {
           printf ("In deleteSetErrorCheck(): calling computeSetIntersection(): DONE \n");
-          printf ("In deleteSetErrorCheck(): intersectionSet.size() = %zu \n",intersectionSet.size());
+          printf ("In deleteSetErrorCheck(): intersectionSet.size() = %" PRIuPTR " \n",intersectionSet.size());
           displaySet(intersectionSet,"intersectionSet");
         }
 

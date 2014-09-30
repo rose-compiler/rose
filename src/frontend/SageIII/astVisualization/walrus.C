@@ -152,7 +152,7 @@ WalrusGraph::generateWalrusGraph( SgNode* node, string outputFilename )
      Counter traversal;
      traversal.traverse(node,preorder);
 
-     printf ("node_to_index_map.size() = %zu \n",node_to_index_map.size());
+     printf ("node_to_index_map.size() = %" PRIuPTR " \n",node_to_index_map.size());
 
      filebuf fb;
      fb.open (outputFilename.c_str(),ios::out);

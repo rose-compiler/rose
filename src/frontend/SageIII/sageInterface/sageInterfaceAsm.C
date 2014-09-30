@@ -213,7 +213,7 @@ SageInterface::get_value( SgAsmValueExpression* asmValueExpression )
              {
                SgAsmIntegerValueExpression* asmIntegerValueExpression = isSgAsmIntegerValueExpression(asmValueExpression);
                value = asmIntegerValueExpression->get_value();
-            // printf ("structure field assigned (Byte) value = %zu \n",value);
+            // printf ("structure field assigned (Byte) value = %" PRIuPTR " \n",value);
                break;
              }
 
@@ -401,7 +401,7 @@ SageInterface::matchAST ( SgNode* node, vector<SgNode*> & listOfNodes, Equivalen
 
                  // This is the first level of equivalence testing (quick but not deep enough)
 #if 0
-                    printf ("Testing match: listOfNodes[%zu] = %s node = %s \n",index,listOfNodes[index]->class_name().c_str(),node->class_name().c_str());
+                    printf ("Testing match: listOfNodes[%" PRIuPTR "] = %s node = %s \n",index,listOfNodes[index]->class_name().c_str(),node->class_name().c_str());
 #endif
                     if (listOfNodes[index]->variantT() == node->variantT())
                        {
@@ -414,18 +414,18 @@ SageInterface::matchAST ( SgNode* node, vector<SgNode*> & listOfNodes, Equivalen
 #endif
                             }
 #if 0
-                         printf ("Found a possible matching IR position index = %zu node = %p = %s \n",index,node,node->class_name().c_str());
+                         printf ("Found a possible matching IR position index = %" PRIuPTR " node = %p = %s \n",index,node,node->class_name().c_str());
 #endif
                       // Now we do a deeper and more custom test of equivalence (looking for matching data members, as required).
 #if 0
-                         printf ("Index = %zu of %zu: comparing target to currentInstruction = %s at address = %p \n",index,listOfNodes.size(),unparseInstruction(currentInstruction).c_str(),(void*)currentInstruction->get_address());
+                         printf ("Index = %" PRIuPTR " of %" PRIuPTR ": comparing target to currentInstruction = %s at address = %p \n",index,listOfNodes.size(),unparseInstruction(currentInstruction).c_str(),(void*)currentInstruction->get_address());
 #endif
                          bool isAMatch = equivalenceTestFunction(listOfNodes[index],node);
 
                          if (isAMatch == true)
                             {
 #if 0
-                              printf ("Found a more exact match at index = %zu of %zu at node = %p = %s \n",index,listOfNodes.size(),node,node->class_name().c_str());
+                              printf ("Found a more exact match at index = %" PRIuPTR " of %" PRIuPTR " at node = %p = %s \n",index,listOfNodes.size(),node,node->class_name().c_str());
 #endif
                               if (index == 0)
                                  {
@@ -461,7 +461,7 @@ SageInterface::matchAST ( SgNode* node, vector<SgNode*> & listOfNodes, Equivalen
                   }
         };
 
-     printf ("Input target listOfNodes.size() = %zu \n",listOfNodes.size());
+     printf ("Input target listOfNodes.size() = %" PRIuPTR " \n",listOfNodes.size());
 
      MatchAST matchAST(listOfNodes,equivalenceTest);
 
@@ -483,19 +483,19 @@ SageInterface::find ( SgNode* astNode, SgNode* target, EquivalenceTestFunctionTy
 
      vector<SgNode*> flattenedTargetList = flattenAST(target);
 
-     printf ("flattenedTargetList.size() = %zu \n",flattenedTargetList.size());
+     printf ("flattenedTargetList.size() = %" PRIuPTR " \n",flattenedTargetList.size());
      SgAsmInstruction* instruction = isSgAsmInstruction(flattenedTargetList[0]);
      if (instruction != NULL)
           printf ("   instruction = %s \n",unparseInstructionWithAddress(instruction).c_str());
      for (size_t i=0; i < flattenedTargetList.size(); i++)
         {
           ROSE_ASSERT(flattenedTargetList[i] != NULL);
-          printf ("flattenedTargetList[%zu] = %s \n",i,flattenedTargetList[i]->class_name().c_str());
+          printf ("flattenedTargetList[%" PRIuPTR "] = %s \n",i,flattenedTargetList[i]->class_name().c_str());
         }
 
      vector<SgNode*> matchList = matchAST (astNode,flattenedTargetList,equivalenceTest);
 
-     printf ("Matching subtrees (matchList.size() = %zu) \n",matchList.size());
+     printf ("Matching subtrees (matchList.size() = %" PRIuPTR ") \n",matchList.size());
      for (size_t i=0; i < matchList.size(); i++)
         {
           ROSE_ASSERT(matchList[i] != NULL);

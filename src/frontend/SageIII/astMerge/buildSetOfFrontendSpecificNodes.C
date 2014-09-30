@@ -59,10 +59,10 @@ getSetOfFrontendSpecificNodes()
      t.traverseMemoryPool();
 
 #if 0
-     printf ("At base of getSetOfFrontendSpecificNodes(): t.nodeList = %zu \n",t.nodeList.size());
+     printf ("At base of getSetOfFrontendSpecificNodes(): t.nodeList = %" PRIuPTR " \n",t.nodeList.size());
      return t.nodeList;
 #else
-  // printf ("Calling compute set difference() to subtract the required IR nodes (t.nodeList = %zu) \n",t.nodeList.size());
+  // printf ("Calling compute set difference() to subtract the required IR nodes (t.nodeList = %" PRIuPTR ") \n",t.nodeList.size());
 
      set<SgNode*> requiredNodesTest = getSetOfNonFrontendSpecificNodes();
 
@@ -73,7 +73,7 @@ getSetOfFrontendSpecificNodes()
      set<SgNode*> finalList = computeSetDifference(t.nodeList,requiredNodesTest);
   // printf ("Calling compute set difference() to subtract the required IR nodes: DONE \n");
 
-  // printf ("At base of getSetOfFrontendSpecificNodes(): finalList = %zu \n",finalList.size());
+  // printf ("At base of getSetOfFrontendSpecificNodes(): finalList = %" PRIuPTR " \n",finalList.size());
      return finalList;
 #endif
    }
@@ -138,7 +138,7 @@ getSetOfNonFrontendSpecificNodes()
      NodeListTraversal t;
      t.traverseMemoryPool();
 
-  // printf ("At base of getSetOfFrontendSpecificNodes(): t.nodeList = %zu \n",t.nodeList.size());
+  // printf ("At base of getSetOfFrontendSpecificNodes(): t.nodeList = %" PRIuPTR " \n",t.nodeList.size());
      return t.nodeList;
    }
 

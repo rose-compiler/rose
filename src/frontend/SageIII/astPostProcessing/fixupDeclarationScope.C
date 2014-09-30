@@ -26,7 +26,7 @@ void fixupAstDeclarationScope( SgNode* node )
      std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* > & mapOfSets = astFixupTraversal.mapOfSets;
 
 #if 0
-     printf ("In fixupAstDeclarationScope(): mapOfSets.size() = %zu \n",mapOfSets.size());
+     printf ("In fixupAstDeclarationScope(): mapOfSets.size() = %" PRIuPTR " \n",mapOfSets.size());
 #endif
 
      std::map<SgDeclarationStatement*,std::set<SgDeclarationStatement*>* >::iterator i = mapOfSets.begin();
@@ -46,7 +46,7 @@ void fixupAstDeclarationScope( SgNode* node )
           ROSE_ASSERT(declarationSet != NULL);
 
 #if 0
-          printf ("In fixupAstDeclarationScope(): mapOfSets[%p]->size() = %zu \n",firstNondefiningDeclaration,mapOfSets[firstNondefiningDeclaration]->size());
+          printf ("In fixupAstDeclarationScope(): mapOfSets[%p]->size() = %" PRIuPTR " \n",firstNondefiningDeclaration,mapOfSets[firstNondefiningDeclaration]->size());
 #endif
 
           std::set<SgDeclarationStatement*>::iterator j = declarationSet->begin();

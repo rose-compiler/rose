@@ -90,11 +90,11 @@ SgAsmPEImportItem::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (p_by_ordinal) {
         fprintf(f, "%s%-*s = 0x%04x (%u)", p, w, "ordinal", p_ordinal, p_ordinal);
         if (p_hintname_rva.get_rva()!=0 || p_hint!=0 || !p_name->get_string().empty())
-            fprintf(f, " (hint/name rva %s %zu bytes, hint=0x%04x (%u), name=\"%s\")",
+            fprintf(f, " (hint/name rva %s %" PRIuPTR " bytes, hint=0x%04x (%u), name=\"%s\")",
                     p_hintname_rva.to_string().c_str(), p_hintname_nalloc, p_hint, p_hint, p_name->get_string(true).c_str());
         fprintf(f, "\n");
     } else {
-        fprintf(f, "%s%-*s = rva %s %zu bytes, hint=0x%04x (%u), name=\"%s\"",
+        fprintf(f, "%s%-*s = rva %s %" PRIuPTR " bytes, hint=0x%04x (%u), name=\"%s\"",
                 p, w, "hint/name", p_hintname_rva.to_string().c_str(), p_hintname_nalloc,
                 p_hint, p_hint, p_name->get_string(true).c_str());
         if (p_ordinal!=0)

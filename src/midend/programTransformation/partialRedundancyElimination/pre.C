@@ -535,7 +535,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
         }
 
   // Do within-node insertions
-  // printf ("At start of loop: insertions.size() = %zu \n",insertions.size());
+  // printf ("At start of loop: insertions.size() = %" PRIuPTR " \n",insertions.size());
      for (vector<pair<SgNode*, bool> >::iterator i = insertions.begin(); i != insertions.end(); ++i)
         {
           SgTreeCopy tc1, tc2;
@@ -544,7 +544,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
           cachevarCopy->set_lvalue(true);
           SgExpression* operation = new SgAssignOp(SgNULL_FILE, cachevarCopy, isSgExpression(expr->copy(tc2)));
 #if 0
-          printf ("Inside of loop: insertions.size() = %zu \n",insertions.size());
+          printf ("Inside of loop: insertions.size() = %" PRIuPTR " \n",insertions.size());
           printf ("\n\ni->first = %p = %s = %s \n",i->first,i->first->class_name().c_str(),i->first->unparseToString().c_str());
           printf ("operation = %p = %s = %s \n",operation,operation->class_name().c_str(),operation->unparseToString().c_str());
 #endif

@@ -470,18 +470,18 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
     
     char buf[128];
     if(t>=SHT_LOOS && t <= SHT_HIOS) {
-        snprintf(buf,sizeof(buf),"os-specific (%zu)",size_t(t)) ;
+        snprintf(buf,sizeof(buf),"os-specific (%" PRIuPTR ")",size_t(t)) ;
         return buf;
     }
     if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
-        snprintf(buf,sizeof(buf),"processor-specific (%zu)",size_t(t)) ;
+        snprintf(buf,sizeof(buf),"processor-specific (%" PRIuPTR ")",size_t(t)) ;
         return buf;
     }
     if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
-        snprintf(buf,sizeof(buf),"application-specific (%zu)",size_t(t)) ;
+        snprintf(buf,sizeof(buf),"application-specific (%" PRIuPTR ")",size_t(t)) ;
         return buf;
     }
-    snprintf(buf,sizeof(buf),"unknown section type (%zu)",size_t(t)) ;
+    snprintf(buf,sizeof(buf),"unknown section type (%" PRIuPTR ")",size_t(t)) ;
     return buf;
 }
 
@@ -558,7 +558,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_addralign",   p_sh_addralign, p_sh_addralign);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_entsize",     p_sh_entsize, p_sh_entsize);
     if (p_extra.size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }

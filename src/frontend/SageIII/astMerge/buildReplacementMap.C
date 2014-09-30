@@ -34,7 +34,7 @@ ReplacementMapTraversal::buildListOfODRviolations ( ReplacementMapTraversal::ODR
         }
 
      if (SgProject::get_verbose() > 0)
-          printf ("ODR_Violations.size() = %zu  returnList.size() = %zu \n",ODR_Violations.size(),returnList.size());
+          printf ("ODR_Violations.size() = %" PRIuPTR "  returnList.size() = %" PRIuPTR " \n",ODR_Violations.size(),returnList.size());
 
      return returnList;
    }
@@ -463,7 +463,7 @@ replacementMapTraversal (
      TimingPerformance timer ("Build the STL map of shared IR nodes and replacement sites in the AST:");
 
      if (SgProject::get_verbose() > 0)
-          printf ("In replacementMapTraversal(): mangledNameMap.size() = %zu \n",mangledNameMap.size());
+          printf ("In replacementMapTraversal(): mangledNameMap.size() = %" PRIuPTR " \n",mangledNameMap.size());
 
      ReplacementMapTraversal traversal(mangledNameMap,replacementMap,deleteList);
      traversal.traverseMemoryPool();
@@ -473,7 +473,7 @@ replacementMapTraversal (
      if (SgProject::get_verbose() > 0)
         {
           printf ("ReplacementMapTraversal statistics: \n");
-          printf ("     violations.size() = %zu \n",violations.size());
+          printf ("     violations.size() = %" PRIuPTR " \n",violations.size());
           printf ("     numberOfNodes         = %d \n",traversal.numberOfNodes);
           printf ("     numberOfNodesTested   = %d \n",traversal.numberOfNodesTested);
           printf ("     numberOfNodesMatching = %d \n",traversal.numberOfNodesMatching);
@@ -487,7 +487,7 @@ ReplacementMapTraversal::displayReplacementMap ( const ReplacementMapTraversal::
    {
   // typedef multimap<SgNode*,SgNode*> ReplacementMapType;
 
-     printf ("ReplacementMapTraversal::displayReplacementMap(): size() = %zu \n",m.size());
+     printf ("ReplacementMapTraversal::displayReplacementMap(): size() = %" PRIuPTR " \n",m.size());
 
      ReplacementMapTraversal::ReplacementMapType::const_iterator i = m.begin();
      while (i != m.end())

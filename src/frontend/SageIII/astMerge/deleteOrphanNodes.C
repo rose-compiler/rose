@@ -69,7 +69,7 @@ deleteOrphanIRnodesInMemoryPool()
      BuildOrphanListMemoryPoolTraversal t;
      t.traverseMemoryPool();
 
-     printf ("In deleteOrphanIRnodesInMemoryPool(): t.parentList.size() = %zu t.childList.size() = %zu \n",t.parentList.size(),t.childList.size());
+     printf ("In deleteOrphanIRnodesInMemoryPool(): t.parentList.size() = %" PRIuPTR " t.childList.size() = %" PRIuPTR " \n",t.parentList.size(),t.childList.size());
      size_t size = t.parentList.size() > t.childList.size() ? t.parentList.size() : t.childList.size();
      std::vector<SgNode*> orphanList(size);
   // orphanList = set_difference(t.parentList.begin(),t.parentList.end(),t.childList.begin(),t.childList.end(),orphanList.begin());
@@ -99,7 +99,7 @@ deleteOrphanIRnodesInMemoryPool()
         }
 #endif
 
-     printf ("In deleteOrphanIRnodesInMemoryPool(): deleting orphanList size = %zu \n",orphanList.size());
+     printf ("In deleteOrphanIRnodesInMemoryPool(): deleting orphanList size = %" PRIuPTR " \n",orphanList.size());
 
      std::vector<SgNode*>::iterator i = orphanList.begin();
      while (i != orphanList.end())

@@ -1667,17 +1667,17 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
            ROSE_ASSERT(returnInfo != NULL);
         // JH (04/21/2006): Adding the storing of the Sg_File_Info pointer
         // returnInfo->setFile_Info((Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex);
-        // printf ("Using fileInfoIndex = %zu to get Sg_File_Info object \n",fileInfoIndex);
+        // printf ("Using fileInfoIndex = %" PRIuPTR " to get Sg_File_Info object \n",fileInfoIndex);
            returnInfo->set_file_info((Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex)));
 #if 0
            printf ("Check the file Info object just read... \n");
            printf ("returnInfo = %p \n",returnInfo);
         // We will be calling the unpacked() functions for attributes later, so at this point the string will be empty.
-           printf ("returnInfo->getString().size() = %zu (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().size());
+           printf ("returnInfo->getString().size() = %" PRIuPTR " (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().size());
            printf ("returnInfo->getString() = %s (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().c_str());
            printf ("returnInfo->get_file_info() = %p \n",returnInfo->get_file_info());
            printf ("returnInfo->get_file_info()->get_freepointer() = %p \n",returnInfo->get_file_info()->get_freepointer());
-           printf ("returnInfo->get_file_info()->get_freepointer() = %zu \n",(size_t)returnInfo->get_file_info()->get_freepointer());
+           printf ("returnInfo->get_file_info()->get_freepointer() = %" PRIuPTR " \n",(size_t)returnInfo->get_file_info()->get_freepointer());
 #endif
         // if there is any data in the pool at all
            if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
@@ -2029,7 +2029,7 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
                printf ("(*copy_)->getString() = %s \n",(*copy_)->getString().c_str());
                printf ("(*copy_)->get_file_info() = %p \n",(*copy_)->get_file_info());
                printf ("(*copy_)->get_file_info()->get_freepointer() = %p \n",(*copy_)->get_file_info()->get_freepointer());
-               printf ("(*copy_)->get_file_info()->get_freepointer() = %zu \n",(size_t)(*copy_)->get_file_info()->get_freepointer());
+               printf ("(*copy_)->get_file_info()->get_freepointer() = %" PRIuPTR " \n",(size_t)(*copy_)->get_file_info()->get_freepointer());
 #endif
                Base::actual->storeDataInEasyStorageClass(*copy_);
              }

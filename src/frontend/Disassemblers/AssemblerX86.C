@@ -223,7 +223,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             fprintf(f, "ExprList {");
             for (size_t i=0; i<ee->get_expressions().size(); i++) {
                 SgAsmExpression *operand = ee->get_expressions()[i];
-                fprintf(f, "\n%soperand[%zu]=", prefix.c_str(), i);
+                fprintf(f, "\n%soperand[%" PRIuPTR "]=", prefix.c_str(), i);
                 printExpr(f, operand, prefix+"  ");
             }
             printExpr(f, e, prefix, V_SgAsmExpression);
@@ -278,7 +278,7 @@ AssemblerX86::InsnDefn::to_str() const
     sprintf(buf+strlen(buf), "%02X", (unsigned)(opcode & 0xff));
 
     if (opcode_modifiers & od_e_mask)
-        sprintf(buf+strlen(buf), "/%zu", od_e_val(opcode_modifiers));
+        sprintf(buf+strlen(buf), "/%" PRIuPTR "", od_e_val(opcode_modifiers));
     if (opcode_modifiers & od_modrm)
         strcat(buf, "/r");
 
@@ -1671,7 +1671,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
 
     static size_t nassembled=0;
     if (0==++nassembled % 10000)
-        fprintf(stderr, "AssemblerX86[va 0x%08"PRIx64"]: assembled %zu instructions\n", insn->get_address(), nassembled);
+        fprintf(stderr, "AssemblerX86[va 0x%08"PRIx64"]: assembled %" PRIuPTR " instructions\n", insn->get_address(), nassembled);
 
     /* Instruction */
     if (p_debug) {
@@ -1688,7 +1688,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
                (x86_insnsize_16==insn->get_operandSize()?16:(x86_insnsize_32==insn->get_operandSize()?32:64)));
         for (size_t i=0; i<insn->get_operandList()->get_operands().size(); i++) {
             SgAsmExpression *operand = insn->get_operandList()->get_operands()[i];
-            fprintf(p_debug, "  operand[%zu]=", i);
+            fprintf(p_debug, "  operand[%" PRIuPTR "]=", i);
             printExpr(p_debug, operand, "    ");
             fprintf(p_debug, "\n");
         }
