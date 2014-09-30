@@ -145,7 +145,7 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
      int tempint;
      double tempdouble;
 
-#if 0
+#if 1
      string atermString = ATwriteToString(term);
      printf ("In AtermToNodeConverter::convertAtermToNode(): atermString = %s \n",atermString.c_str());
 #endif
@@ -358,6 +358,36 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
           goto done;
         }
 
+     if (ATmatch(term, "MemberFunction(<str>, <term>, [<list>], <term>)",&str, &temp1, &temp2, &temp3))
+        {
+       // This case is mostly a copy fo the Function case (above).
+          string funcname = str;
+          SgType* return_type = isSgType(convertAtermToNode(temp1));
+          ROSE_ASSERT (return_type);
+          vector<ATerm> params = getAtermList(temp2);
+          SgFunctionParameterList* pl = new SgFunctionParameterList(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+          for (size_t i = 0; i < params.size(); ++i)
+             {
+               SgNode* argi = convertAtermToNode(params[i]);
+               ROSE_ASSERT (isSgInitializedName(argi));
+               pl->append_arg(isSgInitializedName(argi));
+             }
+          SgFunctionDefinition* def = isSgFunctionDefinition(convertAtermToNode(temp3));
+          SgFunctionType* ft = new SgFunctionType(return_type, false);
+          for (SgInitializedNamePtrList::iterator i = pl->get_args().begin(); i != pl->get_args().end(); ++i)
+               ft->get_arguments().push_back((*i)->get_type());
+          SgFunctionDeclaration* decl = new SgFunctionDeclaration(fi, funcname.c_str(), ft, 0);
+          for (SgInitializedNamePtrList::iterator i = pl->get_args().begin(); i != pl->get_args().end(); ++i)
+             {
+               (*i)->set_definition(decl);
+               decl->get_args().push_back(*i);
+             }
+          if (def)
+               decl->set_definition(def);
+          result = decl;
+          goto done;
+        }
+
      if (ATmatch(term, "FunctionDefinition(<term>)", &temp1))
         {
           SgFunctionDefinition* def = new SgFunctionDefinition(fi);
@@ -498,7 +528,14 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
         {
           cout << "Type ref to " << str << endl;
           SgNode* body = targetLocations[str];
+
+       // DQ (9/18/2014): Need to allow this to be NULL for non-defining declarations associated with types.
+       // I think this is when the reference to the type appears before the declaration in a class.
+#if 1
           ROSE_ASSERT (body);
+#endif
+          if (body != NULL)
+             {
           SgClassDeclaration* classdecl = isSgClassDeclaration(body);
           SgTypedefDeclaration* typedefdecl = isSgTypedefDeclaration(body);
           SgEnumDeclaration* enumdecl = isSgEnumDeclaration(body);
@@ -510,6 +547,7 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
                result = new SgEnumType(enumdecl);
             else
                ROSE_ASSERT (!"Invalid type reference for id");
+             }
           goto done;
         }
 
@@ -584,13 +622,23 @@ AtermToNodeConverter::convertAtermToNode(ATerm term)
   // if (ATmatch(term, "VarDecl(<term>,<term>)", &temp1))
   // if (ATmatch(term, "VarDecl(<term>)", &temp1))
   // if (ATmatch(term, "VarDecl(<term>,<term>,<term>,<term>)", &temp1))
-     if (ATmatch(term, "VarDecl(<term>,[<list>])", &temp1)) 
+  // if (ATmatch(term, "VarDecl(<term>,[<list>])", &temp1)) 
+     if (ATmatch(term, "VarDecl(<term>)", &temp1))
         {
 #if 1
-          printf ("Matching VarDecl(<term>,<term>,<term>,<term>) \n");
+          printf ("Matching VarDecl(<term>) \n");
 #endif
+          SgNode* var = convertAtermToNode(temp1);
+          SgInitializedName* initializedName = isSgInitializedName(var);
+          ROSE_ASSERT (initializedName);
+       // pl->append_arg(isSgInitializedName(argi));
+       // result = SageBuilder::buildVariableDeclaration(initializedName);
+          SgVariableDeclaration* variableDeclaration = new SgVariableDeclaration();
+
+#if 1
           printf ("Found correct form of VarDecl \n");
           ROSE_ASSERT(false);
+#endif
         }
 
      cerr << "Unrecognized term " << ATwriteToString(term) << endl;
@@ -603,6 +651,10 @@ done:
           char* id;
           if (ATmatch(idannot, "<str>", &id))
              {
+#if 1
+                ROSE_ASSERT(result != NULL);
+                printf ("Setting targetLocations map: id = %s result = %p = %s \n",id,result,result->class_name().c_str());
+#endif
                targetLocations[id] = result;
              }
             else
@@ -610,6 +662,9 @@ done:
                ROSE_ASSERT (!"id annotation has incorrect format");
              }
         }
+
+     ROSE_ASSERT(result != NULL);
+     printf ("Leaving AtermToNodeConverter::convertAtermToNode(): result = %p = %s \n",result,result->class_name().c_str());
 
 #ifdef DEBUG
      if (result)

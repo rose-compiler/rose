@@ -40,7 +40,7 @@ main(int argc, char* argv[])
   // printf ("Done: Building the ROSE AST \n");
 
   // Output an optional graph of the AST (just the tree, when active)
-     generateDOT(*project);
+  // generateDOT(*project);
 
      SgFile* roseFile = project->operator[](0);
      ROSE_ASSERT(roseFile != NULL);
@@ -69,12 +69,19 @@ main(int argc, char* argv[])
 
   // ATerm_Graph::graph_aterm_ast(term,file_basename);
 
-#if 0
+#if 1
   // DQ (9/17/2014): Adding test for conversion of Aterm back to AST.
      printf ("Testing the reverse process to generate the ROSE AST from the Aterm \n");
      SgNode* rootOfAST = convertAtermToNode(term);
      printf ("rootOfAST = %p = %s \n",rootOfAST,rootOfAST->class_name().c_str());
 #endif
+
+  // generateDOT(*project);
+     generateDOTforMultipleFile(*project, "AFTER_ATERM");
+
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 5000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"AFTER_ATERM");
 
 #if 0
      printf ("Program Terminated Normally \n");
