@@ -1,3 +1,11 @@
+add_library( astVisualization OBJECT
+  astGraph.C
+  AstAttributeDOT.C
+  wholeAST.C
+  copyGraph.C
+  walrus.C)
+
+
 ########### install files ###############
 
 install(FILES  AstAttributeDOT.h astGraph.h astGraphTemplateImpl.h wholeAST.h

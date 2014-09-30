@@ -356,7 +356,7 @@ class ProcessAstNode
 };
 
 //! Traverse an entire AST, where $op$ is invoked on each AST node to gather information. 
-bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
+bool ROSE_DLL_API ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
                         ProcessAstNode& op, 
                         AstInterface::TraversalOrderType t = AstInterface::PreOrder); 
 

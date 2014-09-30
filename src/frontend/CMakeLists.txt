@@ -1,12 +1,9 @@
-# TODO: move this back down to src/CMakeLists.txt
-add_definitions(-DROSE_DLL_EXPORTS)
-
 add_subdirectory(SageIII)
 add_subdirectory(BinaryDisassembly)
 add_subdirectory(BinaryLoader)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)
-add_subdirectory(PHPFrontend)
+add_subdirectory(Partitioner2)
 add_subdirectory(X10_ROSE_Connection)
 
 if(enable-c)
@@ -17,6 +14,9 @@ if(enable-fortran)
 endif()
 if(enable-java)
   add_subdirectory(ECJ_ROSE_Connection)
+endif()
+if (enable-php)
+  add_subdirectory(PHPFrontend)
 endif()
 if(enable-python)
   add_subdirectory(PythonFrontend)

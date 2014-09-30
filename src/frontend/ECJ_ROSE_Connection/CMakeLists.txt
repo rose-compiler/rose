@@ -1,8 +1,9 @@
+remove_definitions(-DROSE_DLL_EXPORTS)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
   ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/java-parser
-  ${QT_INCLUDES} ${JNI_INCLUDE_DIRS})
+  ${JNI_INCLUDE_DIRS})
 
 
 ########### next target ###############
