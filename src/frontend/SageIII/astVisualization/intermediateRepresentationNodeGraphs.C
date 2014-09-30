@@ -42,7 +42,7 @@ IntermediateRepresentationNodeGraph::IntermediateRepresentationNodeGraph(ofstrea
    {
      for (size_t i = 0; i < nodeKindList.size(); i++)
         {
-          printf ("Adding nodeKindList[%zu] = %d = %s to nodeKindSet \n",i,Cxx_GrammarTerminalNames[nodeKindList[i]].variant,Cxx_GrammarTerminalNames[nodeKindList[i]].name.c_str());
+          printf ("Adding nodeKindList[%" PRIuPTR "] = %d = %s to nodeKindSet \n",i,Cxx_GrammarTerminalNames[nodeKindList[i]].variant,Cxx_GrammarTerminalNames[nodeKindList[i]].name.c_str());
           include_nodeKindSet.insert(nodeKindList[i]);
         }
 

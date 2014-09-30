@@ -96,7 +96,7 @@ void c_action_generic_name_list(int count)
         )
         printf("In c_action_generic_name_list(): count = %d \n", count);
 
-    // printf ("astNameStack.size() = %zu count = %d \n",astNameStack.size(),count);
+    // printf ("astNameStack.size() = %" PRIuPTR " count = %d \n",astNameStack.size(),count);
     ROSE_ASSERT(astNameStack.size() == (size_t)count);
 }
 
@@ -204,7 +204,7 @@ void c_action_declaration_construct()
     {
         if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL
             )
-            printf("WARNING: clearing the astLabelSymbolStack (depth = %zu) \n", astLabelSymbolStack.size());
+            printf("WARNING: clearing the astLabelSymbolStack (depth = %" PRIuPTR ") \n", astLabelSymbolStack.size());
 
         astLabelSymbolStack.clear();
     }
@@ -261,7 +261,7 @@ void c_action_specification_stmt()
 {
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL
         )
-        printf("In c_action_specification_stmt(): astNodeStack = %zu \n", astNodeStack.size());
+        printf("In c_action_specification_stmt(): astNodeStack = %" PRIuPTR " \n", astNodeStack.size());
 
     // DQ (12/14/2007): This should have been set by now! See test2007_114.f03
     build_implicit_program_statement_if_required();
@@ -279,7 +279,7 @@ void c_action_executable_construct()
 
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL
         )
-        printf("In c_action_executable_construct(): astExpressionStack = %zu astNodeStack = %zu \n", astExpressionStack.size(),
+        printf("In c_action_executable_construct(): astExpressionStack = %" PRIuPTR " astNodeStack = %" PRIuPTR " \n", astExpressionStack.size(),
                 astNodeStack.size());
 
     // DQ (12/4/2010): This works well as a test (after fixing a lot of bugs where it failed).
@@ -311,7 +311,7 @@ void c_action_action_stmt()
 
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL
         )
-        printf("In c_action_action_stmt(): astNodeStack = %zu \n", astNodeStack.size());
+        printf("In c_action_action_stmt(): astNodeStack = %" PRIuPTR " \n", astNodeStack.size());
 
     if (astNodeStack.empty() == false)
     {
@@ -499,7 +499,7 @@ void c_action_label(Token_t * lbl)
 
             if (labelSymbol != NULL)
             {
-                // printf ("Adding a labelSymbol %p for label = %s to astLabelSymbolStack.size() = %zu \n",labelSymbol,lbl->text,astLabelSymbolStack.size());
+                // printf ("Adding a labelSymbol %p for label = %s to astLabelSymbolStack.size() = %" PRIuPTR " \n",labelSymbol,lbl->text,astLabelSymbolStack.size());
                 astLabelSymbolStack.push_front(labelSymbol);
             }
         }
@@ -1888,7 +1888,7 @@ void c_action_label(Token_t * lbl)
 
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
-                "In c_action_component_attr_spec_list(): count = %d (building the SgArrayType) astAttributeSpecStack.size() = %zu \n",
+                "In c_action_component_attr_spec_list(): count = %d (building the SgArrayType) astAttributeSpecStack.size() = %" PRIuPTR " \n",
                 count, astAttributeSpecStack.size());
 
 #if 0
@@ -3010,7 +3010,7 @@ void c_action_label(Token_t * lbl)
                 {
                     SgType* typeNode = astTypeStack.front();
 
-                    // printf ("In c_action_declaration_type_spec(): astExpressionStack.size() = %zu \n",astExpressionStack.size());
+                    // printf ("In c_action_declaration_type_spec(): astExpressionStack.size() = %" PRIuPTR " \n",astExpressionStack.size());
 
                     // DQ (12/1/2007): I think this is now taken care of in R404
                     ROSE_ASSERT(astExpressionStack.empty() == true);
@@ -3025,7 +3025,7 @@ void c_action_label(Token_t * lbl)
                         kindExpression->set_parent(typeNode);
 
                         printf(
-                                "After setting the kind, the expression stack size = %zu \n",
+                                "After setting the kind, the expression stack size = %" PRIuPTR " \n",
                                 astExpressionStack.size());
                         astExpressionStack.pop_front();
                     }
@@ -3680,7 +3680,7 @@ void c_action_label(Token_t * lbl)
         if (astTypeStack.empty() == false)
         {
             if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-            printf("Warning, astTypeStack.size() = %zu \n", astTypeStack.size());
+            printf("Warning, astTypeStack.size() = %" PRIuPTR " \n", astTypeStack.size());
         }
 
         // Create a variable declaration for this entity_decl_list:
@@ -3927,7 +3927,7 @@ void c_action_label(Token_t * lbl)
 
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
-                "In R510 c_action_array_spec(): count = %d (building the multi-dimensional shape for the future SgArrayType) astAttributeSpecStack.size() = %zu \n",
+                "In R510 c_action_array_spec(): count = %d (building the multi-dimensional shape for the future SgArrayType) astAttributeSpecStack.size() = %" PRIuPTR " \n",
                 count, astAttributeSpecStack.size());
 
 #if 0
@@ -4482,7 +4482,7 @@ void c_action_label(Token_t * lbl)
         printf("In c_action_bind_entity_list(): count = %d \n", count);
 
         // This is all we know since there are additional entries on the astNameStack (bind_language and binding_label might be present for example)
-        // printf ("astNameStack.size() = %zu \n",astNameStack.size());
+        // printf ("astNameStack.size() = %" PRIuPTR " \n",astNameStack.size());
         ROSE_ASSERT(astNameStack.size() >= (size_t)count);
 
         // buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_bindStatement,label,keyword);
@@ -4870,7 +4870,7 @@ void c_action_label(Token_t * lbl)
         }
 
         if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-        printf("astExpressionStack.size() = %zu \n", astExpressionStack.size());
+        printf("astExpressionStack.size() = %" PRIuPTR " \n", astExpressionStack.size());
 
         if (astExpressionStack.size() == 0)
         {
@@ -6975,7 +6975,7 @@ void c_action_label(Token_t * lbl)
                             cout
                             << "Case ExpressionStack is empty and with implicit none: after generateFunctionCall, variableSymbolList.size() = "
                             << variableSymbolList.size() << endl;
-                            // printf ("Test #1 variableSymbolList.size() = %zu \n",variableSymbolList.size());
+                            // printf ("Test #1 variableSymbolList.size() = %" PRIuPTR " \n",variableSymbolList.size());
 
                             // printf ("Error: This is an implicit variable that has a name matching an implicit function, but isImplicitNoneScope() == true (so this is an inconsistancy).\n");
                             // ROSE_ASSERT(false);
@@ -7000,7 +7000,7 @@ void c_action_label(Token_t * lbl)
                         << "Case ExpressionStack is not empty: after generateFunctionCall, variableSymbolList.size() = "
                         << variableSymbolList.size() << endl;
 
-                        // printf ("Test #2 variableSymbolList.size() = %zu \n",variableSymbolList.size());
+                        // printf ("Test #2 variableSymbolList.size() = %" PRIuPTR " \n",variableSymbolList.size());
                     }
 
 #if 0
@@ -7091,7 +7091,7 @@ void c_action_label(Token_t * lbl)
                             variableSymbolList.push_back(functionSymbol);
                         }
 
-                        // printf ("Test #3 variableSymbolList.size() = %zu \n",variableSymbolList.size());
+                        // printf ("Test #3 variableSymbolList.size() = %" PRIuPTR " \n",variableSymbolList.size());
 
 #if 0
                         // Output debugging information about saved state (stack) information.
@@ -7175,7 +7175,7 @@ void c_action_label(Token_t * lbl)
                             typeDeclarationScope);
 
                     variableSymbolList.push_back(memberFunctionSymbol);
-                    // printf ("Test #4 variableSymbolList.size() = %zu \n",variableSymbolList.size());
+                    // printf ("Test #4 variableSymbolList.size() = %" PRIuPTR " \n",variableSymbolList.size());
 
 #if 0
                     // Output debugging information about saved state (stack) information.
@@ -7275,7 +7275,7 @@ void c_action_label(Token_t * lbl)
         // DQ (12/29/2010): This fails for test2007_57.f90 (but after a lot of work we can enforce this uniromally for all of out simple test codes at least).
         // This is important since now we can use information about the index number of the symbol in variableSymbolList to map back to the
         // hasSelectionSubscriptList data field in the vector of MultipartReferenceType object build in R612 for each part of the multi-part reference.
-        // printf ("numPartRef = %d variableSymbolList.size() = %zu \n",numPartRef,variableSymbolList.size());
+        // printf ("numPartRef = %d variableSymbolList.size() = %" PRIuPTR " \n",numPartRef,variableSymbolList.size());
         ROSE_ASSERT( (size_t) numPartRef == variableSymbolList.size());
 
         // Build a list of intermedate expressions so that we don't disturb the astExpressionStack.
@@ -7284,7 +7284,7 @@ void c_action_label(Token_t * lbl)
         // Loop over the available symbols...
         for (size_t i = 0; i < variableSymbolList.size(); i++)
         {
-            // printf ("In loop over variableSymbolList: i = %zu \n",i);
+            // printf ("In loop over variableSymbolList: i = %" PRIuPTR " \n",i);
             size_t lastElement = variableSymbolList.size() - 1;
             ROSE_ASSERT(i < variableSymbolList.size());
             ROSE_ASSERT(lastElement < variableSymbolList.size());
@@ -7560,7 +7560,7 @@ void c_action_label(Token_t * lbl)
 #endif
 
         // Transfer the expressions from the intermediateExpresionList to the astExpressionStack
-        // printf ("In R612: intermediateExpresionList.size() = %zu \n",intermediateExpresionList.size());
+        // printf ("In R612: intermediateExpresionList.size() = %" PRIuPTR " \n",intermediateExpresionList.size());
         size_t intermediateExpresionListSize = intermediateExpresionList.size();
         for (size_t i = 0; i < intermediateExpresionListSize; i++)
         {
@@ -7970,7 +7970,7 @@ void c_action_label(Token_t * lbl)
 
             setSourcePosition(expressionList);
 
-            // printf ("In c_action_section_subscript_list(): astActualArgumentNameStack.size() = %zu \n",astActualArgumentNameStack.size());
+            // printf ("In c_action_section_subscript_list(): astActualArgumentNameStack.size() = %" PRIuPTR " \n",astActualArgumentNameStack.size());
 
             for (int i=0; i < count; i++)
             {
@@ -8068,7 +8068,7 @@ void c_action_label(Token_t * lbl)
             printf ("\n\n\n\n############### In R619 c_action_section_subscript_list() ################# \n");
             for (size_t i = 0; i < argList.size(); i++)
             {
-                printf ("argList[%zu] = %s \n",i,SageInterface::get_name(argList[i]).c_str());
+                printf ("argList[%" PRIuPTR "] = %s \n",i,SageInterface::get_name(argList[i]).c_str());
             }
 #endif
 #if 0
@@ -8089,7 +8089,7 @@ void c_action_label(Token_t * lbl)
 
             setSourcePosition(expressionList);
 
-            // printf ("In c_action_section_subscript_list(): astActualArgumentNameStack.size() = %zu \n",astActualArgumentNameStack.size());
+            // printf ("In c_action_section_subscript_list(): astActualArgumentNameStack.size() = %" PRIuPTR " \n",astActualArgumentNameStack.size());
 
             for (int i = 0; i < count; i++)
             {
@@ -10704,7 +10704,7 @@ void c_action_label(Token_t * lbl)
 
         // Save the if-stmt that might be the start the a chain of if-then-else-if-else-endif
         astIfStatementStack.push_front(ifStatement);
-        // printf ("Pushed ifStatement = %p onto astIfStatementStack (size = %zu) \n",ifStatement,astIfStatementStack.size());
+        // printf ("Pushed ifStatement = %p onto astIfStatementStack (size = %" PRIuPTR ") \n",ifStatement,astIfStatementStack.size());
 
         // This is the version of the if-stmt which must have an associated endif, but only at the end of a chain of if then .. else .. else .. endif
         // ifStatement->set_has_end_statement(true);
@@ -10743,7 +10743,7 @@ void c_action_label(Token_t * lbl)
 
         SgBasicBlock* currentBlockScope = isSgBasicBlock(currentScope);
         ROSE_ASSERT(currentBlockScope != NULL);
-        // printf ("Appending ifStatement = %p to scope = %p currentBlockScope->get_statements().size() = %zu \n",ifStatement,currentScope,currentBlockScope->get_statements().size());
+        // printf ("Appending ifStatement = %p to scope = %p currentBlockScope->get_statements().size() = %" PRIuPTR " \n",ifStatement,currentScope,currentBlockScope->get_statements().size());
 
         // Push the if scope (it is a scope in C/C++, even if not in Fortran)
         // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
@@ -10821,7 +10821,7 @@ void c_action_label(Token_t * lbl)
 
         // After calling c_action_if_then_stmt() to reuse code there, pop the if-stmt that was saved,
         // since it is NOT the beginning of a chain of if-then-else-if-else-endif statements.
-        // printf ("Pop ifStatement = %p off of astIfStatementStack (pushed on by R804 calling R803) (size = %zu) \n",ifStatement,astIfStatementStack.size());
+        // printf ("Pop ifStatement = %p off of astIfStatementStack (pushed on by R804 calling R803) (size = %" PRIuPTR ") \n",ifStatement,astIfStatementStack.size());
         astIfStatementStack.pop_front();
 
 #if 0
@@ -11923,7 +11923,7 @@ void c_action_label(Token_t * lbl)
                     outputState("Error in R827 c_action_do_stmt()");
 #endif
                     printf(
-                            "Error: astExpressionStack.size() incorrect for do_stmt astExpressionStack.size() = %zu \n",
+                            "Error: astExpressionStack.size() incorrect for do_stmt astExpressionStack.size() = %" PRIuPTR " \n",
                             astExpressionStack.size());
                     ROSE_ASSERT(false);
                 }
@@ -14025,7 +14025,7 @@ void c_action_label(Token_t * lbl)
         if (astExpressionStack.empty() == false)
         {
             printf(
-                    "WARNING: astExpressionStack still has %zu entries (Ok if used in a statement for example) (print) \n",
+                    "WARNING: astExpressionStack still has %" PRIuPTR " entries (Ok if used in a statement for example) (print) \n",
                     astExpressionStack.size());
         }
 
@@ -16259,7 +16259,7 @@ void c_action_label(Token_t * lbl)
             }
 
             // Insert the list of accumulated symbols into the current scope
-            // printf ("renameSymbolList.size() = %zu \n",renameSymbolList.size());
+            // printf ("renameSymbolList.size() = %" PRIuPTR " \n",renameSymbolList.size());
             for (size_t i = 0; i < renameSymbolList.size(); i++)
             {
                 currentScope->insert_symbol(interfaceName, renameSymbolList[i]);
@@ -16486,7 +16486,7 @@ void c_action_label(Token_t * lbl)
 
             // if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
             if (SgProject::get_verbose() > 2)
-            printf("Case hasOnly == false: astNodeStack.size() = %zu \n",
+            printf("Case hasOnly == false: astNodeStack.size() = %" PRIuPTR " \n",
                     astNodeStack.size());
 
             if (astNodeStack.empty() == true)
@@ -16654,7 +16654,7 @@ void c_action_label(Token_t * lbl)
             outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
             if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-            printf("Case hasOnly == true: astNodeStack.size() = %zu \n",
+            printf("Case hasOnly == true: astNodeStack.size() = %" PRIuPTR " \n",
                     astNodeStack.size());
 
             // SgRenamePair IR nodes are on the stack (even if there is no renaming done), this provides a uniform interface.
@@ -16797,7 +16797,7 @@ void c_action_label(Token_t * lbl)
         size_t numberOfROSE_IR_Nodes = numberOfNodes();
         size_t numberOfAliasSymbols = SgAliasSymbol::numberOfNodes();
 
-        printf ("--- At BOTTOM of R1109 c_action_use_stmt(): moduleName = %s symbol table size = %d numberOfNodes = %zu numberOfAliasSymbols = %zu in file = %s line = %d \n",
+        printf ("--- At BOTTOM of R1109 c_action_use_stmt(): moduleName = %s symbol table size = %d numberOfNodes = %" PRIuPTR " numberOfAliasSymbols = %" PRIuPTR " in file = %s line = %d \n",
                 moduleName.c_str(),astScopeStack.front()->get_symbol_table()->size(),numberOfROSE_IR_Nodes,numberOfAliasSymbols,filename.c_str(),line);
 #endif
 
@@ -18891,7 +18891,7 @@ void c_action_label(Token_t * lbl)
             functionDeclaration->set_named_in_end_statement(true);
         }
 
-        // printf ("In c_action_end_subroutine_stmt() astNodeStack = %zu \n",astNodeStack.size());
+        // printf ("In c_action_end_subroutine_stmt() astNodeStack = %" PRIuPTR " \n",astNodeStack.size());
 
         // DQ (11/15/2007): Enforce that we have not left trash on the astNodeStack!
         if (astNodeStack.empty() == false)
@@ -18900,7 +18900,7 @@ void c_action_label(Token_t * lbl)
             // where statements can't span function boundaries we know that we can clear them at this point.
             if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
             printf(
-                    "In R1234 c_action_end_subroutine_stmt(): trash left on stack, clearing it astNodeStack.size() = %zu \n",
+                    "In R1234 c_action_end_subroutine_stmt(): trash left on stack, clearing it astNodeStack.size() = %" PRIuPTR " \n",
                     astNodeStack.size());
             astNodeStack.clear();
         }
@@ -19141,7 +19141,7 @@ void c_action_label(Token_t * lbl)
                         > args.size())
                 {
                     printf(
-                            "Error: alternativeReturnValue = %zu is out of range for this function's parameter list \n",
+                            "Error: alternativeReturnValue = %" PRIuPTR " is out of range for this function's parameter list \n",
                             alternativeReturnValue);
                 }
                 ROSE_ASSERT(alternativeReturnValue > 0);
@@ -19282,7 +19282,7 @@ void c_action_label(Token_t * lbl)
         printf("^^^^^^^^^^^^^^^^^^^^^^^^^^ c_action_end_of_stmt: line %d col %d\n", eos->line, eos->col);
 
         if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-        printf ("In c_action_end_of_stmt() astNodeStack size = %zu astExpressionStack size = %zu \n",astNodeStack.size(),astExpressionStack.size());
+        printf ("In c_action_end_of_stmt() astNodeStack size = %" PRIuPTR " astExpressionStack size = %" PRIuPTR " \n",astNodeStack.size(),astExpressionStack.size());
 
 #if 1
         // Output debugging information about saved state (stack) information.
@@ -19429,7 +19429,7 @@ void c_action_label(Token_t * lbl)
 #endif
 
 #if 0
-        printf ("In c_action_end_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
+        printf ("In c_action_end_of_file(): filenameString = %s astIncludeStack.size() = %" PRIuPTR " \n",filenameString.c_str(),astIncludeStack.size());
 #endif
         astIncludeStack.pop_back();
 

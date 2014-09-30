@@ -481,7 +481,7 @@ ProcessingPhase::outputReport ( int n )
   // Output the rest of the string with timing and memory usage info.
      printf (" time = %8.3f (sec) memory usage %9.3f (megabytes) \n",performance,internalMemoryUsageData);
 
-  // printf ("Children: childList = %zu \n",childList.size());
+  // printf ("Children: childList = %" PRIuPTR " \n",childList.size());
      std::vector<ProcessingPhase*>::iterator i = childList.begin();
      while (i != childList.end())
         {
@@ -604,7 +604,7 @@ struct rusage
 
        // printf ("Performance Report (resolution = %f, number of IR nodes = %d, memory used (calculated for AST) = %d Kilobytes, memory used (actual) = %ld Kilobytes ): \n",
        //      (*i)->get_resolution(),numberOf_IR_Nodes,numberOfKiloBytesUsed,memoryComputedFromSystem);
-            printf ("Performance Report (timer resolution = %f, number of IR nodes = %zu, memory used (calculated from AST memory pool) = %zu Kilobytes, memory used (actual) = %8.3f Megabytes ): \n",
+            printf ("Performance Report (timer resolution = %f, number of IR nodes = %" PRIuPTR ", memory used (calculated from AST memory pool) = %" PRIuPTR " Kilobytes, memory used (actual) = %8.3f Megabytes ): \n",
                  (*i)->get_resolution(),numberOf_IR_Nodes,numberOfKiloBytesUsed,memoryComputedFromSystem);
           } else {
             printf("Memory usage information from system is not available.\n");
@@ -683,7 +683,7 @@ ProcessingPhase::outputReportToFile ( std::ofstream & datafile )
 
   // printf ("name = %s performance = %f \n",csv_field.c_str(),performance);
 
-  // printf ("Children: childList = %zu \n",childList.size());
+  // printf ("Children: childList = %" PRIuPTR " \n",childList.size());
      std::vector<ProcessingPhase*>::iterator i = childList.begin();
      while (i != childList.end())
         {

@@ -227,7 +227,7 @@ Grammar::buildConstructorWithoutSourcePositionInformationSupport( Terminal & nod
      outputFile += editString;
 #endif
 
-  // printf ("node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName(),node.nodeList.size());
+  // printf ("node.name = %s  (# of subtrees/leaves = %" PRIuPTR ") \n",node.getName(),node.nodeList.size());
 
 #if 1
   // Call this function recursively on the children of this node in the tree

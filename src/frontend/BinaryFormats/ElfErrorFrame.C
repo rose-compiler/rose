@@ -140,7 +140,7 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     fprintf(f, "%s%-*s = %d\n", p, w, "addr_encoding", get_addr_encoding());
     if (get_instructions().size()>0) {
-        fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "instructions",
+        fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "instructions",
                 get_instructions().size(), get_instructions().size());
         hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
     }
@@ -237,10 +237,10 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().to_string().c_str());
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n", p, w, "size", get_size(), get_size());
-    fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "aug_data",
+    fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "aug_data",
             get_augmentation_data().size(), get_augmentation_data().size());
     hexdump(f, 0, std::string(p)+"data at ", get_augmentation_data());
-    fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "instructions",
+    fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "instructions",
             get_instructions().size(), get_instructions().size());
     hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }

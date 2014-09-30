@@ -520,7 +520,7 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
             fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->get_string(true).c_str());
             fprintf(stderr, "    section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
                     get_offset(), get_offset(), get_size(), get_size());
-            fprintf(stderr, " write %zu byte%s at section offset 0x%08"PRIx64"\n", bufsize, 1==bufsize?"":"s", offset);
+            fprintf(stderr, " write %" PRIuPTR " byte%s at section offset 0x%08"PRIx64"\n", bufsize, 1==bufsize?"":"s", offset);
             fprintf(stderr, "      ");
             HexdumpFormat hf;
             hf.prefix = "      ";

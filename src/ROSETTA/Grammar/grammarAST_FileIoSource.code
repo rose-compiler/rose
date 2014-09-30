@@ -365,8 +365,8 @@ AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
           if (AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) > globalIndex )
              {
                printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer( SgNode* pointer = %p = %s) \n",pointer,pointer->class_name().c_str());
-               printf ("     pointer->p_freepointer = %p = %zu \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
-               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) = %zu \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()));
+               printf ("     pointer->p_freepointer = %p = %" PRIuPTR " \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
+               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) = %" PRIuPTR " \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()));
              }
        // assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
 #endif
@@ -377,8 +377,8 @@ AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
           if (globalIndex >= AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) )
              {
                printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer( SgNode* pointer = %p = %s) \n",pointer,pointer->class_name().c_str());
-               printf ("     pointer->p_freepointer = %p = %zu \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
-               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) = %zu \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1));
+               printf ("     pointer->p_freepointer = %p = %" PRIuPTR " \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
+               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) = %" PRIuPTR " \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1));
              }
        // assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
 #endif
@@ -814,7 +814,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
 
   // 3.
   // DQ (6/7/2010): Not clear why this is only called for where there is a single AST.
-  // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
+  // printf ("AST_FILE_IO::vectorOfASTs.size() = %" PRIuPTR " \n",AST_FILE_IO::vectorOfASTs.size());
      if (AST_FILE_IO::vectorOfASTs.size() == 1)
         { 
           if ( SgProject::get_verbose() > 0 )
@@ -976,18 +976,18 @@ AST_FILE_IO::display(const std::string & label)
         }
      printf ("Number of different types of IR nodes = %d \n",numberOfDifferentIRnodes);
 
-     printf ("registeredAttributes.size() = %zu \n",registeredAttributes.size());
+     printf ("registeredAttributes.size() = %" PRIuPTR " \n",registeredAttributes.size());
      for (std::map <std::string,CONSTRUCTOR>::iterator i = registeredAttributes.begin(); i != registeredAttributes.end(); i++)
         {
        // This is a map of strings to function pointers (registered pack and unpack functions).
           printf ("i->first = %s  i->second = member function \n",i->first.c_str());
         }
 
-     printf ("vectorOfASTs.size() = %zu \n",vectorOfASTs.size());
+     printf ("vectorOfASTs.size() = %" PRIuPTR " \n",vectorOfASTs.size());
      for (size_t i = 0; i < vectorOfASTs.size(); i++)
         {
        // This is a map of strings to function pointers (registered pack and unpack functions).
-          printf ("vectorOfASTs[%zu] = %p \n",i,vectorOfASTs[i]);
+          printf ("vectorOfASTs[%" PRIuPTR "] = %p \n",i,vectorOfASTs[i]);
         }
 
      printf ("actualRebuildAst = %p \n",actualRebuildAst);

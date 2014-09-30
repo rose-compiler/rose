@@ -573,7 +573,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u%s\n",                           p, w, "e_ident_file_class",     p_e_ident_file_class, class_s);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_version",   p_e_ident_file_version);
     for (size_t i=0; i < p_e_ident_padding.size(); i++)
-        fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
+        fprintf(f, "%s%-*s = [%" PRIuPTR "] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_type",                 p_e_type);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
     fprintf(f, "%s%-*s = 0x%08lx\n",                        p, w, "e_flags",                p_e_flags);

@@ -74,8 +74,8 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "vminor", p_vminor);
     fprintf(f, "%s%-*s = %s\n",                        p, w, "name_rva", p_name_rva.to_string().c_str());
     fprintf(f, "%s%-*s = %u\n",                        p, w, "ord_base", p_ord_base);
-    fprintf(f, "%s%-*s = %zu\n",                       p, w, "expaddr_n", p_expaddr_n);
-    fprintf(f, "%s%-*s = %zu\n",                       p, w, "nameptr_n", p_nameptr_n);
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n",                       p, w, "expaddr_n", p_expaddr_n);
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n",                       p, w, "nameptr_n", p_nameptr_n);
     fprintf(f, "%s%-*s = %s\n",                        p, w, "expaddr_rva", p_expaddr_rva.to_string().c_str());
     fprintf(f, "%s%-*s = %s\n",                        p, w, "nameptr_rva", p_nameptr_rva.to_string().c_str());
     fprintf(f, "%s%-*s = %s\n",                        p, w, "ordinals_rva", p_ordinals_rva.to_string().c_str());
@@ -161,7 +161,7 @@ SgAsmPEExportSection::parse()
         try {
             read_content(fhdr->get_loader_map(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name #%zu at va 0x%08"PRIx64
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name #%" PRIuPTR " at va 0x%08"PRIx64
                     " contains unmapped va 0x%08"PRIx64"\n", i, nameptr_va, e.va);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -177,7 +177,7 @@ SgAsmPEExportSection::parse()
         try {
             s = read_content_str(fhdr->get_loader_map(), fname_va);
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %zu at va 0x%08"PRIx64
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %" PRIuPTR " at va 0x%08"PRIx64
                     " contains unmapped virtual address 0x%08"PRIx64"\n", i, fname_va, e.va);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -192,7 +192,7 @@ SgAsmPEExportSection::parse()
         try {
             read_content(fhdr->get_loader_map(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal #%zu at va 0x%08"PRIx64
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal #%" PRIuPTR " at va 0x%08"PRIx64
                     " contains unmapped va 0x%08"PRIx64"\n", i, ordinal_va, e.va);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -215,7 +215,7 @@ SgAsmPEExportSection::parse()
             try {
                 read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
             } catch (const MemoryMap::NotMapped &e) {
-                fprintf(stderr, "SgAsmPEExportSection::parse: error: export address #%zu at va 0x%08"PRIx64
+                fprintf(stderr, "SgAsmPEExportSection::parse: error: export address #%" PRIuPTR " at va 0x%08"PRIx64
                         " contains unmapped va 0x%08"PRIx64"\n", i, expaddr_va, e.va);
                 if (e.map) {
                     fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -236,7 +236,7 @@ SgAsmPEExportSection::parse()
             try {
                 s = read_content_str(fhdr->get_loader_map(), expaddr.get_va());
             } catch (const MemoryMap::NotMapped &e) {
-                fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %zu at rva 0x%08"PRIx64
+                fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %" PRIuPTR " at rva 0x%08"PRIx64
                         " contains unmapped virtual address 0x%08"PRIx64"\n", i, expaddr.get_rva(), e.va);
                 if (e.map) {
                     fprintf(stderr, "Memory map in effect at time of error:\n");

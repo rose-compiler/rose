@@ -443,9 +443,9 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
 #if 0
   // Avoid excessive output.
      if (isSgFunctionDeclaration(node) == NULL && isSgInitializedName(node) == NULL && isSgFunctionParameterList(node) == NULL)
-          printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): node = %p = %s synthesizedAttributeList.size() = %zu \n",node,node->class_name().c_str(),synthesizedAttributeList.size());
+          printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): node = %p = %s synthesizedAttributeList.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),synthesizedAttributeList.size());
 #else
-     printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): node = %p = %s synthesizedAttributeList.size() = %zu \n",node,node->class_name().c_str(),synthesizedAttributeList.size());
+     printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): node = %p = %s synthesizedAttributeList.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),synthesizedAttributeList.size());
 #endif
 #endif
 

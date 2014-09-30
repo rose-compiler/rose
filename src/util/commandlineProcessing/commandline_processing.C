@@ -494,7 +494,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
           if ( ((*i)[0] != '-') && ((*i)[0] != '+') )
              {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
+            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
 
             // bool foundSourceFile = false;
 

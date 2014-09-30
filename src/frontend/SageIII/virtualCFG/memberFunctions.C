@@ -4187,7 +4187,7 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
 
 #if 0
      SgInitializedNamePtrList & ctorList = this->get_ctors();
-     printf ("In SgCtorInitializerList::cfgInEdges(idx = %u): this = %p ctorList.size() = %zu \n",idx,this,ctorList.size());
+     printf ("In SgCtorInitializerList::cfgInEdges(idx = %u): this = %p ctorList.size() = %" PRIuPTR " \n",idx,this,ctorList.size());
 #endif
 
      if (idx == 0) {

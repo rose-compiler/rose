@@ -228,7 +228,7 @@ computePreviousAndNextNodes(SgGlobal* globalScope, std::vector<FrontierNode*> fr
              }
             else
              {
-               printf ("WARNING: previousNode == NULL: j = %zu can't insert entry into previousAndNextNodeMap: statement = %p = %s \n",j,statement,statement->class_name().c_str());
+               printf ("WARNING: previousNode == NULL: j = %" PRIuPTR " can't insert entry into previousAndNextNodeMap: statement = %p = %s \n",j,statement,statement->class_name().c_str());
              }
 
           previousPreviousNode = previousNode;

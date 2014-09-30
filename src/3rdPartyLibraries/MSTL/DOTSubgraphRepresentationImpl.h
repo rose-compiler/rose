@@ -14,6 +14,8 @@
 #include <sstream>
 #include <typeinfo>
 #include <assert.h>
+#include "sage3basic.h"
+#include <inttypes.h>
 #include "DOTSubgraphRepresentation.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -160,7 +162,7 @@ DOTSubgraphRepresentation<NodeType>::writeDotoutStream( void )
   // clear flags
      resetWriteFlags();
 
-     printf ("DOTSubgraphRepresentation<NodeType>::writeDotoutStream(): mSubgraphNames.size() = %zu \n",mSubgraphNames.size());
+     printf ("DOTSubgraphRepresentation<NodeType>::writeDotoutStream(): mSubgraphNames.size() = %" PRIuPTR " \n",mSubgraphNames.size());
 
 	// write normally if there are no subgraphs
      if (mSubgraphNames.size() == 0) 

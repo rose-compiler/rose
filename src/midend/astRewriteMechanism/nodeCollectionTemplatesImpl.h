@@ -86,7 +86,7 @@ int
 AbstractInterfaceNodeCollection<T>::numberOfStatements( int i )
    {
   // Adjust the size to subtract off the marker declaration statements
-     printf ("In AbstractInterfaceNodeCollection<T>::numberOfStatements(): treeFragement[%d].size() = %zu \n",i,treeFragement[i].size());
+     printf ("In AbstractInterfaceNodeCollection<T>::numberOfStatements(): treeFragement[%d].size() = %" PRIuPTR " \n",i,treeFragement[i].size());
 
   // Note that the unknown case is not implemented and so does 
   // not pickup marker declarations (so subtract off zero).
@@ -447,7 +447,7 @@ AbstractInterfaceNodeCollection<T>::markStatementListWithMarkersAsTransformation
        // Backup one statement (need to terminate at last statement (so for loop test will pass for single statement)
        // lastTransformationStatement--;
 
-       // printf ("##### This function (markStatementListWithMarkersAsTransformation) does not yet mark statements: statementList.size() = %zu \n",statementList.size());
+       // printf ("##### This function (markStatementListWithMarkersAsTransformation) does not yet mark statements: statementList.size() = %" PRIuPTR " \n",statementList.size());
           for (SgStatementPtrList::iterator i = firstTransformationStatement; i != lastTransformationStatement; i++)
              {
             // Use common mechanism to determining if we should output the code in the generation phase
@@ -510,7 +510,7 @@ AbstractInterfaceNodeCollection<T>::processCommentsAndDirectives ( SgStatementPt
   // Now we will assign them to any statements in the input "statementList" in the code below.
   // *************************************************************
 
-  // printf ("relavantCommentAndDirectiveList.size() = %zu \n",relavantCommentAndDirectiveList.size());
+  // printf ("relavantCommentAndDirectiveList.size() = %" PRIuPTR " \n",relavantCommentAndDirectiveList.size());
 
   // Check if we have any comments or directives to worry about
      if (relavantCommentAndDirectiveList.size() > 0)
@@ -627,7 +627,7 @@ AbstractInterfaceNodeCollection<T>::processCommentsAndDirectives ( SgStatementPt
 #else
                     relavantCommentAndDirectiveList.clear();
 #endif
-                 // printf ("After removing elements copied to previous declaration: relavantCommentAndDirectiveList.size() = %zu \n",relavantCommentAndDirectiveList.size());
+                 // printf ("After removing elements copied to previous declaration: relavantCommentAndDirectiveList.size() = %" PRIuPTR " \n",relavantCommentAndDirectiveList.size());
 
                  // printf ("Sorry not implemented, comments/directives are in global scope in processCommentsAndDirectives \n");
                  // ROSE_ASSERT (false);
@@ -696,7 +696,7 @@ AbstractInterfaceNodeCollection<T>::processCommentsAndDirectives ( SgStatementPt
 #else
                     relavantCommentAndDirectiveList.clear();
 #endif
-                 // printf ("After removing elements copied to previous statement: relavantCommentAndDirectiveList.size() = %zu \n",relavantCommentAndDirectiveList.size());
+                 // printf ("After removing elements copied to previous statement: relavantCommentAndDirectiveList.size() = %" PRIuPTR " \n",relavantCommentAndDirectiveList.size());
                   }
 
             // Since there are statements all the relavant comments and directives 

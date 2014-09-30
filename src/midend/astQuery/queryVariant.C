@@ -100,8 +100,8 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
      vector<pair<SgNode*,string> > allNodesInSubtree  = astNode->returnDataMemberPointers();
 
 #if 0
-     printf ("succContainer.size()     = %zu \n",succContainer.size());
-     printf ("allNodesInSubtree.size() = %zu \n",allNodesInSubtree.size());
+     printf ("succContainer.size()     = %" PRIuPTR " \n",succContainer.size());
+     printf ("allNodesInSubtree.size() = %" PRIuPTR " \n",allNodesInSubtree.size());
 #endif
 
      if ( succContainer.size() != allNodesInSubtree.size() )
@@ -153,7 +153,7 @@ void* querySolverGrammarElementFromVariantVector ( SgNode * astNode, VariantVect
 
                               Rose_STL_Container<SgType*> typeVector = type->getInternalTypes();
 #if 0
-                              printf ("----- typeVector.size() = %zu \n",typeVector.size());
+                              printf ("----- typeVector.size() = %" PRIuPTR " \n",typeVector.size());
 #endif
                               Rose_STL_Container<SgType*>::iterator i = typeVector.begin();
                               while(i != typeVector.end())

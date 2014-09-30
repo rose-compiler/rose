@@ -15,7 +15,7 @@
 #include "jni_token.h"
 #include "Utf8.h"
 
-#include <inttypes.h> // for %" PRIuPTR " vs. %Iu handling
+#include <inttypes.h> // for PRIuPTR
 
 using namespace Rose::Frontend::Java;
 using namespace Rose::Frontend::Java::Ecj;

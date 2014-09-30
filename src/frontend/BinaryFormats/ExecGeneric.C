@@ -191,7 +191,7 @@ std::string SgAsmExecutableFileFormat::isa_family_to_string(SgAsmExecutableFileF
       break;
   };
   char buf[64];
-  snprintf(buf,sizeof(buf),"unknown isa family (%zu)",size_t(isa & ISA_FAMILY_MASK)) ;
+  snprintf(buf,sizeof(buf),"unknown isa family (%" PRIuPTR ")",size_t(isa & ISA_FAMILY_MASK)) ;
   return buf;
 }
 
@@ -378,7 +378,7 @@ std::string SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::
       return isa_family_to_string(isa);
   };
   char buf[64];
-  snprintf(buf,sizeof(buf),"unknown isa (%zu)",size_t(isa)) ;
+  snprintf(buf,sizeof(buf),"unknown isa (%" PRIuPTR ")",size_t(isa)) ;
   return buf;
 }
 
@@ -394,7 +394,7 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Exec
     case FAMILY_PE:           return "Microsoft Portable Executable (PE)";   
   };
   char buf[128];
-  snprintf(buf,sizeof(buf),"unknown exec family (%zu)",size_t(family)) ;
+  snprintf(buf,sizeof(buf),"unknown exec family (%" PRIuPTR ")",size_t(family)) ;
   return buf;
 }
 
@@ -423,7 +423,7 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Exec
     case ABI_WIN386:      return "Microsoft Windows";
   };
   char buf[64];
-  snprintf(buf,sizeof(buf),"unknown abi (%zu)",size_t(abi)) ;
+  snprintf(buf,sizeof(buf),"unknown abi (%" PRIuPTR ")",size_t(abi)) ;
   return buf;
 }
 
@@ -439,6 +439,6 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::Exec
     case PURPOSE_PROC_SPECIFIC: return "processor specific purpose";        
   };
   char buf[64];
-  snprintf(buf,sizeof(buf),"unknown exec purpose (%zu)",size_t(purpose)) ;
+  snprintf(buf,sizeof(buf),"unknown exec purpose (%" PRIuPTR ")",size_t(purpose)) ;
   return buf;
 }

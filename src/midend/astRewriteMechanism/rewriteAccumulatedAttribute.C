@@ -59,7 +59,7 @@ AST_Rewrite::AccumulatedDeclarationsAttribute::display( const string & label )
 
      list<string> declarationStringList;
 
-  // printf ("copy.size() = %zu \n",copy.size());
+  // printf ("copy.size() = %" PRIuPTR " \n",copy.size());
 
      int indentation = (copy.size()-0) * 5;
      while (!copy.empty())
@@ -274,7 +274,7 @@ AST_Rewrite::AccumulatedDeclarationsAttribute::generateGlobalDeclarationString()
   // information from the stack distroys the stack
      stack< list<SgDeclarationStatement*> > copy = stackOfLists;
 
-  // printf ("In generateGlobalDeclarationString(): stackOfLists.size() = %zu \n",stackOfLists.size());
+  // printf ("In generateGlobalDeclarationString(): stackOfLists.size() = %" PRIuPTR " \n",stackOfLists.size());
 
   // Build the list of strings that will be built from the stack of lists
      list<string> declarationStringList;
@@ -316,7 +316,7 @@ AST_Rewrite::AccumulatedDeclarationsAttribute::generateOpeningNonGlobalDeclarati
   // error checking
      ROSE_ASSERT (this != NULL);
 
-  // printf ("In generateOpeningNonGlobalDeclarationString(): stackOfLists.size() = %zu \n",stackOfLists.size());
+  // printf ("In generateOpeningNonGlobalDeclarationString(): stackOfLists.size() = %" PRIuPTR " \n",stackOfLists.size());
 
   // Make a copy of the stack of lists becuase extracting 
   // information from the stack distroys the stack
@@ -328,7 +328,7 @@ AST_Rewrite::AccumulatedDeclarationsAttribute::generateOpeningNonGlobalDeclarati
   // Look only at non-global scopes (the last scope is the global scope by definition)
      while (copy.size() > 1)
         {
-       // printf ("In loop over scopes: process a new scope copy.size() = %zu \n",copy.size());
+       // printf ("In loop over scopes: process a new scope copy.size() = %" PRIuPTR " \n",copy.size());
 
           list<SgDeclarationStatement*> & scope = copy.top();
 
@@ -382,7 +382,7 @@ AST_Rewrite::AccumulatedDeclarationsAttribute::generateClosingNonGlobalDeclarati
 
      ROSE_ASSERT (this != NULL);
 
-  // printf ("In generateClosingNonGlobalDeclarationString(): stackOfLists.size() = %zu \n",stackOfLists.size());
+  // printf ("In generateClosingNonGlobalDeclarationString(): stackOfLists.size() = %" PRIuPTR " \n",stackOfLists.size());
 
   // skip the last scope (the last "}")
      for (unsigned i=1; i < stackOfLists.size(); i++)
