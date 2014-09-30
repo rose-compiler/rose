@@ -63,6 +63,10 @@ public:
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) /*override*/;
 
+    /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
+     *  using individual flags for the fields of the FLAGS/EFLAGS register. */
+    virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
+
     virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);

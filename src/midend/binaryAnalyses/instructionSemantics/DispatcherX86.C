@@ -1610,6 +1610,23 @@ DispatcherX86::regcache_init()
     }
 }
 
+static bool
+isStatusRegister(const RegisterDescriptor &reg) {
+    return reg.get_major()==x86_regclass_flags && reg.get_minor()==x86_flags_status;
+}
+
+RegisterDictionary::RegisterDescriptors
+DispatcherX86::get_usual_registers() const
+{
+    RegisterDictionary::RegisterDescriptors registers = regdict->get_largest_registers();
+    registers.erase(std::remove_if(registers.begin(), registers.end(), isStatusRegister), registers.end());
+    BOOST_FOREACH (const RegisterDescriptor &reg, regdict->get_smallest_registers()) {
+        if (isStatusRegister(reg))
+            registers.push_back(reg);
+    }
+    return registers;
+}
+
 void
 DispatcherX86::set_register_dictionary(const RegisterDictionary *regdict)
 {
