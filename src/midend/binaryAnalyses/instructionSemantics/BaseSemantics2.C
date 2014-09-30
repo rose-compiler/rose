@@ -374,7 +374,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     }
 
     // Get a list of all the (parts of) registers that might overlap with this register.
-    Extent need_extent(reg.get_offset(), reg.get_nbits());
+    const Extent need_extent(reg.get_offset(), reg.get_nbits());
     std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by bit offset
     std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
@@ -384,30 +384,33 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
             assert(nonoverlaps.empty());
             return rvi->value;
         } else {
-            Extent overlap = need_extent.intersect(have_extent);
+            const Extent overlap = need_extent.intersect(have_extent);
             if (overlap==need_extent) {
                 // The stored register contains all the bits we need to read, and then some.  Extract only what we need.
                 // No need to traverse further because we never store overlapping values.
                 assert(nonoverlaps.empty());
-                size_t lo_bit = need_extent.first() - have_extent.first();
+                const size_t lo_bit = need_extent.first() - have_extent.first();
                 return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
             } else if (!overlap.empty()) {
-                SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-have_extent.first(), overlap.size());
+                const SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-have_extent.first(), overlap.size());
                 overlaps[overlap.first()] = overlap_val;
+                if (coalesceOnRead) {
+                    // If any part of the existing register is not represented by the register being read, then we need to save
+                    // that part.
+                    get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps /*out*/);
 
-                // If any part of the existing register is not represented by the register being read, then we need to save
-                // that part.
-                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
-
-                // Mark the overlapping register by setting it to null so we can remove it later.
-                rvi->value = SValuePtr();
+                    // Mark the overlapping register by setting it to null so we can remove it later.
+                    rvi->value = SValuePtr();
+                }
             }
         }
     }
 
     // Remove the overlapping registers that we marked above, and replace them with their non-overlapping parts.
-    ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
-    ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
+    if (coalesceOnRead) {
+        ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
+        ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
+    }
 
     // Compute the return value by concatenating the overlapping parts and filling in any missing parts.
     SValuePtr retval;
@@ -421,13 +424,23 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
             while (next_offset<reg.get_nbits() && overlaps[next_offset]==NULL) ++next_offset;
             size_t nbits = next_offset - offset;
             part = get_protoval()->undefined_(nbits);
+            if (!coalesceOnRead) {
+                // This part of the return value doesn't exist in the register state, so we need to add it.  When
+                // coalesceOnRead is set we'll insert the whole value at once at the very end.
+                RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), reg.get_offset()+offset, nbits);
+                ri->second.push_back(RegPair(subreg, part));
+            }
         }
         retval = retval==NULL ? part : ops->concat(retval, part);
         offset += part->get_width();
     }
 
-    // Insert the return value; it does not overlap with any of the other parts.
-    ri->second.push_back(RegPair(reg, retval));
+    // Insert the return value.  When coalesceOnRead is set then no part of the register we just read overlaps with anything
+    // already stored because we've removed those parts of registers that overlap.  In other words, there's already a hole in
+    // which we can insert the value we're about to return.
+    if (coalesceOnRead)
+        ri->second.push_back(RegPair(reg, retval));
+        
     return retval;
 }
 

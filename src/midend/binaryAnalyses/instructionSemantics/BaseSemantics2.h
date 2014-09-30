@@ -955,17 +955,18 @@ public:
 
 protected:
     Registers registers;                        /**< Values for registers that have been accessed. */
+    bool coalesceOnRead;                        /**< If set, do not modify register representations on readRegister. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : RegisterState(protoval, regdict) {
+        : RegisterState(protoval, regdict), coalesceOnRead(true) {
         clear();
     }
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), registers(other.registers) {
+        : RegisterState(other), registers(other.registers), coalesceOnRead(true) {
         deep_copy_values();
     }
 
@@ -1137,6 +1138,35 @@ public:
      *  clear_latest_writer()), or no data has ever been written to the register, or data has been written but no writer was
      *  specified. */
     virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const;
+
+    /** Whether reading modifies representation.  When the @ref readRegister method is called to obtain a value for a desired
+     *  register that overlaps with some (parts of) registers that already exist in this register state we can proceed in two
+     *  ways. In both cases the return value will include data that's already stored, but the difference is in how we store the
+     *  returned value in the register state: (1) we can erase the (parts of) existing registers that overlap and store the
+     *  desired register and store the returned value so that the register we just read appears as one atomic value, or (2) we
+     *  can keep the existing registers and write only those parts of the return value that fall between the gaps.
+     *
+     *  If the coalesceOnRead property is set, then the returned value is stored atomically even when the value might be a
+     *  function of values that are already stored. Otherwise, existing registerss are not rearranged and only those parts of
+     *  the return value that fall into the gaps between existing registers are stored.
+     *
+     *  The set/clear modifiers return the previous value of this property.
+     *
+     * @{ */
+    virtual bool get_coalesceOnRead() { return coalesceOnRead; }
+    virtual bool set_coalesceOnRead(bool b=true) { bool retval=coalesceOnRead; coalesceOnRead=b; return retval; }
+    virtual bool clear_coalescOnRead() { return set_coalesceOnRead(false); }
+    /** @} */
+
+    /** Temporarily turn off coalescing on read.  Original state is restored by the destructor. */
+    class NoCoalesceOnRead {
+        RegisterStateGeneric *rstate_;
+        bool oldValue_;
+    public:
+        /** Turn off coalesceOnRead for the specified register state. */
+        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate): rstate_(rstate), oldValue_(rstate->clear_coalescOnRead()) {}
+        ~NoCoalesceOnRead() { rstate_->set_coalesceOnRead(oldValue_); }
+    };
     
 protected:
     void deep_copy_values();
