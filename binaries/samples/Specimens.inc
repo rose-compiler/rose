@@ -128,6 +128,7 @@ elf_exe_x86_specimens =				\
     i386-pivot_root				\
     i386-pointers				\
     i386-poweroff				\
+    i386-pushfd					\
     i386-pxor					\
     i386-stmxcsr				\
     i386-wait					\
@@ -194,6 +195,7 @@ other_distributed =				\
     i386-mul.s					\
     i386-overlap.s				\
     i386-pop.s					\
+    i386-pushfd.s				\
     i386-pxor.s					\
     i386-stmxcsr.s				\
     i386-wait.s					\
