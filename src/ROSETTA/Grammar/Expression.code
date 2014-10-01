@@ -5511,7 +5511,9 @@ $CLASSNAME::post_construction_initialization()
 SgType*
 $CLASSNAME::get_type() const
    {
-     return NULL;
+     SgType* returnType = SgTypeDefault::createType();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
    }
 SOURCE_HERE_EXPRESSION_END
 
