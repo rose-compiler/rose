@@ -164,7 +164,7 @@ SgAsmInstruction::getBranchTarget(rose_addr_t *target/*out*/) {
 }
 
 /** Virtual method to determine if a single instruction has an effect. Unless subclass redefines, assume all instructions have
- *  an effect other than adjusting the instruction pointer. See SgAsmx86Instruction implementation for complete
+ *  an effect other than adjusting the instruction pointer. See SgAsmX86Instruction implementation for complete
  *  documentation. */
 bool
 SgAsmInstruction::hasEffect()
@@ -173,7 +173,7 @@ SgAsmInstruction::hasEffect()
 }
 
 /** Virtual method to determine if an instruction sequence has an effect. Unless subclass redefines, assume all instruction
- *  sequences have an effect. See SgAsmx86Instruction implementation for complete documentation. */
+ *  sequences have an effect. See SgAsmX86Instruction implementation for complete documentation. */
 bool
 SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/,
                             bool relax_stack_semantics/*false*/)
@@ -182,7 +182,7 @@ SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_br
 }
 
 /** Virtual method to find subsequences of an instruction sequence that are effectively no-ops. Unless subclass redefines,
- *  assume that the sequence has no no-op subsequences. See SgAsmx86Instruction implementation for complete documentation.
+ *  assume that the sequence has no no-op subsequences. See SgAsmX86Instruction implementation for complete documentation.
  *  
  *  FIXME: Instead of leaving this unimplemented, we could implement it in terms of hasEffect() and let the subclasses
  *         reimplement it only if they can do so more efficiently (which they probably can). [RPM 2010-04-30] */

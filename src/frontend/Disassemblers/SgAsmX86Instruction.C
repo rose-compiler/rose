@@ -1,4 +1,4 @@
-/* SgAsmx86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
+/* SgAsmX86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
@@ -14,13 +14,13 @@ using namespace rose;                                   // temporary until this 
 using namespace rose::Diagnostics;
 
 unsigned
-SgAsmx86Instruction::get_anyKind() const {
+SgAsmX86Instruction::get_anyKind() const {
     return p_kind;
 }
 
 // see base class
 bool
-SgAsmx86Instruction::terminatesBasicBlock() {
+SgAsmX86Instruction::terminatesBasicBlock() {
     if (get_kind()==x86_unknown_instruction)
         return true;
     return x86InstructionIsControlTransfer(this);
@@ -30,11 +30,11 @@ SgAsmx86Instruction::terminatesBasicBlock() {
 
 // see base class
 bool
-SgAsmx86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.empty())
         return false;
-    SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
+    SgAsmX86Instruction *last = isSgAsmX86Instruction(insns.back());
     if (!last)
         return false;
 
@@ -51,7 +51,7 @@ SgAsmx86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& in
 
 // see base class
 bool
-SgAsmx86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (isFunctionCallFast(insns, target, return_va))
         return true;
@@ -60,7 +60,7 @@ SgAsmx86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
     static const size_t EXECUTION_LIMIT = 10; // max size of basic blocks for expensive analyses
     if (insns.empty())
         return false;
-    SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
+    SgAsmX86Instruction *last = isSgAsmX86Instruction(insns.back());
     if (!last)
         return false;
     SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(last);
@@ -163,10 +163,10 @@ SgAsmx86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
 // See base class.
 bool
-SgAsmx86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
+SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
         return false;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
+    SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(insns.back());
     if (!last_insn)
         return false;
     if (last_insn->get_kind()==x86_ret || last_insn->get_kind()==x86_retf)
@@ -176,20 +176,20 @@ SgAsmx86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &
 
 // See base class.
 bool
-SgAsmx86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
+SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
     return isFunctionReturnFast(insns);
 }
 
 /** Determines whether this instruction is the special x86 "unknown" instruction. */
 bool
-SgAsmx86Instruction::isUnknown() const
+SgAsmX86Instruction::isUnknown() const
 {
     return x86_unknown_instruction == get_kind();
 }
 
 /** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmx86Instruction::getSuccessors(bool *complete) {
+SgAsmX86Instruction::getSuccessors(bool *complete) {
     BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true; /*assume true and prove otherwise*/
 
@@ -275,7 +275,7 @@ SgAsmx86Instruction::getSuccessors(bool *complete) {
 }
 
 bool
-SgAsmx86Instruction::getBranchTarget(rose_addr_t *target) {
+SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
     // Treats far destinations as "unknown"
     switch (get_kind()) {
         case x86_call:
@@ -320,13 +320,13 @@ SgAsmx86Instruction::getBranchTarget(rose_addr_t *target) {
 
 /** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmx86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
     Stream debug(mlog[DEBUG]);
 
     if (debug) {
-        debug <<"SgAsmx86Instruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())
+        debug <<"SgAsmX86Instruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
@@ -368,7 +368,7 @@ SgAsmx86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
         try {
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
-                SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
+                SgAsmX86Instruction* insn = isSgAsmX86Instruction(insns[i]);
                 semantics.processInstruction(insn);
                 if (debug) {
                     debug << "  state after " <<unparseInstructionWithAddress(insn) <<"\n"
@@ -531,7 +531,7 @@ SgAsmx86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
  *  \endcode
  */
 bool
-SgAsmx86Instruction::hasEffect()
+SgAsmX86Instruction::hasEffect()
 {
     std::vector<SgAsmInstruction*> sequence;
     sequence.push_back(this);
@@ -560,7 +560,7 @@ SgAsmx86Instruction::hasEffect()
  *  "this" is only used to select the virtual function; the operation is performed on the specified instruction vector.
  */
 bool
-SgAsmx86Instruction::hasEffect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+SgAsmX86Instruction::hasEffect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                bool relax_stack_semantics/*false*/)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
@@ -574,7 +574,7 @@ SgAsmx86Instruction::hasEffect(const std::vector<SgAsmInstruction*>& insns, bool
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
             if (!insn) return true;
             semantics.processInstruction(insn);
             if (!policy.get_ip().is_known()) return true;
@@ -610,7 +610,7 @@ SgAsmx86Instruction::hasEffect(const std::vector<SgAsmInstruction*>& insns, bool
  *
  *  "this" is only used to select the virtual function; the operation is performed over the specified instruction vector. */
 std::vector< std::pair< size_t, size_t > >
-SgAsmx86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                           bool relax_stack_semantics/*false*/)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
@@ -637,7 +637,7 @@ SgAsmx86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& 
     state.back().registers.ip = common_ip;
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
             if (verbose)
                 std::cerr <<"  insn #" <<(state.size()-1)
                           <<" " <<(insn ? unparseInstructionWithAddress(insn) : "<none>") <<"\n";
