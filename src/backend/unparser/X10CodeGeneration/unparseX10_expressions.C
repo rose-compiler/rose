@@ -1631,7 +1631,12 @@ Unparse_X10::unparseX10TypeExpression(SgExpression *expr, SgUnparse_Info& info) 
     SgJavaTypeExpression *type_expression = isSgJavaTypeExpression(expr);
     AstRegExAttribute *attribute = (AstRegExAttribute *) type_expression -> getAttribute("type");
     if (attribute) {
-        curprint(attribute -> expression);
+        string expr = attribute->expression;
+        if (expr.compare(0, 2, "::") == 0) {
+           expr = expr.substr(2);
+        }
+        replaceString(expr, "::", ".");
+        curprint(expr);
     }
     else {
         unparseType(type_expression -> get_type(), info);
