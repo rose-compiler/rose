@@ -18868,6 +18868,12 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
             SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
             ROSE_ASSERT (exp_stmt != NULL);
             SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+            // TODO: it can be SgCommanOpExp
+            if (isSgCommaOpExp (exp_stmt->get_expression()) )
+            {
+               cerr<<"Error in moveVariableDeclaration(), multiple expressions in for-condition is not supported now. "<<endl;
+               ROSE_ASSERT (assign_op != NULL);
+            } 
             ROSE_ASSERT (assign_op != NULL);
 
             // remove the existing i=0; preserve its right hand operand
@@ -18882,6 +18888,7 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
               SageInterface::deepDelete (copy_name->get_initptr());
             copy_name->set_initptr(initor);
             initor->set_parent(copy_name);
+            // insert the merged decl into the list, TODO preserve the order in the list
             stmt_list.insert (stmt_list.begin(),  decl_copy);
             decl_copy->set_parent(stmt->get_for_init_stmt());
             ROSE_ASSERT (decl_copy->get_parent() != NULL); 
