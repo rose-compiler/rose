@@ -93,26 +93,26 @@ bool SgAsmPowerpcInstruction::isUnknown() const { return false; }
 std::set<rose_addr_t> SgAsmPowerpcInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmx86Instruction
+// SgAsmX86Instruction
 
-bool SgAsmx86Instruction::terminatesBasicBlock() { return false; }
-bool SgAsmx86Instruction::isUnknown() const { return false; }
-bool SgAsmx86Instruction::hasEffect() { return false; }
-bool SgAsmx86Instruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
-bool SgAsmx86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
-bool SgAsmx86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
-bool SgAsmx86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmx86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmx86Instruction::getBranchTarget(rose_addr_t*) { return false; }
-std::set<rose_addr_t> SgAsmx86Instruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
+bool SgAsmX86Instruction::terminatesBasicBlock() { return false; }
+bool SgAsmX86Instruction::isUnknown() const { return false; }
+bool SgAsmX86Instruction::hasEffect() { return false; }
+bool SgAsmX86Instruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
+bool SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmX86Instruction::getBranchTarget(rose_addr_t*) { return false; }
+std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 
 std::set<rose_addr_t>
-SgAsmx86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
     return std::set<rose_addr_t>();
 }
 
 std::vector<std::pair<size_t,size_t> >
-SgAsmx86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
+SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
     return std::vector<std::pair<size_t,size_t> >();
 }
 

@@ -21,12 +21,12 @@ MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
     const RegisterDescriptor sp(x86_regclass_gpr, x86_gpr_sp, 0, bp.get_nbits());
 
     // Look for PUSH EBP
-    SgAsmx86Instruction *insn = NULL; 
+    SgAsmX86Instruction *insn = NULL; 
     {
         rose_addr_t pushVa = anchor;
         if (partitioner->instructionExists(pushVa))
             return false;                               // already in the CFG/AUM
-        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
+        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
         if (!insn || insn->get_kind()!=x86_push)
             return false;
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -42,7 +42,7 @@ MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
         rose_addr_t moveVa = insn->get_address() + insn->get_size();
         if (partitioner->instructionExists(moveVa))
             return false;                               // already in the CFG/AUM
-        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
+        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
         if (!insn || insn->get_kind()!=x86_mov)
             return false;
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -66,7 +66,7 @@ MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
     rose_addr_t moveVa = anchor;
     if (partitioner->instructionExists(moveVa))
         return false;                               // already in the CFG/AUM
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
     if (!insn || insn->get_kind()!=x86_mov)
         return false;
     const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -92,14 +92,14 @@ MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
 // Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
 bool
 MatchAbbreviatedPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    SgAsmx86Instruction *insn = NULL;
+    SgAsmX86Instruction *insn = NULL;
     // Look for MOV EDI, EDI
     {
         static const RegisterDescriptor REG_EDI(x86_regclass_gpr, x86_gpr_di, 0, 32);
         rose_addr_t moveVa = anchor;
         if (partitioner->instructionExists(moveVa))
             return false;                               // already in the CFG/AUM
-        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(moveVa));
+        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
         if (!insn || insn->get_kind()!=x86_mov)
             return false;
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -117,7 +117,7 @@ MatchAbbreviatedPrologue::match(const Partitioner *partitioner, rose_addr_t anch
     {
         static const RegisterDescriptor REG_ESI(x86_regclass_gpr, x86_gpr_si, 0, 32);
         rose_addr_t pushVa = insn->get_address() + insn->get_size();
-        insn = isSgAsmx86Instruction(partitioner->discoverInstruction(pushVa));
+        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
         if (partitioner->instructionExists(pushVa))
             return false;                               // already in the CFG/AUM
         if (!insn || insn->get_kind()!=x86_push)
@@ -140,7 +140,7 @@ MatchEnterPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     ASSERT_not_null(partitioner);
     if (partitioner->instructionExists(anchor))
         return false;                                   // already in the CFG/AUM
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(partitioner->discoverInstruction(anchor));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor));
     if (!insn || insn->get_kind()!=x86_enter)
         return false;
     const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
@@ -163,7 +163,7 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
             args.bblock->isFunctionReturn() = false;    // empty blocks are never considered returns
             return chain;
         }
-        SgAsmx86Instruction *lastInsn = isSgAsmx86Instruction(args.bblock->instructions().back());
+        SgAsmX86Instruction *lastInsn = isSgAsmX86Instruction(args.bblock->instructions().back());
         if (NULL==lastInsn)
             return chain;                               // defer if not x86
         if (lastInsn->get_kind()!=x86_ret && lastInsn->get_kind()!=x86_retf)
@@ -284,7 +284,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         return chain;
 
     // Block always ends with JMP
-    SgAsmx86Instruction *jmp = isSgAsmx86Instruction(args.bblock->instructions()[nInsns-1]);
+    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(args.bblock->instructions()[nInsns-1]);
     if (!jmp || jmp->get_kind()!=x86_jmp)
         return chain;
     const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
@@ -301,7 +301,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         // Other patterns are: MOV reg, ...; JMP reg
         if (nInsns < 2)
             return chain;
-        SgAsmx86Instruction *mov = isSgAsmx86Instruction(args.bblock->instructions()[nInsns-2]);
+        SgAsmX86Instruction *mov = isSgAsmX86Instruction(args.bblock->instructions()[nInsns-2]);
         if (!mov || mov->get_kind()!=x86_mov)
             return chain;
         const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();

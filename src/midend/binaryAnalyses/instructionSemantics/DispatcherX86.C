@@ -28,14 +28,14 @@ class P: public BaseSemantics::InsnProcessor {
 public:
     typedef DispatcherX86 *D;
     typedef BaseSemantics::RiscOperators *Ops;
-    typedef SgAsmx86Instruction *I;
+    typedef SgAsmX86Instruction *I;
     typedef const SgAsmExpressionPtrList &A;
     virtual void p(D, Ops, I, A) = 0;
 
     virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) /*override*/ {
         DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL && insn==operators->get_insn());
         operators->writeRegister(dispatcher->REG_EIP, operators->add(operators->number_(32, insn->get_address()),
                                                                      operators->number_(32, insn->get_size())));

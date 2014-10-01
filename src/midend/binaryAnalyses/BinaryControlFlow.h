@@ -843,7 +843,7 @@ ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges
 
             if (0==boost::out_degree(*vi, cfg)) {
                 // FIXME: Architecture-specific code here
-                if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn)) {
+                if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn)) {
                     isret[*vi] = x86_ret==insn_x86->get_kind();
                 }
             }

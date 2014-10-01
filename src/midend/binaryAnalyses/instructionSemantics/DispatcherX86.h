@@ -68,7 +68,7 @@ public:
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();
     }

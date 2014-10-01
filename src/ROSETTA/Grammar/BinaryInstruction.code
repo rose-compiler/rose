@@ -4232,7 +4232,7 @@ SgAsmFunction::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
     return 0;
 */
   for (;j!=succs.rend(); j++) {
-     SgAsmx86Instruction* n = isSgAsmx86Instruction(*j);
+     SgAsmX86Instruction* n = isSgAsmX86Instruction(*j);
      if (n && (n->get_kind() == x86_ret || n->get_kind() == x86_hlt)) {
           foundRet=true;
           break;
@@ -4364,7 +4364,7 @@ SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* i
 std::vector<VirtualBinCFG::CFGEdge>
 SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
    {
-  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
+  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmX86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmX86Instruction(this) ? toString(isSgAsmX86Instruction(this)->get_kind()) : "") << endl;
      std::vector<VirtualBinCFG::CFGEdge> result;
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -4410,7 +4410,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
              } // else
         } // if
 
-     if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ )
+     if ((!isSgAsmX86Instruction(this) || (isSgAsmX86Instruction(this)->get_kind() != x86_ret && isSgAsmX86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmX86Instruction(this) && isSgAsmX86Instruction(this)->get_kind() == x86_call) */ )
         {
        // cout << "Next insn is at " << std::hex << nextAddr << endl;
           SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);

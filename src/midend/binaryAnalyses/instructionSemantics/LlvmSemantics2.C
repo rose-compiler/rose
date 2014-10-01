@@ -358,7 +358,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // If the last executed instruction is some kind of function return instruction, then emit an LLVM "ret" instruction.
     // The stack used by LLVM is distinct from the stack used by the binary. The latter's stack is implemented via the @ebp (or
     // similar) global pointer.  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
-    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+    if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         if (insn_x86->get_kind() == x86_ret || insn_x86->get_kind() == x86_retf) {
             o <<prefix() <<"ret void\n";
             return;
@@ -367,7 +367,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 
     // If this function is a thunk, then we need to treat it as an LLVM function call (because LLVM doesn't allow
     // inter-function branches).  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
-    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+    if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         std::vector<SgAsmInstruction*> func_insns = querySubTree<SgAsmInstruction>(func);
         if (func_insns.size()==1 && func_insns.front()==insn_x86 &&
             (insn_x86->get_kind() == x86_jmp || insn_x86->get_kind() == x86_farjmp)) {
@@ -383,7 +383,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 
     // If we don't know the target address and this is an indirect function call, then the successors are the entry points of
     // all known functions.  FIXME[Robb P. Matzke 2014-01-09]: Detection of a function call is architecture dependent.
-    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+    if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         if (insn_x86->get_kind() == x86_call || insn_x86->get_kind() == x86_farcall) {
             LeafNodePtr t1 = emit_expression(o, eip);
             LeafNodePtr t2 = next_temporary(32);        // pointer to the function

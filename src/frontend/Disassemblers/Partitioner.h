@@ -170,8 +170,8 @@ protected:
      *  @{ */
     static SgAsmInstruction *isSgAsmInstruction(const Instruction *);
     static SgAsmInstruction *isSgAsmInstruction(SgNode*);
-    static SgAsmx86Instruction *isSgAsmx86Instruction(const Instruction*);
-    static SgAsmx86Instruction *isSgAsmx86Instruction(SgNode*);
+    static SgAsmX86Instruction *isSgAsmX86Instruction(const Instruction*);
+    static SgAsmX86Instruction *isSgAsmX86Instruction(SgNode*);
     static SgAsmM68kInstruction *isSgAsmM68kInstruction(const Instruction*);
     static SgAsmM68kInstruction *isSgAsmM68kInstruction(SgNode*);
     /** @} */

@@ -10,7 +10,7 @@ struct AnalyzeBlocks: AstSimpleProcessing {
                     std::cout <<"| " <<unparseInstruction(insns[i]) <<"\n";
 
                 rose_addr_t target_va=911, return_va=911;
-                bool is_call = bb->isFunctionCallSlow(target_va, return_va);
+                bool is_call = bb->is_function_call(target_va, return_va);
                 std::cout <<addrToString(bb->get_address(), 64) <<": " <<(is_call ? " is_call" : "not_call")
                           <<" target=" <<addrToString(target_va, 64) <<" return=" <<addrToString(return_va, 64) <<"\n\n";
             }

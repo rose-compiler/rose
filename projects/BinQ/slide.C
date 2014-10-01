@@ -163,7 +163,7 @@ void Slide::updateMouse() {
       } else if (isSgAsmInstruction(stmt)) {
 	//cerr << " selected Byte: " << isSgAsmInstruction(stmt)->get_mnemonic() << endl;
 	QString res = QString("FILE_A: selected Byte  %1: %2  size %3  pos: %4")
-	  .arg(RoseBin_support::HexToString((isSgAsmx86Instruction(stmt))->get_address()).c_str() )
+	  .arg(RoseBin_support::HexToString((isSgAsmX86Instruction(stmt))->get_address()).c_str() )
 	  .arg(	unparseInstruction(isSgAsmInstruction(stmt)).c_str())
 	  .arg(isSgAsmInstruction(stmt)->get_raw_bytes().size())
 	  .arg(selected);
@@ -266,7 +266,7 @@ void Slide::updateMouse() {
       } else if (isSgAsmInstruction(stmt)) {
 	//cerr << " selected Byte: " << isSgAsmInstruction(stmt)->get_mnemonic() << endl;
 	QString res = QString("FILE_B: selected Byte  %1: %2  size %3  pos: %4")
-	  .arg(RoseBin_support::HexToString((isSgAsmx86Instruction(stmt))->get_address()).c_str() )
+	  .arg(RoseBin_support::HexToString((isSgAsmX86Instruction(stmt))->get_address()).c_str() )
 	  .arg(	unparseInstruction(isSgAsmInstruction(stmt)).c_str())
 	  .arg(isSgAsmInstruction(stmt)->get_raw_bytes().size())
 	  .arg(selected);

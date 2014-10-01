@@ -16,7 +16,7 @@ struct Analysis: public AstSimpleProcessing {
 
             const SgAsmStatementPtrList &stmts = block->get_statementList();
             for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(*si);
                 if (insn) {
                     std::cout <<unparseInstructionWithAddress(insn) <<"\n";
                     semantics.processInstruction(insn);
@@ -42,7 +42,7 @@ struct Analysis: public AstSimpleProcessing {
             BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
             const SgAsmStatementPtrList &stmts = block->get_statementList();
             for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(*si);
                 if (insn) {
                     std::cout <<unparseInstructionWithAddress(insn) <<"\n";
                     dispatcher->processInstruction(insn);

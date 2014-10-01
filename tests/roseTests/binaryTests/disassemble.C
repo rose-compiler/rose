@@ -33,7 +33,7 @@
 #include "Diagnostics.h"
 
 /*FIXME: Rose cannot parse this file.*/
-#ifndef CXX_IS_ROSE_ANALYSIS
+#ifndef CXX_I_ROSE_ANALYSIS
 
 using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics;
@@ -63,7 +63,7 @@ bool
 block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
 {
 
-    if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front())) {
+    if (!blk || blk->get_statementList().empty() || !isSgAsmX86Instruction(blk->get_statementList().front())) {
         memset(digest, 0, 20);
         return false;
     }
@@ -76,7 +76,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     Semantics semantics(policy);
     try {
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*si);
             ASSERT_not_null(insn);
             semantics.processInstruction(insn);
         }
@@ -92,7 +92,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
      * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
      * is concerned. */
     bool ignore_final_ip = true;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
+    SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
@@ -213,7 +213,7 @@ private:
     class SyscallName: public UnparserCallback {
     public:
         bool operator()(bool enabled, const InsnArgs &args) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
             SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.insn);
             if (enabled && insn && block && insn->get_kind()==x86_int) {
                 const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
@@ -370,7 +370,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, rose::BinaryAnalysis
                     if (!args.block->get_successors_complete()) {
                         ASSERT_forbid2(args.block->get_statementList().empty(), "basic blocks should not be empty");
                         SgAsmInstruction *last_insn = isSgAsmInstruction(args.block->get_statementList().back());
-                        if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
+                        if (isSgAsmX86Instruction(last_insn) && isSgAsmX86Instruction(last_insn)->get_kind()==x86_ret) {
                             args.output <<", color=blue"; /*function return statement, not used as an unconditional branch*/
                         } else {
                             args.output <<", color=red"; /*red implies that we don't have complete information for successors*/

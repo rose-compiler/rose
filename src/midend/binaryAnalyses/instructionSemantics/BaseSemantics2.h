@@ -2415,7 +2415,7 @@ protected:
     const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
-    // instruction identifier, such as from SgAsmx86Instruction::get_kind(), and comes from the iproc_key() virtual method.
+    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 

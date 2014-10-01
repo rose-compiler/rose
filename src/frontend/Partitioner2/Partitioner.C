@@ -659,7 +659,7 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
 #if 1 // DEBUGGING [Robb P. Matzke 2014-09-15]
     Stream debug(mlog[DEBUG]);
-    debug.enable(isSgAsmx86Instruction(lastInsn) && isSgAsmx86Instruction(lastInsn)->get_kind()==x86_ret);
+    debug.enable(isSgAsmX86Instruction(lastInsn) && isSgAsmX86Instruction(lastInsn)->get_kind()==x86_ret);
 #endif
 
     // Use our own semantics if we have them.
