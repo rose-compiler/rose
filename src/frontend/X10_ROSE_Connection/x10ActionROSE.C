@@ -109,6 +109,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetupSourceFilename(JNIEnv 
 //cout.flush();
     ROSE_ASSERT(::currentSourceFile);
     ROSE_ASSERT(::currentSourceFile -> get_file_info());
+
+    SgJavaImportStatementList* import_statement_list = new SgJavaImportStatementList();
+    import_statement_list -> set_parent(::currentSourceFile);
+    // setX10SourcePosition(import_statement_list, env, x10Token);
+    ::currentSourceFile -> set_import_list(import_statement_list);
 #endif
 }
 
