@@ -27,6 +27,7 @@ bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator&, con
 bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
 bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
 bool sortBlocksForAst(SgAsmBlock*, SgAsmBlock*);
+bool sortInstructionsByAddress(SgAsmInstruction*, SgAsmInstruction*);
 
 template<class Container, class Comparator>
 static bool

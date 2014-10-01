@@ -260,12 +260,12 @@ public:
          *  of the callbacks has transferred the data and the simulator uses @p nbytes_xfer as the return value of the memory
          *  operation. */
         struct Args {
-            Args(RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms, rose_addr_t va, size_t nbytes,
+            Args(RSIM_Process *process, unsigned how, unsigned req_perms, rose_addr_t va, size_t nbytes,
                  void *buffer, size_t &nbytes_xfer/*out*/)
                 : process(process), how(how), req_perms(req_perms), va(va), nbytes(nbytes),
                   buffer(buffer), nbytes_xfer(nbytes_xfer) {}
             RSIM_Process *process;              /**< The process whose memory is accessed. */
-            MemoryMap::Protection how;          /**< How memory is being access. */
+            unsigned how;                       /**< How memory is being access. */
             unsigned req_perms;                 /**< Memory required permissions for access. */
             rose_addr_t va;                     /**< Virtual address for beginning of memory access. */
             size_t nbytes;                      /**< Size of memory access. */
@@ -323,7 +323,7 @@ public:
      *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
      *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
      *  call_memory_callbacks(). */
-    bool call_memory_callbacks(When, RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms,
+    bool call_memory_callbacks(When, RSIM_Process *process, unsigned how, unsigned req_perms,
                                rose_addr_t va, size_t nbytes, void *buffer, size_t &nbytes_xfer, bool prev);
 
 

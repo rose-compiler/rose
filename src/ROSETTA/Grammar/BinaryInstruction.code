@@ -125,6 +125,7 @@ HEADER_BINARY_INSTRUCTION_START
                                                              const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
                 virtual bool is_unknown() const;
+		virtual unsigned get_anyKind() const;
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -2562,7 +2563,7 @@ HEADER_PE_EXPORT_SECTION_START
                 typedef uint16_t ExportOrdinal_disk;
 
                 SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
-                        : SgAsmPESection(fhdr)
+                        : SgAsmPESection(fhdr), p_export_dir(NULL), p_exports(NULL)
                         {ctor();}
                 virtual SgAsmPEExportSection *parse();
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -3629,6 +3630,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
                                                              bool* complete,
                                                              const MemoryMap *initial_memory=NULL) /*override*/;
                 virtual bool is_unknown() const;
+		virtual unsigned get_anyKind() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3638,6 +3640,7 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
                 virtual bool terminates_basic_block() /*override*/;
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual bool is_unknown() const /*override*/;
+		virtual unsigned get_anyKind() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3647,6 +3650,7 @@ HEADER_BINARY_ARM_INSTRUCTION_START
                 virtual bool terminates_basic_block() /*override*/;
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual bool is_unknown() const /*override*/;
+		virtual unsigned get_anyKind() const /*override*/;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
@@ -3660,6 +3664,7 @@ HEADER_BINARY_MIPS_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual bool is_unknown() const /*override*/;
                 virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+		virtual unsigned get_anyKind() const /*override*/;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
@@ -3675,6 +3680,7 @@ HEADER_BINARY_M68K_INSTRUCTION_START
                                                              bool* complete,
                                                              const MemoryMap *initial_memory=NULL) /*override*/;
                 virtual bool is_unknown() const /*override*/;
+		virtual unsigned get_anyKind() const /*override*/;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
 

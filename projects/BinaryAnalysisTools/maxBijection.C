@@ -20,25 +20,12 @@ struct Settings {
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup switches;
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
-    // Standard stuff
-    switches.insert(Switch("help", 'h')
-                    .action(showHelpAndExit(0))
-                    .doc("Show this documentation."));
-    switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
-                    .argument("config")
-                    .whichValue(SAVE_ALL)
-                    .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
-
-    // Switches specific to this tool
-    switches.insert(Switch("width")
-                    .argument("nbits", nonNegativeIntegerParser(settings.nBits))
-                    .doc("Width of values in bits. All calculations are done in modulo arithmetic. The default is " +
+    SwitchGroup tool("Tool-specific switches");
+    tool.insert(Switch("width")
+                .argument("nbits", nonNegativeIntegerParser(settings.nBits))
+                .doc("Width of values in bits. All calculations are done in modulo arithmetic. The default is " +
                          StringUtility::plural(settings.nBits, "bits")));
 
     Parser parser;
@@ -51,7 +38,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "which when added to each of the integers from the first set matches values in the second set.  The delta is "
              "chosen so as to maximize the number of values that match.");
 
-    return parser.with(switches).parse(argc, argv).apply();
+    return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
 
 static Set

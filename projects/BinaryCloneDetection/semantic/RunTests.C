@@ -943,11 +943,13 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
     Disassembler::AddressSet retval;
     for (std::map<SgAsmFunction*, rose_addr_t>::iterator i=t1.gotplt_addr.begin(); i!=t1.gotplt_addr.end(); ++i) {
         std::string name = i->first->get_name();
-        name = StringUtility::split("@", name, 2)[0];
-        if (whitelist_names.find(name)!=whitelist_names.end()) {
-            if (opt.verbosity>=EFFUSIVE)
-                std::cerr <<argv0 <<":   " <<StringUtility::addrToString(i->second) <<" for " <<name <<"\n";
-            retval.insert(i->second);
+        if (name != "") {
+            name = StringUtility::split("@", name, 2)[0];
+            if (whitelist_names.find(name)!=whitelist_names.end()) {
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<argv0 <<":   " <<StringUtility::addrToString(i->second) <<" for " <<name <<"\n";
+                retval.insert(i->second);
+            }
         }
     }
     return retval;
@@ -1026,11 +1028,10 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                             std::cerr <<argv0 <<":     writing " <<StringUtility::plural(nbytes, "bytes")
                                       <<" at " <<StringUtility::addrToString(base_va) <<"\n";
                         }
-                        MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->erase(AddressInterval::baseSize(base_va, nbytes));
+                        MemoryMap::Buffer::Ptr mmbuf = MemoryMap::AllocatingBuffer::instance(nbytes);
+                        mmbuf->write((uint8_t*)buf, 0, nbytes);
                         ro_map->insert(AddressInterval::baseSize(base_va, nbytes),
-                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
-                                                          "analysis-mapped dynlink addresses"));
+                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::READABLE, "analysis-mapped dynlink addresses"));
                     } else {
                         delete[] buf;
                     }

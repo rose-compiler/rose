@@ -2,13 +2,15 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 #include "rose_getline.h"
-#include "Combinatorics.h"
+#include <EditDistance/DamerauLevenshtein.h>
 
 #include <cerrno>
 
 #include <algorithm>
 #include <set>
 #include <iterator>
+
+using namespace rose;
 
 std::string argv0;
 
@@ -269,7 +271,7 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
     size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
     double dl_similarity = 1.0;
     if (dl_max > 0) {
-        size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
+        size_t dl = EditDistance::damerauLevenshteinDistance(*func1_vec, *func2_vec);
         dl_similarity = 1.0 - (double)dl / dl_max;
     }
 

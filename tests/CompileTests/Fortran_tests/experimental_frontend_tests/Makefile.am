@@ -8,18 +8,20 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 # DQ (3/8/2014): Adding OFP test code
-bin_PROGRAMS = traverse
-traverse_SOURCES = traverse.cpp
+# bin_PROGRAMS = traverse
+# traverse_SOURCES = traverse.cpp
 
 # ATERM_ROOT = /home/dquinlan/bin/aterm-2.5-install-64bit
 ATERM_ROOT = $(ATERM_INSTALL_PATH)
 ATERM_INCLUDE = -I$(ATERM_ROOT)/include
 INCLUDES = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse -lofp
+# LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse -lofp
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalRoseFortran
 
 # TEST_F90_Objects = main_program_2008_01.f90 main_program_2014_01.f90
-F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
+# F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
+F90_TESTCODES = test2014_02.f90
 
 TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
 TEST_F90_Sources = ${F90_TESTCODES:.f90=.f90.passed}
@@ -34,12 +36,23 @@ PASSING_TEST_Objects = $(TEST_F90_Objects)
 
 testTranslator: ../../../testTranslator
 
-$(TEST_F90_Objects): ../../../testTranslator
+SGLRI_WITH_PATH = /home/dquinlan/bin/strategoxt-0.17-install-32bit/bin/sglri
+
+# DQ (9/14/2014): This forces the relinking of the testTranslator, which is a work 
+# around until the OFP and ATerm support is included in ROSE using shared libraries.
+recompile_translator:
+	rm ../../../testTranslator
+	$(MAKE) ../../../testTranslator
+
+$(TEST_F90_Objects): recompile_translator ../../../testTranslator
 #	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	sglri -i $(srcdir)/junk.f90 -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o junk.f90.aterm
-	sglri -i $(srcdir)/$(@:.o=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o $(@:.o=.f90.aterm)
-	./traverse -i $(@:.o=.f90.aterm)
+#	sglri -i $(srcdir)/$(@:.o=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Fortran.tbl -o $(@:.o=.f90.aterm)
+#	$(SGLRI_WITH_PATH) -i $(srcdir)/$(@:.o=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl -o $(@:.o=.f90.aterm)
+#	./traverse -i $(@:.o=.f90.aterm)
+#	../../../testTranslator -i $(@:.o=.f90.aterm)
+	../../../testTranslator -rose:experimental_fortran_frontend -c $(srcdir)/$(@:.o=.f90)
 endif
 
 junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl

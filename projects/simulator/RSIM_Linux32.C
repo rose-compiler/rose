@@ -3523,19 +3523,19 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
     int result = -ENOSYS;
 
     RTS_WRITE(t->get_process()->rwlock()) {
-        if (!t->get_process()->get_memory().exists(shmaddr_va)) {
+        if (!t->get_process()->get_memory().at(shmaddr_va).exists()) {
             result = -EINVAL;
             break;
         }
-        const MemoryMap::Segments::Node &me = t->get_process()->get_memory().at(shmaddr_va);
+        const MemoryMap::Node &me = *(t->get_process()->get_memory().find(shmaddr_va));
         if (me.key().least()!=shmaddr_va ||
-            me.value().get_buffer_offset()!=0 ||
-            dynamic_cast<MemoryMap::AnonymousBuffer*>(me.value().get_buffer().get())) {
+            me.value().offset()!=0 ||
+            NULL==me.value().buffer()->data()) {
             result = -EINVAL;
             break;
         }
 
-        result = shmdt(me.value().get_buffer()->get_data_ptr());
+        result = shmdt(me.value().buffer()->data());
         if (-1==result) {
             result = -errno;
             break;
@@ -3733,7 +3733,10 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
 
     RTS_WRITE(t->get_process()->rwlock()) {
         if (0==shmaddr) {
-            shmaddr = t->get_process()->get_memory().find_last_free();
+            const MemoryMap &mm = t->get_process()->get_memory();
+            AddressInterval freeArea = mm.unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
+            assert(!freeArea.isEmpty());
+            shmaddr = freeArea.least();
         } else if (shmflg & SHM_RND) {
             shmaddr = ALIGN_DN(shmaddr, SHMLBA);
         } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
@@ -3748,7 +3751,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         }
 
         /* Map shared memory into the simulator. It's OK to hold the write lock here because this syscall doesn't block. */
-        void *buf = shmat(shmid, NULL, shmflg);
+        uint8_t *buf = (uint8_t*)shmat(shmid, NULL, shmflg);
         if (!buf) {
             result = -errno;
             break;
@@ -3759,9 +3762,9 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         int status = shmctl(shmid, IPC_STAT, &ds); // does not block
         ROSE_ASSERT(status>=0);
         ROSE_ASSERT(ds.shm_segsz>0);
-        unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
+        unsigned perms = MemoryMap::READABLE | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::WRITABLE);
 
-        MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(buf, ds.shm_segsz);
+        MemoryMap::Buffer::Ptr buffer = MemoryMap::StaticBuffer::instance(buf, ds.shm_segsz);
         MemoryMap::Segment sgmt(buffer, 0, perms, "shmat("+StringUtility::numberToString(shmid)+")");
         t->get_process()->get_memory().insert(AddressInterval::baseSize(shmaddr, ds.shm_segsz), sgmt);
 
@@ -4170,9 +4173,9 @@ static void
 syscall_mprotect(RSIM_Thread *t, int callno)
 {
     uint32_t va=t->syscall_arg(0), size=t->syscall_arg(1), real_perms=t->syscall_arg(2);
-    unsigned rose_perms = ((real_perms & PROT_READ) ? MemoryMap::MM_PROT_READ : 0) |
-                          ((real_perms & PROT_WRITE) ? MemoryMap::MM_PROT_WRITE : 0) |
-                          ((real_perms & PROT_EXEC) ? MemoryMap::MM_PROT_EXEC : 0);
+    unsigned rose_perms = ((real_perms & PROT_READ) ? MemoryMap::READABLE : 0) |
+                          ((real_perms & PROT_WRITE) ? MemoryMap::WRITABLE : 0) |
+                          ((real_perms & PROT_EXEC) ? MemoryMap::EXECUTABLE : 0);
     if (va % PAGE_SIZE) {
         t->syscall_return(-EINVAL);
     } else {
@@ -5300,7 +5303,8 @@ syscall_madvise(RSIM_Thread *t, int callno)
     /* If pages are unmapped, return -ENOMEM */
     ExtentMap mapped_mem;
     RTS_READ(t->get_process()->rwlock()) {
-        mapped_mem = toExtentMap(t->get_process()->get_memory().va_extents());
+        AddressIntervalSet addresses(t->get_process()->get_memory());
+        mapped_mem = toExtentMap(addresses);
     } RTS_READ_END;
     ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
     if (unmapped.size()>0) {

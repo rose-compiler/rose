@@ -1258,7 +1258,7 @@ Grammar::setUpBinaryInstructions()
      AsmPEExportSection.setFunctionPrototype("HEADER_PE_EXPORT_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPEExportSection.setDataPrototype("SgAsmPEExportDirectory*", "export_dir", "= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmPEExportSection.setDataPrototype("SgAsmPEExportEntryList*", "exports", "",
+     AsmPEExportSection.setDataPrototype("SgAsmPEExportEntryList*", "exports", "= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 

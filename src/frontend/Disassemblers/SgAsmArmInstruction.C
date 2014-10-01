@@ -6,6 +6,11 @@
 
 using namespace rose;                                   // temporary until this lives in "rose"
 
+unsigned
+SgAsmArmInstruction::get_anyKind() const {
+    return p_kind;
+}
+
 /* Returns true if the instruction modifies the instruction pointer (r15). */
 static bool modifies_ip(SgAsmArmInstruction *insn) 
 {

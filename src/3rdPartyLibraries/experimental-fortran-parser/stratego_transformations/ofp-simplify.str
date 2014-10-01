@@ -1,0 +1,151 @@
+module ofp-simplify
+
+imports
+   libstratego-lib
+   Main
+
+signature
+  constructors
+
+   CommonStmt        : A * B * C -> D
+   InitialSpecPart   : A -> B
+   SpecificationPart : A -> B
+   
+   DerivedType       : TypeName * OptTypeParamSpecList     -> DerivedType
+   Class             : TypeName * OptTypeParamSpecList     -> Class
+
+   RewindStmt        : OptLabel * List(PositionSpec) * EOS -> RewindStmt
+   rewind-unit-stmt  : OptLabel * FileUnitNumber * EOS     -> RewindStmt
+
+   EquivalenceSet    : list                                -> EquivalenceSet
+
+   // For ambiguities
+   amb : list -> choice
+
+
+strategies //=================START OF STRATEGIES============================
+
+  io-ofp-simplify =
+    io-wrap(ofp-simplify)
+
+  ofp-simplify =
+//      outermost(ofp-disamb)
+//    ; innermost(ofp-simplify-ast)
+      innermost(ofp-simplify-ast)
+
+rules //========================START OF RULES===============================
+
+// Disambiguation rules
+//
+
+//R631 : C633 ... AllocateShapeSpecList shall appear
+// TODO - remove: solved by adding {avoid} to Allocation with arity 1
+//ofp-disamb:  amb([Allocation(u),   Allocation(x,y)  ]) -> Allocation(x,y)
+//ofp-disamb:  amb([Allocation(u,v), Allocation(x,y,z)]) -> Allocation(x,y,z)
+
+//R703,R723
+//ofp-disamb:  amb([DefinedOperator(x), DefinedOperator(y)]) -> DefinedOperator(x)
+
+
+// General catch-all rules
+//
+ofp-simplify-ast:  no-list()                      -> []
+ofp-simplify-ast:  a-list(list)                   -> list
+ofp-simplify-ast:  paren-list(list)               -> list
+ofp-simplify-ast:  comma-list(list)               -> list
+
+ofp-simplify-ast:  a-name(name)                   -> name
+
+
+ofp-simplify-ast:  ImplicitPart(list, stmt)       -> <conc>(list, [stmt])
+
+ofp-simplify-ast:  no-implicit-part()             -> []
+
+//R204
+ofp-simplify-ast:  SpecificationPart(l1,l2,l3,l4) -> SpecificationPart(<conc>(l1,l2,l3,l4))
+ofp-simplify-ast:  initial-spec-part(l1,l2)       -> InitialSpecPart(<conc>(l1,l2))
+
+//R403
+ofp-simplify-ast:  derived-type-spec(DerivedTypeSpec(name,list))   -> DerivedType(name,list)
+ofp-simplify-ast:  class-type-spec(  DerivedTypeSpec(name,list))   -> Class(name,list)
+
+//R438
+ofp-simplify-ast:  opt-component-array-spec(spec) -> spec
+
+//R461
+ofp-simplify-ast:  equals-expr(expr)              -> expr
+
+//R503
+ofp-simplify-ast:  opt-array-spec(spec)           -> spec
+ofp-simplify-ast:  opt-coarray-spec(spec)         -> spec
+ofp-simplify-ast:  opt-char-length(length)        -> length
+
+//R508
+ofp-simplify-ast:  language-binding-name(str)     -> str
+
+//R511
+ofp-simplify-ast:  explicit-coshape-spec-list(list,final)   -> <conc>(list, [final])
+ofp-simplify-ast:  final-cobounds-entry(lower)              -> ExplicitCoshape(no-lower-bound(),STAR())
+
+//R563
+ofp-simplify-ast:  name-list-entry-list-head(entry)         -> [entry]
+ofp-simplify-ast:  name-list-entry-list-tail(head,tail)     -> <conc>(head,[tail])
+
+//R566
+ofp-simplify-ast:  equivalence-set-list(head, tail)         -> EquivalenceSet(<concat>[[head], tail])
+
+//R568
+ofp-simplify-ast:
+  common-stmt(label,entry,list,eos)               -> CommonStmt(label, <concat>[[entry], list], eos)
+
+//R611
+ofp-simplify-ast:  DataRef([str])                 -> str
+
+//R612
+ofp-simplify-ast:
+  PartRef(name,no-section-subscripts(),
+               no-image-selector())               -> name
+
+//R622
+ofp-simplify-ast:  opt-stride(stride)             -> stride
+
+//R624
+ofp-simplify-ast:  ImageSelector(list)            -> list  // reduces '[' list ']' to list
+
+//R701
+ofp-simplify-ast:  Primary(expr)                  -> expr  // reduces '(' Expr ')' to Expr
+
+//ofp-simplify-ast:  DataRef([PartRef(obj,_,_)])    -> obj
+
+//R752
+ofp-simplify-ast:  type-spec-colon(spec)          -> spec
+
+//R753
+ofp-simplify-ast:  colon-forall-step(step)        -> step
+
+//R818
+ofp-simplify-ast:  opt-expr(expr)                 -> expr
+
+//R910
+ofp-simplify-ast:  read-format(format)            -> [FMT(format)]
+
+//R913
+ofp-simplify-ast:  io-control-spec-list(list)       -> list
+ofp-simplify-ast:  io-control-spec-list(l1,list)    -> <concat>[[l1],list]
+ofp-simplify-ast:  io-control-spec-list(l1,l2,list) -> <concat>[[l1],[l2],list]
+
+//R924
+ofp-simplify-ast:  backspace-unit-stmt(label,u,eos) -> BackspaceStmt(label,[UNIT(u)],eos)
+
+//R925
+ofp-simplify-ast:  endfile-unit-stmt(label,u,eos)   -> EndfileStmt(label,[UNIT(u)],eos)
+
+//R926
+ofp-simplify-ast:  rewind-unit-stmt(label,u,eos)    -> RewindStmt(label,[UNIT(u)],eos)
+
+//R928
+ofp-simplify-ast:  flush-unit-stmt(label,u,eos)     -> FlushStmt(label,[UNIT(u)],eos)
+
+//R1003
+ofp-simplify-ast:  format-items-first(item)         -> [item]
+ofp-simplify-ast:  format-items(list, item)         -> <concat>[list, [item]]

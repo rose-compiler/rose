@@ -225,6 +225,13 @@ public:
      *  Returns a new list of address users that contains only the data block users from this list. */
     AddressUsers dataBlockUsers() const { return select(selectDataBlocks); }
 
+    /** Returns all instructions.
+     *
+     *  Returns a list of distinct instructions sorted by starting address.  The return value is not an AddressUsers because it
+     *  is more useful to have a list of distinct instructions, and because the @ref instructionUsers method returns the other
+     *  information already. */
+    std::vector<SgAsmInstruction*> instructions() const;
+
     /** Returns all basic blocks.
      *
      *  Returns a list of pointers to distinct basic blocks sorted by starting address.  The return value is not an

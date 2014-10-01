@@ -1,12 +1,78 @@
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Modules {
+
+bool
+Modules::AddGhostSuccessors::operator()(bool chain, const Args &args) {
+    if (chain) {
+        size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits();
+        BOOST_FOREACH (rose_addr_t successorVa, args.partitioner->basicBlockGhostSuccessors(args.bblock))
+            args.bblock->insertSuccessor(successorVa, nBits);
+    }
+    return chain;
+}
+
+bool
+PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
+    if (chain) {
+        bool complete;
+        std::vector<rose_addr_t> successors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &complete);
+        if (complete && 1==successors.size() && successors[0]!=args.bblock->fallthroughVa())
+            args.results.terminate = TERMINATE_NOW;
+    }
+    return chain;
+}
+
+AddressIntervalSet
+deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
+    AddressIntervalSet changes;
+    if (0==threshold)
+        return changes;
+    rose_addr_t va = map.hull().least();
+    AddressInterval zeros;
+    uint8_t buf[4096];
+    while (AddressInterval accessed = map.atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
+        size_t nRead = accessed.size();
+        size_t firstZero = 0;
+        while (firstZero < nRead) {
+            while (firstZero<nRead && buf[firstZero]!=0) ++firstZero;
+            if (firstZero < nRead) {
+                size_t nZeros = 1;
+                while (firstZero+nZeros < nRead && buf[firstZero+nZeros]==0) ++nZeros;
+
+                if (zeros.isEmpty()) {
+                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
+                } else if (zeros.greatest()+1 == va+firstZero) {
+                    zeros = AddressInterval::baseSize(zeros.least(), zeros.size()+nZeros);
+                } else {
+                    if (zeros.size() >= threshold) {
+                        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
+                        changes.insert(zeros);
+                    }
+                    zeros = AddressInterval::baseSize(va+firstZero, nZeros);
+                }
+
+                firstZero += nZeros+1;
+            }
+        }
+        va += nRead;
+    }
+    if (zeros.size()>=threshold) {
+        map.within(zeros).changeAccess(0, MemoryMap::EXECUTABLE);
+        changes.insert(zeros);
+    }
+    return changes;
+}
 
 size_t
 findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
@@ -73,7 +139,6 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
     }
     return functions;
 }
-
 
 } // namespace
 } // namespace
