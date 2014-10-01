@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+using namespace rose;
+
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
 static void

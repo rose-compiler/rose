@@ -1115,8 +1115,11 @@ std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)No
    */
     std::vector < SgFile * >generateFileList ();
 
-  //! Get the current SgProject IR Node
-  ROSE_DLL_API SgProject * getProject();
+/** Get the current SgProject IR Node.
+ *
+ *  The library should never have more than one project and it asserts such.  If no project has been created yet then this
+ *  function returns the null pointer. */
+ROSE_DLL_API SgProject * getProject();
 
 //! Query memory pools to grab SgNode of a specified type
 template <typename NodeType>
