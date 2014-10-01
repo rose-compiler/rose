@@ -18390,14 +18390,25 @@ class Scope_Node {
         return rt; }
   };
 
-// topdown traverse a tree to find the first node with multiple children
+// Topdown traverse a tree to find the first node with multiple children
 // Intuitively, the innermost common scope for a variable.
+// However, we have to adjust a few special cases: 
+// For example: if-stmt case
+//  A variable is used in both true and false body.
+ // Naive analysis will find if-stmt is the inner-most common scope.
+//  But we cannot really move a declaration to the if-stmt scope (condition)
 Scope_Node*  Scope_Node::findFirstBranchNode()
 {
   Scope_Node* first_branch_node = this; 
   // three cases: 0 children, 1 children, >1 children
   while (first_branch_node->children.size()==1)
     first_branch_node = first_branch_node->children[0];
+
+  // Adjust for if-stmt: special adjustment
+  // switch stmt needs not to be adjusted since there is a middle scope as the innermost scope
+  // if a variable is used in multiple case: scopes. 
+   if (isSgIfStmt (first_branch_node->scope))
+      first_branch_node = first_branch_node->parent;
   // now the node must has either 0 or >1 children.
   return first_branch_node; 
 }
@@ -18474,6 +18485,32 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
   }
 }
  
+ 
+//! A helper function to skip some scopes, such as while stmt scope: special adjustment.
+// used for a variable showing up in condition expression of some statement. 
+// We return a grand parent scope for those variables. 
+/*
+ *We don't try to merge a variable decl into the conditional of a while statement
+ * The reason is that often the declaration has an initializer , which must be preserved.
+ * The conditional contain the use of the declared variable, which usually cannot be merged with the declaration.
+ * e.g.  int yy = 10; while (yy< 100) { yy ++; ... }
+ * Another tricky thing is even though yy shows up in both condition and while-body, 
+ * the scope tree will only show while-stmt as the single scope node since the body scope is shadowed. 
+ * Note: the scope of the condition is considered to be the while-stmt.
+ * TODO in a rare case like   int yy = 10; while (yy) { } we can merge the declaration and condition together.
+ * */
+static SgScopeStatement * getAdjustedScope(SgNode* n)
+{
+  ROSE_ASSERT (n!= NULL); 
+  SgScopeStatement* result =  SageInterface::getScope (n);
+  if (isSgWhileStmt (result) || isSgIfStmt (result) || isSgDoWhileStmt (result) || isSgSwitchStatement(result) )
+    result = SageInterface::getEnclosingScope(result, false);
+
+  // TODO: can recursive while-stmt scope happen?
+  ROSE_ASSERT  (isSgWhileStmt (result) == NULL);
+  ROSE_ASSERT  (isSgIfStmt (result) == NULL);
+  return result; 
+}
 //! Generate a scope tree for a declaration: the tree is trimmed. 
 //  To trim the tree , the inner scopes using the variable are removed if there is a use scope which enclosing the inner scopes. 
 //  Return the tree, can not be a NULL pointer. At least we return a node for the scope of the declaration
@@ -18512,7 +18549,8 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)/
     SgVarRefExp *vRef = isSgVarRefExp(*i);
     if (vRef->get_symbol() == var_sym )
     {
-      if (SageInterface::getScope(vRef) == decl_scope) 
+      //if (SageInterface::getScope(vRef) == decl_scope) 
+      if (getAdjustedScope(vRef) == decl_scope) 
       {
         usedInSameScope = true; 
         break;
@@ -18555,7 +18593,8 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)/
   {
     std::stack <SgScopeStatement*> temp_scope_stack;
     SgVarRefExp *vRef = var_refs[i];
-    SgScopeStatement* var_scope = SageInterface::getScope (vRef);
+    //SgScopeStatement* var_scope = SageInterface::getScope (vRef);
+    SgScopeStatement* var_scope = getAdjustedScope(vRef);
     SgScopeStatement * current_scope = var_scope;
     ROSE_ASSERT (current_scope != decl_scope); // we should have excluded this situation already
     temp_scope_stack.push (current_scope) ;  // push the very first bottom scope
@@ -18783,6 +18822,13 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
   ROSE_ASSERT (sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
 
+  // when we adjust first branch node  (if-stmt with both true and false body )in the scope tree, we may backtrack to the decl's scope 
+  // We don't move anything in this case.
+  if ((scopes.size()==1) && (scopes[0] == decl->get_scope()))
+  {
+     return;
+  }
+
   for (size_t i = 0; i< scopes.size(); i++)
   {
     SgScopeStatement* target_scope = scopes[i]; 
@@ -18790,6 +18836,10 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
 
     SgScopeStatement* adjusted_scope = target_scope; 
     SgVariableDeclaration * decl_copy = SageInterface::deepCopy(decl);
+
+    //bool skip = false; // in some rare case, we skip a target scope, no move to that scope (like while-stmt)
+    //This won't work. The move must happen to all scopes or not at all, or dangling variable use without a declaration.
+    //We must skip scopes when generating scope tree, not wait until now.
 
     switch (target_scope->variantT())
     {
@@ -18844,6 +18894,19 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
           }
           break;
         }
+      /*
+       *We don't try to merge a variable decl into the conditional of a while statement
+       * The reason is that often the declaration has an initializer , which must be preserved.
+       * The conditional contain the use of the declared variable, which cannot be merged with the declaration.
+       * e.g.  int yy = 10; while (yy< 100) { yy ++; ... }
+       * Another tricky thing is even though yy shows up in both condition and while-body, 
+       * the scope tree will only show while-stmt as the single scope node since the body scope is shadowed. 
+       * Note: the scope of the condition is considered to be the while-stmt.
+       * */  
+      case V_SgWhileStmt: 
+          cerr<<"while statement @ line"<< target_scope->get_file_info()->get_line()<< " should not show up in scope tree"<<endl;
+          ROSE_ASSERT (false);
+          break;
       default:
         {
           cerr<<"Error. Unhandled target scope type:"<<target_scope->class_name()
@@ -19033,7 +19096,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
     } // end else
   } // end else multiple scopes
 
-  if (target_scopes.size()>=0)
+  if (target_scopes.size()>0)
   {
     moveVariableDeclaration (decl, target_scopes);
     scope_tree->deep_delete_children ();
