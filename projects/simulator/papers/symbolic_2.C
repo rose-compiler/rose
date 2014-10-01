@@ -126,7 +126,7 @@ public:
                     continue;
                 
                 bool complete;
-                std::set<rose_addr_t> succs = insn->get_successors(&complete);
+                std::set<rose_addr_t> succs = insn->getSuccessors(&complete);
                 if (complete && 2==succs.size()) {
                     if (nbranches>=take_branch.size()) {
                         std::ostringstream s; s<<policy.readRegister<32>("eip");

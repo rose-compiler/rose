@@ -410,7 +410,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
              * A more thorough analysis can be performed below in the get_block_successors() call. */          
-            if (insn->terminates_basic_block()) {
+            if (insn->terminatesBasicBlock()) {
                 trace <<"  block " <<addrToString(start_va) <<" naively terminated at " <<addrToString(va)
                       <<" by " <<unparseMnemonic(insn) <<"\n";
                 break;
@@ -894,14 +894,14 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     std::vector<SgAsmInstruction*> block;
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
         block.push_back(ii->second);
-    Disassembler::AddressSet successors = block.front()->get_successors(block, complete);
+    Disassembler::AddressSet successors = block.front()->getSuccessors(block, complete);
 
     /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
-     * make other assumptions, which is why this code is not in SgAsmx86Instruction::get_successors(). [RPM 2010-05-09] */
+     * make other assumptions, which is why this code is not in SgAsmx86Instruction::getSuccessors(). [RPM 2010-05-09] */
     rose_addr_t target, return_va;
     SgAsmInstruction *last_insn = block.back();
-    if (last_insn->is_function_call(block, &target, &return_va))
+    if (last_insn->isFunctionCallSlow(block, &target, &return_va))
         successors.insert(return_va);
 
     return successors;

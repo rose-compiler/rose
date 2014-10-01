@@ -281,7 +281,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (insn==NULL)                                                 // case: no instruction available
             goto done;
         retval->append(insn);
-        if (insn->is_unknown())                                         // case: "unknown" instruction
+        if (insn->isUnknown())                                          // case: "unknown" instruction
             goto done;
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
@@ -295,7 +295,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
             }
         }
 
-        if (userResult.terminate == BasicBlockCallback::TERMINATE_NOW)   // case: user wants us to terminate block here
+        if (userResult.terminate == BasicBlockCallback::TERMINATE_NOW)  // case: user wants us to terminate block here
             goto done;
         if (userResult.terminate == BasicBlockCallback::TERMINATE_PRIOR) {
             retval->pop();                                              // case: user wants to terminate at prior insn
@@ -521,11 +521,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
         // if our try failed then this one probably will too.  In fact, this one will be even slower because it must reprocess
         // the entire basic block each time it's called because it is stateless, whereas ours above only needed to process each
         // instruction as it was appended to the block.
-        std::set<rose_addr_t> successorVas = lastInsn->get_successors(bb->instructions(), &complete, &memoryMap_);
+        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, &memoryMap_);
 #else
         // Look only at the final instruction of the basic block.  This is probably quite fast compared to looking at a whole
         // basic block.
-        std::set<rose_addr_t> successorVas = lastInsn->get_successors(&complete);
+        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(&complete);
 #endif
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas)
@@ -563,7 +563,7 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
     const BasicBlock::Successors &successors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveVa, insn->get_successors(&complete)) {
+        BOOST_FOREACH (rose_addr_t naiveVa, insn->getSuccessors(&complete)) {
             if (insnVas.find(naiveVa)==insnVas.end()) {
                 bool found = false;
                 BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
@@ -642,7 +642,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     }
 
     // We don't have semantics, so delegate to the SgAsmInstruction subclass (which might try some other semantics).
-    retval = lastInsn->is_function_call(bb->instructions(), NULL, NULL);
+    retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
     return retval;
 }
@@ -691,8 +691,8 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
         return retval;
     }
 
-    // No semantics, so delegate to SgAsmInstruction subclasses (which might try some other semantics)
-    retval = lastInsn->is_function_return(bb->instructions());
+    // No semantics, so delegate to SgAsmInstruction subclasses
+    retval = lastInsn->isFunctionReturnFast(bb->instructions());
     bb->isFunctionReturn() = retval;
     return retval;
 }

@@ -335,7 +335,7 @@ Partitioner::update_analyses(BasicBlock *bb)
     std::vector<SgAsmInstruction*> inodes;
     for (InstructionVector::const_iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
         inodes.push_back(isSgAsmInstruction(*ii));
-    bb->cache.sucs = bb->insns.front()->node->get_successors(inodes, &(bb->cache.sucs_complete), &ro_map);
+    bb->cache.sucs = bb->insns.front()->node->getSuccessors(inodes, &(bb->cache.sucs_complete), &ro_map);
 
     /* Try to handle indirect jumps of the form "jmp ds:[BASE+REGISTER*WORDSIZE]".  The trick is to assume that some kind of
      * jump table exists beginning at address BASE, and that the table contains only addresses of valid code.  All we need to
@@ -394,7 +394,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * to the fall-through address is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
-    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va, NULL);
+    bool looks_like_call = bb->insns.front()->node->isFunctionCallSlow(inodes, &target_va, NULL);
     if (looks_like_call && target_va!=fallthrough_va) {
         bb->cache.is_function_call = true;
         bb->cache.call_target = target_va;
@@ -405,7 +405,7 @@ Partitioner::update_analyses(BasicBlock *bb)
 
     /* Function return analysis */
     bb->cache.function_return = !bb->cache.sucs_complete &&
-                                bb->insns.front()->node->is_function_return(inodes);
+                                bb->insns.front()->node->isFunctionReturnSlow(inodes);
 
     bb->validate_cache();
 }
@@ -1784,7 +1784,7 @@ Partitioner::mark_call_insns()
         std::vector<SgAsmInstruction*> iv;
         iv.push_back(ii->second->node);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->node->is_function_call(iv, &target_va, NULL) && target_va!=NO_TARGET &&
+        if (ii->second->node->isFunctionCallSlow(iv, &target_va, NULL) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
@@ -2404,7 +2404,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
         if (validate_targets) {
             /* Instruction must have a single successor */
             bool complete;
-            Disassembler::AddressSet succs = insn->get_successors(&complete);
+            Disassembler::AddressSet succs = insn->getSuccessors(&complete);
             if (!complete && 1!=succs.size())
                 continue;
             rose_addr_t target_va = *succs.begin();
@@ -4545,7 +4545,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
          * acting more like a "PUSH EIP" (we should probably just look at the CALL instruction itself rather than also looking
          * for the following POP, but since ROSE doesn't currently apply the relocation tables before disassembling, the CALL
          * with a zero offset is quite common. [RPM 2009-08-24] */
-        if (insn->terminates_basic_block()) {
+        if (insn->terminatesBasicBlock()) {
             Disassembler::InstructionMap::const_iterator found = insns.find(next_va);
             if (found!=insns.end()) {
                 SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
@@ -4553,7 +4553,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
                 rose_addr_t branch_target_va;
                 if (insn_x86 &&
                     (insn_x86->get_kind()==x86_call || insn_x86->get_kind()==x86_farcall) &&
-                    insn->get_branch_target(&branch_target_va) &&
+                    insn->getBranchTarget(&branch_target_va) &&
                     branch_target_va==next_va && insn2_x86->get_kind()==x86_pop) {
                     /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
                 } else if (bb_starts.find(next_va)==bb_starts.end()) {
@@ -4566,7 +4566,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
          * block (provided there's an instruction at that address). However, if there's only one successor and it's the
          * fall-through address then ignore it. */
         bool complete;
-        Disassembler::AddressSet successors = insn->get_successors(&complete);
+        Disassembler::AddressSet successors = insn->getSuccessors(&complete);
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = *si;
             if ((successor_va != next_va || successors.size()>1) && insns.find(successor_va)!=insns.end())

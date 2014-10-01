@@ -149,12 +149,12 @@ protected:
         BasicBlock *bblock;                     /**< Block to which this instruction belongs, if any. */
 
         /* These methods are forwarded to the underlying instruction node for convenience. */
-        Disassembler::AddressSet get_successors(bool *complete) const {
-            return node->get_successors(complete);
+        Disassembler::AddressSet getSuccessors(bool *complete) const {
+            return node->getSuccessors(complete);
         }
         rose_addr_t get_address() const { return node->get_address(); }
         size_t get_size() const { return node->get_size(); }
-        bool terminates_basic_block() const { return node->terminates_basic_block(); }
+        bool terminates_basic_block() const { return node->terminatesBasicBlock(); }
         SgUnsignedCharList get_raw_bytes() const { return node->get_raw_bytes(); } // FIXME: should return const ref?
     };
 

@@ -405,7 +405,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
         std::string dflt_label = next_label();
         o <<prefix() <<"switch " <<type <<" " <<llvm_term(t1) <<", label %" <<dflt_label <<" [";
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            if (getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->is_first_in_block())
+            if (getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->isFirstInBlock())
                 o <<" " <<type <<" " <<ii->first <<", label %" <<addr_label(ii->first);
         }
         o <<" ]\n";

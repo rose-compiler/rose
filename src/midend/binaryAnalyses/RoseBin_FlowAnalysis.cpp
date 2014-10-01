@@ -579,7 +579,7 @@ RoseBin_FlowAnalysis::process_jumps() {
         for (; it3!=dest_list.end();++it3) {
           SgAsmInstruction* dest = isSgAsmInstruction(*it3);
           if (dest) {
-            dest->append_sources(target);
+            dest->appendSources(target);
             //cerr << " appending source to " << dest->get_address() << "   target: " << target->get_address() << endl;
           }
         } // for

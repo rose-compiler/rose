@@ -504,7 +504,7 @@ public:
      *  buffer and enables instructions to span file segments that are mapped contiguously in virtual memory by the loader but
      *  which might not be contiguous in the file.  The instruction's successor virtual addresses are added to the optional
      *  successor set (note that successors of an individual instruction can also be obtained via
-     *  SgAsmInstruction::get_successors). If the instruction cannot be disassembled then an exception is thrown and the
+     *  SgAsmInstruction::getSuccessors). If the instruction cannot be disassembled then an exception is thrown and the
      *  successors set is not modified.
      *
      *  Thread safety:  The safety of this method depends on its implementation in the subclass. In any case, no other thread

@@ -225,7 +225,7 @@ namespace VirtualBinCFG {
                 if (insn->get_kind() != x86_call) return;
                 //cerr << "Found call xxx at " << hex << insn->get_address() << endl;
                 uint64_t tgtAddr;
-                if (!insn->get_branch_target(&tgtAddr)) return;
+                if (!insn->getBranchTarget(&tgtAddr)) return;
                 //cerr << "Found call at " << hex << insn->get_address() << " with known target " << hex << tgtAddr << endl;
                 SgAsmInstruction* tgt = info->getInstructionAtAddress(tgtAddr);
                 if (!tgt) return;

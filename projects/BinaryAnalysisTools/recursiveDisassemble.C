@@ -29,11 +29,6 @@
  | FindPostFunctionInsns  |                                                           |
  */
 
-// FIXME[Robb P. Matzke 2014-08-28]: SgAsmInstruction::is_function_call repeats most of the instruction semantics that occur in
-// the partitioner and is called when the partitioner semantics failed or were disabled.  Therefore, turning off semantics in
-// the partitioner actually makes the partitioner run slower than normal (because is_function_call is stateless), but if you
-// comment out the semantics inside is_function_call then the speed increase is huge.
-
 using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace rose::Diagnostics;
@@ -342,7 +337,7 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
         if (SgAsmInstruction *insn = partitioner.discoverInstruction(va)) {
             std::vector<SgAsmInstruction*> bb(1, insn);
             rose_addr_t target = NO_ADDRESS;
-            if (insn->is_function_call(bb, &target, NULL) &&
+            if (insn->isFunctionCallFast(bb, &target, NULL) &&
                 partitioner.memoryMap().at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 targets.insert(target);
             }

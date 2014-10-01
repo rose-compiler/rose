@@ -104,27 +104,29 @@ HEADER_BINARY_INSTRUCTION_START
                 SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-                void append_sources( SgAsmInstruction* instruction );
+                void appendSources( SgAsmInstruction* instruction );
 
                 // These are documented in SgAsmInstruction.C
-                virtual bool terminates_basic_block(); /*subclasses must redefine*/
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
-                bool is_first_in_block();
-                bool is_last_in_block();
-                virtual bool get_branch_target(rose_addr_t *target/*out*/);
-                virtual bool has_effect();
-                virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                        bool relax_stack_semantics=false);
+                virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&);
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&);
+                bool isFirstInBlock();
+                bool isLastInBlock();
+                virtual bool getBranchTarget(rose_addr_t *target/*out*/);
+                virtual bool hasEffect();
+                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+                                       bool relax_stack_semantics=false);
                 virtual std::vector<std::pair<size_t,size_t> >
-                    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                           bool relax_stack_semantics=false);
-                virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
-                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
-                                                             bool *complete,
-                                                             const MemoryMap *initial_memory=NULL);
+                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+                                         bool relax_stack_semantics=false);
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete); /*subclasses must redefine*/
+                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                            bool *complete,
+                                                            const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
-                virtual bool is_unknown() const;
+                virtual bool isUnknown() const;
 		virtual unsigned get_anyKind() const;
 HEADER_BINARY_INSTRUCTION_END
 
@@ -3614,22 +3616,25 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&,
-                                              rose_addr_t *target, rose_addr_t *ret) /*override*/;
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) /*override*/;
-                virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
-                virtual bool has_effect() /*override*/;
-                virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                        bool relax_stack_semantics=false) /*override*/;
+                virtual bool terminatesBasicBlock() /*override*/;
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) /*override*/;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) /*override*/;
+                virtual bool getBranchTarget(rose_addr_t *target/*out*/) /*override*/;
+                virtual bool hasEffect() /*override*/;
+                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+                                       bool relax_stack_semantics=false) /*override*/;
                 virtual std::vector<std::pair<size_t,size_t> >
-                    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                           bool relax_stack_semantics=false) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
-                                                             bool* complete,
-                                                             const MemoryMap *initial_memory=NULL) /*override*/;
-                virtual bool is_unknown() const;
+                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+                                         bool relax_stack_semantics=false) /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                            bool* complete,
+                                                            const MemoryMap *initial_memory=NULL) /*override*/;
+                virtual bool isUnknown() const;
 		virtual unsigned get_anyKind() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
@@ -3637,9 +3642,9 @@ HEADER_BINARY_X86_INSTRUCTION_END
 
 HEADER_BINARY_POWERPC_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
+                virtual bool terminatesBasicBlock() /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                virtual bool isUnknown() const /*override*/;
 		virtual unsigned get_anyKind() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
@@ -3647,9 +3652,9 @@ HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 HEADER_BINARY_ARM_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
+                virtual bool terminatesBasicBlock() /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                virtual bool isUnknown() const /*override*/;
 		virtual unsigned get_anyKind() const /*override*/;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
@@ -3657,29 +3662,35 @@ HEADER_BINARY_ARM_INSTRUCTION_END
 
 HEADER_BINARY_MIPS_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
-                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
-                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+                virtual bool terminatesBasicBlock() /*override*/;
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                virtual bool isUnknown() const /*override*/;
+                virtual bool getBranchTarget(rose_addr_t *target) /*override*/;
 		virtual unsigned get_anyKind() const /*override*/;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
 HEADER_BINARY_M68K_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
-                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
-                                                             bool* complete,
-                                                             const MemoryMap *initial_memory=NULL) /*override*/;
-                virtual bool is_unknown() const /*override*/;
+                virtual bool terminatesBasicBlock() /*override*/;
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual bool getBranchTarget(rose_addr_t *target) /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                            bool* complete,
+                                                            const MemoryMap *initial_memory=NULL) /*override*/;
+                virtual bool isUnknown() const /*override*/;
 		virtual unsigned get_anyKind() const /*override*/;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
@@ -4328,7 +4339,7 @@ SOURCE_BINARY_FUNCTION_DECLARATION_END
 SOURCE_BINARY_INSTRUCTION_START
 
 void
-SgAsmInstruction::append_sources( SgAsmInstruction* inst )
+SgAsmInstruction::appendSources( SgAsmInstruction* inst )
    {
      p_sources.push_back(inst);
    }
@@ -4363,7 +4374,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
         {
        // cout << "Found branch" << endl;
           uint64_t addr = 0;
-          bool knownTarget = get_branch_target(&addr);
+          bool knownTarget = getBranchTarget(&addr);
           if (knownTarget)
              {
             // cout << "Has known target " << std::hex << addr << endl;

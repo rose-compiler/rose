@@ -1095,7 +1095,7 @@ struct FindConstantsPolicy {
             }
             if (isAsmBranch(insnx)) {
                 uint64_t addr = 0;
-                bool knownTarget = insnx->get_branch_target(&addr);
+                bool knownTarget = insnx->getBranchTarget(&addr);
                 if (knownTarget) {
                     succs.push_back(addr);
                 }

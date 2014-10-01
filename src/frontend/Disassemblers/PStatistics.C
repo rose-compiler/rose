@@ -795,7 +795,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             }
 
             /* The disassembler can also return an "unknown" instruction when failing, depending on how it is invoked. */
-            if (insn->node->is_unknown()) {
+            if (insn->node->isUnknown()) {
                 ++nfails;
                 pending.erase(Extent(va, insn->get_size()));
                 continue;
@@ -815,7 +815,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
              * instruction even if the more rigorous method determined that one side or the other is always taken.  But this is
              * probably what we want here anyway for determining whether something looks like code. */
             bool complete;
-            Disassembler::AddressSet succs = insn->get_successors(&complete);
+            Disassembler::AddressSet succs = insn->getSuccessors(&complete);
             if (!complete)
                 ++nincomplete;
 
