@@ -47,7 +47,8 @@ struct Settings {
     EditDistanceMetric metric;
     std::string isaName;
     size_t nThreads;
-    Settings(): metric(METRIC_INSN), nThreads(sysconf(_SC_NPROCESSORS_ONLN)) {}
+    bool listPairings;
+    Settings(): metric(METRIC_INSN), nThreads(sysconf(_SC_NPROCESSORS_ONLN)), listPairings(true) {}
 };
 
 // Parse command-line and apply to settings.
@@ -101,6 +102,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                      "this matrix is the dominant cost for this program, and therefore multiple threads are used. The default "
                      "is to use as many threads as there are processor cores on this system (i.e., " +
                      StringUtility::numberToString(settings.nThreads) + ")."));
+
+    tool.insert(Switch("list")
+                .intrinsicValue(true, settings.listPairings)
+                .doc("Produce a listing that indicates how functions in the first specimen map into functions into the "
+                     "second specimen.  The default is to " + std::string(settings.listPairings?"":"not ") + " show "
+                     "this information.  The @s{no-list} switch is the inverse.  Regardless of whether the pairings are "
+                     "listed, the output will contain summary information."));
+    tool.insert(Switch("no-list")
+                .key("list")
+                .intrinsicValue(false, settings.listPairings)
+                .hidden(true));
 
     Parser parser;
     parser
@@ -356,8 +368,10 @@ initializeMatrix(dlib::matrix<double> &distance, Metric &metric, size_t nThreads
         workers.push_back(new MatrixInitializer<Metric>(workList, distance, functions1, functions2, metric));
         workers.back()->start();
     }
-    for (size_t i=0; i<workers.size(); ++i)
+    for (size_t i=0; i<workers.size(); ++i) {
         workers[i]->wait();
+        delete workers[i];
+    }
 }
 
 template<typename T>
@@ -374,7 +388,7 @@ minmax(const dlib::matrix<T> &matrix) {
     return std::make_pair(minValue, maxValue);
 }
 
-// Convert floating point matrix to integer and flip all the values so that dlib::max_cost_assignming is actually
+// Convert floating point matrix to integer and flip all the values so that dlib::max_cost_assignment is actually
 // computing a minimum instead of a maximum.
 template<typename T>
 static void
@@ -450,7 +464,7 @@ main(int argc, char *argv[]) {
     // Initialization
     rose::Diagnostics::initialize();
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insert(mlog);
+    Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line
     Settings settings;
@@ -509,8 +523,7 @@ main(int argc, char *argv[]) {
     info <<"; completed in " <<matrixInitTime <<" seconds\n";
 
     // Use the Kuhn-Munkres algorithm to find a minimum weight perfect matching for the bipartite graph (represented by the
-    // matrix) in O(n^3) time.  Also called the "Hungarian method".  The resulting matrix will have one zero per row and one
-    // zero per column to represent the perfect-match edges in the bipartite graph.
+    // matrix) in O(n^3) time.  Also called the "Hungarian method".
     info <<"Running Kuhn-Munkres";
     Sawyer::Stopwatch munkresTime;
     dlib::matrix<unsigned long> cost(distance.nr(), distance.nc());
@@ -555,7 +568,8 @@ main(int argc, char *argv[]) {
                            "");
         }
     }
-    results.print(std::cout);
+    if (settings.listPairings)
+        results.print(std::cout);
     if (nClashes>0) {
         mlog[WARN] <<nClashes <<" of " <<StringUtility::plural(assignments.size(), "parings")
                    <<" (" <<(100.0*nClashes/assignments.size()) <<" percent) "
