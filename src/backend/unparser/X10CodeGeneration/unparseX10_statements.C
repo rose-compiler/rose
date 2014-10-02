@@ -278,7 +278,7 @@ cout.flush();
 
           default:
              {
-               printf("Unparse_X10::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
+//               printf("Unparse_X10::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
                                 if (stmt->sage_class_name() == "SgFinishStmt") {
 //                                      cout << "SgFinishStmt found" << endl;
                                         SgFinishStmt *finish = (SgFinishStmt *) stmt;
