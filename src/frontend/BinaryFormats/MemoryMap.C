@@ -1,3 +1,5 @@
+#define BOOST_FILESYSTEM_VERSION 3
+
 #include "sage3basic.h"
 #include "MemoryMap.h"
 #include "rose_getline.h"
