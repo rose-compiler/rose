@@ -856,7 +856,17 @@ public:
     void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
     /** @} */
 
-    /** Set all registers to distinct undefined values. */
+    /** Removes stored values from the register state.
+     *
+     *  Depending on the register state implementation, this could either store new, distinct undefined values in each
+     *  register, or it could simply erase all information about stored values leaving the register state truly empty. For
+     *  instance, @ref RegisterStateX86, which stores register values using fixed length arrays assigns new undefined values to
+     *  each element of those arrays, whereas RegisterStateGeneric, which uses variable length arrays to store information
+     *  about a dynamically changing set of registers, clears its arrays to zero length.
+     *
+     *  Register states can also be initialized by clearing them or by explicitly writing new values into each desired
+     *  register (or both). See @ref RegisterStateGeneric::initialize_nonoverlapping for one way to initialize that register
+     *  state. */
     virtual void clear() = 0;
 
     /** Set all registers to the zero. */
