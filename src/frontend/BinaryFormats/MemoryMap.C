@@ -114,7 +114,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
 size_t
 MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, bool writable, std::string segmentName) {
     if (segmentName.empty())
-        segmentName = boost::filesystem::path(fileName).filename().native();
+        segmentName = boost::filesystem::path(fileName).filename().string();
     Segment segment = Segment::fileInstance(fileName, READABLE | (writable?WRITABLE:0), segmentName);
     AddressInterval fileInterval = AddressInterval::baseSize(startVa, segment.buffer()->size());
     insert(fileInterval, segment);
@@ -235,7 +235,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     std::string fileName = s;
     if (fileName.size()!=strlen(fileName.c_str()))
         throw insertFileError(locatorString, "invalid file name");
-    std::string segmentName = boost::filesystem::path(fileName).filename().native();
+    std::string segmentName = boost::filesystem::path(fileName).filename().string();
 
     //-------------------------------- 
     // Open the file and read the data
