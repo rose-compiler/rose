@@ -145,7 +145,7 @@ AddressIntervalParser::Ptr addressIntervalParser();
 /** Trigger based on number of times called. */
 class Trigger {
 public:
-    typedef Sawyer::Container::Interval<size_t> SizeInterval;
+    typedef AddressInterval SizeInterval;               // okay to use 64-bit integers for the counters
     struct Settings {
         SizeInterval when;                              // when to trigger based on nCalls_
         Settings(): when(0) {}
