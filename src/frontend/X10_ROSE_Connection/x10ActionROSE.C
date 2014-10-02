@@ -2743,7 +2743,29 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForeachStatement(JNIEnv *en
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForeachStatementEnd(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
-        cactionForeachStatementEnd(env, clz, x10Token);
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside of cactionForEachStatementEnd() \n");
+
+    SgStatement *action = astX10ComponentStack.popStatement();       // Get the action statement
+
+    SgExpression *collection = astX10ComponentStack.popExpression(); // Get the collection expr
+
+    SgVariableDeclaration *variable_declaration = isSgVariableDeclaration(astX10ComponentStack.popStatement()); // Get the declaration statement
+
+    // Build the final Foreach Statement
+    SgJavaForEachStatement *foreach_statement = astX10ScopeStack.popJavaForEachStatement();
+   
+    // DQ (9/3/2011): Change API as suggested by Philippe.
+    foreach_statement -> set_element(variable_declaration);
+    variable_declaration -> set_parent(foreach_statement);
+   
+    foreach_statement -> set_collection(collection);
+    collection -> set_parent(foreach_statement);
+    foreach_statement -> set_loop_body(action);
+    action -> set_parent(foreach_statement);
+
+    // Pushing 'foreach' on the statement stack
+    astX10ComponentStack.push(foreach_statement);
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForStatement(JNIEnv *env, jclass clz, jobject x10Token) 

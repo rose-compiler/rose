@@ -766,9 +766,9 @@ void Unparse_X10::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
     curprint("for (");
 
     ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
-    unparseVarDeclStmt(foreach_stmt -> get_element(), info);
+    curprint (foreach_stmt->get_element()-> get_variables()[0]->get_name().str());
 
-    curprint(" : ");
+    curprint(" in ");
     unparseExpression(foreach_stmt -> get_collection(), info);
     curprint(")");
 
