@@ -1,3 +1,5 @@
+#define BOOST_FILESYSTEM_VERSION 3
+
 #include "rose.h"
 #include "MemoryMap.h"
 #include "SRecord.h"
@@ -107,7 +109,7 @@ main(int argc, char *argv[]) {
     // Create binary files
     if (!settings.binaryPrefix.empty()) {
         if (boost::contains(settings.binaryPrefix, "%")) {
-            std::string inputFileBaseName = boost::filesystem::path(inputFileName).filename().native();
+            std::string inputFileBaseName = boost::filesystem::path(inputFileName).filename().string();
             boost::replace_first(settings.binaryPrefix, "%", inputFileBaseName);
         }
         mlog[WHERE] <<"dumping memory to binary files\n";

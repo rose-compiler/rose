@@ -265,7 +265,7 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         // Write to the "dot" command, which will add layout information to our graph.
         // FIXME[Robb P. Matzke 2014-09-10]: how to do this on Windows?
         fileName = uniquePath(".dot");
-        std::string dotCmd = "dot /proc/self/fd/0 >" + fileName.native();
+        std::string dotCmd = "dot /proc/self/fd/0 >" + fileName.string();
         FILE *dot = popen(dotCmd.c_str(), "w");
         if (NULL==dot) {
             mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
@@ -352,7 +352,7 @@ functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &fu
         if (srcName.empty())
             return boost::filesystem::path();
         imageName = uniquePath(".jpg");
-        std::string dotCmd = "dot -Tjpg -o" + imageName.native() + " " + srcName.native();
+        std::string dotCmd = "dot -Tjpg -o" + imageName.string() + " " + srcName.native();
         if (0!=system(dotCmd.c_str())) {
             mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
             return boost::filesystem::path();
@@ -387,7 +387,7 @@ functionCfgVertexCoords(const P2::Partitioner &partitioner, const P2::Function::
         boost::filesystem::path sourcePath = functionCfgGraphvizFile(partitioner, function);
         if (sourcePath.empty())
             throw std::runtime_error("CFG not available");
-        std::string dotCmd = "dot -Timap_np -o/proc/self/fd/1 " + sourcePath.native();
+        std::string dotCmd = "dot -Timap_np -o/proc/self/fd/1 " + sourcePath.string();
         my.coordFile = popen(dotCmd.c_str(), "r");
         size_t linenum = 0;
         while (rose_getline(&my.line, &my.linesz, my.coordFile)>0) {
@@ -870,7 +870,7 @@ public:
             wImage_->hide();
             return;
         }
-        wImage_->setImageLink(Wt::WLink(imagePath.native()));
+        wImage_->setImageLink(Wt::WLink(imagePath.string()));
 
         // Add sensitive areas to the image.
         try {
