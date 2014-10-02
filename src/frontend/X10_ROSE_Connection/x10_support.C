@@ -178,6 +178,9 @@ cout << "class_definition in lookupMemberFunctionDeclarationInClassScope=" << cl
         if (method_declaration && method_declaration -> get_name().getString().compare(function_name) == 0) {
             vector<SgInitializedName *> args = method_declaration -> get_args();
             if (args.size() == num_arguments) {
+#if 1
+                break;
+#else
                 list<SgType *>::const_iterator j = types.begin();
                 int k;
                 for (k = 0; k < num_arguments; k++, j++) {
@@ -191,6 +194,7 @@ cout << "class_definition in lookupMemberFunctionDeclarationInClassScope=" << cl
                 if (k == num_arguments) {// all the arguments match?
                     break;
                 }
+#endif
             }
         }
     }
