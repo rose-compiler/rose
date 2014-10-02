@@ -753,7 +753,12 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
 
         if (func_call -> attributeExists("prefix")) {
                 AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
-                curprint(attribute -> expression);
+                string expr = attribute->expression;
+                if (expr.compare(0, 2, "::") == 0) {
+                    expr = expr.substr(2);
+                }
+                replaceString(expr, "::", ".");
+                curprint(expr);
                 curprint(".");
         }
 
