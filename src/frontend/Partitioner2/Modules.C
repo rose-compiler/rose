@@ -208,7 +208,103 @@ CfgGraphVizDumper::operator()(bool chain, const AttachedBasicBlock &args) {
     }
     return chain;
 }
-    
+
+// class method
+Sawyer::CommandLine::SwitchGroup
+HexDumper::switches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup switches;
+    switches.insert(Switch("bblock")
+                    .argument("interval", addressIntervalParser(settings.where))
+                    .doc("Address or address interval for basic blocks that trigger this debugging aid.  This debugging "
+                         "aid is triggered (subject to other constraints) Whenever a basic block whose starting address "
+                         "is equal to the specified address or falls within the specified interval is attached to the "
+                         "CFG."));
+    switches.insert(Trigger::switches(settings.when));
+    switches.insert(Switch("select")
+                    .argument("interval", addressIntervalParser(settings.what))
+                    .doc("Address or address interval specifying which bytes should be listed."));
+
+    switches.insert(Switch("accent")
+                    .intrinsicValue(true, settings.accentSpecialValues)
+                    .doc("Causes zero bytes to be output as a single dot \".\" and 0xff bytes to be output as the "
+                         "string \"##\".  This emphasizes these two important values in the output.  The @s{no-accent} "
+                         "switch causes them to output as \"00\" and \"ff\". The default is to " +
+                         std::string(settings.accentSpecialValues?"":"not ") + "accent them."));
+    switches.insert(Switch("no-accent")
+                    .key("accent")
+                    .intrinsicValue(false, settings.accentSpecialValues)
+                    .hidden(true));
+    return switches;
+}
+
+// class method
+std::string
+HexDumper::docString() {
+    Settings settings;
+    return ("Lists virtual memory contents in standard hexdump format when a basic block or placeholder whose address is "
+            "in the specified @s{bblock} address interval is attached to the CFG." +
+            Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
+}
+
+// class method
+HexDumper::Ptr
+HexDumper::instance(const std::string &config) {
+    std::vector<std::string> args;
+    BOOST_FOREACH (const std::string &s, StringUtility::split(':', config))
+        args.push_back(":"+s);
+    return instance(args);
+}
+
+// class method
+HexDumper::Ptr
+HexDumper::instance(const std::vector<std::string> &args) {
+    Settings settings;
+    Sawyer::CommandLine::Parser parser;
+    parser.with(switches(settings)).longPrefix(":").longPrefix(":--").programName("HexDumper");
+    Sawyer::CommandLine::ParserResult cmdline = parser.parse(args).apply();
+    if (!cmdline.unreachedArgs().empty())
+        throw std::runtime_error("HexDumper: invalid config: \""+StringUtility::join("", args)+"\"");
+    return instance(settings);
+}
+
+bool
+HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
+    using namespace StringUtility;
+    if (chain && settings_.where.isContaining(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
+        Stream debug(mlog[DEBUG]);
+        debug.enable();
+        debug <<"HexDumper triggered: #" <<(trigger_.nCalls()-1) <<" for "
+              <<(args.bblock ? "bblock=" : "placeholder=") <<addrToString(args.startVa) <<"\n";
+        HexdumpFormat fmt;
+        if (settings_.accentSpecialValues) {
+            fmt.numeric_fmt_special[0x00] = " .";       // make zeros less obtrusive
+            fmt.numeric_fmt_special[0xff] = "##";       // make 0xff more obtrusive
+        }
+        fmt.prefix = "    ";                            // prefix before each line
+
+        rose_addr_t va = settings_.what.least();
+        while (AddressInterval avail = args.partitioner->memoryMap().atOrAfter(va).singleSegment().available()) {
+            const MemoryMap::Node &node = *args.partitioner->memoryMap().find(avail.least());
+            const MemoryMap::Segment &segment = node.value();
+            const AddressInterval segmentInterval = node.key();
+            size_t bufferOffset = avail.least() - segmentInterval.least();
+            debug <<"  Segment \"" <<cEscape(segment.name()) <<"\" + " <<toHex(bufferOffset) <<"\n";
+            ASSERT_require(bufferOffset<segment.buffer()->size());
+            ASSERT_require(avail.size() < segment.buffer()->available(bufferOffset));
+            const unsigned char *data = (const unsigned char*)segment.buffer()->data() + bufferOffset;
+            ASSERT_not_null(data);
+            debug <<fmt.prefix;
+            SgAsmExecutableFileFormat::hexdump(debug, avail.least(), data, avail.size(), fmt);
+            debug <<"\n";
+            if (avail.greatest()==settings_.what.greatest())
+                break;                                  // avoid possible overflow
+            va = avail.greatest() + 1;
+        }
+    }
+    return chain;
+}
+
 AddressIntervalSet
 deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
     AddressIntervalSet changes;

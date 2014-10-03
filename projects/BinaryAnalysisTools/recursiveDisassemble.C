@@ -249,6 +249,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "\n\n"
                     "The following debugging aids are available:"
                     "@named{cfg-dot}{" + P2::Modules::CfgGraphVizDumper::docString() + "}"
+                    "@named{hexdump}{" + P2::Modules::HexDumper::docString() + "}"
                     "@named{insn-list}{" + P2::Modules::InstructionLister::docString() + "}"
                     ));
     
@@ -433,11 +434,14 @@ int main(int argc, char *argv[]) {
 
     // Insert debugging aids
     BOOST_FOREACH (const std::string &s, settings.triggers) {
-        if (boost::starts_with(s, "insn-list:")) {
-            P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
-            partitioner.cfgAdjustmentCallbacks().append(aid);
-        } else if (boost::starts_with(s, "cfg-dot:")) {
+        if (boost::starts_with(s, "cfg-dot:")) {
             P2::Modules::CfgGraphVizDumper::Ptr aid = P2::Modules::CfgGraphVizDumper::instance(s.substr(8));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "hexdump:")) {
+            P2::Modules::HexDumper::Ptr aid = P2::Modules::HexDumper::instance(s.substr(8));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "insn-list:")) {
+            P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
             partitioner.cfgAdjustmentCallbacks().append(aid);
         } else {
             throw std::runtime_error("invalid debugging aid for \"trigger\" switch: " + s);

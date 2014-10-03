@@ -227,6 +227,33 @@ public:
     virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
 };
 
+/** Produce a hexdump at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class HexDumper: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) we should monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers the output
+        AddressInterval what;                           // which bytes should be in the output
+        bool accentSpecialValues;                       // use "." and "##" for 0 and 0xff?
+        Settings(): accentSpecialValues(true) {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    HexDumper(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new HexDumper(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
+};
+
 /** Remove execute permissions for zeros.
  *
  *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
