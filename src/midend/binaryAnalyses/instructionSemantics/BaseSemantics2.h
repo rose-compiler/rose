@@ -1468,7 +1468,8 @@ protected:
     // deep-copy cell list so modifying this new one doesn't alter the existing one
     MemoryCell(const MemoryCell &other) {
         address = other.address->copy();
-        value = other.address->copy();
+        value = other.value->copy();
+        latest_writer = other.latest_writer;
     }
 
 public:
