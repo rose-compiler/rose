@@ -429,8 +429,9 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
         ASSERT_not_null(interp->get_map());
         map = *interp->get_map();
         if (!disassembler) {
-            disassembler = engine.allocateDisassembler(interp);
+            disassembler = Disassembler::lookup(interp);
             ASSERT_not_null(disassembler);
+            disassembler = disassembler->clone();
         }
         info <<"; completed in " <<parseTime <<" seconds\n";
     } else {

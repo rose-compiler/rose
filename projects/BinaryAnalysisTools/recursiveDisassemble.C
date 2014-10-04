@@ -381,19 +381,9 @@ int main(int argc, char *argv[]) {
 
     // Load the specimen as raw data or an ELF or PE container.
     MemoryMap map = engine.loadSpecimen(specimenNames);
-    SgAsmInterpretation *interp = SageInterface::getProject() ?
-                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
-                                  NULL;
-
-    // Obtain a suitable disassembler if none was specified on the command-line
-    if (!disassembler) {
-        if (!interp)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        disassembler = Disassembler::lookup(interp);
-        if (!disassembler)
-            throw std::runtime_error("unable to find an appropriate disassembler");
-        disassembler = disassembler->clone();
-    }
+    SgAsmInterpretation *interp = engine.interpretation();
+    if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
+        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
     disassembler->set_progress_reporting(-1.0);         // turn it off
 
 #if 0 // [Robb P. Matzke 2014-08-29]

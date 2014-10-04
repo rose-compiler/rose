@@ -104,9 +104,7 @@ int main(int argc, char *argv[])
     // Load the speciem as raw data or an ELF or PE container
     P2::Engine engine;
     MemoryMap map = engine.loadSpecimen(specimenNames);
-    SgAsmInterpretation *interp = SageInterface::getProject() ?
-                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
-                                  NULL;
+    SgAsmInterpretation *interp = engine.interpretation();
     
     // Obtain a suitable disassembler if none was specified on the command-line
     if (!disassembler) {

@@ -1372,8 +1372,7 @@ int main(int argc, char *argv[]) {
 
     // Parse the command-line
     Settings settings;
-    Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
         disassembler = Disassembler::lookup(settings.isaName);
@@ -1384,19 +1383,11 @@ int main(int argc, char *argv[]) {
     P2::Engine engine;
     MemoryMap map = engine.loadSpecimen(specimenNames);
     P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
-    SgAsmInterpretation *interp = SageInterface::getProject() ?
-                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
-                                  NULL;
+    SgAsmInterpretation *interp = engine.interpretation();
 
     // Obtain a suitable disassembler if none was specified on the command-line
-    if (!disassembler) {
-        if (!interp)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        disassembler = Disassembler::lookup(interp);
-        if (!disassembler)
-            throw std::runtime_error("unable to find an appropriate disassembler");
-        disassembler = disassembler->clone();
-    }
+    if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
+        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
     disassembler->set_progress_reporting(-1.0);         // turn it off
 
 
