@@ -10,6 +10,7 @@
 #include <PartialSymbolicSemantics2.h>
 #include <Partitioner2/Engine.h>
 #include <SymbolicSemantics2.h>
+#include <TestSemantics2.h>
 #include <TraceSemantics2.h>
 #include <YicesSolver.h>
 
@@ -25,10 +26,12 @@
 //      template.
 //
 //   2. Augment the makeProtoVal, makeRegisterState, makeMemoryState, and makeRiscOperators functions so they construct
-//      instances of your classes.  There's examples for when the namespace defines these classes and when it doesn't. Keep the
-//      lists sorted alphabetically.
+//      instances of your classes.  Keep the lists sorted alphabetically.
 //
-//   3. Optionally submit your changes to the ROSE compiler team so you don't need to keep patching this file.
+//   3. Optionally augment testSemanticsApi to test that your semantics layers behave correctly as far as they can be tested
+//      to satisfy the requirements of the samentics framework.
+//
+//   4. Optionally submit your changes to the ROSE compiler team so you don't need to keep patching this file.
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -227,7 +230,7 @@ makeSolver(const Settings &settings) {
 
 static BaseSemantics::SValuePtr
 makeProtoVal(const Settings &settings) {
-    std::string className = settings.valueClassName.empty() ? settings.opsClassName : settings.valueClassName;
+    const std::string &className = settings.valueClassName;
     if (className == "list") {
         std::cout <<"value class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
@@ -260,18 +263,18 @@ makeProtoVal(const Settings &settings) {
 
 static BaseSemantics::RegisterStatePtr
 makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict) {
-    std::string className = settings.rstateClassName.empty() ? settings.opsClassName : settings.rstateClassName;
+    const std::string &className = settings.rstateClassName;
     if (className == "list") {
         std::cout <<"register state class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RegisterState\n"
 #endif
                   <<"  generic          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics default\n"
+                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
+                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics default\n"
+                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  x86              rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
         exit(0);
 #ifdef EXAMPLE_EXTENSIONS
@@ -281,18 +284,15 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
     } else if (className == "generic") {
         return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "interval") {
-        BaseSemantics::RiscOperatorsPtr ops = IntervalSemantics::RiscOperators::instance(regdict);
-        return ops->get_state()->get_register_state();
+        return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "null") {
         return NullSemantics::RegisterState::instance(protoval, regdict);
     } else if (className == "partial") {
-        BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
-        return ops->get_state()->get_register_state();
+        return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "partitioner2") {
         return P2::Semantics::RegisterState::instance(protoval, regdict);
     } else if (className == "symbolic") {
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
-        return ops->get_state()->get_register_state();
+        return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "x86") {
         return BaseSemantics::RegisterStateX86::instance(protoval, regdict);
     } else {
@@ -303,7 +303,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 static BaseSemantics::MemoryStatePtr
 makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protoval, const BaseSemantics::SValuePtr &protoaddr,
                 const RegisterDictionary *regdict) {
-    std::string className = settings.mstateClassName.empty() ? settings.opsClassName : settings.mstateClassName;
+    const std::string &className = settings.mstateClassName;
     if (className == "list") {
         std::cout <<"memory state class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
@@ -337,7 +337,8 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
 
 static BaseSemantics::RiscOperatorsPtr
 makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
-    if (settings.opsClassName == "list") {
+    const std::string &className = settings.opsClassName;
+    if (className == "list") {
         std::cout <<"semantic class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RiscOperators\n"
@@ -348,8 +349,10 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
                   <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
                   <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
         exit(0);
+    } else if (className.empty()) {
+        throw std::runtime_error("--semantics switch is required");
     }
-
+    
     SMTSolver *solver = makeSolver(settings);
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
@@ -358,21 +361,120 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
 
     if (0) {
 #ifdef EXAMPLE_EXTENSIONS
-    } else if (settings.opsClassName == "example") {
+    } else if (className == "example") {
         return com::example::semantics::RiscOperators::instance(state, solver);
 #endif
-    } else if (settings.opsClassName == "interval") {
+    } else if (className == "interval") {
         return IntervalSemantics::RiscOperators::instance(state, solver);
-    } else if (settings.opsClassName == "null") {
+    } else if (className == "null") {
         return NullSemantics::RiscOperators::instance(state, solver);
-    } else if (settings.opsClassName == "partial") {
+    } else if (className == "partial") {
         return PartialSymbolicSemantics::RiscOperators::instance(state, solver);
-    } else if (settings.opsClassName == "partitioner2") {
+    } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
-    } else if (settings.opsClassName == "symbolic") {
+    } else if (className == "symbolic") {
         return SymbolicSemantics::RiscOperators::instance(state, solver);
     } else {
-        throw std::runtime_error("unrecognized semantic class name \"" + settings.opsClassName + "\"; see --semantics=list\n");
+        throw std::runtime_error("unrecognized semantic class name \"" + className + "\"; see --semantics=list\n");
+    }
+}
+
+static void
+adjustSettings(Settings &settings) {
+    if (settings.opsClassName=="list") {
+    } else if (settings.valueClassName=="list" || settings.rstateClassName=="list" || settings.mstateClassName=="list") {
+        if (settings.opsClassName.empty())
+            settings.opsClassName = "none";
+    }
+    if (settings.valueClassName.empty())
+        settings.valueClassName = settings.opsClassName;
+    if (settings.rstateClassName.empty())
+        settings.rstateClassName = settings.opsClassName;
+    if (settings.mstateClassName.empty())
+        settings.mstateClassName = settings.opsClassName;
+}
+
+// Test the API for various combinations of classes.  Sorry this is so long and doesn't handle every case -- that's the pitfal
+// of trying to mix runtime configuration and C++ templates.
+static void
+testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
+    std::cout <<"=====================================================================================\n"
+              <<"=== Performing basic API tests                                                    ===\n"
+              <<"=====================================================================================\n";
+    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, regdict);
+    if (settings.opsClassName == settings.valueClassName &&
+        settings.opsClassName == settings.rstateClassName &&
+        settings.opsClassName == settings.mstateClassName) {
+        if (0) {
+#ifdef EXAMPLE_EXTENSIONS
+        } else if (settings.opsClassName == "example") {
+            TestSemantics<com::example::semantics::SValuePtr, com::example::semantics::RegisterStatePtr,
+                          com::example::semantics::MemoryStatePtr, com::example::semantics::StatePtr,
+                          com::example::semantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+#endif
+        } else if (settings.opsClassName == "interval") {
+            TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          IntervalSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          IntervalSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName == "null") {
+            TestSemantics<
+                NullSemantics::SValuePtr, NullSemantics::RegisterStatePtr, NullSemantics::MemoryStatePtr,
+                BaseSemantics::StatePtr, NullSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName == "partial") {
+            TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          BaseSemantics::MemoryCellListPtr, BaseSemantics::StatePtr,
+                          PartialSymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName == "partitioner2") {
+            TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStateGenericPtr,
+                          P2::Semantics::MemoryStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName == "symbolic") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else {
+            std::cout <<"tests skipped.\n\n";
+            mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
+        }
+    } else {
+        // There are many more combinations where the operators class need not be the same as the value or state classes. We
+        // test only some of the more common ones.
+        if (settings.opsClassName=="partial" && settings.valueClassName=="partial" &&
+            settings.rstateClassName=="x86" && settings.mstateClassName=="partial") {
+            TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
+                          BaseSemantics::MemoryCellListPtr, BaseSemantics::StatePtr,
+                          PartialSymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="partitioner2") {
+            TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
+                          P2::Semantics::MemoryStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+            settings.rstateClassName=="x86" && settings.mstateClassName=="symbolic") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
+                          SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else {
+            std::cout <<"tests skipped.\n\n";
+            mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
+            if (settings.valueClassName != settings.opsClassName)
+                mlog[WARN] <<" value=" <<settings.valueClassName;
+            if (settings.rstateClassName != settings.opsClassName)
+                mlog[WARN] <<" rstate=" <<settings.rstateClassName;
+            if (settings.mstateClassName != settings.opsClassName)
+                mlog[WARN] <<" mstate=" <<settings.mstateClassName;
+            mlog[WARN] <<" cannot be tested\n";
+        }
     }
 }
 
@@ -432,6 +534,7 @@ main(int argc, char *argv[]) {
     // Parse the command-line to load, disassemble, and partition the specimen
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
+    adjustSettings(settings);
     Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
         disassembler = Disassembler::lookup(settings.isaName);
@@ -439,6 +542,7 @@ main(int argc, char *argv[]) {
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
     P2::Partitioner partitioner = P2::Engine().loadAndPartition(specimenNames, disassembler);
+    testSemanticsApi(settings, partitioner);
     
     // Run sementics on each basic block
     BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks())
