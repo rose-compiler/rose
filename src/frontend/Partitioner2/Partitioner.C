@@ -712,6 +712,19 @@ Partitioner::instructionsOverlapping(const AddressInterval &interval) const {
 }
 
 std::vector<BasicBlock::Ptr>
+Partitioner::basicBlocks() const {
+    std::vector<BasicBlock::Ptr> bblocks;
+    BOOST_FOREACH (const ControlFlowGraph::VertexValue &vertex, cfg_.vertexValues()) {
+        if (vertex.type() == V_BASIC_BLOCK) {
+            if (BasicBlock::Ptr bblock = vertex.bblock())
+                bblocks.push_back(bblock);
+        }
+    }
+    std::sort(bblocks.begin(), bblocks.end(), sortBasicBlocksByAddress);
+    return bblocks;
+}
+
+std::vector<BasicBlock::Ptr>
 Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
     return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).basicBlocks();
 }

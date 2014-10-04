@@ -503,6 +503,13 @@ public:
      *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead. */
     size_t nBasicBlocks() const;
 
+    /** Returns all basic blocks attached to the CFG.
+     *
+     *  The returned list contains distinct basic blocks sorted by their starting address.
+     *
+     * @sa basicBlocksOverlapping, @ref basicBlocksSpanning, @ref basicBlocksContainedIn */
+    std::vector<BasicBlock::Ptr> basicBlocks() const;
+
     /** Determines whether a discovered basic block exists in the CFG/AUM.
      *
      *  If the CFG/AUM contains a basic block that starts at the specified address then a pointer to that basic block is

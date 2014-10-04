@@ -1,6 +1,7 @@
 #ifndef ROSE_Partitioner2_Engine_H
 #define ROSE_Partitioner2_Engine_H
 
+#include <Disassembler.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -25,7 +26,11 @@ namespace Partitioner2 {
  *  Although this class has quite a few methods, they are intended to be mostly simple things that are easy to replace in
  *  subclasses. */
 class Engine {
+    SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
+    Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
 public:
+    Engine(): interp_(NULL), disassembler_() {}
+
     virtual ~Engine() {}
 
 
@@ -45,7 +50,8 @@ public:
      *  Each resource string beginning with "map:" is then processed in the order specified and the memory map from the
      *  previous step (or an empty map if the previous step didn't happen) is adjusted accordingly.
      *
-     *  Returns the final memory map.  The SgAsmInterpretation can be found by traversing the SgProject if necessary.
+     *  Returns the final memory map.  If ROSE's @c frontend was called then the memory map will be for one particular
+     *  interpretation and this interpretation can be obtained by calling @ref interpretation.
      *
      * @{ */
     MemoryMap loadSpecimen(const std::string &fileName) { return loadSpecimen(std::vector<std::string>(1, fileName)); }
@@ -59,11 +65,34 @@ public:
      *  result is that the interpretation's memory map is non-null. */
     virtual void loadSpecimen(SgAsmInterpretation*);
 
+    /** Interpretation for memory map.
+     *
+     *  Returns the interpretation, if any, that was used to create the memory map returned by @ref loadSpecimen. */
+    SgAsmInterpretation* interpretation() const { return interp_; }
+
     /** Obtain a disassembler.
      *
-     *  Obtains a newly allocated disassembler if possible. Uses the specified interpretation to choose an appropriate
-     *  disassembler. */
-    virtual Disassembler* allocateDisassembler(SgAsmInterpretation*);
+     *  This is usually called before the engine creates a partitioner. It looks for a suitable disassembler type and allocates
+     *  an instance of the disassembler, saving a pointer.  If the caller provides a disassembler then that disassembler is
+     *  used instead of allocating a new one.  If the caller provides a non-empty architecture name, then that name is used to
+     *  lookup up a disassembler.  Otherwise, if this engine already has a disassembler it does nothing.  Finally, failing
+     *  those three situations, the engine looks at its interpretation, which must exist, to choose a disassembler.
+     *
+     *  @{ */
+    virtual Disassembler* obtainDisassembler(Disassembler *hint=NULL);
+    virtual Disassembler* obtainDisassembler(const std::string &isaName);
+    /** @} */
+
+    /** Property: disassembler.
+     *
+     *  Returns or modifies the disassembler used by this engine.
+     *
+     * @sa obtainDisassembler
+     *
+     * @{ */
+    Disassembler *disassembler() const { return disassembler_; }
+    void disassembler(Disassembler *d) { disassembler_ = d; }
+    /** @} */
 
     /** Create a bare partitioner.
      *
@@ -91,12 +120,21 @@ public:
     //                                  High-level methods that mostly call low-level stuff
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Does everything.
+    /** Loads specimens into memory and disassembles and partitions completely.
+     *
+     *  An optional disassembler can be specified to override the one that would be chosen from the interpretation (ELF or PE
+     *  binary container). The disassembler is required if there is no binary container (as when all specimen names are map
+     *  resources).
+     *
+     *  Returns the partitioner that was used. */
+    virtual Partitioner loadAndPartition(const std::vector<std::string> &specimenNames, Disassembler *disassembler=NULL);
+
+    /** Disassembles and partitions completely.
      *
      *  Builds a partitioner, calls @ref partition, and builds and returns an AST. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*);
 
-    /** Does almost everything.
+    /** Disassembles and partitions completely.
      *
      *  Discovers instructions and organizes them into basic blocks and functions.  Many users will want to use lower-level
      *  methods for more control. */

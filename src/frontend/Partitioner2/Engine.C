@@ -61,10 +61,14 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
     return createGenericPartitioner(disassembler, map);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Preparing to partition
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 MemoryMap
 Engine::loadSpecimen(const std::vector<std::string> &fileNames) {
     MemoryMap map;
-    SgAsmInterpretation *interp = NULL;
+    interp_ = NULL;
 
     // Load the binary container files with single call to frontend()
     std::vector<std::string> frontendNames;
@@ -82,10 +86,10 @@ Engine::loadSpecimen(const std::vector<std::string> &fileNames) {
         std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
         if (interps.empty())
             throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-        interp = interps.back();    // windows PE is always after DOS
-        loadSpecimen(interp);
-        ASSERT_not_null(interp->get_map());
-        map = *interp->get_map();
+        interp_ = interps.back();    // windows PE is always after DOS
+        loadSpecimen(interp_);
+        ASSERT_not_null(interp_->get_map());
+        map = *interp_->get_map();
     }
 
     // Load raw binary files
@@ -102,6 +106,7 @@ Engine::loadSpecimen(const std::vector<std::string> &fileNames) {
 void
 Engine::loadSpecimen(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
+    interp_ = interp;
     if (NULL==interp->get_map()) {
         BinaryLoader *loader = BinaryLoader::lookup(interp);
         if (!loader)
@@ -114,35 +119,61 @@ Engine::loadSpecimen(SgAsmInterpretation *interp) {
 }
 
 Disassembler*
-Engine::allocateDisassembler(SgAsmInterpretation *interp) {
-    ASSERT_not_null(interp);
-    Disassembler *disassembler = Disassembler::lookup(interp);
-    if (!disassembler)
-        throw std::runtime_error("unable to find an appropriate disassembler");
-    return disassembler->clone();
+Engine::obtainDisassembler(const std::string &isaName) {
+    if (!isaName.empty()) {
+        if ((disassembler_ = Disassembler::lookup(isaName)))
+            disassembler_ = disassembler_->clone();
+    } else {
+        obtainDisassembler(disassembler_);
+    }
+    return disassembler_;
+}
+
+Disassembler*
+Engine::obtainDisassembler(Disassembler *disassembler) {
+    if (disassembler) {
+        disassembler_ = disassembler;
+    } else if (disassembler_) {
+        // already have one
+    } else if (interp_) {
+        if ((disassembler_ = Disassembler::lookup(interp_)))
+            disassembler_ = disassembler_->clone();
+    } else {
+        // can't get one
+    }
+    return disassembler_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      High-level stuff
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Partitioner
+Engine::loadAndPartition(const std::vector<std::string> &specimenNames, Disassembler *disassembler) {
+    MemoryMap map = loadSpecimen(specimenNames);
+    if (NULL==(disassembler=obtainDisassembler(disassembler)))
+        throw std::runtime_error("an instruction set architecture or disassembler must be specified");
+    Partitioner partitioner = createTunedPartitioner(disassembler, map);
+    partition(partitioner, interp_);
+    return partitioner;
+}
+
 SgAsmBlock*
 Engine::partition(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
 
     loadSpecimen(interp);
-    Disassembler *disassembler = allocateDisassembler(interp);
-    disassembler->set_progress_reporting(-1.0);         // turn it off
+    if (!obtainDisassembler())
+        throw std::runtime_error("no appropriate disassembler");
+    disassembler_->set_progress_reporting(-1.0);        // turn it off
 
     MemoryMap map = *interp->get_map();
     Modules::deExecuteZeros(map, 256);
 
-    Partitioner partitioner = createTunedPartitioner(disassembler, map);
+    Partitioner partitioner = createTunedPartitioner(disassembler_, map);
     partition(partitioner, interp);
 
-    SgAsmBlock *gblock = partitioner.buildGlobalBlockAst();
-    delete disassembler;
-    return gblock;
+    return partitioner.buildGlobalBlockAst();
 }
 
 void
