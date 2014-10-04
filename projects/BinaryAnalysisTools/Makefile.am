@@ -64,6 +64,14 @@ maxBijection_CPPFLAGS = $(ROSE_INCLUDES)
 maxBijection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# debug instruction semantics
+
+bin_PROGRAMS += debugSemantics
+debugSemantics_SOURCES = debugSemantics.C
+debugSemantics_CPPFLAGS = $(ROSE_INCLUDES)
+debugSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets
 
 bin_PROGRAMS += x86-call-targets
