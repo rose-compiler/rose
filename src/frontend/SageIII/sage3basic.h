@@ -23,6 +23,8 @@
 #endif
 #include <inttypes.h>
 
+#include "rose_override.h"                              // defines ROSE_OVERRIDE as "override" if C++11 is present
+
 
 #include <semaphore.h>
 #include "fileoffsetbits.h"

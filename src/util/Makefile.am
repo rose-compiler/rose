@@ -50,6 +50,7 @@ pkginclude_HEADERS =				\
 	ParallelSort.h                          \
 	processSupport.h			\
 	rose_getline.h				\
+	rose_override.h				\
 	rose_paths.h				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
