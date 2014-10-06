@@ -1715,7 +1715,7 @@ Partitioner::mark_func_patterns()
     struct T1: ByteRangeCallback {
         Partitioner *p;
         T1(Partitioner *p): p(p) {}
-        virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+        virtual bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
             ASSERT_not_null(args.restrict_map);
             uint8_t buf[4096];
             if (enabled) {

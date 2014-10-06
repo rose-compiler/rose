@@ -1001,11 +1001,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/ {
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
         return instance(protoval, regdict);
     }
 
-    virtual RegisterStatePtr clone() const /*override*/ {
+    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStateGenericPtr(new RegisterStateGeneric(*this));
     }
 
@@ -1023,11 +1023,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherit
 public:
-    virtual void clear() /*override*/;
-    virtual void zero() /*override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void clear() ROSE_OVERRIDE;
+    virtual void zero() ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -1247,11 +1247,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/ {
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
         return instance(protoval, regdict);
     }
 
-    virtual RegisterStatePtr clone() const /*override*/ {
+    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStatePtr(new RegisterStateX86(*this));
     }
 
@@ -1269,11 +1269,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() /*override*/;
+    virtual void clear() ROSE_OVERRIDE;
     virtual void zero() /* override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1656,7 +1656,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const /*override*/ {
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const ROSE_OVERRIDE {
         return instance(addrProtoval, valProtoval);
     }
     
@@ -1665,7 +1665,7 @@ public:
         return instance(protocell);
     }
 
-    virtual MemoryStatePtr clone() const /*override*/ {
+    virtual MemoryStatePtr clone() const ROSE_OVERRIDE {
         return MemoryStatePtr(new MemoryCellList(*this));
     }
 
@@ -1683,7 +1683,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() /*override*/ {
+    virtual void clear() ROSE_OVERRIDE {
         cells.clear();
         latest_written_cell.reset();
     }
@@ -1699,7 +1699,7 @@ public:
      *  The width of the @p dflt value determines how much data is read. The base implementation assumes that all cells contain
      *  8-bit values. */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
     /** Write a value to memory.
      *
@@ -1708,9 +1708,9 @@ public:
      *
      *  The base implementation assumes that all cells contain 8-bit values. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
+                             RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy

@@ -158,7 +158,7 @@ namespace Modules {
 class AddGhostSuccessors: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new AddGhostSuccessors); }
-    virtual bool operator()(bool chain, const Args &args) /*override*/;
+    virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
 };
 
 /** Prevent discontiguous basic blocks.
@@ -170,7 +170,7 @@ public:
 class PreventDiscontiguousBlocks: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
-    virtual bool operator()(bool chain, const Args &args) /*override*/;
+    virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
 };
 
 /** List some instructions at a certain time.
@@ -195,8 +195,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
 };
 
 /** Produce a GraphViz file for the CFG at a certain time.
@@ -223,8 +223,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
 };
 
 /** Produce a hexdump at a certain time.
@@ -250,8 +250,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
 };
 
 /** Remove execute permissions for zeros.

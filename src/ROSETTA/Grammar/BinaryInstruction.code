@@ -3616,24 +3616,24 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
-                virtual bool terminatesBasicBlock() /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
                 virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) /*override*/;
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) /*override*/;
-                virtual bool getBranchTarget(rose_addr_t *target/*out*/) /*override*/;
-                virtual bool hasEffect() /*override*/;
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
+                virtual bool getBranchTarget(rose_addr_t *target/*out*/) ROSE_OVERRIDE;
+                virtual bool hasEffect() ROSE_OVERRIDE;
                 virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                       bool relax_stack_semantics=false) /*override*/;
+                                       bool relax_stack_semantics=false) ROSE_OVERRIDE;
                 virtual std::vector<std::pair<size_t,size_t> >
                     findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                         bool relax_stack_semantics=false) /*override*/;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                                         bool relax_stack_semantics=false) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                             bool* complete,
-                                                            const MemoryMap *initial_memory=NULL) /*override*/;
+                                                            const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
                 virtual bool isUnknown() const;
 		virtual unsigned get_anyKind() const;
 HEADER_BINARY_X86_INSTRUCTION_END
@@ -3642,9 +3642,9 @@ HEADER_BINARY_X86_INSTRUCTION_END
 
 HEADER_BINARY_POWERPC_INSTRUCTION_START
         public:
-                virtual bool terminatesBasicBlock() /*override*/;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
-                virtual bool isUnknown() const /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
 		virtual unsigned get_anyKind() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
@@ -3652,46 +3652,46 @@ HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 HEADER_BINARY_ARM_INSTRUCTION_START
         public:
-                virtual bool terminatesBasicBlock() /*override*/;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
-                virtual bool isUnknown() const /*override*/;
-		virtual unsigned get_anyKind() const /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
 
 HEADER_BINARY_MIPS_INSTRUCTION_START
         public:
-                virtual bool terminatesBasicBlock() /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
                 virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
-                virtual bool isUnknown() const /*override*/;
-                virtual bool getBranchTarget(rose_addr_t *target) /*override*/;
-		virtual unsigned get_anyKind() const /*override*/;
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+                virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
 HEADER_BINARY_M68K_INSTRUCTION_START
         public:
-                virtual bool terminatesBasicBlock() /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
                 virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                                rose_addr_t *target, rose_addr_t *ret) /*override*/;
-                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual bool getBranchTarget(rose_addr_t *target) /*override*/;
-                virtual std::set<rose_addr_t> getSuccessors(bool* complete) /*override*/;
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                             bool* complete,
-                                                            const MemoryMap *initial_memory=NULL) /*override*/;
-                virtual bool isUnknown() const /*override*/;
-		virtual unsigned get_anyKind() const /*override*/;
+                                                            const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
 
@@ -3968,9 +3968,9 @@ HEADER_VECTOR_TYPE_START
                 SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
                 size_t get_nElmts() const;
                 SgAsmType* get_elmtType() const;
-                virtual void check() const /*override*/;
-                virtual std::string toString() const /*override*/;
-                virtual size_t get_nBits() const /*override*/;
+                virtual void check() const ROSE_OVERRIDE;
+                virtual std::string toString() const ROSE_OVERRIDE;
+                virtual size_t get_nBits() const ROSE_OVERRIDE;
 HEADER_VECTOR_TYPE_END
 
 
@@ -3980,7 +3980,7 @@ HEADER_SCALAR_TYPE_START
         public:
                 virtual void check() const;
                 virtual std::string toString() const;
-                virtual size_t get_nBits() const /*override*/;
+                virtual size_t get_nBits() const ROSE_OVERRIDE;
                 ByteOrder::Endianness get_minorOrder() const;
                 ByteOrder::Endianness get_majorOrder() const;
                 size_t get_majorNBytes() const;

@@ -197,7 +197,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<uint64_t> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node)/*override*/ {
+        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
             if (!seen.insert(node->hash()).second)
                 return InsnSemanticsExpr::TRUNCATE; // already processed this same expression
             size_t width = node->get_nbits();
@@ -218,7 +218,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
             }
             return InsnSemanticsExpr::CONTINUE;
         }
-        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&)/*override*/ {
+        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
             return InsnSemanticsExpr::CONTINUE;
         }
     } t1(this, o, regs, dictionary);

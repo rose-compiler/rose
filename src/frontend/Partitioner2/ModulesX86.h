@@ -24,8 +24,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -39,8 +39,8 @@ public:
 class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 <cde>MOV EDI,EDI; PUSH ESI</code> function prologe. */
@@ -49,8 +49,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
@@ -59,8 +59,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Basic block callback to detect function returns.
@@ -72,7 +72,7 @@ public:
 class FunctionReturnDetector: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new FunctionReturnDetector); } /**< Allocating constructor. */
-    virtual bool operator()(bool chain, const Args&) /*override*/;
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
 /** Basic block callback to detect "switch" statements.
@@ -83,7 +83,7 @@ class SwitchSuccessors: public BasicBlockCallback {
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new SwitchSuccessors); }
-    virtual bool operator()(bool chain, const Args&) /*override*/;
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
 /** Reads a table of code addresses.

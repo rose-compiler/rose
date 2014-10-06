@@ -249,7 +249,7 @@ private:
 
 class SubstitutionPredicate: public EditDistance::TreeEditDistance::SubstitutionPredicate {
 public:
-    virtual bool operator()(SgNode *source, SgNode *target) /*override*/ {
+    virtual bool operator()(SgNode *source, SgNode *target) ROSE_OVERRIDE {
         if (source->variantT() != target->variantT())
             return false;
         if (SgAsmInstruction *si = isSgAsmInstruction(source)) {
@@ -453,7 +453,7 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
 }
 
 struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
-    std::string operator()(const rose_addr_t &value, size_t width) const /*override*/ {
+    std::string operator()(const rose_addr_t &value, size_t width) const ROSE_OVERRIDE {
         return addrToString(value);
     }
 };

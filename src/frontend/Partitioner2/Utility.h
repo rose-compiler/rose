@@ -136,7 +136,7 @@ public:
     }
 private:
     virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
-                                                        const Sawyer::CommandLine::Location &loc) /*override*/;
+                                                        const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
 };
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);

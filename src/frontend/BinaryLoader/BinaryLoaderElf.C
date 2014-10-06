@@ -327,7 +327,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 
 /* Reference Elf TIS Portal Formats Specification, Version 1.1 */
 void
-BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) /*override*/
+BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) ROSE_OVERRIDE
 {
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     build_master_symbol_table(interp);

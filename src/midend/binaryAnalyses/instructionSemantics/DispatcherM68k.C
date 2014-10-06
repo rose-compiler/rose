@@ -27,7 +27,7 @@ public:
     typedef const SgAsmExpressionPtrList &A;
     virtual void p(D, Ops, I, A) = 0;
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_)/*override*/ {
+    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
         DispatcherM68kPtr dispatcher = DispatcherM68k::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);

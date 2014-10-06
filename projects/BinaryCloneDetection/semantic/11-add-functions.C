@@ -201,7 +201,7 @@ save_call_graph(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, SgAsmInte
     struct CGFilter: BinaryAnalysis::FunctionCall::VertexFilter {
         const std::map<SgAsmFunction*, int> &existing;
         CGFilter(const std::map<SgAsmFunction*, int> &existing): existing(existing) {}
-        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *vertex) /*override*/ {
+        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *vertex) ROSE_OVERRIDE {
             return existing.find(vertex)!=existing.end();
         }
     } vertex_filter(existing_funcs);

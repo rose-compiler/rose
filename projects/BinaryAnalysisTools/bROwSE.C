@@ -525,17 +525,17 @@ public:
         return idx<functions_.size() ? functions_[idx] : P2::Function::Ptr();
     }
 
-    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : functions_.size();
     }
 
-    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : C_NCOLS;
     }
 
     // Name for each column
     virtual boost::any headerData(int column, Wt::Orientation orientation=Wt::Horizontal,
-                                  int role=Wt::DisplayRole) const /*override*/ {
+                                  int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
                 case C_ENTRY:    return Wt::WString("Entry");
@@ -552,7 +552,7 @@ public:
     }
 
     // Data to show in each table cell
-    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const /*override*/ {
+    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         ASSERT_require(index.isValid());
         ASSERT_require(index.row()>=0 && (size_t)index.row() < functions_.size());
         P2::Function::Ptr function = functions_[index.row()];
@@ -986,16 +986,16 @@ public:
         layoutChanged().emit();
     }
     
-    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : insns_.size();
     }
 
-    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : C_NCOLS;
     }
 
     virtual boost::any headerData(int column, Wt::Orientation orientation=Wt::Horizontal,
-                                  int role=Wt::DisplayRole) const /*override*/ {
+                                  int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
                 case C_ADDR:    return Wt::WString("Address");
@@ -1010,7 +1010,7 @@ public:
         return boost::any();
     }
 
-    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const /*override*/ {
+    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         ASSERT_require(index.isValid());
         ASSERT_require(index.row()>=0 && (size_t)index.row() < insns_.size());
         SgAsmInstruction *insn = insns_[index.row()];
