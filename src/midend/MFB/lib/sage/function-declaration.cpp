@@ -57,8 +57,12 @@ void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(unsigned file_id, SgSourc
   for (it_function_decl = function_decl.begin(); it_function_decl != function_decl.end(); it_function_decl++) {
     SgFunctionDeclaration * function_decl = *it_function_decl;
 
+    if (function_decl->get_startOfConstruct()->get_raw_filename() != file->get_sourceFileNameWithPath()) continue;
+
     if (ignore(function_decl->get_scope())) continue;
+
     if (ignore(function_decl->get_name().getString())) continue;
+
 
     SgFunctionSymbol * function_sym = SageInterface::lookupFunctionSymbolInParentScopes(function_decl->get_name(), function_decl->get_scope());
     assert(function_sym != NULL);

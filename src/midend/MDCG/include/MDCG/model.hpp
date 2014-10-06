@@ -88,7 +88,10 @@ struct model_t {
   element_t lookup(const std::string & name) const {
     std::set<element_t> element_set;
     lookup<element_t>(name, element_set);
-    assert(element_set.size() == 1);
+    if (element_set.size() != 1) {
+      std::cerr << "Found " << element_set.size() << " matches for \"" << name << "\" (expect one)." << std::endl;
+      assert(element_set.size() == 1);
+    }
     element_t result = *(element_set.begin());
     assert(result != NULL);
     return result;
@@ -96,11 +99,25 @@ struct model_t {
 
   // Printer
 
+  void toText(std::ostream & out) const;
+  void toText(std::ostream & out, std::string prefix_filter, bool variable_root, bool function_root, bool class_root) const;
+
   void toDot(std::ostream & out) const;
-  void toDot(std::ostream & out, std::string prefix_filter, bool, bool, bool) const;
+  void toDot(std::ostream & out, std::string prefix_filter, bool variable_root, bool function_root, bool class_root) const;
 };
 
 void toDot(
+  std::ostream & out,
+  const std::set<Model::variable_t>  & variable_set,
+  const std::set<Model::function_t>  & function_set,
+  const std::set<Model::field_t>     & field_set,
+  const std::set<Model::method_t>    & method_set,
+  const std::set<Model::type_t>      & type_set,
+  const std::set<Model::class_t>     & class_set,
+  const std::set<Model::namespace_t> & namespace_set
+);
+
+void toText(
   std::ostream & out,
   const std::set<Model::variable_t>  & variable_set,
   const std::set<Model::function_t>  & function_set,
