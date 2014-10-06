@@ -143,7 +143,7 @@ public:
             // Simulate some instructions
             for (/*void*/; ninsns<limit && policy.readRegister<32>(semantics.REG_EIP).is_known(); ++ninsns) {
                 rose_addr_t va = policy.readRegister<32>(semantics.REG_EIP).known_value();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(thread->get_process()->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(thread->get_process()->get_instruction(va));
                 semantics.processInstruction(insn);
             }
         } catch (const Disassembler::Exception &e) {

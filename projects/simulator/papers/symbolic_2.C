@@ -94,7 +94,7 @@ public:
             {
                 // This is a kludge.  If the first instruction is an indirect JMP then assume we're executing through a dynamic
                 // linker thunk and execute the instruction concretely to advance the instruction pointer.
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
                 if (x86_jmp==insn->get_kind()) {
                     PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State, PartialSymbolicSemantics::ValueType> p;
                     X86InstructionSemantics<PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State,
@@ -118,7 +118,7 @@ public:
             std::vector<TreeNodePtr> constraints; // path constraints for the SMT solver
             while (policy.readRegister<32>("eip").is_known()) {
                 uint64_t va = policy.readRegister<32>("eip").known_value();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.thread->get_process()->get_instruction(va));
                 assert(insn!=NULL);
                 trace->mesg("%s: analysing instruction %s", name, unparseInstructionWithAddress(insn).c_str());
                 semantics.processInstruction(insn);
@@ -126,7 +126,7 @@ public:
                     continue;
                 
                 bool complete;
-                std::set<rose_addr_t> succs = insn->get_successors(&complete);
+                std::set<rose_addr_t> succs = insn->getSuccessors(&complete);
                 if (complete && 2==succs.size()) {
                     if (nbranches>=take_branch.size()) {
                         std::ostringstream s; s<<policy.readRegister<32>("eip");

@@ -44,6 +44,18 @@ fileToSRecords_CPPFLAGS = $(ROSE_INCLUDES)
 fileToSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# find similar functions in two specimens
+
+if ROSE_USE_DLIB
+
+bin_PROGRAMS += findSimilarFunctions
+findSimilarFunctions_SOURCES = findSimilarFunctions.C
+findSimilarFunctions_CPPFLAGS = $(ROSE_INCLUDES) -I$(DLIB_PREFIX)
+findSimilarFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+endif
+
+#------------------------------------------------------------------------------------------------------------------------
 # maximize bijection of two sets
 
 bin_PROGRAMS += maxBijection

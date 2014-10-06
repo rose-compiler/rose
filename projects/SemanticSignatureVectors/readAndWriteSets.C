@@ -528,9 +528,9 @@ int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   ReadAndWriteSetPolicy policy;
   X86InstructionSemantics<ReadAndWriteSetPolicy, W> t(policy);
-  vector<SgNode*> insns = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+  vector<SgNode*> insns = NodeQuery::querySubTree(proj, V_SgAsmX86Instruction);
   for (size_t i = 0; i < insns.size(); ++i) {
-    SgAsmx86Instruction* b = isSgAsmx86Instruction(insns[i]);
+    SgAsmX86Instruction* b = isSgAsmX86Instruction(insns[i]);
     ROSE_ASSERT (b);
     try {
         t.processInstruction(b);

@@ -74,7 +74,7 @@ public:
             symbolic_policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(analysis_addr));
             while (symbolic_policy.readRegister<32>("eip").is_known()) {
                 uint64_t va = symbolic_policy.readRegister<32>("eip").known_value();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.thread->get_process()->get_instruction(va));
                 assert(insn!=NULL);
                 symbolic_semantics.processInstruction(insn);
                 sign_semantics.processInstruction(insn);

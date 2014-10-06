@@ -20,7 +20,7 @@ evaluate_bblock(SgAsmBlock *bblock, Policy &policy)
     Semantics semantics(policy);
     const SgAsmStatementPtrList &insns = bblock->get_statementList();
     for (size_t i=0; i<insns.size(); ++i) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns[i]);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insns[i]);
         if (insn) {
             try {
                 semantics.processInstruction(insn);

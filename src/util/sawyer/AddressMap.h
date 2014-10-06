@@ -106,6 +106,9 @@ public:
         prohibitedAccess_ |= bits;
         return *this;
     }
+    AddressMapConstraints& access(unsigned bits) {
+        return require(bits).prohibit(~bits);
+    }
     AddressMapConstraints& substr(const std::string &s) {
         ASSERT_require(nameSubstring_.empty() || nameSubstring_==s);// substring conjunction not supported
         nameSubstring_ = s;
@@ -762,6 +765,20 @@ public:
     }
     AddressMapConstraints<AddressMap> prohibit(unsigned x) {
         return AddressMapConstraints<AddressMap>(this).prohibit(x);
+    }
+    /** @} */
+
+    /** Constraint: required and prohibited access bits.
+     *
+     *  Constrains address to those that have the specified access bits. This method is the same as calling @ref require with
+     *  the specified bit vector, and @ref prohibit with the inverted bit vector.
+     *
+     * @{ */
+    AddressMapConstraints<const AddressMap> access(unsigned x) const {
+        return AddressMapConstraints<const AddressMap>(this).access(x);
+    }
+    AddressMapConstraints<AddressMap> access(unsigned x) {
+        return AddressMapConstraints<AddressMap>(this).access(x);
     }
     /** @} */
 

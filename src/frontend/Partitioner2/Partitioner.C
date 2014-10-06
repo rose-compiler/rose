@@ -281,7 +281,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (insn==NULL)                                                 // case: no instruction available
             goto done;
         retval->append(insn);
-        if (insn->is_unknown())                                         // case: "unknown" instruction
+        if (insn->isUnknown())                                          // case: "unknown" instruction
             goto done;
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
@@ -295,7 +295,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
             }
         }
 
-        if (userResult.terminate == BasicBlockCallback::TERMINATE_NOW)   // case: user wants us to terminate block here
+        if (userResult.terminate == BasicBlockCallback::TERMINATE_NOW)  // case: user wants us to terminate block here
             goto done;
         if (userResult.terminate == BasicBlockCallback::TERMINATE_PRIOR) {
             retval->pop();                                              // case: user wants to terminate at prior insn
@@ -521,11 +521,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
         // if our try failed then this one probably will too.  In fact, this one will be even slower because it must reprocess
         // the entire basic block each time it's called because it is stateless, whereas ours above only needed to process each
         // instruction as it was appended to the block.
-        std::set<rose_addr_t> successorVas = lastInsn->get_successors(bb->instructions(), &complete, &memoryMap_);
+        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, &memoryMap_);
 #else
         // Look only at the final instruction of the basic block.  This is probably quite fast compared to looking at a whole
         // basic block.
-        std::set<rose_addr_t> successorVas = lastInsn->get_successors(&complete);
+        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(&complete);
 #endif
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas)
@@ -563,7 +563,7 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
     const BasicBlock::Successors &successors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveVa, insn->get_successors(&complete)) {
+        BOOST_FOREACH (rose_addr_t naiveVa, insn->getSuccessors(&complete)) {
             if (insnVas.find(naiveVa)==insnVas.end()) {
                 bool found = false;
                 BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
@@ -642,7 +642,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     }
 
     // We don't have semantics, so delegate to the SgAsmInstruction subclass (which might try some other semantics).
-    retval = lastInsn->is_function_call(bb->instructions(), NULL, NULL);
+    retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
     return retval;
 }
@@ -659,7 +659,7 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
 #if 1 // DEBUGGING [Robb P. Matzke 2014-09-15]
     Stream debug(mlog[DEBUG]);
-    debug.enable(isSgAsmx86Instruction(lastInsn) && isSgAsmx86Instruction(lastInsn)->get_kind()==x86_ret);
+    debug.enable(isSgAsmX86Instruction(lastInsn) && isSgAsmX86Instruction(lastInsn)->get_kind()==x86_ret);
 #endif
 
     // Use our own semantics if we have them.
@@ -691,8 +691,8 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
         return retval;
     }
 
-    // No semantics, so delegate to SgAsmInstruction subclasses (which might try some other semantics)
-    retval = lastInsn->is_function_return(bb->instructions());
+    // No semantics, so delegate to SgAsmInstruction subclasses
+    retval = lastInsn->isFunctionReturnFast(bb->instructions());
     bb->isFunctionReturn() = retval;
     return retval;
 }
@@ -1328,6 +1328,94 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             }
         }
     }
+}
+
+// class method
+std::string
+Partitioner::cfgGraphVizVertex(const ControlFlowGraph::VertexNode &vertex, const std::string &attrs) {
+    std::string s = StringUtility::numberToString(vertex.id());
+    switch (vertex.value().type()) {
+        case V_UNDISCOVERED:
+            s += " [ label=\"undiscovered\" ];\n";
+            break;
+        case V_INDETERMINATE:
+            s += " [ label=\"indeterminate\" ];\n";
+            break;
+        case V_NONEXISTING:
+            s += " [ label=\"nonexisting\" ];\n";
+            break;
+        case V_BASIC_BLOCK:
+            s += " [ label=\"" + StringUtility::addrToString(vertex.value().address());
+            if (BasicBlock::Ptr bb = vertex.value().bblock())
+                s += "\\n" + StringUtility::addrToString(bb->fallthroughVa()-1);
+            s += "\" " + attrs + "];\n";
+            break;
+    }
+    return s;
+}
+            
+void
+Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
+                         bool showNeighbors) const {
+    out <<"digraph {\n";
+
+    // Emit those vertices that we want to include in the output
+    std::set<size_t> selected;
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
+        if (vertex.value().type()==V_BASIC_BLOCK && restrict.isContaining(vertex.value().address())) {
+            out <<cfgGraphVizVertex(vertex);
+            selected.insert(vertex.id());
+        }
+    }
+
+    // Edges, and additional vertices outside our range
+    std::set<size_t> seen = selected;
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, cfg_.edges()) {
+        const ControlFlowGraph::VertexNode &source = *edge.source();
+        const ControlFlowGraph::VertexNode &target = *edge.target();
+
+        // Should we show this edge?
+        bool sourceSelected = selected.find(source.id()) != selected.end();
+        bool targetSelected = selected.find(target.id()) != selected.end();
+        if (!sourceSelected && !targetSelected)
+            continue;
+        if (!showNeighbors && (!sourceSelected || !targetSelected))
+            continue;
+
+        // Create the source vertex if we haven't already
+        if (seen.find(source.id()) == seen.end()) {
+            out <<cfgGraphVizVertex(source, "shape=plaintext style=filled fillcolor=yellow");
+            seen.insert(source.id());
+        }
+
+        // Create the destination vertex if we haven't already
+        if (seen.find(target.id()) == seen.end()) {
+            out <<cfgGraphVizVertex(target, "shape=plaintext style=filled fillcolor=yellow");
+            seen.insert(target.id());
+        }
+
+        // The edge
+        std::string edgeAttrs;
+        switch (edge.value().type()) {
+            case E_NORMAL:
+                break;
+            case E_FUNCTION_CALL:
+                edgeAttrs = "label=\"call\"";
+                break;
+            case E_FUNCTION_RETURN:
+                edgeAttrs = "label=\"ret\"";
+                break;
+            case E_CALL_RETURN:
+                edgeAttrs = "label=\"cret\"";
+                break;
+        }
+        out <<source.id() <<" -> " <<target.id();
+        if (!edgeAttrs.empty())
+            out <<" [" + edgeAttrs + "]";
+        out <<";\n";
+    }
+
+    out <<"}\n";
 }
 
 Function::Ptr
