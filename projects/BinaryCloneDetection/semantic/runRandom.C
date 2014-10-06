@@ -68,7 +68,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     tool.insert(Switch("allow-syscalls")
                 .intrinsicValue(true, settings.allowSyscalls)
                 .doc("Allow child process to execute system calls (or any x86 INT instruction).  Allowing such things is "
-                     "dangerous because the child because the child is running on our system with our effective user ID "
+                     "dangerous because the child is running on our system with our effective user ID "
                      "and is making system calls even though it is almost certainly not initialized properly.  We have no "
                      "idea what those system calls might do.  The @s{no-allow-syscalls} disables all INT instructions. The "
                      "default is to " + std::string(settings.allowSyscalls?"":"not ") + " allow system calls.  Note, "
@@ -99,6 +99,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     Parser parser;
     parser
         .purpose("load binary specimen and execute under debugger")
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
         .doc("Synopsis",
              "@prop{programName} [@v{switches}] @v{specimen_name}")
         .doc("Description",
@@ -111,7 +113,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "executed, and the reason for terminating the run.  The reason will begin with the function name as a "
              "C-escaped string in double quotes.  For instance,\n\n"
 
-             "    0x080480a0, 3, "" terminated with segmentation fault")
+             "    0x080480a0, 3, \"\" terminated with segmentation fault")
         .doc("Bugs",
              "Only Linux ELF x86 32-bit executable specimens are supported.");
     
@@ -245,7 +247,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
         // Single-step
         if (debug) {
             sendCommand(PTRACE_GETREGS, child, 0, &regs);
-            debug <<"Single stepping at " <<addrToString(regs.INSTRUCTION_POINTER) <<"\n";
+            debug <<"single stepping at " <<addrToString(regs.INSTRUCTION_POINTER) <<"\n";
         }
         sendCommand(PTRACE_SINGLESTEP, child, 0, 0);
         wstat = waitForChild(child);
@@ -272,7 +274,7 @@ main(int argc, char *argv[]) {
     mlog = Sawyer::Message::Facility("tool");
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
-    // Pare command-line
+    // Parse command-line
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     if (specimenNames.size() != 1)
@@ -332,7 +334,7 @@ main(int argc, char *argv[]) {
             }
             if (!foundFunction) {
                 mlog[WARN] <<"could not find \"" <<settings.initFunction <<"\""
-                           <<"; using original entry point instead (" <<addrToString(*initVa) <<")\n";
+                           <<"; using original entry point instead (" <<addrToString(*oep) <<")\n";
             }
         }
     }
