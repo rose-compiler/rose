@@ -24,7 +24,6 @@ using this memory map for disassembly:
     va 0x0804b24c + 0x00000014 = 0x0804b260 rw-p at anon aal     + 0x00000000 i386-fsck.cramfs(LOAD#3)
     va 0x0804b260 + 0x00000670 = 0x0804b8d0 rw-p at anon acd     + 0x00000000 i386-fsck.cramfs(.bss)
     va 0x0804f318 + 0x00000ce8 = 0x08050000 rw-p at anon aak     + 0x00003a5c i386-fsck.cramfs(LOAD#3)
-disassembled 8353 instructions and 277 failures (use --show-bad to see errors)
 
 
 0x08048940: ================================== Function (symbol) <_init>
@@ -5212,4 +5211,3 @@ disassembled 8353 instructions and 277 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

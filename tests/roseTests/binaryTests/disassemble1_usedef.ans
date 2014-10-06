@@ -5,7 +5,6 @@ using this memory map for disassembly:
     va 0x080480a0 + 0x00000066 = 0x08048106 r-x- at buffer aag   + 0x000000a0 usedef(.text)
     va 0x08048106 + 0x000002d0 = 0x080483d6 r-xp at buffer aac   + 0x00000106 usedef(LOAD#0)
     va 0x080483d6 + 0x00000c2a = 0x08049000 r-xp at anon aab     + 0x00000000 usedef(LOAD#0)
-disassembled 3995 instructions and 2 failures (use --show-bad to see errors)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -2471,4 +2470,3 @@ disassembled 3995 instructions and 2 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

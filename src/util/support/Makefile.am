@@ -16,7 +16,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = \
+pkginclude_HEADERS = \
    DAG.h               IteratorCompound.h  TreeImpl.h \
    BitVectorRepr.h   DirectedGraph.h     IteratorTmpl.h      PtrMap.h       union_find.h \
    VectorCommandOptions.h CommandOptions.h  DoublyLinkedList.h  LatticeElemList.h   PtrSet.h \

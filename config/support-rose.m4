@@ -850,6 +850,8 @@ fi
 # Call supporting macro for Haskell
 ROSE_SUPPORT_HASKELL
 
+ROSE_SUPPORT_CUDA
+
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 
@@ -2201,9 +2203,6 @@ tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
 tests/translatorTests/Makefile
-tests/midend/Makefile
-tests/midend/MFB/Makefile
-tests/midend/MDCG/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/roseHPCT/Makefile

@@ -259,7 +259,7 @@ namespace AstFromString
       } while (afs_is_digit());
       buffer[i]='\0';
 
-      exponent *= pow(10, atoi(buffer));
+      exponent *= pow(10., atoi(buffer));
 
       *result *= exponent;
     }

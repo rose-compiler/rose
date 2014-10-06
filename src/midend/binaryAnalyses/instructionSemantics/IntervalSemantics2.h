@@ -225,8 +225,11 @@ class MemoryState: public BaseSemantics::MemoryCellList {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
-        : BaseSemantics::MemoryCellList(protocell, protoval) {}
+    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+        : BaseSemantics::MemoryCellList(protocell) {}
+
+    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval) {}
 
     MemoryState(const MemoryState &other)
         : BaseSemantics::MemoryCellList(other) {}
@@ -235,27 +238,26 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new memory state with specified prototypical cells and values. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval) {
-        return MemoryStatePtr(new MemoryState(protocell, protoval));
+    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryStatePtr(new MemoryState(protocell));
     }
 
     /** Instantiate a new memory state with prototypical value. This constructor uses BaseSemantics::MemoryCell as the cell
-     * type. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &protoval) {
-        BaseSemantics::MemoryCellPtr protocell = BaseSemantics::MemoryCell::instance(protoval, protoval);
-        return MemoryStatePtr(new MemoryState(protocell, protoval));
+     * type. The address protoval and value protoval are usually the same (or at least the same dynamic type). */
+    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell,
-                                                 const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protocell, protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+        return instance(protocell);
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+        return instance(addrProtoval, valProtoval);
     }
 
     virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
@@ -269,7 +271,7 @@ public:
      *
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                                                size_t nbits, BaseSemantics::RiscOperators *ops) /*override*/;
+                                                BaseSemantics::RiscOperators *ops) /*override*/;
 
     /** Write a byte to memory.
      *
@@ -311,7 +313,7 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval);
+        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -421,8 +423,8 @@ public:
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &cond,
-                                                size_t nbits) /*override*/;
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) /*override*/;
     virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,

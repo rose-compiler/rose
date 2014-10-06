@@ -33,6 +33,7 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction*);
 std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
 std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*, bool leaMode);
 std::string unparseX86Register(const RegisterDescriptor&, const RegisterDictionary*);
+std::string unparseX86Register(SgAsmInstruction*, const RegisterDescriptor&, const RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM
@@ -60,5 +61,13 @@ std::string unparsePowerpcExpression(SgAsmExpression*, const AsmUnparser::LabelM
 
 std::string unparseMipsMnemonic(SgAsmMipsInstruction*);
 std::string unparseMipsExpression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
+
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * M68k
+ *-------------------------------------------------------------------------------------------------------------------------------*/
+
+std::string unparseM68kMnemonic(SgAsmM68kInstruction*);
+std::string unparseM68kExpression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
+
 
 #endif

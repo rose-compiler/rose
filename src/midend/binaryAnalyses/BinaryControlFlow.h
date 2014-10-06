@@ -4,8 +4,11 @@
 #include "Map.h"
 #include "WorkLists.h"
 
+#include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <sawyer/GraphBoost.h>
 
 class SgNode;
 class SgAsmBlock;
@@ -449,7 +452,7 @@ namespace BinaryAnalysis {
             ControlFlow *analyzer;
             ControlFlowGraph &cfg;
             typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-            typedef std::map<SgAsmBlock*, Vertex> BlockVertexMap;
+            typedef Map<SgAsmBlock*, Vertex> BlockVertexMap;
             BlockVertexMap &bv_map;
             VertexInserter(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
                 : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
@@ -540,23 +543,45 @@ namespace BinaryAnalysis {
 
 /** Return the AST node associated with a vertex. The return value is either a basic block (SgAsmBlock) or instruction
   * (SgAsmInstruction) depending on the graph type. */
-template<class ControlFlowGraph>
-typename boost::property_traits<typename boost::property_map<ControlFlowGraph, boost::vertex_name_t>::type>::value_type
-get_ast_node(const ControlFlowGraph &cfg, typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor vertex) {
-    return get(boost::vertex_name, cfg, vertex);
+template<class V, class E>
+typename Sawyer::Container::Graph<V, E>::VertexValue
+get_ast_node(const Sawyer::Container::Graph<V, E> &cfg, size_t vertexId) {
+    typedef typename Sawyer::Container::Graph<V, E> CFG;
+    typename CFG::ConstVertexValueIterator iter = cfg.findVertex(vertexId);
+    ASSERT_forbid2(iter==cfg.vertices().end(), "invalid vertex ID " + StringUtility::numberToString(vertexId));
+    return *iter;
 }
 
 /** Set the AST node associated with a vertex. The value is either a basic block (SgAsmBlock) or instruction
  * (SgAsmInstruction) depending on the graph type. */
-template<class ControlFlowGraph>
+template<class V, class E, class AstNode>
 void
-put_ast_node(ControlFlowGraph &cfg, typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor vertex,
-             typename boost::property_traits<
-                 typename boost::property_map<ControlFlowGraph, boost::vertex_name_t>::type
-                 >::value_type ast_node) {
-    put(boost::vertex_name, cfg, vertex, ast_node);
+put_ast_node(Sawyer::Container::Graph<V, E> &cfg, size_t vertexId, AstNode *astNode) {
+    typedef typename Sawyer::Container::Graph<V, E> CFG;
+    typename CFG::VertexValueIterator iter = cfg.findVertex(vertexId);
+    ASSERT_forbid2(iter==cfg.vertices().end(), "invalid vertex ID " + StringUtility::numberToString(vertexId));
+    *iter = astNode;
 }
 
+// Sorry about this mess!  The goal is to match only boost::adjacency_list graphs.
+template<class A, class B, class C, class D, class E, class F, class G>
+typename boost::property_traits<typename boost::property_map<boost::adjacency_list<A, B, C, D, E, F, G>,
+                                                             boost::vertex_name_t>::type>::value_type
+get_ast_node(const boost::adjacency_list<A, B, C, D, E, F, G> &cfg,
+             typename boost::graph_traits<boost::adjacency_list<A, B, C, D, E, F, G> >::vertex_descriptor vertex) {
+    return boost::get(boost::vertex_name, cfg, vertex);
+}
+
+// Sorry about this mess!  The goal is to match only boost::adjacency_list graphs.
+template<class A, class B, class C, class D, class E, class F, class G>
+void
+put_ast_node(boost::adjacency_list<A, B, C, D, E, F, G> &cfg,
+             typename boost::graph_traits<boost::adjacency_list<A, B, C, D, E, F, G> >::vertex_descriptor vertex,
+             typename boost::property_traits<
+                 typename boost::property_map<boost::adjacency_list<A, B, C, D, E, F, G>, boost::vertex_name_t>::type
+                 >::value_type ast_node) {
+    boost::put(boost::vertex_name, cfg, vertex, ast_node);
+}
 
 /******************************************************************************************************************************
  *                                      Function template definitions
@@ -567,7 +592,7 @@ void
 BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
 {
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+    for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get_ast_node(cfg, *vi); // FIXME: Instruction CFGs not supported yet
         if (!block || is_vertex_filtered(block))
             continue;
@@ -581,11 +606,11 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
         block->set_successors_complete(true);
         block->get_successors().clear();
         typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
-        for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
-            SgAsmBlock *target_block = get_ast_node(cfg, target(*ei, cfg));
+        for (boost::tie(ei, ei_end)=boost::out_edges(*vi, cfg); ei!=ei_end; ++ei) {
+            SgAsmBlock *target_block = get_ast_node(cfg, boost::target(*ei, cfg));
             if (target_block && !is_edge_filtered(block, target_block)) {
-                SgAsmIntegerValueExpression *target = new SgAsmIntegerValueExpression(target_block->get_address());
-                target->make_relative_to(target_block);
+                SgAsmIntegerValueExpression *target = SageBuilderAsm::buildValueU64(target_block->get_address());
+                target->makeRelativeTo(target_block);
                 target->set_parent(block);
                 block->get_successors().push_back(target);
             }
@@ -598,7 +623,7 @@ void
 BinaryAnalysis::ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cfg)
 {
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+    for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get_ast_node(cfg, *vi); // FIXME: Instruction CFGs not supported yet
         if (block && !is_vertex_filtered(block))
             block->set_cached_vertex(*vi);
@@ -609,37 +634,41 @@ template<class ControlFlowGraph>
 void
 BinaryAnalysis::ControlFlow::VertexInserter<ControlFlowGraph>::conditionally_add_vertex(SgAsmBlock *block)
 {
-    if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) &&
-        bv_map.find(block)==bv_map.end()) {
-        Vertex vertex = add_vertex(cfg);
+    if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) && !bv_map.exists(block)) {
+        Vertex vertex = boost::add_vertex(cfg);
         bv_map[block] = vertex;
         put_ast_node(cfg, vertex, block);
     }
 }
-    
 
 template<class ControlFlowGraph>
 void
 BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
 {
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-    typedef std::map<SgAsmBlock*, Vertex> BlockVertexMap;
+    Vertex NO_VERTEX = boost::graph_traits<ControlFlowGraph>::null_vertex();
+    typedef Map<SgAsmBlock*, Vertex> BlockVertexMap;
     BlockVertexMap bv_map;
 
+    // Add the vertices
     cfg.clear();
     VertexInserter<ControlFlowGraph>(this, cfg, bv_map).traverse(root, preorder);
 
-    /* Add the edges. */
-    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
-        SgAsmBlock *source = get_ast_node(cfg, *vi);
-        const SgAsmIntegerValuePtrList &succs = source->get_successors();
-        for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
-            SgAsmBlock *target = isSgAsmBlock((*si)->get_base_node()); // might be null
-            if (target && !is_edge_filtered(source, target)) {
-                typename BlockVertexMap::iterator bvmi=bv_map.find(target);
-                if (bvmi!=bv_map.end())
-                    add_edge(*vi, bvmi->second, cfg);
+    // Mapping from block entry address to CFG vertex
+    Map<rose_addr_t, Vertex> addrToVertex;
+    for (typename BlockVertexMap::iterator bvi=bv_map.begin(); bvi!=bv_map.end(); ++bvi)
+        addrToVertex[bvi->first->get_address()] = bvi->second;
+
+    // Add the edges
+    BOOST_FOREACH (Vertex sourceVertex, boost::vertices(cfg)) {
+        SgAsmBlock *sourceBlock = get_ast_node(cfg, sourceVertex);
+        BOOST_FOREACH (SgAsmIntegerValueExpression *integerValue, sourceBlock->get_successors()) {
+            Vertex targetVertex = addrToVertex.get_value_or(integerValue->get_absoluteValue(), NO_VERTEX);
+            if (targetVertex!=NO_VERTEX) {
+                SgAsmBlock *targetBlock = get_ast_node(cfg, targetVertex);
+                assert(targetBlock!=NULL); // since we have a vertex, there must be an SgAsmBlock!
+                if (!is_edge_filtered(sourceBlock, targetBlock))
+                    boost::add_edge(sourceVertex, targetVertex, cfg);
             }
         }
     }
@@ -698,24 +727,24 @@ BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src, ControlFlowGraph 
     Vertex NO_VERTEX = boost::graph_traits<ControlFlowGraph>::null_vertex();
 
     dst.clear();
-    std::vector<Vertex> src_to_dst(num_vertices(src), NO_VERTEX);
+    std::vector<Vertex> src_to_dst(boost::num_vertices(src), NO_VERTEX);
 
-    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(src); vi!=vi_end; ++vi) {
+    typename boost::graph_traits<const ControlFlowGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=boost::vertices(src); vi!=vi_end; ++vi) {
         SgAsmNode *node = get_ast_node(src, *vi);
         if (!is_vertex_filtered(node)) {
-            src_to_dst[*vi] = add_vertex(dst);
+            src_to_dst[*vi] = boost::add_vertex(dst);
             put_ast_node(dst, src_to_dst[*vi], get_ast_node(src, *vi));
         }
     }
 
-    typename boost::graph_traits<ControlFlowGraph>::edge_iterator ei, ei_end;
-    for (boost::tie(ei, ei_end)=edges(src); ei!=ei_end; ++ei) {
-        if (NO_VERTEX!=src_to_dst[source(*ei, src)] && NO_VERTEX!=src_to_dst[target(*ei, src)]) {
-            SgAsmNode *node1 = get_ast_node(src, source(*ei, src));
-            SgAsmNode *node2 = get_ast_node(src, target(*ei, src));
+    typename boost::graph_traits<const ControlFlowGraph>::edge_iterator ei, ei_end;
+    for (boost::tie(ei, ei_end)=boost::edges(src); ei!=ei_end; ++ei) {
+        if (NO_VERTEX!=src_to_dst[boost::source(*ei, src)] && NO_VERTEX!=src_to_dst[boost::target(*ei, src)]) {
+            SgAsmNode *node1 = get_ast_node(src, boost::source(*ei, src));
+            SgAsmNode *node2 = get_ast_node(src, boost::target(*ei, src));
             if (!is_edge_filtered(node1, node2))
-                add_edge(src_to_dst[source(*ei, src)], src_to_dst[target(*ei, src)], dst);
+                boost::add_edge(src_to_dst[boost::source(*ei, src)], src_to_dst[boost::target(*ei, src)], dst);
         }
     }
 }
@@ -734,9 +763,9 @@ void
 BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/*out*/)
 {
     // BlockCFG is the basic-block binary control flow graph
-    typedef typename boost::graph_traits<BlockCFG>::vertex_descriptor BlockCFG_Vertex;
-    typedef typename boost::graph_traits<BlockCFG>::vertex_iterator BlockCFG_VertexIterator;
-    typedef typename boost::graph_traits<BlockCFG>::edge_iterator BlockCFG_EdgeIterator;
+    typedef typename boost::graph_traits<const BlockCFG>::vertex_descriptor BlockCFG_Vertex;
+    typedef typename boost::graph_traits<const BlockCFG>::vertex_iterator BlockCFG_VertexIterator;
+    typedef typename boost::graph_traits<const BlockCFG>::edge_iterator BlockCFG_EdgeIterator;
 
     // InsnCFG is the instruction binary control flow graph--it points to instructions rather than basic blocks, and changes
     // some edges regarding function calls.
@@ -748,7 +777,7 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
     Map<BlockCFG_Vertex, InsnCFG_VertexPair> vertex_translation; // enter and leave instructions for each of the blocks in cfgb
     {
         BlockCFG_VertexIterator vi, vi_end;
-        for (boost::tie(vi, vi_end)=vertices(cfgb); vi!=vi_end; ++vi) {
+        for (boost::tie(vi, vi_end)=boost::vertices(cfgb); vi!=vi_end; ++vi) {
             SgAsmBlock *blk = get_ast_node(cfgb, *vi);
             const SgAsmStatementPtrList &insns = blk->get_statementList();
             assert(!insns.empty());
@@ -757,12 +786,12 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
             for (SgAsmStatementPtrList::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                 SgAsmInstruction *insn = isSgAsmInstruction(*ii);
                 assert(insn!=NULL); // basic blocks contain only instructions, no other type of asm statement
-                InsnCFG_Vertex vertex = add_vertex(cfgi);
-                put(boost::vertex_name, cfgi, vertex, insn);
+                InsnCFG_Vertex vertex = boost::add_vertex(cfgi);
+                put_ast_node(cfgi, vertex, insn);
                 if (ii==insns.begin()) {
                     enter_vertex = vertex;
                 } else {
-                    add_edge(prev_vertex, vertex, cfgi);
+                    boost::add_edge(prev_vertex, vertex, cfgi);
                 }
                 prev_vertex = vertex;
             }
@@ -775,12 +804,12 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
     // block and enter at the first instruction of the target basic block.
     {
         BlockCFG_EdgeIterator ei, ei_end;
-        for (boost::tie(ei, ei_end)=edges(cfgb); ei!=ei_end; ++ei) {
-            InsnCFG_Vertex src_leave_vertex = vertex_translation.get_one(source(*ei, cfgb)).second;
-            InsnCFG_Vertex dst_enter_vertex = vertex_translation.get_one(target(*ei, cfgb)).first;
+        for (boost::tie(ei, ei_end)=boost::edges(cfgb); ei!=ei_end; ++ei) {
+            InsnCFG_Vertex src_leave_vertex = vertex_translation.get_one(boost::source(*ei, cfgb)).second;
+            InsnCFG_Vertex dst_enter_vertex = vertex_translation.get_one(boost::target(*ei, cfgb)).first;
             assert(src_leave_vertex!=boost::graph_traits<InsnCFG>::null_vertex());
             assert(dst_enter_vertex!=boost::graph_traits<InsnCFG>::null_vertex());
-            add_edge(src_leave_vertex, dst_enter_vertex, cfgi);
+            boost::add_edge(src_leave_vertex, dst_enter_vertex, cfgi);
         }
     }
 }
@@ -802,15 +831,15 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
     // successors at this point because CFG1 didn't have any.
     InstructionMap insns;
     InsnToVertex insn_to_vertex;
-    std::vector<bool> isret(num_vertices(cfg), false);
+    std::vector<bool> isret(boost::num_vertices(cfg), false);
     {
         CFG_VertexIterator vi, vi_end;
-        for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
             SgAsmInstruction *insn = get_ast_node(cfg, *vi);
             insns[insn->get_address()] = insn;
             insn_to_vertex[insn] = *vi;
 
-            if (0==out_degree(*vi, cfg)) {
+            if (0==boost::out_degree(*vi, cfg)) {
                 // FIXME: Architecture-specific code here
                 if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn)) {
                     isret[*vi] = x86_ret==insn_x86->get_kind();
@@ -837,7 +866,7 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
     std::vector<CFG_VertexPair> edges_to_insert, edges_to_erase;
     {
         CFG_VertexIterator vi, vi_end;
-        for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
             CFG_Vertex returner_vertex = *vi;
             if (!isret[returner_vertex])
                 continue;
@@ -847,14 +876,14 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
             // following inter-function CFG edges until we find the true calls (those edges that follow CALL semantics).
             // Inter-function CFG edges can represent true calls or simply inter-function branches such as thunks.  We have to
             // gather up the information without adding it to the CFG yet (can't add while we're iterating)
-            std::vector<bool> seen(num_vertices(cfg), false);
+            std::vector<bool> seen(boost::num_vertices(cfg), false);
             WorkList<CFG_Vertex> worklist; // targets of inter-function CFG edges; function callees
             worklist.push(function_entry_vertex(returner_insn));
             while (!worklist.empty()) {
                 CFG_Vertex callee_vertex = worklist.shift();
                 CFG_InEdgeIterator ei, ei_end;
-                for (boost::tie(ei, ei_end)=in_edges(callee_vertex, cfg); ei!=ei_end; ++ei) {
-                    CFG_Vertex caller_vertex = source(*ei, cfg); // caller is a inter-function call or branch site
+                for (boost::tie(ei, ei_end)=boost::in_edges(callee_vertex, cfg); ei!=ei_end; ++ei) {
+                    CFG_Vertex caller_vertex = boost::source(*ei, cfg); // caller is a inter-function call or branch site
                     if (!seen[caller_vertex]) {
                         seen[caller_vertex] = true;
                         SgAsmInstruction *caller_insn = get_ast_node(cfg, caller_vertex);
@@ -885,10 +914,10 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
     // Erase and insert edges now that we're done iterating.
     if (!preserve_call_fallthrough_edges) {
         for (size_t i=0; i<edges_to_erase.size(); ++i)
-            remove_edge(edges_to_erase[i].first, edges_to_erase[i].second, cfg);
+            boost::remove_edge(edges_to_erase[i].first, edges_to_erase[i].second, cfg);
     }
     for (size_t i=0; i<edges_to_insert.size(); ++i)
-        add_edge(edges_to_insert[i].first, edges_to_insert[i].second, cfg);
+        boost::add_edge(edges_to_insert[i].first, edges_to_insert[i].second, cfg);
 }
 
 template<class ControlFlowGraph>
@@ -896,13 +925,13 @@ void
 BinaryAnalysis::ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Vertex v0,
                                                                   ReverseVertexList *reverse_order) {
     forward_order->clear();
-    std::vector<boost::default_color_type> colors(num_vertices(g), boost::white_color);
-    depth_first_visit(g, v0, *this, &(colors[0]));
+    std::vector<boost::default_color_type> colors(boost::num_vertices(g), boost::white_color);
+    boost::depth_first_visit(g, v0, *this, &(colors[0]));
     assert(!forward_order->empty()); /* it should at least contain v0 */
     std::reverse(forward_order->begin(), forward_order->end());
     if (reverse_order) {
         reverse_order->clear();
-        reverse_order->resize(num_vertices(g), (size_t)(-1));
+        reverse_order->resize(boost::num_vertices(g), (size_t)(-1));
         for (size_t i=0; i<forward_order->size(); i++)
             (*reverse_order)[(*forward_order)[i]] = i;
     }
@@ -930,7 +959,7 @@ void
 BinaryAnalysis::ControlFlow::ReturnBlocks<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g)
 {
     typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
-    boost::tie(ei, ei_end) = out_edges(v, g);
+    boost::tie(ei, ei_end) = boost::out_edges(v, g);
     if (ei==ei_end)
         blocks.push_back(v);
 }
@@ -942,8 +971,8 @@ BinaryAnalysis::ControlFlow::return_blocks(const ControlFlowGraph &cfg,
 {
     typename ReturnBlocks<ControlFlowGraph>::Vector result;
     ReturnBlocks<ControlFlowGraph> visitor(result);
-    std::vector<boost::default_color_type> colors(num_vertices(cfg), boost::white_color);
-    depth_first_visit(cfg, start, visitor, &(colors[0]));
+    std::vector<boost::default_color_type> colors(boost::num_vertices(cfg), boost::white_color);
+    boost::depth_first_visit(cfg, start, visitor, &(colors[0]));
     return result;
 }
 
@@ -990,13 +1019,13 @@ BinaryAnalysis::ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
     Functions funcs;
     std::vector<CFG_Edge> interfunc_edges;
     CFG_VertexIterator vi, vi_end;
-    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+    for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(get_ast_node(cfg, *vi), true);
         FunctionSubgraphInfo<CFG> &f = funcs[func];
         f.vertices.push_back(*vi);
         CFG_OutEdgeIterator ei, ei_end;
-        for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
-            SgNode *tgt_node = get_ast_node(cfg, target(*ei, cfg));
+        for (boost::tie(ei, ei_end)=boost::out_edges(*vi, cfg); ei!=ei_end; ++ei) {
+            SgNode *tgt_node = get_ast_node(cfg, boost::target(*ei, cfg));
             SgAsmFunction *tgt_func = SageInterface::getEnclosingNode<SgAsmFunction>(tgt_node, true);
             if (tgt_func==func) {
                 f.edges.push_back(*ei);
@@ -1026,7 +1055,7 @@ BinaryAnalysis::ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
                 out <<";\n";
             }
             for (size_t i=0; i<f.edges.size(); ++i) {
-                out <<"    " <<source(f.edges[i], cfg) <<"->" <<target(f.edges[i], cfg);
+                out <<"    " <<boost::source(f.edges[i], cfg) <<"->" <<boost::target(f.edges[i], cfg);
                 epw(out, f.edges[i]);
                 out <<";\n";
             }
@@ -1036,7 +1065,7 @@ BinaryAnalysis::ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
 
     // Inter-function edges
     for (size_t i=0; i<interfunc_edges.size(); ++i) {
-        out <<"  " <<source(interfunc_edges[i], cfg) <<"->" <<target(interfunc_edges[i], cfg);
+        out <<"  " <<boost::source(interfunc_edges[i], cfg) <<"->" <<boost::target(interfunc_edges[i], cfg);
         epw(out, interfunc_edges[i]);
         out <<";\n";
     }

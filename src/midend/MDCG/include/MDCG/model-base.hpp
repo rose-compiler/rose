@@ -8,6 +8,8 @@
 #ifndef __MDCG_MODEL_BASE_HPP__
 #define __MDCG_MODEL_BASE_HPP__
 
+#include <cstddef>
+
 #include <vector>
 #include <map>
 

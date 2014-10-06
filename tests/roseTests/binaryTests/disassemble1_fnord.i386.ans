@@ -12,7 +12,6 @@ using this memory map for disassembly:
     va 0x0804c858 + 0x00000008 = 0x0804c860 rw-p at anon aaf     + 0x00000000 fnord.i386(LOAD#1)
     va 0x0804c860 + 0x00000148 = 0x0804c9a8 rw-p at anon aar     + 0x00000000 fnord.i386(.bss)
     va 0x08050968 + 0x00000698 = 0x08051000 rw-p at anon aae     + 0x00003fc8 fnord.i386(LOAD#1)
-disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -12181,4 +12180,3 @@ disassembled 6253 instructions and 15 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

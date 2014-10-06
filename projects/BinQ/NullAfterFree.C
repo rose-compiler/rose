@@ -89,7 +89,7 @@ NullAfterFree::visit(SgNode* node) {
 	    //	    rose_addr_t addrDest=0;
 	    SgAsmExpressionPtrList::const_iterator itOP = opsList.begin();
 	    SgAsmMemoryReferenceExpression* mem=NULL;
-	    SgAsmx86RegisterReferenceExpression* reg=NULL;
+	    SgAsmRegisterReferenceExpression* reg=NULL;
 	    int iteration=0;
 	    for (;itOP!=opsList.end();++itOP) {
 	      SgAsmExpression* exp = *itOP;
@@ -100,7 +100,7 @@ NullAfterFree::visit(SgNode* node) {
 	      }
 	      if (iteration==0) {
 		// left hand side
-		reg = isSgAsmx86RegisterReferenceExpression(exp);		
+		reg = isSgAsmRegisterReferenceExpression(exp);		
 		iteration++;
 	      }
 	    } //for

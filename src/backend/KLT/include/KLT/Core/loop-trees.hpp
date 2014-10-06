@@ -424,7 +424,7 @@ void LoopTrees<Annotation>::read(std::ifstream & in_file) {
     ensure(',');
 
     do {
-      LoopTrees::node_t * lt_node = parseLoopTreesNode<Annotation>();
+      node_t * lt_node = parseLoopTreesNode<Annotation>();
       assert(lt_node != NULL);
       addTree(lt_node);
 

@@ -27,7 +27,6 @@ using this memory map for disassembly:
     va 0x00500dad + 0x00000003 = 0x00500db0 rw-p at buffer aal   + 0x00000dad x86-64-ctrlaltdel(LOAD#3)
     va 0x00500db0 + 0x00000180 = 0x00500f30 r--- at buffer ach   + 0x00000db0 x86-64-ctrlaltdel(.gnu.conflict)
     va 0x00500f30 + 0x000000d0 = 0x00501000 rw-p at buffer aal   + 0x00000f30 x86-64-ctrlaltdel(LOAD#3)
-disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 
 
 0x004005d8: ================================== Function (function call) unknown name
@@ -1637,4 +1636,3 @@ disassembled 2335 instructions and 176 failures (use --show-bad to see errors)
 
 
 
-generating ASCII dump...

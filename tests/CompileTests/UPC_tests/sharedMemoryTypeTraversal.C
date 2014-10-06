@@ -23,6 +23,8 @@ TypeTraversal::transformType(SgType* type)
   // Since only the base_types of pointers are shared, we can take as input the pointer type and just change it internally.
   // The reference to the type from non-type IR nodes need not be modified.
 
+  // DQ (6/11/2014): This function could be made more recursive to better address more general types.
+
      ROSE_ASSERT(type != NULL);
 
 #if DEBUG_TYPE_TRAVERSAL
@@ -116,8 +118,31 @@ TypeTraversal::transformType(SgType* type)
             // DQ (5/31/2014): Reset the type to eliminate the shared keyword.
                mod_type->get_typeModifier().get_upcModifier().set_isShared(false);
              }
-        }
+            else
+             {
+            // DQ (6/11/2014): Added more general support to include SgArrayType (see test2014_48.c).
+#if 0
+               printf ("In TypeTraversal::transformType(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
+               SgArrayType* arrayType = isSgArrayType(type);
+               if (arrayType != NULL)
+                  {
+#if 0
+                    printf ("In TypeTraversal::transformType(): Found a SgArrayType: arrayType = %p \n",arrayType);
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    transformType(arrayType->get_base_type());
+                  }
 
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
    }
 
 
