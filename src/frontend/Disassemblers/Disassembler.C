@@ -32,7 +32,7 @@ std::vector<Disassembler*> Disassembler::disassemblers;
 
 /* Diagnostics */
 Sawyer::Message::Facility Disassembler::mlog;
-double Disassembler::progress_interval = 10.0;
+double Disassembler::progress_interval = -1.0;          // negative turns it off
 double Disassembler::progress_time = 0.0;
 
 void Disassembler::initDiagnostics() {
