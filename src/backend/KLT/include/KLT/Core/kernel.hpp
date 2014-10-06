@@ -50,6 +50,8 @@ class Kernel {
       std::list<SgVariableSymbol *> scalars;
       /// Datas : reference order for call argument
       std::list<Data<Annotation> *> datas;
+      /// Private Datas : reference order for call argument
+      std::list<Data<Annotation> *> privates;
       /// Context : used to communicate information (loop shape, ...) from the host to the device
       SgVariableSymbol * context;
     };
@@ -58,6 +60,7 @@ class Kernel {
       std::map<SgVariableSymbol *, SgVariableSymbol *> parameters;
       std::map<SgVariableSymbol *, SgVariableSymbol *> scalars;
       std::map<Data<Annotation> *, SgVariableSymbol *> datas;
+      std::map<Data<Annotation> *, SgVariableSymbol *> privates;
       std::map<Data<Annotation> *, SgVariableSymbol *> data_offsets;
       std::map<SgVariableSymbol *, SgVariableSymbol *> iterators;
       SgVariableSymbol * context;

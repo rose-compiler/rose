@@ -117,6 +117,9 @@ class LoopTrees {
     /// Datas used by loop trees
     std::vector<Data<Annotation> *> p_datas;
 
+    /// Private datas used by loop trees
+    std::vector<Data<Annotation> *> p_privates;
+
     /// Coefficiants (constant values) used in the sequence loop trees
     std::vector<SgVariableSymbol *> p_scalars;
 
@@ -167,6 +170,9 @@ class LoopTrees {
     const std::vector<Data<Annotation> *> & getDatas() const { return p_datas; }
     size_t getNumDatas() const { return p_datas.size(); }
 
+    const std::vector<Data<Annotation> *> & getPrivates() const { return p_privates; }
+    size_t getNumPrivates() const { return p_privates.size(); }
+
     const std::vector<SgVariableSymbol *> & getScalars() const { return p_scalars; }
     size_t getNumScalars() const { return p_scalars.size(); }
 
@@ -195,6 +201,9 @@ class LoopTrees {
 
     /// Add a data used by loop trees
     void addData(Data<Annotation> * data) { if (std::find(p_datas.begin(), p_datas.end(), data) == p_datas.end()) p_datas.push_back(data); }
+
+    /// Add a data used by loop trees
+    void addPrivate(Data<Annotation> * data) { if (std::find(p_privates.begin(), p_privates.end(), data) == p_privates.end()) p_privates.push_back(data); }
 
     /// Add a coefficient of the sequence of loop trees
     void addScalar(SgVariableSymbol * var_sym) { if (std::find(p_scalars.begin(), p_scalars.end(), var_sym) == p_scalars.end()) p_scalars.push_back(var_sym); }
