@@ -3155,9 +3155,9 @@ Grammar::buildCode ()
 #endif
 
 
-  //---------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------
   // generate a function for each node in the AST to return the node's successors of the traversal   
-  //---------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_treeTraversalFunctionsSourceFile;
      cout << "Calling buildTreeTraversalFunctions() ..." << endl;
   // Write header string to file (it's the same string as above, we just reuse it)
@@ -3171,9 +3171,34 @@ Grammar::buildCode ()
      cout << "DONE: buildTreeTraversalFunctions()" << endl;
      Grammar::writeFile(ROSE_treeTraversalFunctionsSourceFile, target_directory, getGrammarName() + "TreeTraversalSuccessorContainer", ".C");
 
-     //---------------------------------------------------------------------------------------------
-     // generate what is necessary for SAGE support in AstProcessing classes
-     //---------------------------------------------------------------------------------------------
+  // DQ (10/4/2014): Adding ATerm support via ROSETTA.
+  // ---------------------------------------------------------------------------------------------
+  // generate a function for each node in the AST to support ATerm read and write operations.
+  // ---------------------------------------------------------------------------------------------
+     StringUtility::FileWithLineNumbers ROSE_ATermSupportSourceFile;
+     cout << "Calling buildAtermSupportFunctions() ..." << endl;
+  // Write header string to file (it's the same string as above, we just reuse it)
+     ROSE_ATermSupportSourceFile << includeHeaderString;
+
+  // DQ (10/4/2014): Insert "using namespace std;" into the source file (but never into the header files!)
+  // ROSE_ATermSupportSourceFile << "\n// Simplify code by using std namespace (never put into header files since it effects users) \nusing namespace std;\n\n";
+     ROSE_ATermSupportSourceFile << "\n// Simplify code by using AtermSupport namespace (never put into header files since it effects users) \nusing namespace AtermSupport;\n\n";
+
+#if 1
+  // Generate the implementations of the ATerm support functions
+     buildAtermSupportFunctions(*rootNode, ROSE_ATermSupportSourceFile);
+#endif
+     cout << "DONE: buildAtermSupportFunctions()" << endl;
+     Grammar::writeFile(ROSE_ATermSupportSourceFile, target_directory, getGrammarName() + "AtermSupport", ".C");
+
+#if 0
+     printf ("Exiting as a test in ROSETTA generation of ATerm support! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // ---------------------------------------------------------------------------------------------
+  // generate what is necessary for SAGE support in AstProcessing classes
+  // ---------------------------------------------------------------------------------------------
      cout << "building TreeTraversalAccessEnums ... ";
      string treeTraversalClassHeaderFileName = getGrammarName();
      treeTraversalClassHeaderFileName += "TreeTraversalAccessEnums.h";
@@ -3927,13 +3952,14 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
      vector<Terminal *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
-          ROSE_ASSERT((*treeNodeIterator)!=NULL);
-          ROSE_ASSERT((*treeNodeIterator)->getBaseClass()!=NULL);
+          ROSE_ASSERT((*treeNodeIterator) != NULL);
+          ROSE_ASSERT((*treeNodeIterator)->getBaseClass() != NULL);
           buildTreeTraversalFunctions(**treeNodeIterator, outputFile);
         }
 
   // return;
    }
+
 
 /////////////////////////////////////////////////
 // traversalSuccessorContainer Code Generation //
@@ -3971,13 +3997,12 @@ string Grammar::generateTraverseSuccessorForLoopSource(string typeString,
 // as it avoids repeated reallocations on push_back. The size of the container
 // is the sum of the number of single members and the size of the optional
 // container member.
-string Grammar::generateNumberOfSuccessorsComputation(
-        vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
+string Grammar::generateNumberOfSuccessorsComputation( vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
 {
     stringstream travSuccSource;
     if (!traverseDataMemberList.empty())
     {
-        vector<GrammarString *>::iterator iter;
+        vector<GrammarString*>::iterator iter;
         int singleSuccessors = 0, containerSuccessors = 0;
         for (iter = traverseDataMemberList.begin(); iter != traverseDataMemberList.end(); ++iter)
         {
@@ -4038,7 +4063,7 @@ string Grammar::generateTraverseSuccessor(GrammarString* gs, string successorCon
   // MS: sstream should be used here in future
      string travSuccSource="";
 
-#if 1
+#if 0
   // DQ (5/8/2005): Debugging code introduced to debug enclusion of SgDirectory concept!
      travSuccSource += string("/* typeString = ") + string(typeString) + string(" */\n");
      travSuccSource += string("/* isSTLContainer   (typeString) = ") + 

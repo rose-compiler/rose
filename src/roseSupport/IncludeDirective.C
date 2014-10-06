@@ -1,4 +1,5 @@
-#include <rose.h>
+// #include <rose.h>
+#include "sage3basic.h"
 
 #include "IncludeDirective.h"
 

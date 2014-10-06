@@ -32,6 +32,69 @@ using namespace std;
 int
 main(int argc, char* argv[])
    {
+  // This program test the conversion of the ATerm into the ROSE AST.
+
+     string aterm_filename;
+     printf ("argc = %d \n",argc);
+     if (argc == 2)
+        {
+          aterm_filename = argv[1];
+          printf ("aterm_filename = %s \n",aterm_filename.c_str());
+        }
+       else
+        {
+          printf ("Error: must specify name of aterm file on command line. \n");
+          ROSE_ASSERT(false);
+        }
+
+     printf ("Opening the aterm file: %s \n",aterm_filename.c_str());
+
+  // Read the text file format (could alternatively read the binary file format).
+     FILE* aterm_file_TAF = fopen(aterm_filename.c_str(),"r");
+
+     ROSE_ASSERT(aterm_file_TAF != NULL);
+     printf ("DONE: Opening the aterm file: %s \n",aterm_filename.c_str());
+
+     printf ("Calling ATinit \n");
+     ATerm bottom;
+     ATinit(argc, argv, &bottom);
+
+     printf ("Reading the aterm from the file: %s \n",aterm_filename.c_str());
+     ATerm term = ATreadFromTextFile(aterm_file_TAF);
+     printf ("DONE: Reading the aterm from the file: %s \n",aterm_filename.c_str());
+
+#if 1
+  // DQ (9/17/2014): Adding test for conversion of Aterm back to AST.
+     printf ("Testing the reverse process to generate the ROSE AST from the Aterm \n");
+     SgNode* rootOfAST = convertAtermToNode(term);
+     printf ("rootOfAST = %p = %s \n",rootOfAST,rootOfAST->class_name().c_str());
+
+  // SgProject* project = isSgProject(rootOfAST);
+     SgSourceFile* sourceFile = isSgSourceFile(rootOfAST);
+     ROSE_ASSERT(sourceFile != NULL);
+#endif
+
+#if 0
+  // We need a SgProject to support the graph generation (the ATem we generate is only for a SgSourceFile).
+  // generateDOT(*project);
+     generateDOTforMultipleFile(*project, "AFTER_ATERM");
+
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 5000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"AFTER_ATERM");
+#endif
+
+#if 1
+     printf ("Program Terminated Normally \n");
+#endif
+
+     return 0;
+   }
+
+#if 0
+int
+main(int argc, char* argv[])
+   {
   // This program test the conversion of the ROSE AST to n ATerm and back to a ROSE AST.
 
   // Generate a ROSE AST as input.
@@ -89,4 +152,5 @@ main(int argc, char* argv[])
 
      return 0;
    }
+#endif
 

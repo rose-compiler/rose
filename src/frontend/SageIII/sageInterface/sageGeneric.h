@@ -19,7 +19,10 @@
 #endif /* NDEBUG */
 
 // #include "Cxx_Grammar.h"
-#include "rose.h"
+
+// DQ (10/5/2014): We can't include this here.
+// #include "rose.h"
+
 
 namespace sg
 {

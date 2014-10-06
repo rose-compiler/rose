@@ -17810,10 +17810,12 @@ SgUnparse_Info::dec_nestingLevel() {
 SOURCE_UNPARSE_INFO_END
 
 HEADER_TYPEDEF_SEQ_START         
-      //! Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      //! This is the const STL container access function for the STL list of typedef types using the type pointing to this SgTypedefSeq.
           const SgTypePtrList & get_typedefs() const;
 
-      //! Get the list of input types (types of the parameters list) to this function type
+      // Get the list of input types (types of the parameters list) to this function type
+      //! This is the non-const STL container access function for the STL list of typedef types using the type pointing to this SgTypedefSeq.
           SgTypePtrList & get_typedefs();
 
       //! Append new typedef to typedef type list
