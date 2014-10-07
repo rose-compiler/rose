@@ -8,6 +8,7 @@
 
 #include "AttributeMechanism.h"
 #include "rosedll.h"
+#include "rose_override.h"
 
 class SgNode;
 class SgNamedType;
