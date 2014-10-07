@@ -61,7 +61,7 @@ public:
     /** Promote a base value to a value of this type.  The value @p v must have an appropriate dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -171,7 +171,7 @@ public:
      *  will fail if @p x does not point to an object with appropriate dynamic type. */
     static InnerRiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         InnerRiscOperatorsPtr retval = boost::dynamic_pointer_cast<InnerRiscOperators>(x);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
