@@ -191,7 +191,7 @@ public:
     /** Promote a base value to a SymbolicSemantics value.  The value @p v must have a SymbolicSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -204,7 +204,7 @@ public:
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the InsnSemanticsExpr, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
-        assert(nbits==get_width());
+        ASSERT_require(nbits==get_width());
     }
 
     virtual bool is_number() const ROSE_OVERRIDE {
@@ -432,7 +432,7 @@ public:
      *  not have a run-time type that is a SymbolicSemantics::MemoryState or subclass thereof. */
     static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
         MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return retval;
     }
     
@@ -553,7 +553,7 @@ public:
      *  will fail if @p x does not point to a SymbolicSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 

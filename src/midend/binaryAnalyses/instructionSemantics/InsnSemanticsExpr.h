@@ -140,7 +140,7 @@ protected:
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
     mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
+    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { ASSERT_require(nbits>0); }
 
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
@@ -476,7 +476,7 @@ public:
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t get_value() const { assert(!"not a constant value"); return 0;}
+    virtual uint64_t get_value() const { ASSERT_forbid2(true, "not a constant value"); return 0;}
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return nnodes_; }
 
@@ -484,7 +484,7 @@ public:
     size_t nchildren() const { return children.size(); }
 
     /** Returns the specified child. */
-    TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
+    TreeNodePtr child(size_t idx) const { ASSERT_require(idx<children.size()); return children[idx]; }
 
     /** Returns all children. */
     TreeNodes get_children() const { return children; }

@@ -75,7 +75,7 @@ public:
     /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -83,7 +83,7 @@ public:
     // Implementations of functions inherited
 public:
     virtual bool is_number() const { return false; }
-    virtual uint64_t get_number() const { assert(!"not a number"); abort(); uint64_t retval; return retval;}
+    virtual uint64_t get_number() const { ASSERT_not_reachable("not a number"); uint64_t retval; return retval;}
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return true;
@@ -132,7 +132,7 @@ public:
     
     static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &from) {
         RegisterStatePtr retval = boost::dynamic_pointer_cast<RegisterState>(from);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -185,7 +185,7 @@ public:
 public:
     static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
         MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return retval;
     }
 

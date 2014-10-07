@@ -124,7 +124,7 @@ public:
     /** Instantiate a new RiscOperators object. The @p subdomain argument should be the RISC operators that we want to
      * trace. */
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
-        assert(subdomain!=NULL);
+        ASSERT_not_null(subdomain);
         RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
@@ -158,7 +158,7 @@ public:
      *  will fail if @p from does not point to a TraceSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
     

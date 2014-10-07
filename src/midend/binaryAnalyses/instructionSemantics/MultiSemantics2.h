@@ -106,7 +106,7 @@ public:
     /** Promote a base value to a MultiSemantics value.  The value @p v must have a MultiSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -171,7 +171,7 @@ public:
 
     /** Return a subdomain value.  The subdomain must be valid according to is_valid(). */
     virtual BaseSemantics::SValuePtr get_subvalue(size_t idx) const { // hot
-        assert(idx<subvalues.size() && subvalues[idx]!=NULL); // you should have called is_valid() first
+        ASSERT_require(idx<subvalues.size() && subvalues[idx]!=NULL); // you should have called is_valid() first
         return subvalues[idx];
     }
 
@@ -179,7 +179,7 @@ public:
      *  whether the value has a valid dynamic type for that slot.  If the value is not a null pointer, then is_valid() will
      *  return true after this call. */
     virtual void set_subvalue(size_t idx, const BaseSemantics::SValuePtr &value) { // hot
-        assert(value==NULL || value->get_width()==get_width());
+        ASSERT_require(value==NULL || value->get_width()==get_width());
         if (idx>=subvalues.size())
             subvalues.resize(idx+1);
         subvalues[idx] = value;

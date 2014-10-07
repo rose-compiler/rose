@@ -80,23 +80,20 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 void
 State::print_diff_registers(std::ostream &o, const StatePtr &other_state, Formatter &fmt) const
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
 }
 
 bool
 State::equal_registers(const StatePtr &other) const
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
     return false;
 }
 
 void
 State::discard_popped_memory()
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
 }
 
 
@@ -115,7 +112,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if ((!a->name && 0==a->offset) || (!b->name && 0==b->offset))
         return number_(a->get_width(), 0);
     if (a->name || b->name)
@@ -128,7 +125,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (a->must_equal(b))
         return a->copy();
     if (!a->name && !b->name)
@@ -145,7 +142,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (!a->name && !b->name)
         return number_(a->get_width(), a->offset ^ b->offset);
     if (a->must_equal(b))
@@ -178,8 +175,8 @@ BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
 {
     SValuePtr a = SValue::promote(a_);
-    assert(end_bit<=a->get_width());
-    assert(begin_bit<end_bit);
+    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(begin_bit<end_bit);
     if (0==begin_bit) {
         if (end_bit==a->get_width())
             return a->copy();
@@ -216,8 +213,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(1==sel->get_width());
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(1==sel->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (a->must_equal(b))
         return a->copy();
     if (sel->name)
@@ -328,7 +325,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (a->name==b->name && (!a->name || a->negate!=b->negate)) {
         /* [V1+x] + [-V1+y] = [x+y]  or
          * [x] + [y] = [x+y] */
@@ -351,7 +348,7 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
-    assert(a->get_width()==b->get_width() && c->get_width()==1);
+    ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
     int n_unknown = (a->name?1:0) + (b->name?1:0) + (c->name?1:0);
     if (n_unknown <= 1) {
         /* At most, one of the operands is an unknown value. See add() for more details. */
@@ -526,8 +523,8 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 {
 #ifndef NDEBUG
     size_t nbits = value->get_width();
-    assert(8==nbits || 16==nbits || 32==nbits);
-    assert(1==condition->get_width()); // FIXME: condition is not used
+    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
 #endif
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
@@ -541,8 +538,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &condition)
 {
     size_t nbits = dflt_->get_width();
-    assert(1==condition->get_width()); // FIXME: condition is not used
-    assert(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
 
     // Default values come from an optional memory map if possible, otherwise use the passed-in default.
     BaseSemantics::SValuePtr dflt = dflt_;

@@ -142,7 +142,7 @@ public:
      *  PartialSymbolicSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -164,7 +164,7 @@ public:
     }
 
     virtual uint64_t get_number() const ROSE_OVERRIDE {
-        assert(is_number());
+        ASSERT_require(is_number());
         return offset;
     }
 };
@@ -196,15 +196,15 @@ protected:
           const BaseSemantics::MemoryStatePtr &memory)
         : BaseSemantics::State(registers, memory) {
         // This state should use PartialSymbolicSemantics values (or subclasses thereof)
-        assert(registers!=NULL);
+        ASSERT_not_null(registers);
         (void) SValue::promote(registers->get_protoval());
-        assert(memory!=NULL);
+        ASSERT_not_null(memory);
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
         BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
-        assert(!mcl->get_byte_restricted());
+        ASSERT_require(!mcl->get_byte_restricted());
     }
 
     State(const State &other): BaseSemantics::State(other) {}
@@ -241,7 +241,7 @@ public:
 public:
     static StatePtr promote(const BaseSemantics::StatePtr &x) {
         StatePtr retval = boost::dynamic_pointer_cast<State>(x);
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return retval;
     }
 
@@ -336,7 +336,7 @@ public:
      *  fail if @p from does not point to a PartialSymbolicSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 

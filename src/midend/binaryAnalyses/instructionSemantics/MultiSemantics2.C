@@ -23,7 +23,7 @@ BaseSemantics::SValuePtr
 SValue::undefined_(size_t nbits) const
 {
     SValuePtr retval = create_empty(nbits);
-    assert(retval->subvalues.empty());
+    ASSERT_require(retval->subvalues.empty());
     for (size_t i=0; i<subvalues.size(); ++i)
         retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->undefined_(nbits) : BaseSemantics::SValuePtr());
     return retval;
@@ -33,7 +33,7 @@ BaseSemantics::SValuePtr
 SValue::number_(size_t nbits, uint64_t number) const
 {
     SValuePtr retval = create_empty(nbits);
-    assert(retval->subvalues.empty());
+    ASSERT_require(retval->subvalues.empty());
     for (size_t i=0; i<subvalues.size(); ++i)
         retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->number_(nbits, number) : BaseSemantics::SValuePtr());
     return retval;
@@ -101,8 +101,7 @@ SValue::get_number() const
         if (is_valid(i))
             return subvalues[i]->get_number();
     }
-    assert(!"not a number");
-    abort(); // you should have called is_number() first
+    ASSERT_not_reachable("not a number");
 }
 
 void
@@ -142,10 +141,10 @@ SValue::invalidate(size_t idx)
 void
 RiscOperators::Cursor::init(const SValuePtr &arg1, const SValuePtr &arg2, const SValuePtr &arg3)
 {
-    assert((arg1==NULL && arg2==NULL && arg3==NULL) ||
-           (arg1!=NULL && arg2==NULL && arg3==NULL) ||
-           (arg1!=NULL && arg2!=NULL && arg3==NULL) ||
-           (arg1!=NULL && arg2!=NULL && arg3!=NULL));
+    ASSERT_require((arg1==NULL && arg2==NULL && arg3==NULL) ||
+                   (arg1!=NULL && arg2==NULL && arg3==NULL) ||
+                   (arg1!=NULL && arg2!=NULL && arg3==NULL) ||
+                   (arg1!=NULL && arg2!=NULL && arg3!=NULL));
     if (arg1!=NULL)
         inputs_.push_back(arg1);
     if (arg2!=NULL)
@@ -167,10 +166,10 @@ RiscOperators::Cursor::Inputs
 RiscOperators::Cursor::inputs(const BaseSemantics::SValuePtr &arg1, const BaseSemantics::SValuePtr &arg2,
                               const BaseSemantics::SValuePtr &arg3)
 {
-    assert((arg1==NULL && arg2==NULL && arg3==NULL) ||
-           (arg1!=NULL && arg2==NULL && arg3==NULL) ||
-           (arg1!=NULL && arg2!=NULL && arg3==NULL) ||
-           (arg1!=NULL && arg2!=NULL && arg3!=NULL));
+    ASSERT_require((arg1==NULL && arg2==NULL && arg3==NULL) ||
+                   (arg1!=NULL && arg2==NULL && arg3==NULL) ||
+                   (arg1!=NULL && arg2!=NULL && arg3==NULL) ||
+                   (arg1!=NULL && arg2!=NULL && arg3!=NULL));
     Inputs inputs;
     if (arg1!=NULL)
         inputs.push_back(SValue::promote(arg1));
@@ -200,14 +199,14 @@ RiscOperators::Cursor::next()
 size_t
 RiscOperators::Cursor::idx() const
 {
-    assert(!at_end());
+    ASSERT_require(!at_end());
     return idx_;
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::Cursor::operator()(const BaseSemantics::SValuePtr &a_) const
 {
-    assert(!at_end());
+    ASSERT_require(!at_end());
     SValuePtr a = SValue::promote(a_);
     return a->get_subvalue(idx_);
 }
@@ -215,14 +214,14 @@ RiscOperators::Cursor::operator()(const BaseSemantics::SValuePtr &a_) const
 BaseSemantics::RiscOperatorsPtr
 RiscOperators::Cursor::operator->() const
 {
-    assert(!at_end());
+    ASSERT_require(!at_end());
     return ops_->get_subdomain(idx_);
 }
 
 BaseSemantics::RiscOperatorsPtr
 RiscOperators::Cursor::operator*() const
 {
-    assert(!at_end());
+    ASSERT_require(!at_end());
     return ops_->get_subdomain(idx_);
 }
 
@@ -256,14 +255,14 @@ RiscOperatorsPtr
 RiscOperators::promote(const BaseSemantics::RiscOperatorsPtr &ops)
 {
     RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(ops);
-    assert(retval!=NULL);
+    ASSERT_not_null(retval);
     return retval;
 }
 
 size_t
 RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, const std::string &name, bool activate)
 {
-    assert(subdomain!=NULL);
+    ASSERT_not_null(subdomain);
     size_t idx = subdomains.size();
     subdomains.push_back(subdomain);
     active.push_back(activate);
@@ -289,7 +288,7 @@ RiscOperators::set_active(size_t idx, bool status)
         if (idx<subdomains.size())
             active[idx] = false;
     } else {
-        assert(idx<subdomains.size() && subdomains[idx]!=NULL);
+        ASSERT_require(idx<subdomains.size() && subdomains[idx]!=NULL);
         active[idx] = true;
     }
 }
@@ -410,8 +409,8 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a)
 BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t begin_bit, size_t end_bit)
 {
-    assert(end_bit <= a->get_width());
-    assert(end_bit > begin_bit);
+    ASSERT_require(end_bit <= a->get_width());
+    ASSERT_require(end_bit > begin_bit);
     SValuePtr retval = svalue_empty(end_bit-begin_bit);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->extract(sd(a), begin_bit, end_bit));

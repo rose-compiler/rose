@@ -34,7 +34,7 @@ public:
     Interval(const Range<uint64_t> &other): Range<uint64_t>(other) {} /*implicit*/
 
     static Interval inin(uint64_t first, uint64_t last) ROSE_OVERRIDE {
-        assert(first<=last);
+        ASSERT_require(first<=last);
         Interval retval;
         retval.first(first);
         retval.last(last);
@@ -76,12 +76,12 @@ protected:
     SValue(size_t nbits, uint64_t v1, uint64_t v2): BaseSemantics::SValue(nbits) {
         v1 &= IntegerOps::genMask<uint64_t>(nbits);
         v2 &= IntegerOps::genMask<uint64_t>(nbits);
-        assert(v1<=v2);
+        ASSERT_require(v1<=v2);
         p_intervals.insert(Interval::inin(v1, v2));
     }
     SValue(size_t nbits, const Intervals &intervals): BaseSemantics::SValue(nbits) {
-        assert(!intervals.empty());
-        assert((intervals.max() <= IntegerOps::genMask<uint64_t>(nbits)));
+        ASSERT_require(!intervals.empty());
+        ASSERT_require((intervals.max() <= IntegerOps::genMask<uint64_t>(nbits)));
         p_intervals = intervals;
     }
 
@@ -124,7 +124,7 @@ public:
     /** Promote a base value to an IntevalSemantics value. The value @p v must have an IntervalSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
     
@@ -178,7 +178,7 @@ public:
     }
     
     virtual uint64_t get_number() const {
-        assert(1==p_intervals.size());
+        ASSERT_require(1==p_intervals.size());
         return p_intervals.min();
     }
 
@@ -351,7 +351,7 @@ public:
      *  will fail if @p from does not point to a IntervalSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
     
