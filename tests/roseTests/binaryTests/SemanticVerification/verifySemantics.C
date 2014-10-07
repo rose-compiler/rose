@@ -129,7 +129,7 @@ public:
      * instruction on the debugged process.
      *
      * On error, this function prints a message and then throws an exception in order to avoid the analysis. */
-    void startInstruction(SgAsmx86Instruction *insn) {
+    void startInstruction(SgAsmX86Instruction *insn) {
         registers_current = false; /* will cause next register read to come from the debugger rather than a cached value. */
         memory.clear();
 
@@ -148,7 +148,7 @@ public:
     }
 
     /* Called after each instruction is processed. */
-    void finishInstruction(SgAsmx86Instruction*) {}
+    void finishInstruction(SgAsmX86Instruction*) {}
 
     /* Called for the HLT instruction */
     void hlt() {} /*FIXME*/
@@ -989,7 +989,7 @@ int main(int argc, char *argv[]) {
             dbg.cont();
             continue;
         }
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         assert(insn_x86);
 #if 1
         /* Trace instructions */

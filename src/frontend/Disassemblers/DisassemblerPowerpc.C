@@ -74,7 +74,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, 
     /* Note successors if necessary */
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->get_successors(&complete);
+        AddressSet suc2 = insn->getSuccessors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 

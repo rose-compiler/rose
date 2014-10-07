@@ -258,13 +258,15 @@ public:
      *  Implicit conversion to a type that can be used in a boolean context such as an <code>if</code> or <code>while</code>
      *  statement.  For instance:
      *
-     *  @code
-     *   if (Interval<unsigned> x = doSomething(...)) {
-     *      // this is reached only if x is non-empty
-     *   }
-     *  @endcode */
+     * @code
+     *  if (Interval<unsigned> x = doSomething(...)) {
+     *     // this is reached only if x is non-empty
+     *  }
+     * @endcode
+     *
+     *  The inteval evaluates to true if it is non-empty, and false if it is empty. */
     operator unspecified_bool() const {
-        return isEmpty() ? &Interval::this_type_does_not_support_comparisons : 0;
+        return isEmpty() ? 0 : &Interval::this_type_does_not_support_comparisons;
     }
 };
 

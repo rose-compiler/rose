@@ -1044,7 +1044,7 @@ public:
         } else if (cur_state.registers.ip.known_value()!=insn->get_address()) {
             fprintf(stderr, "SymbolicSemantics::Policy::startInstruction: invalid EIP value for current instruction\n\
 startInstruction() is being called for an instruction with a concrete\n\
-address stored in the SgAsmx86Instruction object, but the current value of\n\
+address stored in the SgAsmX86Instruction object, but the current value of\n\
 this policy's EIP register does not match the instruction.  This might\n\
 happen if you're processing instructions in an order that's different than\n\
 the order the policy thinks they would be executed.  If this is truly your\n\

@@ -57,7 +57,7 @@ public:
                 triggered = true;
                 initialize_register_intervals(args.thread);
             }
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
             if (triggered && insn) {
                 RTS_Message *m = args.thread->tracing(TRACE_MISC);
                 m->mesg("%s: %s", name, unparseInstructionWithAddress(insn).c_str());

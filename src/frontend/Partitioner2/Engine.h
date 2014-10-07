@@ -33,16 +33,37 @@ public:
     //                                  Some utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Parse and load specimen into memory.
+     *  
+     *  Given a list of file names, parse the ELF/PE/etc. container if necessary, load the segments into virtual memory,
+     *  instantiate a partitioner, disassemble, and partition instructions into basic blocks and functions.
+     *
+     *  Each file name can be a plain names or resource strings.  The list of plain names is passed to ROSE's @c frontend for
+     *  parsing.  The last SgAsmInterpretation (probably ELF or PE) is used to call the BinaryLoader to map the file sections
+     *  into virtual memory and creating an initial memory map.
+     *
+     *  Each resource string beginning with "map:" is then processed in the order specified and the memory map from the
+     *  previous step (or an empty map if the previous step didn't happen) is adjusted accordingly.
+     *
+     *  Returns the final memory map.  The SgAsmInterpretation can be found by traversing the SgProject if necessary.
+     *
+     * @{ */
+    MemoryMap loadSpecimen(const std::string &fileName) { return loadSpecimen(std::vector<std::string>(1, fileName)); }
+    virtual MemoryMap loadSpecimen(const std::vector<std::string> &fileNames);
+    /** @}*/
+
     /** Ensure specimen is loaded into memory.
      *
      *  If the specified interpretation's memory map is null then an appropriate BinaryLoader is obtained and used to map the
      *  interpretation's segments into virtual memory.  The loader only performs the load step, not dynamic linking.  The
-     *  result is that the interpretation's memory map is non-null.
+     *  result is that the interpretation's memory map is non-null. */
+    virtual void loadSpecimen(SgAsmInterpretation*);
+
+    /** Obtain a disassembler.
      *
-     *  Additionally, if the specified disassembler is the null pointer then an appropriate disassembler is located, cloned,
-     *  and returned; an <code>std::runtime_error</code> is thrown if a disassembler cannot be located.  Otherwise, when a
-     *  disassembler is specified, that same disassembler pointer is returned. */
-    virtual Disassembler* loadSpecimen(SgAsmInterpretation*, Disassembler *disassembler=NULL);
+     *  Obtains a newly allocated disassembler if possible. Uses the specified interpretation to choose an appropriate
+     *  disassembler. */
+    virtual Disassembler* allocateDisassembler(SgAsmInterpretation*);
 
     /** Create a bare partitioner.
      *

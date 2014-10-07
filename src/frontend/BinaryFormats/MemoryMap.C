@@ -1,8 +1,18 @@
+#define BOOST_FILESYSTEM_VERSION 3
+
 #include "sage3basic.h"
 #include "MemoryMap.h"
 #include "rose_getline.h"
+#include "rose_strtoull.h"
 
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+
+#include <boost/config.hpp>
+#ifndef BOOST_WINDOWS
+# include <unistd.h>                                    // for access()
+#endif
+
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
 
@@ -102,11 +112,232 @@ MemoryMap::segmentTitle(const Segment &segment) {
  ******************************************************************************************************************************/
 
 size_t
-MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, bool writable, const std::string &segmentName) {
+MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, bool writable, std::string segmentName) {
+    if (segmentName.empty())
+        segmentName = boost::filesystem::path(fileName).filename().string();
     Segment segment = Segment::fileInstance(fileName, READABLE | (writable?WRITABLE:0), segmentName);
     AddressInterval fileInterval = AddressInterval::baseSize(startVa, segment.buffer()->size());
     insert(fileInterval, segment);
     return fileInterval.size();
+}
+
+static std::runtime_error
+insertFileError(const std::string &locatorString, const std::string &mesg) {
+    throw std::runtime_error("MemoryMap::insertFile: " + mesg + " in \"" + StringUtility::cEscape(locatorString) + "\"");
+}
+
+static rose_addr_t
+parseInteger(const std::string &locatorString, const char *&s, const std::string &mesg) {
+    char *rest = const_cast<char*>(s);
+    errno = 0;
+    rose_addr_t n = rose_strtoull(s, &rest, 0);
+    if (errno!=0 || rest==s)
+        throw insertFileError(locatorString, mesg);
+    s = rest;
+    return n;
+}
+
+std::string
+MemoryMap::insertFileDocumentation() {
+    return ("Beginning with the first colon, a memory map resource string has the form "
+            "\":@v{memory_properties}:@v{file_properties}:@v{file_name}\" where @v{memory_properties} and "
+            "@v{file_properties} are optional but the three colons are always required.  The @v{memory_properties} "
+            "have the form \"[@v{address}][+@v{vsize}][=@v{access}]\" where each of the items is optional (indicated by "
+            "the square brackets which should not be present in the actual resource string). The @v{address} is the "
+            "starting address where the file will be mapped and defaults to the address of the lowest unmapped interval "
+            "that is large enough to hold the new map segment; @v{vsize} is the size in bytes of the interval to be "
+            "mapped, defaulting to the size of the file data; and @v{access} is the accessibility represented by "
+            "zero or more of the characters \"r\" (readable), \"w\" (writable), and \"x\" (executable) in that order and "
+            "defaulting to the accessibility of the file.  The @v{file_properties} have the form "
+            "\"[@v{offset}][+@v{fsize}]\" where @v{offset} is an offset from the beginning of the file defaulting to zero; "
+            "@v{size} is the number of bytes to read from the file, defaulting to the amount of data that is available. "
+            "If @v{vsize} is specified then exactly that many bytes are mapped by zero-padding the file data if necessary; "
+            "otherwise, when @v{fsize} is specified then exactly @v{fsize} bytes are mapped by zero padding the file data "
+            "that could be read; otherwise the file size (adjusted by @v{offset}) determines the mapped size. The numeric "
+            "properties can be specified in decimal, octal, or hexadecimal using the usual C syntax (leading \"0x\" for "
+            "hexadecimal, leading \"0\" for octal, otherwise decimal).");
+}
+
+// Insert file from a locator string of the form:
+//   :[VA][+VSIZE][=PERMS]:[OFFSET][+FSIZE]:FILENAME
+AddressInterval
+MemoryMap::insertFile(const std::string &locatorString) {
+
+    //--------------------------------------
+    // Parse the parts of the locator string
+    //--------------------------------------
+
+    // Leading colon
+    const char *s = locatorString.c_str();
+    if (':'!=*s++)
+        throw insertFileError(locatorString, "not a locator string");
+
+    // Virtual address
+    Sawyer::Optional<rose_addr_t> optionalVa;
+    if (isdigit(*s))
+        optionalVa = parseInteger(locatorString, s /*in,out*/, "virtual address expected");
+
+    // Virtual size
+    Sawyer::Optional<size_t> optionalVSize;
+    if ('+'==*s) {
+        ++s;
+        optionalVSize = parseInteger(locatorString, s /*in,out*/, "virtual size expected");
+    }
+
+    // Virtual accessibility
+    Sawyer::Optional<unsigned> optionalAccess;
+    if ('='==*s) {
+        ++s;
+        unsigned a = 0;
+        if ('r'==*s) {
+            ++s;
+            a |= READABLE;
+        }
+        if ('w'==*s) {
+            ++s;
+            a |= WRITABLE;
+        }
+        if ('x'==*s) {
+            ++s;
+            a |= EXECUTABLE;
+        }
+        optionalAccess = a;
+    }
+
+    // Second colon
+    if (':'!=*s) {
+        if (*s && optionalAccess)
+            throw insertFileError(locatorString, "invalid access spec");
+        throw insertFileError(locatorString, "syntax error before second colon");
+    }
+    ++s;
+
+    // File offset
+    Sawyer::Optional<size_t> optionalOffset;
+    if (isdigit(*s))
+        optionalOffset = parseInteger(locatorString, s /*in,out*/, "file offset expected");
+    
+    // File size
+    Sawyer::Optional<size_t> optionalFSize;
+    if ('+'==*s) {
+        ++s;
+        optionalFSize = parseInteger(locatorString, s /*in,out*/, "file size expected");
+    }
+
+    // Third colon
+    if (':'!=*s)
+        throw insertFileError(locatorString, "syntax error before third colon");
+    ++s;
+
+    // File name
+    if (!*s)
+        throw insertFileError(locatorString, "file name expected after third colon");
+    std::string fileName = s;
+    if (fileName.size()!=strlen(fileName.c_str()))
+        throw insertFileError(locatorString, "invalid file name");
+    std::string segmentName = boost::filesystem::path(fileName).filename().string();
+
+    //-------------------------------- 
+    // Open the file and read the data
+    //-------------------------------- 
+
+    // Open the file and seek to the start of data
+    std::ifstream file(fileName.c_str());
+    if (!file.good())
+        throw std::runtime_error("MemoryMap::insertFile: cannot open file \""+StringUtility::cEscape(fileName)+"\"");
+    if (optionalOffset)
+        file.seekg(*optionalOffset);
+    if (!file.good())
+        throw std::runtime_error("MemoryMap::insertFile: cannot seek in file \""+StringUtility::cEscape(fileName)+"\"");
+
+    // If no file size was specified then try to get one, or delay getting one until later.  On POSIX systems we can use stat
+    // to get the file size, which is useful because infinite devices (like /dev/zero) will return zero.  Otherwise we'll get
+    // the file size by trying to read from the file.
+#if !defined(BOOST_WINDOWS)                             // not targeting Windows; i.e., not Microsoft C++ and not MinGW
+    if (!optionalFSize) {
+        struct stat sb;
+        if (0==stat(fileName.c_str(), &sb))
+            optionalFSize = sb.st_size;
+    }
+#endif
+
+    // Limit the file size according to the virtual size.  We never need to read more than what would be mapped.
+    if (optionalVSize) {
+        if (optionalFSize) {
+            optionalFSize = std::min(*optionalFSize, *optionalVSize);
+        } else {
+            optionalFSize = optionalVSize;
+        }
+    }
+
+    // Read the file data.  If we know the file size then we can allocate a buffer and read it all in one shot, otherwise we'll
+    // have to read a little at a time (only happens on Windows due to stat call above).
+    uint8_t *data = NULL;                               // data read from the file
+    size_t nRead = 0;                                   // bytes of data actually allocated, read, and initialized in "data"
+    if (optionalFSize) {
+        // This is reasonably fast and not too bad on memory
+        if (0 != *optionalFSize) {
+            data = new uint8_t[*optionalFSize];
+            file.read((char*)data, *optionalFSize);
+            nRead = file.gcount();
+            if (nRead != *optionalFSize)
+                throw std::runtime_error("MemoryMap::insertFile: short read from \""+StringUtility::cEscape(fileName)+"\"");
+        }
+    } else {
+        while (file.good()) {
+            uint8_t page[4096];
+            file.read((char*)page, sizeof page);
+            size_t n = file.gcount();
+            uint8_t *tmp = new uint8_t[nRead + n];
+            memcpy(tmp, data, nRead);
+            memcpy(tmp+nRead, page, n);
+            delete[] data;
+            data = tmp;
+            nRead += n;
+        }
+        optionalFSize = nRead;
+    }
+
+    // Choose virtual size
+    if (!optionalVSize) {
+        ASSERT_require(optionalFSize);
+        optionalVSize = optionalFSize;
+    }
+
+    // Choose accessibility
+    if (!optionalAccess) {
+#ifdef BOOST_WINDOWS
+        optionalAccess = READABLE | WRITABLE;
+#else
+        unsigned a = 0;
+        if (0==::access(fileName.c_str(), R_OK))
+            a |= READABLE;
+        if (0==::access(fileName.c_str(), W_OK))
+            a |= WRITABLE;
+        if (0==::access(fileName.c_str(), X_OK))
+            a |= EXECUTABLE;
+        optionalAccess = a;
+#endif
+    }
+
+    // Find a place to map the file.
+    if (!optionalVa) {
+        ASSERT_require(optionalVSize);
+        optionalVa = findFreeSpace(*optionalVSize);
+    }
+
+    // Adjust the memory map
+    ASSERT_require(optionalVa);
+    ASSERT_require(optionalVSize);
+    ASSERT_require(optionalAccess);
+    ASSERT_require(nRead <= *optionalVSize);
+    if (0 == *optionalVSize)
+        return AddressInterval();                       // empty
+    AddressInterval interval = AddressInterval::baseSize(*optionalVa, *optionalVSize);
+    insert(interval, Segment::anonymousInstance(interval.size(), *optionalAccess, segmentName));
+    size_t nCopied = at(interval.least()).limit(nRead).write(data).size();
+    ASSERT_always_require(nRead==nCopied);              // better work since we just created the segment!
+    return interval;
 }
 
 SgUnsignedCharList
@@ -115,7 +346,7 @@ MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) co
     size_t canRead = at(va).limit(desired).require(requiredPerms).read(NULL).size();
     SgUnsignedCharList retval(canRead);
     size_t nRead = at(va).require(requiredPerms).read(retval).size();
-    ASSERT_require(canRead == nRead);
+    ASSERT_always_require(canRead == nRead);
     return retval;
 }
 
@@ -154,6 +385,10 @@ MemoryMap::eraseZeros(size_t minsize)
                 } else {
                     zeroInterval = AddressInterval::hull(zeroInterval.least(), zeroInterval.greatest()+1);
                 }
+            } else if (!zeroInterval.isEmpty()) {
+                if (zeroInterval.size() >= minsize)
+                    toRemove.insert(zeroInterval);
+                zeroInterval = AddressInterval();
             }
         }
         if (accessed.greatest() == hull().greatest())

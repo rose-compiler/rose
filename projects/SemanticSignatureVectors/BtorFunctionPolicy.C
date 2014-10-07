@@ -13,13 +13,13 @@ using namespace std;
 using namespace IntegerOps;
 using boost::array;
 
-std::string btorTranslate(BtorFunctionPolicy& policy, const std::vector<SgAsmx86Instruction*>& instructions) {
+std::string btorTranslate(BtorFunctionPolicy& policy, const std::vector<SgAsmX86Instruction*>& instructions) {
 
   X86InstructionSemantics<BtorFunctionPolicy, BtorWordType> t(policy);
   assert (!instructions.empty());
   policy.writeIP(policy.number<32>(instructions.front()->get_address()));
   for (size_t i = 0; i < instructions.size(); ++i) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    SgAsmX86Instruction* insn = isSgAsmX86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
     try {
         t.processInstruction(insn);
@@ -157,11 +157,11 @@ void BtorFunctionPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   void BtorFunctionPolicy::finishBlock(uint64_t addr) {
   }
 
-  void BtorFunctionPolicy::startInstruction(SgAsmx86Instruction* insn) {
+  void BtorFunctionPolicy::startInstruction(SgAsmX86Instruction* insn) {
     // fprintf(stderr, "startInstruction(0x%"PRIx64")\n", insn->get_address());
   }
 
-  void BtorFunctionPolicy::finishInstruction(SgAsmx86Instruction* insn) {
+  void BtorFunctionPolicy::finishInstruction(SgAsmX86Instruction* insn) {
     // fprintf(stderr, "finishInstruction(0x%"PRIx64")\n", insn->get_address());
   }
 

@@ -73,7 +73,7 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
   bool run(std::string& name, SgGraphNode* node, SgGraphNode* before);
   std::string evaluateRegisters();
-  bool evaluateInstruction( SgAsmx86Instruction* inst, std::string& operands) ;
+  bool evaluateInstruction( SgAsmX86Instruction* inst, std::string& operands) ;
 
   bool runEdge( SgGraphNode* node, SgGraphNode* next) {
     return false;
