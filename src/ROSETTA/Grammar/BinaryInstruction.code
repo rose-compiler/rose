@@ -968,8 +968,8 @@ HEADER_GENERIC_STRTAB_START
                 bool reallocate(bool shrink); /*allocate storage for all unallocated strings*/
 
                 /* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
-                const ExtentMap& get_freelist() const;
-                ExtentMap& get_freelist();
+                const AddressIntervalSet& get_freelist() const;
+                AddressIntervalSet& get_freelist();
 
                 //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
                 virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) {abort(); return NULL;}

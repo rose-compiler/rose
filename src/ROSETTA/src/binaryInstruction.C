@@ -2389,7 +2389,7 @@ Grammar::setUpBinaryInstructions()
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t", "storage_list", "",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericStrtab.setDataPrototype("ExtentMap", "freelist", "", // space avail. for new strings
+     AsmGenericStrtab.setDataPrototype("AddressIntervalSet", "freelist", "", // space avail. for new strings
                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmStringStorage*", "dont_free", "= NULL", // never free this storage
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
