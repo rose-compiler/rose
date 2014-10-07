@@ -115,11 +115,11 @@ bool TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
         SgArrayType *a1 = isSgArrayType(nodeT1);
         SgArrayType *a2 = isSgArrayType(nodeT2);
 
-        bool arrayBaseIsEqual =	typesAreEqual(a1->get_base_type(), a2->get_base_type());
+        bool arrayBaseIsEqual = typesAreEqual(a1->get_base_type(), a2->get_base_type());
 
         SimpleExpressionEvaluator evalA, evalB;
 
-        bool arrayIndexExpressionIsEquivalent =	(evalA.traverse(a1->get_index()) == evalB.traverse(a2->get_index()));
+        bool arrayIndexExpressionIsEquivalent = (evalA.traverse(a1->get_index()) == evalB.traverse(a2->get_index()));
         bool arraysAreEqual = (arrayBaseIsEqual && arrayIndexExpressionIsEquivalent);
         return arraysAreEqual;
       } else if (isSgFunctionType(nodeT1)) {
