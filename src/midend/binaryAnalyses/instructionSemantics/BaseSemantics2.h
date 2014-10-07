@@ -5,7 +5,6 @@
 #include "FormatRestorer.h"
 #include "SMTSolver.h"
 
-#include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
@@ -442,7 +441,7 @@ public:
      *  object will only be deleted after both pointers are deleted.
      * @{ */
     Pointer(const Pointer &other): obj(other.obj) {
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         if (obj!=NULL)
             ++obj->nrefs__;
     }
@@ -455,7 +454,7 @@ public:
     
     /** Conditionally deletes the pointed-to object.  The object is deleted when its reference count reaches zero. */
     ~Pointer() {
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         if (obj!=NULL && 0==--obj->nrefs__)
             delete obj;
     }
@@ -464,22 +463,22 @@ public:
      * object originally pointed to by this pointer and incrementing the reference count for the object pointed by @p other.
      * @{ */
     Pointer& operator=(const Pointer &other) {
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         if (obj!=NULL && 0==--obj->nrefs__)
             delete obj;
         obj = other.obj;
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         if (obj!=NULL)
             ++obj->nrefs__;
         return *this;
     }
     template<class Y>
     Pointer& operator=(const Pointer<Y> &other) {
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         if (obj!=NULL && 0==--obj->nrefs__)
             delete obj;
         obj = other.get();
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         if (obj!=NULL)
             ++obj->nrefs__;
         return *this;
@@ -489,31 +488,35 @@ public:
     /** Reference to the pointed-to object.  An assertion will fail if assertions are enabled and this method is invoked on an
      *  empty pointer. */
     T& operator*() const {
-        assert(obj!=NULL && obj->nrefs__>0);
+        ASSERT_require(obj!=NULL && obj->nrefs__>0);
         return *obj;
     }
 
     /** Dereference pointed-to object. The pointed-to object is returned. Returns null for empty pointers. */
     T* operator->() const {
-        assert(!obj || obj->nrefs__>0);
+        ASSERT_require(!obj || obj->nrefs__>0);
         return obj; // may be null
     }
 
     /** Obtain the pointed-to object.  The pointed-to object is returned. Returns null for empty pointers. */
     T* get() const {
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         return obj; // may be null
     }
 
     /** Returns the pointed-to object's reference count. Returns zero for empty pointers. */
     long use_count() const {
-        assert(obj==NULL || obj->nrefs__>0);
+        ASSERT_require(obj==NULL || obj->nrefs__>0);
         return obj==NULL ? 0 : obj->nrefs__;
     }
 
     bool operator==(T *ptr) const { return obj==ptr; }
     bool operator!=(T *ptr) const { return obj!=ptr; }
     bool operator<(T *ptr) const { return obj<ptr; }
+
+    bool operator==(const Pointer &other) const { return obj==other.obj; }
+    bool operator!=(const Pointer &other) const { return obj!=other.obj; }
+    bool operator<(const Pointer &other) const { return obj<other.obj; }
 };
 
 /** Cast one pointer type to another. This behaves the same as dynamic_cast<> except it updates the pointed-to object's
@@ -566,7 +569,7 @@ private:
 
     // Fills the specified freelist by adding another Bucket-worth of objects.
     void fill_freelist(const int listn) { // hot
-        assert(listn>=0 && listn<N_FREE_LISTS);
+        ASSERT_require(listn>=0 && listn<N_FREE_LISTS);
         const size_t object_size = (listn+1) * SIZE_DIVISOR;
         Bucket *b = new Bucket;
         buckets_[listn].push_back(b);
@@ -575,7 +578,7 @@ private:
             item->next = freelist[listn];
             freelist[listn] = item;
         }
-        assert(freelist[listn]!=NULL);
+        ASSERT_not_null(freelist[listn]);
     }
 
     // Used internally when debugging
@@ -597,7 +600,7 @@ public:
      *  class manages, then it will call the global operator new to satisfy the request (a warning is printed the first time
      *  this happens). */
     void *allocate(size_t size) { // hot
-        assert(size>0);
+        ASSERT_require(size>0);
         const int listn = (size-1) / SIZE_DIVISOR;
         if (listn>=N_FREE_LISTS)
             return ::operator new(size);
@@ -613,7 +616,7 @@ public:
      *  is a no-op if @p ptr is null. */
     void deallocate(void *ptr, const size_t size) { // hot
         if (ptr) {
-            assert(size>0);
+            ASSERT_require(size>0);
             const int listn = (size-1) / SIZE_DIVISOR;
             if (listn>=N_FREE_LISTS)
                 return ::operator delete(ptr);
@@ -680,7 +683,7 @@ protected:
     SValue(const SValue &other): nrefs__(0), width(other.width) {}
 
 public:
-    virtual ~SValue() { assert(0==nrefs__); } // hot
+    virtual ~SValue() { ASSERT_require(0==nrefs__); } // hot
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Allocating static constructor.  None are needed--this class is abstract.
@@ -718,7 +721,7 @@ public:
     // Dynamic pointer casts. No-ops since this is the base class
 public:
     static SValuePtr promote(const SValuePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
 
@@ -812,7 +815,7 @@ protected:
 protected:
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : protoval(protoval), regdict(regdict) {
-        assert(protoval!=NULL);
+        ASSERT_not_null(protoval);
     }
 
 public:
@@ -838,7 +841,7 @@ public:
     // Dynamic pointer casts. No-op since this is the base class.
 public:
     static RegisterStatePtr promote(const RegisterStatePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
 
@@ -1016,7 +1019,7 @@ public:
      *  will fail if @p from does not point to a RegisterStateGeneric object. */
     static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
         RegisterStateGenericPtr retval = boost::dynamic_pointer_cast<RegisterStateGeneric>(from);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -1262,7 +1265,7 @@ public:
      *  will fail if @p from does not point to a RegisterStateX86 object. */
     static RegisterStateX86Ptr promote(const RegisterStatePtr &from) {
         RegisterStateX86Ptr retval = boost::dynamic_pointer_cast<RegisterStateX86>(from);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -1350,7 +1353,7 @@ public:
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
     static MemoryStatePtr promote(const MemoryStatePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -1461,8 +1464,8 @@ protected:
 protected:
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
         : address(address), value(value) {
-        assert(address!=NULL);
-        assert(value!=NULL);
+        ASSERT_not_null(address);
+        ASSERT_not_null(value);
     }
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
@@ -1505,7 +1508,7 @@ public:
     // Dynamic pointer casts. No-op since this is the base class.
 public:
     static MemoryCellPtr promote(const MemoryCellPtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -1516,7 +1519,7 @@ public:
      * @{ */
     virtual SValuePtr get_address() const { return address; }
     virtual void set_address(const SValuePtr &addr) {
-        assert(addr!=NULL);
+        ASSERT_not_null(addr);
         address = addr;
     }
     /** @}*/
@@ -1525,7 +1528,7 @@ public:
      * @{ */
     virtual SValuePtr get_value() const { return value; }
     virtual void set_value(const SValuePtr &v) {
-        assert(v!=NULL);
+        ASSERT_not_null(v);
         value = v;
     }
     /** @}*/
@@ -1676,7 +1679,7 @@ public:
      *  a BaseSemantics::MemoryCellList dynamic type. */
     static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m) {
         MemoryCellListPtr retval = boost::dynamic_pointer_cast<MemoryCellList>(m);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -1785,10 +1788,10 @@ protected:
 protected:
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
         : registers(registers), memory(memory) {
-        assert(registers!=NULL);
-        assert(memory!=NULL);
+        ASSERT_not_null(registers);
+        ASSERT_not_null(memory);
         protoval = registers->get_protoval();
-        assert(protoval!=NULL);
+        ASSERT_not_null(protoval);
     }
 
     // deep-copy the registers and memory
@@ -1834,7 +1837,7 @@ public:
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
     static StatePtr promote(const StatePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -1992,12 +1995,12 @@ protected:
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
         : protoval(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
-        assert(protoval!=NULL);
+        ASSERT_not_null(protoval);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
         : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
-        assert(state!=NULL);
+        ASSERT_not_null(state);
         protoval = state->get_protoval();
     }
 
@@ -2026,7 +2029,7 @@ public:
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
     static RiscOperatorsPtr promote(const RiscOperatorsPtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -2113,7 +2116,7 @@ public:
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
      *  processing an instruction.  Some policies use this to update a pointer to the current instruction. */
     virtual void startInstruction(SgAsmInstruction *insn) {
-        assert(insn!=NULL);
+        ASSERT_not_null(insn);
         cur_insn = insn;
         ++ninsns;
     };
@@ -2121,8 +2124,8 @@ public:
     /** Called at the end of every instruction.  This method is invoked whenever the translation object ends processing for an
      *  instruction.  This is not called if there's an exception during processing. */
     virtual void finishInstruction(SgAsmInstruction *insn) {
-        assert(insn);
-        assert(cur_insn==insn);
+        ASSERT_not_null(insn);
+        ASSERT_require(cur_insn==insn);
         cur_insn = NULL;
     };
 
@@ -2338,7 +2341,7 @@ public:
      *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
      */ 
     virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
-        assert(state!=NULL);
+        ASSERT_not_null(state);
         return state->readRegister(reg, this);
     }
 
@@ -2351,7 +2354,7 @@ public:
      *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
      *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
-        assert(state!=NULL);
+        ASSERT_not_null(state);
         state->writeRegister(reg, a, this);
     }
 
@@ -2437,7 +2440,7 @@ protected:
     Dispatcher(): regdict(NULL) {}
 
     explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
-        assert(operators!=NULL);
+        ASSERT_not_null(operators);
     }
 
 public:

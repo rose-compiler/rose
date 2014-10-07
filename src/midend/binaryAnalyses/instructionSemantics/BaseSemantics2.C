@@ -381,14 +381,14 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
         Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
         if (need_extent==have_extent) {
             // exact match; no need to traverse further because a RegisterStateGeneric never stores overlapping values
-            assert(nonoverlaps.empty());
+            ASSERT_require(nonoverlaps.empty());
             return rvi->value;
         } else {
             const Extent overlap = need_extent.intersect(have_extent);
             if (overlap==need_extent) {
                 // The stored register contains all the bits we need to read, and then some.  Extract only what we need.
                 // No need to traverse further because we never store overlapping values.
-                assert(nonoverlaps.empty());
+                ASSERT_require(nonoverlaps.empty());
                 const size_t lo_bit = need_extent.first() - have_extent.first();
                 return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
             } else if (!overlap.empty()) {
@@ -465,7 +465,7 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
         Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
         if (need_extent==have_extent) {
             // found exact match. No need to traverse further because a RegisterStateGeneric never stores overlapping values.
-            assert(nonoverlaps.empty());
+            ASSERT_require(nonoverlaps.empty());
             rvi->value = value;
             return;
         } else {
@@ -501,7 +501,7 @@ RegisterStateGeneric::traverse(Visitor &visitor)
         for (RegPairs::iterator rpi=ri->second.begin(); rpi!=ri->second.end(); ++rpi) {
             SValuePtr newval = (visitor)(rpi->desc, rpi->value);
             if (newval!=NULL) {
-                assert(newval->get_width()==rpi->desc.get_nbits());
+                ASSERT_require(newval->get_width()==rpi->desc.get_nbits());
                 rpi->value = newval;
             }
         }
@@ -738,8 +738,8 @@ SValuePtr
 RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(ops!=NULL);
-    assert(reg.get_major()==x86_regclass_gpr);
+    ASSERT_not_null(ops);
+    ASSERT_require(reg.get_major()==x86_regclass_gpr);
     if (reg.get_minor()>=n_gprs)
         throw Exception("invalid general purpose register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
@@ -751,7 +751,7 @@ RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *
     SValuePtr result = gpr[reg.get_minor()];
     if (reg.get_offset()!=0 || reg.get_nbits()!=32)
         result = ops->extract(result, reg.get_offset(), reg.get_offset()+reg.get_nbits());
-    assert(result->get_width()==reg.get_nbits());
+    ASSERT_require(result->get_width()==reg.get_nbits());
     return result;
 }
 
@@ -759,8 +759,8 @@ SValuePtr
 RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(ops!=NULL);
-    assert(reg.get_major()==x86_regclass_flags);
+    ASSERT_not_null(ops);
+    ASSERT_require(reg.get_major()==x86_regclass_flags);
     if (reg.get_minor()!=0)
         throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
@@ -772,7 +772,7 @@ RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators 
     SValuePtr result = flag[reg.get_offset()];
     for (size_t i=1; i<reg.get_nbits(); ++i)
         result = ops->concat(result, flag[reg.get_offset()+i]);
-    assert(result->get_width()==reg.get_nbits());
+    ASSERT_require(result->get_width()==reg.get_nbits());
     return result;
 }
 
@@ -780,15 +780,15 @@ SValuePtr
 RegisterStateX86::readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(ops!=NULL);
-    assert(reg.get_major()==x86_regclass_segment);
+    ASSERT_not_null(ops);
+    ASSERT_require(reg.get_major()==x86_regclass_segment);
     if (reg.get_minor()>=n_segregs)
         throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_offset()!=0 || reg.get_nbits()!=16)
         throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
                         " width="+numberToString(reg.get_nbits()), ops->get_insn());
     SValuePtr result = segreg[reg.get_minor()];
-    assert(result->get_width()==reg.get_nbits());
+    ASSERT_require(result->get_width()==reg.get_nbits());
     return result;
 }
 
@@ -796,36 +796,36 @@ SValuePtr
 RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(ops!=NULL);
-    assert(reg.get_major()==x86_regclass_ip);
+    ASSERT_not_null(ops);
+    ASSERT_require(reg.get_major()==x86_regclass_ip);
     if (reg.get_minor()!=0)
         throw Exception("invalid instruction pointer register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_offset()!=0 || reg.get_nbits()!=32)
         throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
                         " width="+numberToString(reg.get_nbits()), ops->get_insn());
-    assert(ip->get_width()==reg.get_nbits());
+    ASSERT_require(ip->get_width()==reg.get_nbits());
     return ip;
 }
 
 SValuePtr
 RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops)
 {
-    assert(reg.get_major()==x86_regclass_st);
-    assert(reg.get_minor()<8);
-    assert(reg.get_offset()==0);
-    assert(reg.get_nbits()==80);
+    ASSERT_require(reg.get_major()==x86_regclass_st);
+    ASSERT_require(reg.get_minor()<8);
+    ASSERT_require(reg.get_offset()==0);
+    ASSERT_require(reg.get_nbits()==80);
     SValuePtr retval = st[reg.get_minor()];
-    assert(retval!=NULL && retval->get_width()==80);
+    ASSERT_require(retval!=NULL && retval->get_width()==80);
     return retval;
 }
 
 SValuePtr
 RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops)
 {
-    assert(reg.get_major()==x86_regclass_flags);
-    assert(reg.get_minor()==x86_flags_fpstatus);
-    assert(reg.get_offset() + reg.get_nbits() <= 16);
-    assert(fpstatus!=NULL && fpstatus->get_width()==16);
+    ASSERT_require(reg.get_major()==x86_regclass_flags);
+    ASSERT_require(reg.get_minor()==x86_flags_fpstatus);
+    ASSERT_require(reg.get_offset() + reg.get_nbits() <= 16);
+    ASSERT_require(fpstatus!=NULL && fpstatus->get_width()==16);
     if (16==reg.get_nbits())
         return fpstatus;
     return ops->extract(fpstatus, reg.get_offset(), reg.get_offset()+reg.get_nbits());
@@ -860,9 +860,9 @@ void
 RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(reg.get_major()==x86_regclass_gpr);
-    assert(value!=NULL && value->get_width()==reg.get_nbits());
-    assert(ops!=NULL);
+    ASSERT_require(reg.get_major()==x86_regclass_gpr);
+    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
+    ASSERT_not_null(ops);
     if (reg.get_minor()>=n_gprs)
         throw Exception("invalid general purpose register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
@@ -876,7 +876,7 @@ RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePt
         towrite = ops->concat(ops->extract(gpr[reg.get_minor()], 0, reg.get_offset()), towrite);
     if (reg.get_offset() + reg.get_nbits()<32)
         towrite = ops->concat(towrite, ops->extract(gpr[reg.get_minor()], reg.get_offset()+reg.get_nbits(), 32));
-    assert(towrite->get_width()==32);
+    ASSERT_require(towrite->get_width()==32);
     gpr[reg.get_minor()] = towrite;
 }
 
@@ -884,9 +884,9 @@ void
 RegisterStateX86::writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(reg.get_major()==x86_regclass_flags);
-    assert(value!=NULL && value->get_width()==reg.get_nbits());
-    assert(ops!=NULL);
+    ASSERT_require(reg.get_major()==x86_regclass_flags);
+    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
+    ASSERT_not_null(ops);
     if (reg.get_minor()!=0)
         throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
@@ -907,9 +907,9 @@ void
 RegisterStateX86::writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(reg.get_major()==x86_regclass_segment);
-    assert(value!=NULL && value->get_width()==reg.get_nbits());
-    assert(ops!=NULL);
+    ASSERT_require(reg.get_major()==x86_regclass_segment);
+    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
+    ASSERT_not_null(ops);
     if (reg.get_minor()>=n_segregs)
         throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_offset()!=0 || reg.get_nbits()!=16)
@@ -922,9 +922,9 @@ void
 RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
     using namespace StringUtility;
-    assert(reg.get_major()==x86_regclass_ip);
-    assert(value!=NULL && value->get_width()==reg.get_nbits());
-    assert(ops!=NULL);
+    ASSERT_require(reg.get_major()==x86_regclass_ip);
+    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
+    ASSERT_not_null(ops);
     if (reg.get_minor()!=0)
         throw Exception("invalid instruction pointer register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
     if (reg.get_offset()!=0 || reg.get_nbits()!=32)
@@ -936,29 +936,29 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
 void
 RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
-    assert(reg.get_major()==x86_regclass_st);
-    assert(reg.get_minor()<8);
-    assert(reg.get_offset()==0);
-    assert(reg.get_nbits()==80);
-    assert(value!=NULL);
-    assert(value->get_width()==80);
+    ASSERT_require(reg.get_major()==x86_regclass_st);
+    ASSERT_require(reg.get_minor()<8);
+    ASSERT_require(reg.get_offset()==0);
+    ASSERT_require(reg.get_nbits()==80);
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_width()==80);
     st[reg.get_minor()] = value;
 }
 
 void
 RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
-    assert(reg.get_major()==x86_regclass_flags);
-    assert(reg.get_minor()==x86_flags_fpstatus);
-    assert(reg.get_offset()+reg.get_nbits() <= 16);
-    assert(value!=NULL && value->get_width()==reg.get_nbits());
+    ASSERT_require(reg.get_major()==x86_regclass_flags);
+    ASSERT_require(reg.get_minor()==x86_flags_fpstatus);
+    ASSERT_require(reg.get_offset()+reg.get_nbits() <= 16);
+    ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
 
     SValuePtr towrite = value;
     if (reg.get_offset()!=0)
         towrite = ops->concat(ops->extract(fpstatus, 0, reg.get_offset()), towrite);
     if (reg.get_offset() + reg.get_nbits()<32)
         towrite = ops->concat(towrite, ops->extract(fpstatus, reg.get_offset()+reg.get_nbits(), 16));
-    assert(towrite->get_width()==16);
+    ASSERT_require(towrite->get_width()==16);
     fpstatus = towrite;
 }
 
@@ -1064,13 +1064,13 @@ MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
         return address->may_equal(other->get_address(), addrOps->get_solver());
 
     size_t addr_nbits = address->get_width();
-    assert(other->get_address()->get_width()==addr_nbits);
+    ASSERT_require(other->get_address()->get_width()==addr_nbits);
 
-    assert(value->get_width() % 8 == 0);                // memory is byte addressable, so values must be multiples of a byte
+    ASSERT_require(value->get_width() % 8 == 0);        // memory is byte addressable, so values must be multiples of a byte
     SValuePtr lo1 = address;
     SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
 
-    assert(other->get_value()->get_width() % 8 == 0);
+    ASSERT_require(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
     SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->get_width(), other->get_value()->get_width() / 8));
 
@@ -1103,13 +1103,13 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
         return address->must_equal(other->get_address(), addrOps->get_solver());
 
     size_t addr_nbits = address->get_width();
-    assert(other->get_address()->get_width()==addr_nbits);
+    ASSERT_require(other->get_address()->get_width()==addr_nbits);
 
-    assert(value->get_width() % 8 == 0);
+    ASSERT_require(value->get_width() % 8 == 0);
     SValuePtr lo1 = address;
     SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
 
-    assert(other->get_value()->get_width() % 8 == 0);
+    ASSERT_require(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
     SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->get_width(), other->get_value()->get_width() / 8));
 
@@ -1146,8 +1146,8 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps)
 {
-    assert(addr!=NULL);
-    assert(dflt!=NULL && (!byte_restricted || dflt->get_width()==8));
+    ASSERT_not_null(addr);
+    ASSERT_require(dflt!=NULL && (!byte_restricted || dflt->get_width()==8));
     bool short_circuited;
     CellList found = scan(addr, dflt->get_width(), addrOps, valOps, short_circuited/*out*/);
     size_t nfound = found.size();
@@ -1159,19 +1159,19 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
     } else {
         retval = found.front()->get_value();
         if (retval->get_width()!=dflt->get_width()) {
-            assert(!byte_restricted); // can't happen if memory state stores only byte values
+            ASSERT_require(!byte_restricted); // can't happen if memory state stores only byte values
             retval = valOps->unsignedExtend(retval, dflt->get_width()); // extend or truncate
         }
     }
 
-    assert(retval->get_width()==dflt->get_width());
+    ASSERT_require(retval->get_width()==dflt->get_width());
     return retval;
 }
 
 std::set<rose_addr_t>
 MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps)
 {
-    assert(addr!=NULL);
+    ASSERT_not_null(addr);
     std::set<rose_addr_t> retval;
     bool short_circuited;
     CellList found = scan(addr, nbits, addrOps, valOps, short_circuited/*out*/);
@@ -1186,7 +1186,7 @@ MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOper
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
-    assert(!byte_restricted || value->get_width()==8);
+    ASSERT_require(!byte_restricted || value->get_width()==8);
     MemoryCellPtr cell = protocell->create(addr, value);
     cells.push_front(cell);
     latest_written_cell = cell;
@@ -1266,7 +1266,7 @@ InsnProcessor *
 Dispatcher::iproc_lookup(SgAsmInstruction *insn)
 {
     int key = iproc_key(insn);
-    assert(key>=0);
+    ASSERT_require(key>=0);
     return iproc_get(key);
 }
 
@@ -1279,7 +1279,7 @@ Dispatcher::iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc)
 void
 Dispatcher::iproc_set(int key, InsnProcessor *iproc)
 {
-    assert(key>=0);
+    ASSERT_require(key>=0);
     if ((size_t)key>=iproc_table.size())
         iproc_table.resize(key+1, NULL);
     iproc_table[key] = iproc;
@@ -1390,7 +1390,7 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         retval = operators->number_(ival->get_significantBits(), ival->get_value());
     }
 
-    assert(retval!=NULL);
+    ASSERT_not_null(retval);
     if (nbits!=0) {
         if (retval->get_width() < nbits) {
             retval = operators->signExtend(retval, nbits);
@@ -1416,7 +1416,8 @@ Dispatcher::segmentRegister(SgAsmMemoryReferenceExpression *mre)
 void
 Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/)
 {
-    assert(e!=NULL && value!=NULL);
+    ASSERT_not_null(e);
+    ASSERT_not_null(value);
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         operators->writeRegister(re->get_descriptor(), value);
     } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
@@ -1437,15 +1438,14 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
         operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
     } else {
-        assert(!"not implemented");
-        abort();
+        ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
     }
 }
 
 SValuePtr
 Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
 {
-    assert(e!=NULL);
+    ASSERT_not_null(e);
     SValuePtr retval;
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         retval = operators->readRegister(re->get_descriptor());
@@ -1485,7 +1485,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
     }
 
     // Make sure the return value is the requested width. The unsignedExtend() can expand or shrink values.
-    assert(retval!=NULL);
+    ASSERT_not_null(retval);
     if (retval->get_width()!=value_nbits)
         retval = operators->unsignedExtend(retval, value_nbits);
     return retval;
