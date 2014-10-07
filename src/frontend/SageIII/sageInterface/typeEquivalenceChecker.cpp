@@ -1,7 +1,8 @@
 #include <cassert>
 #include "typeEquivalenceChecker.hpp"
 
-TypeEquivalenceChecker::TypeEquivalenceChecker(bool profile): profile_(profile),
+TypeEquivalenceChecker::TypeEquivalenceChecker(bool profile, bool useSemanticEquivalence)
+  : profile_(profile), useSemanticEquivalence_(useSemanticEquivalence),
   namedType_(0), pointerType_(0),
   arrayType_(0), functionType_(0) {
 }
@@ -9,36 +10,49 @@ TypeEquivalenceChecker::TypeEquivalenceChecker(bool profile): profile_(profile),
 SgNode * TypeEquivalenceChecker::getBasetypeIfApplicable(SgNode *t){
   SgNode * node = t;
   if (isSgTypedefType(t)) {
-    std::cout << "This is a typedef nodeT1. We strip everything away and compare the hidden types." << std::endl;
+//    std::cout << "This is a typedef nodeT1. We strip everything away and compare the hidden types." << std::endl;
     node = isSgTypedefType(t)->stripType(SgType::STRIP_TYPEDEF_TYPE);
   }
-  if(isSgModifierType(t)){
-    SgModifierType *modType = isSgModifierType(t);
-    ROSE_ASSERT(modType != NULL);
-    // We need to check for Volatile/Restrict types. These are modelled as ModifierTypes, but are equal (in some cases)
-    // volatile seems to make no difference for basic (built in) types like int, bool etc. But it has an impact on types
-    // like classes
-    // restrict seems to have no impact on the type itself.
-     if(SageInterface::isVolatileType(modType)){
-      // handle volatile case
-      std::cout << "Hit volatile type, stripping of modifier type" << std::endl;
-      node = modType->get_base_type();
-    }
-    if(SageInterface::isRestrictType(modType)){
-      // handle restrict case
-      std::cout << "Hit restrict type, stripping of modifier type" << std::endl;
-      node = modType->get_base_type();
+  if(useSemanticEquivalence_){
+    if(isSgModifierType(t)){
+      SgModifierType *modType = isSgModifierType(t);
+      ROSE_ASSERT(modType != NULL);
+      // We need to check for Volatile/Restrict types. These are modelled as ModifierTypes, but are equal (in some cases)
+      // volatile seems to make no difference for basic (built in) types like int, bool etc. But it has an impact on types
+      // like classes
+      // restrict seems to have no impact on the type itself.
+      if(SageInterface::isVolatileType(modType)){
+       // handle volatile case
+       std::cout << "Hit volatile type, stripping of modifier type" << std::endl;
+       node = modType->get_base_type();
+      }
+      if(SageInterface::isRestrictType(modType)){
+        // handle restrict case
+        std::cout << "Hit restrict type, stripping of modifier type" << std::endl;
+        node = modType->get_base_type();
+      }
     }
   }
   ROSE_ASSERT(node != NULL);
   return node;
 }
 
-bool
-TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
+bool TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
   bool equal = false;
   if(t1 == NULL || t2 == NULL){
+    std::string wasNull;
+    if(t1 == NULL){
+      wasNull = "t1";
+    } else {
+      wasNull = "t2";
+    }
+    std::cerr << "ERROR: " << wasNull << " was NULL" << std::endl;
     return equal;
+  }
+  // if both pointers point to same location the types MUST be equal!
+  if(t1 == t2){
+//    std::cout << "Pointers are equal, returning true" << std::endl;
+    return true;
   }
   RoseAst subT1(t1);
   RoseAst subT2(t2);
@@ -53,6 +67,7 @@ TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
    nodeT2 = getBasetypeIfApplicable(nodeT2);
 
    if (nodeT1->variantT() == nodeT2->variantT()) {
+//     std::cout << "variantT is the same" << std::endl;
 
       if (isSgNamedType(nodeT1)) {      // Two different names -> Must be two different things
         if (profile_) {
@@ -113,12 +128,14 @@ TypeEquivalenceChecker::typesAreEqual(SgType *t1, SgType *t2) {
         }
         SgFunctionType *funcTypeA = isSgFunctionType(nodeT1);
         SgFunctionType *funcTypeB = isSgFunctionType(nodeT2);
+//        std::cout << "Inside SgFunctionType" << std::endl;
 //        assert(funcTypeA != funcTypeB);
         if(typesAreEqual(funcTypeA->get_return_type(), funcTypeB->get_return_type())) {
           // If functions don't have the same number of arguments, they are not type-equal
           if(funcTypeA->get_arguments().size() != funcTypeB->get_arguments().size()) {
             return false;
           }
+          // This should always be the same as the if before...
           if(funcTypeA->get_argument_list()->get_arguments().size() != funcTypeB->get_argument_list()->get_arguments().size()){
             return false;
           }
@@ -170,7 +187,7 @@ int TypeEquivalenceChecker::getFunctionTypeCount() {
 
 bool SageInterface::checkTypesAreEqual(SgType *typeA, SgType *typeB) {
 
-  TypeEquivalenceChecker tec(false);
+  TypeEquivalenceChecker tec(false, false);
 
   return tec.typesAreEqual(typeA, typeB);
 

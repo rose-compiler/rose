@@ -3,6 +3,7 @@
 
 //# include "rose.h"
 #include "sage3basic.h"
+#include <cassert>
 
 // XXX Should we have this as template, so that it is extendable?
 
@@ -40,5 +41,10 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <
   EvaluatorExpressionRepresentation getValueExpressionValue(SgValueExp *valExp);
   EvaluatorExpressionRepresentation evaluateVariableReference(SgVarRefExp *vRef);
 };
+
+
+namespace SageInterface {
+  long long evaluateSimpleIntegerExpression(SgExpression *expr);
+}
 
 #endif

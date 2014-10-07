@@ -16,7 +16,7 @@
  */
 class TypeEquivalenceChecker {
  public:
-  TypeEquivalenceChecker(bool profile);
+  TypeEquivalenceChecker(bool profile, bool useSemanticEquivalence);
   bool typesAreEqual(SgType *t1, SgType *t2);   // XXX BAD NAME!!
 
   int getNamedTypeCount();
@@ -25,7 +25,7 @@ class TypeEquivalenceChecker {
   int getFunctionTypeCount();
  private:
   SgNode * getBasetypeIfApplicable(SgNode *t);
-  bool profile_;
+  bool profile_, useSemanticEquivalence_;
   int namedType_, pointerType_, arrayType_, functionType_;
 };
 
