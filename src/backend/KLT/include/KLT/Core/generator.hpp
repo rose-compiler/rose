@@ -80,12 +80,15 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
 ) {
   std::vector<SgVariableSymbol *>::const_iterator it_symbol;
   typename std::set<Data<Annotation> *>::const_iterator it_data;
+  typename std::vector<Data<Annotation> *>::const_iterator it_data_vect;
 
   const std::vector<SgVariableSymbol *> & parameters = loop_trees.getParameters();
   const std::vector<SgVariableSymbol *> & scalars = loop_trees.getScalars();
 
   std::set<SgVariableSymbol *> sym_var_refs;
     collectReferencedSymbols(kernel, sym_var_refs);
+
+  // Parameter
 
   for (it_symbol = parameters.begin(); it_symbol != parameters.end(); it_symbol++) {
     SgVariableSymbol * parameter = *it_symbol;
@@ -95,6 +98,8 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
     if (used) kernel->getArguments().parameters.push_back(parameter);
   }
 
+  // Scalar
+
   for (it_symbol = scalars.begin(); it_symbol != scalars.end(); it_symbol++) {
     SgVariableSymbol * scalar = *it_symbol;
 
@@ -102,6 +107,20 @@ void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
 
     if (used) kernel->getArguments().scalars.push_back(scalar);
   }
+
+  // Private
+
+  const std::vector<Data<Annotation> *> & privates = loop_trees.getPrivates();
+  for (it_data_vect = privates.begin(); it_data_vect != privates.end(); it_data_vect++) {
+    Data<Annotation> * data = *it_data_vect;
+    SgVariableSymbol * private_sym = data->getVariableSymbol();
+
+    bool used = sym_var_refs.find(private_sym) != sym_var_refs.end(); // If it is referenced (SgVarRefExp) then it is needed
+
+    if (used) kernel->getArguments().privates.push_back(data);
+  }
+
+  // Data
 
   std::vector<Data<Annotation> *> sorted_data;
   for (it_data = kernel->getDataflow().datas.begin(); it_data != kernel->getDataflow().datas.end(); it_data++) {
