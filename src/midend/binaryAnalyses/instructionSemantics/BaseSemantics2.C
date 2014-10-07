@@ -824,9 +824,10 @@ RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *o
     ASSERT_require(reg.get_major()==x86_regclass_st);
     ASSERT_require(reg.get_minor()<8);
     ASSERT_require(reg.get_offset()==0);
-    ASSERT_require(reg.get_nbits()==80);
     SValuePtr retval = st[reg.get_minor()];
     ASSERT_require(retval!=NULL && retval->get_width()==80);
+    if (reg.get_nbits()==64)
+        retval = ops->extract(retval, 0, 64);           // reading MM register, low-order 64 bits of ST
     return retval;
 }
 
