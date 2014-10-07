@@ -432,7 +432,7 @@ void HighWater::emitted(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Gang::GangMap Gang::gangs_;
+Gang::GangMap Gang::gangs_ __attribute__((init_priority(65534)));
 
 GangPtr Gang::instanceForId(int id) {
     return gangs_.insertMaybe(id, Gang::instance());
@@ -1388,8 +1388,8 @@ Facilities::print(std::ostream &log) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SAWYER_EXPORT DestinationPtr merr;
-SAWYER_EXPORT Facility mlog("sawyer");
-SAWYER_EXPORT Facilities mfacilities;
+SAWYER_EXPORT Facility mlog __attribute__((init_priority(65534))) ("sawyer");
+SAWYER_EXPORT Facilities mfacilities __attribute__((init_priority(65534)));
 SAWYER_EXPORT bool isInitialized;
 SAWYER_EXPORT SProxy assertionStream;
 
