@@ -59,7 +59,7 @@ public:
      *
      *  This implementation returns true (equal) when both AST nodes are the same type. If the nodes are subclasses of
      *  @ref SgAsmInstruction then they must also be the same kind of instruction (e.g., if they are both @ref
-     *  SgAsmx86Instruction then they must also both be @ref x86_pop instructions). */
+     *  SgAsmX86Instruction then they must also both be @ref x86_pop instructions). */
     bool operator==(const Node &other) const {
         return first_==other.first_ && second_==other.second_;
     }
