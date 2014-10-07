@@ -1,0 +1,42 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+# JP (10/3/14): For whatever reason, I have to make the dependencies 
+# to gtest and our testSupport explicit
+
+$(top_builddir)/tests/testSupport/libroseUnitTestSupport.la :
+	$(MAKE) -C $(top_builddir)/tests/testSupport libroseUnitTestSupport.la
+
+$(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la :
+	$(MAKE) -C $(top_builddir)/tests/testSupport/gtest lib/libgtest_main.la
+
+
+bin_PROGRAMS=sageInterfaceTest sageBuilderTest
+
+sageInterfaceTest_SOURCES= \
+  typesAreEqualUnitTests.cpp \
+  simpleExpressionEvaluatorUnitTests.cpp
+
+sageInterfaceTest_CXXFLAGS= \
+  -I$(top_srcdir)/tests/testSupport \
+  -I$(top_srcdir)/tests/testSupport/gtest/include \
+  $(ROSE_INCLUDES)
+
+sageInterfaceTest_LDADD= \
+  $(top_builddir)/tests/testSupport/libroseUnitTestSupport.la \
+  $(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la \
+  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+sageBuilderTest_SOURCES= \
+  buildTypeUnitTests.cpp \
+  buildExpressionUnitTests.cpp
+
+sageBuilderTest_CXXFLAGS= \
+  -I$(top_srcdir)/tests/testSupport \
+  -I$(top_srcdir)/tests/testSupport/gtest/include \
+  $(ROSE_INCLUDES)
+
+sageBuilderTest_LDADD= \
+  $(top_builddir)/tests/testSupport/libroseUnitTestSupport.la \
+  $(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la \
+  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
