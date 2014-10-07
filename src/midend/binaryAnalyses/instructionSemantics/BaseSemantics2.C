@@ -690,7 +690,12 @@ RegisterStateX86::clear()
         st[i] = protoval->undefined_(80);
         st[i]->set_comment(initialValueName(reg));
     }
-
+    for (size_t i=0; i<n_xmm; ++i) {
+        const RegisterDescriptor reg(x86_regclass_xmm, i, 0, 128);
+        xmm[i] = protoval->undefined_(128);
+        xmm[i]->set_comment(initialValueName(reg));
+    }
+    
     const RegisterDescriptor reg(x86_regclass_flags, x86_flags_fpstatus, 0, 16);
     fpstatus = protoval->undefined_(16);
     fpstatus->set_comment(initialValueName(reg));
@@ -706,6 +711,10 @@ RegisterStateX86::zero()
         segreg[i] = protoval->number_(16, 0);
     for (size_t i=0; i<n_flags; ++i)
         flag[i] = protoval->number_(1, 0);
+    for (size_t i=0; i<n_st; ++i)
+        st[i] = protoval->number_(80, 0);
+    for (size_t i=0; i<n_xmm; ++i)
+        xmm[i] = protoval->number_(128, 0);
     fpstatus = protoval->number_(16, 0);
 }
 
@@ -728,6 +737,8 @@ RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops
             return readRegisterIp(reg, ops);
         case x86_regclass_st:
             return readRegisterSt(reg, ops);
+        case x86_regclass_xmm:
+            return readRegisterXmm(reg, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
                             " (wrong RegisterDictionary?)", ops->get_insn());
@@ -820,6 +831,18 @@ RegisterStateX86::readRegisterSt(const RegisterDescriptor &reg, RiscOperators *o
 }
 
 SValuePtr
+RegisterStateX86::readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    ASSERT_require(reg.get_major()==x86_regclass_xmm);
+    ASSERT_require(reg.get_minor()<8);
+    ASSERT_require(reg.get_offset()==0);
+    ASSERT_require(reg.get_nbits()==128);
+    SValuePtr retval = xmm[reg.get_minor()];
+    ASSERT_require(retval!=NULL && retval->get_width()==128);
+    return retval;
+}
+
+SValuePtr
 RegisterStateX86::readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_flags);
@@ -850,6 +873,8 @@ RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &
             return writeRegisterIp(reg, value, ops);
         case x86_regclass_st:
             return writeRegisterSt(reg, value, ops);
+        case x86_regclass_xmm:
+            return writeRegisterXmm(reg, value, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
                             " (wrong RegisterDictionary?)", ops->get_insn());
@@ -946,6 +971,18 @@ RegisterStateX86::writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
+RegisterStateX86::writeRegisterXmm(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    ASSERT_require(reg.get_major()==x86_regclass_xmm);
+    ASSERT_require(reg.get_minor()<8);
+    ASSERT_require(reg.get_offset()==0);
+    ASSERT_require(reg.get_nbits()==128);
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_width()==128);
+    xmm[reg.get_minor()] = value;
+}
+
+void
 RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_require(reg.get_major()==x86_regclass_flags);
@@ -1024,6 +1061,17 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
                 } else {
                     stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
                            <<" = { " <<(*st[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        for (size_t i=0; i<n_xmm; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_xmm, i, 0, 128));
+            if (should_show(regname, xmm[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*xmm[i]+fmt) <<" }\n";
                 }
             }
         }
