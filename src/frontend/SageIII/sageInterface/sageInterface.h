@@ -1569,7 +1569,8 @@ ROSE_DLL_API void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* roo
 //! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
 ROSE_DLL_API void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
 
-
+//! Move a variable declaration to a new scope, handle symbol, special scopes like For loop, etc.
+ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope);
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
@@ -1639,6 +1640,10 @@ ROSE_DLL_API void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, b
 
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 ROSE_DLL_API SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
+
+//! Replace all variable references to an old symbol in a scope to being references to a new symbol.
+// Essentially replace variable a with b. 
+ROSE_DLL_API void replaceVariableReferences(SgVariableSymbol* old_sym, SgVariableSymbol* new_sym, SgScopeStatement * scope );
 
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
 * that expression. Then, the var reference expression returned can be used instead of the original
@@ -2031,6 +2036,8 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 // DQ (6/7/2012): Unclear where this function should go...
   bool hasTemplateSyntax( const SgName & name );
 
+//! Move a declaration to a scope which is the closest to the declaration's use places
+bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*= false */);
 
 #if 0
 
