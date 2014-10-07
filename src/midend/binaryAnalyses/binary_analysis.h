@@ -36,14 +36,14 @@ std::vector<SgGraphNode*> findGraphRoots(SgIncidenceDirectedGraph* graph);
  * Generate all static traces of length smaller than a limit.
  *******************************************************************/
 void
-findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node, std::vector<SgAsmx86Instruction*>& curTrace, size_t max_length,
-    std::set< std::vector<SgAsmx86Instruction*> >& returnSet);
+findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node, std::vector<SgAsmX86Instruction*>& curTrace, size_t max_length,
+    std::set< std::vector<SgAsmX86Instruction*> >& returnSet);
 
 /*******************************************************************
  * Generate all static traces of length smaller than a limit.
  * We ignore nop's 
  *******************************************************************/
-std::set< std::vector<SgAsmx86Instruction*> > 
+std::set< std::vector<SgAsmX86Instruction*> > 
 generateStaticTraces(SgIncidenceDirectedGraph* graph, size_t max_length);
 
 /***************************************************

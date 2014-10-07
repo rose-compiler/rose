@@ -331,16 +331,16 @@ public:
                 bool bp_not_pushed = false;
                 uint32_t esp = args.thread->policy.readRegister<32>(args.thread->policy.reg_esp).known_value();
                 uint32_t top_word;
-                SgAsmx86Instruction *call_insn;
+                SgAsmX86Instruction *call_insn;
                 try {
                     if (4==process->mem_read(&top_word, esp, 4)) {
-                        if (NULL!=(call_insn=isSgAsmx86Instruction(process->get_instruction(top_word-5))) &&
+                        if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top_word-5))) &&
                             (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
-                        } else if (NULL!=(call_insn=isSgAsmx86Instruction(process->get_instruction(top_word-2))) &&
+                        } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top_word-2))) &&
                                    (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
-                        } else if (NULL!=(call_insn=isSgAsmx86Instruction(process->get_instruction(top_word-6))) &&
+                        } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top_word-6))) &&
                                    (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         }
@@ -848,7 +848,7 @@ public:
     virtual UnhandledInstruction *clone() { return this; }
     virtual bool operator()(bool enabled, const Args &args) {
         static const char *fmt = "UnhandledInstruction triggered for %s\n";
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
         if (enabled && insn) {
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();

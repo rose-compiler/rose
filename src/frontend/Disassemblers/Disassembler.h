@@ -273,6 +273,10 @@ public:
      *  particularly the list of file headers referenced by the interpretation. */
     static Disassembler *lookup(SgAsmInterpretation*);
 
+    /** Finds a suitable disassembler.  Looks up a common disassembler by name.  If the name is the word "list" then a
+     *  list of known names is printed to <code>std::cout</code>. */
+    static Disassembler *lookup(const std::string&);
+
     /** Creates a new copy of a disassembler. The new copy has all the same settings as the original.
      *
      *  Thread safety: The thread safety of this virtual method depends on the implementation in the subclass. */
@@ -500,7 +504,7 @@ public:
      *  buffer and enables instructions to span file segments that are mapped contiguously in virtual memory by the loader but
      *  which might not be contiguous in the file.  The instruction's successor virtual addresses are added to the optional
      *  successor set (note that successors of an individual instruction can also be obtained via
-     *  SgAsmInstruction::get_successors). If the instruction cannot be disassembled then an exception is thrown and the
+     *  SgAsmInstruction::getSuccessors). If the instruction cannot be disassembled then an exception is thrown and the
      *  successors set is not modified.
      *
      *  Thread safety:  The safety of this method depends on its implementation in the subclass. In any case, no other thread

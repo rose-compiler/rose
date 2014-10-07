@@ -76,7 +76,7 @@ static string htmlEscape(const string& s) {
 enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
 
 static const size_t numberOfInstructionKinds = x86_last_instruction;
-inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->get_kind();}
+inline size_t getInstructionKind(SgAsmX86Instruction* insn) {return insn->get_kind();}
 
 
 
@@ -122,11 +122,11 @@ inline void* unparseAndIntern(SgAsmExpression* e) {
   }
 }
  
-void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
-        std::vector<SgAsmx86Instruction*>::iterator end, map<SgAsmExpression*, size_t> numbers[3]) {
+void numberOperands(std::vector<SgAsmX86Instruction*>::iterator beg,
+        std::vector<SgAsmX86Instruction*>::iterator end, map<SgAsmExpression*, size_t> numbers[3]) {
   map<void*, size_t> stringNumbers[3];
   for (; beg != end; ++beg) {
-    SgAsmx86Instruction* insn = *beg;
+    SgAsmX86Instruction* insn = *beg;
     const SgAsmExpressionPtrList& operands = getOperands(insn);
     //size_t operandCount = operands.size();
     for (size_t j = 0; j < operands.size(); ++j) {
@@ -141,8 +141,8 @@ void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
     }
   }
 }
-std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
-    std::vector<SgAsmx86Instruction*>::iterator end)
+std::string normalizeInstructionsToHTML(std::vector<SgAsmX86Instruction*>::iterator beg, 
+    std::vector<SgAsmX86Instruction*>::iterator end)
 {
     string normalizedUnparsedInstructions;
     map<SgAsmExpression*, size_t> valueNumbers[3];
@@ -150,7 +150,7 @@ std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::itera
 
     // Unparse the normalized forms of the instructions
     for (; beg != end; ++beg ) {
-      SgAsmx86Instruction* insn = *beg;
+      SgAsmX86Instruction* insn = *beg;
       string mne = insn->get_mnemonic();
       boost::to_lower(mne);
       mne = "<font color=\"red\">" + htmlEscape(mne)+"</font>";
@@ -178,14 +178,14 @@ std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::itera
     return normalizedUnparsedInstructions;
 };
 void normalizeInstructionInSubTree(SgNode* topNode ){
-  vector<SgAsmx86Instruction*> insns;
+  vector<SgAsmX86Instruction*> insns;
   FindInstructionsVisitor vis;
   AstQueryNamespace::querySubTree(topNode, std::bind2nd( vis, &insns ));
 
-  for(std::vector<SgAsmx86Instruction*>::iterator iItr = insns.begin(); iItr !=  insns.end();
+  for(std::vector<SgAsmX86Instruction*>::iterator iItr = insns.begin(); iItr !=  insns.end();
       ++iItr)
   {
-      SgAsmx86Instruction* insn = *iItr;
+      SgAsmX86Instruction* insn = *iItr;
        SgAsmExpressionPtrList& operands = getOperands(insn);
       // Add to total for this variant
       // Add to total for each kind of operand
@@ -288,11 +288,11 @@ int main(int argc, char** argv)
     std::string outputFile = string(argv[1])+".roseTxt";
     myfile.open (outputFile.c_str());
 
-    std::vector<SgAsmx86Instruction*> instructions;
+    std::vector<SgAsmX86Instruction*> instructions;
     for(int i = 0; i < insnsA.size(); i++ )
-      if(isSgAsmx86Instruction(insnsA[i]))
+      if(isSgAsmX86Instruction(insnsA[i]))
       {
-        if(isSgAsmx86Instruction(insnsA[i])->get_kind() != x86_call ) 
+        if(isSgAsmX86Instruction(insnsA[i])->get_kind() != x86_call ) 
           normalizeInstructionInSubTree(insnsA[i]);
         myfile <<   unparseInstruction((SgAsmInstruction*)insnsA[i]) << "\n";
       }
@@ -304,9 +304,9 @@ int main(int argc, char** argv)
     std::string outputFile = string(argv[1])+".roseTxtNoEndl";
     myfile.open (outputFile.c_str());
 
-    std::vector<SgAsmx86Instruction*> instructions;
+    std::vector<SgAsmX86Instruction*> instructions;
     for(int i = 0; i < insnsA.size(); i++ )
-      if(isSgAsmx86Instruction(insnsA[i]))
+      if(isSgAsmX86Instruction(insnsA[i]))
       {
   //      normalizeInstructionInSubTree(insnsA[i]);
     
@@ -317,7 +317,7 @@ int main(int argc, char** argv)
 
   }
 
- //     instructions.push_back(isSgAsmx86Instruction(insnsA[i]));
+ //     instructions.push_back(isSgAsmX86Instruction(insnsA[i]));
 
 
 //  myfile << normalizeInstructionsToHTML(instructions.begin(), instructions.end());

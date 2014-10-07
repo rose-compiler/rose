@@ -142,7 +142,7 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
    * process all jump instructions and resolve destination
    ****************************************************/
   void process_jumps();
-  SgAsmInstruction* process_jumps_get_target(SgAsmx86Instruction* inst);
+  SgAsmInstruction* process_jumps_get_target(SgAsmX86Instruction* inst);
 
   /****************************************************
    * for testing, how many instructions where created

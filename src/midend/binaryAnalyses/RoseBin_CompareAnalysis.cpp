@@ -73,7 +73,7 @@ void RoseBin_CompareAnalysis::create_map_functions() {
 bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string func_name, string *output) {
   // return true if valid instruction, false if part of filter
   bool isValidInstr=true;
-  SgAsmx86Instruction* inst = isSgAsmx86Instruction(stat);
+  SgAsmX86Instruction* inst = isSgAsmX86Instruction(stat);
   if (inst==NULL) {
     cerr << " filter function produced a statement that is not an instruction " << endl;
     exit(0);
@@ -355,7 +355,7 @@ bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
   bool isreturn=false;
   // check if return matches
   SgReturnStmt* returnS = isSgReturnStmt(srcNode);
-  SgAsmx86Instruction* retBin = isSgAsmx86Instruction(binNode);
+  SgAsmX86Instruction* retBin = isSgAsmX86Instruction(binNode);
   if (returnS && retBin && retBin->get_kind() == x86_ret ) {
     *output+= " !! returnStatement ............... \n";
     nodes_matched++;
@@ -379,7 +379,7 @@ bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
   cerr << "   inside isFunctionCall " << endl;
   SgFunctionCallExp* srcCall = isSgFunctionCallExp(srcNode);
   if (srcCall !=NULL ) {
-    SgAsmx86Instruction* binCall = isSgAsmx86Instruction(binNode);
+    SgAsmX86Instruction* binCall = isSgAsmX86Instruction(binNode);
     if (binCall && binCall->get_kind() == x86_call) {
       *output+= " !! functionCall ............... \n";
       nodes_matched++;
@@ -401,7 +401,7 @@ bool RoseBin_CompareAnalysis::isSgPlusPlus(SgNode* srcNode,
   SgPlusPlusOp* srcCall = isSgPlusPlusOp(srcNode);
   if (srcCall !=NULL ) {
     cerr << "   inside isSgPlusPlus found PlusPlus " << endl;
-    SgAsmx86Instruction* binCall = isSgAsmx86Instruction(binNode);
+    SgAsmX86Instruction* binCall = isSgAsmX86Instruction(binNode);
     if (binCall && binCall->get_kind() == x86_inc) {
       *output+= " !! SgPlusPlus ............... \n";
       nodes_matched++;
@@ -442,7 +442,7 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
   bool isvar=false;
   cerr << "   inside isVariableDeclaration " << endl;
   SgVariableDeclaration* varDecl = isSgVariableDeclaration(srcNode);
-  SgAsmx86Instruction* mov = isSgAsmx86Instruction(binNode);
+  SgAsmX86Instruction* mov = isSgAsmX86Instruction(binNode);
   // check the children of the varDecl , make a disctinction between
   // a) the variable is uninitialized
   // b) the variable is initialized (value on right side) , i.e. there is no corresponding binNode ( hence skip this source node)
@@ -536,7 +536,7 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
                                                                 bool &isVarDecl1,
                                                                 bool &isAssign0,
                                                                 bool &isAssign1,
-                                                                SgAsmx86Instruction* mov
+                                                                SgAsmX86Instruction* mov
                                                                 ) {
   SgAsmOperandList* opList = mov->get_operandList();
   SgAsmExpressionPtrList exprList = opList->get_operands();
@@ -610,7 +610,7 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
   bool isassign=false;
   cerr << "   inside isAssignOp    " << endl;
   SgAssignOp* assign = isSgAssignOp(srcNode);
-  SgAsmx86Instruction* mov = isSgAsmx86Instruction(binNode);
+  SgAsmX86Instruction* mov = isSgAsmX86Instruction(binNode);
   if ( assign && mov && mov->get_kind() == x86_mov) {
     cerr << "      inside isAssignOp && mov " << endl;
     // in this case it is clear what is happening
@@ -777,7 +777,7 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
     ROSE_ASSERT(binNode);
     cerr << "      checking isSgSubstractOp against " << binNode->class_name() << 
       " " << binNode << endl;
-    SgAsmx86Instruction* sub = isSgAsmx86Instruction(binNode);
+    SgAsmX86Instruction* sub = isSgAsmX86Instruction(binNode);
     if (sub && sub->get_kind() == x86_sub) {
       *output += "   !! subOp ............... \n" ;
       cerr << "      found SgSubtract : binCount: " << bin_count << endl;
@@ -824,7 +824,7 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
       ROSE_ASSERT(binNode);
       cerr << "      checking isSgAddOp against " << binNode->class_name() << 
         " " << binNode << endl;
-      SgAsmx86Instruction* add = isSgAsmx86Instruction(binNode);
+      SgAsmX86Instruction* add = isSgAsmX86Instruction(binNode);
       if (add && add->get_kind() == x86_add) {
         cerr << "       found addOp. binCount: " << bin_count << endl;
         *output += "   !! addOp ............... \n" ;
@@ -870,9 +870,9 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
         ROSE_ASSERT(binNodeNextNext);
         cerr << "      checking isSgMultiplyOp against " << binNode->class_name() <<
           " " << binNode << endl;
-        SgAsmx86Instruction* mov = isSgAsmx86Instruction(binNode);
-        SgAsmx86Instruction* shl = isSgAsmx86Instruction(binNodeNext);
-        SgAsmx86Instruction* lea = isSgAsmx86Instruction(binNodeNextNext);
+        SgAsmX86Instruction* mov = isSgAsmX86Instruction(binNode);
+        SgAsmX86Instruction* shl = isSgAsmX86Instruction(binNodeNext);
+        SgAsmX86Instruction* lea = isSgAsmX86Instruction(binNodeNextNext);
         if (mov && mov->get_kind() == x86_mov && shl && shl->get_kind() == x86_shl) {
           *output += "   !! multiplyOp ............... \n" ;
           cerr << "       found multiOp. binCount: " << bin_count << endl;
@@ -918,7 +918,7 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
           binNode = bin_statements[(bin_count)];
           ROSE_ASSERT(binNode);
           cerr << "      checking isSgDivideOp against " << binNode->class_name() << endl;
-          SgAsmx86Instruction* shr = isSgAsmx86Instruction(binNode);
+          SgAsmX86Instruction* shr = isSgAsmX86Instruction(binNode);
           if (shr && shr->get_kind() == x86_shr) {
             *output += "   !! divideOp ............... \n" ;
             (nodes_matched)++;

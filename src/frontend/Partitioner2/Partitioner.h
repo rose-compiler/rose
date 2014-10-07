@@ -240,7 +240,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(true) {
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false) {
         init(disassembler, map);
     }
 
@@ -1223,6 +1223,15 @@ public:
      *  cached rather than only consulting the cache. */
     void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true, bool computeProperties=true) const;
 
+    /** Output CFG as GraphViz.
+     *
+     *  Emits all vertices whose starting address falls within the specified address interval, and all vertices that are
+     *  reachable forward or backward by a single edge from those vertices.
+     *
+     *  If @p showNeighbors is false then only edges whose source and target are both selected vertices are shown. */
+    void cfgGraphViz(std::ostream&, const AddressInterval &restrict = AddressInterval::whole(),
+                     bool showNeighbors=true) const;
+
     /** Name of a vertex. */
     static std::string vertexName(const ControlFlowGraph::VertexNode&);
 
@@ -1311,7 +1320,9 @@ private:
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
     virtual void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
-    
+
+    // String for a vertex in a GraphViz file. The attrs are only added for basic block vertices.
+    static std::string cfgGraphVizVertex(const ControlFlowGraph::VertexNode&, const std::string &attrs="");
 };
 
 } // namespace

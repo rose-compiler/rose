@@ -20,9 +20,9 @@ struct HLTHooks: public BtorTranslationHooks {
   void hlt(BtorTranslationPolicy* policy) {
     policy->registerMap.errorFlag[bmc_error_program_failure] = policy->problem.build_op_redor(policy->readGPR(x86_gpr_bx));
   }
-  void startInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) {
+  void startInstruction(BtorTranslationPolicy* policy, SgAsmX86Instruction* insn) {
   }
-  void finishInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) {
+  void finishInstruction(BtorTranslationPolicy* policy, SgAsmX86Instruction* insn) {
   }
 };
 
@@ -39,10 +39,10 @@ std::string btorTranslateFunction(BtorTranslationPolicy& policy, SgAsmNode* func
   rose_addr_t entryPoint = header->get_entry_rva() + header->get_base_va();
 
   X86InstructionSemantics<BtorTranslationPolicy, BtorWordType> t(policy);
-  std::vector<SgNode*> instructions = NodeQuery::querySubTree(func, V_SgAsmx86Instruction);
+  std::vector<SgNode*> instructions = NodeQuery::querySubTree(func, V_SgAsmX86Instruction);
 
   for (size_t i = 0; i < instructions.size(); ++i) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    SgAsmX86Instruction* insn = isSgAsmX86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
     string s = unparseInstructionWithAddress(insn);
     fprintf(outfile, "\n%s\n", s.c_str());
@@ -254,17 +254,17 @@ main(int argc, char *argv[])
 
           }
 
-          std::set< std::vector<SgAsmx86Instruction*> > staticTraces;
+          std::set< std::vector<SgAsmX86Instruction*> > staticTraces;
 
           
           {
-           std::vector<SgNode*> nodesInSubTree = NodeQuery::querySubTree( funcDecl, V_SgAsmx86Instruction );
+           std::vector<SgNode*> nodesInSubTree = NodeQuery::querySubTree( funcDecl, V_SgAsmX86Instruction );
 
             staticTraces = generateStaticTraces(intraProceduralCFG,  nodesInSubTree.size() );
 
 
             int count =0;
-            for( std::set< std::vector<SgAsmx86Instruction*> >::iterator traceItr = staticTraces.begin();
+            for( std::set< std::vector<SgAsmX86Instruction*> >::iterator traceItr = staticTraces.begin();
                 traceItr != staticTraces.end(); ++traceItr )
             {
               count++;
@@ -284,9 +284,9 @@ main(int argc, char *argv[])
               { // Output x86
                 FILE* fTrace = fopen( string("ddg_x86_"+ funcDecl->get_name()+"_" + boost::lexical_cast<std::string>(count) + ".out").c_str() , "w");
 
-                const std::vector<SgAsmx86Instruction*>& curTrace = *traceItr;
+                const std::vector<SgAsmX86Instruction*>& curTrace = *traceItr;
 
-                for(std::vector<SgAsmx86Instruction*>::const_iterator iItr = curTrace.begin(); iItr != curTrace.end(); ++iItr )
+                for(std::vector<SgAsmX86Instruction*>::const_iterator iItr = curTrace.begin(); iItr != curTrace.end(); ++iItr )
                   fprintf(fTrace, "%s\n", unparseInstructionWithAddress(*iItr).c_str() );
 
                 fclose(fTrace);
@@ -313,16 +313,16 @@ main(int argc, char *argv[])
           //string s = btorTranslateFunction(policy, funcDecl, f, initialConditionsAreUnknown, true,
           //    interp->get_header());
 
-          std::vector<SgNode*> instructions = NodeQuery::querySubTree(funcDecl, V_SgAsmx86Instruction);
+          std::vector<SgNode*> instructions = NodeQuery::querySubTree(funcDecl, V_SgAsmX86Instruction);
 
-          std::vector<SgAsmx86Instruction*> insts; 
+          std::vector<SgAsmX86Instruction*> insts; 
           for(unsigned int k = 0 ;  k < instructions.size() ; k++ )
           {
-            insts.push_back(isSgAsmx86Instruction(instructions[k]) );
+            insts.push_back(isSgAsmX86Instruction(instructions[k]) );
 
             std::cout << "The class name " << instructions[k]->get_parent()->class_name()  << " " <<  instructions[k]->get_parent()->get_parent()->class_name() 
                       << " " << ( isSgAsmBlock(instructions[k]->get_parent()) ?  isSgAsmBlock(instructions[k]->get_parent())->get_address() : 0 ) << std::endl;
-            ROSE_ASSERT(   isSgAsmx86Instruction(instructions[k]) != NULL );
+            ROSE_ASSERT(   isSgAsmX86Instruction(instructions[k]) != NULL );
           }
 
 

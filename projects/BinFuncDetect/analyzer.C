@@ -433,7 +433,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
             if (ida_i->function.find(rose_functions[i]->get_entry_va())==ida_i->function.end()) {
                 entries.insert(rose_functions[i]->get_entry_va());
                 ExtentMap func_bytes;
-                std::vector<SgAsmx86Instruction*> func_insns = SageInterface::querySubTree<SgAsmx86Instruction>(rose_functions[i]);
+                std::vector<SgAsmX86Instruction*> func_insns = SageInterface::querySubTree<SgAsmX86Instruction>(rose_functions[i]);
                 for (size_t j=0; j<func_insns.size(); j++)
                     func_bytes.insert(Extent(func_insns[j]->get_address(), func_insns[j]->get_size()));
                 nbytes += func_bytes.size();
