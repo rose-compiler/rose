@@ -15,6 +15,10 @@ if !ROSE_USE_CLANG_FRONTEND
    SUBDIRS += roseTests
 #endif
 
+# JP (10/3/14): In order to be able to run the unit tests, we want to build the test support,
+# this includes google test as well as our own header, providing some necessary helper functions
+SUBDIRS += testSupport
+
 SUBDIRS += RunTests
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests

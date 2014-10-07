@@ -9,7 +9,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               programTransformationTests \
               graph_tests mergeTraversal_tests \
 	      astLValueTests abstractMemoryObjectTests \
-              unitTesting
+              ROSETTA
 if !ROSE_USE_INSURE
  SUBDIRS += roseHPCToolkitTests 
 endif
