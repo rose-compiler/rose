@@ -7,14 +7,14 @@
 
 // Put non-generated Aterm support code here.
 
+#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+
 using namespace std;
 using namespace AtermSupport;
 
 // Note that setting this to true was the original setting.
 // #define LAZY_WRAPPING_MACRO true
 #define LAZY_WRAPPING_MACRO false
-
-#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
 
 string
 AtermSupport::aterm_type_name( ATerm term )
