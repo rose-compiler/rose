@@ -605,11 +605,11 @@ SgAsmGenericSection::write_sleb128(unsigned char *buf, rose_addr_t offset, int64
 
 /** Returns a list of parts of a single section that have been referenced.  The offsets are relative to the start of the
  *  section. */
-ExtentMap
+AddressIntervalSet
 SgAsmGenericSection::get_referenced_extents() const
 {
     if (0==get_size())
-        return ExtentMap();
+        return AddressIntervalSet();
 
     AddressIntervalSet retval;
     AddressInterval segment = AddressInterval::baseSize(get_offset(), get_size());
@@ -630,13 +630,15 @@ SgAsmGenericSection::get_referenced_extents() const
             ASSERT_not_reachable("invalid extent overlap category");
         }
     }
-    return toExtentMap(retval);
+    return retval;
 }
 
-ExtentMap
+AddressIntervalSet
 SgAsmGenericSection::get_unreferenced_extents() const
 {
-    return get_referenced_extents().subtract_from(Extent(0, get_size())); /*complement*/
+    AddressIntervalSet set = get_referenced_extents();
+    set.invert(AddressInterval::baseSize(0, get_size()));
+    return set;
 }
 
 /** Extend a section by some number of bytes during the construction and/or parsing phase. This is function is considered to
