@@ -14,6 +14,7 @@ using namespace AtermSupport;
 // #define LAZY_WRAPPING_MACRO true
 #define LAZY_WRAPPING_MACRO false
 
+#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
 
 string
 AtermSupport::aterm_type_name( ATerm term )
@@ -393,4 +394,87 @@ ATerm AtermSupport::convertNodeToAterm(SgNode* n)
 
      return term;
    }
+
+
+
+ATerm AtermSupport::getAtermAnnotation(ATerm term, char* annotation_name ) 
+   {
+     ROSE_ASSERT(annotation_name != NULL);
+
+     ATerm idannot = ATgetAnnotation(term, ATmake(annotation_name));
+     if (idannot)
+        {
+#if 1
+          printf ("Found an annotation \n");
+#endif
+          char* unique_string = NULL;
+       // if (ATmatch("id(<str>)", &unique_string))
+          if (ATmatch(idannot,"<str>", &unique_string))
+             {
+               printf ("unique_string = %s \n",unique_string);
+#if 0
+               updateDeclarationMap(unique_string,decl);
+#if 0
+            // Not clear if I need to build the type directly here, I now think we need this step as well.
+            // ROSE_ASSERT(decl->get_type() != NULL);
+
+               SgClassType* classType = new SgClassType(decl);
+            // updateTypeMap(str,classType);
+               updateTypeMap(unique_string,classType);
+#endif
+               decl->set_type(classType);
+               ROSE_ASSERT(decl->get_type() != NULL);
+#endif
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+            // If the annotation is not a string it might be an integer.
+               int unique_integer = -1;
+               if (ATmatch(idannot,"<int>", &unique_integer))
+                  {
+                    printf ("unique_integer = %d \n",unique_integer);
+
+                    printf ("integer aterm annotations not implemented yet! \n");
+                    ROSE_ASSERT(false);
+                  }
+                 else
+                  {
+                    printf ("Unknown annotation: annotation_name = %s \n",annotation_name);
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+       else
+        {
+          printf ("Error: annotation required: annotation_name = %s (needed to define key for updateDeclarationMap()) \n",annotation_name);
+          ROSE_ASSERT(false);
+        }
+   }
+
+
+vector<ATerm> AtermSupport::getAtermList(ATerm ls) 
+   {
+     ATerm a, b;
+     vector<ATerm> result;
+     while (true) 
+        {
+          if (ATmatch(ls, "[]"))
+               return result;
+            else 
+               if (ATmatch(ls, "[<term>, <list>]", &a, &b)) 
+                  {
+                    result.push_back(a);
+                    ls = b;
+                  } 
+                 else
+                    ROSE_ASSERT (!"getAtermList");
+        }
+   }
+
+// endif for ROSE_USE_ROSE_ATERM_SUPPORT
+#endif
 

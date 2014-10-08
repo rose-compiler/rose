@@ -337,7 +337,6 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // Also I want to initially seperate this from Windows support.
 #ifndef _MSC_VER
   #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
-
  // DQ (9/27/2013): This is required to be defined for the 64bit ATerm support.
     #if (__x86_64__ == 1)
    // 64-bit machines are required to set this before including the ATerm header files.
@@ -351,7 +350,13 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 
     #include "aterm1.h"
     #include "aterm2.h"
+  #else
+ // Define this away so that we can trivially compile without ATerm support.
+    typedef int ATerm;
   #endif
+#else
+// Define this away so that we can trivially compile without ATerm support.
+   typedef ATerm int;
 #endif
 
 // DQ (3/7/2013): I think that we need to use "" instead of <> and this may make a difference for SWIG.
@@ -364,9 +369,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // I think we need a specific macro to be defined for when ATerms are being used.
 // Also I want to initially seperate this from Windows support.
 #ifndef _MSC_VER
-  #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+//  #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
     #include "atermSupport.h"
-  #endif
+//  #endif
 #endif
 
 // Disable CC++ extensions (we want to support only the C++ Standard)

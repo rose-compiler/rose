@@ -38,4 +38,13 @@ namespace AtermSupport
      ATerm getTraversalChildrenAsAterm(SgNode* n);
 
      ATerm convertNodeToAterm(SgNode* n);
+
+     ATerm getAtermAnnotation(ATerm term, char* annotation_name );
+
+  // Function for reading aterms and converting them to ROSE AST IR nodes.
+     SgNode* generate_AST(ATerm & term);
+
+  // Generate a list of aterms from the input aterm.
+     std::vector<ATerm> getAtermList(ATerm ls);
    }
+

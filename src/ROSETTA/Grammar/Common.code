@@ -321,6 +321,8 @@ HEADER_START
        */
           $CLASSNAME* addRegExpAttribute(std::string s, AstRegExAttribute* a);
 
+#ifndef _MSC_VER
+   #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
       // DQ (10/4/2014): Adding ATerm support to ROSE.
       /*! \brief Support for generation of ATerms.
 
@@ -333,6 +335,11 @@ HEADER_START
        */
           virtual ATerm generate_ATerm();
           virtual void generate_ATerm_Annotation(ATerm & term);
+   #endif
+#endif
+       // These can't be virtual functions since we don't yet know what IR node to build (until we have read the aterm).
+       // virtual generate_AST(ATerm & term);
+       // virtual void read_ATerm_Annotation(ATerm & term);
 
 // *** COMMON CODE SECTION ENDS HERE ***
 HEADER_END
