@@ -39,6 +39,7 @@ AddressUser::print(std::ostream &out) const {
     } else {
         ASSERT_require(odblock_.isValid());
         out <<"{D-" <<StringUtility::addrToString(odblock_.dataBlock()->address())
+            <<"+" <<odblock_.dataBlock()->size()
             <<" " <<StringUtility::plural(odblock_.nOwners(), "owners") <<"}";
     }
 }
@@ -111,6 +112,7 @@ AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &b
 void
 AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
+    ASSERT_require(isConsistent());
     AddressUser user(odb);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
     if (lb==users_.end() || lb->dataBlock()!=odb.dataBlock()) {
@@ -123,6 +125,7 @@ AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
         BOOST_FOREACH (const BasicBlock::Ptr &bblock, odb.owningBasicBlocks())
             lb->dataBlockOwnership().insertOwner(bblock);
     }
+    ASSERT_require(isConsistent());
 }
 
 void
@@ -133,6 +136,7 @@ AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->insn()==insn)
             users_.erase(lb);
+        ASSERT_require(isConsistent());
     }
 }
 
@@ -144,6 +148,7 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->dataBlock()==dblock)
             users_.erase(lb);
+        ASSERT_require(isConsistent());
     }
 }
 
@@ -236,6 +241,7 @@ AddressUsers::insert(const AddressUsers &other) {
                 users_.insert(lb, user);
         }
     }
+    ASSERT_require(isConsistent());
 }
 
 bool
@@ -254,6 +260,13 @@ AddressUsers::isConsistent() const {
                     ASSERT_not_null2(current->basicBlock(), "instruction user must belong to a basic block");
                     return false;
                 }
+                if (++next != users_.end()) {
+                    if (!(*current < *next)) {
+                        ASSERT_forbid2(*next < *current, "list is not sorted");
+                        ASSERT_require2(*current < *next, "list contains a duplicate");
+                        return false;
+                    }
+                }
             } else {
                 // data block user
                 if (current->insn()!=NULL) {
@@ -264,12 +277,14 @@ AddressUsers::isConsistent() const {
                     ASSERT_require2(current->basicBlock()==NULL, "user cannot have both basic block and data block");
                     return false;
                 }
-            }
-            if (++next != users_.end()) {
-                if (!(*current < *next)) {
-                    ASSERT_forbid2(*next < *current, "list is not sorted");
-                    ASSERT_require2(*current < *next, "list contains a duplicate");
-                    return false;
+                if (++next != users_.end()) {
+                    if (*next < *current) {
+                        ASSERT_forbid2(*next < *current, "list is not sorted");
+                        // Multiple data blocks can can exist at the same address and have the same size, but we can't
+                        // allow the exact same data block (by pointers) to appear multiple times in the list.
+                        ASSERT_forbid2(current->dataBlock()==next->dataBlock(), "list contains a duplicate");
+                        return false;
+                    }
                 }
             }
             ++current;
@@ -312,12 +327,42 @@ AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     AddressInterval interval = AddressInterval::baseSize(odb.dataBlock()->address(), odb.dataBlock()->size());
     Map adjustment;
     adjustment.insert(interval, AddressUsers(odb));
+#if 0 // DEBUGGING [Robb P. Matzke 2014-10-08]
+    std::cerr <<"ROBB: insertDataBlock " <<StringUtility::addrToString(odb.dataBlock()->address())
+              <<" + " <<StringUtility::plural(odb.dataBlock()->size(), "bytes")
+              <<" at [" <<StringUtility::addrToString(odb.dataBlock()->extent().least())
+              <<", " <<StringUtility::addrToString(odb.dataBlock()->extent().greatest()) <<"]\n";
+    std::cerr <<"  Data blocks before insertion:\n";
+    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        const AddressUsers users = node.value().select(AddressUsers::selectDataBlocks);
+        if (!users.isEmpty()) {
+            std::cerr <<"    [" <<StringUtility::addrToString(node.key().least())
+                      <<", " <<StringUtility::addrToString(node.key().greatest()) <<"]"
+                      <<" users = " <<users <<"\n";
+        }
+    }
+#endif
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+#if 0 // DEBUGGING [Robb P. Matzke 2014-10-08]
+        std::cerr <<"  data block overlaps users at [" <<StringUtility::addrToString(node.key().least())
+                  <<", " <<StringUtility::addrToString(node.key().greatest()) <<"]: " <<node.value() <<"\n";
+#endif
         AddressUsers newUsers = node.value();
         newUsers.insertDataBlock(odb);
         adjustment.insert(interval.intersection(node.key()), newUsers);
     }
     map_.insertMultiple(adjustment);
+#if 0 // DEBUGGING [Robb P. Matzke 2014-10-08]
+    std::cerr <<"  Data blocks after insertion:\n";
+    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        const AddressUsers users = node.value().select(AddressUsers::selectDataBlocks);
+        if (!users.isEmpty()) {
+            std::cerr <<"    [" <<StringUtility::addrToString(node.key().least())
+                      <<", " <<StringUtility::addrToString(node.key().greatest()) <<"]"
+                      <<" users = " <<users <<"\n";
+        }
+    }
+#endif
 }
 
 void
