@@ -291,7 +291,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
     }
 
     /* The free list is everything that's been referenced in the container section. */
-    get_freelist() = toAddressIntervalSet(container->get_referenced_extents());
+    get_freelist() = container->get_referenced_extents();
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
