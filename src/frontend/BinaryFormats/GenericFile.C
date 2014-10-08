@@ -112,7 +112,7 @@ void
 SgAsmGenericFile::mark_referenced_extent(rose_addr_t offset, rose_addr_t size)
 {
     if (get_tracking_references()) {
-        p_referenced_extents.insert(Extent(offset, size));
+        p_referenced_extents.insert(AddressInterval::baseSize(offset, size));
         delete p_unreferenced_cache;
         p_unreferenced_cache = NULL;
     }
@@ -124,7 +124,8 @@ SgAsmGenericFile::get_unreferenced_extents() const
 {
     if (!p_unreferenced_cache) {
         p_unreferenced_cache = new ExtentMap();
-        *p_unreferenced_cache = p_referenced_extents.subtract_from(Extent(0, get_current_size()));
+        ExtentMap tmp = toExtentMap(p_referenced_extents);
+        *p_unreferenced_cache = tmp.subtract_from(Extent(0, get_current_size()));
     }
     return *p_unreferenced_cache;
 }

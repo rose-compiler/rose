@@ -2543,7 +2543,7 @@ Grammar::setUpBinaryInstructions()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "tracking_references", "= true",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFile.setDataPrototype("ExtentMap", "referenced_extents", "",
+     AsmGenericFile.setDataPrototype("AddressIntervalSet", "referenced_extents", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "neuter", "= false", // if set, refuse to unparse file
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
