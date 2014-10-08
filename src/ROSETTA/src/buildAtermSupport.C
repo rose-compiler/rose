@@ -1189,11 +1189,14 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                            + grammarString->getVariableNameString() + " typeKind = " 
                            + StringUtility::numberToString((int)typeKind) + "\n";
 
-          string defaultInitializerString = grammarString->getDefaultInitializerString();
+       // string defaultInitializerString = grammarString->getDefaultInitializerString();
+          string attributeName = grammarString->getVariableNameString();
+          string defaultInitializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
 
        // Implement initalization of enum using cast (alternatively the default value is available in ROSETTA).
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = \"\"; \n";
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = " + grammarString->getTypeNameString() + "(0); \n";
+       // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + defaultInitializerString + "; \n";
           dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + defaultInitializerString + "; \n";
 
           constructorArgumentsString += "local_" + grammarString->getVariableNameString();
