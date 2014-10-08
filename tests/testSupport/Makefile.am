@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS=gtest
+#SUBDIRS=gtest
 
 lib_LTLIBRARIES = libroseUnitTestSupport.la
 
