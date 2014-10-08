@@ -163,7 +163,7 @@ public:
      *  Instructions are returned in the order they would be executed (i.e., the order they were added to the block).
      *  Blocks in the undiscovered and not-existing states never have instructions (they return an empty vector); blocks in
      *  the incomplete and complete states always return at least one instruction. */
-    const std::vector<SgAsmInstruction*> instructions() const { return insns_; }
+    const std::vector<SgAsmInstruction*>& instructions() const { return insns_; }
 
     /** Append an instruction to a basic block.
      *
