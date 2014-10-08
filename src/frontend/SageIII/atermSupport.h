@@ -46,5 +46,8 @@ namespace AtermSupport
 
   // Generate a list of aterms from the input aterm.
      std::vector<ATerm> getAtermList(ATerm ls);
+
+     std::string getAtermStringAttribute(ATerm term, const std::string & annotationName );
+
    }
 

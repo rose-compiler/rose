@@ -132,8 +132,8 @@ ATerm AtermSupport::convertSgNodeRangeToAterm(Iter b, Iter e)
 
      if ( (b != e) && (*b != NULL) )
         {
-          SgNode* parent = (*b)->get_parent();
 #if 0
+          SgNode* parent = (*b)->get_parent();
           if (parent == NULL)
              {
                printf ("warning: parent == NULL: *b = %p = %s \n",*b,(*b)->class_name().c_str());
@@ -166,9 +166,9 @@ ATerm AtermSupport::convertSgNodeRangeToAterm(Iter b, Iter e)
 #endif
                child_term = convertNodeToAterm(*b);
 
+#if 0
             // I think we are generating invalid aterms in some cases.
                int atermKind = ATgetType(child_term);
-#if 0
                printf ("In AtermSupport::convertSgNodeRangeToAterm(): child_term: atermKind = %d = %s \n",atermKind,aterm_type_name(child_term).c_str());
 #endif
 #if 0
@@ -185,9 +185,9 @@ ATerm AtermSupport::convertSgNodeRangeToAterm(Iter b, Iter e)
        // ls = ATappend(ls,convertNodeToAterm(*b));
           ls = ATappend(ls,child_term);
 
+#if 0
        // I think we are generating invalid aterms in some cases.
           int atermKind = ATgetType(ls);
-#if 0
        // printf ("In AtermSupport::convertSgNodeRangeToAterm(): ATappend(): atermKind = %d = %s \n",atermKind,aterm_type_name(ls).c_str());
           printf ("In AtermSupport::convertSgNodeRangeToAterm(): ATappend(): atermKind = %d \n",atermKind);
 #endif
@@ -203,9 +203,9 @@ ATerm AtermSupport::convertSgNodeRangeToAterm(Iter b, Iter e)
   // return ATmake("<term>", ls);
      ATerm returnTerm = ATmake("<term>", ls);
 
+#if 0
   // I think we are generating invalid aterms in some cases.
      int atermKind = ATgetType(returnTerm);
-#if 0
      printf ("In AtermSupport::convertSgNodeRangeToAterm(): atermKind = %d = %s \n",atermKind,aterm_type_name(returnTerm).c_str());
 #endif
 #if 0
@@ -309,8 +309,8 @@ ATerm AtermSupport::getTraversalChildrenAsAterm(SgNode* n)
      ATerm term = convertSgNodeRangeToAterm(children.begin(), children.end());
 
   // I think we are generating invalid aterms in some cases.
-     int atermKind = ATgetType(term);
 #if 0
+     int atermKind = ATgetType(term);
      printf ("In AtermSupport::getTraversalChildrenAsAterm(): atermKind = %d = %s \n",atermKind,aterm_type_name(term).c_str());
 #endif
 #if 0
@@ -354,9 +354,9 @@ ATerm AtermSupport::convertNodeToAterm(SgNode* n)
 #endif
           term = ATmake("NULL");
 
+#if 0
        // I think we are generating invalid aterms in some cases.
           int atermKind = ATgetType(term);
-#if 0
           printf ("In AtermSupport::convertNodeToAterm(SgNode* n): NULL ATERM: atermKind = %d = %s \n",atermKind,aterm_type_name(term).c_str());
 #endif
 #if 0
@@ -373,9 +373,9 @@ ATerm AtermSupport::convertNodeToAterm(SgNode* n)
 
           term = n->generate_ATerm();
 
+#if 0
        // I think we are generating invalid aterms in some cases.
           int atermKind = ATgetType(term);
-#if 0
           printf ("In AtermSupport::convertNodeToAterm(SgNode* n): n = %p = %s atermKind = %d = %s \n",n,n->class_name().c_str(),atermKind,aterm_type_name(term).c_str());
 #endif
 #if 0
@@ -474,6 +474,105 @@ vector<ATerm> AtermSupport::getAtermList(ATerm ls)
                     ROSE_ASSERT (!"getAtermList");
         }
    }
+
+
+string 
+AtermSupport::getAtermStringAttribute(ATerm term, const string & annotationName ) 
+   {
+  // This gets the string from an attribut where the know the type is a string.
+  // It is used to assign data members where the data member is a string (e.g. SgName in a SgClassDeclaration).
+
+     string returnString;
+
+     ATerm idannot = ATgetAnnotation(term, ATmake(annotationName.c_str()));
+     if (idannot)
+        {
+#if 1
+          printf ("Found an annotation: annotationName = %s \n",annotationName.c_str());
+#endif
+          char* id = NULL;
+          if (ATmatch(idannot, "<str>", &id))
+             {
+#if 0
+                ROSE_ASSERT(result != NULL);
+                printf ("Setting targetLocations map: id = %s result = %p = %s \n",id,result,result->class_name().c_str());
+#endif
+                returnString = id;
+             }
+        }
+
+     return returnString;
+   }
+
+#if 0
+// DQ (10/7/2014): Not celar if we need this function.
+
+string 
+AtermSupport::processAtermAttribute(ATerm term) 
+   {
+  // This function processes the attribute where it is a associated with a SgType, SgDeclaration, or SgInitializedName.
+
+     ATerm idannot = ATgetAnnotation(term, ATmake("id"));
+     if (idannot)
+        {
+#if 1
+          printf ("Found an annotation \n");
+#endif
+          char* id;
+          if (ATmatch(idannot, "<str>", &id))
+             {
+#if 1
+                ROSE_ASSERT(result != NULL);
+                printf ("Setting targetLocations map: id = %s result = %p = %s \n",id,result,result->class_name().c_str());
+#endif
+            // Organize as seperate translation maps to simplify the debugging (also allows the same key to be used for types and declarations, etc.).
+            // targetLocations[id] = result;
+               SgScopeStatement*       scope           = isSgScopeStatement(result);
+               SgDeclarationStatement* declaration     = isSgDeclarationStatement(result);
+               SgType*                 type            = isSgType(result);
+               SgInitializedName*      initializedName = isSgInitializedName(result);
+               if (scope != NULL)
+                  {
+                    updateScopeMap(id,scope);
+                  }
+                 else
+                  {
+                    if (declaration != NULL)
+                       {
+                         updateDeclarationMap(id,declaration);
+                       }
+                      else
+                       {
+                         if (type != NULL)
+                            {
+                              updateTypeMap(id,type);
+                            }
+                           else
+                            {
+                              if (initializedName != NULL)
+                                 {
+                                   updateInitializedNameMap(id,initializedName);
+                                 }
+                                else
+                                 {
+                                   printf ("Not updated in translation map: result = %p = %s \n",result,result->class_name().c_str());
+                                 }
+                            }
+                       }
+                  }
+             }
+            else
+             {
+               ROSE_ASSERT (!"id annotation has incorrect format");
+             }
+        }
+       else
+        {
+#if 1
+          printf ("No annotation found! \n");
+#endif
+        }
+#endif
 
 // endif for ROSE_USE_ROSE_ATERM_SUPPORT
 #endif
