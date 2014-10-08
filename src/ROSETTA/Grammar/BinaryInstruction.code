@@ -721,7 +721,7 @@ HEADER_GENERIC_FILE_START
                 void dump_all(const std::string& dumpname);             /* Recursively print all known info about the file */
 
                 /* Tracking references */
-                const ExtentMap& get_unreferenced_extents() const;      /* Returns parts of file that have not been referenced */
+                const AddressIntervalSet& get_unreferenced_extents() const; /* Returns parts of file that have not been referenced */
                 void mark_referenced_extent(rose_addr_t start_rva, rose_addr_t size);
 
                 /* Converting encoding/decoding data is it's transferred from/to disk. */
@@ -800,7 +800,7 @@ HEADER_GENERIC_FILE_START
 
         private:
                 void ctor();
-                mutable ExtentMap *p_unreferenced_cache;
+                mutable AddressIntervalSet *p_unreferenced_cache;
                 DataConverter *p_data_converter;
 HEADER_GENERIC_FILE_END
 
@@ -2457,7 +2457,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 size_t iat_required_size() const;
                 int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
-                size_t hintname_table_extent(ExtentMap &extent/*in,out*/) const;
+                size_t hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const;
         private:
                 void ctor(SgAsmPEImportSection*, const std::string &dll_name);
                 void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);

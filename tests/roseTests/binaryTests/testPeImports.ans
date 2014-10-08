@@ -40,7 +40,7 @@
 === WINHTTP.dll ===
   IAT entry #0 at 0x01004150 bound to 0x4d4f84d4 (1297056980), hint=11, name="WinHttpGetDefaultProxyConfiguration"
   IAT entry #1 at 0x01004154 bound to 0x4d4f85a6 (1297057190), hint=24, name="WinHttpSetDefaultProxyConfiguration"
-msvcrt.dll hint/name table has 19 entries at virtual addresses: 0x010041b4+0x000000f6=0x010042aa, 0x010042b6+0x0000000e=0x010042c4
-KERNEL32.dll hint/name table has 16 entries at virtual addresses: 0x010042c4+0x0000010a=0x010043ce
-WININET.dll hint/name table has 1 entry at virtual addresses: 0x010043dc+0x00000018=0x010043f4
-WINHTTP.dll hint/name table has 2 entries at virtual addresses: 0x01004400+0x0000004c=0x0100444c
+msvcrt.dll hint/name table has 19 entries at virtual addresses: { [0x010041b4,0x010042a9] [0x010042b6,0x010042c3] }
+KERNEL32.dll hint/name table has 16 entries at virtual addresses: { [0x010042c4,0x010043cd] }
+WININET.dll hint/name table has 1 entry at virtual addresses: { [0x010043dc,0x010043f3] }
+WINHTTP.dll hint/name table has 2 entries at virtual addresses: { [0x01004400,0x0100444b] }
