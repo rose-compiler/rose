@@ -532,7 +532,12 @@ class Grammar
 
        // DQ (10/4/2014): Adding ATerm support to be automatically generated via ROSETTA.
           void buildAtermSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
-          void generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile);
+          void buildAtermGenerationSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
+          void buildAtermConsumerSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
+          void buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstConstructorParameter, bool & lastDataMemberWasConstructorParameter, 
+                               bool & isInConstructorParameterList, std::string & constructorArgumentsString, std::string & dataMemberString );
+       // void generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile);
+
 
        // MS: create source code for enums used in traversal functions to access synthesized attribute values
           void buildEnumForNode(Terminal& node, std::string& enumString);

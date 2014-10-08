@@ -1383,6 +1383,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
           bool withInitializers = false;
 #endif
           bool withTypes        = true;
+
        // Get the SgLocatedNode so that we can set the data member as not being a constructor 
        // parameter so that we can reuse the same code generation source code.
           Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
@@ -1410,16 +1411,46 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->isInConstructorParameterList = CONSTRUCTOR_PARAMETER;
                returnValue->defaultInitializerString = defaultInitializer;
+#if 0
+            // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (only generated where constructors are generated).
+               if (node.generateConstructor() == true)
+                  {
+                    constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString_1 + "); \n";
+                  }
+#endif
              }
             else
              {
-            // If not a SgLocatedNode then output the normal constructor prototype (with all the default arguments.
+            // If not a SgLocatedNode then output the normal constructor prototype (with all the default arguments).
                string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString + "); \n";
                withInitializers = false;
+#if 0
+            // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (only generated where constructors are generated).
+               if (node.generateConstructor() == true)
+                  {
+                    constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString + "); \n";
+                  }
+#endif
              }
 
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
+        }
+
+  // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (we want it generated independe of if (node.generateConstructor() == true)).
+  // if (node.generateConstructor() == true)
+        {
+          bool complete = false;
+          ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
+          bool withInitializers = true;
+          bool withTypes        = true;
+          string constructorPrototype = "\n     public: \n"; 
+
+          string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+
+          constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString + "); \n";
+
+          dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<aterm support>" */, 1));
         }
 
      return dataAccessFunctionPrototypeString;
@@ -1520,11 +1551,43 @@ Grammar::buildConstructor ( Terminal & node )
                config = NO_CONSTRUCTOR_PARAMETER;
              }
 
-          if (config == NO_CONSTRUCTOR_PARAMETER) {
-            constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
-          } else {
-            constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
-          }
+          if (config == NO_CONSTRUCTOR_PARAMETER) 
+             {
+              constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+            else
+             {
+               constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+        }
+
+#if 1
+  // DQ (10/7/2014): Build the Aterm support static member function (constructor).
+  // if (node.generateConstructor() == true)
+        {
+          string constructorTemplateFileName = "../Grammar/grammarAtermConstructorDefinitionMacros.macro";
+          StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
+
+          bool complete  = false;
+#if 0
+          ConstructParamEnum config = CONSTRUCTOR_PARAMETER;
+          if  (node.getBuildDefaultConstructor())
+             {
+               config = NO_CONSTRUCTOR_PARAMETER;
+             }
+
+          if (config == NO_CONSTRUCTOR_PARAMETER) 
+             {
+              constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+            else
+             {
+               constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+#else
+          constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+#endif
+#endif
         }
 
      return returnString;
