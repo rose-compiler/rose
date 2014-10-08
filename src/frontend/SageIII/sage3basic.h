@@ -356,7 +356,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
   #endif
 #else
 // Define this away so that we can trivially compile without ATerm support.
-   typedef ATerm int;
+   typedef int ATerm;
 #endif
 
 // DQ (3/7/2013): I think that we need to use "" instead of <> and this may make a difference for SWIG.
