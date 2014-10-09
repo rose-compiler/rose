@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
 
 #else
 
+#include <Combinatorics.h>
 #include <Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
@@ -40,11 +41,15 @@ namespace P2 = rose::BinaryAnalysis::Partitioner2;
 static Sawyer::Message::Facility mlog;
 
 struct Settings {
+    bool performLink;                                   // should dynamic linking be performed inside ROSE?
+    std::vector<std::string> libDirs;                   // directories where libraries are stored
     bool showMaps;                                      // show memory maps?
     bool allowSyscalls;                                 // are system calls allowed?
     size_t maxInsns;                                    // max number of instructions to execute; zero means no limit
+    size_t nFunctionsTested;                            // number of functions to test
+    size_t nInsnsTested;                                // number of instructions to test
     std::string initFunction;                           // when to branch to another function
-    Settings(): showMaps(false), allowSyscalls(false), maxInsns(0) {}
+    Settings(): performLink(false), showMaps(false), allowSyscalls(false), maxInsns(0), nFunctionsTested(-1), nInsnsTested(0) {}
 };
 
 // Describe and parse the command-line
@@ -87,6 +92,35 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                       "at most " + plural(settings.maxInsns, "instructions") + "are executed.":
                       std::string("there is no limit."))));
 
+    tool.insert(Switch("link")
+                .intrinsicValue(true, settings.performLink)
+                .doc("Perform dynamic linking within ROSE.  This is in addition to any dynamic linking that might occur when "
+                     "the specimen is run natively and which is controlled by the @s{init} switch.  The @s{no-link} switch "
+                     "disables linking in ROSE.  The default is to " +
+                     std::string(settings.performLink?"":"not ") + "perform the linking step.\n\n"
+
+                     "Note that ROSE's internal dynamic linking algorithm doesn't usually produce the same memory map as "
+                     "the Linux loader/dynamic linker.  Even with @man(setarch)[8] the mappings are different.  The "
+                     "result of using linking in ROSE is therefore twofold: (1) any random function or instruction address that "
+                     "this tool chooses from a dynamic library is likely not the same address in the natively loaded "
+                     "specimen and will likely result in an immediate segmentation fault, and (2) if the "
+                     "@s{no-allow-syscalls} is in effect, any instructions that the native process executes from inside a "
+                     "dynamic library will not match instructions inside ROSE and this tool will complain that the "
+                     "specimen is executing at an unknown address (or at the very least, the syscall detection will be "
+                     "incorrect).  Therefore it is recommended that you carefully check the output from @s{show-maps} "
+                     "when using the @s{link} switch."));
+    tool.insert(Switch("no-link")
+                .key("link")
+                .intrinsicValue(false, settings.performLink)
+                .hidden(true));
+
+    tool.insert(Switch("libdir")
+                .longName("libdirs")
+                .argument("directories", anyParser(settings.libDirs))
+                .whichValue(SAVE_ALL)
+                .doc("Directories that contain libraries that are used if @s{link} is specified. This switch can be specfied "
+                     "more than once, and each argument can be a list of colon-separated directory names."));
+
     tool.insert(Switch("init")
                 .argument("name", anyParser(settings.initFunction))
                 .doc("If specified, allow the specimen to run until the specified function or address is reached.  Keep in "
@@ -95,6 +129,18 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                      "otherwise if @v{name} cannot be found the specimen's original entry point is used, thus allowing the "
                      "dynamic linker to run before branching to a function.  When not specified, branching occurs "
                      "immediately after the specimen is loaded."));
+
+    tool.insert(Switch("functions")
+                .argument("n", nonNegativeIntegerParser(settings.nFunctionsTested))
+                .doc("Run at most @v{n} functions selected at random.  The default is to run " +
+                     std::string(settings.nFunctionsTested==size_t(-1)?"all functions":
+                                 "at most "+plural(settings.nFunctionsTested, "functions")) + "."));
+
+    tool.insert(Switch("instructions")
+                .argument("n", nonNegativeIntegerParser(settings.nInsnsTested))
+                .doc("Run at most @v{n} instructions selected at random.  The default is to try running " +
+                     std::string(settings.nInsnsTested==size_t(-1)?"each instruction":
+                                 "at most "+plural(settings.nInsnsTested, "instructions")) + "."));
 
     Parser parser;
     parser
@@ -130,6 +176,7 @@ sendCommand(enum __ptrace_request request, pid_t pid, void *addr=NULL, void *dat
             case PTRACE_GETREGS:        s = "getregs";          break;
             case PTRACE_SETREGS:        s = "setregs";          break;
             case PTRACE_SINGLESTEP:     s = "singlestep";       break;
+            case PTRACE_SETOPTIONS:     s = "setoptions";       break;
             default:                    s = "?";                break;
         }
         throw std::runtime_error("ptrace(" + s + ") failed: " + strerror(errno));
@@ -142,7 +189,7 @@ waitForChild(pid_t pid) {
         int wstat;
         if (-1 == (pid = waitpid(pid, &wstat, 0)))
             throw std::runtime_error("wait failed: " + std::string(strerror(errno)));
-        if (WIFSTOPPED(wstat) && WSTOPSIG(wstat)!=SIGTRAP) {
+        if (WIFSTOPPED(wstat) && (WSTOPSIG(wstat) & ~0x80)!=SIGTRAP) {
             sendCommand(PTRACE_SINGLESTEP, pid, 0, (void*)WSTOPSIG(wstat)); // deliver signal
         } else {
             return wstat;
@@ -183,10 +230,10 @@ executeUntilAddress(pid_t pid, rose_addr_t va, std::string &terminationReason /*
     return true;
 }
 
-static void
+// Run natively and return number of instructions executed and reason for termination.
+static std::pair<size_t, std::string>
 runNatively(const Settings &settings, const std::string &specimenName, Sawyer::Optional<rose_addr_t> initVa,
-            const P2::Partitioner &partitioner, P2::Function::Ptr function) {
-    mlog[WHERE] <<"running function " <<addrToString(function->address()) <<" \"" <<function->name() <<"\"\n";
+            const P2::Partitioner &partitioner, rose_addr_t randomAddress) {
     Stream debug(mlog[DEBUG]);
 
     // Fork and execute binary specimen expecting to be debugged with ptrace
@@ -205,15 +252,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
         mlog[FATAL] <<"child " <<child <<" " <<terminationReason <<" before we could gain control\n";
         exit(1);
     }
-    ASSERT_require(WIFSTOPPED(wstat) && WSTOPSIG(wstat)==SIGTRAP);
-
-    // Show specimen address map so we can verify that the Linux loader used the same addresses we used.
-    if (settings.showMaps) {
-        std::cout <<"Linux loader specimen memory map:\n";
-        system(("cat /proc/" + numberToString(child) + "/maps").c_str());
-        std::cout <<"ROSE loader specimen memory map:\n";
-        partitioner.memoryMap().dump(std::cout);
-    }
+    ASSERT_require(WIFSTOPPED(wstat) && (WSTOPSIG(wstat) & ~0x80)==SIGTRAP);
 
     // Allow child to run until we hit the desired address.
     if (initVa && !executeUntilAddress(child, *initVa, terminationReason /*out*/)) {
@@ -221,17 +260,28 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
         exit(1);
     }
 
-    // Branch to the function address
-    debug <<"Branching to function entry point\n";
+    // Show specimen address map so we can verify that the Linux loader used the same addresses we used.
+    // We could have shown it earlier, but then we wouldn't have seen the results of dynamic linking.
+    if (settings.showMaps) {
+        std::cout <<"Linux loader specimen memory map:\n";
+        system(("cat /proc/" + numberToString(child) + "/maps").c_str());
+        std::cout <<"ROSE loader specimen memory map:\n";
+        partitioner.memoryMap().dump(std::cout);
+    }
+
+    // Branch to the starting address
+    debug <<"branching to " <<addrToString(randomAddress) <<"\n";
     user_regs_struct regs;
     sendCommand(PTRACE_GETREGS, child, 0, &regs);
-    regs.INSTRUCTION_POINTER = function->address();
+    regs.INSTRUCTION_POINTER = randomAddress;
     sendCommand(PTRACE_SETREGS, child, 0, &regs);
+    sendCommand(PTRACE_SETOPTIONS, child, 0, (void*)PTRACE_O_TRACESYSGOOD);
 
     size_t nExecuted = 0;                               // number of instructions executed
     while (1) {
         // Check for and avoid system calls if necessary
         if (!settings.allowSyscalls) {
+#if 0 // [Robb P. Matzke 2014-10-09]
             sendCommand(PTRACE_GETREGS, child, 0, &regs);
             SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.instructionProvider()[regs.INSTRUCTION_POINTER]);
             if (!insn || insn->isUnknown()) {
@@ -242,6 +292,21 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
                 terminationReason = "tried to execute a system call";
                 break;
             }
+#elif 0
+            // doesn't appear to work properly when single-stepping
+            siginfo_t si;
+            sendCommand(PTRACE_GETSIGINFO, child, 0, &si);
+            if ((si.si_code & ~0x80) == SIGTRAP) {
+                terminationReason = "tried to execute a system call";
+                break;
+            }
+#else
+            // doesn't appear to work properly when single-stepping
+            if (WIFSTOPPED(wstat) && WSTOPSIG(wstat)==(0x80|SIGTRAP)) {
+                terminationReason = "tried to execute a system call";
+                break;
+            }
+#endif
         }
 
         // Single-step
@@ -253,7 +318,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
         wstat = waitForChild(child);
         if (isTerminated(wstat, terminationReason /*out*/))
             break;
-        ASSERT_require(WIFSTOPPED(wstat) && WSTOPSIG(wstat)==SIGTRAP);
+        ASSERT_require(WIFSTOPPED(wstat) && (WSTOPSIG(wstat) & ~0x80)==SIGTRAP);
         ++nExecuted;
         if (settings.maxInsns!=0 && nExecuted>=settings.maxInsns) {
             terminationReason = "reached instruction limit";
@@ -263,9 +328,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
     kill(child, SIGKILL);                               // make sure child is really dead
     waitpid(child, &wstat, 0);                          // and reap it
 
-    // Results
-    std::cout <<addrToString(function->address()) <<", " <<nExecuted <<", "
-              <<"\"" <<cEscape(function->name()) <<"\" " <<terminationReason <<"\n";
+    return std::make_pair(nExecuted, terminationReason);
 }
 
 int
@@ -275,20 +338,35 @@ main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line
+    P2::Engine engine;
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     if (specimenNames.size() != 1)
         throw std::runtime_error("exactly one binary specimen file should be specified; see --help");
 
-    // Parse, load, disassemble, partition, and get list of functions.  No need to create an AST.
+    // Parse, load, link, reloc, disassemble, partition, and get list of functions.  No need to create an AST.
     mlog[INFO] <<"performing parse, load, disassemble and partition";
     Sawyer::Stopwatch partitionTimer;
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadAndPartition(specimenNames);
+    engine.parse(specimenNames);
+    if (settings.performLink) {
+        BinaryLoader *loader = engine.obtainLoader();
+        ASSERT_not_null(loader);
+        loader->set_perform_dynamic_linking(true);
+#if 0 // [Robb P. Matzke 2014-10-09]: not always working, but maybe not needed for this analysis
+        loader->set_perform_relocations(true);
+#endif
+        BOOST_FOREACH (const std::string &paths, settings.libDirs) {
+            BOOST_FOREACH (const std::string &path, split(':', paths)) {
+                loader->add_directory(path);
+            }
+        }
+    }
+    P2::Partitioner partitioner = engine.partition();
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
     mlog[INFO] <<"; completed in " <<partitionTimer <<" seconds.\n";
     mlog[INFO] <<"found " <<plural(functions.size(), "functions") <<"\n";
 
+#if 0 // [Robb P. Matzke 2014-10-09]: doesn't always work with dynamic linking
     // Make sure the specimen is 32-bit x86 Linux ELF executable
     Sawyer::Optional<rose_addr_t> oep;                  // original entry point
     SgAsmInterpretation *interp = engine.interpretation();
@@ -314,6 +392,9 @@ main(int argc, char *argv[]) {
             oep = elf->get_entry_rva() + elf->get_base_va();
     }
     ASSERT_require2(oep, "no OEP");
+#else
+    Sawyer::Optional<rose_addr_t> oep;
+#endif
 
     // How far should we let the specimen run before branching to a function?
     Sawyer::Optional<rose_addr_t> initVa;
@@ -324,27 +405,69 @@ main(int argc, char *argv[]) {
         if (!*rest) {
             initVa = va;
         } else {
-            bool foundFunction = false;
             BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
                 if (function->name() == settings.initFunction) {
-                    foundFunction = true;
                     initVa = function->address();
                     break;
                 }
             }
-            if (!foundFunction) {
+            if (!initVa) {
+                ASSERT_require(oep);
+                initVa = oep;
                 mlog[WARN] <<"could not find \"" <<settings.initFunction <<"\""
                            <<"; using original entry point instead (" <<addrToString(*oep) <<")\n";
             }
         }
     }
-    
-    // Run the specimen natively under a debugger.
-    mlog[INFO] <<"running each function natively under a debugger\n";
-    Sawyer::ProgressBar<size_t> progress(functions.size(), mlog[INFO]);
-    BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
-        ++progress;
-        runNatively(settings, specimenNames[0], initVa, partitioner, function);
+
+    if (settings.nFunctionsTested > 0) {
+        // Select the functions to run.
+        if (settings.nFunctionsTested < functions.size()) {
+            mlog[INFO] <<"limiting to " <<plural(settings.nFunctionsTested, "functions") <<" selected at random.\n";
+            Combinatorics::shuffle(functions);
+            functions.resize(settings.nFunctionsTested);
+        }
+
+        // Run the specimen natively under a debugger.
+        mlog[INFO] <<"running selected functions natively under a debugger\n";
+        Sawyer::ProgressBar<size_t> progress(functions.size(), mlog[INFO]);
+        BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+            mlog[WHERE] <<"running function " <<addrToString(function->address()) <<" \"" <<function->name() <<"\"\n";
+            ++progress;
+            std::pair<size_t, std::string> result = runNatively(settings, specimenNames[0], initVa, partitioner,
+                                                                function->address());
+            std::cout <<addrToString(function->address()) <<", " <<result.first <<", "
+                      <<"\"" <<cEscape(function->name()) <<"\" " <<result.second <<"\n";
+        }
+    }
+
+    if (settings.nInsnsTested > 0) {
+        // Get list of all instructions.
+        std::vector<SgAsmInstruction*> insns;
+        BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks()) {
+            const std::vector<SgAsmInstruction*> &bi = bblock->instructions();
+            insns.insert(insns.end(), bi.begin(), bi.end());
+        }
+        mlog[INFO] <<"found " <<plural(insns.size(), "instructions") <<"\n";
+
+
+        // Select instructions to run
+        if (settings.nInsnsTested < insns.size()) {
+            mlog[INFO] <<"limiting to " <<plural(settings.nInsnsTested, "instructions") <<" selected at random.\n";
+            Combinatorics::shuffle(insns);
+            insns.resize(settings.nInsnsTested);
+        }
+
+        // Run the speciment natively at each selected instruction.
+        mlog[INFO] <<"running selected instructions natively under a debugger\n";
+        Sawyer::ProgressBar<size_t> progress(insns.size(), mlog[INFO]);
+        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+            mlog[WHERE] <<"running instruction " <<addrToString(insn->get_address()) <<"\"\n";
+            ++progress;
+            std::pair<size_t, std::string> result = runNatively(settings, specimenNames[0], initVa, partitioner,
+                                                                insn->get_address());
+            std::cout <<addrToString(insn->get_address()) <<", " <<result.first <<", " <<"instruction " <<result.second <<"\n";
+        }
     }
 }
 
