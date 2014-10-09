@@ -1,9 +1,12 @@
 #pragma once
 
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
+
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
-#include <rose.h>
 
 namespace ssa_unfiltered_cfg
 {
