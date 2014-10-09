@@ -28,7 +28,10 @@ sageInterfaceTest_LDADD= \
 
 
 sageBuilderTest_SOURCES= \
-  buildTypeUnitTests.cpp \
+  sageBuilderBuildIntTypes.cpp \
+  sageBuilderBuildCharTypes.cpp \
+  sageBuilderBuildFloatTypes.cpp \
+  sageBuilderBuildTypes.cpp \
   buildExpressionUnitTests.cpp
 
 sageBuilderTest_CXXFLAGS= \
