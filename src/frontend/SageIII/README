@@ -149,7 +149,7 @@ Here we summarize the separate sub-directoies of this directory:
 
 
 Aterm support notes:
-   Function declated in generated header ROSE IR files:
+   1) Function declated in generated header ROSE IR files:
 static SgTemplateParameter* 
 build_node_from_nonlist_children(
    SgTemplateParameter::template_parameter_enum parameterType = parameter_undefined, 
@@ -187,4 +187,8 @@ SgTemplateParameter::build_node_from_nonlist_children(
    local_templateDeclaration, 
    local_defaultTemplateDeclarationParameter, 
    local_initializedName); 
+
+   2) There is nothing to say what the elements are of an IR node that has a container.
+      So this has to be handled via some specific function that will be case oriented.
+
 

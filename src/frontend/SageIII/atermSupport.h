@@ -48,6 +48,18 @@ namespace AtermSupport
      std::vector<ATerm> getAtermList(ATerm ls);
 
      std::string getAtermStringAttribute(ATerm term, const std::string & annotationName );
+     int getAtermIntegerAttribute(ATerm term, const std::string & annotationName );
+
+  // DQ (10/8/2014): I don't think we need these (Aterm type system is not rich enough to justify these).
+  // int getAtermEnumAttribute(ATerm term, const std::string & annotationName );
+  // std::string getAtermNodeNameAttribute(ATerm term, const std::string & annotationName );
+
+  // This function is special in that it accesses (internal) maps to lookup the SgNode 
+  // using a sting that is saved as an annotation in the aterm and then as a key into the map.
+  // Note that this should work where we see declarations before they are referenced, but 
+  // will likely have to be fixed up after the translation where this rule is relaxed in C++
+  // classes (which may refer to constructs before they are declared (and is always an issue)).
+     SgNode* getAtermNodeAttribute(ATerm term, const std::string & annotationName );
 
    }
 

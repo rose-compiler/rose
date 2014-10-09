@@ -504,6 +504,47 @@ AtermSupport::getAtermStringAttribute(ATerm term, const string & annotationName 
      return returnString;
    }
 
+
+int
+AtermSupport::getAtermIntegerAttribute(ATerm term, const std::string & annotationName )
+   {
+     int returnValue = 42;
+     return returnValue;
+   }
+
+#if 0
+  // DQ (10/8/2014): I don't think we need these (Aterm type system is not rich enough to justify these).
+int
+AtermSupport::getAtermEnumAttribute(ATerm term, const std::string & annotationName )
+   {
+     int returnValue = 42;
+     return returnValue;
+   }
+#endif
+#if 0
+  // DQ (10/8/2014): I don't think we need these (Aterm type system is not rich enough to justify these).
+string
+AtermSupport::getAtermNodeNameAttribute(ATerm term, const std::string & annotationName )
+   {
+     string returnString = "sorry, non implemented";
+     return returnString;
+   }
+#endif
+
+SgNode*
+AtermSupport::getAtermNodeAttribute(ATerm term, const std::string & annotationName )
+   {
+  // This function uses maps to access previously build ROSE IR nodes that are looked up using a key that is an annotation on the aterm.
+     SgNode* returnNode = NULL;
+
+     printf ("In AtermSupport::getAtermNodeAttribute(): not yet implemented \n");
+     ROSE_ASSERT(false);
+
+     return returnNode;
+   }
+
+
+
 #if 0
 // DQ (10/7/2014): Not celar if we need this function.
 

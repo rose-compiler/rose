@@ -620,6 +620,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
                  // atermAnnotationString += string("  // ") + typenameString + "\n";
 
+#if 1
+                    buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
+#else
                     if (firstAterm == false)
                        {
                       // atermPatternSubstring   += ", ";
@@ -653,7 +656,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                        {
                       // lastDataMemberWasConstructorParameter = false;
                        }
-
+#endif
 #if 0
                     bool atermAnnotationStringProcessed = false;
 
@@ -721,6 +724,25 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
                     string typenameBase = grammarString->getTypeNameString();
 
+#if 0
+                     outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+                                << grammarString->getTypeNameString() << " data member variable: " 
+                                << grammarString->getVariableNameString() << " typeKind = " 
+                                << StringUtility::numberToString((int)typeKind) << "\n";
+#endif
+#if 1
+                    dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
+                                     + grammarString->getTypeNameString() + " data member variable: " 
+                                     + grammarString->getVariableNameString() + " typeKind = " 
+                                     + StringUtility::numberToString((int)typeKind) + "\n";
+#endif
+
+                    string containerElementTypeString        = grammarString->containerElementTypeString(node);
+                    string containerAppendFunctionNameString = grammarString->containerAppendFunctionNameString(node);
+#if 1
+                    dataMemberString_post += string("       // containerElementTypeString        = ") + containerElementTypeString + "\n";
+                    dataMemberString_post += string("       // containerAppendFunctionNameString = ") + containerAppendFunctionNameString + "\n";
+#endif
                  // In the case of a list of ROSE IR nodes we need to build the elements of the list seperately in a loop.
                  // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = is" + typenameBase + "(generate_AST(term" + integer_counter_string + ")); \n";
                  // dataMemberString += "          ROSE_ASSERT(local_" + grammarString->getVariableNameString() + " != NULL); \n";
@@ -737,10 +759,12 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                     dataMemberString_post += "          vector<ATerm> terms = getAtermList(" + atermArgumentsName + integer_counter_string + ");\n";
                     dataMemberString_post += "          for (size_t i = 0; i < terms.size(); ++i)\n";
                     dataMemberString_post += "             {\n";
-                    dataMemberString_post += "               SgDeclarationStatement* child = isSgDeclarationStatement(generate_AST(terms[i]));\n";
+                 // dataMemberString_post += "            // SgDeclarationStatement* child = isSgDeclarationStatement(generate_AST(terms[i]));\n";
+                    dataMemberString_post += "               " + containerElementTypeString + "* child = is" + containerElementTypeString + "(generate_AST(terms[i]));\n";
                     dataMemberString_post += "               ROSE_ASSERT(child != NULL);\n";
                  // dataMemberString_post += "               local_returnNode->append(child);\n";
-                    dataMemberString_post += "            // local_returnNode->append(child); (need an append member function) \n";
+                 // dataMemberString_post += "            // local_returnNode->append(child); (need an append member function) \n";
+                    dataMemberString_post += "               local_returnNode->" + containerAppendFunctionNameString + "(child); // (need an common append member function) \n";
                     dataMemberString_post += "             }\n";
                  //           SgDeclarationStatement* child = isSgDeclarationStatement(convertAtermToNode(terms[i]));
                  //           ROSE_ASSERT (child);
@@ -781,6 +805,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
             // atermAnnotationString += string("  // ") + typenameString + "\n";
 
+#if 1
+               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
+#else
                if (firstConstructorParameter == false && isInConstructorParameterList == true)
                   {
                     constructorArgumentsString  += ", ";
@@ -806,7 +833,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   {
                  // lastDataMemberWasConstructorParameter = false;
                   }
-
+#endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                   {
@@ -843,6 +870,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                printf ("   --- typenameString = %s grammarString->getVariableNameString() = %s typeKind = %d \n",typenameString.c_str(),grammarString->getVariableNameString().c_str(),typeKind);
             // printf ("Found typeKind == SGNAME \n");
 #endif
+#if 1
+               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
+#else
                if (firstConstructorParameter == false && isInConstructorParameterList == true)
                   {
                     constructorArgumentsString  += ", ";
@@ -868,7 +898,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   {
                  // lastDataMemberWasConstructorParameter = false;
                   }
-
+#endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                   {
@@ -908,6 +938,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                printf ("   --- typenameString = %s grammarString->getVariableNameString() = %s typeKind = %d \n",typenameString.c_str(),grammarString->getVariableNameString().c_str(),typeKind);
                printf ("Found typeKind == ENUM_TYPE \n");
 #endif
+#if 1
+               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
+#else
                if (firstConstructorParameter == false && isInConstructorParameterList == true)
                   {
                     constructorArgumentsString  += ", ";
@@ -936,7 +969,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   {
                  // lastDataMemberWasConstructorParameter = false;
                   }
-
+#endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                   {
@@ -961,7 +994,6 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                printf ("Found typeKind == STRING \n");
 #endif
 #if 1
-            // buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstConstructorParameter, bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, string & dataMemberString );
                buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
 #else
                if (firstConstructorParameter == false && isInConstructorParameterList == true)
@@ -1171,7 +1203,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
    {
   // Refactored code to support building default values date members for marked as constructor initializers.
 
-     string typenameString = grammarString->getTypeNameString();
+     string typenameString             = grammarString->getTypeNameString();
      Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
      if (firstConstructorParameter == false && isInConstructorParameterList == true)
@@ -1191,13 +1223,52 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
 
        // string defaultInitializerString = grammarString->getDefaultInitializerString();
           string attributeName = grammarString->getVariableNameString();
-          string defaultInitializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
+       // string defaultInitializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
+       // string initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
+          string initializerString;
+
+          Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+          switch(typeKind)
+             {
+               case Terminal::SGCLASS_POINTER:
+                  {
+                 // initializerString = string("= getAtermNodeNameAttribute(term,\"") + attributeName + "\")";
+                 // initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
+                 // initializerString = string("= ") + typenameString + "(getAtermStringAttribute(term,\"" + attributeName + "\"))";
+
+                    size_t typenameStringSize = grammarString->getTypeNameString().size();
+                    string typenameBase       = grammarString->getTypeNameString().substr(0,typenameStringSize-1);
+                    initializerString = string("= ") + "is" + typenameBase + "(getAtermNodeAttribute(term,\"" + attributeName + "\"))";
+                    break;
+                  }
+
+               case Terminal::STRING:
+               case Terminal::SGNAME:
+                    initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
+                    break;
+
+            // This case included bools and integer values.
+               case Terminal::BASIC_DATA_TYPE:
+                    initializerString = string("= getAtermIntegerAttribute(term,\"") + attributeName + "\")";
+                    break;
+
+               case Terminal::ENUM_TYPE:
+                 // initializerString = string("= getAtermEnumAttribute(term,\"") + attributeName + "\")";
+                    initializerString = string("= ") + typenameString + "(getAtermIntegerAttribute(term,\"" + attributeName + "\"))";
+                    break;
+
+               default:
+                  {
+                    printf ("ERROR: default reached in generation of code for ATerm support: typeKind = %d \n",typeKind);
+                    ROSE_ASSERT(false);
+                  }
+             }
 
        // Implement initalization of enum using cast (alternatively the default value is available in ROSETTA).
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = \"\"; \n";
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = " + grammarString->getTypeNameString() + "(0); \n";
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + defaultInitializerString + "; \n";
-          dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + defaultInitializerString + "; \n";
+          dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + initializerString + "; \n";
 
           constructorArgumentsString += "local_" + grammarString->getVariableNameString();
 
