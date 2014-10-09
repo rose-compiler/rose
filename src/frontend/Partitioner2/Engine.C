@@ -16,6 +16,77 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Basic steps
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SgAsmInterpretation*
+Engine::parse(const std::vector<std::string> &fileNames) {
+    interp_ = NULL;
+    map_.clear();
+
+    // Parse the binary container files with single call to frontend()
+    std::vector<std::string> frontendNames;
+    BOOST_FOREACH (const std::string &fileName, fileNames) {
+        if (!boost::starts_with(fileName, "map:"))
+            frontendNames.push_back(fileName);
+    }
+    if (!frontendNames.empty()) {
+        std::vector<std::string> frontendArgs;
+        frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
+        frontendArgs.push_back("-rose:binary");
+        frontendArgs.push_back("-rose:read_executable_file_format_only");
+        frontendArgs.insert(frontendArgs.end(), frontendNames.begin(), frontendNames.end());
+        SgProject *project = frontend(frontendArgs);
+        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
+        if (interps.empty())
+            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
+        interp_ = interps.back();    // windows PE is always after DOS
+    }
+    return interp_;
+}
+
+MemoryMap
+Engine::load(const std::vector<std::string> &fileNames) {
+    map_.clear();
+
+    // Parse the binary containers
+    if (!interp_)
+        parse(fileNames);
+
+    // Load the interpretation if it hasn't been already
+    if (interp_ && (!interp_->get_map() || interp_->get_map()->isEmpty())) {
+        if (!obtainLoader())
+            throw std::runtime_error("unable to find an appropriate loader for the binary interpretation");
+        loader_->load(interp_);
+    }
+
+    // Get a map from the now-loaded interpretation, or use an empty map if the interp isn't mapped
+    if (interp_ && interp_->get_map())
+        map_ = *interp_->get_map();
+    
+    // Load raw binary files into map
+    BOOST_FOREACH (const std::string &fileName, fileNames) {
+        if (boost::starts_with(fileName, "map:")) {
+            std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
+            map_.insertFile(resource);
+        }
+    }
+
+    return map_;
+}
+
+Partitioner
+Engine::partition(const std::vector<std::string> &fileNames) {
+    if (map_.isEmpty())
+        load(fileNames);
+    if (!obtainDisassembler())
+        throw std::runtime_error("no disassembler available for partitioning");
+    Partitioner partitioner = createTunedPartitioner(disassembler_, map_);
+    runPartitioner(partitioner, interp_);
+    return partitioner;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner-making functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -61,63 +132,6 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
     return createGenericPartitioner(disassembler, map);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Preparing to partition
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-MemoryMap
-Engine::loadSpecimen(const std::vector<std::string> &fileNames) {
-    MemoryMap map;
-    interp_ = NULL;
-
-    // Load the binary container files with single call to frontend()
-    std::vector<std::string> frontendNames;
-    BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (!boost::starts_with(fileName, "map:"))
-            frontendNames.push_back(fileName);
-    }
-    if (!frontendNames.empty()) {
-        std::vector<std::string> frontendArgs;
-        frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
-        frontendArgs.push_back("-rose:binary");
-        frontendArgs.push_back("-rose:read_executable_file_format_only");
-        frontendArgs.insert(frontendArgs.end(), frontendNames.begin(), frontendNames.end());
-        SgProject *project = frontend(frontendArgs);
-        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-        if (interps.empty())
-            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-        interp_ = interps.back();    // windows PE is always after DOS
-        loadSpecimen(interp_);
-        ASSERT_not_null(interp_->get_map());
-        map = *interp_->get_map();
-    }
-
-    // Load raw binary files
-    BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (boost::starts_with(fileName, "map:")) {
-            std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
-            map.insertFile(resource);
-        }
-    }
-
-    return map;
-}
-
-void
-Engine::loadSpecimen(SgAsmInterpretation *interp) {
-    ASSERT_not_null(interp);
-    interp_ = interp;
-    if (NULL==interp->get_map()) {
-        BinaryLoader *loader = BinaryLoader::lookup(interp);
-        if (!loader)
-            throw std::runtime_error("unable to find an appropriate loader for binary interpretation");
-        loader = loader->clone();                       // in case we change any settings
-        loader->remap(interp);                          // simulate loading without linking
-        ASSERT_not_null2(interp->get_map(), "BinaryLoader failed to produce a memory map");
-        delete loader;
-    }
-}
-
 Disassembler*
 Engine::obtainDisassembler(const std::string &isaName) {
     if (!isaName.empty()) {
@@ -127,6 +141,25 @@ Engine::obtainDisassembler(const std::string &isaName) {
         obtainDisassembler(disassembler_);
     }
     return disassembler_;
+}
+
+BinaryLoader*
+Engine::obtainLoader(BinaryLoader *loader) {
+    if (loader) {
+        loader_ = loader;
+    } else if (loader_) {
+        // already have one
+    } else if (interp_) {
+        if ((loader_ = BinaryLoader::lookup(interp_))) {
+            loader_ = loader_->clone();
+            loader_->set_perform_remap(true);
+            loader_->set_perform_dynamic_linking(false);
+            loader_->set_perform_relocations(false);
+        }
+    } else {
+        // can't get one
+    }
+    return loader_;
 }
 
 Disassembler*
@@ -145,39 +178,11 @@ Engine::obtainDisassembler(Disassembler *disassembler) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      High-level stuff
+//                                      High-level partitioning actions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner
-Engine::loadAndPartition(const std::vector<std::string> &specimenNames, Disassembler *disassembler) {
-    MemoryMap map = loadSpecimen(specimenNames);
-    if (NULL==(disassembler=obtainDisassembler(disassembler)))
-        throw std::runtime_error("an instruction set architecture or disassembler must be specified");
-    Partitioner partitioner = createTunedPartitioner(disassembler, map);
-    partition(partitioner, interp_);
-    return partitioner;
-}
-
-SgAsmBlock*
-Engine::partition(SgAsmInterpretation *interp) {
-    ASSERT_not_null(interp);
-
-    loadSpecimen(interp);
-    if (!obtainDisassembler())
-        throw std::runtime_error("no appropriate disassembler");
-    disassembler_->set_progress_reporting(-1.0);        // turn it off
-
-    MemoryMap map = *interp->get_map();
-    Modules::deExecuteZeros(map, 256);
-
-    Partitioner partitioner = createTunedPartitioner(disassembler_, map);
-    partition(partitioner, interp);
-
-    return partitioner.buildGlobalBlockAst();
-}
-
 void
-Engine::partition(Partitioner &partitioner, SgAsmInterpretation *interp) {
+Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     makeContainerFunctions(partitioner, interp);
     discoverFunctions(partitioner);
     attachDeadCodeToFunctions(partitioner);

@@ -103,7 +103,8 @@ int main(int argc, char *argv[])
 
     // Load the speciem as raw data or an ELF or PE container
     P2::Engine engine;
-    MemoryMap map = engine.loadSpecimen(specimenNames);
+    engine.disassembler(disassembler);
+    MemoryMap map = engine.load(specimenNames);
     SgAsmInterpretation *interp = engine.interpretation();
     
     // Obtain a suitable disassembler if none was specified on the command-line

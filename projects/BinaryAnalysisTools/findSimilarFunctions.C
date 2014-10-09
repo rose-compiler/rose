@@ -425,13 +425,12 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
         ASSERT_not_null(file);
         interp = file->get_interpretations()->get_interpretations().back();
         ASSERT_not_null(interp);
-        engine.loadSpecimen(interp);
-        ASSERT_not_null(interp->get_map());
-        map = *interp->get_map();
+        engine.interpretation(interp);
+        engine.load();
+        map = engine.memoryMap();
         if (!disassembler) {
-            disassembler = Disassembler::lookup(interp);
+            disassembler = engine.disassembler();
             ASSERT_not_null(disassembler);
-            disassembler = disassembler->clone();
         }
         info <<"; completed in " <<parseTime <<" seconds\n";
     } else {
@@ -445,7 +444,7 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
     P2::Modules::deExecuteZeros(map, 256);
     Sawyer::Stopwatch partitionTime;
     P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
-    engine.partition(partitioner, interp);
+    engine.runPartitioner(partitioner, interp);
     SgAsmBlock *gblock = partitioner.buildGlobalBlockAst();
     info <<"; completed in " <<partitionTime <<" seconds\n";
 

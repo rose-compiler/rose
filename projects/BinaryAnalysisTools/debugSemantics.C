@@ -535,13 +535,13 @@ main(int argc, char *argv[]) {
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     adjustSettings(settings);
-    Disassembler *disassembler = NULL;
+    P2::Engine engine;
     if (!settings.isaName.empty())
-        disassembler = Disassembler::lookup(settings.isaName);
+        engine.disassembler(Disassembler::lookup(settings.isaName));
     (void) makeRiscOperators(settings, RegisterDictionary::dictionary_i386());// for "list" side effects
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
-    P2::Partitioner partitioner = P2::Engine().loadAndPartition(specimenNames, disassembler);
+    P2::Partitioner partitioner = engine.partition(specimenNames);
     testSemanticsApi(settings, partitioner);
     
     // Run sementics on each basic block

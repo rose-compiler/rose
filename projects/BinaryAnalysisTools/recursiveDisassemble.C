@@ -380,11 +380,10 @@ int main(int argc, char *argv[]) {
     P2::Engine engine;
 
     // Load the specimen as raw data or an ELF or PE container.
-    MemoryMap map = engine.loadSpecimen(specimenNames);
+    MemoryMap map = engine.load(specimenNames);
     SgAsmInterpretation *interp = engine.interpretation();
     if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
         throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-    disassembler->set_progress_reporting(-1.0);         // turn it off
 
 #if 0 // [Robb P. Matzke 2014-08-29]
     // Remove execute permission from all segments of memory except those with ".text" as part of their name.

@@ -1371,25 +1371,23 @@ int main(int argc, char *argv[]) {
     Diagnostics::initialize();
 
     // Parse the command-line
+    P2::Engine engine;
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
-    Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
-        disassembler = Disassembler::lookup(settings.isaName);
+        engine.disassembler(Disassembler::lookup(settings.isaName));
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Load the specimen as raw data or an ELF or PE container
-    P2::Engine engine;
-    MemoryMap map = engine.loadSpecimen(specimenNames);
+    MemoryMap map = engine.load(specimenNames);
     P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
     SgAsmInterpretation *interp = engine.interpretation();
 
     // Obtain a suitable disassembler if none was specified on the command-line
-    if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
+    Disassembler *disassembler = engine.obtainDisassembler();
+    if (NULL==disassembler)
         throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-    disassembler->set_progress_reporting(-1.0);         // turn it off
-
 
     // Create the partitioner
     P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
@@ -1401,7 +1399,7 @@ int main(int argc, char *argv[]) {
     partitioner.memoryMap().dump(std::cout);            // show what we'll be working on
 
     // Disassemble and partition into functions
-    engine.partition(partitioner, interp);
+    engine.runPartitioner(partitioner, interp);
     std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
     std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBasicBlocks(), "basic blocks") <<"\n";
     std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nDataBlocks(), "data blocks") <<"\n";
