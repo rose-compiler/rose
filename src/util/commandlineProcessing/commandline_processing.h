@@ -5,11 +5,33 @@
 #include "rosedll.h"
 #include <list>
 #define Rose_STL_Container std::vector
+#include <sawyer/CommandLine.h>
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
 
 namespace CommandlineProcessing
    {
+          /** Generic command-line components.
+           *
+           *  Returns a description of the switches that should be available for all ROSE tools. To make a command-line
+           *  parser that recognizes these switches, add the switches to the parser using its @c with method.  For example:
+           *
+           * @code
+           *  static Sawyer::CommandLine::ParserResult
+           *  parseCommandLine(int argc, char *argv[]) {
+           *      Sawyer::CommandLine::Parser parser;
+           *      return parser
+           *          .with(CommandlineProcessing::genericSwitches()) // these generic switches
+           *          .with(mySwitches)                               // my own switches, etc.
+           *          .parse(argc, argv)                              // parse without side effects
+           *          .apply();                                       // apply parser results
+           *  }
+           * @endcode
+           *
+           *  See any recent tool for more examples. */
+          Sawyer::CommandLine::SwitchGroup genericSwitches();
+
+
       //! Separate a string into individual parameters and store them into a string vector
           ROSE_UTIL_API Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
 

@@ -34,6 +34,7 @@ static const size_t cloneSep = 2;
 
 enum Step {END_OF_PATH, LEFT, UP, CHANGE_OR_KEEP};
 
+#if OUTPUT_CLONE_TRACE
 static char tochar(char x) 
    {
      if (isprint(x))
@@ -41,14 +42,18 @@ static char tochar(char x)
        else 
           return '.';
    }
-
+#endif
 
 void
 traceClone(const float* swTable, char* swDirs, const vector<int> & in1data, const vector<int> & in2data, size_t x, size_t y)
      {
        size_t in1size = in1data.size();
+#if OUTPUT_CLONE_TRACE || !defined(NDEBUG)
        size_t origX = x, origY = y;
+#endif
+#if OUTPUT_CLONE_TRACE
        float score = swTable[y * in1size + x];
+#endif
        vector<char> dirsInReversedTrace;
        top:
           {
@@ -122,10 +127,10 @@ traceClone(const float* swTable, char* swDirs, const vector<int> & in1data, cons
                     case CHANGE_OR_KEEP:
                        {
                          ++x; ++y;
+#if OUTPUT_CLONE_TRACE
                          unsigned int data1 = in1data[x];
                          unsigned int data2 = in2data[y];
 
-#if OUTPUT_CLONE_TRACE
                          string s1 = Cxx_GrammarTerminalNames[data1].name;
                          string s2 = Cxx_GrammarTerminalNames[data2].name;
                          if (data1 == data2)

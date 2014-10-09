@@ -16,15 +16,25 @@ class MatchLink: public FunctionPrologueMatcher {
 protected:
     Function::Ptr function_;
 public:
-    static Ptr instance() { return Ptr(new MatchLink); } /**< Allocating constructor. */
+    /** Allocating constructor. */
+    static Ptr instance() { return Ptr(new MatchLink); }
     virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual bool match(const Partitioner*, rose_addr_t anchor) /*override*/;
+};
+
+/** Matches M68k function padding. */
+class MatchFunctionPadding: public FunctionPaddingMatcher {
+public:
+    /** Allocating constructor. */
+    static Ptr instance() { return Ptr(new MatchFunctionPadding); }
+    virtual rose_addr_t match(const Partitioner*, rose_addr_t anchor) /*override*/;
 };
 
 /** Adjusts basic block successors for M68k "switch" statements. */
 class SwitchSuccessors: public BasicBlockCallback {
 public:
-    static Ptr instance() { return Ptr(new SwitchSuccessors); } /**< Allocating constructor. */
+    /** Allocating constructor. */
+    static Ptr instance() { return Ptr(new SwitchSuccessors); }
     virtual bool operator()(bool chain, const Args&) /*override*/;
 };
 

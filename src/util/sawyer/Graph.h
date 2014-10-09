@@ -14,6 +14,23 @@
 namespace Sawyer {
 namespace Container {
 
+/** Traits for graphs. */
+template<class G>
+struct GraphTraits {
+    typedef typename G::EdgeNodeIterator EdgeNodeIterator;
+    typedef typename G::EdgeValueIterator EdgeValueIterator;
+    typedef typename G::VertexNodeIterator VertexNodeIterator;
+    typedef typename G::VertexValueIterator VertexValueIterator;
+};
+
+template<class G>
+struct GraphTraits<const G> {
+    typedef typename G::ConstEdgeNodeIterator EdgeNodeIterator;
+    typedef typename G::ConstEdgeValueIterator EdgeValueIterator;
+    typedef typename G::ConstVertexNodeIterator VertexNodeIterator;
+    typedef typename G::ConstVertexValueIterator VertexValueIterator;
+};
+
 /** %Graph containing user-defined vertices and edges.
  *
  * @section nodes Vertices and Edges

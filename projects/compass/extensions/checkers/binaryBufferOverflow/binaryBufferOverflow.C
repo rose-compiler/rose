@@ -160,7 +160,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
   ROSE_ASSERT(node);
 
   //cerr << " bufferoverflow->run " << node->get_name() << endl;
-  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* asmNode = isSgAsmX86Instruction(node->get_SgNode());
   if (asmNode) {
 
     // ANALYSIS 2 : BUFFER OVERFLOW DETECTION -------------------------------------------
@@ -187,7 +187,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 	  uint64_t value=0;
 	  while (foundMov!=true && sameParents(node, pre)) {
 	    pre = getPredecessor(pre);
-	    SgAsmx86Instruction* asmPre = isSgAsmx86Instruction(pre->get_SgNode());
+	    SgAsmX86Instruction* asmPre = isSgAsmX86Instruction(pre->get_SgNode());
 	    if (asmPre->get_kind() == x86_mov || asmPre->get_kind() == x86_push) {
 	      foundMov = true;
 	      if (asmPre->get_kind() == x86_mov) {
@@ -217,7 +217,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 	  SgGraphNode* aft = node;
 	  while (foundMov!=true && sameParents(node, aft)) {
 	    aft = getSuccessor(aft);
-	    SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+	    SgAsmX86Instruction* asmAft = isSgAsmX86Instruction(aft->get_SgNode());
 	    if (asmAft->get_kind() == x86_mov) {
 	      foundMov = true;
 	      uint64_t address_of_var=0;
@@ -300,7 +300,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 		SgGraphNode* aft = node;
 		while (foundMov!=true && sameParents(node, aft)) {
 		  aft = getSuccessor(aft);
-		  SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+		  SgAsmX86Instruction* asmAft = isSgAsmX86Instruction(aft->get_SgNode());
 		  if (asmAft->get_kind() == x86_add) {
 		    bool memRef = false, regRef = false;
 		    std::pair<X86RegisterClass, int> code;

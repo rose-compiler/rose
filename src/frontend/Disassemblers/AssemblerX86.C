@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+using namespace rose;
+
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
 static void
@@ -757,7 +759,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
 }
 
 void
-AssemblerX86::matches(const InsnDefn *defn, SgAsmx86Instruction *insn, int64_t *disp_p, int64_t *imm_p) const
+AssemblerX86::matches(const InsnDefn *defn, SgAsmX86Instruction *insn, int64_t *disp_p, int64_t *imm_p) const
 {
     if (insn->get_kind()!=defn->kind)
         throw Exception("insn kind doesn't match definition", insn);
@@ -866,7 +868,7 @@ AssemblerX86::parse_memref(SgAsmInstruction *insn, SgAsmMemoryReferenceExpressio
 }
 
 void
-AssemblerX86::build_modreg(const InsnDefn *defn, SgAsmx86Instruction *insn, size_t argno,
+AssemblerX86::build_modreg(const InsnDefn *defn, SgAsmX86Instruction *insn, size_t argno,
                            uint8_t *modrm/*in,out*/, uint8_t *rex/*in,out*/) const
 {
     ROSE_ASSERT(insn!=NULL);
@@ -897,7 +899,7 @@ AssemblerX86::build_modreg(const InsnDefn *defn, SgAsmx86Instruction *insn, size
 }
 
 uint8_t
-AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_t argno, 
+AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_t argno, 
                           uint8_t *sib/*out*/, int64_t *displacement/*out*/, uint8_t *rex/*in,out*/) const
 {
     ROSE_ASSERT(insn!=NULL);
@@ -1140,7 +1142,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
 }
 
 uint8_t
-AssemblerX86::segment_override(SgAsmx86Instruction *insn)
+AssemblerX86::segment_override(SgAsmX86Instruction *insn)
 {
     const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
     for (size_t i=0; i<operands.size(); i++) {
@@ -1184,7 +1186,7 @@ AssemblerX86::segment_override(SgAsmx86Instruction *insn)
 }
 
 SgUnsignedCharList
-AssemblerX86::fixup_prefix_bytes(SgAsmx86Instruction *insn, SgUnsignedCharList source)
+AssemblerX86::fixup_prefix_bytes(SgAsmX86Instruction *insn, SgUnsignedCharList source)
 {
     /* What prefixes are present in the source encoding? */
     std::set<uint8_t> present;
@@ -1265,7 +1267,7 @@ done:
 }
 
 SgUnsignedCharList
-AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn) 
+AssemblerX86::assemble(SgAsmX86Instruction *insn, const InsnDefn *defn) 
 {
     SgUnsignedCharList retval;
     uint8_t modrm = 0;                          /* The ModR/M byte */
@@ -1659,7 +1661,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
 SgUnsignedCharList
 AssemblerX86::assembleOne(SgAsmInstruction *_insn) 
 {
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(_insn);
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(_insn);
     ROSE_ASSERT(insn);
 
     if (get_encoding_type()==ET_MATCHES)

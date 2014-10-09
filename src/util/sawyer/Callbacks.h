@@ -15,6 +15,10 @@ private:
     CbList callbacks_;
 
 public:
+    bool isEmpty() const {
+        return callbacks_.empty();
+    }
+
     Callbacks& append(const Callback &callback) {
         callbacks_.push_back(callback);
         return *this;

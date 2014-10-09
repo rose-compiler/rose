@@ -3,8 +3,12 @@
 
 #include "string_functions.h"
 #include "Combinatorics.h"
+#include <EditDistance/Levenshtein.h>
+#include <EditDistance/DamerauLevenshtein.h>
 
 #include <iostream>
+
+using namespace rose;
 
 static bool
 test_isLineTerminated()
@@ -569,12 +573,12 @@ test_edit_distance()
                 switch (algo) {
                     case 0:
                         name = "Levenshtein";
-                        d1 = Combinatorics::levenshtein_distance(v1, v2);
+                        d1 = EditDistance::levenshteinDistance(v1, v2);
                         d2 = Levenshtein2::edit_distance(v1, v2);
                         break;
                     case 1:
                         name = "Damerau-Levenshtein";
-                        d1 = Combinatorics::damerau_levenshtein_distance(v1, v2);
+                        d1 = EditDistance::damerauLevenshteinDistance(v1, v2);
                         if (v1.empty())
                             v1.push_back(911); // we need a pointer, and &v1[0] won't cut it if v1 is empty
                         if (v2.empty())
