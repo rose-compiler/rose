@@ -1,0 +1,94 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionTypeSymbol
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgFunctionTypeSymbol
+\brief This class represents the concept of a name and a type. It may be 
+renamed in the future to SgTypeSymbol (since it is ued for both functions 
+types and more general types).
+
+This IR node is used as both the symbol in the SgFunctionTypeTable
+and in the SgTypeTable (both IR nodes containing a SgSymbolTable IR node).
+
+\todo Consider derivation of SgEnumSymbol, SgClassSymbol, SgFunctionTypeSymbol, and 
+    SgTypedefSymbol from a common SgTypeSymbol.  Then supporting functions for 
+    SgTypeSymbol would lookup any of these type based symbols.
+
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionTypeSymbol data members
+/////////////////////////////////////////////////////////////////////////
+
+/*
+\var SgFunctionTypeSymbol::p_name
+\brief This pointer is always valid and stores the assocated name.
+*/
+
+/*
+\var SgFunctionTypeSymbol::p_type
+\brief This pointer is always valid and stores the associated type.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionTypeSymbol member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgFunctionTypeSymbol::SgFunctionTypeSymbol()
+\brief This is the default constructor.
+
+   This constructor builds the SgFunctionTypeSymbol base class.
+
+\sa 
+\ref SgFunctionTypeSymbol_create "Example:create an SgFunctionTypeSymbol object"
+*/
+
+/*!
+\fn SgFunctionTypeSymbol::~SgFunctionTypeSymbol()
+\brief This is the destructor.
+
+*/
+
+/*!
+\fn SgFunctionTypeSymbol::get_name() const
+\brief Access function for getting name from declarations or types internally.
+
+\internal This is a virtual function.
+
+\return Returns SgName.
+*/
+
+/*!
+\fn SgFunctionTypeSymbol::get_type() const 
+\brief This function returns the type associated with the named entity.
+
+\internal This is a virtual function.
+
+\return Returns SgType*.
+*/
+
+/*!
+\fn SgFunctionTypeSymbol::isSgFunctionTypeSymbol (SgNode *s)
+\brief Cast function (from derived class to SgFunctionTypeSymbol pointer).
+
+   This functions returns a SgFunctionTypeSymbol pointer for any input of a 
+pointer to an object derived from a SgFunctionTypeSymbol.
+
+\return Returns valid pointer to SgFunctionTypeSymbol if input is derived from a SgFunctionTypeSymbol.
+*/
+
+/*!
+\fn SgFunctionTypeSymbol::isSgFunctionTypeSymbol (const SgNode *s)
+\brief Cast function (from derived class to SgFunctionTypeSymbol pointer).
+
+   This functions returns a SgFunctionTypeSymbol pointer for any input of a 
+pointer to an object derived from a SgFunctionTypeSymbol.
+
+\return Returns valid pointer to SgFunctionTypeSymbol if input is derived from a SgFunctionTypeSymbol.
+*/
+
+
+
+
