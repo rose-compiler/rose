@@ -265,8 +265,6 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
     if (settings.showMaps) {
         std::cout <<"Linux loader specimen memory map:\n";
         system(("cat /proc/" + numberToString(child) + "/maps").c_str());
-        std::cout <<"ROSE loader specimen memory map:\n";
-        partitioner.memoryMap().dump(std::cout);
     }
 
     // Branch to the starting address
@@ -362,6 +360,10 @@ main(int argc, char *argv[]) {
         }
     }
     P2::Partitioner partitioner = engine.partition();
+    if (settings.showMaps) {
+        std::cout <<"ROSE loader specimen memory map:\n";
+        partitioner.memoryMap().dump(std::cout);
+    }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
     mlog[INFO] <<"; completed in " <<partitionTimer <<" seconds.\n";
     mlog[INFO] <<"found " <<plural(functions.size(), "functions") <<"\n";

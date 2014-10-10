@@ -178,14 +178,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "@prop{programName} [@v{switches}] @v{specimen_names}")
         .doc("description",
              "This is a web server for viewing the contents of a binary specimen.")
-        .doc("Specimens",
-             "The binary specimen can be constructed from files in two ways."
-             "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
-             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
-             "string. " + MemoryMap::insertFileDocumentation() + "}"
-             "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
-             "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.");
+        .doc("Specimens", P2::Engine::specimenNameDocumentation());
     
     return parser.with(gen).with(dis).with(server).parse(argc, argv).apply();
 }

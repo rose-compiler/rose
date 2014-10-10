@@ -59,6 +59,16 @@ rose_addr_t
 BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
 {
     static const size_t maximum_alignment = 8192;
+    AddressInterval mappableArea = AddressInterval::whole();
+
+#if 0 // [Robb P. Matzke 2014-10-09]
+    // If this is a library then restrict where it can be mapped.  This is to try to make BinaryLoaderElf behave more like the
+    // native loader on Linux (at least when run with "i386 --addr-compat-layout --addr-no-randomize), but it's a failing
+    // proposition because the headers in ROSE are apparently not processed in the same order as in Linux.
+    SgAsmGenericFormat *fmt = header->get_exec_format();
+    if (fmt->get_purpose() == SgAsmGenericFormat::PURPOSE_LIBRARY)
+        mappableArea = AddressInterval::hull(0x55555000, mappableArea.greatest());
+#endif
 
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
@@ -67,7 +77,8 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
     rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
 
     // Minimum address at which to map
-    AddressInterval freeSpace = map->unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
+    AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
+    freeSpace = freeSpace & mappableArea;
     if (freeSpace.isEmpty())
         throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
     rose_addr_t map_base_va = ALIGN_UP(freeSpace.least(), maximum_alignment);

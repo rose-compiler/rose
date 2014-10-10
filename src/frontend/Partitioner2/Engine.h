@@ -105,6 +105,9 @@ public:
     //                                  Some utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Documentation for specimen names. */
+    static std::string specimenNameDocumentation();
+
     /** Obtain a binary loader.
      *
      *  This is usually called before the engine creates a partitioner. It looks for a suitable loader type and allocates an

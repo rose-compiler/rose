@@ -274,6 +274,12 @@ public:
     /** Documentation string for @ref insertFile. */
     static std::string insertFileDocumentation();
 
+    /** Insert the memory of some other process into this memory map. */
+    void insertProcess(const std::string &locatorString);
+
+    /** Documentation string for @ref insertProcess. */
+    static std::string insertProcessDocumentation();
+
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void eraseZeros(size_t minsize);
 

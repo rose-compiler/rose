@@ -27,7 +27,7 @@ Engine::parse(const std::vector<std::string> &fileNames) {
     // Parse the binary container files with single call to frontend()
     std::vector<std::string> frontendNames;
     BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (!boost::starts_with(fileName, "map:"))
+        if (!boost::starts_with(fileName, "map:") && !boost::starts_with(fileName, "proc:"))
             frontendNames.push_back(fileName);
     }
     if (!frontendNames.empty()) {
@@ -69,6 +69,9 @@ Engine::load(const std::vector<std::string> &fileNames) {
         if (boost::starts_with(fileName, "map:")) {
             std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
             map_.insertFile(resource);
+        } else if (boost::starts_with(fileName, "proc:")) {
+            std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
+            map_.insertProcess(resource);
         }
     }
 
@@ -130,6 +133,28 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
     }
 
     return createGenericPartitioner(disassembler, map);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Engine utilities
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+Engine::specimenNameDocumentation() {
+    return ("The following names are recognized for binary specimens:"
+
+            "@bullet{If the name does not match any of the following patterns then it is assumed to be the name of a "
+            "file containing a specimen that is a binary container format such as ELF or PE.}"
+
+            "@bullet{If the name begins with the string \"map:\" then it is treated as a memory map resource string that "
+            "adjusts a memory map by inserting part of a file. " + MemoryMap::insertFileDocumentation() + "}"
+
+            "@bullet{If the name begins with the string \"proc:\" then it is treated as a process resource string that "
+            "adjusts a memory map by reading the process' memory. " + MemoryMap::insertProcessDocumentation() + "}"
+
+            "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
+            "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "
+            "are then processed in the order they appear, possibly overwriting parts of the map.");
 }
 
 Disassembler*

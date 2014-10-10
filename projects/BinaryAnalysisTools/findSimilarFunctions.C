@@ -128,12 +128,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "distance from each other.  The specimens need not have the same number of functions, in which case one of "
              "the specimens will have null functions inserted to make them the same size.  The distance between a null "
              "function and some other function is always zero regardless of metric.")
-        .doc("Specimens",
-             "The binary specimens can be constructed from files in two ways."
-             "@bullet{If the specimen name is a simple file name then the specimen is passed to the \"buildBinaryComposite\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
-             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
-             "string. " + MemoryMap::insertFileDocumentation() + "}");
+        .doc("Specimens", P2::Engine::specimenNameDocumentation() + "\n\n"
+             "Note: only two names can be supplied: one for the first specimen and one for the second.");
 
     return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
