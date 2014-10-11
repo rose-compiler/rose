@@ -1,4 +1,6 @@
 #include "sage3basic.h"
+
+#include "BinaryDebugger.h"
 #include "BinaryLoader.h"
 #include "DisassemblerM68k.h"
 #include "DisassemblerX86.h"
@@ -27,8 +29,14 @@ Engine::parse(const std::vector<std::string> &fileNames) {
     // Parse the binary container files with single call to frontend()
     std::vector<std::string> frontendNames;
     BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (!boost::starts_with(fileName, "map:") && !boost::starts_with(fileName, "proc:"))
+        if (boost::starts_with(fileName, "map:") || boost::starts_with(fileName, "proc:")) {
+            // these are processed by the load() method only
+        } else if (boost::starts_with(fileName, "run:")) {
+            // these are processed here and in load()
+            frontendNames.push_back(fileName.substr(4));
+        } else {
             frontendNames.push_back(fileName);
+        }
     }
     if (!frontendNames.empty()) {
         std::vector<std::string> frontendArgs;
@@ -72,6 +80,18 @@ Engine::load(const std::vector<std::string> &fileNames) {
         } else if (boost::starts_with(fileName, "proc:")) {
             std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
             map_.insertProcess(resource);
+        } else if (boost::starts_with(fileName, "run:")) {
+            std::string exeName = fileName.substr(4);
+            BinaryDebugger debugger(exeName);
+            BOOST_FOREACH (const MemoryMap::Node &node, map_.nodes()) {
+                if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
+                    debugger.setBreakpoint(node.key());
+            }
+            debugger.runToBreakpoint();
+            if (debugger.isTerminated())
+                throw std::runtime_error(exeName + " " + debugger.howTerminated() + " without reaching a breakpoint");
+            map_.insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
+            debugger.terminate();
         }
     }
 
@@ -151,6 +171,12 @@ Engine::specimenNameDocumentation() {
 
             "@bullet{If the name begins with the string \"proc:\" then it is treated as a process resource string that "
             "adjusts a memory map by reading the process' memory. " + MemoryMap::insertProcessDocumentation() + "}"
+
+            "@bullet{If the name begins with the string \"run:\" then it is first treated like a normal file by ROSE's "
+            "\"fontend\" function, and then during a second pass it will be loaded natively under a debugger, run until "
+            "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
+            "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
+            "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior.}"
 
             "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
             "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "
