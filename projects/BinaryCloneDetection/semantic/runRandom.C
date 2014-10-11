@@ -3,28 +3,16 @@
 #include <rose.h>
 #include <rose_config.h>
 
-#if !defined(HAVE_ASM_LDT_H) || !defined(HAVE_SYS_TYPES_H) || !defined(HAVE_SYS_WAIT_H)
 
-int main(int argc, char *argv[]) {
-    std::cerr <<argv[0] <<" is not supported on this platform.\n";
-    exit(1);
-}
-
-#else
-
+#include <BinaryDebugger.h>
 #include <Combinatorics.h>
 #include <Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
-#include <errno.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/Optional.h>
 #include <sawyer/ProgressBar.h>
 #include <sawyer/Stopwatch.h>
-#include <sys/ptrace.h>
-#include <sys/user.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 // Instruction pointer member from user_regs_struct in <sys/user.h>
 #if __WORDSIZE == 64
@@ -35,6 +23,7 @@ int main(int argc, char *argv[]) {
 
 using namespace rose;
 using namespace StringUtility;
+using namespace BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
@@ -43,13 +32,15 @@ static Sawyer::Message::Facility mlog;
 struct Settings {
     bool performLink;                                   // should dynamic linking be performed inside ROSE?
     std::vector<std::string> libDirs;                   // directories where libraries are stored
+    bool useProcMap;                                    // use memory map from natively-loaded process
     bool showMaps;                                      // show memory maps?
     bool allowSyscalls;                                 // are system calls allowed?
     size_t maxInsns;                                    // max number of instructions to execute; zero means no limit
     size_t nFunctionsTested;                            // number of functions to test
     size_t nInsnsTested;                                // number of instructions to test
     std::string initFunction;                           // when to branch to another function
-    Settings(): performLink(false), showMaps(false), allowSyscalls(false), maxInsns(0), nFunctionsTested(-1), nInsnsTested(0) {}
+    Settings(): performLink(false), useProcMap(true), showMaps(false), allowSyscalls(false), maxInsns(0),
+                nFunctionsTested(-1), nInsnsTested(0) {}
 };
 
 // Describe and parse the command-line
@@ -121,6 +112,20 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                 .doc("Directories that contain libraries that are used if @s{link} is specified. This switch can be specfied "
                      "more than once, and each argument can be a list of colon-separated directory names."));
 
+    tool.insert(Switch("procmap")
+                .intrinsicValue(true, settings.useProcMap)
+                .doc("Use the process memory map rather than the map created by ROSE.  When this flag is present, the "
+                     "memory map created from parsing the binary container and running ROSE's BinaryLoader will be "
+                     "augmented by natively running the process and then reading its memory map.  This causes ROSE to "
+                     "obtain accurate information about the location and contents of dynamically linked libraries.  The "
+                     "@s{link} switch should probably not be used with @s{procmap}.  The @s{no-procmap} switch disables "
+                     "this feature.  The default is to " + std::string(settings.useProcMap?"":"not ") +
+                     "read a process memory map."));
+    tool.insert(Switch("no-procmap")
+                .key("procmap")
+                .intrinsicValue(false, settings.useProcMap)
+                .hidden(true));
+
     tool.insert(Switch("init")
                 .argument("name", anyParser(settings.initFunction))
                 .doc("If specified, allow the specimen to run until the specified function or address is reached.  Keep in "
@@ -160,74 +165,31 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "C-escaped string in double quotes.  For instance,\n\n"
 
              "    0x080480a0, 3, \"\" terminated with segmentation fault")
+        .doc("Specimens", P2::Engine::specimenNameDocumentation())
         .doc("Bugs",
-             "Only Linux ELF x86 32-bit executable specimens are supported.");
+             "@bullet{Only Linux ELF x86 32-bit executable specimens are supported.}"
+             "@bullet{Won't work correctly when address randomization is in effect. Run under \"i386 -R\" to disable "
+             "randomization.}");
     
     return parser.with(gen).with(tool).parse(argc, argv).apply();
 }
 
 static void
-sendCommand(enum __ptrace_request request, pid_t pid, void *addr=NULL, void *data=NULL) {
-    if (-1 == ptrace(request, pid, addr, data)) {
-        kill(pid, SIGKILL);
-        std::string s;
-        switch (request) {
-            case PTRACE_TRACEME:        s = "traceme";          break;
-            case PTRACE_GETREGS:        s = "getregs";          break;
-            case PTRACE_SETREGS:        s = "setregs";          break;
-            case PTRACE_SINGLESTEP:     s = "singlestep";       break;
-            case PTRACE_SETOPTIONS:     s = "setoptions";       break;
-            default:                    s = "?";                break;
-        }
-        throw std::runtime_error("ptrace(" + s + ") failed: " + strerror(errno));
+augmentMemoryMap(const Settings &settings, MemoryMap &map /*in,out*/, const std::string &specimenName,
+                 Sawyer::Optional<rose_addr_t> initVa) {
+    BinaryDebugger debugger(specimenName);
+    if (initVa) {
+        debugger.setBreakpoint(*initVa);
+        debugger.runToBreakpoint();
+        debugger.clearBreakpoint(*initVa);
     }
-}
-
-static int
-waitForChild(pid_t pid) {
-    while (1) {
-        int wstat;
-        if (-1 == (pid = waitpid(pid, &wstat, 0)))
-            throw std::runtime_error("wait failed: " + std::string(strerror(errno)));
-        if (WIFSTOPPED(wstat) && (WSTOPSIG(wstat) & ~0x80)!=SIGTRAP) {
-            sendCommand(PTRACE_SINGLESTEP, pid, 0, (void*)WSTOPSIG(wstat)); // deliver signal
-        } else {
-            return wstat;
-        }
+    if (debugger.isTerminated()) {
+        mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated()
+                    <<" before reaching " <<addrToString(*initVa) <<"\n";
+        exit(1);
     }
-}
-
-static bool
-isTerminated(int wstat, std::string &why /*out*/) {
-    if (WIFEXITED(wstat)) {
-        why = "exit with status " + numberToString(WEXITSTATUS(wstat));
-        return true;
-    } else if (WIFSIGNALED(wstat)) {
-        why = strsignal(WTERMSIG(wstat));
-        if (!why.empty() && isupper(why[0]))
-            why[0] = tolower(why[0]);
-        why = "terminated with " + why;
-        return true;
-    }
-    return false;
-}
-
-// Allow child to run until it hits the specified virtual address or dies.  Returns false if it died.
-static bool
-executeUntilAddress(pid_t pid, rose_addr_t va, std::string &terminationReason /*out*/) {
-    terminationReason = "";
-    while (1) {
-        user_regs_struct regs;
-        sendCommand(PTRACE_GETREGS, pid, 0, &regs);
-        if (regs.INSTRUCTION_POINTER == va)
-            return true;
-
-        sendCommand(PTRACE_SINGLESTEP, pid);
-        int wstat = waitForChild(pid);
-        if (isTerminated(wstat, terminationReason /*out*/))
-            return false;
-    }
-    return true;
+    map.insertProcess(":noattach:" + numberToString(debugger.isAttached()));
+    debugger.terminate();
 }
 
 // Run natively and return number of instructions executed and reason for termination.
@@ -236,97 +198,73 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
             const P2::Partitioner &partitioner, rose_addr_t randomAddress) {
     Stream debug(mlog[DEBUG]);
 
-    // Fork and execute binary specimen expecting to be debugged with ptrace
-    const pid_t child = fork();
-    ASSERT_always_require2(child>=0, "fork failed");
-    if (0==child) {
-        sendCommand(PTRACE_TRACEME, 0);
-        execl(specimenName.c_str(), specimenName.c_str(), NULL);
-        throw std::runtime_error("execl failed: " + std::string(strerror(errno)));
-    }
-
-    // We will be notified as soon as child's exec occurs
-    int wstat = waitForChild(child);
-    std::string terminationReason;
-    if (isTerminated(wstat, terminationReason /*out*/)) {
-        mlog[FATAL] <<"child " <<child <<" " <<terminationReason <<" before we could gain control\n";
+    BinaryDebugger debugger(specimenName);
+    if (debugger.isTerminated()) {
+        mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated() <<" before we could gain control\n";
         exit(1);
     }
-    ASSERT_require(WIFSTOPPED(wstat) && (WSTOPSIG(wstat) & ~0x80)==SIGTRAP);
 
     // Allow child to run until we hit the desired address.
-    if (initVa && !executeUntilAddress(child, *initVa, terminationReason /*out*/)) {
-        mlog[FATAL] <<"child " <<child <<" " <<terminationReason <<" without reaching " <<addrToString(*initVa) <<"\n";
-        exit(1);
+    if (initVa) {
+        debugger.setBreakpoint(*initVa);
+        debugger.runToBreakpoint();
+        debugger.clearBreakpoint(*initVa);
+        if (debugger.isTerminated()) {
+            mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated()
+                        <<" without reaching " <<addrToString(*initVa) <<"\n";
+            exit(1);
+        }
     }
-
+    
     // Show specimen address map so we can verify that the Linux loader used the same addresses we used.
     // We could have shown it earlier, but then we wouldn't have seen the results of dynamic linking.
     if (settings.showMaps) {
         std::cout <<"Linux loader specimen memory map:\n";
-        system(("cat /proc/" + numberToString(child) + "/maps").c_str());
+        system(("cat /proc/" + numberToString(debugger.isAttached()) + "/maps").c_str());
     }
 
     // Branch to the starting address
     debug <<"branching to " <<addrToString(randomAddress) <<"\n";
-    user_regs_struct regs;
-    sendCommand(PTRACE_GETREGS, child, 0, &regs);
-    regs.INSTRUCTION_POINTER = randomAddress;
-    sendCommand(PTRACE_SETREGS, child, 0, &regs);
-    sendCommand(PTRACE_SETOPTIONS, child, 0, (void*)PTRACE_O_TRACESYSGOOD);
+    debugger.executionAddress(randomAddress);
 
+    std::string terminationReason;
     size_t nExecuted = 0;                               // number of instructions executed
     while (1) {
         // Check for and avoid system calls if necessary
         if (!settings.allowSyscalls) {
-#if 0 // [Robb P. Matzke 2014-10-09]
-            sendCommand(PTRACE_GETREGS, child, 0, &regs);
-            SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.instructionProvider()[regs.INSTRUCTION_POINTER]);
+            rose_addr_t eip = debugger.executionAddress();
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.instructionProvider()[eip]);
             if (!insn || insn->isUnknown()) {
-                terminationReason = "executed at " + addrToString(regs.INSTRUCTION_POINTER) +" which we don't know about";
+                terminationReason = "executed at " + addrToString(eip) +" which we don't know about";
                 break;
             }
             if (insn->get_kind() == x86_int) {
                 terminationReason = "tried to execute a system call";
                 break;
             }
-#elif 0
-            // doesn't appear to work properly when single-stepping
-            siginfo_t si;
-            sendCommand(PTRACE_GETSIGINFO, child, 0, &si);
-            if ((si.si_code & ~0x80) == SIGTRAP) {
-                terminationReason = "tried to execute a system call";
-                break;
-            }
-#else
-            // doesn't appear to work properly when single-stepping
-            if (WIFSTOPPED(wstat) && WSTOPSIG(wstat)==(0x80|SIGTRAP)) {
-                terminationReason = "tried to execute a system call";
-                break;
-            }
-#endif
         }
 
         // Single-step
-        if (debug) {
-            sendCommand(PTRACE_GETREGS, child, 0, &regs);
-            debug <<"single stepping at " <<addrToString(regs.INSTRUCTION_POINTER) <<"\n";
-        }
-        sendCommand(PTRACE_SINGLESTEP, child, 0, 0);
-        wstat = waitForChild(child);
-        if (isTerminated(wstat, terminationReason /*out*/))
+        if (debug)
+            debug <<"single stepping at " <<addrToString(debugger.executionAddress()) <<"\n";
+        debugger.singleStep();
+        if (debugger.isTerminated()) {
+            terminationReason = debugger.howTerminated();
             break;
-        ASSERT_require(WIFSTOPPED(wstat) && (WSTOPSIG(wstat) & ~0x80)==SIGTRAP);
+        }
         ++nExecuted;
         if (settings.maxInsns!=0 && nExecuted>=settings.maxInsns) {
             terminationReason = "reached instruction limit";
             break;
         }
     }
-    kill(child, SIGKILL);                               // make sure child is really dead
-    waitpid(child, &wstat, 0);                          // and reap it
-
+    debugger.terminate();
     return std::make_pair(nExecuted, terminationReason);
+}
+
+static bool
+isUnnamed(const P2::Function::Ptr &function) {
+    return function->name().empty();
 }
 
 int
@@ -341,11 +279,25 @@ main(int argc, char *argv[]) {
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     if (specimenNames.size() != 1)
         throw std::runtime_error("exactly one binary specimen file should be specified; see --help");
+    Stream info(mlog[INFO]);
 
-    // Parse, load, link, reloc, disassemble, partition, and get list of functions.  No need to create an AST.
-    mlog[INFO] <<"performing parse, load, disassemble and partition";
-    Sawyer::Stopwatch partitionTimer;
+    // Parse the specimen's binary container
+    info <<"performing parse, load, link";
+    Sawyer::Stopwatch parseTimer;
     engine.parse(specimenNames);
+    info <<"; completed in " <<parseTimer <<" seconds\n";
+
+    // Find the original entry point for the specimen before we complicate matters with dynamic linking
+    SgAsmInterpretation *interp = engine.interpretation();
+    ASSERT_not_null2(interp, "specimen has no default interpretation; not a binary container?");
+    ASSERT_forbid(interp->get_headers()->get_headers().empty());
+    SgAsmElfFileHeader *elf = isSgAsmElfFileHeader(interp->get_headers()->get_headers()[0]);
+    ASSERT_not_null2(elf, "not an ELF specimen");
+    rose_addr_t oep = elf->get_entry_rva() + elf->get_base_va();
+
+    // Map, link, and/or relocate
+    info <<"performing map" <<(settings.performLink?" and link":"") <<" steps";
+    Sawyer::Stopwatch linkTimer;
     if (settings.performLink) {
         BinaryLoader *loader = engine.obtainLoader();
         ASSERT_not_null(loader);
@@ -359,44 +311,28 @@ main(int argc, char *argv[]) {
             }
         }
     }
+    engine.load();
+    info <<"; completed in " <<linkTimer <<" seconds\n";
+
+    // Augment the memory map by allowing the specimen to run natively and then reading its process memory
+    if (settings.useProcMap)
+        augmentMemoryMap(settings, engine.memoryMap(), specimenNames[0], oep);
+
+    // Disassemble, partition, and get list of functions.  No need to create an AST.
+    info <<"performing disassemble and partition";
+    Sawyer::Stopwatch partitionTimer;
     P2::Partitioner partitioner = engine.partition();
     if (settings.showMaps) {
         std::cout <<"ROSE loader specimen memory map:\n";
         partitioner.memoryMap().dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
-    mlog[INFO] <<"; completed in " <<partitionTimer <<" seconds.\n";
-    mlog[INFO] <<"found " <<plural(functions.size(), "functions") <<"\n";
+    info <<"; completed in " <<partitionTimer <<" seconds.\n";
+    info <<"found " <<plural(functions.size(), "functions") <<"\n";
 
-#if 0 // [Robb P. Matzke 2014-10-09]: doesn't always work with dynamic linking
-    // Make sure the specimen is 32-bit x86 Linux ELF executable
-    Sawyer::Optional<rose_addr_t> oep;                  // original entry point
-    SgAsmInterpretation *interp = engine.interpretation();
-    BOOST_FOREACH (SgAsmGenericHeader *hdr, interp->get_headers()->get_headers()) {
-        SgAsmElfFileHeader *elf = isSgAsmElfFileHeader(hdr);
-        if (!elf)
-            throw std::runtime_error("only ELF binary specimens are supported");
-        if (elf->get_exec_format()->get_purpose() != SgAsmGenericFormat::PURPOSE_EXECUTABLE &&
-            elf->get_exec_format()->get_purpose() != SgAsmGenericFormat::PURPOSE_UNSPECIFIED) {
-            throw std::runtime_error("only executables are supported");
-        }
-        if (elf->get_exec_format()->get_abi() != SgAsmGenericFormat::ABI_LINUX &&
-            elf->get_exec_format()->get_abi() != SgAsmGenericFormat::ABI_UNSPECIFIED) {
-            throw std::runtime_error("only Linux executables are supported");
-        }
-        if (0 == (elf->get_isa() & SgAsmGenericFormat::ISA_IA32_Family) &&
-            elf->get_isa() != SgAsmGenericFormat::ISA_UNSPECIFIED) {
-            throw std::runtime_error("only Intel x86 executables are supported");
-        }
-        if (32!=partitioner.instructionProvider().instructionPointerRegister().get_nbits())
-            throw std::runtime_error("only 32-bit binary specimens are supported");
-        if (!oep)
-            oep = elf->get_entry_rva() + elf->get_base_va();
-    }
-    ASSERT_require2(oep, "no OEP");
-#else
-    Sawyer::Optional<rose_addr_t> oep;
-#endif
+    // Consider only functions that have names
+    functions.erase(std::remove_if(functions.begin(), functions.end(), isUnnamed), functions.end());
+    info <<"functions with names: " <<functions.size() <<"\n";
 
     // How far should we let the specimen run before branching to a function?
     Sawyer::Optional<rose_addr_t> initVa;
@@ -414,10 +350,9 @@ main(int argc, char *argv[]) {
                 }
             }
             if (!initVa) {
-                ASSERT_require(oep);
                 initVa = oep;
                 mlog[WARN] <<"could not find \"" <<settings.initFunction <<"\""
-                           <<"; using original entry point instead (" <<addrToString(*oep) <<")\n";
+                           <<"; using original entry point instead (" <<addrToString(oep) <<")\n";
             }
         }
     }
@@ -425,13 +360,13 @@ main(int argc, char *argv[]) {
     if (settings.nFunctionsTested > 0) {
         // Select the functions to run.
         if (settings.nFunctionsTested < functions.size()) {
-            mlog[INFO] <<"limiting to " <<plural(settings.nFunctionsTested, "functions") <<" selected at random.\n";
+            info <<"limiting to " <<plural(settings.nFunctionsTested, "functions") <<" selected at random.\n";
             Combinatorics::shuffle(functions);
             functions.resize(settings.nFunctionsTested);
         }
 
         // Run the specimen natively under a debugger.
-        mlog[INFO] <<"running selected functions natively under a debugger\n";
+        info <<"running selected functions natively under a debugger\n";
         Sawyer::ProgressBar<size_t> progress(functions.size(), mlog[INFO]);
         BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
             mlog[WHERE] <<"running function " <<addrToString(function->address()) <<" \"" <<function->name() <<"\"\n";
@@ -450,18 +385,18 @@ main(int argc, char *argv[]) {
             const std::vector<SgAsmInstruction*> &bi = bblock->instructions();
             insns.insert(insns.end(), bi.begin(), bi.end());
         }
-        mlog[INFO] <<"found " <<plural(insns.size(), "instructions") <<"\n";
+        info <<"found " <<plural(insns.size(), "instructions") <<"\n";
 
 
         // Select instructions to run
         if (settings.nInsnsTested < insns.size()) {
-            mlog[INFO] <<"limiting to " <<plural(settings.nInsnsTested, "instructions") <<" selected at random.\n";
+            info <<"limiting to " <<plural(settings.nInsnsTested, "instructions") <<" selected at random.\n";
             Combinatorics::shuffle(insns);
             insns.resize(settings.nInsnsTested);
         }
 
         // Run the speciment natively at each selected instruction.
-        mlog[INFO] <<"running selected instructions natively under a debugger\n";
+        info <<"running selected instructions natively under a debugger\n";
         Sawyer::ProgressBar<size_t> progress(insns.size(), mlog[INFO]);
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
             mlog[WHERE] <<"running instruction " <<addrToString(insn->get_address()) <<"\"\n";
@@ -472,5 +407,3 @@ main(int argc, char *argv[]) {
         }
     }
 }
-
-#endif
