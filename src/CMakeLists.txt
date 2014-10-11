@@ -318,6 +318,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init8.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init9.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/BinaryDebugger.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerMips.C 
