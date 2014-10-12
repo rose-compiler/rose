@@ -161,7 +161,7 @@ BinaryDebugger::attach(const std::string &exeName) {
             exit(1);
         }
         execl(exeName.c_str(), exeName.c_str(), NULL);
-        std::cerr <<"BinaryDebugger::attach: exec failed: " <<strerror(errno) <<"\n";
+        std::cerr <<"BinaryDebugger::attach: exec \"" <<StringUtility::cEscape(exeName) <<"\" failed: " <<strerror(errno) <<"\n";
         exit(1);
     }
 
