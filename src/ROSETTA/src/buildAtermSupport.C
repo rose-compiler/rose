@@ -31,6 +31,10 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
      string atermAnnotationString = "";
 
 #if 0
+     printf ("In Grammar::buildAtermSupportFunctions(): node.getName() = %s \n",node.getName().c_str());
+#endif
+
+#if 0
   // This is a way to reduce the size of the denerated file so that the code generation can be debugged.
      printf ("In Grammar::buildAtermSupportFunctions(): node.getName() = %s \n",node.getName().c_str());
   // outputFile << "// In Grammar::buildAtermSupportFunctions(): data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << "\n";
@@ -75,6 +79,26 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #endif
 
 #if 1
+  // Allow for special cases as needed to add a annotations for specific data members or computed values we want to save.
+     if (node.getName() == "SgFunctionDeclaration")
+        {
+       // handledAsSpecialCase = true;
+
+          string variableName = "return_type";
+          string variableAccessFunctionName = "type()->get_return_type";
+          atermAnnotationString += string("  // SPECIAL CASE: node : ") + node.getName() + "\n";
+          atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + variableName + "\"),ATmake(\"<str>\", uniqueId(this->get_" + variableAccessFunctionName + "()).c_str())); \n";
+
+          variableName = "current_scope";
+          variableAccessFunctionName = "scope";
+          atermAnnotationString += string("  // SPECIAL CASE: node : ") + node.getName() + "\n";
+          atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + variableName + "\"),ATmake(\"<str>\", uniqueId(this->get_" + variableAccessFunctionName + "()).c_str())); \n";
+
+          atermAnnotationString += "\n";
+        }
+#endif
+
+#if 1
      if (handledAsSpecialCase == false)
         {
      for (vector<GrammarString*>::iterator i = includeList.begin(); i != includeList.end(); i++)
@@ -95,9 +119,14 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << "typeKind = " << StringUtility::numberToString((int)typeKind) << "\n";
              }
 #endif
+#if 1
+          outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() 
+                     << " typeKind = " << StringUtility::numberToString((int)typeKind) << " enum kind = " << node.typeEvaluationName(typeKind) << "\n";
+#endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
 
           bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+
 #if 1
           if (typeKind == Terminal::SGCLASS_POINTER)
              {
@@ -117,7 +146,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                   }
                  else
                   {
-#if 1
+#if 0
                  // This should be added as an aterm annotation.
                      outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
                                 << grammarString->getTypeNameString() << " data member variable: " 
@@ -127,21 +156,52 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                  // atermAnnotationString += string("  // ") + typenameString + "\n";
 
                     bool atermAnnotationStringProcessed = false;
-
-                 // This is where we can support the source file information.
+#if 1
+                 // This is where we can support the source file position information.
                     if (typenameString == "Sg_File_Info*")
                        {
                          atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),convertFileInfoToAterm(this->get_" + grammarString->getVariableNameString() + "())); \n";
                          atermAnnotationStringProcessed = true;
                        }
-
+#endif
                  // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                     if (atermAnnotationStringProcessed == false && grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                        {
-                         if (typenameString.substr(0,7) != "static " && typenameString.substr(0,11) != "$CLASSNAME*")
+                      // Note that the type traversal will include the static members, so we need to include it in our pattern for the match to work.
+                      // if (typenameString.substr(0,7) != "static " && typenameString.substr(0,11) != "$CLASSNAME*")
+                         if (typenameString.substr(0,11) != "$CLASSNAME*")
                             {
-                              atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
+                           // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
+                              bool isType = false;
+                              atermAnnotationString += "     // type is: " + grammarString->getTypeNameString() + "\n";
+                           // isType = (grammarString->getTypeNameString() == "SgPointerType");
+                              isType = (grammarString->getTypeNameString() == "SgType*");
+
+                           // Where this is a type, it must be unwound to the base type.
+                              if (isType == true)
+                                 {
+                                // <appl(<list>)>
+                                // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<term>\", getTraversalChildrenAsAterm(this->get_" + grammarString->getVariableNameString() + "()))); \n";
+                                // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<appl(<term>)>\"," + grammarString->getTypeNameString() + ",getTraversalChildrenAsAterm(this->get_" + grammarString->getVariableNameString() + "()))); \n";
+                                // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<appl(<term>)>\"," + grammarString->getTypeNameString() + ",getTraversalChildrenAsAterm(this))); \n";
+                                // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<appl(<term>)>\"," + grammarString->getVariableNameString() + ",getTraversalChildrenAsAterm(this))); \n";
+                                // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),this->get_" + grammarString->getVariableNameString() + "()->generate_ATerm()); \n";
+
+                                // We need to call the AtermSupport::convertNodeToAterm(SgNode* n) function so that both generate_ATerm() and generate_ATerm_Annotation() functions will be called.
+                                   atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),convertNodeToAterm(this->get_" + grammarString->getVariableNameString() + "())); \n";
+                                 }
+                                else
+                                 {
+                                   atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
+                                 }
                             }
+                           else
+                            {
+#if 0
+                              printf ("NOTE: Skipping output of ATerm annotation for grammarString->getVariableNameString() = %s (ends with $CLASSNAME*) \n",grammarString->getVariableNameString().c_str());
+#endif
+                            }
+                         
 
                          firstAnnotation = false;
                        }
@@ -187,6 +247,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                          atermPatternSubstring += ", ";
                        }
                     atermPatternSubstring += "<list>";
+                 // atermPatternSubstring += "[<list>]";
 
                     isContainer = true;
                     firstAterm = false;
@@ -220,7 +281,9 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                   {
                  // string atermTypeName = "ATmake";
                  // These are the easy types to support using an ATerm Int
-                    if (typenameString == "bool" || typenameString == "int")
+                 // if (typenameString == "bool" || typenameString == "int" || typenameString == "unsigned int")
+                    bool isInteger = isIntegerKind(typenameString);
+                    if (isInteger == true)
                        {
                       // atermTypeName = "ATmakeInt";
                       // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmakeInt(this->get_" + grammarString->getVariableNameString() + "())); \n";
@@ -230,7 +293,23 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                       else
                        {
                       // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this).c_str())); \n";
-                         atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
+                      // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
+                         bool processDataMember = true;
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgFunctionModifier::opencl_work_group_size_t");
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "RegisterDescriptor");
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iref_type");
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iord_type");
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iname_type");
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::osfixup_type");
+
+                         if (processDataMember == true)
+                            {
+                              atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
+                            }
+                           else
+                            {
+                              atermAnnotationString += "     // skipping some data members of specific unsupported structure types \n";
+                            }
                        }
 
                     firstAnnotation = false;
@@ -328,10 +407,14 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
        // outputFile << "ATerm " << node.getName() << "::generate_ATerm(" << node.getName() << "* n) \n   {\n";
           outputFile << "ATerm " << node.getName() << "::generate_ATerm() \n   {\n";
 
-       // outputFile << "atermPatternSubstring = " << atermPatternSubstring << "\n";
+       // outputFile << "  // atermPatternSubstring = " << atermPatternSubstring << "\n";
           string atermPatternString = node.getName() + "(" + atermPatternSubstring + ")";
+#if 1
           outputFile << "  // expected read pattern: atermPatternString = " << atermPatternString << "\n";
-
+#endif
+#if 1
+          outputFile << string("     printf (\"In ") + atermPatternString + "\\n\");\n";
+#endif
 #if 0
        // I don't think we need this complexity.
           if (isContainer == true)
@@ -351,18 +434,53 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
        // outputFile << "     ATerm term = ATmake(\"" << atermPatternString << "\",getTraversalChildrenAsAterm(this));\n";
        // term = ATmake("<appl(<list>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(n));
        // outputFile << "     ATerm term = ATmake(\"<appl(<list>)>\", \"" << node.getName() << "\",getTraversalChildrenAsAterm(this));\n";
-#if 0
+#if 1
           outputFile << "  // isContainer = " << ((isContainer == true) ? "true" : "false") << "\n";
 #endif
           if (isContainer == false)
              {
+#if 1
                outputFile << "     ATerm term = ATmake(\"<appl(<list>)>\", \"" << node.getName() << "\",getTraversalChildrenAsAterm(this));\n";
+#else
+               bool isType = false;
+               atermAnnotationString += "     // node is: " + node.getName() + "\n";
+            // isType = (grammarString->getTypeNameString() == "SgPointerType");
+            // isType = (node.getName() == "SgTypeInt");
+
+            // Where this is a type, it must be unwound to the base type.
+               if (isType == true)
+                  {
+                    outputFile << "     ATerm term = ATmake(\"<appl()>\", \"" << node.getName() << "\");\n";
+                  }
+                 else
+                  {
+                    outputFile << "     ATerm term = ATmake(\"<appl(<list>)>\", \"" << node.getName() << "\",getTraversalChildrenAsAterm(this));\n";
+                  }
+#endif
              }
             else
              {
             // Case of when we have a container (since containers can have more that 255 elements which is a limit in the ATerm library).
             // term = ATmake("<appl(<term>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(n));
+#if 0
                outputFile << "     ATerm term = ATmake(\"<appl(<term>)>\", \"" << node.getName() << "\",getTraversalChildrenAsAterm(this));\n";
+#else
+               if (node.getName() == "SgVariableDeclaration")
+                  {
+                 // term = ATmake("VarDecl(<term>)", convertSgNodeRangeToAterm(variableDeclaration->get_variables().begin(),variableDeclaration->get_variables().end()));
+                 // outputFile << "     ATerm term = ATmake(\"<appl(<term>, <list>)>\", \"" << node.getName() << "\",getTraversalChildrenAsAterm(this));\n";
+                 // outputFile << "     ATerm term = ATmake(\"<appl(<term>)>\", \"" << node.getName() << "\",convertSgNodeRangeToAterm(variableDeclaration->get_variables().begin(),variableDeclaration->get_variables().end()));\n";
+
+                 // outputFile << "     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(this);\n";
+                 // outputFile << "     ROSE_ASSERT(variableDeclaration != NULL);\n";
+
+                    outputFile << "     ATerm term = ATmake(\"<appl(<term>, <list>)>\", \"" << node.getName() << "\",convertNodeToAterm(this->get_baseTypeDefiningDeclaration()),convertSgNodeRangeToAterm(this->get_variables().begin(),this->get_variables().end()));\n";
+                  }
+                 else
+                  {
+                    outputFile << "     ATerm term = ATmake(\"<appl(<term>)>\", \"" << node.getName() << "\",getTraversalChildrenAsAterm(this));\n";
+                  }
+#endif
              }
 #endif
        // outputFile << "  // end of function: " << node.getName() << "::generate_ATerm() \n";
@@ -373,19 +491,24 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
        // Output an empty function because we have had to unconditially add virtual function to 
        // every ROSE IR node and we require a defining function declaration.
        // outputFile << "ATerm " << node.getName() << "::generate_ATerm() \n   {\n     ATerm term = ATmake(\"[]\");\n     return term;\n   }\n";
-          outputFile << "ATerm " << node.getName() << "::generate_ATerm() \n   {\n     ATerm term = ATmake(\"NULL\");\n     return term;\n   }\n";
+       // outputFile << "ATerm " << node.getName() << "::generate_ATerm() \n   {\n     ATerm term = ATmake(\"NULL\");\n     return term;\n   }\n";
+          outputFile << "ATerm " << node.getName() << "::generate_ATerm() \n   {\n     ATerm term = ATmake(\"" + node.getName() + "\");\n     return term;\n   }\n";
         }
 
   // Add vertical space to format the generated file better.
      outputFile << "\n";
 
   // We only want to annotate ATerms that we will actually generate.
-     if (availableAtermPatternString == true && availableAtermAnnotationString == true)
+  // if (availableAtermPatternString == true && availableAtermAnnotationString == true)
+     if (availableAtermAnnotationString == true)
         {
        // Make this a virtual function (so we don't need to pass in a ROSE IR node).
        // outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term, " << node.getName() << "* n) \n   {\n";
           outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term)\n   {\n";
 
+#if 1
+          outputFile << string("     printf (\"In ") + node.getName() + "::generate_ATerm_Annotation(ATerm & term)\\n\");\n";
+#endif
        // outputFile << "  // atermAnnotationString = " << atermAnnotationString << "\n";
           outputFile << atermAnnotationString << "\n";
 
@@ -416,20 +539,6 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
         }
    }
 
-
-#if 0
-// It is not efficient to refactor the code into this level of function on the GrammarString objects.
-void
-Grammar::generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile)
-   {
-     outputFile << "// data member type: " << gs->getTypeNameString() << " data member variable: " << gs->getVariableNameString() << "\n";
-
-  // Terminal::TypeEvaluation typeKind = Terminal::evaluateType(gs->getTypeNameString());
-
-  // outputFile << "// data member prototype: " << gs->getDataPrototypeString() << "\n";
-  // outputFile << "// function name: " << gs->getFunctionNameString() << "\n\n";
-   }
-#endif
 
 
 void
@@ -473,7 +582,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
      ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
 
      string defaultConstructorParametersString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
-#if 0
+#if 1
      outputFile << "  // node = " << node.getName() << " defaultConstructorParameterString = " << defaultConstructorParametersString << "\n";
 #endif
 #if 0
@@ -502,6 +611,36 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
 
 #if 1
+  // Special case handling in Grammar::buildAtermConsumerSupportFunctions().
+  // This shows how to support adding specific data (as annotations) to the aterms and reading it from the aterm.
+     if (node.getName() == "SgFunctionDeclaration")
+        {
+       // handledAsSpecialCase = true;
+
+       // Handle the case of the return type (which is not a data member in SgFunctionDeclaration.
+          string attributeName     = "return_type";
+          string typenameBase      = "SgType";
+          string typenameString    = "SgType*";
+          string initializerString = "getAtermTypeNodeAttribute(term,\"" + attributeName + "\")";
+
+          dataMemberString += string("       // SPECIAL CASE: ") + node.getName() + "\n";
+          dataMemberString += "          " + typenameString + " local_" + attributeName + " = is" + typenameBase + "(" + initializerString + ");\n";
+          dataMemberString += "          ROSE_ASSERT(local_" + attributeName + " != NULL);\n";
+
+       // Another case: scope
+          attributeName     = "current_scope";
+          typenameBase      = "SgScopeStatement";
+          typenameString    = "SgScopeStatement*";
+          initializerString = "getAtermScopeNodeAttribute(term,\"" + attributeName + "\")";
+
+          dataMemberString += string("       // SPECIAL CASE: ") + node.getName() + "\n";
+          dataMemberString += "          " + typenameString + " local_" + attributeName + " = is" + typenameBase + "(" + initializerString + ");\n";
+          dataMemberString += "          ROSE_ASSERT(local_" + attributeName + " != NULL);\n";
+          dataMemberString += "\n";
+        }
+#endif
+
+#if 1
      if (handledAsSpecialCase == false)
         {
        // The counter used to build the substring that will be a part of the function argument names for terms (e.g. term1, term2, term3, etc.).
@@ -510,6 +649,10 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
   // We need to keep track of some history to get the use of "," correct.
   // This is only relevant for those parameters that will be output.
      bool lastDataMemberWasConstructorParameter = false;
+
+#if 1
+     outputFile << "  // STARTING processing of loop over all data members for node = " + node.getName() + "\n";
+#endif
 
      for (vector<GrammarString*>::iterator i = includeList.begin(); i != includeList.end(); i++)
         {
@@ -529,8 +672,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << " typeKind = " << StringUtility::numberToString((int)typeKind) << "\n";
              }
 #endif
-#if 0
-          outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << " typeKind = " << StringUtility::numberToString((int)typeKind) << "\n";
+#if 1
+          outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() 
+                     << " typeKind = " << StringUtility::numberToString((int)typeKind) << " enum kind = " << node.typeEvaluationName(typeKind) << "\n";
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
 
@@ -582,17 +726,25 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
                     string integer_counter_string = StringUtility::numberToString(integer_counter);
 
+                    atermArgumentsSubstring += integer_counter_string;
+
                     size_t typenameStringSize = grammarString->getTypeNameString().size();
                     string typenameBase       = grammarString->getTypeNameString().substr(0,typenameStringSize-1);
                     
                     dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = is" + typenameBase + "(generate_AST(term" + integer_counter_string + ")); \n";
-                    dataMemberString += "          ROSE_ASSERT(local_" + grammarString->getVariableNameString() + " != NULL); \n";
+
+                 // Note that the returned value can be NULL (e.g. the initialized for translation of an aterm to a SgInitializedName).
+                 // dataMemberString += "          ROSE_ASSERT(local_" + grammarString->getVariableNameString() + " != NULL); \n";
+
+                 // We have to use this variable with a set access function for the data member after the IR node has been built.
+                    dataMemberString_post += string("       // ##### traversed data member (SGCLASS_POINTER): put in use of local_") + grammarString->getVariableNameString() + "\n";
+                    dataMemberString_post +=        "          local_returnNode->set_" + grammarString->getVariableNameString() + "(local_" + grammarString->getVariableNameString() + ");\n";
 
                     if (isInConstructorParameterList == true)
                        {
                       // This variable should be empty when we have a container.
                          constructorArgumentsString += "local_" + grammarString->getVariableNameString();
-                         atermArgumentsSubstring += integer_counter_string;
+                      // atermArgumentsSubstring += integer_counter_string;
 
                          constructorParametersString += grammarString->getTypeNameString() + " " + "local_" + grammarString->getVariableNameString();
                          lastDataMemberWasConstructorParameter = true;
@@ -602,6 +754,12 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                       else 
                        {
                       // lastDataMemberWasConstructorParameter = false;
+#if 0
+                      // dataMemberString += " // Is not a constructor parameter \n";
+                         dataMemberString += string("// Is not a constructor parameter: data member type: ") + grammarString->getTypeNameString() 
+                                          + " data member variable: " + grammarString->getVariableNameString() + " typeKind = " 
+                                          + StringUtility::numberToString((int)typeKind) + "\n";
+#endif
                        }
                          
                  // Increment the counter used to build the substring that will be a part of the function argument names for terms (e.g. term1, term2, term3, etc.).
@@ -620,43 +778,8 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
                  // atermAnnotationString += string("  // ") + typenameString + "\n";
 
-#if 1
-                    buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
-#else
-                    if (firstAterm == false)
-                       {
-                      // atermPatternSubstring   += ", ";
-                      // atermArgumentsSubstring += ", ";
-                       }
-                    
-                      // if (isInConstructorParameterList == true)
-                      // if (lastDataMemberWasConstructorParameter && isInConstructorParameterList == true)
-                    if (firstConstructorParameter == false && isInConstructorParameterList == true)
-                       {
-                         constructorArgumentsString  += ", ";
-                      // constructorParametersString += ", ";
-                       }
+                     buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
-                 // The function we build to translate the child data members to a proper IR node required all of the constructor parameters (even if they are not traversed).
-                    if (isInConstructorParameterList == true)
-                       {
-                         dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-                         dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
-                                          + grammarString->getTypeNameString() + " data member variable: " 
-                                          + grammarString->getVariableNameString() + " typeKind = " 
-                                          + StringUtility::numberToString((int)typeKind) + "\n";
-                         dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = NULL; \n";
-
-                         constructorArgumentsString += "local_" + grammarString->getVariableNameString();
-
-                         firstConstructorParameter = false;
-                         lastDataMemberWasConstructorParameter = true;
-                       }
-                      else 
-                       {
-                      // lastDataMemberWasConstructorParameter = false;
-                       }
-#endif
 #if 0
                     bool atermAnnotationStringProcessed = false;
 
@@ -707,70 +830,8 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                  // This is the rule we will use to build Aterms for this case.
                  // term = ATmake("<appl(<term>)>",getShortVariantName((VariantT)(n->variantT())).c_str(),getTraversalChildrenAsAterm(this));
 
-                    if (firstAterm == false)
-                       {
-                         atermPatternSubstring   += ", ";
-                         atermArgumentsSubstring += ", ";
-
-                      // constructorArgumentsString  += ", ";
-                      // constructorParametersString += ", ";
-                       }
-
-                    atermPatternSubstring += "<list>";
-                    string atermArgumentsName = "term";
-                    atermArgumentsSubstring += "&" + atermArgumentsName;
-                    string integer_counter_string = StringUtility::numberToString(integer_counter);
-                    atermArgumentsSubstring += integer_counter_string;
-
-                    string typenameBase = grammarString->getTypeNameString();
-
-#if 0
-                     outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
-                                << grammarString->getTypeNameString() << " data member variable: " 
-                                << grammarString->getVariableNameString() << " typeKind = " 
-                                << StringUtility::numberToString((int)typeKind) << "\n";
-#endif
-#if 1
-                    dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
-                                     + grammarString->getTypeNameString() + " data member variable: " 
-                                     + grammarString->getVariableNameString() + " typeKind = " 
-                                     + StringUtility::numberToString((int)typeKind) + "\n";
-#endif
-
-                    string containerElementTypeString        = grammarString->containerElementTypeString(node);
-                    string containerAppendFunctionNameString = grammarString->containerAppendFunctionNameString(node);
-#if 1
-                    dataMemberString_post += string("       // containerElementTypeString        = ") + containerElementTypeString + "\n";
-                    dataMemberString_post += string("       // containerAppendFunctionNameString = ") + containerAppendFunctionNameString + "\n";
-#endif
-                 // In the case of a list of ROSE IR nodes we need to build the elements of the list seperately in a loop.
-                 // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = is" + typenameBase + "(generate_AST(term" + integer_counter_string + ")); \n";
-                 // dataMemberString += "          ROSE_ASSERT(local_" + grammarString->getVariableNameString() + " != NULL); \n";
-                 // We need code such as:
-                 //      vector<ATerm> terms = getAtermList(temp1);
-                 //      for (size_t i = 0; i < terms.size(); ++i)
-                 //         {
-                 //           SgDeclarationStatement* child = isSgDeclarationStatement(convertAtermToNode(terms[i]));
-                 //           ROSE_ASSERT (child);
-                 //           class_definition->append_member(child);
-                 //         }
-                 //      result = class_definition;
-                 // dataMemberString_post += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = NULL";
-                    dataMemberString_post += "          vector<ATerm> terms = getAtermList(" + atermArgumentsName + integer_counter_string + ");\n";
-                    dataMemberString_post += "          for (size_t i = 0; i < terms.size(); ++i)\n";
-                    dataMemberString_post += "             {\n";
-                 // dataMemberString_post += "            // SgDeclarationStatement* child = isSgDeclarationStatement(generate_AST(terms[i]));\n";
-                    dataMemberString_post += "               " + containerElementTypeString + "* child = is" + containerElementTypeString + "(generate_AST(terms[i]));\n";
-                    dataMemberString_post += "               ROSE_ASSERT(child != NULL);\n";
-                 // dataMemberString_post += "               local_returnNode->append(child);\n";
-                 // dataMemberString_post += "            // local_returnNode->append(child); (need an append member function) \n";
-                    dataMemberString_post += "               local_returnNode->" + containerAppendFunctionNameString + "(child); // (need an common append member function) \n";
-                    dataMemberString_post += "             }\n";
-                 //           SgDeclarationStatement* child = isSgDeclarationStatement(convertAtermToNode(terms[i]));
-                 //           ROSE_ASSERT (child);
-                 //           class_definition->append_member(child);
-                 //         }
-
+                 // DQ (10/9/2014): Bug: handling of atermArgumentsSubstring
+                    buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
                  // constructorArgumentsString += "local_" + grammarString->getVariableNameString();
 
                  // constructorParametersString += grammarString->getTypeNameString() + " " + "local_" + grammarString->getVariableNameString();
@@ -805,35 +866,9 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
             // atermAnnotationString += string("  // ") + typenameString + "\n";
 
-#if 1
-               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
-#else
-               if (firstConstructorParameter == false && isInConstructorParameterList == true)
-                  {
-                    constructorArgumentsString  += ", ";
-                 // constructorParametersString += ", ";
-                  }
+               buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,
+                  constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
-            // The function we build to translate the child data members to a proper IR node required all of the constructor parameters (even if they are not traversed).
-               if (isInConstructorParameterList == true)
-                  {
-                    dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-                    dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
-                                     + grammarString->getTypeNameString() + " data member variable: " 
-                                     + grammarString->getVariableNameString() + " typeKind = " 
-                                     + StringUtility::numberToString((int)typeKind) + "\n";
-                    dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = NULL; \n";
-
-                    constructorArgumentsString += "local_" + grammarString->getVariableNameString();
-
-                    firstConstructorParameter = false;
-                    lastDataMemberWasConstructorParameter = true;
-                  }
-                 else 
-                  {
-                 // lastDataMemberWasConstructorParameter = false;
-                  }
-#endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                   {
@@ -870,35 +905,10 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                printf ("   --- typenameString = %s grammarString->getVariableNameString() = %s typeKind = %d \n",typenameString.c_str(),grammarString->getVariableNameString().c_str(),typeKind);
             // printf ("Found typeKind == SGNAME \n");
 #endif
-#if 1
-               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
-#else
-               if (firstConstructorParameter == false && isInConstructorParameterList == true)
-                  {
-                    constructorArgumentsString  += ", ";
-                 // constructorParametersString += ", ";
-                  }
 
-            // The function we build to translate the child data members to a proper IR node required all of the constructor parameters (even if they are not traversed).
-               if (isInConstructorParameterList == true)
-                  {
-                    dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-                    dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
-                                     + grammarString->getTypeNameString() + " data member variable: " 
-                                     + grammarString->getVariableNameString() + " typeKind = " 
-                                     + StringUtility::numberToString((int)typeKind) + "\n";
-                    dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = \"\"; \n";
+               buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,
+                  constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
-                    constructorArgumentsString += "local_" + grammarString->getVariableNameString();
-
-                    firstConstructorParameter = false;
-                    lastDataMemberWasConstructorParameter = true;
-                  }
-                 else 
-                  {
-                 // lastDataMemberWasConstructorParameter = false;
-                  }
-#endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                   {
@@ -938,38 +948,8 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                printf ("   --- typenameString = %s grammarString->getVariableNameString() = %s typeKind = %d \n",typenameString.c_str(),grammarString->getVariableNameString().c_str(),typeKind);
                printf ("Found typeKind == ENUM_TYPE \n");
 #endif
-#if 1
-               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
-#else
-               if (firstConstructorParameter == false && isInConstructorParameterList == true)
-                  {
-                    constructorArgumentsString  += ", ";
-                 // constructorParametersString += ", ";
-                  }
+               buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
-            // The function we build to translate the child data members to a proper IR node required all of the constructor parameters (even if they are not traversed).
-               if (isInConstructorParameterList == true)
-                  {
-                    dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-                    dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
-                                     + grammarString->getTypeNameString() + " data member variable: " 
-                                     + grammarString->getVariableNameString() + " typeKind = " 
-                                     + StringUtility::numberToString((int)typeKind) + "\n";
-
-                 // Implement initalization of enum using cast (alternatively the default value is available in ROSETTA).
-                 // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = 0; \n";
-                    dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = " + grammarString->getTypeNameString() + "(0); \n";
-
-                    constructorArgumentsString += "local_" + grammarString->getVariableNameString();
-
-                    firstConstructorParameter = false;
-                    lastDataMemberWasConstructorParameter = true;
-                  }
-                 else 
-                  {
-                 // lastDataMemberWasConstructorParameter = false;
-                  }
-#endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
                if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
                   {
@@ -993,43 +973,27 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                printf ("   --- typenameString = %s grammarString->getVariableNameString() = %s typeKind = %d \n",typenameString.c_str(),grammarString->getVariableNameString().c_str(),typeKind);
                printf ("Found typeKind == STRING \n");
 #endif
-#if 1
-               buildDataMember(node,grammarString,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,dataMemberString);
-#else
-               if (firstConstructorParameter == false && isInConstructorParameterList == true)
-                  {
-                    constructorArgumentsString  += ", ";
-                 // constructorParametersString += ", ";
-                  }
 
-            // The function we build to translate the child data members to a proper IR node required all of the constructor parameters (even if they are not traversed).
-               if (isInConstructorParameterList == true)
-                  {
-                    dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-                    dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
-                                     + grammarString->getTypeNameString() + " data member variable: " 
-                                     + grammarString->getVariableNameString() + " typeKind = " 
-                                     + StringUtility::numberToString((int)typeKind) + "\n";
-
-                 // Implement initalization of enum using cast (alternatively the default value is available in ROSETTA).
-                    dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = \"\"; \n";
-                 // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = " + grammarString->getTypeNameString() + "(0); \n";
-
-                    constructorArgumentsString += "local_" + grammarString->getVariableNameString();
-
-                    firstConstructorParameter = false;
-                    lastDataMemberWasConstructorParameter = true;
-                  }
-                 else 
-                  {
-                 // lastDataMemberWasConstructorParameter = false;
-                  }
-#endif
+               buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
              }
+#if 0
+          outputFile << "  // at end of loop over data member = " + grammarString->getVariableNameString() + " for node = " + node.getName() + "\n";
+          outputFile << "  //    --- dataMemberString.size()      = " << StringUtility::numberToString(dataMemberString.size()) << "\n";
+          outputFile << "  //    --- dataMemberString_post.size() = " << StringUtility::numberToString(dataMemberString_post.size()) << "\n";
+#endif
         }
+
+#if 1
+     outputFile << "  // Finished processing loop over all data members for node = " + node.getName() + "\n";
+#endif
 
      bool availableAtermPatternString    = (outputAterm == true) && (firstAterm == false);
      bool availableAtermAnnotationString = (outputAterm == true) && (firstAnnotation == false);
+
+#if 1
+     outputFile << string("  // availableAtermPatternString    = ") + (availableAtermPatternString    ? "true" : "false") + "\n";
+     outputFile << string("  // availableAtermAnnotationString = ") + (availableAtermAnnotationString ? "true" : "false") + "\n";
+#endif
 
      if (availableAtermPatternString == true && availableAtermAnnotationString == true)
         {
@@ -1045,7 +1009,12 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
         }
 
-     if (availableAtermPatternString == true)
+#if 0
+     outputFile << string("  // availableAtermPatternString = ") + (availableAtermPatternString ? "true" : "false") + "\n";
+#endif
+
+  // if (availableAtermPatternString == true)
+     if (availableAtermPatternString == true || availableAtermAnnotationString == true)
         {
        // Make this a virtual function (so we don't need to pass in a ROSE IR node).
        // outputFile << "ATerm " << node.getName() << "::generate_ATerm() \n   {\n";
@@ -1054,7 +1023,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
        // outputFile << "atermPatternSubstring = " << atermPatternSubstring << "\n";
           string atermPatternString = node.getName() + "(" + atermPatternSubstring + ")";
-#if 0
+#if 1
           outputFile << "  // expected read pattern: atermPatternString      = " << atermPatternString << "\n";
           outputFile << "  // expected read pattern: atermArgumentsSubstring = " << atermArgumentsSubstring << "\n";
 #endif
@@ -1087,8 +1056,40 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
           outputFile << "\n";
           outputFile << "  // Call to Aterm API function to match aterm against predefined pattern. \n";
-          outputFile << "     if (ATmatch(term, \"" << atermPatternString << "\", " << atermArgumentsSubstring << "))\n        {\n";
+          outputFile << string("  // atermPatternString = ") + atermPatternString + "\n";
 
+       // outputFile << "     if (ATmatch(term, \"" << atermPatternString << "\", " << atermArgumentsSubstring << "))\n        {\n";
+          if (node.getName() == "SgVariableDeclaration")
+             {
+            // Note special case handling.
+
+            // if (ATmatch(term, "SgVariableDeclaration(<term>, [<list>])", &term1, &term2))
+            // outputFile << "     if (ATmatch(term, \"" << atermPatternString << "\", " << atermArgumentsSubstring << "))\n        {\n";
+            // outputFile << "     if (ATmatch(term, \"" << "SgVariableDeclaration(<term>, <term>)\",&term1,&term2))\n        {\n";
+            // outputFile << "     if (ATmatch(term, \"" << "SgVariableDeclaration(<term>, [<list>])\",&term1,&term2))\n        {\n";
+               outputFile << "     if (ATmatch(term, \"" << "SgVariableDeclaration(<term>, <term>)\",&term1,&term2))\n        {\n";
+             }
+            else
+             {
+            // We need to handle the case where there are no child aterms (but there are aterm annotations).
+            // outputFile << "     if (ATmatch(term, \"" << atermPatternString << "\", " << atermArgumentsSubstring << "))\n        {\n";
+               if (atermArgumentsSubstring == "")
+                  {
+                 // I think we can enforce that this is true.
+                    ROSE_ASSERT(availableAtermPatternString == false);
+
+                    atermPatternString = node.getName();
+                    outputFile << "     if (ATmatch(term, \"" << atermPatternString << "\"))\n        {\n";
+                  }
+                 else
+                  {
+                    outputFile << "     if (ATmatch(term, \"" << atermPatternString << "\", " << atermArgumentsSubstring << "))\n        {\n";
+                  }
+             }
+          
+#if 1
+          outputFile << string("          printf (\"In ") + atermPatternString + "\\n\");\n";
+#endif
 #if 0
        // Allow for special cases as needed.
           if (node.getName() == "SgForStatement")
@@ -1113,6 +1114,11 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
              }
 #endif
 
+          if (node.getBaseClass() != NULL)
+             {
+               outputFile << "       // node.getBaseClass()->getName() = " + node.getBaseClass()->getName() + "\n";
+             }
+
           if (isContainer == false)
              {
                outputFile << "       // handle the case of: is NOT a container \n";
@@ -1122,24 +1128,50 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
             // This is the call to the function to build the IR node using the children already constructed (bottom up).
             // outputFile << string("          returnNode = new ") + node.getName() + "(" + constructorArgumentsString + "); \n";
             // outputFile << string("          returnNode = build_") + node.getName() + "_from_children(" + constructorArgumentsString + "); \n";
-               outputFile << string("          returnNode = ") + buildNodeFunctionName + "(" + constructorArgumentsString + "); \n";
+            // outputFile << string("          returnNode = ") + buildNodeFunctionName + "(" + constructorArgumentsString + "); \n";
+
+            // outputFile << string("          ") + node.getName() + "* local_returnNode = " + buildNodeFunctionName + "(" + constructorArgumentsString + "); \n";
+               if (node.getName() == "SgFunctionDeclaration")
+                  {
+                 // Add extra data to the function were we will connect this to the SageBuilder API.
+                    string added_data_members = "local_return_type, local_parameterList, local_current_scope, ";
+                    outputFile << string("          ") + node.getName() + "* local_returnNode = /* SPECIAL CASE */ " + buildNodeFunctionName + "(" + added_data_members + constructorArgumentsString + "); \n";
+                  }
+                 else
+                  {
+                    outputFile << string("          ") + node.getName() + "* local_returnNode = " + buildNodeFunctionName + "(" + constructorArgumentsString + "); \n";
+                  }
+
+               outputFile << "          ROSE_ASSERT(local_returnNode != NULL); \n";
+
+#if 1
+               outputFile << "\n";
+            // outputFile << "   // Output of dataMemberString_post: \n";
+               outputFile << dataMemberString_post;
+            // outputFile << "\n";
+               outputFile << "          returnNode = local_returnNode;\n";
+#endif
              }
             else
              {
             // Note that scopes (and other IR nodes having containers of IR nodes have to be constructed top-down 
             // (so this complexity need to be encoded into this code to generate the code to construct the ROSE AST).
                outputFile << "       // handle the case of: IS a container \n";
-               outputFile << "\n";
+            // outputFile << "\n";
                outputFile << dataMemberString;
                outputFile << "\n";
             // outputFile << string("          ") + node.getName() + "* local_returnNode = build_" + node.getName() + "_from_children(" + constructorArgumentsString + "); \n";
                outputFile << string("          ") + node.getName() + "* local_returnNode = " + buildNodeFunctionName + "(" + constructorArgumentsString + "); \n";
+               outputFile << "          ROSE_ASSERT(local_returnNode != NULL); \n";
                outputFile << "\n";
             // outputFile << dataMemberString;
                outputFile << dataMemberString_post;
                outputFile << "\n";
                outputFile << "          returnNode = local_returnNode;\n";
              }
+#endif
+#if 1
+          outputFile << string("          printf (\"Leaving ") + atermPatternString + "\\n\");\n";
 #endif
           outputFile << "\n";
           outputFile << "       // Skip to the end of the function \n";
@@ -1160,7 +1192,8 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
 #if 0
   // We only want to annotate ATerms that we will actually generate.
-     if (availableAtermPatternString == true && availableAtermAnnotationString == true)
+  // if (availableAtermPatternString == true && availableAtermAnnotationString == true)
+     if (availableAtermAnnotationString == true)
         {
        // Make this a virtual function (so we don't need to pass in a ROSE IR node).
        // outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term, " << node.getName() << "* n) \n   {\n";
@@ -1199,28 +1232,58 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
 
 void
-Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstConstructorParameter, bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, string & constructorArgumentsString, string & dataMemberString )
+Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstAterm,
+     bool & firstConstructorParameter, bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, 
+     string & constructorArgumentsString, string & atermArgumentsSubstring, string & atermPatternSubstring,
+     string & dataMemberString, string & dataMemberString_post, int integer_counter)
    {
   // Refactored code to support building default values date members for marked as constructor initializers.
 
      string typenameString             = grammarString->getTypeNameString();
      Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
+     bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+
+     string atermArgumentsName     = "term";
+     string integer_counter_string = StringUtility::numberToString(integer_counter);
+
      if (firstConstructorParameter == false && isInConstructorParameterList == true)
         {
           constructorArgumentsString  += ", ";
-       // constructorParametersString += ", ";
+        }
+
+     if (toBeTraversed == true)
+        {
+#if 0
+          dataMemberString += string("       // firstConstructorParameter    = ") + (firstConstructorParameter    ? "true" : "false") + "\n";
+          dataMemberString += string("       // isInConstructorParameterList = ") + (isInConstructorParameterList ? "true" : "false") + "\n";
+#endif
+       // Terminal::SGCLASS_POINTER_LIST types are never in the constructor parameter list.
+       // if (firstConstructorParameter == false && isInConstructorParameterList == true)
+       // if (firstConstructorParameter == false && ( (isInConstructorParameterList == true) || (typeKind == Terminal::SGCLASS_POINTER_LIST) ) )
+          if (firstAterm == false)
+             {
+               atermArgumentsSubstring  += ", ";
+             }
+
+       // atermPatternSubstring        += "<list>";
+          atermArgumentsSubstring      += "&" + atermArgumentsName;
+          atermArgumentsSubstring      += integer_counter_string;
+        }
+       else
+        {
         }
 
   // The function we build to translate the child data members to a proper IR node required all of the constructor parameters (even if they are not traversed).
      if (isInConstructorParameterList == true)
         {
+#if 0
           dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
           dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
                            + grammarString->getTypeNameString() + " data member variable: " 
                            + grammarString->getVariableNameString() + " typeKind = " 
                            + StringUtility::numberToString((int)typeKind) + "\n";
-
+#endif
        // string defaultInitializerString = grammarString->getDefaultInitializerString();
           string attributeName = grammarString->getVariableNameString();
        // string defaultInitializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
@@ -1238,7 +1301,44 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
 
                     size_t typenameStringSize = grammarString->getTypeNameString().size();
                     string typenameBase       = grammarString->getTypeNameString().substr(0,typenameStringSize-1);
-                    initializerString = string("= ") + "is" + typenameBase + "(getAtermNodeAttribute(term,\"" + attributeName + "\"))";
+                 // initializerString = string("= ") + "is" + typenameBase + "(getAtermNodeAttribute(term,\"" + attributeName + "\"))";
+                    if (typenameBase == "Sg_File_Info")
+                       {
+                         initializerString = string("= getAtermFileInfo(term,\"") + attributeName + "\")";
+                       }
+                      else
+                       {
+                         if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+                            {
+                           // initializerString = string("= ") + "is" + typenameBase + "(getAtermNodeAttribute(term,\"" + attributeName + "\"))";
+                           // if (node.isDerivedFrom("SgType") == true)
+                              if (grammarString->getTypeNameString() == "SgType*")
+                                 {
+                                   initializerString = string("= ") + "is" + typenameBase + "(getAtermTypeNodeAttribute(term,\"" + attributeName + "\"))";
+                                 }
+                                else
+                                 {
+                                   if (grammarString->getTypeNameString() == "SgScopeStatement*")
+                                      {
+                                        initializerString = string("= ") + "is" + typenameBase + "(getAtermScopeNodeAttribute(term,\"" + attributeName + "\"))";
+                                      }
+                                     else
+                                      {
+                                        initializerString = string("= ") + "is" + typenameBase + "(getAtermNodeAttribute(term,\"" + attributeName + "\"))";
+                                      }
+                                 }
+                            }
+                           else
+                            {
+                           // Since data member without access functions cannot be accessed to build the aterm annotations, we can't exoect to read them.
+                           // We still have to provide them as inputs since they are constructor parameters, but likely they are relics from a time long ago.
+                           // For example, the "expression_type" in many expressions is from when we used to store the extression in all SgExpression IR nodes.
+                           // This was mostly removed for where it is not required since we design ROSE to be a mutable AST, and thus it is computed on expressions
+                           // instead of explicitly stored (so it can always be correct during transformations).
+                              dataMemberString += "       // Since a data member without access functions cannot be accessed to build the aterm annotations, we can't exoect to read them. \n";
+                              initializerString = "= NULL"; 
+                            }
+                       }
                     break;
                   }
 
@@ -1249,8 +1349,23 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
 
             // This case included bools and integer values.
                case Terminal::BASIC_DATA_TYPE:
+                  {
                     initializerString = string("= getAtermIntegerAttribute(term,\"") + attributeName + "\")";
+
+                 // if (typenameString == "bool" || typenameString == "int" || typenameString == "unsigned int")
+                    bool isInteger = isIntegerKind(typenameString);
+                    if (isInteger == true)
+                       {
+                      // We want to support all kinds of integers here.
+                         initializerString = string("= getAtermIntegerAttribute(term,\"") + attributeName + "\")";
+                       }
+                      else
+                       {
+                      // I think this is to support char*
+                         initializerString = string("= getAtermStringAttribute(term,\"") + attributeName + "\")";
+                       }
                     break;
+                  }
 
                case Terminal::ENUM_TYPE:
                  // initializerString = string("= getAtermEnumAttribute(term,\"") + attributeName + "\")";
@@ -1259,7 +1374,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
 
                default:
                   {
-                    printf ("ERROR: default reached in generation of code for ATerm support: typeKind = %d \n",typeKind);
+                    printf ("ERROR: PART 1: default reached in generation of code for ATerm support: typeKind = %d \n",typeKind);
                     ROSE_ASSERT(false);
                   }
              }
@@ -1268,52 +1383,236 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = \"\"; \n";
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " = " + grammarString->getTypeNameString() + "(0); \n";
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + defaultInitializerString + "; \n";
-          dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + initializerString + "; \n";
+       // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + initializerString + "; \n";
+
+       // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
+          if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+             {
+               bool processDataMember = true;
+               processDataMember = processDataMember && (grammarString->getTypeNameString() != "RegisterDescriptor");
+
+               if (processDataMember == true)
+                  {
+                    dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + initializerString + "; \n";
+
+                    dataMemberString_post += string("       // ##### isInConstructorParameterList == true : put in use of local_") + grammarString->getVariableNameString() + "\n";                    
+                    dataMemberString_post +=        "          local_returnNode->set_" + grammarString->getVariableNameString() + "(local_" + attributeName + ");\n";
+                  }
+                 else
+                  {
+                    dataMemberString += string("       // ##### isInConstructorParameterList == true : skipping some unsupported structure type data members: local_") + grammarString->getVariableNameString() + "\n";
+
+                 // Output the variable uninitalized (as a structure it is initialized using its default constructor.
+                    dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + "; \n";
+                  }
+             }
+            else
+             {
+               dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + initializerString + "; \n";
+
+               dataMemberString_post += string("       // ##### isInConstructorParameterList == true : no access functions defined for local_") + grammarString->getVariableNameString() + "\n";
+             }
 
           constructorArgumentsString += "local_" + grammarString->getVariableNameString();
 
           firstConstructorParameter = false;
           lastDataMemberWasConstructorParameter = true;
-
-       // We want to build code that looks like this:
-       //      ATerm idannot = ATgetAnnotation(term, ATmake("id"));
-       //      if (idannot)
-       //         {
-       // #if 1
-       //           printf ("Found an annotation \n");
-       // #endif
-       //           char* unique_id = NULL;
-       //           if (ATmatch(idannot, "<str>", &unique_id))
-       //              {
-       //                printf ("unique_id = %s \n",unique_id);
-       //              }
-       //         }
-
-#if 0
-          dataMemberString += "     ATerm idannot = ATgetAnnotation(term, ATmake(" + grammarString->getVariableNameString() + "));\n";
-          dataMemberString += "     if (idannot)\n";
-          dataMemberString += "        {\n";
-          dataMemberString += "#if 1\n";
-          dataMemberString += "          printf (\"Found an annotation \\n\");\n";
-          dataMemberString += "#endif\n";
-          dataMemberString += "        \n";
-          dataMemberString += "          char* unique_id = NULL;\n";
-          dataMemberString += "          if (ATmatch(idannot, \"<str>\", &unique_id))\n";
-          dataMemberString += "             {\n";
-          dataMemberString += "               printf (\"unique_id = %s \\n\",unique_id);\n";
-          dataMemberString += "             }\n";
-          dataMemberString += "        \n";
-          dataMemberString += "        }\n";
-#endif
-
-
         }
        else 
         {
        // lastDataMemberWasConstructorParameter = false;
+
+          if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+             {
+               if (firstAterm == false)
+                  {
+                    atermPatternSubstring += ", ";
+                  }
+
+            // atermPatternSubstring += "<list>";
+               atermPatternSubstring += "[<list>]";
+
+               string typenameBase = grammarString->getTypeNameString();
+
+#if 0
+               outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+                          << grammarString->getTypeNameString() << " data member variable: " 
+                          << grammarString->getVariableNameString() << " typeKind = " 
+                          << StringUtility::numberToString((int)typeKind) << "\n";
+#endif
+#if 0
+               dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
+                                      + grammarString->getTypeNameString() + " data member variable: " 
+                                      + grammarString->getVariableNameString() + " typeKind = " 
+                                      + StringUtility::numberToString((int)typeKind) + "\n";
+#endif
+
+               string containerElementTypeString        = grammarString->containerElementTypeString(node);
+               string containerAppendFunctionNameString = grammarString->containerAppendFunctionNameString(node);
+#if 0
+               dataMemberString_post += string("       // containerElementTypeString        = ") + containerElementTypeString + "\n";
+               dataMemberString_post += string("       // containerAppendFunctionNameString = ") + containerAppendFunctionNameString + "\n";
+#endif
+            // In the case of a list of ROSE IR nodes we need to build the elements of the list seperately in a loop.
+               dataMemberString_post += "          vector<ATerm> terms = getAtermList(" + atermArgumentsName + integer_counter_string + ");\n";
+               dataMemberString_post += "          printf (\"vector<ATerm> terms.size() = %zu \\n\",terms.size()); \n";
+               dataMemberString_post += "          for (size_t i = 0; i < terms.size(); ++i)\n";
+               dataMemberString_post += "             {\n";
+#if 1
+               dataMemberString_post += "#if 1 \n";
+               dataMemberString_post += "               printf (\"In container IR node: loop: i = %zu \\n\",i);\n";
+               dataMemberString_post += "#endif \n";
+#endif
+               dataMemberString_post += "               " + containerElementTypeString + "* child = is" + containerElementTypeString + "(generate_AST(terms[i]));\n";
+               dataMemberString_post += "               ROSE_ASSERT(child != NULL);\n";
+               dataMemberString_post += "               local_returnNode->" + containerAppendFunctionNameString + "(child);\n";
+               dataMemberString_post += "             }\n";
+            // dataMemberString_post += "\n";
+             }
+            else
+             {
+            // Get the annotations and call the access function on the ROSE IR node to set the data members.
+            // dataMemberString_post += "       // Get the annotations and call the access function on the ROSE IR node to set the data members\n";
+#if 1
+               dataMemberString_post += "       // Get annotation and set data member: node = " + node.getName() + " toBeTraversed == false: data member type: "
+                     + grammarString->getTypeNameString() + " data member variable: "
+                     + grammarString->getVariableNameString() + " typeKind = "
+                     + StringUtility::numberToString((int)typeKind) + "\n";
+#endif
+               string attributeName = grammarString->getVariableNameString();
+               string initializerString;
+               Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+
+               string typenameBase = typenameString;
+
+               switch(typeKind)
+                  {
+                    case Terminal::SGCLASS_POINTER:
+                       {
+                         size_t typenameStringSize = grammarString->getTypeNameString().size();
+
+                      // Reset the typenameBase to exclude the '*'.
+                         typenameBase      = grammarString->getTypeNameString().substr(0,typenameStringSize-1);
+                      // initializerString = "getAtermNodeAttribute(term,\"" + attributeName + "\")";
+                         if (typenameBase == "Sg_File_Info")
+                            {
+                              initializerString = "getAtermFileInfo(term,\"" + attributeName + "\")";
+                            }
+                           else
+                            {
+                           // initializerString = "getAtermNodeAttribute(term,\"" + attributeName + "\")";
+                              if (grammarString->getTypeNameString() == "SgType*")
+                                 {
+                                   initializerString = "getAtermTypeNodeAttribute(term,\"" + attributeName + "\")";
+                                 }
+                                else
+                                 {
+                                   if (grammarString->getTypeNameString() == "SgScopeStatement*")
+                                      {
+                                        initializerString = "getAtermScopeNodeAttribute(term,\"" + attributeName + "\")";
+                                      }
+                                     else
+                                      {
+                                        initializerString = "getAtermNodeAttribute(term,\"" + attributeName + "\")";
+                                      }
+                                 }
+                            }
+                         break;
+                       }
+
+                    case Terminal::STRING:
+                    case Terminal::SGNAME:
+                         initializerString = string("getAtermStringAttribute(term,\"") + attributeName + "\")";
+                         break;
+
+                 // This case included bools and integer values.
+                    case Terminal::BASIC_DATA_TYPE:
+                         initializerString = string("getAtermIntegerAttribute(term,\"") + attributeName + "\")";
+                         break;
+
+                    case Terminal::ENUM_TYPE:
+                         initializerString = string("getAtermIntegerAttribute(term,\"") + attributeName + "\")";
+                         break;
+
+                    default:
+                       {
+                         printf ("ERROR: PART 2: default reached in generation of code for ATerm support: typeKind = %d \n",typeKind);
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+            // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
+               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+                  {
+                 // Exclude the freepointer variable since it is part of the ROSE memory management and not intented to be set explicitly.
+                 // It might be equivalent to filter on those data member that have access functions.  Also exclude some data members
+                 // specific to unsupported types (these are mostly associated with the binary analysis, not a target for initial aterm work).
+
+                    bool processDataMember = true;
+                    processDataMember = processDataMember && (grammarString->getVariableNameString() != "freepointer");
+                    processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgFunctionModifier::opencl_work_group_size_t");
+                    processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iref_type");
+                    processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iord_type");
+                    processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iname_type");
+                    processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::osfixup_type");
+
+                    if (processDataMember == true)
+                       {
+                      // dataMemberString_post += "          local_returnNode->set_" + grammarString->getVariableNameString() + "(" + initializerString + ");\n";
+                         if (typeKind == Terminal::SGCLASS_POINTER)
+                            {
+                              dataMemberString_post += "          " + typenameString + " local_" + attributeName + " = is" + typenameBase + "(" + initializerString + ");\n";
+                            }
+                           else
+                            {
+                              dataMemberString_post += "          " + typenameString + " local_" + attributeName + " = (" + typenameBase + ") " + initializerString + ";\n";
+                            }
+                         dataMemberString_post += "          local_returnNode->set_" + grammarString->getVariableNameString() + "(local_" + attributeName + ");\n";
+
+                         dataMemberString_post += "\n";
+                       }
+                      else
+                       {
+                         dataMemberString_post += "       // Skipping output for freepointer (data member specific to ROSE memory management)  and some specific structure types in IR nodes \n";
+                       }
+                  }
+                 else
+                  {
+                    dataMemberString_post += "       // Skipping output for data members without generated access functions (e.g. freepointer, data member specific to ROSE memory management) \n";
+                  }
+             }
         }
    }
 
+
+bool Grammar::isIntegerKind(const string & typenameString)
+   {
+      bool isInteger = false;
+      if (typenameString == "bool"          || typenameString == "int"   || typenameString == "unsigned int" || 
+          typenameString == "unsigned"      || typenameString == "short" || typenameString == "short int"    || 
+          typenameString == "unsigned long" || typenameString == "long"  || typenameString == "size_t"       ||
+          typenameString == "unsigned long int" ||  typenameString == "unsigned short" || typenameString == "long int"  || 
+          typenameString == "long long int"  || typenameString == "long long unsigned int"  ||
+          typenameString == "unsigned long long int"  ||
+          typenameString == "uint64_t"      || typenameString == "rose_addr_t")
+         {
+           isInteger = true;
+         }
+
+   // Also save an char as an int as well (better ATerm type than using a string).
+      if (typenameString == "char" || typenameString == "unsigned char"  )
+         {
+           isInteger = true;
+         }
+
+   // For the moment (to support initial debugging) save floating point values as an integer as well.
+      if (typenameString == "float" || typenameString == "double" || typenameString == "long double"  )
+         {
+           isInteger = true;
+         }
+
+      return isInteger;
+   }
 
 void
 Grammar::buildAtermSupportFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile)
@@ -1354,6 +1653,18 @@ Grammar::buildAtermSupportFunctions(Terminal & node, StringUtility::FileWithLine
      outputFile << "     ATerm term18;\n";
      outputFile << "     string unrecognizedAterm;\n";
   // outputFile << "\n";
+
+     outputFile << "\n";
+  // outputFile << "     if (ATmatch(term, \"NULL\") || ATmatch(term, "\\"NULL\\"")) \n";
+     outputFile << "     if (ATmatch(term, \"NULL\")) \n";
+     outputFile << "        { \n";
+     outputFile << "#if 1 \n";
+     outputFile << "          printf (\"Found NULL pointer! goto done \\n\");\n";
+     outputFile << "#endif \n";
+     outputFile << "          returnNode = NULL; \n";
+     outputFile << "          goto done; \n";
+     outputFile << "        } \n";
+     outputFile << "\n";
 
 #if 1
   // Call the function to build the support to read the ATerms and generate the AST.
