@@ -34,6 +34,9 @@ for i in $(seq 1 $NSPECIMENS); do
     echo
 
     ./runRandom --version
-    (  set -x; 	./runRandom --no-allow-syscalls --limit=1000000 --functions=100 --instructions=100 $SPECIMEN )
+    (  set -x;
+ 	i386 -R ./runRandom -L 'rose::BinaryAnalysis::Partitioner2(!warn)' \
+	    --init=main --functions=100 --instructions=100 --limit=1000000 run:$SPECIMEN
+    )
 done
     

@@ -9,6 +9,7 @@
 #include <Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <sawyer/CommandLine.h>
 #include <sawyer/Optional.h>
 #include <sawyer/ProgressBar.h>
@@ -32,15 +33,15 @@ static Sawyer::Message::Facility mlog;
 struct Settings {
     bool performLink;                                   // should dynamic linking be performed inside ROSE?
     std::vector<std::string> libDirs;                   // directories where libraries are stored
-    bool useProcMap;                                    // use memory map from natively-loaded process
     bool showMaps;                                      // show memory maps?
     bool allowSyscalls;                                 // are system calls allowed?
     size_t maxInsns;                                    // max number of instructions to execute; zero means no limit
     size_t nFunctionsTested;                            // number of functions to test
     size_t nInsnsTested;                                // number of instructions to test
     std::string initFunction;                           // when to branch to another function
-    Settings(): performLink(false), useProcMap(true), showMaps(false), allowSyscalls(false), maxInsns(0),
-                nFunctionsTested(-1), nInsnsTested(0) {}
+    bool showInsnTrace;                                 // show executed instructions?
+    Settings(): performLink(false), showMaps(false), allowSyscalls(false), maxInsns(0),
+                nFunctionsTested(-1), nInsnsTested(0), showInsnTrace(false) {}
 };
 
 // Describe and parse the command-line
@@ -112,20 +113,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                 .doc("Directories that contain libraries that are used if @s{link} is specified. This switch can be specfied "
                      "more than once, and each argument can be a list of colon-separated directory names."));
 
-    tool.insert(Switch("procmap")
-                .intrinsicValue(true, settings.useProcMap)
-                .doc("Use the process memory map rather than the map created by ROSE.  When this flag is present, the "
-                     "memory map created from parsing the binary container and running ROSE's BinaryLoader will be "
-                     "augmented by natively running the process and then reading its memory map.  This causes ROSE to "
-                     "obtain accurate information about the location and contents of dynamically linked libraries.  The "
-                     "@s{link} switch should probably not be used with @s{procmap}.  The @s{no-procmap} switch disables "
-                     "this feature.  The default is to " + std::string(settings.useProcMap?"":"not ") +
-                     "read a process memory map."));
-    tool.insert(Switch("no-procmap")
-                .key("procmap")
-                .intrinsicValue(false, settings.useProcMap)
-                .hidden(true));
-
     tool.insert(Switch("init")
                 .argument("name", anyParser(settings.initFunction))
                 .doc("If specified, allow the specimen to run until the specified function or address is reached.  Keep in "
@@ -146,6 +133,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                 .doc("Run at most @v{n} instructions selected at random.  The default is to try running " +
                      std::string(settings.nInsnsTested==size_t(-1)?"each instruction":
                                  "at most "+plural(settings.nInsnsTested, "instructions")) + "."));
+
+    tool.insert(Switch("trace")
+                .intrinsicValue(true, settings.showInsnTrace)
+                .doc("Output each instruction that is executed.  The instructions are output to standard output along "
+                     "and precede each line containing the respective run total and termination reason.  Each instruction "
+                     "output line begins with the string \"at \".  The @s{no-trace} switch disables this feature.  The "
+                     "default is to " + std::string(settings.showInsnTrace?"":"not ") + "not show this information."));
+    tool.insert(Switch("no-trace")
+                .key("trace")
+                .intrinsicValue(false, settings.showInsnTrace)
+                .hidden(true));
 
     Parser parser;
     parser
@@ -172,24 +170,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "randomization.}");
     
     return parser.with(gen).with(tool).parse(argc, argv).apply();
-}
-
-static void
-augmentMemoryMap(const Settings &settings, MemoryMap &map /*in,out*/, const std::string &specimenName,
-                 Sawyer::Optional<rose_addr_t> initVa) {
-    BinaryDebugger debugger(specimenName);
-    if (initVa) {
-        debugger.setBreakpoint(*initVa);
-        debugger.runToBreakpoint();
-        debugger.clearBreakpoint(*initVa);
-    }
-    if (debugger.isTerminated()) {
-        mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated()
-                    <<" before reaching " <<addrToString(*initVa) <<"\n";
-        exit(1);
-    }
-    map.insertProcess(":noattach:" + numberToString(debugger.isAttached()));
-    debugger.terminate();
 }
 
 // Run natively and return number of instructions executed and reason for termination.
@@ -235,10 +215,14 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
             rose_addr_t eip = debugger.executionAddress();
             SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.instructionProvider()[eip]);
             if (!insn || insn->isUnknown()) {
+                if (settings.showInsnTrace)
+                    std::cout <<"at " <<addrToString(eip) <<": " <<(insn?"no":"unknown") <<" instruction\n";
                 terminationReason = "executed at " + addrToString(eip) +" which we don't know about";
                 break;
             }
-            if (insn->get_kind() == x86_int) {
+            if (settings.showInsnTrace)
+                std::cout <<"at " <<unparseInstructionWithAddress(insn) <<"\n";
+            if (insn->get_kind() == x86_int || insn->get_kind() == x86_sysenter) {
                 terminationReason = "tried to execute a system call";
                 break;
             }
@@ -279,25 +263,13 @@ main(int argc, char *argv[]) {
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     if (specimenNames.size() != 1)
         throw std::runtime_error("exactly one binary specimen file should be specified; see --help");
+    std::string specimenName = boost::starts_with(specimenNames[0], "run:") ? specimenNames[0].substr(4) : specimenNames[0];
     Stream info(mlog[INFO]);
 
-    // Parse the specimen's binary container
-    info <<"performing parse, load, link";
-    Sawyer::Stopwatch parseTimer;
+    // Parse, map, link, and/or relocate
+    info <<"performing parse, map, and optional link steps";
     engine.parse(specimenNames);
-    info <<"; completed in " <<parseTimer <<" seconds\n";
-
-    // Find the original entry point for the specimen before we complicate matters with dynamic linking
-    SgAsmInterpretation *interp = engine.interpretation();
-    ASSERT_not_null2(interp, "specimen has no default interpretation; not a binary container?");
-    ASSERT_forbid(interp->get_headers()->get_headers().empty());
-    SgAsmElfFileHeader *elf = isSgAsmElfFileHeader(interp->get_headers()->get_headers()[0]);
-    ASSERT_not_null2(elf, "not an ELF specimen");
-    rose_addr_t oep = elf->get_entry_rva() + elf->get_base_va();
-
-    // Map, link, and/or relocate
-    info <<"performing map" <<(settings.performLink?" and link":"") <<" steps";
-    Sawyer::Stopwatch linkTimer;
+    Sawyer::Stopwatch loadTimer;
     if (settings.performLink) {
         BinaryLoader *loader = engine.obtainLoader();
         ASSERT_not_null(loader);
@@ -311,12 +283,8 @@ main(int argc, char *argv[]) {
             }
         }
     }
-    engine.load();
-    info <<"; completed in " <<linkTimer <<" seconds\n";
-
-    // Augment the memory map by allowing the specimen to run natively and then reading its process memory
-    if (settings.useProcMap)
-        augmentMemoryMap(settings, engine.memoryMap(), specimenNames[0], oep);
+    engine.load(specimenNames);
+    info <<"; completed in " <<loadTimer <<" seconds\n";
 
     // Disassemble, partition, and get list of functions.  No need to create an AST.
     info <<"performing disassemble and partition";
@@ -350,9 +318,8 @@ main(int argc, char *argv[]) {
                 }
             }
             if (!initVa) {
-                initVa = oep;
-                mlog[WARN] <<"could not find \"" <<settings.initFunction <<"\""
-                           <<"; using original entry point instead (" <<addrToString(oep) <<")\n";
+                mlog[FATAL] <<"could not find function \"" <<settings.initFunction <<"\"\n";
+                exit(1);
             }
         }
     }
@@ -371,7 +338,7 @@ main(int argc, char *argv[]) {
         BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
             mlog[WHERE] <<"running function " <<addrToString(function->address()) <<" \"" <<function->name() <<"\"\n";
             ++progress;
-            std::pair<size_t, std::string> result = runNatively(settings, specimenNames[0], initVa, partitioner,
+            std::pair<size_t, std::string> result = runNatively(settings, specimenName, initVa, partitioner,
                                                                 function->address());
             std::cout <<addrToString(function->address()) <<", " <<result.first <<", "
                       <<"\"" <<cEscape(function->name()) <<"\" " <<result.second <<"\n";
@@ -401,7 +368,7 @@ main(int argc, char *argv[]) {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
             mlog[WHERE] <<"running instruction " <<addrToString(insn->get_address()) <<"\"\n";
             ++progress;
-            std::pair<size_t, std::string> result = runNatively(settings, specimenNames[0], initVa, partitioner,
+            std::pair<size_t, std::string> result = runNatively(settings, specimenName, initVa, partitioner,
                                                                 insn->get_address());
             std::cout <<addrToString(insn->get_address()) <<", " <<result.first <<", " <<"instruction " <<result.second <<"\n";
         }
