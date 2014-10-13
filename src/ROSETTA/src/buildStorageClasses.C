@@ -1088,7 +1088,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                   {
                     switch (evaluateType(varTypeString) )
                        {
-                        case SGCLASS_POINTER:
+                         case SGCLASS_POINTER:
                            s += "     " + varStorageNameString + " = "\
                                 "AST_FILE_IO::getGlobalIndexFromSgClassPointer ( source->p_" + varNameString + " );\n" ;
                            break;
