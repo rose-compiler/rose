@@ -7,7 +7,6 @@
 
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
-//#include "typeEquivalenceChecker.hpp"
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -2321,6 +2320,15 @@ bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*=
 
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
+
+// JP (10/10/14): Added my function to evaluate an array index expression (if possible)
+struct const_int_expr_t {
+  size_t value_;
+  bool hasValue_;
+};
+
+
+   const_int_expr_t evaluateArrayIndexExpression(SgExpression *expr) ;
 
 // JP (9/17/14): Added function to test whether two SgType* are equivalent or not
    bool checkTypesAreEqual(SgType *typeA, SgType *typeB);

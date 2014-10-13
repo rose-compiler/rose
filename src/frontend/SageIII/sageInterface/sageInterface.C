@@ -19110,3 +19110,375 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   }
 }
 
+class EvaluatorExpressionRepresentation {
+ public:
+EvaluatorExpressionRepresentation():
+  value_(-1),
+  evalutable_ (false) 
+{
+}
+
+EvaluatorExpressionRepresentation(long long value):
+  value_(value),
+  evalutable_(true) 
+{
+}
+
+bool isEvalutable() {
+  return evalutable_;
+}
+
+void setEvalutable(bool evalutable) {
+  evalutable_ = evalutable;
+}
+
+long long getValue() {
+  return value_;
+}
+
+void setValue(long long value) {
+  value_ = value;
+}
+
+bool operator==(const EvaluatorExpressionRepresentation &eer) {
+  return (value_ == eer.value_) && (evalutable_ && eer.evalutable_);
+}
+
+ private:
+  long long value_;
+  bool evalutable_;
+};
+
+class SimpleExpressionEvaluator: public AstBottomUpProcessing <EvaluatorExpressionRepresentation> {
+ public:
+SimpleExpressionEvaluator() {
+}
+
+EvaluatorExpressionRepresentation getValueExpressionValue(SgValueExp *valExp) {
+  long long subtreeVal = 0;
+
+  if (isSgIntVal(valExp)) {
+    subtreeVal = isSgIntVal(valExp)->get_value();
+  } else if (isSgLongIntVal(valExp)) {
+    subtreeVal = isSgLongIntVal(valExp)->get_value();
+  } else if (isSgLongLongIntVal(valExp)) {
+    subtreeVal = isSgLongLongIntVal(valExp)->get_value();
+  } else if (isSgShortVal(valExp)) {
+    subtreeVal = isSgShortVal(valExp)->get_value();
+  } else if (isSgUnsignedIntVal(valExp)) {
+    subtreeVal = isSgUnsignedIntVal(valExp)->get_value();
+  } else if (isSgUnsignedLongVal(valExp)) {
+    subtreeVal = isSgUnsignedLongVal(valExp)->get_value();
+  } else if (isSgUnsignedLongLongIntVal(valExp)) {
+    subtreeVal = isSgUnsignedLongLongIntVal(valExp)->get_value();
+  } else if (isSgUnsignedShortVal(valExp)) {
+    subtreeVal = isSgUnsignedShortVal(valExp)->get_value();
+  }
+  return EvaluatorExpressionRepresentation(subtreeVal);
+}
+
+EvaluatorExpressionRepresentation evaluateVariableReference(SgVarRefExp *vRef) {
+  if (isSgModifierType(vRef->get_type()) == NULL) {
+    return EvaluatorExpressionRepresentation();
+  }
+  if (isSgModifierType(vRef->get_type())->get_typeModifier().get_constVolatileModifier().isConst()) {
+    // We know that the var value is const, so get the initialized name and evaluate it
+    SgVariableSymbol *sym = vRef->get_symbol();
+    SgInitializedName *iName = sym->get_declaration();
+    SgInitializer *ini = iName->get_initializer();
+
+    if (isSgAssignInitializer(ini)) {
+      SgAssignInitializer *initializer = isSgAssignInitializer(ini);
+      SgExpression *rhs = initializer->get_operand();
+      SimpleExpressionEvaluator variableEval;
+
+      return variableEval.traverse(rhs);
+    }
+  }
+}
+
+
+EvaluatorExpressionRepresentation evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
+  if (isSgExpression(node)) {
+    if (isSgValueExp(node)) {
+      return this->getValueExpressionValue(isSgValueExp(node));
+    }
+
+    if (isSgVarRefExp(node)) {
+//      std::cout << "Hit variable reference expression!" << std::endl;
+      return evaluateVariableReference(isSgVarRefExp(node));
+    }
+    // Early break out for assign initializer // other possibility?
+    if (isSgAssignInitializer(node)) {
+      if (synList.at(0).isEvalutable()) {
+//        std::cout << "Returning an evaluated value of: " << synList.at(0).getValue() << " from a SgAssignInitializer node" << std::endl;
+        return EvaluatorExpressionRepresentation(synList.at(0).getValue());
+      } else {
+        return EvaluatorExpressionRepresentation();
+      }
+    }
+
+    long long evaluatedValue = 0;
+//    std::cout << "Node: " << node->class_name() << ":" << synList.size() << std::endl;
+
+//    assert(synList.size() == 2);
+#if 0
+    if(synList.size() != 2){
+      for(SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it){
+        std::cout << "Node: " << node->unparseToString() << "\n" << (*it).getValue() << std::endl;
+        std::cout << "Parent: " << node->get_parent()->unparseToString() << std::endl;
+        std::cout << "Parent, Parent: " << node->get_parent()->get_parent()->unparseToString() << std::endl;
+      }
+    }
+#endif
+    for (SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it) {
+      if ((*it).isEvalutable()) {
+        if (isSgAddOp(node)) {
+          assert(synList.size() == 2);
+          evaluatedValue = synList[0].getValue() + synList[1].getValue() ;
+        } else if (isSgSubtractOp(node)) {
+          assert(synList.size() == 2);
+          evaluatedValue = synList[0].getValue()  - synList[1].getValue() ;
+        } else if (isSgMultiplyOp(node)) {
+          assert(synList.size() == 2);
+          evaluatedValue = synList[0].getValue()  * synList[1].getValue() ;
+        } else if (isSgDivideOp(node)) {
+          assert(synList.size() == 2);
+          evaluatedValue = synList[0].getValue()  / synList[1].getValue() ;
+        } else if (isSgModOp(node)) {
+          assert(synList.size() == 2);
+          evaluatedValue = synList[0].getValue()  % synList[1].getValue() ;
+        }
+      } else {
+        std::cerr << "Expression is not evaluatable" << std::endl;
+        return EvaluatorExpressionRepresentation();
+      }
+    }
+//    std::cout << "Returning evaluated expression with value: " << evaluatedValue << std::endl;
+    return EvaluatorExpressionRepresentation(evaluatedValue);
+
+  }
+  return EvaluatorExpressionRepresentation();
+}
+};
+
+struct SageInterface::const_int_expr_t SageInterface::evaluateArrayIndexExpression(SgExpression *expr){
+  SimpleExpressionEvaluator eval;
+  const_int_expr_t ciet;
+  EvaluatorExpressionRepresentation eer = eval.traverse(expr);
+  if(eer.isEvalutable()){
+    ciet.hasValue_ = true;
+    ciet.value_ = eer.getValue();
+  } else {
+    ciet.hasValue_ = false;
+    ciet.value_ = -42;
+  }
+  return ciet;
+}
+
+bool
+SageInterface::checkTypesAreEqual(SgType *typeA, SgType *typeB){
+
+  class TypeEquivalenceChecker {
+    public:
+     TypeEquivalenceChecker(bool profile, bool useSemanticEquivalence)
+       : profile_(profile), useSemanticEquivalence_(useSemanticEquivalence),
+         namedType_(0), pointerType_(0), arrayType_(0), functionType_(0) 
+     {
+     }
+
+     SgNode * getBasetypeIfApplicable(SgNode *t){
+       SgNode * node = t;
+       if (isSgTypedefType(t)) {
+//    std::cout << "This is a typedef nodeT1. We strip everything away and compare the hidden types." << std::endl;
+         node = isSgTypedefType(t)->stripType(SgType::STRIP_TYPEDEF_TYPE);
+     }
+     if(useSemanticEquivalence_){
+       if(isSgModifierType(t)){
+         SgModifierType *modType = isSgModifierType(t);
+         ROSE_ASSERT(modType != NULL);
+         // We need to check for Volatile/Restrict types. These are modelled as ModifierTypes, but are equal (in some cases)
+         // volatile seems to make no difference for basic (built in) types like int, bool etc. But it has an impact on types
+         // like classes
+         // restrict seems to have no impact on the type itself.
+         if(SageInterface::isVolatileType(modType)){
+          // handle volatile case
+          std::cout << "Hit volatile type, stripping of modifier type" << std::endl;
+          node = modType->get_base_type();
+         }
+      if(SageInterface::isRestrictType(modType)){
+        // handle restrict case
+        std::cout << "Hit restrict type, stripping of modifier type" << std::endl;
+        node = modType->get_base_type();
+      }
+    }
+  }
+  ROSE_ASSERT(node != NULL);
+  return node;
+}
+
+bool typesAreEqual(SgType *t1, SgType *t2) {
+  bool equal = false;
+  if(t1 == NULL || t2 == NULL){
+    std::string wasNull;
+    if(t1 == NULL){
+      wasNull = "t1";
+    } else {
+      wasNull = "t2";
+    }
+    std::cerr << "ERROR: " << wasNull << " was NULL" << std::endl;
+    return equal;
+  }
+  // if both pointers point to same location the types MUST be equal!
+  if(t1 == t2){
+//    std::cout << "Pointers are equal, returning true" << std::endl;
+    return true;
+  }
+  RoseAst subT1(t1);
+  RoseAst subT2(t2);
+
+  for (RoseAst::iterator i = subT1.begin(), j = subT2.begin();
+       i != subT1.end(), j != subT2.end(); ++i, ++j) {
+    SgNode *nodeT1 = *i;
+    SgNode *nodeT2 = *j;
+
+//    std::cout << "nodeT1: " << nodeT1->class_name() << " nodeT2: " << nodeT2->class_name() << std::endl;
+   nodeT1 = getBasetypeIfApplicable(nodeT1);
+   nodeT2 = getBasetypeIfApplicable(nodeT2);
+
+   if (nodeT1->variantT() == nodeT2->variantT()) {
+//     std::cout << "variantT is the same" << std::endl;
+
+      if (isSgNamedType(nodeT1)) {      // Two different names -> Must be two different things
+        if (profile_) {
+          namedType_++;
+        }
+        i.skipChildrenOnForward();
+        j.skipChildrenOnForward();
+        SgNamedType *c1 = isSgNamedType(nodeT1);
+        SgNamedType *c2 = isSgNamedType(nodeT2);
+
+//        std::cout << c1->get_qualified_name() << std::endl;
+        // XXX A function to check whether a named type is anonymous or not would speed
+        // up this check, since we could get rid of this string compare.
+//        if (c1->get_qualified_name().getString().find("__anonymous_") != std::string::npos) {
+        if(!c1->get_autonomous_declaration()){
+          return false;
+        }
+        if (!c2->get_autonomous_declaration()){
+          return false;
+        }
+        if (c1->get_qualified_name() == c2->get_qualified_name()) {
+          return true;
+        } else {
+          return false;
+        }
+
+      } else if (isSgPointerType(nodeT1)) {
+        if (profile_) {
+          pointerType_++;
+        }
+        SgPointerType *t1 = isSgPointerType(nodeT1);
+        SgPointerType *t2 = isSgPointerType(nodeT2);
+
+        return typesAreEqual(t1->get_base_type(), t2->get_base_type());
+
+      } else if(isSgReferenceType(nodeT1)){
+        SgReferenceType *t1 = isSgReferenceType(nodeT1);
+        SgReferenceType *t2 = isSgReferenceType(nodeT2);
+
+        return typesAreEqual(t1->get_base_type(), t2->get_base_type());
+      } else if (isSgArrayType(nodeT1)) {
+        if (profile_) {
+          arrayType_++;
+        }
+        SgArrayType *a1 = isSgArrayType(nodeT1);
+        SgArrayType *a2 = isSgArrayType(nodeT2);
+
+        bool arrayBaseIsEqual = typesAreEqual(a1->get_base_type(), a2->get_base_type());
+
+        SimpleExpressionEvaluator evalA, evalB;
+
+//        bool arrayIndexExpressionIsEquivalent = (evalA.traverse(a1->get_index()) == evalB.traverse(a2->get_index()));
+        SgExpression::const_int_expr_t t1Index = a1->get_index()->evaluateConstIntegerExpression();
+        SgExpression::const_int_expr_t t2Index = a2->get_index()->evaluateConstIntegerExpression();
+        bool arrayIndexExpressionIsEquivalent = false;
+        if(t1Index.hasValue_ && t2Index.hasValue_){
+          if(t1Index.value_ == t2Index.value_){
+            arrayIndexExpressionIsEquivalent = true;
+          }
+        }
+        bool arraysAreEqual = (arrayBaseIsEqual && arrayIndexExpressionIsEquivalent);
+        return arraysAreEqual;
+      } else if (isSgFunctionType(nodeT1)) {
+        if(profile_) {
+          functionType_++;
+        }
+        SgFunctionType *funcTypeA = isSgFunctionType(nodeT1);
+        SgFunctionType *funcTypeB = isSgFunctionType(nodeT2);
+//        std::cout << "Inside SgFunctionType" << std::endl;
+//        assert(funcTypeA != funcTypeB);
+        if(typesAreEqual(funcTypeA->get_return_type(), funcTypeB->get_return_type())) {
+          // If functions don't have the same number of arguments, they are not type-equal
+          if(funcTypeA->get_arguments().size() != funcTypeB->get_arguments().size()) {
+            return false;
+          }
+          // This should always be the same as the if before...
+          if(funcTypeA->get_argument_list()->get_arguments().size() != funcTypeB->get_argument_list()->get_arguments().size()){
+            return false;
+          }
+
+          for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
+              jj = funcTypeB->get_arguments().begin();
+              ii != funcTypeA->get_arguments().end(),
+              jj != funcTypeB->get_arguments().end();
+              ++ii, ++jj) {
+//            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
+            // For all argument types check whether they are equal
+            if(!typesAreEqual((*ii), (*jj))) {
+              return false;
+            }
+          }
+          return true;
+        }
+        return false;
+      } else {
+        // We don't have a named type, pointer type or array type, so they are equal
+        // This is for the primitive type - case
+        return true;
+      }
+    } else {
+      // In this case the types are not equal, since its variantT is not equal.
+      return false;
+    }
+  }
+  // this should be unreachable code...
+  return equal;
+}
+
+int getNamedTypeCount() {
+  return namedType_;
+}
+
+int getPointerTypeCount() {
+  return pointerType_;
+}
+
+int getArrayTypeCount() {
+  return arrayType_;
+}
+
+int getFunctionTypeCount() {
+  return functionType_;
+}
+    private:
+//     SgNode * getBasetypeIfApplicable(SgNode *t);
+     bool profile_, useSemanticEquivalence_;
+     int namedType_, pointerType_, arrayType_, functionType_;
+};
+
+TypeEquivalenceChecker tec(false, false);
+return tec.typesAreEqual(typeA, typeB);
+
+}
+
