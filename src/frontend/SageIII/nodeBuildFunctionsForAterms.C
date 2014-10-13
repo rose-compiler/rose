@@ -1498,6 +1498,9 @@ SgTypeFloat* SgTypeFloat::build_node_from_nonlist_children (  )
 
      SgTypeFloat* returnNode = NULL;
 
+     returnNode = SageBuilder::buildFloatType();
+     ROSE_ASSERT(returnNode != NULL);
+
      return returnNode;
    }
 
@@ -1515,6 +1518,9 @@ SgTypeDouble* SgTypeDouble::build_node_from_nonlist_children (  )
 #endif
 
      SgTypeDouble* returnNode = NULL;
+
+     returnNode = SageBuilder::buildDoubleType();
+     ROSE_ASSERT(returnNode != NULL);
 
      return returnNode;
    }
@@ -1623,6 +1629,9 @@ SgTypeLongDouble* SgTypeLongDouble::build_node_from_nonlist_children (  )
 #endif
 
      SgTypeLongDouble* returnNode = NULL;
+
+     returnNode = SageBuilder::buildLongDoubleType();
+     ROSE_ASSERT(returnNode != NULL);
 
      return returnNode;
    }
@@ -3490,6 +3499,10 @@ SgGlobal* SgGlobal::build_node_from_nonlist_children ( Sg_File_Info* startOfCons
      ROSE_ASSERT(startOfConstruct != NULL);
      returnNode->set_startOfConstruct(startOfConstruct);
 
+
+// DQ (10/13/2014): We can't access the AtermSupport namespace under Windows.
+#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+
      string id = AtermSupport::uniqueId(returnNode);
 
 #if 1
@@ -3512,6 +3525,7 @@ SgGlobal* SgGlobal::build_node_from_nonlist_children ( Sg_File_Info* startOfCons
 #endif
           AtermSupport::translationScopeMap[id] = returnNode;
         }
+#endif
 
 #if 0
      printf ("Exiting as a test in SgGlobal::build_node_from_nonlist_children() \n");

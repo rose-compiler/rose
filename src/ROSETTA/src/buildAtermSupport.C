@@ -9,8 +9,12 @@
 #include <sstream>
 
 // This generates debugging code in the generation of the aterms from the AST.
-#define GENERATE_DEBUG_CODE 0
+#define GENERATE_ATERM_DEBUG_CODE 0
+#define GENERATE_AST_DEBUG_CODE 1
 
+// This generated comments in the generated code
+#define GENERATE_ATERM_COMMENTS 0
+#define GENERATE_AST_COMMENTS 0
 
 using namespace std;
 
@@ -123,8 +127,8 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << "typeKind = " << StringUtility::numberToString((int)typeKind) << "\n";
              }
 #endif
-#if 1
-          outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() 
+#if GENERATE_ATERM_COMMENTS
+          outputFile << "// data member type (generate ATERM): " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() 
                      << " typeKind = " << StringUtility::numberToString((int)typeKind) << " enum kind = " << node.typeEvaluationName(typeKind) << "\n";
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
@@ -177,7 +181,9 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                             {
                            // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
                               bool isType = false;
+#if 0
                               atermAnnotationString += "     // type is: " + grammarString->getTypeNameString() + "\n";
+#endif
                            // isType = (grammarString->getTypeNameString() == "SgPointerType");
                               isType = (grammarString->getTypeNameString() == "SgType*");
 
@@ -416,7 +422,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #if 1
           outputFile << "  // expected read pattern: atermPatternString = " << atermPatternString << "\n";
 #endif
-#if GENERATE_DEBUG_CODE
+#if GENERATE_ATERM_DEBUG_CODE
        // This generates debugging code in the generation of the aterms from the AST.
           outputFile << string("     printf (\"In ") + atermPatternString + "\\n\");\n";
 #endif
@@ -511,7 +517,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
        // outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term, " << node.getName() << "* n) \n   {\n";
           outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term)\n   {\n";
 
-#if GENERATE_DEBUG_CODE
+#if GENERATE_ATERM_DEBUG_CODE
        // This generates debugging code in the generation of the aterms from the AST.
           outputFile << string("     printf (\"In ") + node.getName() + "::generate_ATerm_Annotation(ATerm & term)\\n\");\n";
 #endif
@@ -588,7 +594,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
      ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
 
      string defaultConstructorParametersString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
-#if 1
+#if GENERATE_AST_COMMENTS
      outputFile << "  // node = " << node.getName() << " defaultConstructorParameterString = " << defaultConstructorParametersString << "\n";
 #endif
 #if 0
@@ -656,7 +662,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
   // This is only relevant for those parameters that will be output.
      bool lastDataMemberWasConstructorParameter = false;
 
-#if 1
+#if GENERATE_AST_COMMENTS
      outputFile << "  // STARTING processing of loop over all data members for node = " + node.getName() + "\n";
 #endif
 
@@ -678,8 +684,8 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << " typeKind = " << StringUtility::numberToString((int)typeKind) << "\n";
              }
 #endif
-#if 1
-          outputFile << "// data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() 
+#if GENERATE_AST_COMMENTS
+          outputFile << "// data member type (generate AST): " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() 
                      << " typeKind = " << StringUtility::numberToString((int)typeKind) << " enum kind = " << node.typeEvaluationName(typeKind) << "\n";
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
@@ -989,14 +995,14 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
         }
 
-#if 1
+#if GENERATE_AST_COMMENTS
      outputFile << "  // Finished processing loop over all data members for node = " + node.getName() + "\n";
 #endif
 
      bool availableAtermPatternString    = (outputAterm == true) && (firstAterm == false);
      bool availableAtermAnnotationString = (outputAterm == true) && (firstAnnotation == false);
 
-#if 1
+#if 0
      outputFile << string("  // availableAtermPatternString    = ") + (availableAtermPatternString    ? "true" : "false") + "\n";
      outputFile << string("  // availableAtermAnnotationString = ") + (availableAtermAnnotationString ? "true" : "false") + "\n";
 #endif
@@ -1029,7 +1035,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
        // outputFile << "atermPatternSubstring = " << atermPatternSubstring << "\n";
           string atermPatternString = node.getName() + "(" + atermPatternSubstring + ")";
-#if 1
+#if 0
           outputFile << "  // expected read pattern: atermPatternString      = " << atermPatternString << "\n";
           outputFile << "  // expected read pattern: atermArgumentsSubstring = " << atermArgumentsSubstring << "\n";
 #endif
@@ -1093,7 +1099,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   }
              }
           
-#if GENERATE_DEBUG_CODE
+#if GENERATE_AST_DEBUG_CODE
           outputFile << string("          printf (\"In ") + atermPatternString + "\\n\");\n";
 #endif
 #if 0
@@ -1176,7 +1182,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                outputFile << "          returnNode = local_returnNode;\n";
              }
 #endif
-#if GENERATE_DEBUG_CODE
+#if GENERATE_AST_DEBUG_CODE
           outputFile << string("          printf (\"Leaving ") + atermPatternString + "\\n\");\n";
 #endif
           outputFile << "\n";
