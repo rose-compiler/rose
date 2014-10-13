@@ -8,6 +8,10 @@
 #include "grammarString.h"
 #include <sstream>
 
+// This generates debugging code in the generation of the aterms from the AST.
+#define GENERATE_DEBUG_CODE 0
+
+
 using namespace std;
 
 void
@@ -412,7 +416,8 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #if 1
           outputFile << "  // expected read pattern: atermPatternString = " << atermPatternString << "\n";
 #endif
-#if 1
+#if GENERATE_DEBUG_CODE
+       // This generates debugging code in the generation of the aterms from the AST.
           outputFile << string("     printf (\"In ") + atermPatternString + "\\n\");\n";
 #endif
 #if 0
@@ -506,7 +511,8 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
        // outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term, " << node.getName() << "* n) \n   {\n";
           outputFile << "void " << node.getName() << "::generate_ATerm_Annotation(ATerm & term)\n   {\n";
 
-#if 1
+#if GENERATE_DEBUG_CODE
+       // This generates debugging code in the generation of the aterms from the AST.
           outputFile << string("     printf (\"In ") + node.getName() + "::generate_ATerm_Annotation(ATerm & term)\\n\");\n";
 #endif
        // outputFile << "  // atermAnnotationString = " << atermAnnotationString << "\n";
@@ -1087,7 +1093,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   }
              }
           
-#if 1
+#if GENERATE_DEBUG_CODE
           outputFile << string("          printf (\"In ") + atermPatternString + "\\n\");\n";
 #endif
 #if 0
@@ -1170,7 +1176,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                outputFile << "          returnNode = local_returnNode;\n";
              }
 #endif
-#if 1
+#if GENERATE_DEBUG_CODE
           outputFile << string("          printf (\"Leaving ") + atermPatternString + "\\n\");\n";
 #endif
           outputFile << "\n";
