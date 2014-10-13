@@ -6,6 +6,7 @@
 
 #include "AsmUnparser_compat.h"
 
+namespace rose {
 namespace BinaryAnalysis {                      // documented elsewhere
 
 /** A vertex property writer for instruction-based CFGs.  This causes vertex names to be instructions rather than
@@ -17,7 +18,7 @@ struct InsnCFGVertexWriter {
     typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
     void operator()(std::ostream &output, const Vertex &v) const {
         SgAsmInstruction *insn = get_ast_node(cfg, v);
-        SgAsmx86Instruction *x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *x86 = isSgAsmX86Instruction(insn);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         output <<"[ label=\"[" <<v << "] " <<unparseInstructionWithAddress(insn) <<"\"";
         if (insn->get_address()==func->get_entry_va()) {
@@ -29,6 +30,7 @@ struct InsnCFGVertexWriter {
     }
 };
 
+} // namespace
 } // namespace
 
 #endif

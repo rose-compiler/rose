@@ -2,6 +2,7 @@
 #include "TraceSemantics2.h"
 #include "AsmUnparser_compat.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace TraceSemantics {
@@ -921,6 +922,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &a, const BaseSemantics::SVa
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

@@ -21,6 +21,7 @@
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -270,7 +271,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
-    MemoryMap *map;
+    const MemoryMap *map;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -346,8 +347,8 @@ public:
      *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory
      *  map is used when reading the value.
      * @{ */
-    MemoryMap *get_memory_map() const { return map; }
-    void set_memory_map(MemoryMap *m) { map = m; }
+    const MemoryMap *get_memory_map() const { return map; }
+    void set_memory_map(const MemoryMap *m) { map = m; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -811,9 +812,9 @@ protected:
             }
 #endif
 
-        } /*namespace*/
-    } /*namespace*/
-} /*namespace*/
-
+} // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Various tools for data flow analysis.
@@ -27,7 +28,7 @@ namespace BinaryAnalysis {
  *  the inputs and/or outputs depend on other inputs.  The binary data flow implemented by this class uses abstract locations
  *  (@ref AbstractLocation) to represent variables. An abstract location is either a register or a memory address.  Registers
  *  are represented by a @ref RegisterDescriptor while addresses are represented by a semantic value in some user-specified
- *  domain (often symbolic, see @ref BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
+ *  domain (often symbolic, see @ref rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
  *
  *  Another difference is in the number of basic operations that need to be supported. Source-level languages typically have at
  *  most a few dozen basic operations for which data flow must be explicitly encoded in the analysis, while binary analysis
@@ -76,7 +77,7 @@ namespace BinaryAnalysis {
  *  performed with the usual ROSE binary analysis mechanisms.
  *
  *  Once the scope of the analysis is determined (e.g., a particular function), a control flow graph is obtained with @ref
- *  BinaryAnalysis::ControlFlow, which produces a CFG whose vertices are either instructions or basic blocks (user's
+ *  rose::BinaryAnalysis::ControlFlow, which produces a CFG whose vertices are either instructions or basic blocks (user's
  *  choice). Any kind of graph supporting the Boost Graph Library (BGL) API is permissible if it also satisfies the
  *  requirements layed out in the ControlFlow documentation.
  *
@@ -104,8 +105,8 @@ public:
      *
      *  A variable in binary data flow analysis is an abstract location referencing either a register or memory cell.  The
      *  address for memory locations is an arbitrary semantic expression (@ref
-     *  BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
-    typedef BinaryAnalysis::AbstractLocation Variable;
+     *  rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
+    typedef AbstractLocation Variable;
 
     /** List of variables. */
     typedef std::list<Variable> VariableList;
@@ -198,7 +199,7 @@ public:
      *  variables, although typically not through pointers or array indexing. */
     template<class CFG>
     VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
-        using namespace rose::Diagnostics;
+        using namespace Diagnostics;
         ASSERT_this();
         ASSERT_require(startVertex < cfg.nVertices());
         Stream mesg(mlog[WHERE] <<"buildGraphPerVertex startVertex=" <<startVertex);
@@ -321,6 +322,7 @@ public:
     };
 };
 
+} // namespace
 } // namespace
 
 #endif

@@ -343,7 +343,7 @@ SB_DirectedGraph::isValidCFGEdge(SgGraphNode* sgNode,
   //  bool isAUnconditionalControlTransfer = false;
   bool valid = true;
   bool isDirectedControlFlowEdge = false;
-  SgAsmx86Instruction* inst = isSgAsmx86Instruction(sgNodeBefore->get_SgNode());
+  SgAsmX86Instruction* inst = isSgAsmX86Instruction(sgNodeBefore->get_SgNode());
 
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());

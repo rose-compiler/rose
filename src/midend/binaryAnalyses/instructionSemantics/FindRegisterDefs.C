@@ -1,7 +1,12 @@
-#include "rose.h"
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
+
 #include "FindRegisterDefs.h"
 #include <ostream>
 
+namespace rose {
+namespace BinaryAnalysis {
 namespace FindRegisterDefs {
 
 /******************************************************************************************************************************
@@ -81,4 +86,6 @@ Policy::print(std::ostream &o) const
     o <<cur_state;
 }
 
-}; // namespace
+} // namespace
+} // namespace
+} // namespace

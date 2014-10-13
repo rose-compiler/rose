@@ -319,10 +319,15 @@ void $CLASSNAME::operator delete(void *Pointer, size_t sizeOfObject)
             ROSE_ASSERT((New_Link->p_freepointer != NULL) || (New_Link->p_freepointer == NULL));
             ROSE_ASSERT(($CLASSNAME_Current_Link != NULL) || ($CLASSNAME_Current_Link == NULL));
             ROSE_ASSERT((New_Link != NULL) || (New_Link == NULL));
-
+// Liao, 8/11/2014, to support IR mapping, we need unique IDs for AST nodes.
+// We provide a mode in which memory space will not be reused later so we can easily generate unique IDs based on memory addresses.
+#ifdef ROSE_USE_MEMORY_POOL_NO_REUSE
+            New_Link->p_freepointer = NULL;   // clear IS_VALID_POINTER flag, but not putting it back to the memory pool.
+#else
             // Put deleted object (New_Link) at front of linked list (Current_Link)!
             New_Link->p_freepointer = $CLASSNAME_Current_Link;
             $CLASSNAME_Current_Link = New_Link;
+#endif            
 #           if ROSE_USE_VALGRIND
             // VALGRIND_PRINTF_BACKTRACE("Deallocating block at %p size %u (for $CLASSNAME)\n", Current_Link, sizeof($CLASSNAME));
             // VALGRIND_FREELIKE_BLOCK(Current_Link, 0);

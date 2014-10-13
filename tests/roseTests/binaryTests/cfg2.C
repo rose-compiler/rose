@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
     SgAsmInterpretation *interp = interps.back();
 
     // Build an instruction-based control flow graph from control flow info stored in the AST
-    typedef BinaryAnalysis::ControlFlow::InsnGraph CFG;
-    BinaryAnalysis::ControlFlow analyzer;
+    typedef rose::BinaryAnalysis::ControlFlow::InsnGraph CFG;
+    rose::BinaryAnalysis::ControlFlow analyzer;
     CFG cfg = analyzer.build_insn_cfg_from_ast<CFG>(interp);
-    analyzer.write_graphviz(std::cout, cfg, BinaryAnalysis::InsnCFGVertexWriter<CFG>(cfg));
+    analyzer.write_graphviz(std::cout, cfg, rose::BinaryAnalysis::InsnCFGVertexWriter<CFG>(cfg));
 }

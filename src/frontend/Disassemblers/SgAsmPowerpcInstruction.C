@@ -4,10 +4,17 @@
 #include "sage3basic.h"
 #include "Disassembler.h"
 
+using namespace rose;                                   // temporary until this lives in "rose"
+
+unsigned
+SgAsmPowerpcInstruction::get_anyKind() const {
+    return p_kind;
+}
+
 // Return control flow successors. See base class for full documentation.
-Disassembler::AddressSet
-SgAsmPowerpcInstruction::get_successors(bool *complete) {
-    Disassembler::AddressSet retval;
+BinaryAnalysis::Disassembler::AddressSet
+SgAsmPowerpcInstruction::getSuccessors(bool *complete) {
+    BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true; /*assume retval is the complete set of successors for now*/
 
     switch (get_kind()) {
@@ -70,7 +77,7 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
 
 // Does instruction terminate basic block? See base class for full documentation.
 bool
-SgAsmPowerpcInstruction::terminates_basic_block() {
+SgAsmPowerpcInstruction::terminatesBasicBlock() {
     switch (get_kind()) {
         case powerpc_unknown_instruction:
         case powerpc_b:         /* branch instructions... */
@@ -98,7 +105,7 @@ SgAsmPowerpcInstruction::terminates_basic_block() {
 
 // Determines whether this is the special PowerPC "unknown" instruction.
 bool
-SgAsmPowerpcInstruction::is_unknown() const
+SgAsmPowerpcInstruction::isUnknown() const
 {
     return powerpc_unknown_instruction == get_kind();
 }

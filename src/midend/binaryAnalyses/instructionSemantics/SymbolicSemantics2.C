@@ -2,6 +2,7 @@
 #include "SymbolicSemantics2.h"
 #include "integerOps.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SymbolicSemantics {
@@ -123,6 +124,8 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 /*******************************************************************************************************************************
  *                                      Memory state
  *******************************************************************************************************************************/
+
+MemoryState::CellCompressorChoice MemoryState::cc_choice;
 
 SValuePtr
 MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
@@ -719,6 +722,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

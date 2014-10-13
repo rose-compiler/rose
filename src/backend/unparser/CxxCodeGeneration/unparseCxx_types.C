@@ -368,13 +368,13 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
    {
      ROSE_ASSERT(type != NULL);
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseType(): type->class_name() = %s firstPart = %s secondPart = %s \n",
              type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      curprint ( string("\n/* Top of unparseType name ") + type->class_name().c_str()
          + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
@@ -441,6 +441,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
              }
         }
 
+#if 0
+     printf ("In unparseType(): usingGeneratedNameQualifiedTypeNameString = %s \n",usingGeneratedNameQualifiedTypeNameString ? "true" : "false");
+#endif
 #if 0
      curprint ("\n /* In unparseType(): usingGeneratedNameQualifiedTypeNameString = " + string(usingGeneratedNameQualifiedTypeNameString ? "true" : "false") + " */ \n");
 #endif
@@ -552,6 +555,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
                case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
                case T_REFERENCE:          unparseReferenceType(type, info);        break;
+
+               case T_RVALUE_REFERENCE:   unparseRvalueReferenceType(type, info);  break;
+
             // case T_NAME:               unparseNameType(type, info);             break;
 
             // DQ (6/18/2013): Test to see if this is the correct handling of test2013_214.C.
@@ -648,11 +654,28 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
 
+            // DQ (7/30/2014): Fixed spelling of T_LABEL tag.
             // DQ (4/27/2014): After some fixes to ROSE to permit the new shared memory DSL, we now get this 
             // IR node appearing in test2007_168.f90 (I don't yet understand why).
-               case T_LABLE:
+            // case T_LABLE:
+               case T_LABEL:
                   {
                     printf ("ERROR: Unparse_Type::unparseType(): SgTypeLabel is appearing in test2007_168.f90 (where it had not appeared before) (allow this for now) \n");
+                    break;
+                  }
+
+            // DQ (7/31/2014): Adding support for nullptr constant expression and its associated type.
+               case T_NULLPTR:
+                  {
+                    unparseNullptrType(type, info);
+                 // printf ("ERROR: Unparse_Type::unparseType(): SgTypeNullptr: we should not have to be unparsing this type (C++11 specific) \n");
+                    break;
+                  }
+
+            // DQ (8/2/2014): Adding support for C++11 decltype.
+               case T_DECLTYPE:
+                  {
+                    unparseDeclType(type, info);
                     break;
                   }
 
@@ -665,13 +688,55 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Leaving Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
           type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
      curprint ( string("\n/* Bottom of unparseType name ") + type->sage_class_name()
          + " firstPart  " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
    }
+
+
+void
+Unparse_Type::unparseNullptrType(SgType* type, SgUnparse_Info& info)
+   {
+  // DQ (7/31/2014): Adding support for nullptr constant expression and its associated type.
+
+     curprint("std::nullptr_t");
+   }
+
+
+void
+Unparse_Type::unparseDeclType(SgType* type, SgUnparse_Info& info)
+   {
+  // DQ (8/2/2014): Adding support for C++11 decltype.
+
+     SgDeclType* decltype_node = isSgDeclType(type);
+     ROSE_ASSERT(decltype_node != NULL);
+
+     ROSE_ASSERT(decltype_node->get_base_expression() != NULL);
+
+     if (info.isTypeFirstPart() == true)
+        {
+          SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(decltype_node->get_base_expression());
+          if (functionParameterRefExp != NULL)
+             {
+            // In this case just use the type directly.
+               ROSE_ASSERT(decltype_node->get_base_type() != NULL);
+#if 1
+               printf ("In unparseDeclType(): detected SgFunctionParameterRefExp: using decltype_node->get_base_type() = %p = %s \n",decltype_node->get_base_type(),decltype_node->get_base_type()->class_name().c_str());
+#endif
+               unparseType(decltype_node->get_base_type(),info);
+             }
+            else
+             {
+               curprint("decltype(");
+               unp->u_exprStmt->unparseExpression(decltype_node->get_base_expression(),info);
+               curprint(") ");
+             }
+        }
+   }
+
 
 
 #if 0
@@ -899,8 +964,10 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
      SgType *btype = mpointer_type->get_base_type();
      SgMemberFunctionType *ftype = NULL;
 
-  // printf ("In unparseMemberPointerType(): btype = %p = %s \n",btype,(btype != NULL) ? btype->sage_class_name() : "NULL" );
-  // curprint ( "\n/* In unparseMemberPointerType() */ \n";
+#if 0
+     printf ("In unparseMemberPointerType(): btype = %p = %s \n",btype,(btype != NULL) ? btype->class_name().c_str() : "NULL" );
+     curprint("\n/* In unparseMemberPointerType() */ \n");
+#endif
 
      if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
         {
@@ -974,7 +1041,9 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
        else
         {
        /* pointer to member data */
-       // printf ("In unparseMemberPointerType(): pointer to member data \n");
+#if 0
+          printf ("In unparseMemberPointerType(): pointer to member data \n");
+#endif
           if (info.isTypeFirstPart())
              {
             // DQ (9/16/2004): This appears to be an error, btype should not be unparsed here (of maybe btype is not set properly)!
@@ -990,8 +1059,23 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
              {
                if (info.isTypeSecondPart())
                   {
-                 // printf ("Handling the second part \n");
-                    curprint ( ")");
+#if 0
+                    printf ("Handling the second part \n");
+#endif
+                    curprint(")");
+
+                 // DQ (8/19/2014): Handle array types (see test2014_129.C).
+                    SgArrayType* arrayType = isSgArrayType(btype);
+                    if (arrayType != NULL)
+                       {
+#if 0
+                         printf ("Handling the array type \n");
+#endif
+                         SgUnparse_Info ninfo(info);
+                         curprint("[");
+                         unp->u_exprStmt->unparseExpression(arrayType->get_index(),ninfo);
+                         curprint("]");
+                       }
                   }
                  else
                   {
@@ -1005,8 +1089,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-  // curprint ( "\n/* Leaving unparseMemberPointerType() */ \n";
+#if 0
+     printf ("Leaving unparseMemberPointerType() \n");
+     curprint("\n/* Leaving unparseMemberPointerType() */ \n");
+#endif
    }
+
 
 void Unparse_Type::unparseReferenceType(SgType* type, SgUnparse_Info& info)
    {
@@ -1049,6 +1137,48 @@ void Unparse_Type::unparseReferenceType(SgType* type, SgUnparse_Info& info)
         }
    }
 
+void Unparse_Type::unparseRvalueReferenceType(SgType* type, SgUnparse_Info& info)
+   {
+     SgRvalueReferenceType* rvalue_ref_type = isSgRvalueReferenceType(type);
+     ROSE_ASSERT(rvalue_ref_type != NULL);
+
+  /* special cases: ptr to array, int (*p) [10] */
+  /*                ptr to function, int (*p)(int) */
+  /*                ptr to ptr to .. int (**p) (int) */
+     SgUnparse_Info ninfo(info);
+
+     if (isSgReferenceType(rvalue_ref_type->get_base_type()) ||
+         isSgPointerType(rvalue_ref_type->get_base_type()) ||
+         isSgArrayType(rvalue_ref_type->get_base_type()) ||
+         isSgFunctionType(rvalue_ref_type->get_base_type()) ||
+         isSgMemberFunctionType(rvalue_ref_type->get_base_type()) ||
+         isSgModifierType(rvalue_ref_type->get_base_type()) )
+        {
+          ninfo.set_isReferenceToSomething();
+        }
+
+     if (ninfo.isTypeFirstPart())
+        {
+          unparseType(rvalue_ref_type->get_base_type(), ninfo);
+          curprint ( "&&");
+        }
+       else
+        {
+          if (ninfo.isTypeSecondPart())
+             {
+               unparseType(rvalue_ref_type->get_base_type(), ninfo);
+             }
+            else
+             {
+               SgUnparse_Info ninfo2(ninfo);
+               ninfo2.set_isTypeFirstPart();
+               unparseType(rvalue_ref_type, ninfo2);
+               ninfo2.set_isTypeSecondPart();
+               unparseType(rvalue_ref_type, ninfo2);
+             }
+        }
+   }
+
 #if 0
 void Unparse_Type::unparseNameType(SgType* type, SgUnparse_Info& info)
    {
@@ -1079,6 +1209,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
 #if 0
      printf ("Inside of Unparse_Type::unparseClassType type = %p \n",type);
+     curprint("/* Inside of Unparse_Type::unparseClassType */ \n");
 #endif
 
 #if 0
@@ -1107,14 +1238,18 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(decl == decl->get_firstNondefiningDeclaration());
 
 #if 0
+  // printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
      printf ("In Unparse_Type::unparseClassType(): class_type->get_autonomous_declaration() = %s \n",class_type->get_autonomous_declaration() ? "true" : "false");
      printf ("In Unparse_Type::unparseClassType(): decl->get_isAutonomousDeclaration()      = %s \n",decl->get_isAutonomousDeclaration() ? "true" : "false");
      printf ("In Unparse_Type::unparseClassType(): decl->get_isUnNamed()                    = %s \n",decl->get_isUnNamed() ? "true" : "false");
 
-     SgClassDeclaration *defining_decl = isSgClassDeclaration(class_type->get_declaration()->get_definingDeclaration());
+     SgClassDeclaration* defining_decl = isSgClassDeclaration(class_type->get_declaration()->get_definingDeclaration());
      printf ("decl = %p defining_decl = %p \n",decl,defining_decl);
-     printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isAutonomousDeclaration() = %s \n",defining_decl->get_isAutonomousDeclaration() ? "true" : "false");
-     printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isUnNamed()               = %s \n",defining_decl->get_isUnNamed() ? "true" : "false");
+     if (defining_decl != NULL)
+        {
+          printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isAutonomousDeclaration() = %s \n",defining_decl->get_isAutonomousDeclaration() ? "true" : "false");
+          printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isUnNamed()               = %s \n",defining_decl->get_isUnNamed() ? "true" : "false");
+        }
 
      printf ("In Unparse_Type::unparseClassType(): decl = %p = %s decl->get_definition() = %p \n",decl,decl->class_name().c_str(),decl->get_definition());
 #endif
@@ -1615,14 +1750,15 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
              {
                curprint ("enum ");
              }
-
+#if 0
+       // DQ (7/30/2014): Commented out to avoid compiler warning about not being used.
        // DQ (10/16/2004): Handle name qualification the same as in the unparseClassType function (we could factor common code later!)
           SgNamedType *ptype = NULL;
           if (cdefn != NULL)
              {
                ptype = isSgNamedType(cdefn->get_declaration()->get_type());
              }
-
+#endif
 #if 0
        // DQ (10/14/2004): If we are going to output the definition (below) then we don't need the qualified name!
           bool definitionWillBeOutput = ( (info.isTypeFirstPart() == true) && !info.SkipClassDefinition() );

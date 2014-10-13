@@ -27,6 +27,8 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
+using namespace rose::BinaryAnalysis;
+
 // Callback to disassemble an entire process when a certain instruction address is reached.
 class MyDisassembler: public RSIM_Callbacks::InsnCallback {
 public:

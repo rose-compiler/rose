@@ -1,8 +1,15 @@
-#include "rose.h"
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
+
 #include "findConstants.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace FindConstants {
+
 uint64_t xvarNameCounter = 0;
-SgAsmx86Instruction* currentInstruction = NULL;
+SgAsmX86Instruction* currentInstruction = NULL;
 
 /** Returns true if the contents of memory location @p a could possibly overlap with @p b. In other words, returns false only
  *  if memory location @p a cannot overlap with memory location @p b. */
@@ -65,3 +72,7 @@ operator<<(std::ostream& o, const RegisterSet& rs)
     }
     return o;
 }
+
+} // namespace
+} // namespace
+} // namespace

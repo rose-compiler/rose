@@ -29,6 +29,7 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/Common.code \
      ../Grammar/Support.code \
      ../Grammar/grammarConstructorDefinitionMacros.macro \
+     ../Grammar/grammarAtermConstructorDefinitionMacros.macro \
      ../Grammar/node.macro \
      ../Grammar/Cxx_GlobalDeclarations.macro \
      ../Grammar/Symbol.code \
@@ -102,6 +103,7 @@ CxxGrammarMetaProgram_SOURCES = \
    buildStorageClasses.C \
    buildConstructorsWithoutSourcePositionInformation.C \
    outputClassesAndFields.C \
+   buildAtermSupport.C \
    java/terminals.cpp
 
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C

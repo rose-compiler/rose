@@ -7,11 +7,7 @@
 #include <unistd.h>
 #include <cmath>
 
-struct UnexecutableSegments: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const AddressInterval&, const MemoryMap::Segment &segment) {
-        return 0 == (segment.get_mapperms() & MemoryMap::MM_PROT_EXEC);
-    }
-} is_unexecutable;
+using namespace rose::BinaryAnalysis;
 
 static double sigma(double variance) { return variance*variance; }
 
@@ -79,9 +75,9 @@ main(int argc, char *argv[])
 
     rose_addr_t start_va = 0;
     MemoryMap map;
-    MemoryMap::BufferPtr buffer = MemoryMap::MmapBuffer::create(filename, O_RDONLY, PROT_READ, MAP_PRIVATE);
+    MemoryMap::Buffer::Ptr buffer = MemoryMap::MappedBuffer::instance(filename);
     map.insert(AddressInterval::baseSize(start_va, buffer->size()),
-               MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_RX, filename));
+               MemoryMap::Segment(buffer, 0, MemoryMap::READABLE|MemoryMap::EXECUTABLE, filename));
 
     SgAsmGenericHeader *fake_header = new SgAsmPEFileHeader(new SgAsmGenericFile());
     Disassembler *disassembler = Disassembler::lookup(fake_header)->clone();
@@ -95,8 +91,9 @@ main(int argc, char *argv[])
     partitioner->add_instructions(insns);
 
     MemoryMap map2 = map;
-    map2.prune(is_unexecutable);
-    Partitioner::RegionStats *stats = partitioner->region_statistics(toExtentMap(map.va_extents()));
+    map2.require(MemoryMap::EXECUTABLE).keep();
+    AddressIntervalSet extent(map);
+    Partitioner::RegionStats *stats = partitioner->region_statistics(toExtentMap(extent));
 
     /* Initialize a code criteria object with some reasonable values. */
     Partitioner::RegionStats m, v;

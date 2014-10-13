@@ -190,7 +190,7 @@ get_position_in_register(const RegisterDescriptor &rdesc) {
 }
 
 bool
-RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& operands) {
+RoseBin_Emulate::evaluateInstruction( SgAsmX86Instruction* binInst, string& operands) {
   SgAsmOperandList* opList = binInst->get_operandList();
   ROSE_ASSERT(opList);
   //string operands = "";
@@ -795,7 +795,7 @@ RoseBin_Emulate::run(string& name, SgGraphNode* node,
       cout << "EMULATE BEFORE::  name: " << unp_name << " \n regs: " << regs << endl;
     }
     string eval = "";
-    bool success=evaluateInstruction(isSgAsmx86Instruction(inst), eval);
+    bool success=evaluateInstruction(isSgAsmX86Instruction(inst), eval);
     //node->append_properties(SgGraph::name,unp_name);
     node->append_properties(SgGraph::eval,eval);
     string regs = evaluateRegisters();

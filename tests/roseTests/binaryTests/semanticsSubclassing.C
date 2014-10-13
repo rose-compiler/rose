@@ -4,7 +4,7 @@
 #include "rose.h"
 #include "SymbolicSemantics2.h"
 
-using namespace BinaryAnalysis::InstructionSemantics2;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,26 +101,28 @@ typedef boost::shared_ptr<class MyRiscOperators> MyRiscOperatorsPtr;
 class MyRiscOperators: public SymbolicSemantics::RiscOperators {
     // Real constructors
 protected:
-    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval, rose::BinaryAnalysis::SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(protoval, solver) {}
-    explicit MyRiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit MyRiscOperators(const BaseSemantics::StatePtr &state, rose::BinaryAnalysis::SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(state, solver) {}
 
     // Static allocating constructors
 public:
-    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return MyRiscOperatorsPtr(new MyRiscOperators(protoval, solver));
     }
-    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return MyRiscOperatorsPtr(new MyRiscOperators(state, solver));
     }
 
     // Virtual constructors
 public:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) const {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(protoval, solver);
     }
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) const {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(state, solver);
     }
 
@@ -167,7 +169,7 @@ int main()
     // Build the RiscOperators.  Since we're wanting to use our shiny new classes, we need to build the lattice manually.
     // Refer to SymbolicSemantics::RiscOperators::instance() to see what parts are required, and substitute our class names
     // where appropriate.
-    SMTSolver *solver = NULL;
+    rose::BinaryAnalysis::SMTSolver *solver = NULL;
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
     BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
     BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);

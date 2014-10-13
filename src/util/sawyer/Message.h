@@ -577,7 +577,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for all types of message destinations. This is the base class for all nodes in the plumbing lattice. */
-class SAWYER_EXPORT Destination: public SharedFromThis<Destination> {
+class SAWYER_EXPORT Destination: public SharedObject, public SharedFromThis<Destination> {
 protected:
     MesgProps dflts_;                                   /**< Default properties merged into each incoming message. */
     MesgProps overrides_;                               /**< Override properties applied to incoming message. */
@@ -831,7 +831,7 @@ public:
  *  terminal.  A gang just keeps track of what message was most recently emitted. */
 class Gang: public HighWater, public SharedObject {
     typedef Sawyer::Container::Map<int, GangPtr> GangMap;
-    static GangMap gangs_;                              /**< Gangs indexed by file descriptor or other ID. */
+    static GangMap *gangs_;                             /**< Gangs indexed by file descriptor or other ID. */
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
 protected:
     Gang() {}
@@ -847,7 +847,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Information printed at the beginning of each free-format message. */
-class SAWYER_EXPORT Prefix: public SharedFromThis<Prefix> {
+class SAWYER_EXPORT Prefix: public SharedObject, public SharedFromThis<Prefix> {
 #include <sawyer/WarningsOff.h>
     enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
     ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */

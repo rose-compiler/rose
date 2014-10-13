@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "NullSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis { // documented elsewhere
 namespace InstructionSemantics2 { // documented elsewhere
 namespace NullSemantics { // documented in the header
@@ -251,6 +252,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     (void) SValue::promote(cond);
 }
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace

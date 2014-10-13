@@ -18,6 +18,9 @@
 #include "InsnSemanticsExpr.h"
 #include "threadSupport.h"
 
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 // Everything about detecting symbolic complexity is encapsulated in this single class.  The class' instruction callback is
 // invoked for each instruction and when it hits the @p when address an analysis is triggered (only once, and only by the first
 // thread to reach the address).  The analysis disassembles the entire process memory and then analyzes each function
@@ -106,7 +109,7 @@ public:
         eip.set_subvalue(SP_VMS, policy.get_policy(SP_VMS).number<32>(func->get_entry_va()));
         eip.set_subvalue(SP_SYM, policy.get_policy(SP_SYM).number<32>(func->get_entry_va()));
         policy.writeRegister(decoder.REG_EIP, eip);
-        std::vector<SgAsmx86Instruction*> execution_path;
+        std::vector<SgAsmX86Instruction*> execution_path;
 
         try {
             while (true) {
@@ -118,7 +121,7 @@ public:
                     m->more("%s:   unknown eip: %s\n", cb_name, ss.str().c_str());
                     break;
                 }
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(proc->get_instruction(eip.get_subvalue(SP_VMS).known_value()));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(proc->get_instruction(eip.get_subvalue(SP_VMS).known_value()));
                 if (!insn)
                     break;
 

@@ -30,8 +30,8 @@ struct BtorTranslationPolicy;
 class BtorTranslationHooks {
   public:
   virtual ~BtorTranslationHooks() {}
-  virtual void startInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) = 0;
-  virtual void finishInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) = 0;
+  virtual void startInstruction(BtorTranslationPolicy* policy, SgAsmX86Instruction* insn) = 0;
+  virtual void finishInstruction(BtorTranslationPolicy* policy, SgAsmX86Instruction* insn) = 0;
   virtual void hlt(BtorTranslationPolicy* policy) = 0;
 };
 
@@ -362,8 +362,8 @@ struct BtorTranslationPolicy {
 
   void startBlock(uint64_t addr);
   void finishBlock(uint64_t addr);
-  void startInstruction(SgAsmx86Instruction* insn);
-  void finishInstruction(SgAsmx86Instruction* insn);
+  void startInstruction(SgAsmX86Instruction* insn);
+  void finishInstruction(SgAsmX86Instruction* insn);
 
   /** Reads from a named register. */
   template<size_t Len/*bits*/>

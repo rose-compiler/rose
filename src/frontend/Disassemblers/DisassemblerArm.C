@@ -7,7 +7,10 @@
 #include "DisassemblerArm.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+namespace rose {
+namespace BinaryAnalysis {
+
+using namespace Diagnostics;
 
 /* See header file for full documentation. */
 
@@ -26,6 +29,9 @@ DisassemblerArm::init()
     set_alignment(4);
     set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_arm7()); // only a default
+
+    REG_IP = *get_registers()->lookup("r15");
+    REG_SP = *get_registers()->lookup("r13");
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the ArmDisassembler name space. */
@@ -40,7 +46,7 @@ DisassemblerArm::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
     /* The old ArmDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4]; /* all ARM instructions are 32 bits */
-    size_t tempsz = map->read(temp, start_va, sizeof temp, get_protection());
+    size_t tempsz = map->at(start_va).limit(sizeof temp).require(get_protection()).read(temp).size();
 
     /* Treat the bytes as a little-endian instruction. FIXME: This assumes a little-endian ARM system. */
     if (tempsz<4)
@@ -55,7 +61,7 @@ DisassemblerArm::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
     /* Note successors if necessary */
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->get_successors(&complete);
+        AddressSet suc2 = insn->getSuccessors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 
@@ -606,3 +612,6 @@ DisassemblerArm::disassemble()
       // DQ (11/29/2009): Avoid MSVC warning.
       return NULL;
 }
+
+} // namespace
+} // namespace

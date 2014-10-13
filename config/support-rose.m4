@@ -123,6 +123,7 @@ AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 # Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
+ROSE_CONFIGURE_SECTION([GNU Fortran])
 # DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
@@ -227,6 +228,21 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
 # ************************************************************
+# Option to turn on a special mode of memory pools: no reuse of deleted memory. 
+# This is useful to track AST nodes during transformation, otherwise the same memory may be reused
+# by multiple different AST nodes. 
+# Liao 8/13/2014
+# ************************************************************
+
+AC_ARG_ENABLE(memoryPoolNoReuse, AS_HELP_STRING([--enable-memory-pool-no-reuse], [Enable special memory pool model: no reuse of deleted memory (default is to reuse memory)]))
+AM_CONDITIONAL(ROSE_USE_MEMORY_POOL_NO_REUSE, [test "x$enable_memory_pool_no_reuse" = xyes])
+if test "x$enable_memory_pool_no_reuse" = "xyes"; then
+  AC_MSG_WARN([Turn on a special mode in memory pools: no reuse of deleted memory blocks.])
+  AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
+fi
+
+
+# ************************************************************
 # Option to control the size of the generated files by ROSETTA
 # ************************************************************
 
@@ -234,7 +250,7 @@ AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_
 AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
-  AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
+  AC_MSG_WARN([Using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR.])
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
@@ -274,6 +290,7 @@ else
   ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
 fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
 # DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
@@ -1453,6 +1470,10 @@ AC_SUBST(absolute_path_srcdir)
 res_top_src=$(cd "$srcdir" && pwd -P)
 AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
 
+# kelly64 (6/26/2013): Compass2 xml configuration files require fully-resolved
+#                      absolute paths.
+AC_SUBST(res_top_src)
+
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
 # tree) from Automake because the needed include file does not exist when
@@ -1706,8 +1727,9 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/experimental-fortran-parser/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -1758,6 +1780,7 @@ src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
 src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
+src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
@@ -1862,6 +1885,7 @@ projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
+projects/BinaryCloneDetection/compression/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
@@ -2262,12 +2286,73 @@ projects/compass2/docs/Makefile
 projects/compass2/docs/asciidoc/Makefile
 projects/compass2/docs/doxygen/doxygen.config
 projects/compass2/docs/doxygen/Makefile
+projects/compass2/share/xml/compass_parameters.xml
+projects/compass2/tests/checkers/asynchronous_signal_handler/compass_parameters.xml
+projects/compass2/tests/checkers/asynchronous_signal_handler/Makefile
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/no_vfork/Makefile
+projects/compass2/tests/checkers/no_vfork/compass_parameters.xml
+projects/compass2/tests/checkers/no_variadic_functions/Makefile
+projects/compass2/tests/checkers/no_variadic_functions/compass_parameters.xml
+projects/compass2/tests/checkers/no_goto/Makefile
+projects/compass2/tests/checkers/no_goto/compass_parameters.xml
+projects/compass2/tests/checkers/floating_point_exact_comparison/Makefile
+projects/compass2/tests/checkers/floating_point_exact_comparison/compass_parameters.xml
+projects/compass2/tests/checkers/no_rand/Makefile
+projects/compass2/tests/checkers/no_rand/compass_parameters.xml
+projects/compass2/tests/checkers/allocate_and_free_in_the_same_module/Makefile
+projects/compass2/tests/checkers/allocate_and_free_in_the_same_module/compass_parameters.xml
+projects/compass2/tests/checkers/discard_assignment/Makefile
+projects/compass2/tests/checkers/discard_assignment/compass_parameters.xml
+projects/compass2/tests/checkers/explicit_test_for_non_boolean_value/Makefile
+projects/compass2/tests/checkers/explicit_test_for_non_boolean_value/compass_parameters.xml
+projects/compass2/tests/checkers/data_member_access/Makefile
+projects/compass2/tests/checkers/data_member_access/compass_parameters.xml
+projects/compass2/tests/checkers/unary_minus/Makefile
+projects/compass2/tests/checkers/unary_minus/compass_parameters.xml
+projects/compass2/tests/checkers/pointer_comparison/Makefile
+projects/compass2/tests/checkers/pointer_comparison/compass_parameters.xml
+projects/compass2/tests/checkers/do_not_delete_this/Makefile
+projects/compass2/tests/checkers/do_not_delete_this/compass_parameters.xml
+projects/compass2/tests/checkers/size_of_pointer/Makefile
+projects/compass2/tests/checkers/size_of_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/float_for_loop_counter/Makefile
+projects/compass2/tests/checkers/float_for_loop_counter/compass_parameters.xml
+projects/compass2/tests/checkers/ternary_operator/Makefile
+projects/compass2/tests/checkers/ternary_operator/compass_parameters.xml
+projects/compass2/tests/checkers/forbidden_functions/Makefile
+projects/compass2/tests/checkers/forbidden_functions/compass_parameters.xml
+projects/compass2/tests/checkers/magic_number/Makefile
+projects/compass2/tests/checkers/magic_number/compass_parameters.xml
+projects/compass2/tests/checkers/dangerous_overload/Makefile
+projects/compass2/tests/checkers/dangerous_overload/compass_parameters.xml
+projects/compass2/tests/checkers/comma_operator/Makefile
+projects/compass2/tests/checkers/comma_operator/compass_parameters.xml
+projects/compass2/tests/checkers/byte_by_byte_structure_comparison/Makefile
+projects/compass2/tests/checkers/byte_by_byte_structure_comparison/compass_parameters.xml
+projects/compass2/tests/checkers/boolean_is_has/Makefile
+projects/compass2/tests/checkers/boolean_is_has/compass_parameters.xml
+projects/compass2/tests/checkers/dead_function/Makefile
+projects/compass2/tests/checkers/dead_function/compass_parameters.xml
+projects/compass2/tests/checkers/default_argument/Makefile
+projects/compass2/tests/checkers/default_argument/compass_parameters.xml
 projects/compass2/tests/checkers/function_pointer/Makefile
 projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/function_prototype/Makefile
+projects/compass2/tests/checkers/function_prototype/compass_parameters.xml
+projects/compass2/tests/checkers/function_with_multiple_returns/Makefile
+projects/compass2/tests/checkers/function_with_multiple_returns/compass_parameters.xml
+projects/compass2/tests/checkers/global_variables/Makefile
+projects/compass2/tests/checkers/global_variables/compass_parameters.xml
 projects/compass2/tests/checkers/keyword_macro/Makefile
 projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
+projects/compass2/tests/checkers/non_global_cpp_directive/Makefile
+projects/compass2/tests/checkers/non_global_cpp_directive/compass_parameters.xml
+projects/compass2/tests/checkers/non_static_array_size/Makefile
+projects/compass2/tests/checkers/non_static_array_size/compass_parameters.xml
+projects/compass2/tests/checkers/variable_name_similarity/Makefile
+projects/compass2/tests/checkers/variable_name_similarity/compass_parameters.xml
 projects/compass2/tests/core/Makefile
 projects/compass2/tests/core/compass_parameters.xml
 ])

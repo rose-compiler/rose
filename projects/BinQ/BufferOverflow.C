@@ -33,7 +33,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
   ROSE_ASSERT(node);
   ROSE_ASSERT(node->get_SgNode());
   //cerr << " bufferoverflow->run " << node->get_name() << endl;
-  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* asmNode = isSgAsmX86Instruction(node->get_SgNode());
   if (asmNode==NULL)
     return false;
 
@@ -52,7 +52,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
       pre = getPredecessor(pre);
       if (pre==NULL)
 	break;
-      SgAsmx86Instruction* asmPre = isSgAsmx86Instruction(pre->get_SgNode());
+      SgAsmX86Instruction* asmPre = isSgAsmX86Instruction(pre->get_SgNode());
       if (asmPre && (asmPre->get_kind() == x86_mov || asmPre->get_kind() == x86_push)) {
 	foundMov = true;
 	if (asmPre->get_kind() == x86_mov) {
@@ -89,7 +89,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
       //cerr << " ----------- Getting successor for " << aft->get_name() << endl;
       aft = getSuccessor(aft);
       ROSE_ASSERT(aft);
-      SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+      SgAsmX86Instruction* asmAft = isSgAsmX86Instruction(aft->get_SgNode());
       if (asmAft->get_kind() == x86_mov) {
 	foundMov = true;
 	uint64_t address_of_var=0;
@@ -171,7 +171,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 	    SgGraphNode* aft = node;
 	    while (foundMov!=true && sameParents(node, aft)) {
 	      aft = getSuccessor(aft);
-	      SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+	      SgAsmX86Instruction* asmAft = isSgAsmX86Instruction(aft->get_SgNode());
 	      if (asmAft->get_kind() == x86_add) {
 		bool memRef = false, regRef = false;
 		std::pair<X86RegisterClass, int> code;

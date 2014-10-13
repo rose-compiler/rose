@@ -4,9 +4,10 @@
 #include "BinaryControlFlow.h"
 #include "FindRegisterDefs.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
-typedef BinaryAnalysis::ControlFlow::Graph CFG;
+typedef ControlFlow::Graph CFG;
 typedef boost::graph_traits<CFG>::vertex_descriptor CFGVertex;
 typedef FindRegisterDefs::Policy Policy;
 typedef X86InstructionSemantics<Policy, FindRegisterDefs::ValueType> Semantics;
@@ -19,7 +20,7 @@ evaluate_bblock(SgAsmBlock *bblock, Policy &policy)
     Semantics semantics(policy);
     const SgAsmStatementPtrList &insns = bblock->get_statementList();
     for (size_t i=0; i<insns.size(); ++i) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns[i]);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insns[i]);
         if (insn) {
             try {
                 semantics.processInstruction(insn);
@@ -36,7 +37,7 @@ solve_flow_equation_iteratively(SgAsmFunction *func)
 #if 1
     std::cerr <<"ROBB: solving flow equations for function " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
 #endif
-    BinaryAnalysis::ControlFlow cfg_analyzer;
+    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
     CFG cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(func);
 
     CFGVertex entry_vertex = 0;

@@ -442,7 +442,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     if (name_parent!=recursiveFunctionName)
       continue;
 
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(internal);
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(internal);
 
     if (inst) {
 #ifndef _MSC_VER
@@ -516,7 +516,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
         //cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
         error=true;
       }
-      ROSE_ASSERT(hex_name==nameL);
+      //ROSE_ASSERT(hex_name==nameL);
     }
         if (!error)
     myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<
@@ -655,7 +655,7 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
   }
 
   string output = "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + edgeLabel  + "\"" + "];\n";
-  SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
+  SgAsmX86Instruction* contrl = isSgAsmX86Instruction(source->get_SgNode());
   if (contrl) {
     // we use either dest or dest_list
     // dest is used for single destinations during cfg run
@@ -715,8 +715,8 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
   }
 
   if (!(forward_analysis)) {
-    SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(source->get_SgNode());
-    SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(target->get_SgNode());
+    SgAsmX86Instruction* thisNode = isSgAsmX86Instruction(source->get_SgNode());
+    SgAsmX86Instruction* nextNode = isSgAsmX86Instruction(target->get_SgNode());
     if (thisNode && nextNode) {
       SgAsmFunction* f_1 = isSgAsmFunction(thisNode->get_parent());
       SgAsmFunction* f_2 = isSgAsmFunction(nextNode->get_parent());

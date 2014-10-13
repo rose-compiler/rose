@@ -13,7 +13,7 @@
 #include <sawyer/IntervalMap.h>
 #include <sawyer/Map.h>
 
-// Documented elsewhere
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Binary instruction semantics.
@@ -89,7 +89,7 @@ namespace BinaryAnalysis {
  *  @code
  *      // user code
  *      #include <IntervalSemantics.h>
- *      using namespace BinaryAnalysis::InstructionSemantics2;
+ *      using namespace rose::BinaryAnalysis::InstructionSemantics2;
  *      BaseSemantics::SValuePtr value = IntervalSemantics::SValue::instance();
  *      // no need to ever delete the object that 'value' points to
  *  @endcode
@@ -239,8 +239,8 @@ namespace BinaryAnalysis {
  *
  *  @section IS5 Other major changes
  *
- *  The new API exists in the BinaryAnalysis::InstructionSemantics2 name space and can coexist with the original API in
- *  BinaryAnalysis::InstructionSemantics&mdash;a program can use both APIs at the same time.
+ *  The new API exists in the rose::BinaryAnalysis::InstructionSemantics2 name space and can coexist with the original API in
+ *  rose::BinaryAnalysis::InstructionSemantics&mdash;a program can use both APIs at the same time.
  *
  *  The mapping of class names (and some method) from old API to new API is:
  *  <ul>
@@ -280,12 +280,12 @@ namespace BinaryAnalysis {
  *
  *  @code
  *   // New API 
- *   using namespace BinaryAnalysis::InstructionSemantics2;
+ *   using namespace rose::BinaryAnalysis::InstructionSemantics2;
  *   BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance();
  *   BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
  *
  *   // Old API for comparison
- *   using namespace BinaryAnalysis::InstructionSemantics;
+ *   using namespace rose::BinaryAnalysis::InstructionSemantics;
  *   typedef SymbolicSemantics::Policy<> Policy;
  *   Policy policy;
  *   X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> semantics(policy);
@@ -297,7 +297,7 @@ namespace BinaryAnalysis {
  *  @code
  *   // New API, constructing the lattice from bottom up.
  *   // Almost copied from SymbolicSemantics::RiscOperators::instance()
- *   using namespace BinaryAnalysis::InstructionSemantics2;
+ *   using namespace rose::BinaryAnalysis::InstructionSemantics2;
  *   BaseSemantics::SValuePtr protoval = MySemanticValue::instance();
  *   BaseSemantics::RegisterStatePtr regs = BaseSemantics::RegisterStateX86::instance(protoval);
  *   BaseSemantics::MemoryStatePtr mem = SymbolicSemantics::MemoryState::instance(protoval);
@@ -308,7 +308,7 @@ namespace BinaryAnalysis {
  *   // components as easily, and the implementation of MySemanticValue would certainly have been
  *   // more complex, not to mention that it wasn't even possible for end users to always correctly
  *   // override a particular method by subclassing.
- *   using namespace BinaryAnalysis::InstructionSemantics;
+ *   using namespace rose::BinaryAnalysis::InstructionSemantics;
  *   typedef SymbolicSemantics::Policy<SymbolicSemantics::State, MySemanticValue> Policy;
  *   Policy policy;
  *   X86InstructionSemantics<Policy, MySemanticValue> semantics(policy);
@@ -665,8 +665,8 @@ typedef Pointer<class SValue> SValuePtr;
  *  data in intervals, etc.
  *
  *  Semantics value objects are allocated on the heap and reference counted.  The BaseSemantics::SValue is an abstract class
- *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
- *  together.*/
+ *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
+ *  fit together.*/
 class SValue {
 public:
     long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
@@ -801,7 +801,7 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
- *  BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
+ *  rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
 protected:
     SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
@@ -856,7 +856,17 @@ public:
     void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
     /** @} */
 
-    /** Set all registers to distinct undefined values. */
+    /** Removes stored values from the register state.
+     *
+     *  Depending on the register state implementation, this could either store new, distinct undefined values in each
+     *  register, or it could simply erase all information about stored values leaving the register state truly empty. For
+     *  instance, @ref RegisterStateX86, which stores register values using fixed length arrays assigns new undefined values to
+     *  each element of those arrays, whereas RegisterStateGeneric, which uses variable length arrays to store information
+     *  about a dynamically changing set of registers, clears its arrays to zero length.
+     *
+     *  Register states can also be initialized by clearing them or by explicitly writing new values into each desired
+     *  register (or both). See @ref RegisterStateGeneric::initialize_nonoverlapping for one way to initialize that register
+     *  state. */
     virtual void clear() = 0;
 
     /** Set all registers to the zero. */
@@ -955,17 +965,18 @@ public:
 
 protected:
     Registers registers;                        /**< Values for registers that have been accessed. */
+    bool coalesceOnRead;                        /**< If set, do not modify register representations on readRegister. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : RegisterState(protoval, regdict) {
+        : RegisterState(protoval, regdict), coalesceOnRead(true) {
         clear();
     }
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), registers(other.registers) {
+        : RegisterState(other), registers(other.registers), coalesceOnRead(true) {
         deep_copy_values();
     }
 
@@ -1137,6 +1148,35 @@ public:
      *  clear_latest_writer()), or no data has ever been written to the register, or data has been written but no writer was
      *  specified. */
     virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const;
+
+    /** Whether reading modifies representation.  When the @ref readRegister method is called to obtain a value for a desired
+     *  register that overlaps with some (parts of) registers that already exist in this register state we can proceed in two
+     *  ways. In both cases the return value will include data that's already stored, but the difference is in how we store the
+     *  returned value in the register state: (1) we can erase the (parts of) existing registers that overlap and store the
+     *  desired register and store the returned value so that the register we just read appears as one atomic value, or (2) we
+     *  can keep the existing registers and write only those parts of the return value that fall between the gaps.
+     *
+     *  If the coalesceOnRead property is set, then the returned value is stored atomically even when the value might be a
+     *  function of values that are already stored. Otherwise, existing registerss are not rearranged and only those parts of
+     *  the return value that fall into the gaps between existing registers are stored.
+     *
+     *  The set/clear modifiers return the previous value of this property.
+     *
+     * @{ */
+    virtual bool get_coalesceOnRead() { return coalesceOnRead; }
+    virtual bool set_coalesceOnRead(bool b=true) { bool retval=coalesceOnRead; coalesceOnRead=b; return retval; }
+    virtual bool clear_coalescOnRead() { return set_coalesceOnRead(false); }
+    /** @} */
+
+    /** Temporarily turn off coalescing on read.  Original state is restored by the destructor. */
+    class NoCoalesceOnRead {
+        RegisterStateGeneric *rstate_;
+        bool oldValue_;
+    public:
+        /** Turn off coalesceOnRead for the specified register state. */
+        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate): rstate_(rstate), oldValue_(rstate->clear_coalescOnRead()) {}
+        ~NoCoalesceOnRead() { rstate_->set_coalesceOnRead(oldValue_); }
+    };
     
 protected:
     void deep_copy_values();
@@ -1253,6 +1293,9 @@ protected:
     virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+
+    // Generate a name for initial values.
+    virtual std::string initialValueName(const RegisterDescriptor&) const;
 };
 
 
@@ -1264,8 +1307,8 @@ protected:
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
- *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics2
- *  namespace for an overview of how the parts fit together.*/
+ *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the
+ *  rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
@@ -1728,7 +1771,8 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  vertex.
  *
  *  State objects are allocated on the heap and reference counted.  The BaseSemantics::State is an abstract class that defines
- *  the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.  */
+ *  the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
+ *  together.  */
 class State: public boost::enable_shared_from_this<State> {
 protected:
     SValuePtr protoval;                         /**< Initial value used to create additional values as needed. */
@@ -1931,8 +1975,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  vectors. Operators extract(), unsignedExtend(), signExtend(), readRegister(), and readMemory() fall into this category.
  *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
- *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
- *  together. */
+ *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
+ *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
 protected:
     SValuePtr protoval;                         /**< Prototypical value used for its virtual constructors. */
@@ -2373,21 +2417,24 @@ public:
  *  counted; they are owned by the dispatcher and deleted when the dispatcher is destroyed. [Robb Matzke 2013-03-04])
  *
  *  Dispatcher objects are allocated on the heap and reference counted.  The BaseSemantics::Dispatcher is an abstract class
- *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
- *  together. */
+ *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
+ *  fit together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 protected:
     RiscOperatorsPtr operators;
     const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
-    // instruction identifier, such as from SgAsmx86Instruction::get_kind(), and comes from the iproc_key() virtual method.
+    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
+    // Prototypical constructor
+    Dispatcher(): regdict(NULL) {}
+
     explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
         assert(operators!=NULL);
     }
@@ -2543,7 +2590,9 @@ std::ostream& operator<<(std::ostream&, const State::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const RiscOperators&);
 std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace
+
 #endif

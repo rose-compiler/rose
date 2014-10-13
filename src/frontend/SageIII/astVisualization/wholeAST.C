@@ -537,6 +537,15 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
 #else
   // DQ (3/6/2007): This builds a default set of mappings of edge colors and edge options to edges.
 
+#if 0
+     ROSE_ASSERT(from != NULL);
+     printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): from = %p = %s \n",from,from->class_name().c_str());
+     ROSE_ASSERT(to != NULL);
+  // printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): to = %p = %s \n",to,to->class_name().c_str());
+     printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): SgType::static_variant = %d to = %p \n",(int)SgType::static_variant,to);
+     printf ("In CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(): to->variantT() = %d \n",(int)(to->variantT()));
+#endif
+
   // Color all edges that lead to a SgType (this is overwritten for the parent edges)
      SgType* type = isSgType(to);
      if (type != NULL)
@@ -595,7 +604,9 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
    {
      ROSE_ASSERT(node!= NULL);
 
-  // printf ("CustomMemoryPoolDOTGenerationData::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#if 0
+     printf ("CustomMemoryPoolDOTGenerationData::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
      bool ignoreThisIRnode = false;
   // bool ignoreThisIRnode = true;
@@ -643,6 +654,15 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
             // and do something like include that IR node in the AST?
                SgNode* n             = (*i).first;
                std::string edgelabel = (*i).second;
+#if 0
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: node->variantT() = %d \n",(int)(node->variantT()));
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: n = %p \n",n);
+               printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: edgelabel = %s \n",edgelabel.c_str());
+               if (n != NULL)
+                  {
+                    printf ("In CustomMemoryPoolDOTGenerationData::visit(): top of while loop: n->variantT() = %d \n",(int)(n->variantT()));
+                  }
+#endif
 #if 0
                if (isSgFunctionDeclaration(node) != NULL)
                   {
@@ -702,6 +722,14 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                             {
                            // DQ (3/5/2007): Support for edge options
                            // These are both virtual function calls
+#if 0
+                              printf ("In CustomMemoryPoolDOTGenerationData::visit(): calling additionalEdgeOptions(): node->variantT() = %d \n",(int)(node->variantT()));
+                              printf ("In CustomMemoryPoolDOTGenerationData::visit(): calling additionalEdgeOptions(): n = %p \n",n);
+                              if (n != NULL)
+                                 {
+                                   printf ("In CustomMemoryPoolDOTGenerationData::visit(): calling additionalEdgeOptions(): n->variantT() = %d \n",(int)(n->variantT()));
+                                 }
+#endif
                               std::string additionalEdgeOption = additionalEdgeOptions(node,n,edgelabel);
                               std::string additionalEdgeLabel  = additionalEdgeInfo(node,n,edgelabel);
 
@@ -1563,6 +1591,18 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     char value = charVal->get_value();
                     labelWithSourceCode += string("\\n alpha/numeric value = ") + (isalnum(value) ? "true" : "false") + "  ";
+                  }
+
+            // DQ (8/13/2014): Added debugging output to support C++11 unicode specific details.
+               SgStringVal* stringVal = isSgStringVal(valueExp);
+               if (stringVal != NULL)
+                  {
+                    bool is_wchar     = stringVal->get_wcharString();
+                    bool is_16Bitchar = stringVal->get_is16bitString();
+                    bool is_32Bitchar = stringVal->get_is32bitString();
+                    labelWithSourceCode += string("\\n is_wchar = ") + (is_wchar ? "true" : "false") + "  ";
+                    labelWithSourceCode += string("\\n is_16Bitchar = ") + (is_16Bitchar ? "true" : "false") + "  ";
+                    labelWithSourceCode += string("\\n is_32Bitchar = ") + (is_32Bitchar ? "true" : "false") + "  ";
                   }
 
             // DQ (10/4/2010): Output the value so that we can provide more information.

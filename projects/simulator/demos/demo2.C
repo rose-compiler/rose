@@ -35,6 +35,8 @@
 #include "RSIM_Linux32.h"
 #include "SignAnalysisExample.h"
 
+using namespace rose;
+
 /** Runs sign analysis.
  *
  *  Since this demo runs the sign analysis in synchrony with the simulation, all we need to do is attach the sign analysis to
@@ -63,7 +65,7 @@ public:
 
     /* The instruction is fed to the sign analysis, updating its state. */
     virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
         if (enabled && insn) {
             semantics.processInstruction(insn);
             std::cerr <<policy;

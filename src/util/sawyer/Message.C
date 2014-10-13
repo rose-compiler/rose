@@ -304,10 +304,10 @@ Multiplexer::addDestination(const DestinationPtr &destination) {
     std::vector<DestinationPtr> work(1, destination);
     while (!work.empty()) {
         DestinationPtr d = work.back();
-        if (get(d)==this)
+        if (getRawPointer(d)==this)
             throw std::runtime_error("cycle introduced in Sawyer::Multiplexer tree");
         work.pop_back();
-        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(get(d)))
+        if (Multiplexer *seq = dynamic_cast<Multiplexer*>(getRawPointer(d)))
             work.insert(work.end(), seq->destinations_.begin(), seq->destinations_.end());
     }
     
@@ -432,14 +432,20 @@ void HighWater::emitted(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Gang::GangMap Gang::gangs_ __attribute__((init_priority(65534)));
+// This is a pointer so that it doesn't depend on order of global variable initialization. We'll allocate it the first time we
+// need it.
+Gang::GangMap *Gang::gangs_ = NULL;
 
 GangPtr Gang::instanceForId(int id) {
-    return gangs_.insertMaybe(id, Gang::instance());
+    if (!gangs_)
+        gangs_ = new GangMap;
+    return gangs_->insertMaybe(id, Gang::instance());
 }
 
 void Gang::removeInstance(int id) {
-    gangs_.erase(id);
+    if (!gangs_)
+        gangs_ = new GangMap;
+    gangs_->erase(id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -479,7 +485,7 @@ Prefix::setProgramName() {
         programName_ = name;
     }
 #endif
-    if (programName_.getOrElse("").empty())
+    if (programName_.orElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
 
@@ -591,8 +597,8 @@ UnformattedSink::maybeTerminatePrior(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (gang()->isValid() && gang()->id() != mesg.id()) {
-            retval = gang()->properties().interruptionStr.getOrDefault() +
-                     gang()->properties().lineTermination.getOrDefault();
+            retval = gang()->properties().interruptionStr.orDefault() +
+                     gang()->properties().lineTermination.orDefault();
             gang()->clear();
         }
     }
@@ -620,12 +626,12 @@ UnformattedSink::maybeFinal(const Mesg &mesg, const MesgProps &props) {
     std::string retval;
     if (!mesg.isEmpty()) {
         if (mesg.isCanceled()) {
-            retval = props.cancelationStr.getOrDefault() +
-                     props.lineTermination.getOrDefault();
+            retval = props.cancelationStr.orDefault() +
+                     props.lineTermination.orDefault();
             gang()->clear();
         } else if (mesg.isComplete()) {
-            retval = props.completionStr.getOrDefault() +
-                     props.lineTermination.getOrDefault();
+            retval = props.completionStr.orDefault() +
+                     props.lineTermination.orDefault();
             gang()->clear();
         } else {
             gang()->emitted(mesg, props);
@@ -736,7 +742,7 @@ SAWYER_EXPORT void
 SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
     if (mesg.isComplete()) {
         int priority = LOG_ERR;
-        switch (props.importance.getOrElse(ERROR)) {
+        switch (props.importance.orElse(ERROR)) {
             case DEBUG: priority = LOG_DEBUG;   break;
             case TRACE: priority = LOG_DEBUG;   break;
             case WHERE: priority = LOG_DEBUG;   break;
@@ -951,12 +957,16 @@ SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
-    if ((size_t)imp>=streams_.size() || NULL==streams_[imp]) {
+    if ((size_t)imp>=streams_.size() || NULL==streams_[imp].get()) {
         // If you're looking at this line in a debugger it's probably because you're trying to use a Stream from a
         // default-constructed Facility.  Facilities that are allocated statically and/or at global scope should probably
         // either be constructed with Facility(const std::string&) or initialized by assigning some other facility to them.
         // Another possibility is that you provided Sawyer::Message::merr as the destination before libsawyer had a chance to
         // initialize that global variable. You can work around that problem by calling Sawyer::initializeLibrary() first.
+        //
+        // ROSE users: librose does not currently (2014-09-09) initialize libsawyer until the ROSE frontend() is called. If
+        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by
+        // invoking rose::Diagnostics::initialize() early in "main".
         throw std::runtime_error("stream " + stringifyImportance(imp) +
                                  (name_.empty() ? std::string() : " in facility \"" + name_ + "\"") +
                                  " is not initialized yet");
@@ -1387,11 +1397,11 @@ Facilities::print(std::ostream &log) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SAWYER_EXPORT DestinationPtr merr;
-SAWYER_EXPORT Facility mlog __attribute__((init_priority(65534))) ("sawyer");
-SAWYER_EXPORT Facilities mfacilities __attribute__((init_priority(65534)));
+SAWYER_EXPORT DestinationPtr merr SAWYER_STATIC_INIT;
+SAWYER_EXPORT Facility mlog SAWYER_STATIC_INIT ("sawyer");
+SAWYER_EXPORT Facilities mfacilities SAWYER_STATIC_INIT;
 SAWYER_EXPORT bool isInitialized;
-SAWYER_EXPORT SProxy assertionStream;
+SAWYER_EXPORT SProxy assertionStream SAWYER_STATIC_INIT;
 
 SAWYER_EXPORT bool
 initializeLibrary() {

@@ -3,6 +3,7 @@
 
 #include <sawyer/Assert.h>
 #include <sawyer/Sawyer.h>
+#include <boost/integer_traits.hpp>
 
 namespace Sawyer {
 namespace Container {
@@ -62,6 +63,11 @@ public:
         return 0==size ? Interval() : Interval::hull(lo, lo+size-1);
     }
 
+    /** Construct an interval that covers the entire domain. */
+    static Interval whole() {
+        return hull(boost::integer_traits<T>::const_min, boost::integer_traits<T>::const_max);
+    }
+
     /** Assignment from an interval. */
     Interval& operator=(const Interval &other) {
         lo_ = other.lo_;
@@ -94,7 +100,7 @@ public:
     bool isSingleton() const { return lo_ == hi_; }
 
     /** True if interval covers entire space. */
-    bool isWhole() const { return !isEmpty() && hi_ + 1 == lo_; }
+    bool isWhole() const { return lo_==boost::integer_traits<T>::const_min && hi_==boost::integer_traits<T>::const_max; }
 
     /** True if two intervals overlap.
      *
@@ -166,12 +172,18 @@ public:
 
     /** Intersection.
      *
-     *  Returns an interval which is the intersection of this interval with another. */
+     *  Returns an interval which is the intersection of this interval with another.
+     *
+     * @{ */
     Interval intersection(const Interval &other) const {
         if (isEmpty() || other.isEmpty() || greatest()<other.least() || least()>other.greatest())
             return Interval();
         return Interval::hull(std::max(least(), other.least()), std::min(greatest(), other.greatest()));
     }
+    Interval operator&(const Interval &other) const {
+        return intersection(other);
+    }
+    /** @} */
 
     /** Hull.
      *
@@ -234,7 +246,28 @@ public:
             return hull(right);
         }
     }
-    
+
+    // The following trickery is to allow things like "if (x)" to work but without having an implicit
+    // conversion to bool which would cause no end of other problems.  This is fixed in C++11
+private:
+    typedef void(Interval::*unspecified_bool)() const;
+    void this_type_does_not_support_comparisons() const {}
+public:
+    /** Type for Boolean context.
+     *
+     *  Implicit conversion to a type that can be used in a boolean context such as an <code>if</code> or <code>while</code>
+     *  statement.  For instance:
+     *
+     * @code
+     *  if (Interval<unsigned> x = doSomething(...)) {
+     *     // this is reached only if x is non-empty
+     *  }
+     * @endcode
+     *
+     *  The inteval evaluates to true if it is non-empty, and false if it is empty. */
+    operator unspecified_bool() const {
+        return isEmpty() ? 0 : &Interval::this_type_does_not_support_comparisons;
+    }
 };
 
 } // namespace

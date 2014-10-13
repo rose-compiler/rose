@@ -12,6 +12,8 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
+using namespace rose::BinaryAnalysis;
+
 size_t RSIM_Thread::next_sequence_number = 1;
 
 /* Constructor */
@@ -78,11 +80,11 @@ RSIM_Thread::tracing(TracingFacility tf)
     return trace_mesg[tf];
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 RSIM_Thread::current_insn()
 {
     rose_addr_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(get_process()->get_instruction(ip));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(get_process()->get_instruction(ip));
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     return insn;
 }
@@ -676,10 +678,10 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s", func->get_name().c_str());
-            } else if (process->get_memory().exists(ip)) {
-                const MemoryMap::Segment &sgmt = process->get_memory().at(ip).value();
-                if (!sgmt.get_name().empty())
-                    mesg->more(" in memory region %s", sgmt.get_name().c_str());
+            } else if (process->get_memory().at(ip).exists()) {
+                const MemoryMap::Segment &sgmt = process->get_memory().find(ip)->value();
+                if (!sgmt.name().empty())
+                    mesg->more(" in memory region %s", sgmt.name().c_str());
             }
 
             if (bp_not_saved) {
@@ -760,7 +762,7 @@ RSIM_Thread::main()
             /* Find the instruction.  Callbacks might change the value of the EIP register, in which case we should re-fetch
              * the instruction. The pre-instruction callbacks will be invoked for each re-fetched instruction, but the
              * post-instruction callback is only invoked for the final instruction. */
-            SgAsmx86Instruction *insn = NULL;
+            SgAsmX86Instruction *insn = NULL;
             bool cb_status;
             do {
                 insn = current_insn();

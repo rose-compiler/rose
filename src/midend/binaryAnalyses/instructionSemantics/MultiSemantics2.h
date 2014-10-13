@@ -3,6 +3,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {                                // documented elsewhere
 namespace BinaryAnalysis {                      // documented elsewhere
 namespace InstructionSemantics2 {               // documented elsewhere
 
@@ -427,6 +428,7 @@ public:
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

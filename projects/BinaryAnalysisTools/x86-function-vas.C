@@ -6,6 +6,8 @@
 #include <cstring>
 #include <iostream>
 
+using namespace rose::BinaryAnalysis;
+
 int
 main(int argc, char *argv[])
 {
@@ -29,8 +31,8 @@ main(int argc, char *argv[])
     // Open the file
     rose_addr_t start_va = 0;
     MemoryMap map;
-    size_t file_size = map.insert_file(specimen_name, start_va);
-    map.mprotect(AddressInterval::baseSize(start_va, file_size), MemoryMap::MM_PROT_RX);
+    size_t file_size = map.insertFile(specimen_name, start_va);
+    map.at(start_va).limit(file_size).changeAccess(MemoryMap::EXECUTABLE, 0);
 
     // Try to disassemble every byte, and print the CALL/FARCALL targets
     InstructionMap insns;
@@ -39,7 +41,7 @@ main(int argc, char *argv[])
     for (rose_addr_t offset=0; offset<file_size; ++offset) {
         try {
             rose_addr_t insn_va = start_va + offset;
-            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, insn_va)))
+            if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(disassembler->disassembleOne(&map, insn_va)))
                 insns[insn_va] = insn;
         } catch (const Disassembler::Exception &e) {
             ++nerrors;

@@ -9,7 +9,7 @@
 #include "RoseBin_IDAPRO_buildTree.h"
 
 using namespace std;
-
+using namespace rose;
 using namespace RoseBin_Def;
 
 SgAsmType*

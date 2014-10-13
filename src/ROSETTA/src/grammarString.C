@@ -1226,3 +1226,733 @@ GrammarString::buildDestructorSource()
      return returnString;
    }
 
+string
+GrammarString::containerElementTypeString(Terminal & node) const
+   {
+  // DQ (10/8/2014): This returns the name of the type where this data member is a container.
+  // The container type is required as part of ATerm support in reading the ATerms and generating
+  // the ROSE IR.
+
+     string typenameString = this->getTypeNameString();
+     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+
+     string returnString = "";
+
+#if 0
+     printf ("In GrammarString::containerElementTypeString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
+#endif
+
+  // ROSE_ASSERT(typeKind == Terminal::SGCLASS_POINTER_LIST);
+     if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+        {
+       // return the case using a switch over the types (for now).
+          if (typenameString == "SgFilePtrList")
+             {
+               returnString = "SgFile";
+               goto done;
+             }
+
+          if (typenameString == "SgDirectoryPtrList")
+             {
+               returnString = "SgDirectory";
+               goto done;
+             }
+
+          if (typenameString == "SgTemplateArgumentPtrList")
+             {
+               returnString = "SgTemplateArgument";
+               goto done;
+             }
+
+          if (typenameString == "SgTemplateParameterPtrList")
+             {
+               returnString = "SgTemplateParameter";
+               goto done;
+             }
+
+          if (typenameString == "SgJavaImportStatementPtrList")
+             {
+               returnString = "SgJavaImportStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgClassDeclarationPtrList")
+             {
+               returnString = "SgClassDeclaration";
+               goto done;
+             }
+
+          if (typenameString == "SgVarRefExpPtrList")
+             {
+            // returnString = "SgExpression";
+               returnString = "SgVarRefExp";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedStatementPtrList")
+             {
+               returnString = "SgUntypedStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedDeclarationStatementPtrList")
+             {
+               returnString = "SgUntypedDeclarationStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedFunctionDeclarationPtrList")
+             {
+               returnString = "SgUntypedFunctionDeclaration";
+               goto done;
+             }
+
+          if (typenameString == "SgDeclarationStatementPtrList")
+             {
+               returnString = "SgDeclarationStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgStatementPtrList")
+             {
+               returnString = "SgStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgInitializedNamePtrList")
+             {
+               returnString = "SgInitializedName";
+               goto done;
+             }
+
+          if (typenameString == "SgOmpClausePtrList")
+             {
+               returnString = "SgOmpClause";
+               goto done;
+             }
+
+          if (typenameString == "SgKeyDatumPairPtrList")
+             {
+               returnString = "SgKeyDatumPair";
+               goto done;
+             }
+
+          if (typenameString == "SgJavaMemberValuePairPtrList")
+             {
+               returnString = "SgJavaMemberValuePair";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmStatementPtrList")
+             {
+               returnString = "SgAsmStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmExpressionPtrList")
+             {
+               returnString = "SgAsmExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedInitializedNamePtrList")
+             {
+               returnString = "SgUntypedInitializedName";
+               goto done;
+             }
+
+          if (typenameString == "SgExpressionPtrList")
+             {
+               returnString = "SgExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgRenamePairPtrList")
+             {
+               returnString = "SgRenamePair";
+               goto done;
+             }
+
+          if (typenameString == "SgInterfaceBodyPtrList")
+             {
+               returnString = "SgInterfaceBody";
+               goto done;
+             }
+
+          if (typenameString == "SgCommonBlockObjectPtrList")
+             {
+               returnString = "SgCommonBlockObject";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmRegisterReferenceExpressionPtrList")
+             {
+               returnString = "SgAsmRegisterReferenceExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmNEEntryPointPtrList")
+             {
+               returnString = "SgAsmNEEntryPoint";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmNERelocEntryPtrList")
+             {
+               returnString = "SgAsmNERelocEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmLEPageTableEntryPtrList")
+             {
+               returnString = "SgAsmLEPageTableEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmLEEntryPointPtrList")
+             {
+               returnString = "SgAsmLEEntryPoint";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmLERelocEntryPtrList")
+             {
+            // This is a typedef in Node.code: 
+            //      typedef SgAsmNERelocEntry SgAsmLERelocEntry;
+            // I think this is thus missing from the header files we use for this file.
+            // returnString = "SgAsmLERelocEntry";
+               returnString = "SgAsmNERelocEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmGenericSectionPtrList")
+             {
+               returnString = "SgAsmGenericSection";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmGenericHeaderPtrList")
+             {
+               returnString = "SgAsmGenericHeader";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymbolPtrList")
+             {
+               returnString = "SgAsmElfSymbol";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfRelocEntryPtrList")
+             {
+               returnString = "SgAsmElfRelocEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPEExportEntryPtrList")
+             {
+               returnString = "SgAsmPEExportEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSegmentTableEntryPtrList")
+             {
+               returnString = "SgAsmElfSegmentTableEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverEntryPtrList")
+             {
+               returnString = "SgAsmElfSymverEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverNeededEntryPtrList")
+             {
+               returnString = "SgAsmElfSymverNeededEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmCoffSymbolPtrList")
+             {
+               returnString = "SgAsmCoffSymbol";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPERVASizePairPtrList")
+             {
+               returnString = "SgAsmPERVASizePair";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPEImportDirectoryPtrList")
+             {
+               returnString = "SgAsmPEImportDirectory";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfMacroPtrList")
+             {
+               returnString = "SgAsmDwarfMacro";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfLinePtrList")
+             {
+               returnString = "SgAsmDwarfLine";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfCompilationUnitPtrList")
+             {
+               returnString = "SgAsmDwarfCompilationUnit";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfConstructPtrList")
+             {
+               returnString = "SgAsmDwarfConstruct";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPEImportItemPtrList")
+             {
+               returnString = "SgAsmPEImportItem";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmInterpretationPtrList")
+             {
+               returnString = "SgAsmInterpretation";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverDefinedEntryPtrList")
+             {
+               returnString = "SgAsmElfSymverDefinedEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverNeededAuxPtrList")
+             {
+               returnString = "SgAsmElfSymverNeededAux";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmGenericFilePtrList")
+             {
+               returnString = "SgAsmGenericFile";
+               goto done;
+             }
+
+
+          if (typenameString == "SgAsmElfSymverDefinedAuxPtrList")
+             {
+               returnString = "SgAsmElfSymverDefinedAux";
+               goto done;
+             }
+#if 0
+          if (typenameString == "SgAsmElfSymverDefinedAuxList")
+             {
+            // This node is a problem, not clear what to return.
+            // returnString = "SgAsmElfSymverDefinedAux";
+               returnString = "SgNode";
+               goto done;
+             }
+#endif
+#if 0
+          if (typenameString == "")
+             {
+               returnString = "*";
+               goto done;
+             }
+#endif
+
+          printf ("ERROR: In GrammarString::containerElementTypeString(): unhandled case: node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
+
+          done: ;
+#if 0
+             {
+            // returnString = "SgFile*";
+               returnString = typenameString + ": unimplemented";
+               printf ("ERROR: GrammarString::containerElementTypeString() note yet defined for container: typenameString = %s \n",typenameString.c_str());
+            // ROSE_ASSERT(false);
+             }
+#endif
+        }
+       else
+        {
+          printf ("ERROR: GrammarString::containerElementTypeString() only defined for Terminal::SGCLASS_POINTER_LIST type data members \n");
+          printf ("   --- typenameString = %s \n",typenameString.c_str());
+          ROSE_ASSERT(false);
+        }
+
+     return returnString;
+   }
+
+
+string
+GrammarString::containerAppendFunctionNameString(Terminal & node) const
+   {
+  // DQ (10/8/2014): This returns the name of the append function for the container.
+  // This is not standardized in ROSE (and shoudl be).
+
+     string typenameString = this->getTypeNameString();
+     Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
+
+  // Maybe this is the simplest way to handle this.
+  // string returnString = "append";
+  // string returnString = "get_listOfFile().push_back";
+     string returnString = string("get_") + this->getVariableNameString() + "().push_back";
+
+#if 0
+     printf ("In GrammarString::containerAppendFunctionNameString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
+#endif
+
+  // ROSE_ASSERT(typeKind == Terminal::SGCLASS_POINTER_LIST);
+     if (typeKind == Terminal::SGCLASS_POINTER_LIST)
+        {
+       // return the case using a switch over the types (for now).
+          if (typenameString == "SgFilePtrList")
+             {
+            // returnString = "SgFile";
+               goto done;
+             }
+
+          if (typenameString == "SgDirectoryPtrList")
+             {
+            // returnString = "SgDirectory";
+               goto done;
+             }
+
+          if (typenameString == "SgTemplateArgumentPtrList")
+             {
+            // returnString = "SgTemplateArgument";
+               goto done;
+             }
+
+          if (typenameString == "SgTemplateParameterPtrList")
+             {
+               // returnString = "SgTemplateParameter";
+               goto done;
+             }
+
+          if (typenameString == "SgJavaImportStatementPtrList")
+             {
+               // returnString = "SgJavaImportStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgClassDeclarationPtrList")
+             {
+               // returnString = "SgClassDeclaration";
+               goto done;
+             }
+
+          if (typenameString == "SgVarRefExpPtrList")
+             {
+               // returnString = "SgExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedStatementPtrList")
+             {
+               // returnString = "SgUntypedStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedDeclarationStatementPtrList")
+             {
+               // returnString = "SgUntypedDeclarationStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedFunctionDeclarationPtrList")
+             {
+               // returnString = "SgUntypedFunctionDeclaration";
+               goto done;
+             }
+
+          if (typenameString == "SgDeclarationStatementPtrList")
+             {
+               // returnString = "SgDeclarationStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgStatementPtrList")
+             {
+               // returnString = "SgStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgInitializedNamePtrList")
+             {
+               // returnString = "SgInitializedName";
+               goto done;
+             }
+
+          if (typenameString == "SgOmpClausePtrList")
+             {
+               // returnString = "SgOmpClause";
+               goto done;
+             }
+
+          if (typenameString == "SgKeyDatumPairPtrList")
+             {
+               // returnString = "SgKeyDatumPair";
+               goto done;
+             }
+
+          if (typenameString == "SgJavaMemberValuePairPtrList")
+             {
+               // returnString = "SgJavaMemberValuePair";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmStatementPtrList")
+             {
+               // returnString = "SgAsmStatement";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmExpressionPtrList")
+             {
+               // returnString = "SgAsmExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedInitializedNamePtrList")
+             {
+               // returnString = "SgUntypedInitializedName";
+               goto done;
+             }
+
+          if (typenameString == "SgExpressionPtrList")
+             {
+               // returnString = "SgExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgRenamePairPtrList")
+             {
+               // returnString = "SgRenamePair";
+               goto done;
+             }
+
+          if (typenameString == "SgInterfaceBodyPtrList")
+             {
+               // returnString = "SgInterfaceBody";
+               goto done;
+             }
+
+          if (typenameString == "SgCommonBlockObjectPtrList")
+             {
+               // returnString = "SgCommonBlockObject";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmRegisterReferenceExpressionPtrList")
+             {
+               // returnString = "SgAsmRegisterReferenceExpression";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmNEEntryPointPtrList")
+             {
+               // returnString = "SgAsmNEEntryPoint";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmNERelocEntryPtrList")
+             {
+               // returnString = "SgAsmNERelocEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmLEPageTableEntryPtrList")
+             {
+               // returnString = "SgAsmLEPageTableEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmLEEntryPointPtrList")
+             {
+               // returnString = "SgAsmLEEntryPoint";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmLERelocEntryPtrList")
+             {
+            // This is a typedef in Node.code: 
+            //      typedef SgAsmNERelocEntry SgAsmLERelocEntry;
+            // I think this is thus missing from the header files we use for this file.
+            // returnString = "SgAsmLERelocEntry";
+               // returnString = "SgAsmNERelocEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmGenericSectionPtrList")
+             {
+               // returnString = "SgAsmGenericSection";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmGenericHeaderPtrList")
+             {
+               // returnString = "SgAsmGenericHeader";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymbolPtrList")
+             {
+               // returnString = "SgAsmElfSymbol";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfRelocEntryPtrList")
+             {
+               // returnString = "SgAsmElfRelocEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPEExportEntryPtrList")
+             {
+               // returnString = "SgAsmPEExportEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSegmentTableEntryPtrList")
+             {
+               // returnString = "SgAsmElfSegmentTableEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverEntryPtrList")
+             {
+               // returnString = "SgAsmElfSymverEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverNeededEntryPtrList")
+             {
+               // returnString = "SgAsmElfSymverNeededEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmCoffSymbolPtrList")
+             {
+               // returnString = "SgAsmCoffSymbol";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPERVASizePairPtrList")
+             {
+               // returnString = "SgAsmPERVASizePair";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPEImportDirectoryPtrList")
+             {
+               // returnString = "SgAsmPEImportDirectory";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfMacroPtrList")
+             {
+               // returnString = "SgAsmDwarfMacro";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfLinePtrList")
+             {
+               // returnString = "SgAsmDwarfLine";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfCompilationUnitPtrList")
+             {
+               // returnString = "SgAsmDwarfCompilationUnit";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmDwarfConstructPtrList")
+             {
+               // returnString = "SgAsmDwarfConstruct";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmPEImportItemPtrList")
+             {
+               // returnString = "SgAsmPEImportItem";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmInterpretationPtrList")
+             {
+               // returnString = "SgAsmInterpretation";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverDefinedEntryPtrList")
+             {
+               // returnString = "SgAsmElfSymverDefinedEntry";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmElfSymverNeededAuxPtrList")
+             {
+               // returnString = "SgAsmElfSymverNeededAux";
+               goto done;
+             }
+
+          if (typenameString == "SgAsmGenericFilePtrList")
+             {
+               // returnString = "SgAsmGenericFile";
+               goto done;
+             }
+
+
+          if (typenameString == "SgAsmElfSymverDefinedAuxPtrList")
+             {
+               // returnString = "SgAsmElfSymverDefinedAux";
+               goto done;
+             }
+#if 0
+          if (typenameString == "SgAsmElfSymverDefinedAuxList")
+             {
+            // This node is a problem, not clear what to return.
+            // returnString = "SgAsmElfSymverDefinedAux";
+               returnString = "SgNode";
+               goto done;
+             }
+#endif
+#if 0
+          if (typenameString == "")
+             {
+               returnString = "*";
+               goto done;
+             }
+#endif
+
+          printf ("ERROR: In GrammarString::containerAppendFunctionNameString(): unhandled case: node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
+
+          done: ;
+#if 0
+             {
+            // returnString = "SgFile*";
+               returnString = typenameString + ": unimplemented";
+               printf ("ERROR: GrammarString::containerAppendFunctionNameString() note yet defined for container: typenameString = %s \n",typenameString.c_str());
+            // ROSE_ASSERT(false);
+             }
+#endif
+        }
+       else
+        {
+          printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for Terminal::SGCLASS_POINTER_LIST type data members \n");
+          printf ("   --- typenameString = %s \n",typenameString.c_str());
+          ROSE_ASSERT(false);
+        }
+
+     return returnString;
+   }
+

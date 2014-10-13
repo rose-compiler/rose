@@ -1,10 +1,17 @@
-#include "rose.h"
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
+
 #ifndef _MSC_VER
 #include "rose_getline.h" /* Mac OSX v10.6 does not have GNU getline() */
 #endif
 #include "SMTSolver.h"
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
+
+namespace rose {
+namespace BinaryAnalysis {
+
 
 std::ostream&
 operator<<(std::ostream &o, const SMTSolver::Exception &e)
@@ -190,3 +197,6 @@ SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const 
         exprs.push_back(expr);
     return satisfiable(exprs);
 }
+
+} // namespace
+} // namespace

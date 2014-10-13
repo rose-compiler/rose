@@ -1,6 +1,9 @@
 #include "sage3basic.h"
 #include "Partitioner.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 
 //class IpdUnparsser: public AsmUnparser {
 //protected:
@@ -75,3 +78,6 @@ Partitioner::IPDParser::unparse(std::ostream &output, SgNode *ast)
     if (ast)
         T1(output).traverse(ast);
 }
+
+} // namespace
+} // namespace

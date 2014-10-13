@@ -35,8 +35,8 @@ main(int argc, char *argv[], char *envp[])
     /* Watch for stack being executed. */
     rose_addr_t stack_base = 0xbffeb000;
     rose_addr_t stack_size = 0x00015000;
-    unsigned operation = MemoryMap::MM_PROT_READ;
-    unsigned access_type = MemoryMap::MM_PROT_EXEC;
+    unsigned operation = MemoryMap::READABLE;
+    unsigned access_type = MemoryMap::EXECUTABLE;
     RTS_Message facility(stderr, NULL);
     sim.install_callback(new RSIM_Tools::MemoryAccessWatcher(stack_base, stack_size, operation, access_type, &facility));
 

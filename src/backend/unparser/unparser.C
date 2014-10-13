@@ -24,6 +24,7 @@
 #include <string.h>
 #if _MSC_VER
 #include <direct.h>
+#include <process.h>
 #endif
 
 #include "IncludedFilesUnparser.h"
@@ -2187,10 +2188,13 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             outFolder += package_name;
             outFolder += (package_name.size() > 0 ? "/" : "");
             // Create package folder structure
-            string mkdirCommand = string("mkdir -p ") + outFolder;
-            int status = system (mkdirCommand.c_str());
-            ROSE_ASSERT(status == 0);
+            boost::filesystem::create_directories(outFolder);
+            ROSE_ASSERT(boost::filesystem::exists(outFolder));
             outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
+            // Convert Windows-style paths to POSIX-style.
+            #ifdef _MSC_VER
+            boost::replace_all(outputFilename, "\\", "/");
+            #endif
 #if 0
             printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
 #endif
@@ -2295,7 +2299,26 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                          outputFilename = alternative_filename;
                        }
+                 // Pei-Hung (8/6/2014) appending PID as alternative name to avoid collision
+                    else
+                       {
+                         if (project->get_appendPID() == true)
+                            {
+                              ostringstream os;
+                              #ifdef _MSC_VER 
+                              os << _getpid(); 
+                              #else 
+                              os << getpid(); 
+                              #endif 
+                              unsigned dot = outputFilename.find_last_of(".");
+                              outputFilename = outputFilename.substr(0,dot) + "_" + os.str() + outputFilename.substr(dot);
+                              if ( SgProject::get_verbose() > 0 )
+                                   printf ("Generate test output name with PID = %s \n",outputFilename.c_str());
+
+                            }
+                       }
                   }
+               file->set_unparse_output_filename(outputFilename);
              }
 
           fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);

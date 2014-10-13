@@ -13,10 +13,13 @@
 #include "DisassemblerX86.h"
 #include "integerOps.h"
 #include "stringify.h"
+#include "DispatcherX86.h"
 
 #include <sstream>
 
-using namespace rose;
+namespace rose {
+namespace BinaryAnalysis {
+
 
 /* See header file for full documentation. */
 
@@ -63,11 +66,30 @@ DisassemblerX86::init(size_t wordsize)
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
     switch (wordsize) {
-        case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::dictionary_i286());  break;
-        case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_pentium4());  break;
-        case 8: insnSize = x86_insnsize_64; set_registers(RegisterDictionary::dictionary_amd64()); break;
+        case 2:
+            insnSize = x86_insnsize_16;
+            set_registers(RegisterDictionary::dictionary_i286());
+            REG_IP = *p_registers->lookup("ip");
+            REG_SP = *p_registers->lookup("sp");
+            REG_SS = *p_registers->lookup("ss");
+            break;
+        case 4:
+            insnSize = x86_insnsize_32;
+            set_registers(RegisterDictionary::dictionary_pentium4());
+            REG_IP = *p_registers->lookup("eip");
+            REG_SP = *p_registers->lookup("esp");
+            REG_SS = *p_registers->lookup("ss");
+            break;
+        case 8:
+            insnSize = x86_insnsize_64;
+            set_registers(RegisterDictionary::dictionary_amd64());
+            REG_IP = *p_registers->lookup("rip");
+            REG_SP = *p_registers->lookup("rsp");
+            REG_SS = *p_registers->lookup("ss");
+            break;
         default: ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
+    p_proto_dispatcher = InstructionSemantics2::DispatcherX86::instance();
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(ByteOrder::ORDER_LSB);
@@ -91,17 +113,17 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
      * In theory, by adding all appropriate prefix bytes you can obtain an instruction that is up to 16 bytes long. However,
      * the x86 CPU will generate an exception if the instruction length exceeds 15 bytes, and so will the getByte method. */
     unsigned char temp[16];
-    size_t tempsz = map->read(temp, start_va, sizeof temp, get_protection());
+    size_t tempsz = map->at(start_va).limit(sizeof temp).require(get_protection()).read(temp).size();
 
     /* Disassemble the instruction */
     startInstruction(start_va, temp, tempsz);
-    SgAsmx86Instruction *insn = disassemble(); /*throws an exception on error*/
+    SgAsmX86Instruction *insn = disassemble(); /*throws an exception on error*/
     ASSERT_not_null(insn);
 
     /* Note successors if necesssary */
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->get_successors(&complete);
+        AddressSet suc2 = insn->getSuccessors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 
@@ -112,7 +134,7 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
 SgAsmInstruction *
 DisassemblerX86::make_unknown_instruction(const Exception &e)
 {
-    SgAsmx86Instruction *insn = makeInstruction(x86_unknown_instruction, "unknown");
+    SgAsmX86Instruction *insn = makeInstruction(x86_unknown_instruction, "unknown");
     insn->set_raw_bytes(e.bytes);
     return insn;
 }
@@ -326,11 +348,11 @@ DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_si
     return retval;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mnemonic,
                                  SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3, SgAsmExpression *op4)
 {
-    SgAsmx86Instruction *insn = new SgAsmx86Instruction(ip, mnemonic, kind, insnSize, effectiveOperandSize(),
+    SgAsmX86Instruction *insn = new SgAsmX86Instruction(ip, mnemonic, kind, insnSize, effectiveOperandSize(),
                                                         effectiveAddressSize());
     ASSERT_not_null(insn);
     insn->set_lockPrefix(lock);
@@ -369,18 +391,8 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    const char *name = NULL;
-    switch (insnSize) {
-        case x86_insnsize_16: name="ip"; break;
-        case x86_insnsize_32: name="eip"; break;
-        case x86_insnsize_64: name="rip"; break;
-        case x86_insnsize_none:
-            ASSERT_not_reachable("invalid instruction size: " + stringifyX86InstructionSize(insnSize));
-    }
-    ASSERT_not_null(get_registers());
-    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
-    ASSERT_not_null(rdesc);
-    SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(*rdesc);
+    ASSERT_require(REG_IP.is_valid());
+    SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(REG_IP);
     r->set_type(sizeToType(insnSize));
     return r;
 }
@@ -947,11 +959,11 @@ DisassemblerX86::getImmJb()
  *========================================================================================================================*/
 
 /* Mostly copied from the old x86Disassembler.C version */
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::disassemble()
 {
     uint8_t opcode = getByte();
-    SgAsmx86Instruction *insn = 0;
+    SgAsmX86Instruction *insn = 0;
     switch (opcode) {
         case 0x00: {
             getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
@@ -2733,7 +2745,7 @@ done:
     return insn;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeOpcode0F()
 {
     uint8_t opcode = getByte();
@@ -5176,7 +5188,7 @@ DisassemblerX86::decodeOpcode0F()
 }
 
 /* SSSE3 (opcode 0F38) */
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeOpcode0F38()
 {
     // Get the third byte of the opcode (the first two were read by the caller (decodeOpcode0F())
@@ -5203,7 +5215,7 @@ DisassemblerX86::decodeOpcode0F38()
     }
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionD8()
 {
     getModRegRM(rmReturnNull, rmST, FLOATT);
@@ -5245,7 +5257,7 @@ DisassemblerX86::decodeX87InstructionD8()
     }
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionD9()
 {
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
@@ -5323,7 +5335,7 @@ DisassemblerX86::decodeX87InstructionD9()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionDA()
 {
     getModRegRM(rmReturnNull, rmReturnNull, DWORDT);
@@ -5358,7 +5370,7 @@ DisassemblerX86::decodeX87InstructionDA()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionDB()
 {
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
@@ -5403,7 +5415,7 @@ DisassemblerX86::decodeX87InstructionDB()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionDC()
 {
     getModRegRM(rmReturnNull, rmST, DOUBLET);
@@ -5436,7 +5448,7 @@ DisassemblerX86::decodeX87InstructionDC()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionDD()
 {
     getModRegRM(rmReturnNull, rmST, NULL);
@@ -5487,7 +5499,7 @@ DisassemblerX86::decodeX87InstructionDD()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionDE()
 {
     getModRegRM(rmReturnNull, rmST, WORDT);
@@ -5525,7 +5537,7 @@ DisassemblerX86::decodeX87InstructionDE()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeX87InstructionDF()
 {
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
@@ -5567,7 +5579,7 @@ DisassemblerX86::decodeX87InstructionDF()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup1(SgAsmExpression* imm)
 {
     switch (regField) {
@@ -5585,7 +5597,7 @@ DisassemblerX86::decodeGroup1(SgAsmExpression* imm)
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup1a()
 {
     if (regField != 0)
@@ -5593,7 +5605,7 @@ DisassemblerX86::decodeGroup1a()
     return makeInstruction(x86_pop, "pop", modrm);
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup2(SgAsmExpression* count)
 {
     switch (regField) {
@@ -5611,7 +5623,7 @@ DisassemblerX86::decodeGroup2(SgAsmExpression* count)
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
 {
     switch (regField) {
@@ -5638,7 +5650,7 @@ DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup4()
 {
     switch (regField) {
@@ -5650,7 +5662,7 @@ DisassemblerX86::decodeGroup4()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup5()
 {
     switch (regField) {
@@ -5679,7 +5691,7 @@ DisassemblerX86::decodeGroup5()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup6()
 {
     switch (regField) {
@@ -5697,7 +5709,7 @@ DisassemblerX86::decodeGroup6()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup7()
 {
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
@@ -5787,7 +5799,7 @@ DisassemblerX86::decodeGroup7()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup8(SgAsmExpression* imm)
 {
     switch (regField) {
@@ -5805,7 +5817,7 @@ DisassemblerX86::decodeGroup8(SgAsmExpression* imm)
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup11(SgAsmExpression* imm)
 {
     switch (regField) {
@@ -5816,7 +5828,7 @@ DisassemblerX86::decodeGroup11(SgAsmExpression* imm)
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup15()
 {
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
@@ -5866,7 +5878,7 @@ DisassemblerX86::decodeGroup15()
     return NULL;
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroup16()
 {
     requireMemory();
@@ -5879,7 +5891,7 @@ DisassemblerX86::decodeGroup16()
     }
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 DisassemblerX86::decodeGroupP()
 {
     getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
@@ -5891,3 +5903,6 @@ DisassemblerX86::decodeGroupP()
         default: return makeInstruction(x86_prefetch, "prefetch", modrm);
     }
 }
+
+} // namespace
+} // namespace
