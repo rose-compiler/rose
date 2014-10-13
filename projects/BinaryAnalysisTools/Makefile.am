@@ -3,6 +3,14 @@ bin_PROGRAMS =
 EXTRA_DIST =
 
 #------------------------------------------------------------------------------------------------------------------------
+# dump specimen memory to files
+
+bin_PROGRAMS += dumpMemory
+dumpMemory_SOURCES = dumpMemory.C
+dumpMemory_CPPFLAGS = $(ROSE_INCLUDES)
+dumpMemory_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # linear disassembly at specified addresses
 
 bin_PROGRAMS += linearDisassemble
@@ -29,19 +37,6 @@ bROwSE_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include
 bROwSE_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 endif
-
-#------------------------------------------------------------------------------------------------------------------------
-# S-Record utilities
-
-bin_PROGRAMS += dumpSRecords
-dumpSRecords_SOURCES = dumpSRecords.C
-dumpSRecords_CPPFLAGS = $(ROSE_INCLUDES)
-dumpSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-bin_PROGRAMS += fileToSRecords
-fileToSRecords_SOURCES = fileToSRecords.C
-fileToSRecords_CPPFLAGS = $(ROSE_INCLUDES)
-fileToSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # find similar functions in two specimens
