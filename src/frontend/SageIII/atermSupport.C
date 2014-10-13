@@ -7,10 +7,8 @@
 
 // Put non-generated Aterm support code here.
 
-#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
 
 using namespace std;
-// using namespace AtermSupport;
 
 // Note that setting this to true was the original setting.
 // #define LAZY_WRAPPING_MACRO true
@@ -24,7 +22,39 @@ std::map<std::string, SgType*>                 AtermSupport::translationTypeMap;
 std::map<std::string, SgDeclarationStatement*> AtermSupport::translationDeclarationMap;
 std::map<std::string, SgInitializedName*>      AtermSupport::translationInitializedNameMap;
 
+// This function needs to be defined outside of the include guards for ROSE_USE_ROSE_ATERM_SUPPORT.
+// I am not really clear why this is required.
+string AtermSupport::uniqueId(SgNode* n)
+   {
+  // return SageInterface::generateUniqueName(n, false);
+  // return intToHex(n);
 
+     if (n == NULL)
+        {
+          return "NULL";
+        }
+
+     ROSE_ASSERT(n != NULL);
+
+     Sg_File_Info* fileInfo = isSg_File_Info(n);
+     if (fileInfo != NULL)
+        {
+       // This could be how we handle source position information.
+        }
+
+  // DQ (9/18/2014): Ignore the different between defining vs. non-defining declarations (in generation of unique names).
+  // string returnString = SageInterface::generateUniqueName(n, false);
+     string returnString = SageInterface::generateUniqueName(n, true);
+
+#if 0
+     printf ("In uniqueId(): n = %p = %s returnString = %s \n",n,n->class_name().c_str(),returnString.c_str());
+#endif
+
+  // return SageInterface::generateUniqueName(n, false);
+     return returnString;
+   }
+
+#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
 
 void
 AtermSupport::initializeTypeSystem()
@@ -89,36 +119,6 @@ AtermSupport::aterm_type_name( ATerm term )
         }
 
      return s;
-   }
-
-string AtermSupport::uniqueId(SgNode* n)
-   {
-  // return SageInterface::generateUniqueName(n, false);
-  // return intToHex(n);
-
-     if (n == NULL)
-        {
-          return "NULL";
-        }
-
-     ROSE_ASSERT(n != NULL);
-
-     Sg_File_Info* fileInfo = isSg_File_Info(n);
-     if (fileInfo != NULL)
-        {
-       // This could be how we handle source position information.
-        }
-
-  // DQ (9/18/2014): Ignore the different between defining vs. non-defining declarations (in generation of unique names).
-  // string returnString = SageInterface::generateUniqueName(n, false);
-     string returnString = SageInterface::generateUniqueName(n, true);
-
-#if 0
-     printf ("In uniqueId(): n = %p = %s returnString = %s \n",n,n->class_name().c_str(),returnString.c_str());
-#endif
-
-  // return SageInterface::generateUniqueName(n, false);
-     return returnString;
    }
 
 string 
