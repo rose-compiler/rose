@@ -15,6 +15,9 @@ using namespace std;
 // #define LAZY_WRAPPING_MACRO false
 
 
+#ifndef _MSC_VER
+// DQ (10/13/2014): Exclude this if we are being compiled with Windows compilers.
+
 std::map<std::string, SgNode*>                 AtermSupport::translationNodeMap;
 
 std::map<std::string, SgScopeStatement*>       AtermSupport::translationScopeMap;
@@ -53,6 +56,7 @@ string AtermSupport::uniqueId(SgNode* n)
   // return SageInterface::generateUniqueName(n, false);
      return returnString;
    }
+#endif
 
 #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
 
