@@ -28,7 +28,8 @@ set(CxxGrammarMetaProgram_SRCS
     buildAstFileIO.C
     buildStorageClasses.C
     buildConstructorsWithoutSourcePositionInformation.C
-    outputClassesAndFields.C)
+    outputClassesAndFields.C
+    buildAtermSupport.C)
 
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES
@@ -39,6 +40,7 @@ set(GRAMMAR_SOURCE_FILES
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Common.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Support.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarConstructorDefinitionMacros.macro 
+     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/node.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Symbol.code 
