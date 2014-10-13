@@ -4,6 +4,7 @@
 #include "BinaryLoader.h"
 #include "DisassemblerM68k.h"
 #include "DisassemblerX86.h"
+#include "SRecord.h"
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesM68k.h>
@@ -34,6 +35,8 @@ Engine::parse(const std::vector<std::string> &fileNames) {
         } else if (boost::starts_with(fileName, "run:")) {
             // these are processed here and in load()
             frontendNames.push_back(fileName.substr(4));
+        } else if (boost::ends_with(fileName, ".srec")) {
+            // Motorola S-Records are handled in load()
         } else {
             frontendNames.push_back(fileName);
         }
@@ -92,6 +95,22 @@ Engine::load(const std::vector<std::string> &fileNames) {
                 throw std::runtime_error(exeName + " " + debugger.howTerminated() + " without reaching a breakpoint");
             map_.insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
             debugger.terminate();
+        } else if (boost::ends_with(fileName, ".srec")) {
+            if (fileName.size()!=strlen(fileName.c_str())) {
+                throw std::runtime_error("file name contains internal NUL characters: \"" +
+                                         StringUtility::cEscape(fileName) + "\"");
+            }
+            std::ifstream input(fileName.c_str());
+            if (!input.good()) {
+                throw std::runtime_error("cannot open Motorola S-Record file: \"" +
+                                         StringUtility::cEscape(fileName) + "\"");
+            }
+            std::vector<SRecord> srecs = SRecord::parse(input);
+            for (size_t i=0; i<srecs.size(); ++i) {
+                if (!srecs[i].error().empty())
+                    mlog[ERROR] <<fileName <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
+            }
+            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::EXECUTABLE);
         }
     }
 
@@ -177,6 +196,10 @@ Engine::specimenNameDocumentation() {
             "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
             "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
             "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior.}"
+
+            "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
+            "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
+            "with read and execute permissions.}"
 
             "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
             "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "
