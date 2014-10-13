@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "BinaryDebugger.h"
 
+#include <boost/algorithm/string/case_conv.hpp>
+
 #include <boost/config.hpp>
 #ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
 
@@ -38,9 +40,18 @@ static int kill(int, int) {                             // Windows dud
     return -1;
 }
 
+static int fork() {                                     // Windows dud
+    errno = ENOSYS;
+    return -1;
+}
+
 static int execl(const char*, ...) {                    // Windows dud
     errno = ENOSYS;
     return -1;
+}
+
+static const char *strsignal(int) {                     // Windows dud
+    return "unknown";
 }
 
 static int WIFEXITED(int) { return 1; }                 // Windows dud
@@ -132,7 +143,7 @@ BinaryDebugger::terminate() {
 }
 
 void
-BinaryDebugger::attach(pid_t child, bool attach) {
+BinaryDebugger::attach(int child, bool attach) {
     if (-1 == child) {
         detach();
     } else if (child == child_) {

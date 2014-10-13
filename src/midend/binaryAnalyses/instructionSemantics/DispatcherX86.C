@@ -2012,7 +2012,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
                                                                                         operators->negate(maskedShiftCount)))));
             break;
         default:
-            ASSERT_not_reachable(!"instruction not handled");
+            ASSERT_not_reachable("instruction not handled");
     }
     ASSERT_require(operand->get_width()==result->get_width());
     BaseSemantics::SValuePtr originalSign = operators->extract(operand, operand->get_width()-1, operand->get_width());
