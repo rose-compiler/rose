@@ -411,132 +411,23 @@ public:
 };
 
 /*******************************************************************************************************************************
- *                                      Reference-counting pointers
- *******************************************************************************************************************************/
-
-/** Referenc-counting pointer.  These pointers reference count the object to which they point and have an API similar to
- *  boost::shared_ptr<>.  However, this implementation is much faster (about 90% faster in tests) because it doesn't need to be
- *  as general-purpose as the Boost implementation.  This implementation doesn't support weak pointers or multi-threading, and
- *  it requires public access to an nrefs__ data member in the objects to which it points. */
-template<class T>
-class Pointer {
-private:
-    T *obj;     // object to which this pointer points; null for an empty pointer
-public:
-    typedef T element_type;
-
-    /** Constructs an empty shared pointer. */
-    Pointer(): obj(NULL) {}
-
-    /** Constructs a shared pointer for an object.  If @p obj is non-null then its reference count is incremented. It is
-     *  possible to create any number of shared pointers to the same object using this constructor. The expression "delete obj"
-     *  must be well formed and must not invoke undefined behavior. */
-    template<class Y>
-    explicit Pointer(Y *obj): obj(obj) {
-        if (obj!=NULL)
-            ++obj->nrefs__;
-    }
-
-    /** Constructs a new pointer that shares ownership of the pointed-to object with the @p other pointer. The pointed-to
-     *  object will only be deleted after both pointers are deleted.
-     * @{ */
-    Pointer(const Pointer &other): obj(other.obj) {
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL)
-            ++obj->nrefs__;
-    }
-    template<class Y>
-    Pointer(const Pointer<Y> &other): obj(other.get()) {
-        if (obj!=NULL)
-            ++obj->nrefs__;
-    }
-    /** @} */
-    
-    /** Conditionally deletes the pointed-to object.  The object is deleted when its reference count reaches zero. */
-    ~Pointer() {
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL && 0==--obj->nrefs__)
-            delete obj;
-    }
-
-    /** Assignment. This pointer is caused to point to the same object as @p other, decrementing the reference count for the
-     * object originally pointed to by this pointer and incrementing the reference count for the object pointed by @p other.
-     * @{ */
-    Pointer& operator=(const Pointer &other) {
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL && 0==--obj->nrefs__)
-            delete obj;
-        obj = other.obj;
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL)
-            ++obj->nrefs__;
-        return *this;
-    }
-    template<class Y>
-    Pointer& operator=(const Pointer<Y> &other) {
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL && 0==--obj->nrefs__)
-            delete obj;
-        obj = other.get();
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL)
-            ++obj->nrefs__;
-        return *this;
-    }
-    /** @} */
-
-    /** Reference to the pointed-to object.  An assertion will fail if assertions are enabled and this method is invoked on an
-     *  empty pointer. */
-    T& operator*() const {
-        ASSERT_require(obj!=NULL && obj->nrefs__>0);
-        return *obj;
-    }
-
-    /** Dereference pointed-to object. The pointed-to object is returned. Returns null for empty pointers. */
-    T* operator->() const {
-        ASSERT_require(!obj || obj->nrefs__>0);
-        return obj; // may be null
-    }
-
-    /** Obtain the pointed-to object.  The pointed-to object is returned. Returns null for empty pointers. */
-    T* get() const {
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        return obj; // may be null
-    }
-
-    /** Returns the pointed-to object's reference count. Returns zero for empty pointers. */
-    long use_count() const {
-        ASSERT_require(obj==NULL || obj->nrefs__>0);
-        return obj==NULL ? 0 : obj->nrefs__;
-    }
-
-    bool operator==(T *ptr) const { return obj==ptr; }
-    bool operator!=(T *ptr) const { return obj!=ptr; }
-    bool operator<(T *ptr) const { return obj<ptr; }
-
-    bool operator==(const Pointer &other) const { return obj==other.obj; }
-    bool operator!=(const Pointer &other) const { return obj!=other.obj; }
-    bool operator<(const Pointer &other) const { return obj<other.obj; }
-};
-
-/** Cast one pointer type to another. This behaves the same as dynamic_cast<> except it updates the pointed-to object's
- *  reference count. */
-template<class T, class U>
-Pointer<T> dynamic_pointer_cast(const Pointer<U> &other)
-{
-    T* obj = dynamic_cast<T*>(other.get());
-    return Pointer<T>(obj);
-}
-
-/*******************************************************************************************************************************
  *                                      Semantic Values
  *******************************************************************************************************************************/
 
+// This is leftover for compatibility with an older API.  The old API had code like this:
+//    User::SValue user_svalue = BaseSemantics::dynamic_pointer_cast<User::SValue>(base_svalue);
+// Which can be replaced now with
+//    User::SValue user_svalue = base_svalue.dynamicCast<User::SValue>();
+template<class To, class From>
+Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From> &from) {
+    return from.template dynamicCast<To>();
+}
+
 /** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted.
  *
- *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses a custom Pointer class which is
+ *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses Sawyer::SharedPointer which is
  *  substantially faster. */
-typedef Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Base class for semantic values.
  *
@@ -552,7 +443,7 @@ typedef Pointer<class SValue> SValuePtr;
  *  Semantics value objects are allocated on the heap and reference counted.  The BaseSemantics::SValue is an abstract class
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
-class SValue: public Sawyer::SmallObject {
+class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
 public:
     long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
 protected:

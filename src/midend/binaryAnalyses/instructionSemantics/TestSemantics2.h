@@ -23,7 +23,7 @@ namespace InstructionSemantics2 {       // documented elsewhere
 template<class SValuePtr, class RegisterStatePtr, class MemoryStatePtr, class StatePtr, class RiscOperatorsPtr>
 class TestSemantics {
 public:
-    typedef typename SValuePtr::element_type SValue;
+    typedef typename SValuePtr::Pointee SValue;
     typedef typename RegisterStatePtr::element_type RegisterState;
     typedef typename MemoryStatePtr::element_type MemoryState;
     typedef typename StatePtr::element_type State;

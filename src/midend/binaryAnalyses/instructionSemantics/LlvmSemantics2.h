@@ -280,6 +280,7 @@ public:
      * @{ */
     virtual LeafNodePtr emit_expression(std::ostream&, const SValuePtr&);
     virtual LeafNodePtr emit_expression(std::ostream&, const TreeNodePtr&);
+    virtual LeafNodePtr emit_expression(std::ostream&, const LeafNodePtr&);
     /** @} */
 
 protected:

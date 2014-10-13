@@ -67,7 +67,7 @@ public:
  *******************************************************************************************************************************/
 
 /** Smart pointer to an SValue object. SValue objects are referece counted and should not be explicitly deleted. */
-typedef BaseSemantics::Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the MultiSemantics domain.
  *
@@ -105,7 +105,7 @@ public:
 
     /** Promote a base value to a MultiSemantics value.  The value @p v must have a MultiSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
+        SValuePtr retval = v.dynamicCast<SValue>();
         ASSERT_not_null(retval);
         return retval;
     }

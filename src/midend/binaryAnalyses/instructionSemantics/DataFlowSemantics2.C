@@ -15,7 +15,7 @@ namespace DataFlowSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-typedef BaseSemantics::Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 class SValue: public BaseSemantics::SValue {
     std::vector<AbstractLocation> sources_;             // the locations that defined this value
@@ -60,7 +60,7 @@ public:
 public:
     /** Promote a base value to a value of this type.  The value @p v must have an appropriate dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
+        SValuePtr retval = v.dynamicCast<SValue>();
         ASSERT_not_null(retval);
         return retval;
     }

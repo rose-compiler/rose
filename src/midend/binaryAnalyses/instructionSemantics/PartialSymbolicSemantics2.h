@@ -63,7 +63,7 @@ public:
  *******************************************************************************************************************************/
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
-typedef BaseSemantics::Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the PartialSymbolicSemantics domain. A value is either known or unknown. Unknown values have
  *  a base name (unique ID number), offset, and sign. */
@@ -141,7 +141,7 @@ public:
     /** Promote a base value to a PartialSymbolicSemantics value. The value @p v must have a
      *  PartialSymbolicSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
+        SValuePtr retval = v.dynamicCast<SValue>();
         ASSERT_not_null(retval);
         return retval;
     }

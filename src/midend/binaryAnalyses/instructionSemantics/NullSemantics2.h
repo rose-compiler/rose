@@ -20,7 +20,7 @@ namespace NullSemantics {
  *******************************************************************************************************************************/
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
-typedef BaseSemantics::Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
 class SValue: public BaseSemantics::SValue {
@@ -74,7 +74,7 @@ public:
 public:
     /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
+        SValuePtr retval = v.dynamicCast<SValue>();
         ASSERT_not_null(retval);
         return retval;
     }
@@ -90,7 +90,7 @@ public:
     }
 
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
-        return this == other.get(); // must be equal if they're both the same object
+        return this == getRawPointer(other); // must be equal if they're both the same object
     }
 
     virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const ROSE_OVERRIDE {

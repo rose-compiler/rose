@@ -1017,6 +1017,13 @@ RiscOperators::emit_memory_write(std::ostream &o, const TreeNodePtr &addr, const
       <<", " <<llvm_integer_type(value->get_nbits()) <<"* " <<llvm_term(t3) <<"\n";
 }
 
+LeafNodePtr
+RiscOperators::emit_expression(std::ostream &o, const LeafNodePtr &leaf)
+{
+    TreeNodePtr x = leaf;
+    return emit_expression(o, x);
+}
+
 // Emits LLVM for an expression and returns a terminal (variable or constant).  If the expression is already a terminal then
 // this method is a no-op.
 LeafNodePtr
