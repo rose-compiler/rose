@@ -544,10 +544,10 @@ int main(int argc, char *argv[]) {
 #if SEMANTIC_API == NEW_API
     std::ostream &info = std::cerr; // do not include in answer because objects vary in size per architecture
     info <<"Before vacuum...\n";
-    BaseSemantics::SValue::allocator.printStatistics(info);
-    BaseSemantics::SValue::allocator.vacuum();
+    BaseSemantics::SValue::poolAllocator().showInfo(info);
+    BaseSemantics::SValue::poolAllocator().vacuum();
     info <<"After vacuum...\n";
-    BaseSemantics::SValue::allocator.printStatistics(info);
+    BaseSemantics::SValue::poolAllocator().showInfo(info);
 #endif
 
     return 0;

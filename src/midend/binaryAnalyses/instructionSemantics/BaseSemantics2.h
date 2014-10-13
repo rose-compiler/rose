@@ -529,124 +529,6 @@ Pointer<T> dynamic_pointer_cast(const Pointer<U> &other)
 }
 
 /*******************************************************************************************************************************
- *                                      Memory Allocators
- *******************************************************************************************************************************/
-
-/** Fast memory allocator for small objects.  This memory allocator is used for semantic values and works by requesting large
- *  blocks of objects from the global operator new and maintaining a free list thereof.  User requests for objects return
- *  objects from the free list, and user deallocations return them to the free list.  The allocator will also be used for
- *  subclasses (unless the user overrides the operator new and operator delete in the subclass) and can handle a variety
- *  of object sizes. */
-class Allocator {
-private:
-    struct Bucket {
-        enum { SIZE = 81920 };          // FIXME: tune this
-        char buffer[SIZE];
-    };
-
-    struct FreeItem {
-        FreeItem *next;
-    };
-
-    enum { SIZE_DIVISOR = 8 };          // must be >= sizeof(FreeItem)
-    enum { N_FREE_LISTS = 16 };         // number of lists. list[N] has objects of size <= (N+1)*SIZE_DIVISOR
-    FreeItem *freelist[N_FREE_LISTS];
-    typedef std::list<Bucket*> BucketList;
-    BucketList buckets_[N_FREE_LISTS];                  // lists containing all buckets allocated
-    size_t nallocated_[N_FREE_LISTS];                   // number of objects currently allocated
-    size_t highwater_[N_FREE_LISTS];                    // max number of objects allocated at once
-
-    typedef Sawyer::Container::Interval<uint64_t> BucketAddressInterval;
-    typedef Sawyer::Container::IntervalMap<BucketAddressInterval, Bucket*> BucketAddressMap;
-    typedef Sawyer::Container::Map<Bucket*, size_t> BucketUsageCounts;
-
-    // Returns a mapping from address (as uint64_t) to bucket pointer
-    void bucketAddresses(BucketAddressMap&/*out*/, size_t poolNumber) const;
-
-    // Returns a mapping from bucket pointer to number of used objects in the bucket.
-    void bucketUsage(BucketUsageCounts &result, size_t poolNumber) const;
-    void bucketUsage(BucketUsageCounts &result, size_t poolNumber, const BucketAddressMap&) const;
-
-    // Fills the specified freelist by adding another Bucket-worth of objects.
-    void fill_freelist(const int listn) { // hot
-        ASSERT_require(listn>=0 && listn<N_FREE_LISTS);
-        const size_t object_size = (listn+1) * SIZE_DIVISOR;
-        Bucket *b = new Bucket;
-        buckets_[listn].push_back(b);
-        for (size_t offset=0; offset+object_size<=Bucket::SIZE; offset+=object_size) {
-            FreeItem *item = (FreeItem*)(b->buffer+offset);
-            item->next = freelist[listn];
-            freelist[listn] = item;
-        }
-        ASSERT_not_null(freelist[listn]);
-    }
-
-    // Used internally when debugging
-    void assertInvariants() const;
-
-public:
-    Allocator() {
-        ASSERT_require(sizeof(FreeItem) <= SIZE_DIVISOR);
-        memset(nallocated_, 0, sizeof nallocated_);
-        memset(highwater_, 0, sizeof highwater_);
-        memset(freelist, 0, sizeof freelist);
-    }
-
-    ~Allocator() {
-        destroyAllObjects();
-    }
-
-    /** Allocate one object of specified size. The size must be non-zero. If the size is greater than the largest objects this
-     *  class manages, then it will call the global operator new to satisfy the request (a warning is printed the first time
-     *  this happens). */
-    void *allocate(size_t size) { // hot
-        ASSERT_require(size>0);
-        const int listn = (size-1) / SIZE_DIVISOR;
-        if (listn>=N_FREE_LISTS)
-            return ::operator new(size);
-        if (NULL==freelist[listn])
-            fill_freelist(listn);
-        void *retval = freelist[listn];
-        freelist[listn] = freelist[listn]->next;
-        highwater_[listn] = std::max(highwater_[listn], ++nallocated_[listn]);
-        return retval;
-    }
-
-    /** Free one object of specified size.  The @p size must be the same size that was used when the object was allocated. This
-     *  is a no-op if @p ptr is null. */
-    void deallocate(void *ptr, const size_t size) { // hot
-        if (ptr) {
-            ASSERT_require(size>0);
-            const int listn = (size-1) / SIZE_DIVISOR;
-            if (listn>=N_FREE_LISTS)
-                return ::operator delete(ptr);
-            FreeItem *item = (FreeItem*)ptr;
-            item->next = freelist[listn];
-            freelist[listn] = item;
-            ASSERT_require(nallocated_[listn]>0);
-            --nallocated_[listn];
-        }
-    }
-
-    /** Deallocate unused buckets.
-     *
-     *  Does a linear traversal of the free lists to determine which buckets contain only free objects, then deletes those
-     *  buckets, removing their members from the free list. */
-    void vacuum();
-
-    /** Deallocate all buckets.
-     *
-     *  Frees all objects allocated by this allocator regardless of whether those objects are on a freelist. */
-    void destroyAllObjects();
-
-    /** Print some statistics.
-     *
-     *  Writes some information about this allocator to the specified stream. */
-    void printStatistics(std::ostream&) const;
-
-};
-
-/*******************************************************************************************************************************
  *                                      Semantic Values
  *******************************************************************************************************************************/
 
@@ -670,7 +552,7 @@ typedef Pointer<class SValue> SValuePtr;
  *  Semantics value objects are allocated on the heap and reference counted.  The BaseSemantics::SValue is an abstract class
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
-class SValue {
+class SValue: public Sawyer::SmallObject {
 public:
     long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
 protected:
@@ -724,13 +606,6 @@ public:
         ASSERT_not_null(x);
         return x;
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Custom allocation.
-public:
-    static Allocator allocator;
-    static void *operator new(size_t size) { return allocator.allocate(size); } // hot
-    static void operator delete(void *ptr, size_t size) { allocator.deallocate(ptr, size); } // hot
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
