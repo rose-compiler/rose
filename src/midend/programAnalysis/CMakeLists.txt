@@ -27,6 +27,7 @@ add_subdirectory(genericDataflow)
 add_subdirectory(dataflowAnalysis)
 add_subdirectory(ssaUnfilteredCfg)
 add_subdirectory(systemDependenceGraph)
+add_subdirectory(EditDistance)
 
 
 
