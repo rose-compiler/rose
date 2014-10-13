@@ -4735,6 +4735,9 @@ HEADER_INITIALIZED_NAME_START
                SgInitializedName *prev_decl_item = 0 );
 #endif
 
+       // DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
+          SgInitializedName() ROSE_DEPRECATED_FUNCTION;
+
           SgInitializedName(const SgInitializedName& ptr);
 
           SgInitializedName& operator= (const SgInitializedName& ptr);
@@ -10911,6 +10914,13 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
 	 // this assert can be put back, once symbols for such variables are available.
      // assert(symbol != NULL);
      return symbol;
+   }
+
+// DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
+SgInitializedName::SgInitializedName()
+   : p_name(""), p_typeptr(NULL), p_initptr(NULL), p_prev_decl_item(NULL), p_is_initializer(false), p_declptr(NULL), p_scope(NULL)
+   {
+  // This constructor has been added to support the previous API, I would like to depricate it.
    }
 
 #if 0

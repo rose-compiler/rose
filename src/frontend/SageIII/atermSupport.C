@@ -150,8 +150,9 @@ AtermSupport::uniqueId(const rose_rva_t & n)
 ATerm 
 AtermSupport::convertFileInfoToAterm(Sg_File_Info* fi) 
    {
+#if 0
      printf ("In AtermSupport::convertFileInfoToAterm(): filename = %s line = %d col = %d \n",fi->get_filename(),fi->get_line(),fi->get_col());
-
+#endif
      ATerm term = ATmake("Position(<str>, <int>, <int>)", fi->get_filename(), fi->get_line(), fi->get_col());
 
      return term;
@@ -160,13 +161,17 @@ AtermSupport::convertFileInfoToAterm(Sg_File_Info* fi)
 Sg_File_Info*
 AtermSupport::getAtermFileInfo(ATerm term, string annotationName ) 
    {
+#if 0
      printf ("In AtermSupport::getAtermFileInfo(): annotationName = %s \n",annotationName.c_str());
+#endif
 
   // ATerm loc = ATgetAnnotation(term, ATmake("location"));
       ATerm loc = ATgetAnnotation(term, ATmake(annotationName.c_str()));
      if (loc == NULL)
         {
+#if 0
           printf ("In AtermSupport::getAtermFileInfo(): ATgetAnnotation does not identify an aterm: return Sg_File_Info::generateDefaultFileInfoForTransformationNode() \n");
+#endif
           return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
         }
 
@@ -176,7 +181,9 @@ AtermSupport::getAtermFileInfo(ATerm term, string annotationName )
   // ROSE_ASSERT(ATmatch(loc, "Position(<str>, <int>, <int>)", &filename, &line, &col));
      if (ATmatch(loc, "Position(<str>, <int>, <int>)", &filename, &line, &col))
         {
+#if 0
           printf ("In AtermSupport::getAtermFileInfo(): filename = %s line = %d col = %d \n",filename,line,col);
+#endif
         }
        else
         {
@@ -387,7 +394,7 @@ ATerm AtermSupport::getTraversalChildrenAsAterm(SgNode* n)
 
      vector<SgNode*> children = n->get_traversalSuccessorContainer();
 
-#if 1
+#if 0
      printf ("In AtermSupport::getTraversalChildrenAsAterm(): n = %p = %s children.size() = %zu \n",n,n->class_name().c_str(),children.size());
      for (vector<SgNode*>::iterator i = children.begin(); i != children.end(); i++)
         {
@@ -400,14 +407,14 @@ ATerm AtermSupport::getTraversalChildrenAsAterm(SgNode* n)
      ATerm term = convertSgNodeRangeToAterm(children.begin(), children.end());
 
   // I think we are generating invalid aterms in some cases.
-#if 1
+#if 0
      int atermKind = ATgetType(term);
      printf ("In AtermSupport::getTraversalChildrenAsAterm(): atermKind = %d = %s \n",atermKind,aterm_type_name(term).c_str());
 #endif
-#if 1
+#if 0
      printf ("In AtermSupport::getTraversalChildrenAsAterm(): returning the aterm \n");
 #endif
-#if 1
+#if 0
      cout << "AtermSupport::getTraversalChildrenAsAterm(): returning the aterm -> " << ATwriteToString(term) << endl;
 #endif
 
