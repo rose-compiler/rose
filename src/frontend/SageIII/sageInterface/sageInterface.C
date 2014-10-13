@@ -19110,171 +19110,6 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
   }
 }
 
-class EvaluatorExpressionRepresentation {
- public:
-EvaluatorExpressionRepresentation():
-  value_(-1),
-  evalutable_ (false) 
-{
-}
-
-EvaluatorExpressionRepresentation(long long value):
-  value_(value),
-  evalutable_(true) 
-{
-}
-
-bool isEvalutable() {
-  return evalutable_;
-}
-
-void setEvalutable(bool evalutable) {
-  evalutable_ = evalutable;
-}
-
-long long getValue() {
-  return value_;
-}
-
-void setValue(long long value) {
-  value_ = value;
-}
-
-bool operator==(const EvaluatorExpressionRepresentation &eer) {
-  return (value_ == eer.value_) && (evalutable_ && eer.evalutable_);
-}
-
- private:
-  long long value_;
-  bool evalutable_;
-};
-
-class SimpleExpressionEvaluator: public AstBottomUpProcessing <EvaluatorExpressionRepresentation> {
- public:
-SimpleExpressionEvaluator() {
-}
-
-EvaluatorExpressionRepresentation getValueExpressionValue(SgValueExp *valExp) {
-  long long subtreeVal = 0;
-
-  if (isSgIntVal(valExp)) {
-    subtreeVal = isSgIntVal(valExp)->get_value();
-  } else if (isSgLongIntVal(valExp)) {
-    subtreeVal = isSgLongIntVal(valExp)->get_value();
-  } else if (isSgLongLongIntVal(valExp)) {
-    subtreeVal = isSgLongLongIntVal(valExp)->get_value();
-  } else if (isSgShortVal(valExp)) {
-    subtreeVal = isSgShortVal(valExp)->get_value();
-  } else if (isSgUnsignedIntVal(valExp)) {
-    subtreeVal = isSgUnsignedIntVal(valExp)->get_value();
-  } else if (isSgUnsignedLongVal(valExp)) {
-    subtreeVal = isSgUnsignedLongVal(valExp)->get_value();
-  } else if (isSgUnsignedLongLongIntVal(valExp)) {
-    subtreeVal = isSgUnsignedLongLongIntVal(valExp)->get_value();
-  } else if (isSgUnsignedShortVal(valExp)) {
-    subtreeVal = isSgUnsignedShortVal(valExp)->get_value();
-  }
-  return EvaluatorExpressionRepresentation(subtreeVal);
-}
-
-EvaluatorExpressionRepresentation evaluateVariableReference(SgVarRefExp *vRef) {
-  if (isSgModifierType(vRef->get_type()) == NULL) {
-    return EvaluatorExpressionRepresentation();
-  }
-  if (isSgModifierType(vRef->get_type())->get_typeModifier().get_constVolatileModifier().isConst()) {
-    // We know that the var value is const, so get the initialized name and evaluate it
-    SgVariableSymbol *sym = vRef->get_symbol();
-    SgInitializedName *iName = sym->get_declaration();
-    SgInitializer *ini = iName->get_initializer();
-
-    if (isSgAssignInitializer(ini)) {
-      SgAssignInitializer *initializer = isSgAssignInitializer(ini);
-      SgExpression *rhs = initializer->get_operand();
-      SimpleExpressionEvaluator variableEval;
-
-      return variableEval.traverse(rhs);
-    }
-  }
-}
-
-
-EvaluatorExpressionRepresentation evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
-  if (isSgExpression(node)) {
-    if (isSgValueExp(node)) {
-      return this->getValueExpressionValue(isSgValueExp(node));
-    }
-
-    if (isSgVarRefExp(node)) {
-//      std::cout << "Hit variable reference expression!" << std::endl;
-      return evaluateVariableReference(isSgVarRefExp(node));
-    }
-    // Early break out for assign initializer // other possibility?
-    if (isSgAssignInitializer(node)) {
-      if (synList.at(0).isEvalutable()) {
-//        std::cout << "Returning an evaluated value of: " << synList.at(0).getValue() << " from a SgAssignInitializer node" << std::endl;
-        return EvaluatorExpressionRepresentation(synList.at(0).getValue());
-      } else {
-        return EvaluatorExpressionRepresentation();
-      }
-    }
-
-    long long evaluatedValue = 0;
-//    std::cout << "Node: " << node->class_name() << ":" << synList.size() << std::endl;
-
-//    assert(synList.size() == 2);
-#if 0
-    if(synList.size() != 2){
-      for(SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it){
-        std::cout << "Node: " << node->unparseToString() << "\n" << (*it).getValue() << std::endl;
-        std::cout << "Parent: " << node->get_parent()->unparseToString() << std::endl;
-        std::cout << "Parent, Parent: " << node->get_parent()->get_parent()->unparseToString() << std::endl;
-      }
-    }
-#endif
-    for (SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it) {
-      if ((*it).isEvalutable()) {
-        if (isSgAddOp(node)) {
-          assert(synList.size() == 2);
-          evaluatedValue = synList[0].getValue() + synList[1].getValue() ;
-        } else if (isSgSubtractOp(node)) {
-          assert(synList.size() == 2);
-          evaluatedValue = synList[0].getValue()  - synList[1].getValue() ;
-        } else if (isSgMultiplyOp(node)) {
-          assert(synList.size() == 2);
-          evaluatedValue = synList[0].getValue()  * synList[1].getValue() ;
-        } else if (isSgDivideOp(node)) {
-          assert(synList.size() == 2);
-          evaluatedValue = synList[0].getValue()  / synList[1].getValue() ;
-        } else if (isSgModOp(node)) {
-          assert(synList.size() == 2);
-          evaluatedValue = synList[0].getValue()  % synList[1].getValue() ;
-        }
-      } else {
-        std::cerr << "Expression is not evaluatable" << std::endl;
-        return EvaluatorExpressionRepresentation();
-      }
-    }
-//    std::cout << "Returning evaluated expression with value: " << evaluatedValue << std::endl;
-    return EvaluatorExpressionRepresentation(evaluatedValue);
-
-  }
-  return EvaluatorExpressionRepresentation();
-}
-};
-
-struct SageInterface::const_int_expr_t SageInterface::evaluateArrayIndexExpression(SgExpression *expr){
-  SimpleExpressionEvaluator eval;
-  const_int_expr_t ciet;
-  EvaluatorExpressionRepresentation eer = eval.traverse(expr);
-  if(eer.isEvalutable()){
-    ciet.hasValue_ = true;
-    ciet.value_ = eer.getValue();
-  } else {
-    ciet.hasValue_ = false;
-    ciet.value_ = -42;
-  }
-  return ciet;
-}
 
 bool
 SageInterface::checkTypesAreEqual(SgType *typeA, SgType *typeB){
@@ -19348,8 +19183,17 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
    if (nodeT1->variantT() == nodeT2->variantT()) {
 //     std::cout << "variantT is the same" << std::endl;
-
-      if (isSgNamedType(nodeT1)) {      // Two different names -> Must be two different things
+      if(isSgModifierType(nodeT1)){
+        // we need to check whether the modifier is the same or not
+        SgTypeModifier modT1 = isSgModifierType(nodeT1)->get_typeModifier();
+        SgTypeModifier modT2 = isSgModifierType(nodeT2)->get_typeModifier();
+        if(modT1.get_constVolatileModifier().isConst() != modT2.get_constVolatileModifier().isConst()){
+          return false;
+        }
+        if(modT1.get_constVolatileModifier().isVolatile() != modT2.get_constVolatileModifier().isVolatile()){
+          return false;
+        }
+      } else if (isSgNamedType(nodeT1)) {      // Two different names -> Must be two different things
         if (profile_) {
           namedType_++;
         }
@@ -19397,9 +19241,6 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
         bool arrayBaseIsEqual = typesAreEqual(a1->get_base_type(), a2->get_base_type());
 
-        SimpleExpressionEvaluator evalA, evalB;
-
-//        bool arrayIndexExpressionIsEquivalent = (evalA.traverse(a1->get_index()) == evalB.traverse(a2->get_index()));
         SgExpression::const_int_expr_t t1Index = a1->get_index()->evaluateConstIntegerExpression();
         SgExpression::const_int_expr_t t2Index = a2->get_index()->evaluateConstIntegerExpression();
         bool arrayIndexExpressionIsEquivalent = false;
