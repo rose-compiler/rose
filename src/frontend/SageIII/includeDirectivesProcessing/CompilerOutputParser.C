@@ -1,7 +1,10 @@
 // DQ (2/10/2014): See if this helps compile ROSE using boost version 1.50.
 // #define BOOST_FILESYSTEM_VERSION 2
 
-#include <rose.h>
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include <rose.h>
+#include "sage3basic.h"
+
 #include <rose_config.h>
 
 #include "FileHelper.h"
