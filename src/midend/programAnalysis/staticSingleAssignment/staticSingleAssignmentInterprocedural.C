@@ -4,7 +4,10 @@
  * variables are defined at function call expressions. If interprocedural analysis is turned off, function call expressions
  * never have definitions of variables. */
 
-#include "rose.h"
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
+
 #include "CallGraph.h"
 #include "staticSingleAssignment.h"
 #include <boost/timer.hpp>

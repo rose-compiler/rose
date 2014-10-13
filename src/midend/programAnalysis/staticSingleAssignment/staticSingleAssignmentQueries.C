@@ -1,7 +1,12 @@
 //Author: George Vulov <georgevulov@hotmail.com>
 //Based on work by Justin Frye <jafrye@tamu.edu>
+
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
+
 #include "staticSingleAssignment.h"
-#include "rose.h"
+
 #include <boost/foreach.hpp>
 #include <queue>
 
