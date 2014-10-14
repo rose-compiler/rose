@@ -534,8 +534,13 @@ class Grammar
           void buildAtermSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
           void buildAtermGenerationSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
           void buildAtermConsumerSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
-          void buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstConstructorParameter, bool & lastDataMemberWasConstructorParameter, 
-                               bool & isInConstructorParameterList, std::string & constructorArgumentsString, std::string & dataMemberString );
+          void buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstAterm, bool & firstConstructorParameter, 
+                               bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, 
+                               std::string & constructorArgumentsString, std::string & atermArgumentsSubstring, std::string & atermPatternSubstring, 
+                               std::string & dataMemberString, std::string & dataMemberString_post, int integer_counter );
+          StringUtility::FileWithLineNumbers buildAtermConstructor ( Terminal & node );
+          void buildAtermBuildFunctionsSourceFile( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+          bool isIntegerKind(const std::string & typenameString);
        // void generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile);
 
 

@@ -63,10 +63,17 @@ main(int argc, char* argv[])
      ATerm term = ATreadFromTextFile(aterm_file_TAF);
      printf ("DONE: Reading the aterm from the file: %s \n",aterm_filename.c_str());
 
+  // This builds required builtin types (primative types, int, float, double, etc.).
+  // Either we initialize the type system or recognize unique type name string and 
+  // build them as needed. I prefer a uniform approach for all types.
+     printf ("Calling AtermSupport::initializeTypeSystem() \n");
+     AtermSupport::initializeTypeSystem();
+
 #if 1
   // DQ (9/17/2014): Adding test for conversion of Aterm back to AST.
      printf ("Testing the reverse process to generate the ROSE AST from the Aterm \n");
-     SgNode* rootOfAST = convertAtermToNode(term);
+  // SgNode* rootOfAST = convertAtermToNode(term);
+     SgNode* rootOfAST = AtermSupport::generate_AST(term);
      printf ("rootOfAST = %p = %s \n",rootOfAST,rootOfAST->class_name().c_str());
 
   // SgProject* project = isSgProject(rootOfAST);
