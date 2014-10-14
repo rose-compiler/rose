@@ -803,7 +803,7 @@ public:
                 const T04 &v04=T04(), const T05 &v05=T05(), const T06 &v06=T06(), const T07 &v07=T07(),
                 const T08 &v08=T08(), const T09 &v09=T09(), const T10 &v10=T10(), const T11 &v11=T11(),
                 const T12 &v12=T12(), const T13 &v13=T13(), const T14 &v14=T14(), const T15 &v15=T15()) {
-        rows_.push_back(Tuple(v00, v01, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15));
+        rows_.push_back(Tuple(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15));
     }
     /** @} */
 

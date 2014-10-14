@@ -1,9 +1,9 @@
 // Tests the algorithms in util/ParallelSort.h
 #include "ParallelSort.h"
-#include "Stopwatch.h"
 #include "LinearCongruentialGenerator.h"
 #include <cstring>
 #include <iostream>
+#include <sawyer/Stopwatch.h>
 
 using namespace rose;
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
         nthreads = strtoul(argv[2], 0, NULL);
 
     std::cerr <<"Generating " <<nvalues <<" values... ";
-    Stopwatch generation;
+    Sawyer::Stopwatch generation;
     LinearCongruentialGenerator random;
     std::vector<Thing> values;
     values.reserve(nvalues);
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     std::cerr <<"done (" <<generation.stop() <<" seconds)\n";
                          
     std::cerr <<"Sorting with " <<nthreads <<" threads... ";
-    Stopwatch sorting;
+    Sawyer::Stopwatch sorting;
     rose::ParallelSort::quicksort(&values[0], &values[0]+values.size(), compare, nthreads);
     std::cerr <<"done (" <<sorting.stop() <<" seconds)\n";
 

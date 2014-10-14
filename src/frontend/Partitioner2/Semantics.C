@@ -18,7 +18,10 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
     if (map_ && addr->is_number()) {
         ASSERT_require2(8==dflt->get_width(), "multi-byte reads should have been handled above this call");
         uint8_t byte;
-        if (1==map_->read(&byte, addr->get_number(), 1, MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE))
+        size_t nRead = map_->at(addr->get_number()).limit(1)
+                       .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
+                       .read(&byte).size();
+        if (1==nRead)
             return valOps->number_(8, byte);
     }
     return SymbolicSemantics::MemoryState::readMemory(addr, dflt, addrOps, valOps);

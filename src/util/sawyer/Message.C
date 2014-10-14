@@ -432,14 +432,20 @@ void HighWater::emitted(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Gang::GangMap Gang::gangs_;
+// This is a pointer so that it doesn't depend on order of global variable initialization. We'll allocate it the first time we
+// need it.
+Gang::GangMap *Gang::gangs_ = NULL;
 
 GangPtr Gang::instanceForId(int id) {
-    return gangs_.insertMaybe(id, Gang::instance());
+    if (!gangs_)
+        gangs_ = new GangMap;
+    return gangs_->insertMaybe(id, Gang::instance());
 }
 
 void Gang::removeInstance(int id) {
-    gangs_.erase(id);
+    if (!gangs_)
+        gangs_ = new GangMap;
+    gangs_->erase(id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -951,12 +957,16 @@ SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
-    if ((size_t)imp>=streams_.size() || NULL==streams_[imp]) {
+    if ((size_t)imp>=streams_.size() || NULL==streams_[imp].get()) {
         // If you're looking at this line in a debugger it's probably because you're trying to use a Stream from a
         // default-constructed Facility.  Facilities that are allocated statically and/or at global scope should probably
         // either be constructed with Facility(const std::string&) or initialized by assigning some other facility to them.
         // Another possibility is that you provided Sawyer::Message::merr as the destination before libsawyer had a chance to
         // initialize that global variable. You can work around that problem by calling Sawyer::initializeLibrary() first.
+        //
+        // ROSE users: librose does not currently (2014-09-09) initialize libsawyer until the ROSE frontend() is called. If
+        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by
+        // invoking rose::Diagnostics::initialize() early in "main".
         throw std::runtime_error("stream " + stringifyImportance(imp) +
                                  (name_.empty() ? std::string() : " in facility \"" + name_ + "\"") +
                                  " is not initialized yet");
@@ -1387,11 +1397,11 @@ Facilities::print(std::ostream &log) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SAWYER_EXPORT DestinationPtr merr;
-SAWYER_EXPORT Facility mlog("sawyer");
-SAWYER_EXPORT Facilities mfacilities;
+SAWYER_EXPORT DestinationPtr merr SAWYER_STATIC_INIT;
+SAWYER_EXPORT Facility mlog SAWYER_STATIC_INIT ("sawyer");
+SAWYER_EXPORT Facilities mfacilities SAWYER_STATIC_INIT;
 SAWYER_EXPORT bool isInitialized;
-SAWYER_EXPORT SProxy assertionStream;
+SAWYER_EXPORT SProxy assertionStream SAWYER_STATIC_INIT;
 
 SAWYER_EXPORT bool
 initializeLibrary() {

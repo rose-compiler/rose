@@ -389,7 +389,7 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
     if (RoseBin_support::DEBUG_MODE() && defNode)
       cout << "    investigating ... " << defNode->get_name() <<endl;
     ROSE_ASSERT(defNode);
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(defNode->get_SgNode());
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(defNode->get_SgNode());
     ROSE_ASSERT(inst);
     positions.push_back(inst->get_address());
     // the right hand side of the instruction is either a use or a value
@@ -438,7 +438,7 @@ InterruptAnalysis::run(string& name, SgGraphNode* node,
   std::vector<uint64_t> pos_rax, pos_rbx, pos_rcx, pos_rdx;
   uint64_t fpos_rax, fpos_rbx, fpos_rcx, fpos_rdx=0xffffffff;
 
-  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* asmNode = isSgAsmX86Instruction(node->get_SgNode());
   if (asmNode) {
     //    cerr << " Interrupt Analysis :: checking node " << RoseBin_support::HexToString(asmNode->get_address())
     //   << "  - " << toString(asmNode->get_kind()) << endl;

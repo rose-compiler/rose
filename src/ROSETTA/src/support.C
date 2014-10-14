@@ -1305,6 +1305,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
+     Project.setDataPrototype("bool", "appendPID", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
   // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.

@@ -262,7 +262,7 @@ protected:
         // interested. This is called by the first pass of analysis, which is trying to discover when pointer variable's value
         // is used.
         bool interesting_access(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(this->cur_insn);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(this->cur_insn);
             if (x86_ret==insn->get_kind()) {
                 // memory read for the RET instruction is not interesting.  It is only reading the return address that was pushed
                 // onto the stack by the caller.  What's even worse is that the address of the return value was defined by the
@@ -482,7 +482,7 @@ public:
                 if (debug)
                     fprintf(debug, "PointerDetection: %s\n", std::string(80, '-').c_str());
                 rose_addr_t va = worklist.pop();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(instruction_providor->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(instruction_providor->get_instruction(va));
                 if (!insn || (!addrspc.empty() && !addrspc.contains(Extent(insn->get_address(), insn->get_size())))) {
                     if (debug)
                         fprintf(debug, "PointerDetection: processing pass %zu 0x%08"PRIx64": %s\n", info.pass, va,

@@ -154,7 +154,7 @@ main(int argc, char *argv[])
             prev_interp = interp;
             assert(interp->get_map()!=NULL);
             ro_map = *interp->get_map();
-            ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
+            ro_map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
             Disassembler::AddressSet whitelist_imports = get_import_addresses(interp, builtin_function_names);
             whitelist_exports.clear(); // imports are addresses of import table slots; exports are functions
             overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, &ro_map, GOTPLT_VALUE,

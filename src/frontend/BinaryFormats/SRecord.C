@@ -133,10 +133,9 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
         }
 
         // Create buffers for the data and insert them into the memory map
-        BOOST_FOREACH (const AddressInterval &interval, addressesUsed.nodes()) {
+        BOOST_FOREACH (const AddressInterval &interval, addressesUsed.intervals()) {
             ASSERT_forbid(interval.isWhole());              // not practically possible since S-Record file would be >2^65 bytes
-            MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(interval.size());
-            map.insert(interval, MemoryMap::Segment(buffer, 0, accessPerms, "S-Records"));
+            map.insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, "S-Records"));
         }
     }
 
@@ -148,7 +147,7 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
             case SREC_DATA24:
             case SREC_DATA32: {
                 if (!srec.data().empty()) {
-                    size_t nwritten = map.write(&srec.data()[0], srec.address(), srec.data().size(), MemoryMap::MM_PROT_NONE);
+                    size_t nwritten = map.at(srec.address()).write(srec.data()).size();
                     if (nwritten != srec.data().size())
                         throw MemoryMap::NotMapped("S-Record destination is not mapped for " +
                                                    StringUtility::plural(srec.data().size(), "bytes"),
@@ -183,8 +182,8 @@ SRecord::dump(const MemoryMap &map, std::ostream &out, size_t addrSize) {
     rose_addr_t va = 0;
     static const size_t maxBytesPerRecord = 28;         // common value so each S-Record fits on an 80-character screen
     uint8_t buffer[maxBytesPerRecord];
-    while (map.next(va).assignTo(va)) {
-        size_t nread = map.read(buffer, va, maxBytesPerRecord, MemoryMap::MM_PROT_NONE);
+    while (map.atOrAfter(va).next().assignTo(va)) {
+        size_t nread = map.at(va).limit(maxBytesPerRecord).read(buffer).size();
         ASSERT_require(nread>0);                        // since map.next() returned true
         SRecord srec(type, va, buffer, nread);
         out <<srec <<"\n";
