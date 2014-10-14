@@ -1195,7 +1195,7 @@ if ROSE_USE_GRAPHVIZ_DOT
 endif
 
 
-binaryAnalysis_pic1.pdf: binaryAnalysis
+binaryAnalysis_pic1.pdf: binaryAnalysisExample binaryAnalysis
 	@echo "Building an example BinaryAnalysis ..."
 # This does currently not work because we don't support 64bit binaries
 #	./binaryAnalysis bin_example
