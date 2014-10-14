@@ -4040,7 +4040,9 @@ SageInterface::generateFileList()
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
 
-     ROSE_ASSERT(fileTraversal.fileList.empty() == false);
+  // DQ (10/11/2014): This is allowed to be empty (required for new aterm support).
+  // ROSE_ASSERT(fileTraversal.fileList.empty() == false);
+
      return fileTraversal.fileList;
    }
 

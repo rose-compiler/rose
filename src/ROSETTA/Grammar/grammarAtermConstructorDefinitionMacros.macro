@@ -2,9 +2,6 @@
 // Generated static function for building IR nodes for Aterm support (like a constructor).
 $CLASSNAME* $CLASSNAME::build_node_from_nonlist_children ( $CONSTRUCTOR_PARAMETER_LIST )
    {
-#ifdef DEBUG
-  // printf ("In $CLASSNAME::$CLASSNAME ($CONSTRUCTOR_PARAMETER_LIST) sage_class_name() = %s \n",class_name().c_str());
-#endif
 #if 0
   // debugging information!
      printf ("In $CLASSNAME::build_node_from_nonlist_children ($CONSTRUCTOR_PARAMETER_LIST): this = %p = %s \n",this,this->class_name().c_str());

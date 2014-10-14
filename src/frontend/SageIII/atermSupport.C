@@ -7,42 +7,26 @@
 
 // Put non-generated Aterm support code here.
 
-#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
 
 using namespace std;
-using namespace AtermSupport;
 
 // Note that setting this to true was the original setting.
 // #define LAZY_WRAPPING_MACRO true
-#define LAZY_WRAPPING_MACRO false
+// #define LAZY_WRAPPING_MACRO false
 
-string
-AtermSupport::aterm_type_name( ATerm term )
-   {
-  // Debugging support.
 
-     string s;
-     int atermType = ATgetType(term);
+#ifndef _MSC_VER
+// DQ (10/13/2014): Exclude this if we are being compiled with Windows compilers.
 
-     switch (atermType)
-        {
-          case AT_APPL:        s = "AT_APPL";        break;
-          case AT_INT:         s = "AT_INT";         break;
-          case AT_REAL:        s = "AT_REAL";        break;
-          case AT_LIST:        s = "AT_LIST";        break;
-          case AT_PLACEHOLDER: s = "AT_PLACEHOLDER"; break;
-          case AT_BLOB:        s = "AT_BLOB";        break;
+std::map<std::string, SgNode*>                 AtermSupport::translationNodeMap;
 
-          default:
-             {
-               printf ("In graph(ATerm): term = %p: default reached atermType = %d \n",term,atermType);
-               ROSE_ASSERT(!"error to reach default in switch!");
-             }
-        }
+std::map<std::string, SgScopeStatement*>       AtermSupport::translationScopeMap;
+std::map<std::string, SgType*>                 AtermSupport::translationTypeMap;
+std::map<std::string, SgDeclarationStatement*> AtermSupport::translationDeclarationMap;
+std::map<std::string, SgInitializedName*>      AtermSupport::translationInitializedNameMap;
 
-     return s;
-   }
-
+// This function needs to be defined outside of the include guards for ROSE_USE_ROSE_ATERM_SUPPORT.
+// I am not really clear why this is required.
 string AtermSupport::uniqueId(SgNode* n)
    {
   // return SageInterface::generateUniqueName(n, false);
@@ -72,35 +56,151 @@ string AtermSupport::uniqueId(SgNode* n)
   // return SageInterface::generateUniqueName(n, false);
      return returnString;
    }
+#endif
 
-string AtermSupport::uniqueId(uint64_t n)
+#ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+
+void
+AtermSupport::initializeTypeSystem()
+   {
+  // This builds required builtin types (primative types, int, float, double, etc.).
+  // Either we initialize the type system or recognize unique type name string and 
+  // build them as needed. I prefer a uniform approach for all types.
+
+     printf ("In AtermSupport::initializeTypeSystem() \n");
+
+     SgTypeInt* typeInt = SageBuilder::buildIntType();
+     string typeIntName = uniqueId(typeInt);
+     printf ("Insert typeInt = %p using typeIntName = %s \n",typeInt,typeIntName.c_str());
+     translationTypeMap[uniqueId(typeInt)] = typeInt;
+
+     SgTypeLong* typeLong = SageBuilder::buildLongType();
+     string typeLongName = uniqueId(typeLong);
+     printf ("Insert typeLong = %p using typeLongName = %s \n",typeLong,typeLongName.c_str());
+     translationTypeMap[uniqueId(typeLong)] = typeLong;
+
+     SgTypeDouble* typeDouble = SageBuilder::buildDoubleType();
+     string typeDoubleName = uniqueId(typeDouble);
+     printf ("Insert typeDouble = %p using typeDoubleName = %s \n",typeDouble,typeDoubleName.c_str());
+     translationTypeMap[uniqueId(typeDouble)] = typeDouble;
+
+     SgTypeLongDouble* typeLongDouble = SageBuilder::buildLongDoubleType();
+     string typeLongDoubleName = uniqueId(typeLongDouble);
+     printf ("Insert typeLongDouble = %p using typeLongDoubleName = %s \n",typeLongDouble,typeLongDoubleName.c_str());
+     translationTypeMap[uniqueId(typeLongDouble)] = typeLongDouble;
+
+     SgTypeFloat* typeFloat = SageBuilder::buildFloatType();
+     string typeFloatName = uniqueId(typeFloat);
+     printf ("Insert typeFloat = %p using typeFloatName = %s \n",typeFloat,typeFloatName.c_str());
+     translationTypeMap[uniqueId(typeFloat)] = typeFloat;
+
+     printf ("Leaving AtermSupport::initializeTypeSystem(): translationTypeMap.size() = %zu \n",translationTypeMap.size());
+   }
+
+
+string
+AtermSupport::aterm_type_name( ATerm term )
+   {
+  // Debugging support.
+
+     string s;
+     int atermType = ATgetType(term);
+
+     switch (atermType)
+        {
+          case AT_APPL:        s = "AT_APPL";        break;
+          case AT_INT:         s = "AT_INT";         break;
+          case AT_REAL:        s = "AT_REAL";        break;
+          case AT_LIST:        s = "AT_LIST";        break;
+          case AT_PLACEHOLDER: s = "AT_PLACEHOLDER"; break;
+          case AT_BLOB:        s = "AT_BLOB";        break;
+
+          default:
+             {
+               printf ("In graph(ATerm): term = %p: default reached atermType = %d \n",term,atermType);
+               ROSE_ASSERT(!"error to reach default in switch!");
+             }
+        }
+
+     return s;
+   }
+
+string 
+AtermSupport::uniqueId(uint64_t n)
    {
   // This supports generation of strings from addresses (mostly so that the SgAsm support will compile).
   // I don't think that Aterms have a data type for unsigned 64-bit integers.
 
+     printf ("In AtermSupport::uniqueId(uint64_t n): returning empty_string_uint64_t string for now \n");
+
   // return an empty string for now.
-     return "";
+     return "empty_string_uint64_t";
    }
 
-string AtermSupport::uniqueId(const rose_rva_t & n)
+string 
+AtermSupport::uniqueId(const rose_rva_t & n)
    {
   // This supports generation of strings from rose_rva_t (so that the SgAsm support will compile).
   // I don't think it is clear how to implement this function (but we can worry about the binary analysis 
   // use of Aterms later).
 
+     printf ("In AtermSupport::uniqueId(const rose_rva_t & n): returning empty_string_rose_rva_t string for now \n");
+
   // return an empty string for now.
-     return "";
+     return "empty_string_rose_rva_t";
    }
 
 
-ATerm AtermSupport::convertFileInfoToAterm(Sg_File_Info* fi) 
+ATerm 
+AtermSupport::convertFileInfoToAterm(Sg_File_Info* fi) 
    {
+#if 0
+     printf ("In AtermSupport::convertFileInfoToAterm(): filename = %s line = %d col = %d \n",fi->get_filename(),fi->get_line(),fi->get_col());
+#endif
      ATerm term = ATmake("Position(<str>, <int>, <int>)", fi->get_filename(), fi->get_line(), fi->get_col());
 
      return term;
    }
 
-ATerm AtermSupport::convertVectorToAterm(const vector<ATerm>& v, int start, int len) 
+Sg_File_Info*
+AtermSupport::getAtermFileInfo(ATerm term, string annotationName ) 
+   {
+#if 0
+     printf ("In AtermSupport::getAtermFileInfo(): annotationName = %s \n",annotationName.c_str());
+#endif
+
+  // ATerm loc = ATgetAnnotation(term, ATmake("location"));
+      ATerm loc = ATgetAnnotation(term, ATmake(annotationName.c_str()));
+     if (loc == NULL)
+        {
+#if 0
+          printf ("In AtermSupport::getAtermFileInfo(): ATgetAnnotation does not identify an aterm: return Sg_File_Info::generateDefaultFileInfoForTransformationNode() \n");
+#endif
+          return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+        }
+
+     int line, col;
+     char* filename;
+
+  // ROSE_ASSERT(ATmatch(loc, "Position(<str>, <int>, <int>)", &filename, &line, &col));
+     if (ATmatch(loc, "Position(<str>, <int>, <int>)", &filename, &line, &col))
+        {
+#if 0
+          printf ("In AtermSupport::getAtermFileInfo(): filename = %s line = %d col = %d \n",filename,line,col);
+#endif
+        }
+       else
+        {
+          printf ("AtermSupport::getAtermFileInfo(): ATmatch failed! \n");
+          ROSE_ASSERT(false);
+        }
+
+     return new Sg_File_Info(filename, line, col);
+   }
+
+
+ATerm 
+AtermSupport::convertVectorToAterm(const vector<ATerm>& v, int start, int len) 
    {
      if (len == -1)
           len = v.size() - start;
@@ -111,8 +211,10 @@ ATerm AtermSupport::convertVectorToAterm(const vector<ATerm>& v, int start, int 
      return ATmake("<term>", ls);
    }
 
+#if 0
 template <typename Iter>
-ATerm AtermSupport::convertRangeToAterm(Iter b, Iter e) 
+ATerm 
+AtermSupport::convertRangeToAterm(Iter b, Iter e) 
    {
      ATermList ls = ATmakeList0();
      for (; b != e; ++b) 
@@ -217,7 +319,7 @@ ATerm AtermSupport::convertSgNodeRangeToAterm(Iter b, Iter e)
 
      return returnTerm;
    }
-
+#endif
 
 string
 AtermSupport::getShortVariantName(VariantT var) 
@@ -463,15 +565,32 @@ vector<ATerm> AtermSupport::getAtermList(ATerm ls)
      while (true) 
         {
           if (ATmatch(ls, "[]"))
+             {
                return result;
+             }
             else 
+             {
                if (ATmatch(ls, "[<term>, <list>]", &a, &b)) 
                   {
                     result.push_back(a);
                     ls = b;
                   } 
                  else
-                    ROSE_ASSERT (!"getAtermList");
+                  {
+                    printf ("In AtermSupport::getAtermList(): singular element interpreted as list! \n");
+                 // ROSE_ASSERT (!"getAtermList");
+                    if (ATmatch(ls, "<term>", &a)) 
+                       {
+                         result.push_back(a);
+                      // ls = b;
+                         return result;
+                       }
+                      else
+                       {
+                         ROSE_ASSERT (!"getAtermList");
+                       }
+                 }
+             }
         }
    }
 
@@ -501,6 +620,10 @@ AtermSupport::getAtermStringAttribute(ATerm term, const string & annotationName 
              }
         }
 
+#if 1
+     printf ("Leaving AtermSupport::getAtermStringAttribute(): annotationName = %s returnString = %s \n",annotationName.c_str(),returnString.c_str());
+#endif
+
      return returnString;
    }
 
@@ -509,6 +632,51 @@ int
 AtermSupport::getAtermIntegerAttribute(ATerm term, const std::string & annotationName )
    {
      int returnValue = 42;
+
+     ATerm idannot = ATgetAnnotation(term, ATmake(annotationName.c_str()));
+     if (idannot)
+        {
+#if 0
+          printf ("In getAtermIntegerAttribute(): Found an annotation: annotationName = %s \n",annotationName.c_str());
+#endif
+          int value = 0;
+
+       // Get the associated annotation string.
+          if (ATmatch(idannot, "<int>", &value))
+             {
+               returnValue = value;
+#if 0
+               printf ("In getAtermIntegerAttribute(): value = %d \n",value);
+#endif
+             }
+            else
+             {
+               printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
+
+            // Debugging code.
+#if 1
+               string unrecognizedAterm = ATwriteToString(term);
+               printf ("ERROR: unrecognizedAterm = %s \n\n",unrecognizedAterm.c_str());
+#endif
+               string unrecognizedAtermAnnotation = ATwriteToString(idannot);
+               printf ("ERROR: unrecognizedAtermAnnotation = %s \n\n",unrecognizedAtermAnnotation.c_str());
+
+               printf ("DIAGNOSTIC: aterm_type_name = %s \n",aterm_type_name(term).c_str());
+
+               ROSE_ASSERT(false);
+             }
+        }
+       else
+        {
+          printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
+          ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("In AtermSupport::getAtermIntegerAttribute(): not yet implemented \n");
+     ROSE_ASSERT(false);
+#endif
+
      return returnValue;
    }
 
@@ -537,12 +705,183 @@ AtermSupport::getAtermNodeAttribute(ATerm term, const std::string & annotationNa
   // This function uses maps to access previously build ROSE IR nodes that are looked up using a key that is an annotation on the aterm.
      SgNode* returnNode = NULL;
 
+     ATerm idannot = ATgetAnnotation(term, ATmake(annotationName.c_str()));
+     if (idannot)
+        {
+#if 1
+          printf ("In getAtermNodeAttribute(): Found an annotation: annotationName = %s \n",annotationName.c_str());
+#endif
+          char* id = NULL;
+       // Get the associated annotation string.
+          if (ATmatch(idannot, "<str>", &id))
+             {
+#if 1
+                printf ("In getAtermNodeAttribute(): Found an string in the annotation: annotationName = %s id = %s \n",annotationName.c_str(),id);
+#endif
+               if (translationNodeMap.find(id) != translationNodeMap.end())
+                  {
+                    returnNode = translationNodeMap[id];
+                    ROSE_ASSERT(returnNode != NULL);
+#if 1
+                    printf ("In getAtermNodeAttribute NodeMap: id = %s returnNode = %p = %s \n",id,returnNode,returnNode->class_name().c_str());
+#endif
+                  }
+                 else
+                  {
+#if 1
+                    printf ("In getAtermNodeAttribute(): Node not found in translationNodeMap: returing NULL pointer \n");
+#endif
+                  }
+             }
+            else
+             {
+               printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+       else
+        {
+          printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
+          ROSE_ASSERT(false);
+        }
+
+#if 0
      printf ("In AtermSupport::getAtermNodeAttribute(): not yet implemented \n");
      ROSE_ASSERT(false);
+#endif
 
      return returnNode;
    }
 
+
+SgType*
+AtermSupport::getAtermTypeNodeAttribute (ATerm term, const std::string & annotationName )
+   {
+     SgType* returnNode = NULL;
+
+     ATerm idannot = ATgetAnnotation(term, ATmake(annotationName.c_str()));
+     if (idannot)
+        {
+#if 1
+          printf ("In getAtermTypeNodeAttribute(): Found an annotation: annotationName = %s \n",annotationName.c_str());
+#endif
+          char* id = NULL;
+       // Get the associated annotation string.
+          if (ATmatch(idannot, "<str>", &id))
+             {
+#if 1
+                printf ("In getAtermTypeNodeAttribute(): Found an string in the annotation: annotationName = %s id = %s \n",annotationName.c_str(),id);
+#endif
+               if (translationTypeMap.find(id) != translationTypeMap.end())
+                  {
+                    returnNode = translationTypeMap[id];
+                    ROSE_ASSERT(returnNode != NULL);
+#if 1
+                    printf ("In getAtermTypeNodeAttribute translationTypeMap: id = %s returnNode = %p = %s \n",id,returnNode,returnNode->class_name().c_str());
+#endif
+                  }
+                 else
+                  {
+#if 1
+                    printf ("In getAtermTypeNodeAttribute(): Node not found in translationTypeMap: returing NULL pointer \n");
+#endif
+                  }
+             }
+            else
+             {
+            // Including types in the aterm annotations will put <term> entried in the associated term used for annotations.
+            // so we need to handle ATmatch(idannot, "<term>", &term1)) as a pattern.
+               ATerm term1;
+               if (ATmatch(idannot, "<term>", &term1))
+                  {
+                    printf ("Found pattern used for nested types! \n");
+
+                    string type_aterm_string = ATwriteToString(term1);
+                    printf ("NOTE: type_aterm_string = %s \n",type_aterm_string.c_str());
+                    printf ("DIAGNOSTIC: aterm_type_name = %s \n",aterm_type_name(term).c_str());
+
+                    SgNode* n = generate_AST(term1);
+                    ROSE_ASSERT(n != NULL);
+                    returnNode = isSgType(n);
+                    ROSE_ASSERT(returnNode != NULL);
+                  }
+                 else
+                  {
+                    printf ("Could not find nested type! \n");
+                    ROSE_ASSERT(false);
+                  }
+#if 0
+               printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+       else
+        {
+          printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
+          ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("In AtermSupport::getAtermTypeNodeAttribute(): not yet implemented \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnNode;
+   }
+
+SgScopeStatement*
+AtermSupport::getAtermScopeNodeAttribute (ATerm term, const std::string & annotationName )
+   {
+     SgScopeStatement* returnNode = NULL;
+
+     ATerm idannot = ATgetAnnotation(term, ATmake(annotationName.c_str()));
+     if (idannot)
+        {
+#if 1
+          printf ("In getAtermScopeNodeAttribute(): Found an annotation: annotationName = %s \n",annotationName.c_str());
+#endif
+          char* id = NULL;
+       // Get the associated annotation string.
+          if (ATmatch(idannot, "<str>", &id))
+             {
+#if 1
+                printf ("In getAtermScopeNodeAttribute(): Found an string in the annotation: annotationName = %s id = %s \n",annotationName.c_str(),id);
+#endif
+               if (translationScopeMap.find(id) != translationScopeMap.end())
+                  {
+                    returnNode = translationScopeMap[id];
+                    ROSE_ASSERT(returnNode != NULL);
+#if 1
+                    printf ("In getAtermScopeNodeAttribute translationScopeMap: id = %s returnNode = %p = %s \n",id,returnNode,returnNode->class_name().c_str());
+#endif
+                  }
+                 else
+                  {
+#if 1
+                    printf ("In getAtermScopeNodeAttribute(): Node not found in translationNodeMap: returing NULL pointer \n");
+#endif
+                  }
+             }
+            else
+             {
+               printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+       else
+        {
+          printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
+          ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("In AtermSupport::getAtermScopeNodeAttribute(): not yet implemented \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnNode;
+   }
 
 
 #if 0

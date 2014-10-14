@@ -240,6 +240,8 @@ class Terminal
   void setBaseClass ( Terminal* baseClassPointer );
   Terminal* getBaseClass () const;
 
+  bool isDerivedFrom(const std::string & s) const;
+
   void setCanHaveInstances (bool canHaveInstances);
   bool getCanHaveInstances() const;
 
@@ -369,6 +371,9 @@ class Terminal
   // JH (21/01/20005): method that evaluates the type string of a data member and returns the corresponding TypeEvaluation type
   // DQ (4/6/2006): Modified the function parameter as per Jochen's version
      TypeEvaluation evaluateType (std::string& varTypeString);
+
+  // DQ (10/12/2014): output the name assocauted with the TypeEvaluation enum values.
+     std::string typeEvaluationName ( TypeEvaluation x );
 
   /* JH (10/28/2005): declaration of the source building methods for the storage classes
      concenrning the ast file IO. More about them one can find in the terminal.C file. They
