@@ -19169,6 +19169,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 //    std::cout << "Pointers are equal, returning true" << std::endl;
     return true;
   }
+#ifndef USE_CMAKE
   RoseAst subT1(t1);
   RoseAst subT2(t2);
 
@@ -19295,6 +19296,11 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
   }
   // this should be unreachable code...
   return equal;
+#else
+  std::cerr << "This feature for now is available with autotools only!" << std::endl;
+  ROSE_ASSERT(false);
+  return false;
+#endif
 }
 
 int getNamedTypeCount() {
