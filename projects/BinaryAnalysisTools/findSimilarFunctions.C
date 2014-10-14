@@ -439,7 +439,7 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
     info <<"disassembling and partitioning";
     P2::Modules::deExecuteZeros(map, 256);
     Sawyer::Stopwatch partitionTime;
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     engine.runPartitioner(partitioner, interp);
     SgAsmBlock *gblock = partitioner.buildGlobalBlockAst();
     info <<"; completed in " <<partitionTime <<" seconds\n";

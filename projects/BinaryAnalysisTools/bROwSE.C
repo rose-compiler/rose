@@ -1383,7 +1383,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
 
     // Create the partitioner
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());

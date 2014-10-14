@@ -241,13 +241,17 @@ partitioner2(const Settings &settings, SgAsmInterpretation *interp, Disassembler
     Stream info(mlog[INFO] <<"Disassembling and partitioning (version 2)");
     Sawyer::Stopwatch partitionTime;
     P2::Engine engine;
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    engine.interpretation(interp);
+    engine.memoryMap(map);
+    engine.disassembler(disassembler);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
         partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
-    engine.partition(partitioner, interp);
+    
+    engine.runPartitioner(partitioner, interp);
     info <<"; completed in " <<partitionTime <<" seconds.\n";
 
     // Show some stats
@@ -295,7 +299,7 @@ int main(int argc, char *argv[]) {
 
     // Load the specimen as raw data or an ELF/PE container.
     P2::Engine engine;
-    MemoryMap map = engine.loadSpecimen(specimenNames);
+    MemoryMap map = engine.load(specimenNames);
     SgAsmInterpretation *interp = SageInterface::getProject() ?
                                   SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
                                   NULL;

@@ -99,6 +99,7 @@ public:
      * @{ */
     Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>());
     Partitioner partition(const std::string &fileName) { return partition(std::vector<std::string>(1, fileName)); }
+    virtual Partitioner partition(SgAsmInterpretation*);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -136,22 +137,30 @@ public:
      *
      *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
      *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor
-     *  is not quite the same--that would produce an even more bare partitioner!   The disassembler and memory map arguments
-     *  are passed along to the partitioner's constructor but not used for anything else. */
-    virtual Partitioner createBarePartitioner(Disassembler*, const MemoryMap&);
+     *  is not quite the same--that would produce an even more bare partitioner!  The partitioner must have disassembler and
+     *  memory map properties assigned already. They can be assigned explicitly with @ref disassembler and @ref memoryMap
+     *  methods, and/or they can be allocated implicitly by calling steps up through @ref load. */
+    virtual Partitioner createBarePartitioner();
 
     /** Create a generic partitioner.
      *
      *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
-     *  disassembler and memory map arguments are passed along to the partitioner's constructor but not used for anything
-     *  else. */
-    virtual Partitioner createGenericPartitioner(Disassembler*, const MemoryMap&);
+     *  partitioner must have disassembler and memory map properties assigned already. They can be assigned explicitly with
+     *  @ref disassembler and @ref memoryMap methods, and/or they can be allocated implicitly by calling steps up through @ref
+     *  load. */
+    virtual Partitioner createGenericPartitioner();
 
     /** Create a tuned partitioner.
      *
      *  Returns a partitioner that is tuned to operate on the architecture described by the specified disassembler. The
-     *  disassembler and memory map are passed along to the partitioner's constructor. */
-    virtual Partitioner createTunedPartitioner(Disassembler*, const MemoryMap&);
+     *  partitioner must have disassembler and memory map properties assigned already. They can be assigned explicitly with
+     *  @ref disassembler and @ref memoryMap methods, and/or they can be allocated implicitly by calling steps up through @ref
+     *  load. */
+    virtual Partitioner createTunedPartitioner();
+
+private:
+    void checkCreatePartitionerPrerequisites() const;
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Properties
@@ -166,7 +175,7 @@ public:
      *
      * @{ */
     SgAsmInterpretation* interpretation() const { return interp_; }
-    void interpretation(SgAsmInterpretation *i) { interp_ = i; }
+    Engine& interpretation(SgAsmInterpretation *i) { interp_ = i; return *this; }
     /** @} */
 
     /** Property: loader
@@ -179,7 +188,7 @@ public:
      *
      * @{ */
     BinaryLoader* loader() const { return loader_; }
-    void loader(BinaryLoader *l) { loader_ = l; }
+    Engine& loader(BinaryLoader *l) { loader_ = l; return *this; }
     /** @} */
 
     /** Property: memory map
@@ -196,7 +205,7 @@ public:
      * @{ */
     MemoryMap& memoryMap() { return map_; }
     const MemoryMap& memoryMap() const { return map_; }
-    void memoryMap(const MemoryMap &m) { map_ = m; }
+    Engine& memoryMap(const MemoryMap &m) { map_ = m; return *this; }
     /** @} */
 
     /** Property: disassembler.
@@ -208,7 +217,7 @@ public:
      *
      * @{ */
     Disassembler *disassembler() const { return disassembler_; }
-    void disassembler(Disassembler *d) { disassembler_ = d; }
+    Engine& disassembler(Disassembler *d) { disassembler_ = d; return *this; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,7 +229,7 @@ public:
      *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
      *  instantiate functions and then uses the specified partitioner to discover basic blocks and use the CFG to assign basic
      *  blocks to functions.  It is often overridden by subclasses. */
-    virtual void runPartitioner(Partitioner&, SgAsmInterpretation*);
+    virtual Engine& runPartitioner(Partitioner&, SgAsmInterpretation*);
 
     /** Discover as many basic blocks as possible.
      *

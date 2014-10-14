@@ -399,7 +399,7 @@ int main(int argc, char *argv[]) {
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
     Stream info(mlog[INFO] <<"Disassembling and partitioning");
     Sawyer::Stopwatch partitionTime;
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());

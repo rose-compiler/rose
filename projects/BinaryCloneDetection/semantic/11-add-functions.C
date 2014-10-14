@@ -354,7 +354,7 @@ main(int argc, char *argv[])
         // Save function
         SgAsmFunction *func = fi->second;
         ReturnValueUsed::UsageCounts &retval_usage = used_retvals[func];
-        ExtentMap e_insns, e_data, e_total;
+        AddressIntervalSet e_insns, e_data, e_total;
         size_t ninsns = func->get_extent(&e_insns, NULL, NULL, &iselector);
         func->get_extent(&e_data, NULL, NULL, &dselector);
         func->get_extent(&e_total);

@@ -121,26 +121,50 @@ Partitioner
 Engine::partition(const std::vector<std::string> &fileNames) {
     if (map_.isEmpty())
         load(fileNames);
+    return partition(interp_);
+}
+
+Partitioner
+Engine::partition(SgAsmInterpretation *interp) {
+    if (interp && interp!=interp_) {
+        interp_ = interp;
+        if (map_.isEmpty())
+            load(std::vector<std::string>());
+    }
     if (!obtainDisassembler())
         throw std::runtime_error("no disassembler available for partitioning");
-    Partitioner partitioner = createTunedPartitioner(disassembler_, map_);
+    Partitioner partitioner = createTunedPartitioner();
     runPartitioner(partitioner, interp_);
     return partitioner;
 }
+    
+
+    
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner-making functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+Engine::checkCreatePartitionerPrerequisites() const {
+    if (NULL==disassembler_)
+        throw std::runtime_error("Engine::createBarePartitioner needs a prior disassembler");
+    if (map_.isEmpty())
+        mlog[WARN] <<"Engine::createBarePartitioner: using an empty memory map\n";
+}
+
 Partitioner
-Engine::createBarePartitioner(Disassembler *disassembler, const MemoryMap &map) {
-    Partitioner p(disassembler, map);
+Engine::createBarePartitioner() {
+    checkCreatePartitionerPrerequisites();
+    Partitioner p(disassembler_, map_);
     return p;
 }
 
 Partitioner
-Engine::createGenericPartitioner(Disassembler *disassembler, const MemoryMap &map) {
-    Partitioner p = createBarePartitioner(disassembler, map);
+Engine::createGenericPartitioner() {
+    checkCreatePartitionerPrerequisites();
+    Partitioner p = createBarePartitioner();
     p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
@@ -153,16 +177,18 @@ Engine::createGenericPartitioner(Disassembler *disassembler, const MemoryMap &ma
 }
 
 Partitioner
-Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map) {
-    if (dynamic_cast<DisassemblerM68k*>(disassembler)) {
-        Partitioner p = createBarePartitioner(disassembler, map);
+Engine::createTunedPartitioner() {
+    if (dynamic_cast<DisassemblerM68k*>(disassembler_)) {
+        checkCreatePartitionerPrerequisites();
+        Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
         return p;
     }
     
-    if (dynamic_cast<DisassemblerX86*>(disassembler)) {
-        Partitioner p = createBarePartitioner(disassembler, map);
+    if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
+        checkCreatePartitionerPrerequisites();
+        Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
@@ -171,7 +197,7 @@ Engine::createTunedPartitioner(Disassembler *disassembler, const MemoryMap &map)
         return p;
     }
 
-    return createGenericPartitioner(disassembler, map);
+    return createGenericPartitioner();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +281,7 @@ Engine::obtainDisassembler(Disassembler *disassembler) {
 //                                      High-level partitioning actions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
+Engine&
 Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     makeContainerFunctions(partitioner, interp);
     discoverFunctions(partitioner);
@@ -264,6 +290,7 @@ Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     attachSurroundedDataToFunctions(partitioner);
     attachBlocksToFunctions(partitioner, true);         // to emit warnings about CFG problems
     postPartitionFixups(partitioner, interp);
+    return *this;
 }
 
 void
