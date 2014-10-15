@@ -1,3 +1,5 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "Snippet.h"
 #include "AstTraversal.h"
 #include "LinearCongruentialGenerator.h"

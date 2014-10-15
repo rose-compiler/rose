@@ -4,8 +4,8 @@
  * Date : 3Apr07
  * Decription : Code that handles the IDAPRO DB
  ****************************************************/
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "RoseBin_file.h"
 #include <errno.h>
 #include "readTicl.h"

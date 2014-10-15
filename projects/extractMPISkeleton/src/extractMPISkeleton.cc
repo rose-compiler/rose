@@ -1,6 +1,8 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
+#include "rose.h"
+
 #include "APIReader.h"
 #include "APIDepFinder.h"
 #include "DangerousOperationFinder.h"

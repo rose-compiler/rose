@@ -1,6 +1,5 @@
 // Support for running tests
 
-#include "sage3basic.h"
 #include "RunTests.h"
 
 #include <cerrno>

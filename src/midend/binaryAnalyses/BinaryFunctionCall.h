@@ -1,7 +1,6 @@
 #ifndef ROSE_BinaryAnalysis_FunctionCall_H
 #define ROSE_BinaryAnalysis_FunctionCall_H
 
-#include "sage3basic.h"
 #include "BinaryControlFlow.h"
 
 class SgAsmFunction;
