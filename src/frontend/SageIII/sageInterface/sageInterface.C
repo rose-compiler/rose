@@ -19113,6 +19113,126 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
 }
 
 
+class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterface::const_int_expr_t> {
+ public:
+   SimpleExpressionEvaluator() {
+   }
+
+ struct SageInterface::const_int_expr_t getValueExpressionValue(SgValueExp *valExp) {
+   struct SageInterface::const_int_expr_t subtreeVal;
+   subtreeVal.hasValue_ = true;
+
+   if (isSgIntVal(valExp)) {
+     subtreeVal.value_ = isSgIntVal(valExp)->get_value();
+   } else if (isSgLongIntVal(valExp)) {
+     subtreeVal.value_ = isSgLongIntVal(valExp)->get_value();
+   } else if (isSgLongLongIntVal(valExp)) {
+     subtreeVal.value_ = isSgLongLongIntVal(valExp)->get_value();
+   } else if (isSgShortVal(valExp)) {
+     subtreeVal.value_ = isSgShortVal(valExp)->get_value();
+   } else if (isSgUnsignedIntVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedIntVal(valExp)->get_value();
+   } else if (isSgUnsignedLongVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedLongVal(valExp)->get_value();
+   } else if (isSgUnsignedLongLongIntVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedLongLongIntVal(valExp)->get_value();
+   } else if (isSgUnsignedShortVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedShortVal(valExp)->get_value();
+   }
+   return subtreeVal;
+ }
+
+ struct SageInterface::const_int_expr_t evaluateVariableReference(SgVarRefExp *vRef) {
+   if (isSgModifierType(vRef->get_type()) == NULL) {
+     struct SageInterface::const_int_expr_t val;
+     val.hasValue_ = false;
+     return val;
+   }
+   if (isSgModifierType(vRef->get_type())->get_typeModifier().get_constVolatileModifier().isConst()) {
+     // We know that the var value is const, so get the initialized name and evaluate it
+     SgVariableSymbol *sym = vRef->get_symbol();
+     SgInitializedName *iName = sym->get_declaration();
+     SgInitializer *ini = iName->get_initializer();
+                                                                                 
+     if (isSgAssignInitializer(ini)) {
+       SgAssignInitializer *initializer = isSgAssignInitializer(ini);
+       SgExpression *rhs = initializer->get_operand();
+       SimpleExpressionEvaluator variableEval;
+                                                                                                                
+       return variableEval.traverse(rhs);
+     }
+   }
+ }
+
+ struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
+   if (isSgExpression(node)) {
+     if (isSgValueExp(node)) {
+       return this->getValueExpressionValue(isSgValueExp(node));
+     }
+                                                                                                                                                 
+     if (isSgVarRefExp(node)) {
+      //      std::cout << "Hit variable reference expression!" << std::endl;
+       return evaluateVariableReference(isSgVarRefExp(node));
+     }
+     // Early break out for assign initializer // other possibility?
+     if (isSgAssignInitializer(node)) {
+       if(synList.at(0).hasValue_){
+       return synList.at(0);
+       } else { 
+         struct SageInterface::const_int_expr_t val;
+         val.hasValue_ = false;
+         return val;
+       }
+     }
+     struct SageInterface::const_int_expr_t evaluatedValue;
+#if 0
+    if(synList.size() != 2){
+      for(SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it){
+        std::cout << "Node: " << node->unparseToString() << "\n" << (*it).value_ << std::endl;
+        std::cout << "Parent: " << node->get_parent()->unparseToString() << std::endl;
+        std::cout << "Parent, Parent: " << node->get_parent()->get_parent()->unparseToString() << std::endl;
+      }
+    }
+#endif
+     for (SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it) {
+       if((*it).hasValue_){
+         if (isSgAddOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_ + synList[1].value_ ;
+         } else if (isSgSubtractOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  - synList[1].value_ ;
+         } else if (isSgMultiplyOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  * synList[1].value_ ;
+         } else if (isSgDivideOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  / synList[1].value_ ;
+         } else if (isSgModOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  % synList[1].value_ ;
+         }
+       } else {
+         std::cerr << "Expression is not evaluatable" << std::endl;
+         evaluatedValue.hasValue_ = false;
+         return evaluatedValue;
+       }
+     }
+     evaluatedValue.hasValue_ = true;
+     return evaluatedValue;
+   }
+   struct SageInterface::const_int_expr_t evaluatedValue;
+   evaluatedValue.hasValue_ = false;
+   return evaluatedValue;
+ }
+};
+
+struct SageInterface::const_int_expr_t 
+SageInterface::evaluateConstIntegerExpression(SgExpression *expr){
+  SimpleExpressionEvaluator eval;
+  return eval.traverse(expr);
+}
+
 bool
 SageInterface::checkTypesAreEqual(SgType *typeA, SgType *typeB){
 
@@ -19244,8 +19364,8 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
         bool arrayBaseIsEqual = typesAreEqual(a1->get_base_type(), a2->get_base_type());
 
-        SgExpression::const_int_expr_t t1Index = a1->get_index()->evaluateConstIntegerExpression();
-        SgExpression::const_int_expr_t t2Index = a2->get_index()->evaluateConstIntegerExpression();
+        SageInterface::const_int_expr_t t1Index = SageInterface::evaluateConstIntegerExpression(a1->get_index());
+        SageInterface::const_int_expr_t t2Index = SageInterface::evaluateConstIntegerExpression(a2->get_index());
         bool arrayIndexExpressionIsEquivalent = false;
         if(t1Index.hasValue_ && t2Index.hasValue_){
           if(t1Index.value_ == t2Index.value_){
@@ -19328,6 +19448,5 @@ int getFunctionTypeCount() {
 
 TypeEquivalenceChecker tec(false, false);
 return tec.typesAreEqual(typeA, typeB);
-
 }
 
