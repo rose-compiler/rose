@@ -1513,9 +1513,11 @@ Grammar::setUpExpressions ()
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
   // JJW (11/22/2008): Changed members to SgValueExp*; real_value can be NULL for imaginary numbers
      ComplexVal.setFunctionPrototype ( "HEADER_COMPLEX_VALUE_EXPRESSION", "../Grammar/Expression.code" );
-     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "",
+  // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
+     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "",
+  // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
+     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ComplexVal.setDataPrototype ( "SgType*", "precisionType", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
