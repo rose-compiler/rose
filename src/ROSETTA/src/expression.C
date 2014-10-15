@@ -271,6 +271,31 @@ Grammar::setUpExpressions ()
 
 #endif
 
+
+#define ROSE_USE_STENCILE_COMPILER_NODES 0
+#if ROSE_USE_STENCILE_COMPILER_NODES
+
+  // Possible new IR nodes specific to new stencil DSL.
+     NEW_TERMINAL_MACRO (ShiftOpExpr,             "ShiftOpExpr",              "Temp_ShiftOpExpr" );
+     NEW_TERMINAL_MACRO (GrowOpExpr,              "GrowOpExpr",               "Temp_GrowOpExpr" );
+     NEW_TERMINAL_MACRO (CrossLevelOpExpr,        "CrossLevelOpExpr",         "Temp_CrossLevelOpExpr" );
+     NEW_TERMINAL_MACRO (PointExpr,               "PointExpr",                "Temp_PointExpr" );
+
+     NEW_TERMINAL_MACRO (BoxOpExpr,               "BoxOpExpr",                "Temp_BoxOpExpr" );
+     NEW_TERMINAL_MACRO (ArrayExpr,               "ArrayExpr",                "Temp_ArrayExpr" );
+
+  // Note that ArrayDecl, ArrayDef, and StencilDef, StencilExpr would be derived from SgExpression.
+
+  // DQ (10/14/2014): ALTERNATIVE:
+  // An alternative to naming new IR nodes would be to add associated AST attributes from a base class
+  // that would be interpreted to be the equivalent new IR nodes at runtime.  The Aterm generator
+  // and Aterm reader would be able to interpret these AST attributes and generate the desired new
+  // aterm nodes (and read then using modified patterns with the new IR node names).  This approach
+  // would simplify the handling of Aterms for new IR nodes extended from existing ROSE IR nodes.
+  
+#endif
+
+
   // An expression with a designator, used for designated initialization in
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );

@@ -618,6 +618,7 @@ SgTemplateFunctionSymbol
 SgTemplateMemberFunctionDeclaration
 SgTemplateMemberFunctionRefExp
 SgTemplateMemberFunctionSymbol
+SgTemplateTypedefDeclaration
 SgTemplateVariableDeclaration
 SgTemplateVariableSymbol
 SgTemplateClassDefinition

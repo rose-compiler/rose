@@ -27,7 +27,7 @@ SUBDIRS = \
 	MPI_Tools \
 	MacroRewrapper \
 	OpenMP_Analysis \
-        OpenMP_Checker \
+   OpenMP_Checker \
 	QtDesignerPlugins \
 	RoseQt \
 	arrayOptimization \
@@ -46,13 +46,15 @@ SUBDIRS = \
    taintcheck \
 	ManyCoreRuntime \
 	StencilManyCore \
+	ShiftCalculus \
 	Fortran_to_C \
 	mint \
 	vectorization \
 	extractMPISkeleton \
-	RoseBlockLevelTracing\
+	RoseBlockLevelTracing \
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
+
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.
 #   BinaryDataStructureRecognition 
 # DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
