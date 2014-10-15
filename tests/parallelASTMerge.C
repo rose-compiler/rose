@@ -27,7 +27,7 @@ class XTimer {
     public:
         XTimer() 
         {
-            xtime_get(&_start_time, boost::TIME_UTC);
+            xtime_get(&_start_time, boost::TIME_UTC_);
         }
 
         XTimer(const XTimer& other)
@@ -38,7 +38,7 @@ class XTimer {
         double elapsed() const 
         {
             boost::xtime now;
-            xtime_get(&now, boost::TIME_UTC);
+            xtime_get(&now, boost::TIME_UTC_);
             return boost::lexical_cast<double>(now.sec - _start_time.sec) + 
                 boost::lexical_cast<double>(now.nsec - _start_time.nsec) / 1000000000;
         }

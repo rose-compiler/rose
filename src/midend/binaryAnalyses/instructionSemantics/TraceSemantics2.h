@@ -225,7 +225,7 @@ public:
     virtual BaseSemantics::SValuePtr get_protoval() const ROSE_OVERRIDE;
     virtual void set_solver(SMTSolver*) ROSE_OVERRIDE;
     virtual SMTSolver *get_solver() const ROSE_OVERRIDE;
-    virtual BaseSemantics::StatePtr get_state() ROSE_OVERRIDE;
+    virtual BaseSemantics::StatePtr get_state() const ROSE_OVERRIDE;
     virtual void set_state(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
     virtual size_t get_ninsns() const ROSE_OVERRIDE;
