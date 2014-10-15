@@ -240,6 +240,8 @@ class Terminal
   void setBaseClass ( Terminal* baseClassPointer );
   Terminal* getBaseClass () const;
 
+  bool isDerivedFrom(const std::string & s) const;
+
   void setCanHaveInstances (bool canHaveInstances);
   bool getCanHaveInstances() const;
 
@@ -326,87 +328,91 @@ class Terminal
    to stl vectors or lists. They are marked below, but may cause no trouble if they remain.
 */
 // DQ (4/6/2006): New enum from Jochen's muilt file support.
-  enum TypeEvaluation 
-  {
-                       CHAR_POINTER,
-                       CONST_CHAR_POINTER,
-                       ATTACHEDPREPROCESSINGINFOTYPE,
-                       ROSE_HASH_MULTIMAP,
-                       ROSE_GRAPH_HASH_MULTIMAP,
-                       ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP,
-                       ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP,
-                       ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP,
-                       ROSE_GRAPH_INTEGER_NODE_HASH_MAP,
-                       ROSE_GRAPH_INTEGER_EDGE_HASH_MAP,
-                       ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP,
-                       ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP,
-                       ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP,
-                       SGCLASS_POINTER,
-                       ROSEATTRUBUTESLISTCONTAINER,
-                       SGCLASS_POINTER_LIST,
-                       SGCLASS_POINTER_VECTOR,
-                       SGCLASS_POINTER_VECTOR_NAMED_LIST,
-                       STL_CONTAINER,
-                       STL_SET,
-                    // DQ (4/30/2009): Added case of STL_MULTIMAP
-                       STL_MULTIMAP,
-                       STL_MAP,
-                       STRING,
-                       SGNAME,
-                       BIT_VECTOR,
-                       MODIFIERCLASS,
-                       MODIFIERCLASS_WITHOUTEASYSTORAGE,
-                       ASTATTRIBUTEMECHANISM,
-                       TO_HANDLE,
-                       OSTREAM,
-                       ENUM_TYPE,
-                       BASIC_DATA_TYPE,
-                       SKIP_TYPE,
-                    // should be no longer necessary after the implementation is changed to STL lists instead of pointers to lists
-                       SGCLASS_POINTER_LIST_POINTER
-                      } ;
-/* JH (21/01/20005): method that evaluates the type string of a data member and returns the corresponding
-   TypeEvaluation type
-*/
-// DQ (4/6/2006): Modified the function paramter as per Jochen's version
-  TypeEvaluation evaluateType (std::string& varTypeString);
+     enum TypeEvaluation 
+        {
+          CHAR_POINTER,
+          CONST_CHAR_POINTER,
+          ATTACHEDPREPROCESSINGINFOTYPE,
+          ROSE_HASH_MULTIMAP,
+          ROSE_GRAPH_HASH_MULTIMAP,
+          ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP,
+          ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP,
+          ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP,
+          ROSE_GRAPH_INTEGER_NODE_HASH_MAP,
+          ROSE_GRAPH_INTEGER_EDGE_HASH_MAP,
+          ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP,
+          ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP,
+          ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP,
+          SGCLASS_POINTER,
+          ROSEATTRUBUTESLISTCONTAINER,
+          SGCLASS_POINTER_LIST,
+          SGCLASS_POINTER_VECTOR,
+          SGCLASS_POINTER_VECTOR_NAMED_LIST,
+          STL_CONTAINER,
+          STL_SET,
+       // DQ (4/30/2009): Added case of STL_MULTIMAP
+          STL_MULTIMAP,
+          STL_MAP,
+          STRING,
+          SGNAME,
+          BIT_VECTOR,
+          MODIFIERCLASS,
+          MODIFIERCLASS_WITHOUTEASYSTORAGE,
+          ASTATTRIBUTEMECHANISM,
+          TO_HANDLE,
+          OSTREAM,
+          ENUM_TYPE,
+          BASIC_DATA_TYPE,
+          SKIP_TYPE,
+       // should be no longer necessary after the implementation is changed to STL lists instead of pointers to lists
+          SGCLASS_POINTER_LIST_POINTER
+        };
 
+  // JH (21/01/20005): method that evaluates the type string of a data member and returns the corresponding TypeEvaluation type
+  // DQ (4/6/2006): Modified the function parameter as per Jochen's version
+     TypeEvaluation evaluateType (std::string& varTypeString);
 
-/* JH (10/28/2005): declaration of the source building methods for the storage classes
-   concenrning the ast file IO. More about them one can find in the terminal.C file. They
-   are called while the code generation of ROSETTA by the method 'buildStringForStorageClassSource'
-   in the file grammar.C
-*/
-  std::string buildStorageClassHeader ();
-  std::string buildStorageClassDeleteStaticDataSource ();
-  std::string buildStorageClassArrangeStaticDataInOneBlockSource ();
-  std::string buildStorageClassPickOutIRNodeDataSource ();
-  std::string buildPointerInPoolCheck();
-  std::string buildSourceForIRNodeStorageClassConstructor();
-  std::string buildSourceForStoringStaticMembers ();
-  std::string buildInitializationForStaticMembers ();
-  std::string buildStaticDataConstructorSource();
-  std::string buildStorageClassWriteStaticDataToFileSource () ;
-  std::string buildStorageClassReadStaticDataFromFileSource ();
-  bool hasMembersThatAreStoredInEasyStorageClass();
-  bool hasStaticMembers ();
+  // DQ (10/12/2014): output the name assocauted with the TypeEvaluation enum values.
+     std::string typeEvaluationName ( TypeEvaluation x );
 
-// DQ (4/6/2006): Added these to match Jochen's new version
-  std::string buildStaticDataMemberList();
-  std::string buildStaticDataMemberListSetStaticData();
-  std::string buildStaticDataMemberListDeleteStaticData();
-  std::string buildStaticDataMemberListConstructor();
-  std::string buildAccessFunctionsForStaticDataMember();
-  std::string buildAccessFunctionsForStaticDataMemberSource();
-  std::string buildStaticDataMemberListOfStorageClass();
-  std::string buildStaticDataWriteEasyStorageDataToFileSource () ;
-  std::string buildStaticDataReadEasyStorageDataFromFileSource();
-  std::string buildStaticDataArrangeEasyStorageInOnePoolSource();
-  std::string buildStaticDataDeleteEasyStorageMemoryPoolSource();
+  /* JH (10/28/2005): declaration of the source building methods for the storage classes
+     concenrning the ast file IO. More about them one can find in the terminal.C file. They
+     are called while the code generation of ROSETTA by the method 'buildStringForStorageClassSource'
+     in the file grammar.C
+   */
+     std::string buildStorageClassHeader ();
+     std::string buildStorageClassDeleteStaticDataSource ();
+     std::string buildStorageClassArrangeStaticDataInOneBlockSource ();
+     std::string buildStorageClassPickOutIRNodeDataSource ();
+     std::string buildPointerInPoolCheck();
+     std::string buildSourceForIRNodeStorageClassConstructor();
+     std::string buildSourceForStoringStaticMembers ();
+     std::string buildInitializationForStaticMembers ();
+     std::string buildStaticDataConstructorSource();
+     std::string buildStorageClassWriteStaticDataToFileSource () ;
+     std::string buildStorageClassReadStaticDataFromFileSource ();
+     bool hasMembersThatAreStoredInEasyStorageClass();
+     bool hasStaticMembers ();
 
-// DQ (5/18/2007): support for documentation to handle mapping to KDM
-  std::string outputClassesAndFields ();
+  // DQ (4/6/2006): Added these to match Jochen's new version
+     std::string buildStaticDataMemberList();
+     std::string buildStaticDataMemberListSetStaticData();
+     std::string buildStaticDataMemberListDeleteStaticData();
+     std::string buildStaticDataMemberListConstructor();
+     std::string buildAccessFunctionsForStaticDataMember();
+     std::string buildAccessFunctionsForStaticDataMemberSource();
+     std::string buildStaticDataMemberListOfStorageClass();
+     std::string buildStaticDataWriteEasyStorageDataToFileSource();
+     std::string buildStaticDataReadEasyStorageDataFromFileSource();
+     std::string buildStaticDataArrangeEasyStorageInOnePoolSource();
+     std::string buildStaticDataDeleteEasyStorageMemoryPoolSource();
 
-};
+  // DQ (5/18/2007): support for documentation to handle mapping to KDM
+     std::string outputClassesAndFields();
+
+  // DQ (10/4/2014): Support for ATerms.
+     std::string buildAtermSupport();
+
+   };
 
 #endif

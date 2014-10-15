@@ -3643,7 +3643,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
      string functionNameString = operatorExp->get_name();
      curprint(functionNameString);
 
-#if 1
+#if 0
      printf ("In unparseTypeTraitBuiltinExp(): functionNameString = %s expr = %p = %s \n",functionNameString.c_str(),expr,expr->class_name().c_str());
 #endif
 
@@ -3654,7 +3654,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
      curprint("(");
      while (operand != list.end())
         {
-#if 1
+#if 0
           printf ("   --- TOP operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
 #endif
 #if 0
@@ -3668,7 +3668,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 
           SgType*       type       = isSgType(*operand);
           SgExpression* expression = isSgExpression(*operand);
-#if 1
+#if 0
           printf ("   --- operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
 #endif
        // DQ (7/13/2013): Build a new SgUnparse_Info so that we can skip passing on any existing referenceNode for name qualification.

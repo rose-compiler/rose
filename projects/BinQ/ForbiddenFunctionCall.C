@@ -23,8 +23,8 @@ std::string ForbiddenFunctionCall::getDescription() {
 
 void
 ForbiddenFunctionCall::visit(SgNode* node) {
-  if (isSgAsmx86Instruction(node) && isSgAsmx86Instruction(node)->get_kind() == x86_call) {
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+  if (isSgAsmX86Instruction(node) && isSgAsmX86Instruction(node)->get_kind() == x86_call) {
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(node);
     string calleeName = inst->get_comment();
     std::vector<std::string>::const_iterator it = blackList.begin();
     for (;it!=blackList.end();++it) {

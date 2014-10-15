@@ -31,14 +31,15 @@ void
 AddressUser::print(std::ostream &out) const {
     if (insn_!=NULL) {
         if (bblock_ != NULL) {
-            out <<"{" <<unparseInstructionWithAddress(insn_) <<" in " <<StringUtility::addrToString(bblock_->address()) <<"}";
+            out <<"{B-" <<StringUtility::addrToString(bblock_->address()) <<" ";
         } else {
-            out <<unparseInstructionWithAddress(insn_);
+            out <<"{B-none       ";
         }
+        out <<unparseInstructionWithAddress(insn_) <<"}";
     } else {
         ASSERT_require(odblock_.isValid());
-        out <<"data at " <<StringUtility::addrToString(odblock_.dataBlock()->address())
-            <<" has " <<StringUtility::plural(odblock_.nOwners(), "owners");
+        out <<"{D-" <<StringUtility::addrToString(odblock_.dataBlock()->address())
+            <<" " <<StringUtility::plural(odblock_.nOwners(), "owners") <<"}";
     }
 }
 
@@ -144,6 +145,17 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
         if (lb!=users_.end() && lb->dataBlock()==dblock)
             users_.erase(lb);
     }
+}
+
+std::vector<SgAsmInstruction*>
+AddressUsers::instructions() const {
+    std::vector<SgAsmInstruction*> insns;
+    BOOST_FOREACH (const AddressUser &user, users_) {
+        if (SgAsmInstruction *insn = user.insn())
+            insns.push_back(insn);
+    }
+    ASSERT_require(isSorted(insns, sortInstructionsByAddress, true));
+    return insns;
 }
 
 std::vector<BasicBlock::Ptr>
@@ -268,8 +280,9 @@ AddressUsers::isConsistent() const {
 
 void
 AddressUsers::print(std::ostream &out) const {
+    size_t nItems = 0;
     BOOST_FOREACH (const AddressUser &addressUser, users_)
-        out <<" " <<addressUser;
+        out <<(1==++nItems?"":", ") <<addressUser;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -391,7 +404,7 @@ AddressUsageMap::dataBlockExists(const DataBlock::Ptr &dblock) const {
 AddressIntervalSet
 AddressUsageMap::extent() const {
     AddressIntervalSet retval;
-    BOOST_FOREACH (const Map::Interval &interval, map_.keys())
+    BOOST_FOREACH (const Map::Interval &interval, map_.intervals())
         retval.insert(interval);
     return retval;
 }
@@ -420,7 +433,7 @@ AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
     using namespace StringUtility;
     BOOST_FOREACH (const Map::Node &node, map_.nodes())
         out <<prefix <<"[" <<addrToString(node.key().least()) <<"," <<addrToString(node.key().greatest())
-            <<"] =" <<node.value() <<"\n";
+            <<"] " <<StringUtility::plural(node.key().size(), "bytes") << ": " <<node.value() <<"\n";
 }
 
 } // namespace

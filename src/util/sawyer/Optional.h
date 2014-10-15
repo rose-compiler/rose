@@ -237,7 +237,7 @@ public:
     }
     
     // The following trickery is to allow things like "if (x)" to work but without having an implicit
-    // conversion to bool which would cause no end of other problems.
+    // conversion to bool which would cause no end of other problems. This is fixed in C++11.
 private:
     typedef void(Optional::*unspecified_bool)() const;
     void this_type_does_not_support_comparisons() const {}

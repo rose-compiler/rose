@@ -26,7 +26,7 @@ public:
     virtual InsnStats *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
         assert(insn);
         ninsns++;
 

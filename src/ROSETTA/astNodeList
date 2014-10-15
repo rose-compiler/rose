@@ -245,7 +245,7 @@ SgAsmUnaryPlus
 SgAsmUnaryRrx
 SgAsmValueExpression
 SgAsmVectorType
-SgAsmx86Instruction
+SgAsmX86Instruction
 SgAsmBinaryAddressSymbol
 SgAsmBinaryDataSymbol
 SgAssertStmt

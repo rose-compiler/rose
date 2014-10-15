@@ -251,7 +251,7 @@ VirtualTableSection::printOutVirtualFunctionTableInformation ( VirtualFunctionTa
 VirtualTableLoad::VirtualTableLoad( SgAsmInstruction* instruction )
    {
   // Constructor for VirtualTableLoad takes a SgAsmInstruction, and initializes the address of the virual table.
-  // SgAsmx86Instruction* x86Instruction = isSgAsmx86Instruction(instruction);
+  // SgAsmX86Instruction* x86Instruction = isSgAsmX86Instruction(instruction);
      ROSE_ASSERT(instruction != NULL);
      ROSE_ASSERT(instruction->get_operandList()->get_operands().size() == 2);
      ROSE_ASSERT(instruction->get_operandList()->get_operands()[0] != NULL);

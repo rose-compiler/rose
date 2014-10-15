@@ -285,10 +285,14 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     //       case we treat it like a function call.  LLVM requires us to treat all inter-function control flow as a
     //       function call even though the same restriction isn't present in the binary. FIXME[Robb P. Matzke 2014-01-09]
     //    2. It is an unconditional intra-function branch which can be translated to an LLVM unconditional "br" instruction.
+    //    3. It is the fall-through address added by transcodeBasicBlock for an instruction for which semantics failed when
+    //       quiet-errors mode is enabled, and therefore might be completely invalid.
     if (eip->is_number()) {
         SgAsmInstruction *dst_insn = insns.get_value_or(eip->get_number(), NULL);
         SgAsmFunction *dst_func = getEnclosingNode<SgAsmFunction>(dst_insn);
-        if (func!=dst_func) {                       // one or both could be null
+        if (!dst_func) {
+            o <<prefix() <<"unreachable\n";
+        } else if (func!=dst_func) {                    // func could be null
             std::string funcname = function_label(dst_func);
             o <<prefix() <<"call void " <<funcname <<"()\n";
             rose_addr_t ret_addr = fallthrough_va;
@@ -354,7 +358,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // If the last executed instruction is some kind of function return instruction, then emit an LLVM "ret" instruction.
     // The stack used by LLVM is distinct from the stack used by the binary. The latter's stack is implemented via the @ebp (or
     // similar) global pointer.  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
-    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+    if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         if (insn_x86->get_kind() == x86_ret || insn_x86->get_kind() == x86_retf) {
             o <<prefix() <<"ret void\n";
             return;
@@ -363,7 +367,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 
     // If this function is a thunk, then we need to treat it as an LLVM function call (because LLVM doesn't allow
     // inter-function branches).  FIXME[Robb P. Matzke 2014-01-09]: This is architecture dependent.
-    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+    if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         std::vector<SgAsmInstruction*> func_insns = querySubTree<SgAsmInstruction>(func);
         if (func_insns.size()==1 && func_insns.front()==insn_x86 &&
             (insn_x86->get_kind() == x86_jmp || insn_x86->get_kind() == x86_farjmp)) {
@@ -379,7 +383,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
 
     // If we don't know the target address and this is an indirect function call, then the successors are the entry points of
     // all known functions.  FIXME[Robb P. Matzke 2014-01-09]: Detection of a function call is architecture dependent.
-    if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(latest_insn)) {
+    if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         if (insn_x86->get_kind() == x86_call || insn_x86->get_kind() == x86_farcall) {
             LeafNodePtr t1 = emit_expression(o, eip);
             LeafNodePtr t2 = next_temporary(32);        // pointer to the function
@@ -401,7 +405,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
         std::string dflt_label = next_label();
         o <<prefix() <<"switch " <<type <<" " <<llvm_term(t1) <<", label %" <<dflt_label <<" [";
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            if (getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->is_first_in_block())
+            if (getEnclosingNode<SgAsmFunction>(ii->second)==func && ii->second->isFirstInBlock())
                 o <<" " <<type <<" " <<ii->first <<", label %" <<addr_label(ii->first);
         }
         o <<" ]\n";

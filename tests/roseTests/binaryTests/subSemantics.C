@@ -131,7 +131,7 @@ struct Test: AstSimpleProcessing {
     Semantics semantics;
     Test(): semantics(policy) {}
     virtual void visit(SgNode *node) /*override*/ {
-        if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+        if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(node)) {
             policy.writeRegister("eip", ValueType<32>(insn->get_address()));
             semantics.processInstruction(insn);
         }
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
         Semantics semantics;
         Test0(): semantics(policy) {}
         virtual void visit(SgNode *node) /*override*/ {
-            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+            if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(node)) {
                 policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(insn->get_address()));
                 semantics.processInstruction(insn);
             }

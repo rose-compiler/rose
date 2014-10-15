@@ -6,6 +6,11 @@
 
 using namespace rose;                                   // temporary until this lives in "rose"
 
+unsigned
+SgAsmArmInstruction::get_anyKind() const {
+    return p_kind;
+}
+
 /* Returns true if the instruction modifies the instruction pointer (r15). */
 static bool modifies_ip(SgAsmArmInstruction *insn) 
 {
@@ -75,7 +80,7 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
 
 /** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmArmInstruction::get_successors(bool *complete) {
+SgAsmArmInstruction::getSuccessors(bool *complete) {
     BinaryAnalysis::Disassembler::AddressSet retval;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
     *complete = true; /*assume retval is the complete set of successors for now*/
@@ -145,7 +150,7 @@ SgAsmArmInstruction::get_successors(bool *complete) {
 
 // Does instruction terminate basic block? See base class for full documentation.
 bool
-SgAsmArmInstruction::terminates_basic_block() {
+SgAsmArmInstruction::terminatesBasicBlock() {
     if (get_kind()==arm_unknown_instruction)
         return true;
     return modifies_ip(this);
@@ -153,7 +158,7 @@ SgAsmArmInstruction::terminates_basic_block() {
 
 // Determines whether this is the special ARM "unkown" instruction. See base class for documentation.
 bool
-SgAsmArmInstruction::is_unknown() const
+SgAsmArmInstruction::isUnknown() const
 {
     return arm_unknown_instruction == get_kind();
 }

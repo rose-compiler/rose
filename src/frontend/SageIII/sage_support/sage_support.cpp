@@ -2280,6 +2280,10 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 // This function calls the Java JVM to load the Java implemented parser (written
 // using ANTLR, a parser generator).
 int openFortranParser_main(int argc, char **argv );
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+// This is defined seperately only in configured for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
 int experimental_openFortranParser_main(int argc, char **argv );
 #endif
 
@@ -3661,7 +3665,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           experimentalFrontEndCommandLine.push_back(parseTableOption);
 
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
@@ -3675,8 +3680,26 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
           printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
           frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) \n");
+#else
+          printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
+#endif
+          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
+          if (frontendErrorLevel == 0)
+             {
+#if 0
+               printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
+               exit(0);
+#else
+               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCESS! \n");
+#endif
+             }
+            else
+             {
+               printf ("Error returned from call to experimental_openFortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
+               exit(1);
+             }
         }
        else
         {

@@ -19,6 +19,18 @@ recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Experimental "binary ROSE on-line workbench for specimen exploration"
+
+if ROSE_USE_WT
+
+bin_PROGRAMS += bROwSE
+bROwSE_SOURCES = bROwSE.C
+bROwSE_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include
+bROwSE_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+endif
+
+#------------------------------------------------------------------------------------------------------------------------
 # S-Record utilities
 
 bin_PROGRAMS += dumpSRecords
@@ -30,6 +42,18 @@ bin_PROGRAMS += fileToSRecords
 fileToSRecords_SOURCES = fileToSRecords.C
 fileToSRecords_CPPFLAGS = $(ROSE_INCLUDES)
 fileToSRecords_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# find similar functions in two specimens
+
+if ROSE_USE_DLIB
+
+bin_PROGRAMS += findSimilarFunctions
+findSimilarFunctions_SOURCES = findSimilarFunctions.C
+findSimilarFunctions_CPPFLAGS = $(ROSE_INCLUDES) -I$(DLIB_PREFIX)
+findSimilarFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+endif
 
 #------------------------------------------------------------------------------------------------------------------------
 # maximize bijection of two sets

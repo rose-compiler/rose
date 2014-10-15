@@ -1,3 +1,0 @@
-The files (shell scripts) in this directory get sourced by various rosegit tools.
-See defaults.conf for a description of which files get sourced and what variables
-can be set.
