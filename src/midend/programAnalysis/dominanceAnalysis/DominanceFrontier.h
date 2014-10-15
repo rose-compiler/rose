@@ -114,7 +114,7 @@ namespace DominatorTreesAndDominanceFrontiers
                                         for (unsigned int edge = 0; edge < outEdges.size(); edge++)
                                         {
                                                 VirtualCFG::FilteredCFGNode < CFGFilterFunction > child =
-                                                    VirtualCFG::FilteredCFGEdge<CFGFilterFunction>::target(outEdges[edge]);
+                                                    outEdges[edge].target();
                                                 int imDom=dominatorTree.getImDomID(child);
                                                 int childID=dominatorTree.getID(child);
                                                 // if the current ID is the immdom of this child, put it in the domSet
