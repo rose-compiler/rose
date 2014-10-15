@@ -3,6 +3,8 @@
  * Author: Cong Hou [hou_cong@gatech.edu]
  */
 
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "util.h"
 #include <boost/foreach.hpp>
 #include <boost/graph/strong_components.hpp>

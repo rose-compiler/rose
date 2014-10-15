@@ -3,6 +3,8 @@
  * Author   : Markus Schordan                                *
  *************************************************************/
 
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>

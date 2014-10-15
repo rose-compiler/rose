@@ -3,7 +3,8 @@
 #ifndef ROSE_AST_SNIPPET
 #define ROSE_AST_SNIPPET
 
-#include "sage3basic.h"
+// rose.h and sage3basic.h should not be included in librose header files. [Robb P. Matzke 2014-10-15]
+// #include "sage3basic.h"
 #include "Map.h"
 
 #include <boost/shared_ptr.hpp>
