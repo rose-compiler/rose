@@ -1,5 +1,12 @@
 #!/usr/bin/perl
 # DO NOT DISABLE without first checking with a ROSE core developer
+
+# Please do not increase this limit! Only decrease it.
+my $allowedFailures = 78;
+
+
+
+
 my $desc = <<EOF;
 The "rose.h" header file should not be included into any ROSE library header
 files.  Include "sage3basic.h" in the ROSE library .C file before including
@@ -36,7 +43,7 @@ my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
     if ($filename=~/\.(h|hh|hpp|code2|macro)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
 	while (<FILE>) {
-	    if (/^\s*#\s*include\s*["<]((rose|sage3|sage3basic|rose_config)\.h)[>"]/) {
+	    if (/^\s*#\s*include\s*["<]((rose|sage3|sage3basic|rose_config)\.h)[>"]/ && !/\bPOLICY_OK\b/) {
 		print $desc unless $nfail++;
 		printf "  %1s (%1s)\n", $filename, $1;
 		last;
@@ -45,7 +52,7 @@ while (my $filename = $files->next_file) {
 	close FILE;
     } elsif ($filename =~ /\.(C|cpp)$/ && !is_disabled($filename) && open FILE, "<", $filename) {
 	while (<FILE>) {
-	    if (/^\s*#\s*include\s*["<](rose\.h)[>"]/) {
+	    if (/^\s*#\s*include\s*["<](rose\.h)[>"]/ && !/\bPOLICY_OK\b/) {
 		print $desc unless $nfail++;
 		printf "  %1s (%1s)\n", $filename, $1;
 		last;
@@ -55,14 +62,22 @@ while (my $filename = $files->next_file) {
     }
 }
 
-if ($nfail > 125) {
+if ($nfail > $allowedFailures) {
     print <<EOF;
 Your changes introduce a new violation of this policy.  Please fix it, and while
-you're at it, fix any other violations in files that you "own".  Then edit the
-end of $0
-and change the threshold for failing (there are currently $nfail violations).
+you're at it, fix any other violations in files that you "own".
 EOF
-    exit 1
+    exit 1;
+} elsif ($nfail < $allowedFailures) {
+    print <<EOF;
+Congratulations, you've improved the librose source quality by fixing violations of
+this policy.  Now, please edit the top of $0
+and replace the line
+    my \$allowedFailures = $allowedFailures;
+with
+    my \$allowedFailures = $nfail;
+Thank you.
+EOF
+    exit 1;
 }
-
 exit($nfail>0 ? 128 : 0);
