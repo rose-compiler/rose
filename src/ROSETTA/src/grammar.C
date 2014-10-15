@@ -1561,7 +1561,7 @@ Grammar::buildConstructor ( Terminal & node )
              }
         }
 
-#if 1
+#if 0
   // DQ (10/7/2014): Build the Aterm support static member function (constructor).
   // if (node.generateConstructor() == true)
         {
@@ -1587,11 +1587,33 @@ Grammar::buildConstructor ( Terminal & node )
 #else
           constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
 #endif
-#endif
         }
+#endif
 
      return returnString;
    }
+
+
+StringUtility::FileWithLineNumbers
+Grammar::buildAtermConstructor ( Terminal & node )
+   {
+  // DQ (10/10/2014): This function is only called to generate the skeleton for a 
+  // small part of the API to translate Aterms to ROSE IR nodes.
+
+  // DQ (10/7/2014): Build the Aterm support static member function (constructor).
+
+     StringUtility::FileWithLineNumbers returnString;
+
+     string constructorTemplateFileName = "../Grammar/grammarAtermConstructorDefinitionMacros.macro";
+     StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
+
+     bool complete  = false;
+     constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+
+     return returnString;
+   }
+
+
 
 StringUtility::FileWithLineNumbers
 Grammar::buildCopyMemberFunctionSource ( Terminal & node )
@@ -2107,7 +2129,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
   // Place the constructor at the top of the node specific code for this element of grammar
 
-     // BP : 10/24/2001, keep track of memory
+  // BP : 10/24/2001, keep track of memory
      editedStringMiddle += editStringMiddleNodeMemberFunctions;
      editedStringMiddle += editStringMiddleNodeDataMemberFunctions;
 
@@ -2148,6 +2170,44 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
         }
 #endif
    }
+
+
+void
+Grammar::buildAtermBuildFunctionsSourceFile( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+   {
+  // DQ (10/10/2014): This function is only called to generate the skeleton for a 
+  // small part of the API to translate Aterms to ROSE IR nodes.
+
+     printf ("At TOP of Grammar::buildAtermBuildFunctionsSourceFile() \n");
+
+#if 0
+     printf ("Exiting at TOP of Grammar::buildAtermBuildFunctionsSourceFile() \n");
+     ROSE_ASSERT(false);
+#endif
+
+     StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildAtermConstructor (node);
+
+#if 1
+  // Also output strings to single file
+     outputFile += editStringMiddleNodeDataMemberFunctions;
+#endif
+
+  // printf ("node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName(),node.nodeList.size());
+
+#if 1
+  // Call this function recursively on the children of this node in the tree
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
+        {
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+
+          buildAtermBuildFunctionsSourceFile(**treeNodeIterator,outputFile);
+        }
+#endif
+   }
+
+
 
 void
 Grammar::printTreeNodeNames ( const Terminal & node ) const
@@ -3016,9 +3076,23 @@ Grammar::buildCode ()
      Grammar::writeFile(ROSE_ArrayGrammarSourceFile, target_directory, getGrammarName(), ".C");
 #endif
 
+#if 0
+  // DQ (10/10/2014): Added an automated generation of the API to connect to SageBuilder API.
+  // We only needed to run this once to generate the API (then fill in the functions to 
+  // build out the translation support of Aterms translated to ROSE AST nodes.
 
+  // This builds the skeleton used as a basis for the automatically generated
+  // function API which is then modified by hand to connect to the hand-written
+  // SageBuilder API.  The result is the file nodeBuildFunctionsForAterms.C 
+  // which then implements the functions for the automcatically generated API.
+     StringUtility::FileWithLineNumbers ROSE_AtermSourceFile;
 
+     buildAtermBuildFunctionsSourceFile(*rootNode,ROSE_AtermSourceFile);
 
+     cout << "DONE: buildAtermBuildFunctionsSourceFile()" << endl;
+
+     Grammar::writeFile(ROSE_AtermSourceFile, target_directory, getGrammarName()+ "AtermNodeBuildFunctions", ".C");
+#endif
 
 #if 1
    //-----------------------------------------------
@@ -3701,6 +3775,11 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                else if ((nodeName == "SgClassDeclaration" || nodeName == "SgTemplateInstantiationDecl") && memberVariableName == "definition")
                   {
                     outputFile << successorContainerName << ".push_back(compute_classDefinition());\n";
+                  }
+            // DQ (10/12/2014): Added case to supress handling of the builtin types in the ROSE SgType IR nodes.
+               else if ((gs->getTypeNameString() == "static $CLASSNAME*") && memberVariableName == "builtin_type")
+                  {
+                    outputFile << "  // suppress handling of builtin_type date members \n";
                   }
                else
                   {
