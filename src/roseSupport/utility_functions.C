@@ -162,6 +162,7 @@ unsigned int rose_boost_version_id()
     return ROSE_BOOST_VERSION;
 #else
   ROSE_ASSERT(! "Expected CPP macro ROSE_BOOST_VERSION to be defined");
+  return 0; // Windows compiler requires return value
 #endif
   }
 
@@ -172,6 +173,7 @@ std::string rose_boost_version_path()
     return ROSE_BOOST_PATH;
 #else
   ROSE_ASSERT(! "Expected CPP macro ROSE_BOOST_PATH to be defined");
+  return ""; // Windows compiler requires return value
 #endif
   }
 
