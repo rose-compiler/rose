@@ -188,6 +188,7 @@ libsage3Sources = \
    ompAstConstruction.cpp \
    dwarfSupport.C \
    atermSupport.C \
+   nodeBuildFunctionsForAterms.C \
    rose_graph_support.C \
    $(fSageSupport_la_sources)
 endif
