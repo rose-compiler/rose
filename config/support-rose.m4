@@ -2032,6 +2032,7 @@ projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
+projects/ShiftCalculus/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 tests/Makefile
