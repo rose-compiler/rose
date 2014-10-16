@@ -4,6 +4,9 @@
 #include <iostream>
 //#include <array>
 
+// DQ: Forward reference required (for reference to Shift below).
+class Shift;
+
 using namespace std;
 class Point
 {
@@ -43,6 +46,10 @@ class Point
   inline bool operator==(const Point& a_pt) const;
   /// are two points equal.
   inline bool operator!=(const Point& a_pt) const;
+
+// DQ: Added assignment operator for Point class (for when rhs is type Shift).
+  Point operator= (const Shift & x);
+
   /// Get a component of a point.
   inline const int&  operator[](const int& a_index) const
 {

@@ -16,7 +16,7 @@ ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-TESTCODES_REQUIRED_TO_PASS = test2013_01.C
+TESTCODES_REQUIRED_TO_PASS = test2014_01.C
 
 TESTCODE_CURRENTLY_FAILING =
 
@@ -28,7 +28,7 @@ ALL_TESTCODES = $(TESTCODES) $(TESTCODE_CURRENTLY_FAILING)
 PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
-PASSING_REGRESSION_TEST_Output = ${REGRESSION_TESTCODES:.C=.C.passing}
+PASSING_REGRESSION_TEST_Output = ${TESTCODES_REQUIRED_TO_PASS:.C=.C.passing}
 
 
 $(PASSING_REGRESSION_TEST_Output): ./shiftCalculusCompiler
@@ -36,8 +36,19 @@ $(PASSING_REGRESSION_TEST_Output): ./shiftCalculusCompiler
 
 
 
-test: shiftCalculusCompiler
-	./shiftCalculusCompiler -c example1.C
+test1: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/identity.cpp
+
+test2: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/laplacian.cpp
+
+
+test3: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/identity_lite.cpp
+
+test4: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/laplacian_lite.cpp
+
 
 
 check-local:

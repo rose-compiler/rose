@@ -825,7 +825,7 @@ ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges
     typedef typename boost::graph_traits<InsnCFG>::in_edge_iterator CFG_InEdgeIterator;
     typedef std::pair<CFG_Vertex, CFG_Vertex> CFG_VertexPair;
     typedef Map<SgAsmInstruction*, CFG_Vertex> InsnToVertex;
-    typedef Map<CFG_Vertex, rose_addr_t> CallSites; // return address (or -1) for each call or inter-function branch site
+ // typedef Map<CFG_Vertex, rose_addr_t> CallSites; // return address (or -1) for each call or inter-function branch site
     CFG_Vertex NO_VERTEX = boost::graph_traits<InsnCFG>::null_vertex();
 
     // Build mappings needed later and find the function return points.  We just look for the x86
@@ -1011,7 +1011,7 @@ void
 ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
                             const VertexPropertyWriter &vpw, const EdgePropertyWriter &epw)
 {
-    typedef typename boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
+ // typedef typename boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
     typedef typename boost::graph_traits<CFG>::edge_descriptor CFG_Edge;
     typedef typename boost::graph_traits<CFG>::vertex_iterator CFG_VertexIterator;
     typedef typename boost::graph_traits<CFG>::out_edge_iterator CFG_OutEdgeIterator;

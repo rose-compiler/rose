@@ -1,25 +1,25 @@
 #ifndef _SHIFT_H_
 #define _SHIFT_H_
-#include "Point.H"
+
+#include "Point_lite.H"
 //#include<array>
 
 using namespace std;
 class Shift
 {
 public:
-  inline Shift(){m_shift = getZeros();};
-  inline Shift(Point a_pt){m_shift = a_pt;};
-  inline Shift operator*(Shift a_s){return Shift(m_shift + a_s.m_shift);};
+  Shift();
+  Shift(Point a_pt);
+  Shift operator*(Shift a_s);
   
-  inline Point getExp(){return m_shift;};
-  inline int getExp(int dir){return m_shift[dir];};
+  Point getExp();
+  int getExp(int dir);
   Point m_shift;
-  inline void print(){m_shift.print();};
-
-// DQ: Added assignment operator for Shift class.
-// Shift operator= (const Shift & x);
+  void print();
 };
-inline Shift getUnitShift(){return Shift(getOnes());};
+
+Shift getUnitShift();
+
 // inline array<Shift,DIM> getShiftVec()
 // {
 //   array<Shift,DIM> ret;

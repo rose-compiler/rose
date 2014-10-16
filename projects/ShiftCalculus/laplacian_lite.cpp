@@ -9,17 +9,17 @@
 #define BLOCKSIZE 5
 #define DOMAINSIZE 7
 
-#include <iostream>
-#include <cassert>
-#include <cmath>
-#include <vector>
-#include <memory>
-#include <stdio.h>
-#include <fstream>
-#include "Shift.H"
-#include "Stencil.H" 
-#include "PowerItoI.H"
-#include "RectMDArray.H"
+// #include <iostream>
+// #include <cassert>
+// #include <cmath>
+#include "vector_lite.h"
+// #include <memory>
+// #include <stdio.h>
+// #include <fstream>
+#include "Shift_lite.H"
+#include "Stencil_lite.H" 
+// #include "PowerItoI.H"
+// #include "RectMDArray.H"
 
 // function to initialize the src data
 void initialize(RectMDArray<double>& patch)

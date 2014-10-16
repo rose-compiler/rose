@@ -28,7 +28,24 @@ Traversal::Traversal()
    }
 
 
-#define DEBUG_USING_DOT_GRAPHS 0
+InheritedAttribute
+Traversal::evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute )
+   {
+     InheritedAttribute return_inheritedAttribute;
+     return return_inheritedAttribute;
+   }
+
+
+SynthesizedAttribute
+Traversal::evaluateSynthesizedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList )
+   {
+     SynthesizedAttribute return_synthesizedAttribute;
+
+     return return_synthesizedAttribute;
+   }
+
+
+#define DEBUG_USING_DOT_GRAPHS 1
 
 int main( int argc, char * argv[] )
    {
@@ -46,7 +63,7 @@ int main( int argc, char * argv[] )
 #if DEBUG_USING_DOT_GRAPHS
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
 #endif
-#if DEBUG_USING_DOT_GRAPHS && 1
+#if DEBUG_USING_DOT_GRAPHS && 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_before");
 #endif
@@ -73,10 +90,11 @@ int main( int argc, char * argv[] )
 
 #if DEBUG_USING_DOT_GRAPHS
      printf ("Write out the DOT file after the transformation \n");
-     generateDOTforMultipleFile(*project,"after_transformation");
+  // generateDOTforMultipleFile(*project,"after_transformation");
+     generateDOT(*project,"_after_transformation");
      printf ("DONE: Write out the DOT file after the transformation \n");
 #endif
-#if DEBUG_USING_DOT_GRAPHS && 1
+#if DEBUG_USING_DOT_GRAPHS && 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
   // const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_after");

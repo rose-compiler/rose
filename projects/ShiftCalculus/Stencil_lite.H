@@ -1,10 +1,12 @@
 #ifndef _STENCIL_H_
 #define _STENCIL_H_
-//#include <array>
-//#include <tuple>
-#include <iostream>
-#include "Shift.H"
+
+// #include <iostream>
+
+#include "Shift_lite.H"
 #include "RectMDArray.H"
+
+
 using namespace std;
 
 //The main stencil class. A stencil consists of a collection
@@ -64,7 +66,8 @@ public:
                  Point a_srcRefratio=getOnes());
 };
   
-#include "StencilImplem.H"
+// #include "StencilImplem.H"
+
 template <class TCoef> Stencil<TCoef> 
 operator*(TCoef a_coef, Shift a_shift)
 {return Stencil<TCoef>(pair<Shift,TCoef>(a_shift,a_coef));};
@@ -80,70 +83,7 @@ public:
   void operator()(const Stencil<TCoef>& a_stencil,
                   const RectMDArray<TDest>& a_LOfPhi,
                   const RectMDArray<TSrc>& a_phi,
-                  const Box& a_bx)
-  {
-    const vector<TCoef> & coef = a_stencil.m_coef;
-    const vector<Point> & offsets = a_stencil.m_offsets;
-    const Point& srcRefratio = a_stencil.m_srcRefratio;
-    const Point& destRefratio = a_stencil.m_destRefratio;
-    const Point& destShift = a_stencil.m_destShift;
-    int tuple[DIM];
-    int n = a_bx.getHighCorner()[0] - a_bx.getLowCorner()[0]+1;
-    int incp[DIM];
-    incp[0] = 1;
-    Box bxl = a_LOfPhi.getBox();
-    Box bxp = a_phi.getBox();
-    for (int l=1;l<DIM;l++)
-      {
-        incp[l] = incp[l-1]*
-          (bxp.getHighCorner()[l-1] - bxp.getLowCorner()[l-1]+1);
-        tuple[l] = a_bx.getHighCorner()[l];
-      }
-    tuple[0]=a_bx.getLowCorner()[0];
-    Point hicross(tuple);
-    Box cross(a_bx.getLowCorner(),
-              a_bx.getHighCorner()*(getOnes()-getUnitv(0))
-              +getUnitv(0)*a_bx.getLowCorner()[0]);
-    vector<int> srcOffset;
-    vector<vector<int > > srcOffsetVec;
-    double* destpencil = new double[n];
-    srcOffset.resize(coef.size());
-    srcOffsetVec.resize(coef.size());
-    int size = cross.sizeOf();
- // int kbasel0 = 0;
- // int npts = 0;
- // int nstencil = 0;
-    for (int isten = 0; isten < coef.size();isten++)
-      {
-        srcOffset[isten] = 0;
-        for (int dir = 0; dir < DIM ; dir++)
-          {
-            srcOffset[isten] += offsets[isten][dir]*incp[dir];
-          }
-      }
-    int desdisp = destRefratio[0];
-    int srcdisp = srcRefratio[0];
-    int destshift = destShift[0];
-    for (int kperp = 0; kperp < size; kperp++)
-      {
-        Point pt = cross.getPoint(kperp);
-        int kbasel = bxl.getIndex(pt*destRefratio + destShift); 
-        int kbasep = bxp.getIndex(pt*srcRefratio);
-          
-        for (int isten = 0;isten < srcOffset.size(); isten++)
-          {
-            for (int k0 = 0;k0 < n;k0++)              
-              {
-                int offset =  srcOffset[isten];   
-                int k0dest = k0*desdisp;
-                int k0src = k0*srcdisp;
-                a_LOfPhi[kbasel + k0dest] += 
-                  coef[isten]*a_phi[kbasep + k0src + offset];
-              }
-          }
-      }
-    delete [] destpencil;
-  };
+                  const Box& a_bx);
 };
 
 // //a function that can be applied pointwise
