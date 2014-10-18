@@ -93,8 +93,8 @@ CycleDetection::run(string& name, SgGraphNode* node,
     std::set<SgGraphNode*>::iterator it =visited.find(next);
     if (it!=visited.end()) {
       // found this node in visited list
-      SgAsmx86Instruction* nodeSg = isSgAsmx86Instruction(node->get_SgNode());
-      SgAsmx86Instruction* nextSg = isSgAsmx86Instruction(next->get_SgNode());
+      SgAsmX86Instruction* nodeSg = isSgAsmX86Instruction(node->get_SgNode());
+      SgAsmX86Instruction* nextSg = isSgAsmX86Instruction(next->get_SgNode());
       if (debug) {
       std::cerr << "Found possible cycle between  " << 
         rose::stringifyX86InstructionKind(nodeSg->get_kind()) << " (" << 

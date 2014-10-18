@@ -1508,7 +1508,7 @@ void CodeGeneratorVisitor::preOrderVisit(SgNode *node) {
      //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
-     //                 SgAsmx86Instruction
+     //                 SgAsmX86Instruction
      //                 SgAsmArmInstruction
      //                 SgAsmPowerpcInstruction
      //         SgAsmExpression:
@@ -3314,7 +3314,7 @@ void CodeGeneratorVisitor::postOrderVisit(SgNode *node) {
      //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
-     //                 SgAsmx86Instruction
+     //                 SgAsmX86Instruction
      //                 SgAsmArmInstruction
      //                 SgAsmPowerpcInstruction
      //         SgAsmExpression:

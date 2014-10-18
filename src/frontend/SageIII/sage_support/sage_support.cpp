@@ -5610,6 +5610,17 @@ SgProject::compileOutput()
                   }
              }
 
+          // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+          #ifdef ROSE_BOOST_PATH
+          if (get_C_only() || get_Cxx_only())
+          {
+              // Search dir for header files, after all directories specified by -I but
+              // before the standard system directories.
+              originalCommandLine.push_back("-isystem");
+              originalCommandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+          }
+          #endif
+
        // DQ (8/13/2006): Add a space to avoid building "g++-E" as output.
        // compilerNameString += " ";
 
@@ -5626,6 +5637,15 @@ SgProject::compileOutput()
           printf ("Support for \"-E\" not implemented yet. \n");
           ROSE_ASSERT(false);
 #endif
+
+          // Debug: Output commandline arguments before actually executing
+          if (SgProject::get_verbose() > 0)
+          {
+              for (unsigned int i=0; i < originalCommandLine.size(); ++i)
+              {
+                   printf ("originalCommandLine[%u] = %s \n", i, originalCommandLine[i].c_str());
+              }
+          }
 
           errorCode = systemFromVector(originalCommandLine);
 

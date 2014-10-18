@@ -20,7 +20,7 @@ A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
 INCLUDES = $(A_TERM_INCLUDE) $(ROSE_INCLUDES)
 
 # bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI termGraph_using_RoseAtermAPI_withForwardedFunctions
-bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI testTranslation_AST_to_ATerm_to_AST
+bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI testTranslation_AST_to_ATerm_to_AST testTranslation_AST_to_ATerm testTranslation_ATerm_to_AST
 
 termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
@@ -32,6 +32,10 @@ termGraph_SOURCES = termGraph.C
 termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
 
 testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+
+testTranslation_AST_to_ATerm_SOURCES = testTranslation_AST_to_ATerm.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+testTranslation_ATerm_to_AST_SOURCES = testTranslation_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+
 
 # termGraph_using_RoseAtermAPI_withForwardedFunctions_SOURCES = termGraph_using_RoseAtermAPI_withForwardedFunctions.C
 
@@ -49,8 +53,19 @@ termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Added new test code to increase testing
 testTranslation_AST_to_ATerm_to_AST_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+# testTranslation_AST_to_ATerm_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+# testTranslation_ATerm_to_AST_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
-TESTCODES_REQUIRED_TO_PASS = test2013_01.C
+# DQ (10/1/2014): This is the complete list of passing example codes.
+COMPLETE_TESTCODES_REQUIRED_TO_PASS = \
+test2013_01.C \
+test2013_02.C \
+test2013_03.C \
+test2013_04.C \
+test2014_01.C
+
+TESTCODES_REQUIRED_TO_PASS = \
+test2014_05.C
 
 TESTCODE_CURRENTLY_FAILING =
 
@@ -59,11 +74,14 @@ TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 ALL_TESTCODES = $(TESTCODES) $(TESTCODE_CURRENTLY_FAILING)
 
-PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
-TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
+# PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
+# TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
+PASSING_TEST_Output = $(TESTCODES_REQUIRED_TO_PASS)
+TEST_Output = $(ALL_TESTCODES)
+PASSING_TEST_Output = $(addsuffix .passed, $(filter-out $(TESTCODE_CURRENTLY_FAILING), $(ALL_TESTCODES)))
 
-rose_%: $(srcdir)/% termToStratego
-	./termToStratego $(ROSE_FLAGS) -c $< -o $@
+# rose_%: $(srcdir)/% termToStratego
+#	./termToStratego $(ROSE_FLAGS) -c $< -o $@
 
 
 REGRESSION_TESTCODES = \
@@ -865,12 +883,177 @@ test2006_84.C \
 test2006_124.C \
 inputBug317.C 
 
+REGRESSION_C_SUBSET_OF_CXX_TESTCODES = \
+test_CplusplusMacro_C.C \
+test2001_02.C \
+test2001_03.C \
+test2001_05.C \
+test2001_07.C \
+test2001_08.C \
+test2001_09.C \
+test2001_14.C \
+test2001_17.C \
+test2001_23.C \
+test2001_24.C \
+test2001_25.C \
+test2001_26.C \
+test2002_01.C \
+test2003_04.C \
+test2003_05.C \
+test2003_06.C \
+test2003_10.C \
+test2003_11.C \
+test2003_13.C \
+test2003_14.C \
+test2003_15.C \
+test2003_16.C \
+test2003_18.C \
+test2003_19.C \
+test2003_20.C \
+test2003_21.C \
+test2003_23.C \
+test2003_24.C \
+test2003_25.C \
+test2003_26.C \
+test2003_29.C \
+test2003_30.C \
+test2003_31.C \
+test2003_32.C \
+test2003_35.C \
+test2003_36.C \
+test2004_03.C \
+test2004_04.C \
+test2004_05.C \
+test2004_13.C \
+test2004_14.C \
+test2004_19.C \
+test2004_23.C \
+test2004_28.C \
+test2004_29.C \
+test2004_49.C \
+test2004_53.C \
+test2004_60.C \
+test2004_61.C \
+test2004_72.C \
+test2004_74.C \
+test2004_94.C \
+test2004_96.C \
+test2004_102.C \
+test2004_105.C \
+test2004_107.C \
+test2004_108.C \
+test2004_114.C \
+test2004_118.C \
+test2004_131.C \
+test2004_152.C \
+test2004_153.C \
+test2004_154.C \
+test2004_163.C \
+test2005_16.C \
+test2005_20.C \
+test2005_21.C \
+test2005_22.C \
+test2005_23.C \
+test2005_26.C \
+test2005_48.C \
+test2005_62.C \
+test2005_84.C \
+test2005_92.C \
+test2005_95.C \
+test2005_100.C \
+test2005_111.C \
+test2005_116.C \
+test2005_125.C \
+test2005_157.C \
+test2005_159.C \
+test2005_164.C \
+test2005_165.C \
+test2005_169.C \
+test2005_170.C \
+test2005_176.C \
+test2005_180.C \
+test2005_182.C \
+test2005_184.C \
+test2005_187.C \
+test2005_191.C \
+test2005_198.C \
+test2005_202.C \
+test2005_209.C \
+test2006_07.C \
+test2006_10.C \
+test2006_12.C \
+test2006_14.C \
+test2006_16.C \
+test2006_23.C \
+test2006_34.C \
+test2006_40.C \
+test2006_50.C \
+test2006_52.C \
+test2006_53.C \
+test2006_55.C \
+test2006_56.C \
+test2006_57.C \
+test2006_62.C \
+test2006_69.C \
+test2006_75.C \
+test2006_76.C \
+test2006_82.C \
+test2006_83.C \
+test2006_88.C \
+test2006_91.C \
+test2006_93.C \
+test2006_94.C \
+test2006_97.C \
+test2006_99.C \
+test2006_103.C \
+test2006_104.C \
+test2006_105.C \
+test2006_106.C \
+test2006_107.C \
+test2006_108.C \
+test2006_109.C \
+test2006_111.C \
+test2006_113.C \
+test2006_116.C \
+test2006_137.C \
+test2006_140.C \
+test2006_142.C \
+test2006_145.C \
+test2006_146.C \
+test2006_147.C \
+test2006_148.C \
+test2006_149.C \
+test2006_150.C \
+test2006_151.C \
+test2006_152.C \
+test2006_153.C \
+test2006_154.C \
+test2006_181.C \
+test2008_04.C \
+test2010_16.C \
+test_int_lexemes.C \
+test_int_lexemes_donot_pass.C \
+test_simple_int.C \
+test_wchars.C \
+X.C
+
+# DQ (9/29/2014): This test code required the TEST_STRING_MACRO macro to be defined on the command line (ignore it for these ATerm tests).
+# test2005_56.C 
 
 #PASSING_REGRESSION_TEST_Output = $(addprefix rose_,${REGRESSION_TESTCODES})
 # PASSING_REGRESSION_TEST_Output = ${REGRESSION_TESTCODES}
 # PASSING_TEST_Objects = ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o}
 # PASSING_REGRESSION_TEST_Output = ${REGRESSION_TESTCODES:.C=.C.dot} ${ROSE__CXX_TESTS:.C=.C.dot}
 PASSING_REGRESSION_TEST_Output = ${REGRESSION_TESTCODES:.C=.C.dot} 
+PASSING_REGRESSION_TEST_ATerm_Output = ${REGRESSION_TESTCODES:.C=.C.dot} 
+
+# PASSING_REGRESSION_TEST_AST_Output = ${REGRESSION_TESTCODES:.C=.C.dot}
+TESTS_THAT_FAIL =
+PASSING_REGRESSION_TEST_AST_Output = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(REGRESSION_TESTCODES)))
+
+
+PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_Output = ${REGRESSION_C_SUBSET_OF_CXX_TESTCODES:.C=.C.dot}
+PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_ATerm_Output = ${REGRESSION_C_SUBSET_OF_CXX_TESTCODES:.C=.C.dot}
 
 # rose_%: $(srcdir)/tests/CompileTests/Cxx_tests/% ./termGraph_using_RoseAtermAPI
 #$(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
@@ -880,6 +1063,30 @@ PASSING_REGRESSION_TEST_Output = ${REGRESSION_TESTCODES:.C=.C.dot}
 $(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
 	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C)
 
+$(PASSING_REGRESSION_TEST_ATerm_Output): ./testTranslation_AST_to_ATerm
+	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C)
+
+$(PASSING_REGRESSION_TEST_AST_Output): ./testTranslation_ATerm_to_AST
+	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.passed=.C)
+#	./testTranslation_ATerm_to_AST $(@:.C.dot=.C_TAF.aterm)
+	@$(RTH_RUN) CMD="./testTranslation_ATerm_to_AST $(@:.C.passed=.C_TAF.aterm)" $(top_srcdir)/scripts/test_exit_status $@
+
+$(PASSING_TEST_Output): ./testTranslation_ATerm_to_AST ./testTranslation_AST_to_ATerm
+	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -c $(srcdir)/$(@:.C.passed=.C)
+#	./testTranslation_ATerm_to_AST $(@:.C.dot=.C_TAF.aterm)
+	@$(RTH_RUN) CMD="./testTranslation_ATerm_to_AST $(@:.C.passed=.C_TAF.aterm)" $(top_srcdir)/scripts/test_exit_status $@
+
+# $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_Output): ./termGraph_using_RoseAtermAPI
+#	@echo "Part 1: Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
+#	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C) $(@:.C.dot=.c)
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.C.dot=.c)
+#	rm -f $(@:.C.dot=.c)
+
+# $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_ATerm_Output): ./termGraph_using_RoseAtermAPI
+#	@echo "Part 2: Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
+#	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C) $(@:.C.dot=.c)
+#	./testTranslation_AST_to_ATerm $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.C.dot=.c)
+#	rm -f $(@:.C.dot=.c)
 
 # $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
 # ../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
@@ -891,6 +1098,17 @@ test1: testTranslation_AST_to_ATerm_to_AST
 #	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
 	./testTranslation_AST_to_ATerm_to_AST $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
 
+test2: testTranslation_AST_to_ATerm_to_AST
+	@echo "Tests for ATerm C examples."
+#	@$(MAKE) $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_Output)
+	@$(MAKE) $(PASSING_REGRESSION_TEST_ATerm_Output)
+
+test3: testTranslation_ATerm_to_AST
+	@echo "Tests for ATerm to ROSE examples."
+	@$(MAKE) $(PASSING_REGRESSION_TEST_AST_Output)
+
+test4: testTranslation_ATerm_to_AST testTranslation_AST_to_ATerm
+	@$(MAKE) $(PASSING_TEST_Output)
 
 test: termGraph
 	./termGraph atermFile.aterm
@@ -912,7 +1130,11 @@ endif
 check-local:
 	@echo "Tests for ATerm examples."
 #	@$(MAKE) $(PASSING_TEST_Output)
-	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
+#	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
+#	@$(MAKE) $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_Output)
+	@$(MAKE) $(PASSING_REGRESSION_TEST_ATerm_Output)
+#	@$(MAKE) $(PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_ATerm_Output)
+#	@$(MAKE) $(PASSING_REGRESSION_TEST_ATerm_Output)
 	@echo "********************************************************************************************"
 	@echo "****** ROSE/projects/AtermTranslation: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************"
@@ -923,7 +1145,10 @@ CLEANFILES =
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files rose_*.C *.pdf
-	rm -f a.out *.dot 
+	rm -f a.out *.dot *.aterm *.failed *.passed
+
+clean_tests:
+	rm -f a.out *.dot *.aterm *.failed *.passed
 
 # rule to compile stretego program to generate a C file 
 # which stretego compiles to generate an executable.

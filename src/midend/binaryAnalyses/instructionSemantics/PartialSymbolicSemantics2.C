@@ -524,9 +524,11 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition)
 {
+#ifndef NDEBUG
     size_t nbits = value->get_width();
     assert(8==nbits || 16==nbits || 32==nbits);
     assert(1==condition->get_width()); // FIXME: condition is not used
+#endif
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
     state->writeMemory(address, value, this, this);

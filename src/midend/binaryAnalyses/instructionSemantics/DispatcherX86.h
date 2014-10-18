@@ -63,13 +63,20 @@ public:
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) /*override*/;
 
+    /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
+     *  using individual flags for the fields of the FLAGS/EFLAGS register. */
+    virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
+
     virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();
     }
 
-    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=32);
+    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=32) /*override*/;
+
+    /** Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);

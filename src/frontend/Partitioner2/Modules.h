@@ -1,9 +1,11 @@
-#ifndef ROSE_Partitioner2_Modules_H
+#ifndef ROSE_Partitioner2_Modules_H 
 #define ROSE_Partitioner2_Modules_H
 
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/Utility.h>
 
 #include <sawyer/SharedPointer.h>
 
@@ -169,6 +171,60 @@ class PreventDiscontiguousBlocks: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
     virtual bool operator()(bool chain, const Args &args) /*override*/;
+};
+
+/** List some instructions at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class InstructionLister: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // which basic block(s) we should we monitor
+        Trigger::Settings when;                         // once found, how often we produce a list
+        AddressInterval what;                           // what instructions to list
+        Settings(): what(AddressInterval::whole()) {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    explicit InstructionLister(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new InstructionLister(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
+};
+
+/** Produce a GraphViz file for the CFG at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class CfgGraphVizDumper: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) we should monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers the output
+        AddressInterval what;                           // which basic blocks should be in the output
+        bool showNeighbors;                             // should neighbor blocks be included in the output?
+        std::string fileName;                           // name of output; '%' gets expanded to a distinct identifier
+        Settings(): what(AddressInterval::whole()), showNeighbors(true), fileName("cfg-%.dot") {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    CfgGraphVizDumper(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new CfgGraphVizDumper(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) /*override*/;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) /*override*/ { return chain; }
 };
 
 /** Remove execute permissions for zeros.

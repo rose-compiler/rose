@@ -61,12 +61,12 @@ buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &desc)
 }
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildx86Instruction(X86InstructionKind kind) {
     return buildX86Instruction(kind);
 }
 
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildX86Instruction(X86InstructionKind kind) {
     // These are the default values used for the construction of new instructions.
     rose_addr_t address = 0;
@@ -75,7 +75,7 @@ buildX86Instruction(X86InstructionKind kind) {
     X86InstructionSize operandSize = x86_insnsize_none; 
     X86InstructionSize addressSize = x86_insnsize_none;
 
-    SgAsmx86Instruction* instruction = new SgAsmx86Instruction(address, mnemonic, kind, baseSize, operandSize, addressSize);
+    SgAsmX86Instruction* instruction = new SgAsmX86Instruction(address, mnemonic, kind, baseSize, operandSize, addressSize);
 
     // This should not have been set yet.
     ASSERT_require(instruction->get_operandList() == NULL);
@@ -88,28 +88,28 @@ buildX86Instruction(X86InstructionKind kind) {
 }
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildx86Instruction(X86InstructionKind kind, SgAsmExpression *operand) {
     return buildX86Instruction(kind, operand);
 }
 
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildX86Instruction(X86InstructionKind kind, SgAsmExpression *operand)
 {
-    SgAsmx86Instruction* instruction = buildX86Instruction(kind);
+    SgAsmX86Instruction* instruction = buildX86Instruction(kind);
     appendOperand(instruction,operand);
     return instruction;
 }
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildx86Instruction(X86InstructionKind kind, SgAsmExpression *lhs, SgAsmExpression *rhs) {
     return buildX86Instruction(kind, lhs, rhs);
 }
 
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildX86Instruction(X86InstructionKind kind, SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    SgAsmx86Instruction* instruction = buildX86Instruction(kind);
+    SgAsmX86Instruction* instruction = buildX86Instruction(kind);
     appendOperand(instruction,lhs);
     appendOperand(instruction,rhs);
     return instruction;
@@ -434,12 +434,12 @@ buildMultibyteNopInstruction(int n) {
     return buildX86MultibyteNopInstruction(n);
 }
 
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 buildX86MultibyteNopInstruction(size_t nBytes) {
     ASSERT_require(nBytes > 0);
     ASSERT_require(nBytes <= 9);
 
-    SgAsmx86Instruction *instruction = new SgAsmx86Instruction(0, "nop", x86_nop,
+    SgAsmX86Instruction *instruction = new SgAsmX86Instruction(0, "nop", x86_nop,
                                                                x86_insnsize_32, x86_insnsize_32, x86_insnsize_32);
 
     // Build a simple version of multi-byte nop using repeated prefixes.

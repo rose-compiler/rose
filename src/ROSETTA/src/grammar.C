@@ -1383,6 +1383,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
           bool withInitializers = false;
 #endif
           bool withTypes        = true;
+
        // Get the SgLocatedNode so that we can set the data member as not being a constructor 
        // parameter so that we can reuse the same code generation source code.
           Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
@@ -1410,16 +1411,46 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->isInConstructorParameterList = CONSTRUCTOR_PARAMETER;
                returnValue->defaultInitializerString = defaultInitializer;
+#if 0
+            // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (only generated where constructors are generated).
+               if (node.generateConstructor() == true)
+                  {
+                    constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString_1 + "); \n";
+                  }
+#endif
              }
             else
              {
-            // If not a SgLocatedNode then output the normal constructor prototype (with all the default arguments.
+            // If not a SgLocatedNode then output the normal constructor prototype (with all the default arguments).
                string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString + "); \n";
                withInitializers = false;
+#if 0
+            // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (only generated where constructors are generated).
+               if (node.generateConstructor() == true)
+                  {
+                    constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString + "); \n";
+                  }
+#endif
              }
 
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
+        }
+
+  // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (we want it generated independe of if (node.generateConstructor() == true)).
+  // if (node.generateConstructor() == true)
+        {
+          bool complete = false;
+          ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
+          bool withInitializers = true;
+          bool withTypes        = true;
+          string constructorPrototype = "\n     public: \n"; 
+
+          string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+
+          constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString + "); \n";
+
+          dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<aterm support>" */, 1));
         }
 
      return dataAccessFunctionPrototypeString;
@@ -1520,15 +1551,69 @@ Grammar::buildConstructor ( Terminal & node )
                config = NO_CONSTRUCTOR_PARAMETER;
              }
 
-          if (config == NO_CONSTRUCTOR_PARAMETER) {
-            constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
-          } else {
-            constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
-          }
+          if (config == NO_CONSTRUCTOR_PARAMETER) 
+             {
+              constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+            else
+             {
+               constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
         }
+
+#if 0
+  // DQ (10/7/2014): Build the Aterm support static member function (constructor).
+  // if (node.generateConstructor() == true)
+        {
+          string constructorTemplateFileName = "../Grammar/grammarAtermConstructorDefinitionMacros.macro";
+          StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
+
+          bool complete  = false;
+#if 0
+          ConstructParamEnum config = CONSTRUCTOR_PARAMETER;
+          if  (node.getBuildDefaultConstructor())
+             {
+               config = NO_CONSTRUCTOR_PARAMETER;
+             }
+
+          if (config == NO_CONSTRUCTOR_PARAMETER) 
+             {
+              constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+            else
+             {
+               constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+             }
+#else
+          constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+#endif
+        }
+#endif
 
      return returnString;
    }
+
+
+StringUtility::FileWithLineNumbers
+Grammar::buildAtermConstructor ( Terminal & node )
+   {
+  // DQ (10/10/2014): This function is only called to generate the skeleton for a 
+  // small part of the API to translate Aterms to ROSE IR nodes.
+
+  // DQ (10/7/2014): Build the Aterm support static member function (constructor).
+
+     StringUtility::FileWithLineNumbers returnString;
+
+     string constructorTemplateFileName = "../Grammar/grammarAtermConstructorDefinitionMacros.macro";
+     StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
+
+     bool complete  = false;
+     constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+
+     return returnString;
+   }
+
+
 
 StringUtility::FileWithLineNumbers
 Grammar::buildCopyMemberFunctionSource ( Terminal & node )
@@ -2044,7 +2129,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
   // Place the constructor at the top of the node specific code for this element of grammar
 
-     // BP : 10/24/2001, keep track of memory
+  // BP : 10/24/2001, keep track of memory
      editedStringMiddle += editStringMiddleNodeMemberFunctions;
      editedStringMiddle += editStringMiddleNodeDataMemberFunctions;
 
@@ -2085,6 +2170,44 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
         }
 #endif
    }
+
+
+void
+Grammar::buildAtermBuildFunctionsSourceFile( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+   {
+  // DQ (10/10/2014): This function is only called to generate the skeleton for a 
+  // small part of the API to translate Aterms to ROSE IR nodes.
+
+     printf ("At TOP of Grammar::buildAtermBuildFunctionsSourceFile() \n");
+
+#if 0
+     printf ("Exiting at TOP of Grammar::buildAtermBuildFunctionsSourceFile() \n");
+     ROSE_ASSERT(false);
+#endif
+
+     StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildAtermConstructor (node);
+
+#if 1
+  // Also output strings to single file
+     outputFile += editStringMiddleNodeDataMemberFunctions;
+#endif
+
+  // printf ("node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName(),node.nodeList.size());
+
+#if 1
+  // Call this function recursively on the children of this node in the tree
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
+        {
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+
+          buildAtermBuildFunctionsSourceFile(**treeNodeIterator,outputFile);
+        }
+#endif
+   }
+
+
 
 void
 Grammar::printTreeNodeNames ( const Terminal & node ) const
@@ -2953,9 +3076,23 @@ Grammar::buildCode ()
      Grammar::writeFile(ROSE_ArrayGrammarSourceFile, target_directory, getGrammarName(), ".C");
 #endif
 
+#if 0
+  // DQ (10/10/2014): Added an automated generation of the API to connect to SageBuilder API.
+  // We only needed to run this once to generate the API (then fill in the functions to 
+  // build out the translation support of Aterms translated to ROSE AST nodes.
 
+  // This builds the skeleton used as a basis for the automatically generated
+  // function API which is then modified by hand to connect to the hand-written
+  // SageBuilder API.  The result is the file nodeBuildFunctionsForAterms.C 
+  // which then implements the functions for the automcatically generated API.
+     StringUtility::FileWithLineNumbers ROSE_AtermSourceFile;
 
+     buildAtermBuildFunctionsSourceFile(*rootNode,ROSE_AtermSourceFile);
 
+     cout << "DONE: buildAtermBuildFunctionsSourceFile()" << endl;
+
+     Grammar::writeFile(ROSE_AtermSourceFile, target_directory, getGrammarName()+ "AtermNodeBuildFunctions", ".C");
+#endif
 
 #if 1
    //-----------------------------------------------
@@ -3155,9 +3292,9 @@ Grammar::buildCode ()
 #endif
 
 
-  //---------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------
   // generate a function for each node in the AST to return the node's successors of the traversal   
-  //---------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_treeTraversalFunctionsSourceFile;
      cout << "Calling buildTreeTraversalFunctions() ..." << endl;
   // Write header string to file (it's the same string as above, we just reuse it)
@@ -3171,9 +3308,34 @@ Grammar::buildCode ()
      cout << "DONE: buildTreeTraversalFunctions()" << endl;
      Grammar::writeFile(ROSE_treeTraversalFunctionsSourceFile, target_directory, getGrammarName() + "TreeTraversalSuccessorContainer", ".C");
 
-     //---------------------------------------------------------------------------------------------
-     // generate what is necessary for SAGE support in AstProcessing classes
-     //---------------------------------------------------------------------------------------------
+  // DQ (10/4/2014): Adding ATerm support via ROSETTA.
+  // ---------------------------------------------------------------------------------------------
+  // generate a function for each node in the AST to support ATerm read and write operations.
+  // ---------------------------------------------------------------------------------------------
+     StringUtility::FileWithLineNumbers ROSE_ATermSupportSourceFile;
+     cout << "Calling buildAtermSupportFunctions() ..." << endl;
+  // Write header string to file (it's the same string as above, we just reuse it)
+     ROSE_ATermSupportSourceFile << includeHeaderString;
+
+  // DQ (10/4/2014): Insert "using namespace std;" into the source file (but never into the header files!)
+  // ROSE_ATermSupportSourceFile << "\n// Simplify code by using std namespace (never put into header files since it effects users) \nusing namespace std;\n\n";
+     ROSE_ATermSupportSourceFile << "\n// Simplify code by using AtermSupport namespace (never put into header files since it effects users) \nusing namespace AtermSupport;\n\n";
+
+#if 1
+  // Generate the implementations of the ATerm support functions
+     buildAtermSupportFunctions(*rootNode, ROSE_ATermSupportSourceFile);
+#endif
+     cout << "DONE: buildAtermSupportFunctions()" << endl;
+     Grammar::writeFile(ROSE_ATermSupportSourceFile, target_directory, getGrammarName() + "AtermSupport", ".C");
+
+#if 0
+     printf ("Exiting as a test in ROSETTA generation of ATerm support! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // ---------------------------------------------------------------------------------------------
+  // generate what is necessary for SAGE support in AstProcessing classes
+  // ---------------------------------------------------------------------------------------------
      cout << "building TreeTraversalAccessEnums ... ";
      string treeTraversalClassHeaderFileName = getGrammarName();
      treeTraversalClassHeaderFileName += "TreeTraversalAccessEnums.h";
@@ -3614,6 +3776,11 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                   {
                     outputFile << successorContainerName << ".push_back(compute_classDefinition());\n";
                   }
+            // DQ (10/12/2014): Added case to supress handling of the builtin types in the ROSE SgType IR nodes.
+               else if ((gs->getTypeNameString() == "static $CLASSNAME*") && memberVariableName == "builtin_type")
+                  {
+                    outputFile << "  // suppress handling of builtin_type date members \n";
+                  }
                else
                   {
                  // normal case
@@ -3927,13 +4094,14 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
      vector<Terminal *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
-          ROSE_ASSERT((*treeNodeIterator)!=NULL);
-          ROSE_ASSERT((*treeNodeIterator)->getBaseClass()!=NULL);
+          ROSE_ASSERT((*treeNodeIterator) != NULL);
+          ROSE_ASSERT((*treeNodeIterator)->getBaseClass() != NULL);
           buildTreeTraversalFunctions(**treeNodeIterator, outputFile);
         }
 
   // return;
    }
+
 
 /////////////////////////////////////////////////
 // traversalSuccessorContainer Code Generation //
@@ -3971,13 +4139,12 @@ string Grammar::generateTraverseSuccessorForLoopSource(string typeString,
 // as it avoids repeated reallocations on push_back. The size of the container
 // is the sum of the number of single members and the size of the optional
 // container member.
-string Grammar::generateNumberOfSuccessorsComputation(
-        vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
+string Grammar::generateNumberOfSuccessorsComputation( vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
 {
     stringstream travSuccSource;
     if (!traverseDataMemberList.empty())
     {
-        vector<GrammarString *>::iterator iter;
+        vector<GrammarString*>::iterator iter;
         int singleSuccessors = 0, containerSuccessors = 0;
         for (iter = traverseDataMemberList.begin(); iter != traverseDataMemberList.end(); ++iter)
         {
@@ -4038,7 +4205,7 @@ string Grammar::generateTraverseSuccessor(GrammarString* gs, string successorCon
   // MS: sstream should be used here in future
      string travSuccSource="";
 
-#if 1
+#if 0
   // DQ (5/8/2005): Debugging code introduced to debug enclusion of SgDirectory concept!
      travSuccSource += string("/* typeString = ") + string(typeString) + string(" */\n");
      travSuccSource += string("/* isSTLContainer   (typeString) = ") + 
