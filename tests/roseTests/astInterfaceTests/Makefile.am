@@ -155,9 +155,11 @@ generatedCodeExamples = \
   rose_inputmoveDeclarationToInnermostScope_3.C \
   rose_inputmoveDeclarationToInnermostScope_4.C \
   rose_inputmoveDeclarationToInnermostScope_5.C \
+  rose_inputmoveDeclarationToInnermostScope_6.C \
+  rose_inputmoveDeclarationToInnermostScope_7.C \
   buildJavaPackage.passed 
 
-test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C
+test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -493,6 +495,20 @@ rose_inputmoveDeclarationToInnermostScope_4.C: inputmoveDeclarationToInnermostSc
 		$(srcdir)/astInterface.conf $@.passed
 
 rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostScope_5.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostScope_7.C moveDeclarationToInnermostScope
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \

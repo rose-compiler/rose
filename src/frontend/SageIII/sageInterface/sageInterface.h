@@ -1932,8 +1932,8 @@ SgBasicBlock* ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs);
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 
-//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not.
-ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
+//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not when the flag is true.
+ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs, bool createEmptyBody = true);
 
 //! Check if the body of a 'catch' statement is a SgBasicBlock, create one if not.
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
@@ -1947,7 +1947,7 @@ ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatemen
 bool isBodyStatement (SgStatement* s);
 
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
-void changeAllBodiesToBlocks(SgNode* top);
+void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
 //! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
 void changeAllLoopBodiesToBlocks(SgNode* top);
