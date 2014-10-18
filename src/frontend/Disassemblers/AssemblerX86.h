@@ -7,7 +7,7 @@
 
 //#include "sage3.h"
 
-/** This class contains methods for assembling x86 instructions (SgAsmx86Instruction).
+/** This class contains methods for assembling x86 instructions (SgAsmX86Instruction).
  *
  *  End users will generally not need to use the AssemblerX86 class directly. Instead, they will call Assembler::create() to
  *  create an assembler that's appropriate for a particular binary file header or interpretation and then use that assembler to
@@ -424,16 +424,16 @@ private:
      *  groups 1 through 4 as listed in section 2.1.1 of the Intel Instruction Set Reference. It should not contain the REX
      *  byte. Any source prefix that does not appear in the original instruction will be placed at the end of the result; any
      *  prefix that appears in the original instruction but not the source will be dropped. */
-    SgUnsignedCharList fixup_prefix_bytes(SgAsmx86Instruction *insn, SgUnsignedCharList source);
+    SgUnsignedCharList fixup_prefix_bytes(SgAsmX86Instruction *insn, SgUnsignedCharList source);
 
     /** Low-level method to assemble a single instruction using the specified definition from the assembly dictionary. An
      *  Assembler::Exception is thrown if the instruction is not compatible with the definition. */
-    SgUnsignedCharList assemble(SgAsmx86Instruction *insn, const InsnDefn *defn);
+    SgUnsignedCharList assemble(SgAsmX86Instruction *insn, const InsnDefn *defn);
 
     /** Attempts to match an instruction with a definition. An exception is thrown if the instruction and definition do not
      *  match.  If the @p disp or @p imm arguments are non-null pointers then the operands of the instruction are also checked,
      *  and any operand which is an IP-relative displacement or immediate have their values returned through those arguments. */
-    void matches(const InsnDefn *defn, SgAsmx86Instruction *insn, int64_t *disp, int64_t *imm) const;
+    void matches(const InsnDefn *defn, SgAsmX86Instruction *insn, int64_t *disp, int64_t *imm) const;
 
     /** Attempts to match an instruction operand with a definition operand. Returns true if they match, false otherwise. The
      *  @p disp and @p imm pointers are used to return values if the operand is an IP-relative displacement or immediate value. */
@@ -451,15 +451,15 @@ private:
                                                SgAsmValueExpression **scale/*out*/, SgAsmValueExpression **displacement/*out*/);
 
     /** Builds the ModR/M byte, SIB byte. Also adjusts the REX prefix byte and returns any displacement value. */
-    uint8_t build_modrm(const InsnDefn*, SgAsmx86Instruction*, size_t argno,
+    uint8_t build_modrm(const InsnDefn*, SgAsmX86Instruction*, size_t argno,
                         uint8_t *sib, int64_t *displacement, uint8_t *rex) const;
 
     /** Adjusts the "reg" field of the ModR/M byte and adjusts the REX prefix byte if necessary. */
-    void build_modreg(const InsnDefn*, SgAsmx86Instruction*, size_t argno, uint8_t *modrm, uint8_t *rex) const;
+    void build_modreg(const InsnDefn*, SgAsmX86Instruction*, size_t argno, uint8_t *modrm, uint8_t *rex) const;
 
     /** Calculates the segment override from the instruction operands rather than obtaining it from the p_segmentOverride data
      *  member. Returns zero if no segment override is necessary. */
-    uint8_t segment_override(SgAsmx86Instruction*);
+    uint8_t segment_override(SgAsmX86Instruction*);
 
     static InsnDictionary defns;                /**< Instruction assembly definitions organized by X86InstructionKind. */
     bool honor_operand_types;                   /**< If true, operand types rather than values determine assembled form. */
