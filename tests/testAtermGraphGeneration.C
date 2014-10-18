@@ -45,6 +45,8 @@
 #include <set>
 #include <assert.h>
 
+#include <string.h>
+
 #define ROSE_ASSERT(x) assert(x)
 
 // This code is to support building DOT graphs of the EDG AST ans associated nodes

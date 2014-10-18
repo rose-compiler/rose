@@ -20,7 +20,8 @@ A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
 INCLUDES = $(A_TERM_INCLUDE) $(ROSE_INCLUDES)
 
 # bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI termGraph_using_RoseAtermAPI_withForwardedFunctions
-bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI testTranslation_AST_to_ATerm_to_AST testTranslation_AST_to_ATerm testTranslation_ATerm_to_AST
+# bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI testTranslation_AST_to_ATerm_to_AST testTranslation_AST_to_ATerm testTranslation_ATerm_to_AST
+bin_PROGRAMS = testTranslation_AST_to_ATerm testTranslation_ATerm_to_AST
 
 termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
@@ -31,10 +32,12 @@ termGraph_SOURCES = termGraph.C
 # termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C
 termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
 
-testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
-
-testTranslation_AST_to_ATerm_SOURCES = testTranslation_AST_to_ATerm.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
-testTranslation_ATerm_to_AST_SOURCES = testTranslation_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+# testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+# testTranslation_AST_to_ATerm_SOURCES = testTranslation_AST_to_ATerm.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+# testTranslation_ATerm_to_AST_SOURCES = testTranslation_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C atermTranslation.h
+testTranslation_AST_to_ATerm_SOURCES = testTranslation_AST_to_ATerm.C atermTranslation.h
+testTranslation_ATerm_to_AST_SOURCES = testTranslation_ATerm_to_AST.C atermTranslation.h
 
 
 # termGraph_using_RoseAtermAPI_withForwardedFunctions_SOURCES = termGraph_using_RoseAtermAPI_withForwardedFunctions.C
@@ -1060,7 +1063,8 @@ PASSING_REGRESSION_C_SUBSET_OF_CXX_TEST_ATerm_Output = ${REGRESSION_C_SUBSET_OF_
 #	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) $(srcdir)/tests/CompileTests/Cxx_tests/$@
 #$(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
 #	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/test2001_01.C
-$(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
+# $(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
+$(PASSING_REGRESSION_TEST_Output): 
 	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.C.dot=.C)
 
 $(PASSING_REGRESSION_TEST_ATerm_Output): ./testTranslation_AST_to_ATerm
