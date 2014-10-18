@@ -1350,6 +1350,8 @@ int main( int argc, char * argv[] ) {
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
     ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
     ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
+    ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
+    ("std-out-only", po::value< string >(), "bypass and remove all states that are not output-states [=yes|no]")
     ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
     ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
     ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
@@ -1432,6 +1434,8 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
+  boolOptions.registerOption("std-in-only",false);
+  boolOptions.registerOption("std-out-only",false);
 
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("determine-prefix-depth",false);
@@ -1932,11 +1936,21 @@ int main( int argc, char * argv[] ) {
     //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
   }
   
+  if(boolOptions["std-in-only"]) {
+    cout << "STATUS: reducing STG to Input-states."<<endl;
+    analyzer.reduceGraphInOutWorklistOnly(true,false);
+  }
+
+  if(boolOptions["std-out-only"]) {
+    cout << "STATUS: reducing STG to output-states."<<endl;
+    analyzer.reduceGraphInOutWorklistOnly(false,true);
+  }
+
   if(boolOptions["std-io-only"]) {
     cout << "STATUS: bypassing all non standard I/O states."<<endl;
     timer.start();
     //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
-    analyzer.reduceGraphInOutWorklistOnly();
+    analyzer.reduceGraphInOutWorklistOnly(true,true);
     stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
   }
 

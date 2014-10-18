@@ -153,8 +153,8 @@ namespace CodeThorn {
     // (recursively until only paths of infinite length remain)
     void pruneLeavesRec();
     // connects start, input, output and worklist states according to possible paths in the transition graph. 
-    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions.
-    void reduceGraphInOutWorklistOnly();
+    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
+    void reduceGraphInOutWorklistOnly(bool reduceIn=true, bool reduceOut=true);
     // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
     // stores results in PropertyValueTable "reachabilityResults".
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
