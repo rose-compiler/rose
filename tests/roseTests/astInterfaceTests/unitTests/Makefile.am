@@ -6,8 +6,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 $(top_builddir)/tests/testSupport/libroseUnitTestSupport.la :
 	$(MAKE) -C $(top_builddir)/tests/testSupport libroseUnitTestSupport.la
 
-$(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la :
-	$(MAKE) -C $(top_builddir)/tests/testSupport/gtest lib/libgtest_main.la
+#$(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la :
+#	$(MAKE) -C $(top_builddir)/tests/testSupport/gtest lib/libgtest_main.la
 
 
 bin_PROGRAMS=sageInterfaceTest sageBuilderTest
