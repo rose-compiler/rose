@@ -1,11 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-$(top_builddir)/tests/testSupport/libroseUnitTestSupport.la :
-	$(MAKE) -C $(top_builddir)/tests/testSupport libroseUnitTestSupport.la
+BUILT_SOURCES=testSupport
 
-$(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la :
-	$(MAKE) -C $(top_builddir)/tests/testSupport/gtest lib/libgtest_main.la
-
+testSupport:
+	$(MAKE) -C $(top_builddir)/tests/testSupport/
 
 bin_PROGRAMS=nodeHierarchyTest
 

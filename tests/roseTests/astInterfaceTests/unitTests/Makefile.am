@@ -1,14 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# JP (10/3/14): For whatever reason, I have to make the dependencies 
-# to gtest and our testSupport explicit
+BUILT_SOURCES=testSupport
 
-$(top_builddir)/tests/testSupport/libroseUnitTestSupport.la :
-	$(MAKE) -C $(top_builddir)/tests/testSupport libroseUnitTestSupport.la
-
-#$(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la :
-#	$(MAKE) -C $(top_builddir)/tests/testSupport/gtest lib/libgtest_main.la
-
+testSupport:
+	$(MAKE) -C $(top_builddir)/tests/testSupport/
 
 bin_PROGRAMS=sageInterfaceTest sageBuilderTest
 
