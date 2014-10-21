@@ -19145,6 +19145,7 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
  struct SageInterface::const_int_expr_t evaluateVariableReference(SgVarRefExp *vRef) {
    if (isSgModifierType(vRef->get_type()) == NULL) {
      struct SageInterface::const_int_expr_t val;
+     val.value_ = -1;
      val.hasValue_ = false;
      return val;
    }
@@ -19162,6 +19163,10 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
        return variableEval.traverse(rhs);
      }
    }
+   struct SageInterface::const_int_expr_t val;
+   val.hasValue_ = false;
+   val.value_ = -1;
+   return val;
  }
 
  struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
@@ -19177,14 +19182,17 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
      // Early break out for assign initializer // other possibility?
      if (isSgAssignInitializer(node)) {
        if(synList.at(0).hasValue_){
-       return synList.at(0);
+         return synList.at(0);
        } else { 
          struct SageInterface::const_int_expr_t val;
+         val.value_ = -1;
          val.hasValue_ = false;
          return val;
        }
      }
      struct SageInterface::const_int_expr_t evaluatedValue;
+     evaluatedValue.hasValue_ = false;
+     evaluatedValue.value_ = -1;
 #if 0
     if(synList.size() != 2){
       for(SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it){
@@ -19199,22 +19207,28 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
          if (isSgAddOp(node)) {
            assert(synList.size() == 2);
            evaluatedValue.value_ = synList[0].value_ + synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
          } else if (isSgSubtractOp(node)) {
            assert(synList.size() == 2);
            evaluatedValue.value_ = synList[0].value_  - synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
          } else if (isSgMultiplyOp(node)) {
            assert(synList.size() == 2);
            evaluatedValue.value_ = synList[0].value_  * synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
          } else if (isSgDivideOp(node)) {
            assert(synList.size() == 2);
            evaluatedValue.value_ = synList[0].value_  / synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
          } else if (isSgModOp(node)) {
            assert(synList.size() == 2);
            evaluatedValue.value_ = synList[0].value_  % synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
          }
        } else {
          std::cerr << "Expression is not evaluatable" << std::endl;
          evaluatedValue.hasValue_ = false;
+         evaluatedValue.value_ = -1;
          return evaluatedValue;
        }
      }
@@ -19223,6 +19237,7 @@ class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterf
    }
    struct SageInterface::const_int_expr_t evaluatedValue;
    evaluatedValue.hasValue_ = false;
+   evaluatedValue.value_ = -1;
    return evaluatedValue;
  }
 };
