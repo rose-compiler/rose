@@ -5379,6 +5379,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    // Search dir for header files, after all directories specified by -I but
+    // before the standard system directories.
+    commandLine.push_back("--sys_include");
+    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    #endif
+
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
   //    --microsoft
@@ -6322,6 +6330,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // the default value of "originalCompilerName" is "CC"
      vector<string> compilerNameString;
      compilerNameString.push_back(compilerName);
+
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    if (get_C_only() || get_Cxx_only())
+    {
+        // Search dir for header files, after all directories specified by -I but
+        // before the standard system directories.
+        compilerNameString.push_back("-isystem");
+        compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    }
+    #endif
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);

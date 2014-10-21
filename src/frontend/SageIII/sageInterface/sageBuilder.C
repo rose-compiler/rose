@@ -2718,8 +2718,12 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
         {
        // first prototype declaration
        // func = new actualFunction (name,func_type,NULL);
+#if 0
+       // DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
+          func = new actualFunction (nameWithTemplateArguments,NULL,func_type,NULL);
+#else
           func = new actualFunction (nameWithTemplateArguments,func_type,NULL);
-
+#endif
           ROSE_ASSERT(func != NULL);
 
        // DQ (5/1/2012): This should always be true.
