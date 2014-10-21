@@ -8924,7 +8924,8 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   if (init.size() !=1)
   {
     cerr<<"SageInterface::getLoopIndexVariable(), no or more than one initialization statements are encountered. Not supported yet "<<endl;
-    ROSE_ASSERT(false);
+    //ROSE_ASSERT(false);
+    return NULL; 
   }
   SgStatement* init1 = init.front();
   SgExpression* ivarast=NULL;
@@ -8969,10 +8970,11 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   else
   {
-    cerr<<"Error. SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
+    cerr<<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
     cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
     init1->get_file_info()->display("Debug");
-    ROSE_ASSERT (false);
+    return NULL; 
+    //ROSE_ASSERT (false);
   }
   // Cannot be both true
  // ROSE_ASSERT(!(isCase1&&isCase2));
@@ -12502,8 +12504,11 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* SageInterface::ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* fs , bool createEmptyBody /* = true*/) {
     SgStatement* b = fs->get_false_body();
+    // if no false body at all AND no-create-empty-body
+    if (!createEmptyBody && (b == NULL || isSgNullStatement(b)))
+      return NULL;
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b); // This works if b is NULL as well (producing an empty block)
       fs->set_false_body(b);
@@ -12811,8 +12816,11 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
         changeAllBodiesToBlocks(top) ;
   }
 
-  void SageInterface::changeAllBodiesToBlocks(SgNode* top) {
-    struct Visitor: public AstSimpleProcessing {
+  void SageInterface::changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody /*= true*/ ) {
+    class Visitor: public AstSimpleProcessing {
+      public: 
+      bool allowEmptyBody; 
+      Visitor (bool flag):allowEmptyBody(flag) {}
       virtual void visit(SgNode* n) {
         switch (n->variantT()) {
           case V_SgForStatement: {
@@ -12833,7 +12841,7 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
           }
           case V_SgIfStmt: {
             ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(n));
-            ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n));
+            ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n), allowEmptyBody);
             break;
           }
           case V_SgCatchOptionStmt: {
@@ -12854,7 +12862,7 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
         }
       }
     };
-    Visitor().traverse(top, postorder);
+    Visitor(createEmptyBody).traverse(top, postorder);
   }
 
 
@@ -18849,6 +18857,11 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
           // target scope is a for loop and the declaration declares its index variable.
           if (i_name == SageInterface::getLoopIndexVariable (stmt))
           {
+            if (i_name == NULL)
+            {
+              cerr<<"Warning: in moveVariableDeclaration(): targe_scope is a for loop with unrecognized index variable. Skipping it ..."<<endl;
+              break;
+            }
             // we move int i; to be for (int i=0; ...);
             SgStatementPtrList& stmt_list = stmt->get_init_stmt();
             // Try to match a pattern like for (i=0; ...) here
