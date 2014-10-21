@@ -290,22 +290,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      * PartialSymbolicSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-#if defined(__GNUC__)
-#if __GNUC__==4 && __GNUC_MINOR__==2
-        // This is needed to work around a bug in GCC-4.2.4 optimization. [Robb P. Matzke 2014-07-16]
-        // Perhaps this isn't needed anymore now that we're using Sawyer::ShareObject/SharedPointer? [Robb P. Matzke 2014-10-15]
-        volatile size_t x = ownershipCount(protoval);
-#endif
-#endif
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
-        memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        SMTSolver *solver = NULL;
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict);
 
     /** Instantiates a new RiscOperators object with specified prototypical values. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {

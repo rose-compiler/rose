@@ -101,6 +101,29 @@ State::discard_popped_memory()
  *                                      RISC Operators
  *******************************************************************************************************************************/
 
+RiscOperatorsPtr
+RiscOperators::instance(const RegisterDictionary *regdict)
+{
+    BaseSemantics::SValuePtr protoval = SValue::instance();
+#if defined(__GNUC__)
+#if __GNUC__==4 && __GNUC_MINOR__==2
+    // GCC 4.2.4 may have problems optimizing the function.  It was originally [2014-07] defined in the header file where an
+    // extraneous volatile read from the protoval reference counter defeated the bug.  Later [2014-10] the proval pointer
+    // mechanism was changed to use Sawyer::SharedPointer and the volatile read was no longer an option, but adding extra
+    // function calls (like 'std::cerr <<ownershipCount(protoval) <<"\n"') defeated the bug.  Eventually [2014-10] this
+    // function was moved from the header to the .C file which seems to defeat the bug without the need for volatile reads or
+    // extra function calls.
+#endif
+#endif
+    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+    BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
+    memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
+    BaseSemantics::StatePtr state = State::instance(registers, memory);
+    SMTSolver *solver = NULL;
+    RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
+    return ops;
+}
+
 void
 RiscOperators::interrupt(int majr, int minr)
 {
