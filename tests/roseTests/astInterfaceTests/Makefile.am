@@ -4,7 +4,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # JP (10/3/14): Added the unit tests subdirectory to be built.
-SUBDIR = unitTests typeEquivalenceTests
+SUBDIR = typeEquivalenceTests unitTests 
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
@@ -614,15 +614,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
 
 
 # JP (10/4/14): Added the unit tests
-unitTests/sageBuilderTest:
-	$(MAKE) sageBuilderTest -C unitTests/
-
-unitTests/sageInterfaceTest:
-	$(MAKE) sageInterfaceTest -C unitTests/
-
-unit-tests: unitTests/sageBuilderTest unitTests/sageInterfaceTest
-	./unitTests/sageBuilderTest
-	./unitTests/sageInterfaceTest
+unit-tests:
+	$(MAKE) check-local -C unitTests
 
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate

@@ -16,3 +16,4 @@ libroseUnitTestSupport_la_CXXFLAGS= \
 libroseUnitTestSupport_la_LIBADD= \
   $(builddir)/gtest/lib/libgtest.la
 
+check-local: libroseUnitTestSupport.la

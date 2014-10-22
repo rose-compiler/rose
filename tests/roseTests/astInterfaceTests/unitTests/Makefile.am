@@ -36,3 +36,8 @@ sageBuilderTest_LDADD= \
   $(top_builddir)/tests/testSupport/libroseUnitTestSupport.la \
   $(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+check-local: sageInterfaceTest sageBuilderTest
+	./sageInterfaceTest
+	./sageBuilderTest
