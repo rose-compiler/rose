@@ -3,7 +3,7 @@
 
 #include "createSignatureVectors.h"
 #include "vectorCompression.h"
-
+#include "../semantic/CloneDetectionLib.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <ext/hash_map>
@@ -36,7 +36,7 @@ struct hash<void*> {
 
 enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
 
-#if 1
+#if 0
 static const size_t numberOfInstructionKinds = x86_last_instruction;
 inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->get_kind();}
 #else
@@ -334,6 +334,11 @@ addFunctionStatistics(const SqlDatabase::TransactionPtr &tx, const std::string& 
         ->execute();
 }
 
+
+
+
+
+
 void
 addVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const SignatureVector& vec, const std::string& functionName,
                     size_t functionId, size_t indexWithinFunction, const std::string& normalizedUnparsedInstructions,
@@ -385,3 +390,313 @@ createDatabases(const SqlDatabase::TransactionPtr &tx)
     extern const char *syntactic_schema_create; // defined in machine-generated SyntacticSchema.C
     tx->execute(syntactic_schema_create);
 }
+
+/* ========================================================================================================= 
+       SOURCE CODE CLONE DETECTION
+
+*/
+
+void
+addSourceVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const SignatureVector& vec,
+                    size_t functionId, SgLocatedNode* firstNode, SgLocatedNode* lastNode)
+{
+    ++numVectorsGenerated;
+
+    vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
+    size_t vectorSum = 0;
+    for (size_t i=0; i<SignatureVector::Size; ++i)
+        vectorSum += vec[i];
+
+    SqlDatabase::StatementPtr cmd = tx->statement("insert into vectors"
+                                                  // 0   1            2                      3     4             5
+                                                  " (id, function_id, index_within_function, line, last_insn_va, size,"
+                                                  // 6            7           8
+                                                  "sum_of_counts, counts_b64, instr_seq_b64)"
+                                                  " values (?,?,?,?,?,?,?,?,?)");
+    int vector_id = tx->statement("select coalesce(max(id),0)+1 from vectors")->execute_int(); // 1-origin
+    
+    std::string base64_encoding = StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size());
+
+    unsigned char md[16];
+    MD5((const unsigned char*)&compressedCounts[0], compressedCounts.size(), md);
+
+
+    int start_line = isSgLocatedNode(firstNode) ? firstNode->get_file_info()->get_line() : 0;
+    int end_line   = isSgLocatedNode(lastNode)  ? lastNode->get_file_info()->get_line()  : 0;
+
+    cmd->bind(0, vector_id);
+    cmd->bind(1, functionId);
+    cmd->bind(2, start_line );
+    cmd->bind(3, start_line );
+    cmd->bind(4, end_line );
+    // this is the size of the code - don't know if that makes as much sense for source so I am using vectorSum 
+    cmd->bind(5, vectorSum); 
+    cmd->bind(6, vectorSum);
+    cmd->bind(7, base64_encoding );
+    // In source we do not create a normalized string representation as we do for source. 
+    //   We therefore just use the encoding of the compressedCounts 
+    cmd->bind(8,  StringUtility::encode_base64(md, 16) );     cmd->execute();
+}
+
+
+
+class SynthesizedAttribute
+   {
+     public:
+         //Nodes In the Subtree of this node. Currently does not contain
+         //the node itself
+         int *nodesInSubtree;
+
+         SynthesizedAttribute(); 
+         void addToVector(int *vectorToAdd);
+     
+        SynthesizedAttribute & operator=( const SynthesizedAttribute& rhs );
+            
+   };
+
+//Current merged vector
+static SignatureVector mergedVector;
+
+
+
+class CreateCloneDetectionVectors : public SgBottomUpProcessing<SynthesizedAttribute>
+   {
+     public:
+
+       CreateCloneDetectionVectors(const SqlDatabase::TransactionPtr &tmp_tx) : tx(tmp_tx){
+          firstNode = NULL;  
+          lastNode  = NULL;
+       };
+
+	   //The file to write to
+	   std::ofstream myfile;
+
+
+       std::map<SgNode*, int* > nodeToCloneVector; 
+
+	   //Variants to put in the generated vector
+       std::vector<int> variantNumVec;
+
+	   //Variants to write to file
+	   std::vector<int> variantToWriteToFile;
+
+	   //stride
+	   int stride;
+
+	   //min number of tokens before writing out
+	   int minTokens;
+       int functionId;
+
+       const SqlDatabase::TransactionPtr tx;
+  
+       SgLocatedNode* firstNode;
+
+       SgLocatedNode* lastNode;
+
+
+       // Functions required
+       SynthesizedAttribute evaluateSynthesizedAttribute (
+             SgNode* astNode,
+             SubTreeSynthesizedAttributes synthesizedAttributeList );
+
+   };
+
+
+
+
+SynthesizedAttribute::SynthesizedAttribute() {
+  nodesInSubtree = new int[V_SgNumVariants];
+  for( int i = 0; i < V_SgNumVariants; ++i)
+  {
+	(nodesInSubtree)[i] = 0;
+  }
+
+
+};
+
+void SynthesizedAttribute::addToVector(int *vectorToAdd){
+  int j=0;
+  for( int i = 0; i < V_SgNumVariants; i++)
+  {
+	(nodesInSubtree)[i] += (vectorToAdd)[i];
+	j+=(nodesInSubtree)[i];
+	//std::cout << (*nodesInSubtree)[i] << " " ;
+
+  }
+  //std::cout << std::endl << std::endl;
+  //std::cout <<  j << std::endl;
+}
+
+SynthesizedAttribute& SynthesizedAttribute::operator=( const SynthesizedAttribute& rhs ){
+  nodesInSubtree = rhs.nodesInSubtree;
+  return (*this);
+}
+
+
+
+SynthesizedAttribute
+CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
+     SgNode* astNode,
+     SubTreeSynthesizedAttributes synthesizedAttributeList )
+   {
+	 static int currentStride = 0;
+
+     SynthesizedAttribute returnAttribute;
+     //test.push_back(astNode->class_name());
+     //initialize to zero
+     for( int i = 0; i < V_SgNumVariants; ++i)
+        {
+         (returnAttribute.nodesInSubtree)[i] = 0;
+        }
+
+     nodeToCloneVector[astNode] = returnAttribute.nodesInSubtree;
+
+     //Add current node to vector
+     (returnAttribute.nodesInSubtree)[astNode->variantT()]+=1;
+
+
+     //Add the vectors in the subtrees of the vector to this vector
+     for(SubTreeSynthesizedAttributes::iterator iItr = synthesizedAttributeList.begin();
+         iItr != synthesizedAttributeList.end(); ++iItr){
+#if 0 
+                for( int i = 0; i < lengthVariantT; i++)
+                  {
+                     std::cout << (iItr->nodesInSubtree)[i] << " " ;
+            
+                  }
+                std::cout << std::endl << std::endl;
+#endif
+
+         returnAttribute.addToVector ( (*iItr).nodesInSubtree );
+     }
+
+     //std::cout << "\n\nVector of names" << std::endl;
+
+#if 1	 
+	 //Print out the number of elements found for each variant in the subtree
+     for(int i = 0;  i < V_SgNumVariants; i++  ){
+       if(returnAttribute.nodesInSubtree[i] > 0)
+          std::cout << returnAttribute.nodesInSubtree[i] << " " << roseGlobalVariantNameList[i] << " ";
+	 }
+     std::cout << "\n\n";
+#endif
+
+	 //Write to the file specified in the config file on the commandline
+	 if(( variantToWriteToFile.size() == 0 || std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end() ) && 
+             astNode->get_file_info() != NULL && astNode->get_file_info()->isCompilerGenerated() == false 
+           )
+	 {
+
+	   int numTokens = 0;
+
+           if( variantNumVec.size() > 0 ){
+  	     for(unsigned int i=0; i < variantNumVec.size(); i++ )
+		 numTokens+= returnAttribute.nodesInSubtree[i];
+
+           }else{
+      	     for(unsigned int i=0; i < V_SgNumVariants; i++ )
+	  	 numTokens+= returnAttribute.nodesInSubtree[i];
+           }
+
+        
+           if( isSgLocatedNode(astNode) ){
+                if( currentStride == 0 ) firstNode = isSgLocatedNode(astNode);
+                else lastNode = isSgLocatedNode(astNode);
+           }
+
+	   if( numTokens >= minTokens )
+	   {
+		 currentStride++;
+                 std::cout << "FUCKERS FUCK FUCK" << std::endl;
+                 std::cout << numTokens << " " << minTokens << std::endl;
+
+
+		 //To implement the concept of a stride we need to not overcount
+		 //subtrees. But I am not sure if the vectors which contains this vector
+		 //should have a smaller
+
+		 if(variantNumVec.size() > 0){
+			 for(unsigned int i = 0;  i < variantNumVec.size(); i++  )
+				 mergedVector.totalForVariant(i)+= returnAttribute.nodesInSubtree[i];
+		 }else{
+                         for(unsigned int i = 0;  i < V_SgNumVariants; i++  )
+				 mergedVector.totalForVariant(i)+= returnAttribute.nodesInSubtree[i];
+		 }
+
+                 std::cout << currentStride << " " << stride << std::endl;
+		 if( currentStride >= stride ){
+
+                   addSourceVectorToDatabase(tx, mergedVector, functionId, firstNode, lastNode);         
+
+		   currentStride = 0;
+                   mergedVector.clear();
+
+		 }
+	   }
+
+	 }
+
+     return returnAttribute;
+   }
+
+
+
+
+
+
+
+void createSourceVectorsForSubtree(SgNode* top, int functionId, size_t minTokens, size_t stride, std::vector<int> variantNumVec,
+     std::vector<int> variantToWriteToFile,  const SqlDatabase::TransactionPtr &tx )
+{
+   CreateCloneDetectionVectors t(tx);
+   
+   t.minTokens     = minTokens;
+   t.functionId     = functionId;
+   //t.windowSize    = windowSize;
+   t.stride        = stride;
+   t.variantNumVec = variantNumVec;
+   t.variantToWriteToFile = variantToWriteToFile;  
+   //t.tx = tx; 
+ 
+   t.traverse(top);     
+   
+};
+
+void
+createSourceVectorsRespectingFunctionBoundaries(SgNode* top, size_t minTokens, size_t stride,
+                                          std::vector<int> variantNumVec, std::vector<int> variantToWriteToFile, const SqlDatabase::TransactionPtr &tx)
+{
+    CloneDetection::FilesTable files(tx);
+
+    SqlDatabase::StatementPtr cmd1 = tx->statement("insert into semantic_functions"
+                                                   // 0   1     2              3         4      5      6
+                                                   " (id, file_id, name, entry_va, isize, dsize, size)"
+                                                   " values(?,?,?,?,?,?,?)");
+    
+    vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(top);
+    int functionId = tx->statement("select coalesce(max(id),-1)+1 from semantic_functions")->execute_int(); // zero origin
+    
+    for (vector<SgFunctionDefinition*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi, ++functionId) {
+
+      size_t num_successors = (*fi)->get_numberOfTraversalSuccessors(); 
+ 
+        std::string specimen_name = (*fi)->get_file_info()->get_filename();
+        int specimen_id = files.insert(specimen_name);
+        files.save(tx);
+
+        cmd1->bind(0, functionId);
+        cmd1->bind(1, specimen_id);
+        cmd1->bind(2, (*fi)->get_mangled_name() );
+        cmd1->bind(3, (*fi)->get_file_info()->get_line());
+        cmd1->bind(4, num_successors );
+        cmd1->bind(5, num_successors);
+        cmd1->bind(6, num_successors);
+        cmd1->execute();
+
+	createSourceVectorsForSubtree(*fi, functionId, minTokens, stride, variantNumVec, variantToWriteToFile, tx);
+  
+    }
+    cerr << "Total vectors generated: " << numVectorsGenerated << endl;
+}
+
+

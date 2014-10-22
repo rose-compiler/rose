@@ -35,6 +35,11 @@ bin_PROGRAMS += createVectorsBinary
 createVectorsBinary_SOURCES = createSignatureVectors.C SyntacticSchema.C createVectorsBinary.C vectorCompression.C
 createVectorsBinary_LDADD = $(BOOST_LDFLAGS) ../semantic/libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# Scans the specimen with sliding windows and populates the "vectors" and "function_ids" tables.
+bin_PROGRAMS += createVectorsSource
+createVectorsSource_SOURCES = createSignatureVectors.C createVectorsSource.C  SyntacticSchema.C vectorCompression.C
+createVectorsSource_LDADD = $(BOOST_LDFLAGS) ../semantic/libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 # Reads the database created by createVectorsBinary and finds windows that are similar, inserting them into the "clusters" table.
 bin_PROGRAMS += findClones
 findClones_SOURCES = \
@@ -112,6 +117,7 @@ EXTRA_DIST = 					\
 	callLSH.h				\
 	collateByHash.C				\
 	createCloneDetectionVectorsBinary.h	\
+        createCloneDetectionVectorsSource.h     \
 	createSignatureVectors.h		\
 	createVectors.C				\
 	findExactClones.h			\
