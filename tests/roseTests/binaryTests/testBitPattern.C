@@ -1,4 +1,5 @@
 // Tests the BitPattern<> class
+#include "rose.h"
 #include "BitPattern.h"
 #include <string>
 #include <sstream>
