@@ -1,0 +1,23 @@
+bash-4.1$ make check
+./test_forward
+Forward 10000 events.
+done.
+Forward time: 1212.21 ms
+Reverse time: 0 ms
+Commit time : 0 ms
+./test_reverse
+Forward 10000 events.
+Reversing 0 events.
+Committing 10000 events.
+done.
+Forward time: 2754.96 ms
+Reverse time: 0 ms
+Commit time : 7.194 ms
+./test_reverse r
+Forward 10000 events.
+Reversing 10000 events.
+Committing 0 events.
+done.
+Forward time: 2765.58 ms
+Reverse time: 6.983 ms
+Commit time : 0 ms
