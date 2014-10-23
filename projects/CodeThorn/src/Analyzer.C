@@ -1952,7 +1952,7 @@ void Analyzer::removeNonIOStates() {
   }
 }
 
-void Analyzer::reduceGraphInOutWorklistOnly() {
+void Analyzer::reduceGraphInOutWorklistOnly(bool reduceIn, bool reduceOut) {
   // 1.) worklist_reduce <- list of startState and all input/output states
   std::list<const EState*> worklist_reduce;
   EStatePtrSet states=transitionGraph.estateSet();
@@ -1962,7 +1962,7 @@ void Analyzer::reduceGraphInOutWorklistOnly() {
   }
   worklist_reduce.push_back(transitionGraph.getStartEState());
   for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    if ( (*i)->io.isStdInIO() || (*i)->io.isStdOutIO() ) {
+    if ( (reduceIn&&(*i)->io.isStdInIO()) || (reduceOut&&(*i)->io.isStdOutIO()) ) {
       worklist_reduce.push_back(*i);
     }
   }
