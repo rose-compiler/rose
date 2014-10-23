@@ -94,5 +94,7 @@ class RunTimeSystem {
   uintptr_t prog_stack_max;
 };
 
+ typedef RunTimeSystem RunTimeStateStorage;
+
 }
 #endif
