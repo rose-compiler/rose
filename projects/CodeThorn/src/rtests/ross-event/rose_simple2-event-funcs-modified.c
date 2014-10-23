@@ -65,13 +65,6 @@ void ctr_event_handler(ctr_state *s,tw_bf *bf,ctr_message *m,tw_lp *lp)
     (*rts.avpush(&(s -> npart))) -= nsend;
     (*rts.avpush(&(s -> transit))) += nsend;
   }
-  /* Store number of sent particles in auxiliary data field, that can be used by
-     the inverse event routine to "undo" this event */
-  {
-#if 0
-    (*rts.avpush(&(*((unsigned int *)bf)))) = nsend;
-#endif
-  }
 }
 }
 /* Reverse event processing routine. Should perform the inverse of ctr_event_handler() */
@@ -86,5 +79,5 @@ void ctr_event_handler_rc(ctr_state *s,tw_bf *bf,ctr_message *m,tw_lp *lp)
     tw_rand_reverse_unif(lp -> rng);
   }
 // call backstroke-reverse function now
-// rtl.reverseEvent(lp);
+ rtl.reverseEvent(lp);
 }

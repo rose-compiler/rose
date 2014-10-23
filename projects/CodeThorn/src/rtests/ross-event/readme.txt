@@ -1,17 +1,12 @@
 
-for random-number functions: generate call of reverse functino
+foreach tw_rand_* function call 
+        generate tw_rand_reverse_unif(lp->rng); in the reverse code
 
- tw_rand_exponential(lp->rng, mean)
-
-foreach rand_* function call generate a     tw_rand_reverse_unif(lp->rng); call in the reverse code.
-
-put pointer to reverse function on the reverse-stack.
+TODO: put pointer to reverse function on the restore-stack.
 
 in general:
 for functions with side-effects (and existing reverse function) store the pointer to the reverse function on the reverse-stack.
 
-
-
-two features:
+ROSS: two memory modifying operations:
 modify state
 modify ross-ints for restoring destroyed information
