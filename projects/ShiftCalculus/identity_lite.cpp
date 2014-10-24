@@ -22,6 +22,7 @@
 // #include "PowerItoI.H"
 // #include "RectMDArray.H"
 
+#if 0
 // function to initialize the src data
 void initialize(RectMDArray<double>& patch)
 {
@@ -30,6 +31,7 @@ void initialize(RectMDArray<double>& patch)
   for (Point pt = D0.getLowCorner();D0.notDone(pt);D0.increment(pt))
       patch[pt] = k++;
 }
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -48,17 +50,18 @@ int main(int argc, char* argv[])
   RectMDArray<double> Adest(bx);
   double ident=1.0;
 
-  initialize(Asrc);
+//initialize(Asrc);
 
-  cout <<" The source Box" << endl;
-  Asrc.print();
-  cout << endl;
+//cout <<" The source Box" << endl;
+//Asrc.print();
+//cout << endl;
 
   // build the identity stencil
-  Stencil<double> id(pair<Shift,double>(getZeros(),ident));
+// Stencil<double> id(pair<Shift,double>(getZeros(),ident));
+  Stencil<double> id(pair<Shift,double>(zero,ident));
   StencilOperator<double,double, double> op;
   op(id,Adest,Asrc,bx);
-  cout <<" The destination Box" << endl;
-  Adest.print();
+//cout <<" The destination Box" << endl;
+//Adest.print();
 
 }

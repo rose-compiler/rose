@@ -24,3 +24,10 @@ template<typename _Tp > class vector : protected _Vector_base<_Tp>
  
    };
 
+template<typename T, typename S> class pair
+   {
+     public:
+          pair(T t, S s);
+   };
+
+

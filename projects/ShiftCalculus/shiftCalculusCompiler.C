@@ -3,47 +3,12 @@
 // to support the stencil computations, and required runtime support is developed seperately.
 #include "rose.h"
 
+#include "stencilAndStencilOperatorDetection.h"
+#include "stencilEvaluation.h"
+
 #include "shiftCalculusCompiler.h"
 
-InheritedAttribute::InheritedAttribute()
-   {
-   }
-
-InheritedAttribute::InheritedAttribute( const InheritedAttribute & X )
-   {
-   }
-
-
-
-SynthesizedAttribute::SynthesizedAttribute()
-   {
-   }
-
-SynthesizedAttribute::SynthesizedAttribute( const SynthesizedAttribute & X )
-   {
-   }
-
-Traversal::Traversal()
-   {
-   }
-
-
-InheritedAttribute
-Traversal::evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute )
-   {
-     InheritedAttribute return_inheritedAttribute;
-     return return_inheritedAttribute;
-   }
-
-
-SynthesizedAttribute
-Traversal::evaluateSynthesizedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList )
-   {
-     SynthesizedAttribute return_synthesizedAttribute;
-
-     return return_synthesizedAttribute;
-   }
-
+#include "dslCodeGeneration.h"
 
 #define DEBUG_USING_DOT_GRAPHS 1
 
@@ -60,7 +25,7 @@ int main( int argc, char * argv[] )
   // generateDOTforMultipleFile(*project);
      generateDOT(*project,"_before_transformation");
 #endif
-#if DEBUG_USING_DOT_GRAPHS
+#if DEBUG_USING_DOT_GRAPHS && 0
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
 #endif
 #if DEBUG_USING_DOT_GRAPHS && 0
@@ -69,20 +34,58 @@ int main( int argc, char * argv[] )
 #endif
 
   // Build the inherited attribute
-     InheritedAttribute inheritedAttribute;
+     Detection_InheritedAttribute inheritedAttribute;
 
   // Define the traversal
-     Traversal shiftCalculus_Traversal;
+     DetectionTraversal shiftCalculus_DetectionTraversal;
 
-#if 1
-     printf ("Call the traversal starting at the project (root) node of the AST \n");
+#if 0
+     printf ("Call the Detection traversal starting at the project (root) node of the AST \n");
 #endif
 
   // Call the traversal starting at the project (root) node of the AST
-     SynthesizedAttribute result = shiftCalculus_Traversal.traverse(project,inheritedAttribute);
+     Detection_SynthesizedAttribute result = shiftCalculus_DetectionTraversal.traverse(project,inheritedAttribute);
+#if 0
+     printf ("Stencil Operator was transformed: %s \n",result.get_stencilOperatorTransformed() ? "true" : "false");
+#endif
+     ROSE_ASSERT(result.get_stencilOperatorTransformed() == false);
+
+#if 0
+     printf ("DONE: Call the Detection traversal starting at the project (root) node of the AST \n");
+#endif
+
+  // Build the inherited attribute
+     StencilEvaluation_InheritedAttribute inheritedAttribute_stencilEval;
+
+  // Define the traversal
+     StencilEvaluationTraversal shiftCalculus_StencilEvaluationTraversal(shiftCalculus_DetectionTraversal);
+
+#if 0
+     printf ("Call the StencilEvaluation traversal starting at the project (root) node of the AST \n");
+#endif
+
+  // Call the traversal starting at the project (root) node of the AST
+     StencilEvaluation_SynthesizedAttribute result_stencilEval = shiftCalculus_StencilEvaluationTraversal.traverse(project,inheritedAttribute_stencilEval);
+#if 0
+     printf ("Stencil Evaluation was transformed: %s \n",result_stencilEval.get_stencilOperatorTransformed() ? "true" : "false");
+#endif
+     ROSE_ASSERT(result_stencilEval.get_stencilOperatorTransformed() == false);
+
+#if 0
+     printf ("DONE: Call the StencilEvaluation traversal starting at the project (root) node of the AST \n");
+#endif
+
+     shiftCalculus_StencilEvaluationTraversal.displayStencil("After evaluation of stencil");
 
 #if 1
-     printf ("DONE: Call the traversal starting at the project (root) node of the AST \n");
+     printf ("Call generateStencilCode to generate example code \n");
+#endif
+
+  // Generate code from stencil data structure.
+     generateStencilCode(shiftCalculus_StencilEvaluationTraversal);
+
+#if 1
+     printf ("DONE: Call generateStencilCode to generate example code \n");
 #endif
 
   // AST consistency tests (optional for users, but this enforces more of our tests)

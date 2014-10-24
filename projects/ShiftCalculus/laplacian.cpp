@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
   Asrc.print();
   cout << endl;
 
+#if 0
   vector<Point>shft;
   vector<double>wt;
   shft.push_back(zero);
@@ -74,6 +75,40 @@ int main(int argc, char* argv[])
   
   // build the stencil, and the stencil operator
   Stencil<double> laplace(wt,shft);
+#else
+  // This is a simpler interface to interpret (suggested by Anshu).
+     Stencil<double> laplace(pair<Shift,double>(zero,C0));
+
+  // DQ: these are used as relative offsets instead of points, so then might be more clear if 
+  // there was a RelativeOffset class.
+     Point xdir = getUnitv(0);
+
+  // here I am using "+" operator defined on stencils, which is one mechanism for composing
+     laplace=laplace+(pair<Shift,double>(xdir,ident));
+
+  // DQ: this might be simpler if we have an operator*=() member function.
+  // xdir=xdir*(-1);
+     xdir *= -1;
+     laplace=laplace+(pair<Shift,double>(xdir,ident));
+     Point ydir=getUnitv(1);
+     laplace=laplace+(pair<Shift,double>(ydir,ident));
+
+  // DQ: this might be simpler if we have an operator*=() member function.
+  // ydir=ydir*(-1);
+     ydir *= -1;
+     laplace=laplace+(pair<Shift,double>(ydir,ident));
+
+#if DIM==3
+     Point zdir=getUnitv(1);
+     laplace=laplace+(pair<Shift,double>(zdir,ident));
+
+  // DQ: this might be simpler if we have an operator*=() member function.
+  // zdir=zdir*(-1);
+     zdir *= -1;
+     laplace=laplace+(pair<Shift,double>(zdir,ident));
+#endif
+#endif
+
   StencilOperator<double,double, double> op;
 
   //apply stencil operator

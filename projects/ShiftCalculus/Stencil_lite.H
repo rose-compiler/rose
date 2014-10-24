@@ -4,10 +4,10 @@
 // #include <iostream>
 
 #include "Shift_lite.H"
-#include "RectMDArray.H"
+#include "RectMDArray_lite.H"
 
 
-using namespace std;
+// using namespace std;
 
 //The main stencil class. A stencil consists of a collection
 // of shifts (integer offsets from the destination discrete point) 
@@ -29,24 +29,27 @@ using namespace std;
 // are multiplied
 
 template <class TCoef> class Stencil
-{
-public:
-  Stencil();
+   {
+     public:
+          Stencil();
 
-  // constructor with a single shift
-  Stencil(pair<Shift,TCoef> a_pair,
-          Point a_destRefratio=getOnes(),
-          Shift a_destShift=getZeros(),
-          Point a_srcRefratio=getOnes());
+       // constructor with a single shift
+          Stencil(pair<Shift,TCoef> a_pair,
+               Point a_destRefratio = getOnes(),
+               Shift a_destShift    = getZeros(),
+               Point a_srcRefratio  = getOnes());
 
-  // constructor with multiple shifts
-  Stencil<TCoef>(vector<pair<Shift,TCoef> > a_shifts,
-                 Point a_destRefratio=getOnes(),
-                 Shift a_destShift=getZeros(),
-                 Point a_srcRefratio=getOnes());  
-  Stencil<TCoef> operator*(const Stencil<TCoef> a_stencil) const;
-  void operator*=(const TCoef& a_coef);
-  Stencil<TCoef> operator+(const Stencil<TCoef> a_stencil) const;
+       // constructor with multiple shifts
+          Stencil<TCoef>(vector<pair<Shift,TCoef> > a_shifts,
+               Point a_destRefratio = getOnes(),
+               Shift a_destShift    = getZeros(),
+               Point a_srcRefratio  = getOnes());  
+
+          Stencil<TCoef> operator*(const Stencil<TCoef> a_stencil) const;
+          void operator*=(const TCoef& a_coef);
+          Stencil<TCoef> operator+(const Stencil<TCoef> a_stencil) const;
+
+#if 0
   void stencilDump() const; 
   void setDestRefratio(Point a_pt){m_destRefratio = a_pt;};
   void setSrcRefratio(Point a_pt){m_srcRefratio = a_pt;}; 
@@ -64,27 +67,26 @@ public:
                  Point a_destRefratio=getOnes(),
                  Point a_destShift=getZeros(),
                  Point a_srcRefratio=getOnes());
-};
+#endif
+   };
   
 // #include "StencilImplem.H"
 
 template <class TCoef> Stencil<TCoef> 
-operator*(TCoef a_coef, Shift a_shift)
-{return Stencil<TCoef>(pair<Shift,TCoef>(a_shift,a_coef));};
-
+operator*(TCoef a_coef, Shift a_shift);
 
 //The stencil operator class which applies the stencil to the
 // source box to output destination box with the result
 template <class TCoef, class TSrc, class TDest> 
 class StencilOperator
-{
-public:
-  StencilOperator(){};
-  void operator()(const Stencil<TCoef>& a_stencil,
-                  const RectMDArray<TDest>& a_LOfPhi,
-                  const RectMDArray<TSrc>& a_phi,
-                  const Box& a_bx);
-};
+   {
+     public:
+          StencilOperator(){};
+          void operator()(const Stencil<TCoef>& a_stencil,
+               const RectMDArray<TDest>& a_LOfPhi,
+               const RectMDArray<TSrc>& a_phi,
+               const Box& a_bx);
+   };
 
 // //a function that can be applied pointwise
 // template <class TSrc,class TDest,class F>

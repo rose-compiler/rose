@@ -8,9 +8,9 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = shiftCalculusCompiler 
 
-shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C 
+shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperatorDetection.C stencilEvaluation.C stencilFiniteStateMachine.C dslSupport.C dslCodeGeneration.C
 
-include_HEADERS = shiftCalculusCompiler.h
+include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h
 
 ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 
@@ -48,6 +48,18 @@ test3: shiftCalculusCompiler
 
 test4: shiftCalculusCompiler
 	./shiftCalculusCompiler -c $(srcdir)/laplacian_lite.cpp
+
+test5: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/test2014_02.C
+
+test6: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/test2014_03.C
+
+test7: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/test2014_04.C
+
+test8: shiftCalculusCompiler
+	./shiftCalculusCompiler -c $(srcdir)/test2014_05.C
 
 
 

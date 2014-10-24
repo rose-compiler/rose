@@ -54,7 +54,8 @@ int main(int argc, char* argv[])
   cout << endl;
 
   // build the identity stencil
-  Stencil<double> id(pair<Shift,double>(getZeros(),ident));
+//Stencil<double> id(pair<Shift,double>(getZeros(),ident));
+  Stencil<double> id(pair<Shift,double>(zero,ident));
   StencilOperator<double,double, double> op;
   op(id,Adest,Asrc,bx);
   cout <<" The destination Box" << endl;

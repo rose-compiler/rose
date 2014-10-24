@@ -17,8 +17,10 @@ int main(int argc, char* argv[])
    {
   // DQ: Modified code to add const.
 
+  // Use of "const" makes the type a SgModifierType (so for now let's keep it simple).
   // const Point zero = getZeros();
      Point zero = getZeros();
+
      Point lo=zero;
   // Point hi=getOnes()*(DOMAINSIZE-1);
      Point hi=getOnes()*(6);
@@ -38,28 +40,11 @@ int main(int argc, char* argv[])
      const double ident =  1.0;
      const double C0    = -4.0;
 
+  // An expression to recognize: 
+  // pair<Shift,double>(zero,C0);
+
   // This is a simpler interface to interpret (suggested by Anshu).
+  // Stencil<double> laplace(pair<Shift,double>(zero,C0));
+
      Stencil<double> laplace(pair<Shift,double>(zero,C0));
-
-     Point xdir = getUnitv(0);
-
-  // here I am using "+" operator defined on stencils, which is one mechanism for composing
-     laplace=laplace+(pair<Shift,double>(xdir,ident));
-     xdir *= -1;
-     laplace=laplace+(pair<Shift,double>(xdir,ident));
-     Point ydir=getUnitv(1);
-     laplace=laplace+(pair<Shift,double>(ydir,ident));
-     ydir *= -1;
-     laplace=laplace+(pair<Shift,double>(ydir,ident));
-#if DIM==3
-     Point zdir=getUnitv(1);
-     laplace=laplace+(pair<Shift,double>(zdir,ident));
-     zdir=zdir*(-1);
-     laplace=laplace+(pair<Shift,double>(zdir,ident));
-#endif
-
-     StencilOperator<double,double, double> op;
-
-  // apply stencil operator
-     op(laplace,Adest,Asrc,bxdest);
    }

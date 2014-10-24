@@ -137,8 +137,7 @@ public:
                 int offset =  srcOffset[isten];   
                 int k0dest = k0*desdisp;
                 int k0src = k0*srcdisp;
-                a_LOfPhi[kbasel + k0dest] += 
-                  coef[isten]*a_phi[kbasep + k0src + offset];
+                a_LOfPhi[kbasel + k0dest] += coef[isten]*a_phi[kbasep + k0src + offset];
               }
           }
       }
