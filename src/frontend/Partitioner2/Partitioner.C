@@ -729,6 +729,18 @@ Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
     return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).basicBlocks();
 }
 
+BasicBlock::Ptr
+Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
+    std::vector<BasicBlock::Ptr> bblocks = basicBlocksOverlapping(insnVa);
+    BOOST_FOREACH (const BasicBlock::Ptr &bblock, bblocks) {
+        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+            if (insn->get_address() == insnVa)
+                return bblock;
+        }
+    }
+    return BasicBlock::Ptr();
+}
+
 SgAsmInstruction *
 Partitioner::discoverInstruction(rose_addr_t startVa) const {
     return (*instructionProvider_)[startVa];

@@ -416,8 +416,6 @@ public:
      *  then that same instruction will be returned this time. */
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const;
 
-    
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner basic block placeholder operations
@@ -560,6 +558,12 @@ public:
      *
      *  The returned list of basic blocks are sorted by their starting address. */
     std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const;
+
+    /** Returns the basic block that contains a specific instruction address.
+     *
+     *  Returns the basic block that contains an instruction that starts at the specified address, or null if no such
+     *  instruction or basic block exists in the CFG/AUM. */
+    BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const;
 
     /** Returns the addresses used by basic block instructions.
      *
