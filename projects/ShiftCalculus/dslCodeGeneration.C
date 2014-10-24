@@ -183,7 +183,7 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
 SgExpression* 
 buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient, int stencilDimension, SgVariableSymbol* variableSymbol, 
    SgVariableSymbol* indexVariableSymbol_X, SgVariableSymbol* indexVariableSymbol_Y, SgVariableSymbol* indexVariableSymbol_Z, 
-   SgVariableSymbol* arraySizeVariableSymbol_X, SgVariableSymbol* arraySizeVariableSymbol_Y)
+   SgVariableSymbol* arraySizeVariableSymbol_X, SgVariableSymbol* arraySizeVariableSymbol_Y, bool generateLowlevelCode)
    {
   // We want to generate: source[j*axis_x_size+i]
 
@@ -250,65 +250,36 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
                   }
              }
 
-#if 1
-          SgFunctionCallExp* functionCallExp = buildMemberFunctionCall(variableSymbol,"operator[]",expression,true);
-#else
-       // Need to get the symbol for the member function "operator[]" in the RectMDArray<TDest> template class instantiation.
-          SgClassType* classType = isSgClassType(variableSymbol->get_type());
-          ROSE_ASSERT(classType != NULL);
 
-          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-          ROSE_ASSERT(classDeclaration != NULL);
-          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-          ROSE_ASSERT(definingClassDeclaration != NULL);
+          SgExpression* dataReferenceExpression = NULL;
+          if (generateLowlevelCode == true)
+             {
+               SgVarRefExp* arrayPointerVarRefExp = SageBuilder::buildVarRefExp(variableSymbol);
+               SgPntrArrRefExp* arrayRefExp       = SageBuilder::buildPntrArrRefExp(arrayPointerVarRefExp,expression);
+               dataReferenceExpression = arrayRefExp;
+             }
+            else
+             {
+               SgFunctionCallExp* functionCallExp = buildMemberFunctionCall(variableSymbol,"operator[]",expression,true);
+               dataReferenceExpression = functionCallExp;
+             }
 
-       // We need the class definition scope so that we can look up the member function "operator[]".
-          SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-          ROSE_ASSERT(classDefinition != NULL);
-
-       // For the moment we will assume this is not a overloaded operator.
-       // SgMemberFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_nontemplate_member_function_symbol("opearator[]");
-          SgFunctionSymbol* functionSymbol = classDefinition->lookup_function_symbol("operator[]");
-          ROSE_ASSERT(functionSymbol != NULL);
-       // SgMemberFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_function_symbol("opearator[]");
-          SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(functionSymbol);
-          ROSE_ASSERT(memberFunctionSymbol != NULL);
-
-       // Build the member function reference expression.
-          bool virtual_call   = false;
-          bool need_qualifier = false;
-          SgMemberFunctionRefExp* memberFunctionRefExp = SageBuilder::buildMemberFunctionRefExp(memberFunctionSymbol,virtual_call,need_qualifier);
-
-       // Build the variable reference so that we can apply the member function.
-          SgVarRefExp* varRefExp = SageBuilder::buildVarRefExp(variableSymbol);
-
-       // Build the dot expression (array variable reference on lhs and member function reference on rhs).
-          SgDotExp* dotExp                   = SageBuilder::buildDotExp(varRefExp,memberFunctionRefExp);
-
-       // Build the function argument list.
-          SgExprListExp* exprListExp         = SageBuilder::buildExprListExp(expression);
-
-       // Build the function call expression.
-          SgFunctionCallExp* functionCallExp = SageBuilder::buildFunctionCallExp(dotExp,exprListExp);
-
-       // Cause the unparsed code to use the operator syntax (instead of function syntax).
-          functionCallExp->set_uses_operator_syntax(true);
-#endif
-
-       // If stencilCoeficient == 1.0 then don't build the SgMultiplyOp (I will do handle this better later).
+       // If stencilCoeficient == 1.0 then don't build the SgMultiplyOp (I will handle this better later).
           if (stencilCoeficient < 0.99999 || stencilCoeficient > 1.00001)
              {
             // Build the value expression for the coeficient.
                SgDoubleVal* doubleVal = SageBuilder::buildDoubleVal(stencilCoeficient);
 
             // Build the expression to multiply the array reference (using "operator[]" member function) times the stencil coeficient.
-               SgMultiplyOp* multiplyOp = SageBuilder::buildMultiplyOp(functionCallExp,doubleVal);
+            // SgMultiplyOp* multiplyOp = SageBuilder::buildMultiplyOp(functionCallExp,doubleVal);
+               SgMultiplyOp* multiplyOp = SageBuilder::buildMultiplyOp(dataReferenceExpression,doubleVal);
                returnExpression = multiplyOp;
              }
             else
              {
-            // This is the case where stencilCoeficient == 1.0 (but i want to avoid equality comparision of floating point values).
-               returnExpression = functionCallExp;
+            // This is the case where stencilCoeficient == 1.0 (but I want to avoid equality comparisions of floating point values).
+            // returnExpression = functionCallExp;
+               returnExpression = dataReferenceExpression;
              }          
         }
        else
@@ -381,19 +352,23 @@ SgExprStatement* assembleStencilSubTreeArray(SgExpression* stencil_lhs, vector<S
    }
 
 
-void generateStencilCode(StencilEvaluationTraversal & traversal)
+void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLowlevelCode)
    {
   // Read the stencil and generate the inner most loop AST for the stencil.
 
-   // Example of code that we want to generate:
-   // for (j=0; j < source.size(0); j++)
-   //    {
-   //      int axis_x_size = source.size(0);
-   //      for (i=0; i < source.size(0); i++)
-   //         {
-   //           destination[j*axis_x_size+i] = source[j*axis_x_size+i];
-   //         }
-   //    }
+  // Note that generateLowlevelCode controls the generation of low level C code using a
+  // base pointer to raw memory and linearized indexing off of that pointer.  The
+  // alternative is to use the operator[] member function in the RectMDArray class.
+
+  // Example of code that we want to generate:
+  // for (j=0; j < source.size(0); j++)
+  //    {
+  //      int axis_x_size = source.size(0);
+  //      for (i=0; i < source.size(0); i++)
+  //         {
+  //           destination[j*axis_x_size+i] = source[j*axis_x_size+i];
+  //         }
+  //    }
 
   // This function genertes the loop nest only:
   //    SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody)
@@ -496,14 +471,47 @@ void generateStencilCode(StencilEvaluationTraversal & traversal)
           SgVariableSymbol* boxVariableSymbol = boxVarRefExp->get_symbol();
           ROSE_ASSERT(boxVariableSymbol != NULL);
 
+       // This can be important in handling of comments and CPP directives.
+          bool autoMovePreprocessingInfo = true;
+
+          SgStatement* lastStatement = associatedStatement;
+          if (generateLowlevelCode == true)
+             {
+#if 1
+               SgVariableDeclaration* sourceDataPointerVariableDeclaration = buildDataPointer("sourceDataPointer",sourceVariableSymbol,outerScope);
+#else
+            // Optionally build a pointer variable so that we can optionally support a C style indexing for the DTEC DSL blocks.
+               SgExpression* sourcePointerExp = buildMemberFunctionCall(sourceVariableSymbol,"getPointer",NULL,false);
+               ROSE_ASSERT(sourcePointerExp != NULL);
+               SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(sourcePointerExp);
+               ROSE_ASSERT(assignInitializer != NULL);
+
+            // Build the variable declaration for the pointer to the data.
+               string sourcePointerName = "sourceDataPointer";
+               SgVariableDeclaration* sourceDataPointerVariableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(sourcePointerName,SageBuilder::buildPointerType(SageBuilder::buildDoubleType()),assignInitializer,outerScope);
+               ROSE_ASSERT(sourceDataPointerVariableDeclaration != NULL);
+#endif
+
+            // SageInterface::insertStatementAfter(associatedStatement,forStatementScope,autoMovePreprocessingInfo);
+               SageInterface::insertStatementAfter(associatedStatement,sourceDataPointerVariableDeclaration,autoMovePreprocessingInfo);
+
+               SgVariableDeclaration* destinationDataPointerVariableDeclaration = buildDataPointer("destinationDataPointer",destinationVariableSymbol,outerScope);
+               SageInterface::insertStatementAfter(sourceDataPointerVariableDeclaration,destinationDataPointerVariableDeclaration,autoMovePreprocessingInfo);
+
+            // Reset the variable symbols we will use in the buildStencilPoint() function.
+               sourceVariableSymbol      = SageInterface::getFirstVarSym(sourceDataPointerVariableDeclaration);
+               destinationVariableSymbol = SageInterface::getFirstVarSym(destinationDataPointerVariableDeclaration);
+
+               lastStatement = destinationDataPointerVariableDeclaration;
+             }
+
           SgBasicBlock* innerLoopBody = NULL;
        // SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,sourceVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
           SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
           ROSE_ASSERT(innerLoopBody != NULL);
 
-          bool autoMovePreprocessingInfo = true;
-       // SageInterface::insertStatementAfter(associatedStatement,forStatementScope,autoMovePreprocessingInfo);
-          SageInterface::insertStatementAfter(associatedStatement,loopNest,autoMovePreprocessingInfo);
+          ROSE_ASSERT(lastStatement != NULL);
+          SageInterface::insertStatementAfter(lastStatement,loopNest,autoMovePreprocessingInfo);
 
        // Mark this as compiler generated so that it will not be unparsed.
           associatedStatement->get_file_info()->setCompilerGenerated();
@@ -522,7 +530,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal)
             // SgFunctionCallExp* stencilSubTree = buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilFSM->stencilDimension());
                SgExpression* stencilSubTree = 
                     buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilDimension,sourceVariableSymbol,
-                         indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
+                         indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,generateLowlevelCode);
 
                ROSE_ASSERT(stencilSubTree != NULL);
 
@@ -533,7 +541,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal)
           StencilOffsetFSM* stencilOffsetFSM_lhs = new StencilOffsetFSM(0,0,0);
           double stencilCoeficient_lhs = 1.00;
           SgExpression* stencil_lhs = buildStencilPoint(stencilOffsetFSM_lhs,stencilCoeficient_lhs,stencilDimension,destinationVariableSymbol,
-                         indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
+                                           indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,generateLowlevelCode);
           ROSE_ASSERT(stencil_lhs != NULL);
 
        // Assemble the stencilSubTreeArray into a single expression.

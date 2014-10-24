@@ -24,6 +24,8 @@ public:
 
    Box getBox() const;
 
+   T* getPointer() const;
+
 #if 0
 // dimension dependent access.
   T& operator()(int i) const;

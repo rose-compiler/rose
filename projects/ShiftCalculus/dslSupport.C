@@ -175,7 +175,7 @@ DSL_Support::buildMemberFunctionCall(SgExpression* expressionRoot, const string 
      SgFunctionSymbol* functionSymbol = classDefinition->lookup_function_symbol(memberFunctionName);
      if (functionSymbol == NULL)
         {
-           printf ("Error: function not found in classDeclaration = %s symbol table: memberFunctionName = %s \n",classDeclaration->get_name().str(),memberFunctionName.c_str());
+          printf ("Error: function not found in classDeclaration = %s symbol table: memberFunctionName = %s \n",classDeclaration->get_name().str(),memberFunctionName.c_str());
         }
      ROSE_ASSERT(functionSymbol != NULL);
   // SgMemberFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_function_symbol("opearator[]");
@@ -235,3 +235,18 @@ DSL_Support::buildMemberFunctionCall(SgVariableSymbol* variableSymbol, const str
      return memberFunctionCall;
    }
 
+SgVariableDeclaration*
+DSL_Support::buildDataPointer(const string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope)
+   {
+  // Optionally build a pointer variable so that we can optionally support a C style indexing for the DTEC DSL blocks.
+     SgExpression* pointerExp = buildMemberFunctionCall(variableSymbol,"getPointer",NULL,false);
+     ROSE_ASSERT(pointerExp != NULL);
+     SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(pointerExp);
+     ROSE_ASSERT(assignInitializer != NULL);
+
+  // Build the variable declaration for the pointer to the data.
+     SgVariableDeclaration* variableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(pointerVariableName,SageBuilder::buildPointerType(SageBuilder::buildDoubleType()),assignInitializer,outerScope);
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+     return variableDeclaration;
+   }

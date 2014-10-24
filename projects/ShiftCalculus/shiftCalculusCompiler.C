@@ -82,7 +82,8 @@ int main( int argc, char * argv[] )
 #endif
 
   // Generate code from stencil data structure.
-     generateStencilCode(shiftCalculus_StencilEvaluationTraversal);
+     bool generateLowlevelCode = true;
+     generateStencilCode(shiftCalculus_StencilEvaluationTraversal,generateLowlevelCode);
 
 #if 1
      printf ("DONE: Call generateStencilCode to generate example code \n");
