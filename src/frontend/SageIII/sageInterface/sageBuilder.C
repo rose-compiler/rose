@@ -14781,7 +14781,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
                     ROSE_ASSERT(targetScope->lookup_function_symbol(name,functionType) != NULL);
 
-                    ROSE_ASSERT(functionDeclaration_copy_firstNondefining->get_scope() == targetScope);
+                 // TV (10/22/2014): Might not be the case as we now have a project wide global scope
+                 // ROSE_ASSERT(functionDeclaration_copy_firstNondefining->get_scope() == targetScope);
 
                     ROSE_ASSERT(functionDeclaration_copy_firstNondefining == functionDeclaration_copy_firstNondefining->get_firstNondefiningDeclaration());
 
@@ -15008,7 +15009,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          ROSE_ASSERT(scope == targetScope);
                       // enumDeclaration_copy->set_scope(scope);
 #else
-                         ROSE_ASSERT(enumDeclaration->get_scope() == targetScope);
+                      // TV (10/22/2014): Might not be the case as we now have a project wide global scope
+                      // ROSE_ASSERT(enumDeclaration->get_scope() == targetScope);
 #endif
                        }
 
@@ -15745,8 +15747,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
                          ROSE_ASSERT(new_associatedEnumDeclaration_copy != NULL);
 
                       // If this is false then in means that we should have built a new SgEnumSymbol instead of reusing the existing one from the snippet.
-                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);
-                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
+                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);// TV (10/22/2014): with project wide global scope this will always be false because 'symbol' is resolve to the first-non-defn-decl in original scope
+                      // ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
                          ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_definingDeclaration());
 
                          enumVal_copy->set_declaration(new_associatedEnumDeclaration_copy);
