@@ -403,6 +403,22 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n name = ") + name;
         }
 
+  // DQ (10/19/2014): Added support for output of the name for SgConstructorInitializer IR nodes.
+     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(node);
+     if (constructorInitializer != NULL)
+        {
+          SgClassDeclaration* classDeclaration = constructorInitializer->get_class_decl();
+
+       // DQ (10/20/2014): This can be NULL in rare occasions.
+       // ROSE_ASSERT(classDeclaration != NULL);
+
+          if (classDeclaration != NULL)
+             {
+               string name = classDeclaration->get_name();
+               nodelabel += string("\\n name = ") + name;
+             }
+        }
+
 #if 0
   // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
   // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
