@@ -1,4 +1,4 @@
-/* SgAsmx86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
+/* SgAsmX86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
@@ -14,38 +14,55 @@ using namespace rose;                                   // temporary until this 
 using namespace rose::Diagnostics;
 
 unsigned
-SgAsmx86Instruction::get_anyKind() const {
+SgAsmX86Instruction::get_anyKind() const {
     return p_kind;
 }
 
 // see base class
 bool
-SgAsmx86Instruction::terminates_basic_block() {
+SgAsmX86Instruction::terminatesBasicBlock() {
     if (get_kind()==x86_unknown_instruction)
         return true;
     return x86InstructionIsControlTransfer(this);
 }
 
+
+
 // see base class
 bool
-SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
 {
-    static const size_t EXECUTION_LIMIT = 10; // max size of basic blocks for expensive analyses
     if (insns.empty())
         return false;
-    SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
+    SgAsmX86Instruction *last = isSgAsmX86Instruction(insns.back());
     if (!last)
         return false;
 
     // Quick method based only on the kind of instruction
     if (x86_call==last->get_kind() || x86_farcall==last->get_kind()) {
-        last->get_branch_target(target);
+        last->getBranchTarget(target);
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
     }
 
+    return false;
+}
+
+// see base class
+bool
+SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+{
+    if (isFunctionCallFast(insns, target, return_va))
+        return true;
+
     // The following stuff works only if we have a relatively complete AST.
+    static const size_t EXECUTION_LIMIT = 10; // max size of basic blocks for expensive analyses
+    if (insns.empty())
+        return false;
+    SgAsmX86Instruction *last = isSgAsmX86Instruction(insns.back());
+    if (!last)
+        return false;
     SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(last);
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
 
@@ -144,12 +161,12 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
     return false;
 }
 
-/** True if @p insns ends with a RET instruction. Eventually this could do something more sophisticated. */
+// See base class.
 bool
-SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*> &insns) {
+SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
         return false;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
+    SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(insns.back());
     if (!last_insn)
         return false;
     if (last_insn->get_kind()==x86_ret || last_insn->get_kind()==x86_retf)
@@ -157,16 +174,22 @@ SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*> &in
     return false;
 }
 
+// See base class.
+bool
+SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
+    return isFunctionReturnFast(insns);
+}
+
 /** Determines whether this instruction is the special x86 "unknown" instruction. */
 bool
-SgAsmx86Instruction::is_unknown() const
+SgAsmX86Instruction::isUnknown() const
 {
     return x86_unknown_instruction == get_kind();
 }
 
 /** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmx86Instruction::get_successors(bool *complete) {
+SgAsmX86Instruction::getSuccessors(bool *complete) {
     BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true; /*assume true and prove otherwise*/
 
@@ -178,7 +201,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
             /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
              * fall-through address. */
             rose_addr_t va;
-            if (get_branch_target(&va)) {
+            if (getBranchTarget(&va)) {
                 retval.insert(va);
             } else {
                 *complete = false;
@@ -210,7 +233,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
         case x86_loopz: {
             /* Conditional branches to operand-specified address */
             rose_addr_t va;
-            if (get_branch_target(&va)) {
+            if (getBranchTarget(&va)) {
                 retval.insert(va);
             } else {
                 *complete = false;
@@ -252,7 +275,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 }
 
 bool
-SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
+SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
     // Treats far destinations as "unknown"
     switch (get_kind()) {
         case x86_call:
@@ -297,17 +320,17 @@ SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
 
 /** Return control flow successors. See base class for full documentation. */
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
     Stream debug(mlog[DEBUG]);
 
     if (debug) {
-        debug <<"SgAsmx86Instruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
+        debug <<"SgAsmX86Instruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
 
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
@@ -345,7 +368,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         try {
             Semantics semantics(policy);
             for (size_t i=0; i<insns.size(); i++) {
-                SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
+                SgAsmX86Instruction* insn = isSgAsmX86Instruction(insns[i]);
                 semantics.processInstruction(insn);
                 if (debug) {
                     debug << "  state after " <<unparseInstructionWithAddress(insn) <<"\n"
@@ -508,11 +531,11 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
  *  \endcode
  */
 bool
-SgAsmx86Instruction::has_effect()
+SgAsmX86Instruction::hasEffect()
 {
     std::vector<SgAsmInstruction*> sequence;
     sequence.push_back(this);
-    return has_effect(sequence, false);
+    return hasEffect(sequence, false);
 }
 
 /** Determines whether a sequence of instructions has an effect besides advancing the flow of control.
@@ -537,8 +560,8 @@ SgAsmx86Instruction::has_effect()
  *  "this" is only used to select the virtual function; the operation is performed on the specified instruction vector.
  */
 bool
-SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
-                                bool relax_stack_semantics/*false*/)
+SgAsmX86Instruction::hasEffect(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                               bool relax_stack_semantics/*false*/)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
 
@@ -551,7 +574,7 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
             if (!insn) return true;
             semantics.processInstruction(insn);
             if (!policy.get_ip().is_known()) return true;
@@ -578,23 +601,23 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 /** Determines what subsequences of an instruction sequence have no cumulative effect.  The return value is a vector of pairs
  *  where each pair is the starting index and length of subsequence.  The algorithm we use is to compute the machine state
  *  after each instruction and then look for pairs of states that are identical except for the instruction pointer.  Like the
- *  vector version of has_effect(), the control-flow from the final instruction is treated specially depending on the
+ *  vector version of hasEffect(), the control-flow from the final instruction is treated specially depending on the
  *  allow_branch value, which defaults to false.
  *
- *  It is more efficient to call this function to find sequences than to call the vector version of has_effect() with various
+ *  It is more efficient to call this function to find sequences than to call the vector version of hasEffect() with various
  *  vectors. First, one doesn't have to construct all the different subsequences; second, the semantic analysis is performed
  *  only one time.
  *
  *  "this" is only used to select the virtual function; the operation is performed over the specified instruction vector. */
 std::vector< std::pair< size_t, size_t > >
-SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
-                                            bool relax_stack_semantics/*false*/)
+SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                                          bool relax_stack_semantics/*false*/)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics;
 
     static const bool verbose = false;
 
-    if (verbose) std::cerr <<"find_noop_subsequences:\n";
+    if (verbose) std::cerr <<"findNoopSubsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
     typedef PartialSymbolicSemantics::Policy<> Policy;
@@ -614,7 +637,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     state.back().registers.ip = common_ip;
     try {
         for (std::vector<SgAsmInstruction*>::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
             if (verbose)
                 std::cerr <<"  insn #" <<(state.size()-1)
                           <<" " <<(insn ? unparseInstructionWithAddress(insn) : "<none>") <<"\n";

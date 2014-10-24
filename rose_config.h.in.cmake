@@ -524,7 +524,7 @@
 #undef RETSIGTYPE
 
 /* Location (unquoted) of Boost specified on configure line. */
-#define ROSE_BOOST_PATH ${BOOST_ROOT}
+#define ROSE_BOOST_PATH "${BOOST_ROOT}"
 
 /* Location of ROSE Compile Tree. */
 #define ROSE_COMPILE_TREE_PATH ${ROSE_TOP_BINARY_DIR}

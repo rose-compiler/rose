@@ -4,29 +4,12 @@
 
 /*!
 \class SgModifierNodes
-\brief This class represents a list of SgModifierTypes and a link is a linked list of
-    SgModifierNodes.  
-
-   This class has a confusing class design.  It is also seemingly
-not used anywhere within the AST.  So it might disapear, unless we
-feel we require it.  Since it's information is fundamentally redundant with what
-is already in the AST, I think it should be removed at some point.
-
-\note The SgLinkageModifier is not used bacuase we store an explicit string in the 
-      SgDeclarationStatement.  It might be better to use the SgLinkageModifier in the
-      future.
-
-\note The Fortran binding language is specified using the explicit string in the 
-      SgDeclarationStatement.  It might be better to use the SgLinkageModifier in the
-      future.
+\brief This class is not used in ROSE, but is intended to represent a list of SgModifierTypes 
+(similar to the SgTypedefSeq IR node) used for the SgType IR node that points to this SgModifierNodes.
+In the future, we may either support this concept (similar to SgTypedefSeq) or we may remove
+the related implementation of SgTypedefSeq to be consistant by design). 
 
 \internal This IR node could likely be removed at some point in the future.
-
-\todo Fortran support for modifiers is required: see section 5.2, 5.3 in Fortran 2003 standard.
-      Note that type modifiers can be used as statements.
-
-\sa
-\ref SgModifierNodes_usage  "Example of using a SgModifierNodes object"
 */
 
 
@@ -34,68 +17,11 @@ is already in the AST, I think it should be removed at some point.
 // Documentation for class SgModifierNodes data members
 /////////////////////////////////////////////////////////////////////////
 
-/*!
-\var SgModifierNodes::p_nodes
-\brief This is the list of SgModifierTypes (pointers) associated with the IR node
-    containing this SgModifierNodes object.
-
-\internal  This is an STL list.
-*/
-
-/*!
-\var SgModifierNodes::p_next
-\brief This is a pointer to any additional SgModifierNodes object (in case of a link list).
-
-\internal  I would be happier if this was an explicit STL list.  This IR node should
-    likely be reimplemented.
-*/
-
-
+/* No documentation since this IR node is not used */
 
 //////////////////////////////////////////////////////////////////////////
 // Documentation for class SgModifierNodes member functions (methods)
 /////////////////////////////////////////////////////////////////////////
-/*!
-\fn SgModifierNodes::SgModifierNodes()
-\brief This is the constructor.
 
-   This constructor builds the SgModifierNodes base class.
-
-\sa 
-\ref SgModifierNodes_create "Example:create an SgModifierNodes object"
-*/
-
-/*!
-\fn SgModifierNodes::~SgModifierNodes()
-\brief This is the destructor.
-
-   There is nothing to delete in this object.
-*/
-
-/*!
-\fn SgModifierNodes::operator=(const SgModifierNodes & X)
-\brief This is the assignment operator.
-
-   This is a simple assignment of the SgBitVector from X to the current object.
-*/
-
-/*!
-\fn SgModifierNodes::isSgModifierNodes (SgNode *s)
-\brief Cast function (from derived class to SgModifierNodes pointer).
-
-   This functions returns a SgModifierNodes pointer for any input of a 
-pointer to an object derived from a SgModifierNodes.
-
-\return Returns valid pointer to SgModifierNodes if input is derived from a SgLocatedNode.
-*/
-
-/*!
-\fn SgModifierNodes::isSgModifierNodes (const SgNode *s)
-\brief Cast function (from derived class to SgModifierNodes pointer).
-
-   This functions returns a SgModifierNodes pointer for any input of a 
-pointer to an object derived from a SgModifierNodes.
-
-\return Returns valid pointer to SgModifierNodes if input is derived from a SgLocatedNode.
-*/
+/* No documentation since this IR node is not used */
 
