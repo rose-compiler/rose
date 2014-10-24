@@ -344,7 +344,7 @@ V_SgSymbol
 V_SgAsmBlock 	
 V_SgAsmOperandList 	
 V_SgAsmArmInstruction 	
-V_SgAsmx86Instruction 	
+V_SgAsmX86Instruction 	
 V_SgAsmInstruction 	
 V_SgAsmFunction 	
 V_SgAsmStatement 	

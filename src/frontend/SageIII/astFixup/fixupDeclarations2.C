@@ -106,7 +106,7 @@ FixupTemplateDeclarations::visit ( SgNode* node )
 #if 0
                     printf ("Found a forward class template declaration with valid pointer to a definition (reset definition to NULL) \n");
 #endif
-                    s->set_definition(NULL);
+                    s->set_definition((SgTemplateInstantiationDefn*)NULL);
                   }
                break;
              }

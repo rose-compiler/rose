@@ -136,7 +136,7 @@ visit(SgNode* n)
      if (isSgBinaryComposite(n) && file==NULL)
        file = isSgBinaryComposite(n);
 
-  SgAsmx86Instruction* binInst = isSgAsmx86Instruction(n);
+  SgAsmX86Instruction* binInst = isSgAsmX86Instruction(n);
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);
 

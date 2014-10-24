@@ -1,45 +1,60 @@
+#define BOOST_FILESYSTEM_VERSION 3
+
 #include "rose.h"
 #include "MemoryMap.h"
 #include "SRecord.h"
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/filesystem.hpp>
 #include <sawyer/CommandLine.h>
 #include <sawyer/Message.h>
 
 using namespace rose;
 using namespace Sawyer::Message::Common;
 
-static Diagnostics::Facility mlog("tool");              // further initialization in main()
+static Diagnostics::Facility mlog;                      // further initialization in main()
 
-struct Options {
-    bool quiet;                                         // don't do the hexdump to stdout
-    std::string prefix;                                 // if non-empty, generate binary files
-    Options(): quiet(false) {}
+struct Settings {
+    bool doHexDump;                                     // show a hexdump of the initialized memory
+    std::string binaryPrefix;                           // if non-empty, generate binary files
+    Settings(): doHexDump(false) {}
 };
 
 static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Options &opts) {
+parseCommandLine(int argc, char *argv[], Settings &settings/*out*/) {
     using namespace Sawyer::CommandLine;
     SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
     SwitchGroup tool("Tool-specific switches");
-    tool.insert(Switch("quiet", 'q')
-                .intrinsicValue(true, opts.quiet)
-                .doc("Suppresses the hexdump output."));
-    tool.insert(Switch("binary", 'b')
-                .argument("prefix", anyParser(opts.prefix))
-                .doc("Causes files to be created that contain the raw memory from loading the S-Records. The file "
-                     "names are constructed from the specified @v{prefix} and an 8-character hexadecimal string "
-                     "which is the starting address for a contiguous region of memory."));
+
+    tool.insert(Switch("hexdump")
+                .intrinsicValue(true, settings.doHexDump)
+                .doc("Show a hexdump of the initialized memory, or turn off this feature with the @s{no-hexdump} switch. "
+                     "The default is to " + std::string(settings.doHexDump?"":"not ") + "produce this output."));
+    tool.insert(Switch("no-hexdump")
+                .key("hexdump")
+                .intrinsicValue(false, settings.doHexDump)
+                .hidden(true));
+
+    tool.insert(Switch("binary")
+                .argument("prefix", anyParser(settings.binaryPrefix))
+                .doc("Produce a binary file containing the data for each initialized segment of memory.  If a string is "
+                     "specified then the string is used as the first part of the file name, and if the string contains a "
+                     "percent character ('%') then that character is replaced with the non-path part of the specimen "
+                     "file. The hexadecimal address of each memory segment is appended to the prefix.  The default is to "
+                     "not produce binary files, which happens when the prefix string is empty."));
 
     Parser parser;
-    parser.errorStream(mlog[FATAL]);
-    parser.purpose("load and list Motorola S-Records");
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
-    parser.chapter(1, "ROSE Command-line Tools");
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{SRecord_File}");
-    parser.doc("Description",
-               "Reads the ASCII @v{SRecord_File} specified on the command-line, loads it into memory, and then produces "
-               "a hexdump and/or binary files for the resulting memory.");
+    parser
+        .errorStream(mlog[FATAL])
+        .purpose("load and list Motorola S-Records")
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("Synopsis", "@prop{programName} [@v{switches}] @v{SRecord_File}")
+        .doc("Description",
+             "Reads the ASCII @v{SRecord_File} specified on the command-line, loads it into memory, and optionally produces "
+             "a hexdump and/or binary files for the resulting memory.");
 
     return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
@@ -48,12 +63,12 @@ int
 main(int argc, char *argv[]) {
     // Initialization
     Diagnostics::initialize();
-    mlog.initStreams(rose::Diagnostics::destination);
+    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line
-    Options opts;
-    std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, opts).unreachedArgs();
+    Settings settings;
+    std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, settings).unreachedArgs();
     if (positionalArgs.size()!=1) {
         mlog[FATAL] <<"exactly one S-Record file must be specified\n";
         if (positionalArgs.empty())
@@ -92,12 +107,16 @@ main(int argc, char *argv[]) {
         std::cout <<"Starting address: " <<StringUtility::addrToString(startAddr) <<"\n";
 
     // Create binary files
-    if (!opts.prefix.empty()) {
+    if (!settings.binaryPrefix.empty()) {
+        if (boost::contains(settings.binaryPrefix, "%")) {
+            std::string inputFileBaseName = boost::filesystem::path(inputFileName).filename().string();
+            boost::replace_first(settings.binaryPrefix, "%", inputFileBaseName);
+        }
         mlog[WHERE] <<"dumping memory to binary files\n";
         BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
             const AddressInterval &interval = node.key();
             const MemoryMap::Segment &segment = node.value();
-            std::string outputName = opts.prefix + StringUtility::addrToString(interval.least()).substr(2);// skip "0x"
+            std::string outputName = settings.binaryPrefix + StringUtility::addrToString(interval.least()).substr(2);// skip "0x"
             mlog[TRACE] <<"  dumping " <<StringUtility::plural(interval.size(), "bytes") <<" to " <<outputName <<"\n";
             std::ofstream output(outputName.c_str());
             const char *data = (const char*)segment.buffer()->data();
@@ -109,7 +128,7 @@ main(int argc, char *argv[]) {
     }
     
     // Make the hexdump
-    if (!opts.quiet) {
+    if (settings.doHexDump) {
         mlog[WHERE] <<"dumping memory in hexdump format\n";
         HexdumpFormat fmt;
         fmt.numeric_fmt_special[0x00] = " .";           // make zeros less obtrusive

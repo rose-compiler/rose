@@ -18,7 +18,7 @@ SgAsmM68kInstruction::get_anyKind() const {
 
 // see base class
 bool
-SgAsmM68kInstruction::terminates_basic_block()
+SgAsmM68kInstruction::terminatesBasicBlock()
 {
     switch (get_kind()) {
         case m68k_unknown_instruction:
@@ -120,8 +120,8 @@ SgAsmM68kInstruction::terminates_basic_block()
 
 // see base class; don't modify target_va or return_va if they are not known
 bool
-SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va,
-                                       rose_addr_t *return_va)
+SgAsmM68kInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va,
+                                         rose_addr_t *return_va)
 {
     if (insns.empty())
         return false;
@@ -131,14 +131,29 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
 
     // Quick method based only on the kind of instruction
     if (m68k_bsr==last->get_kind() || m68k_jsr==last->get_kind() || m68k_callm==last->get_kind()) {
-        last->get_branch_target(target_va); // only modifies target_va if it can be determined
+        last->getBranchTarget(target_va); // only modifies target_va if it can be determined
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
     }
 
-#if 0 // [Robb P. Matzke 2014-08-22]: too slow
+    return false;
+}
+
+// see base class; don't modify target_va or return_va if they are not known
+bool
+SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va,
+                                         rose_addr_t *return_va)
+{
+    if (isFunctionCallFast(insns, target_va, return_va))
+        return true;
+
     static const size_t EXECUTION_LIMIT = 25; // max size of basic blocks for expensive analyses
+    if (insns.empty())
+        return false;
+    SgAsmM68kInstruction *last = isSgAsmM68kInstruction(insns.back());
+    if (!last)
+        return false;
     SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(last);
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
 
@@ -234,13 +249,12 @@ SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>& ins
             return true;
         }
     }
-#endif
 
     return false;
 }
 
 bool
-SgAsmM68kInstruction::is_function_return(const std::vector<SgAsmInstruction*>& insns)
+SgAsmM68kInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>& insns)
 {
     if (insns.empty())
         return false;
@@ -252,14 +266,20 @@ SgAsmM68kInstruction::is_function_return(const std::vector<SgAsmInstruction*>& i
     return false;
 }
 
+bool 
+SgAsmM68kInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>& insns)
+{
+    return isFunctionReturnFast(insns);
+}
+
 bool
-SgAsmM68kInstruction::is_unknown() const
+SgAsmM68kInstruction::isUnknown() const
 {
     return m68k_unknown_instruction == get_kind();
 }
 
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmM68kInstruction::get_successors(bool *complete)
+SgAsmM68kInstruction::getSuccessors(bool *complete)
 {
     BinaryAnalysis::Disassembler::AddressSet retval;
     *complete = true;
@@ -369,7 +389,7 @@ SgAsmM68kInstruction::get_successors(bool *complete)
         case m68k_trapv: {
             // Fall-through address and another (known or unknown) address
             rose_addr_t target_va;
-            if (get_branch_target(&target_va)) {
+            if (getBranchTarget(&target_va)) {
                 retval.insert(target_va);
             } else {
                 *complete = false;
@@ -385,7 +405,7 @@ SgAsmM68kInstruction::get_successors(bool *complete)
         case m68k_jsr: {
             // Unconditional branches
             rose_addr_t target_va;
-            if (get_branch_target(&target_va)) {
+            if (getBranchTarget(&target_va)) {
                 retval.insert(target_va);
             } else {
                 *complete = false;
@@ -405,17 +425,17 @@ SgAsmM68kInstruction::get_successors(bool *complete)
 }
 
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
+SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
     Stream debug(mlog[DEBUG]);
 
     if (debug) {
-        debug <<"SgAsmM68kInstruction::get_successors(" <<StringUtility::addrToString(insns.front()->get_address())
+        debug <<"SgAsmM68kInstruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())
               <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
     }
 
-    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+    BinaryAnalysis::Disassembler::AddressSet successors = SgAsmInstruction::getSuccessors(insns, complete);
 
     // If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
     // we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
@@ -458,7 +478,7 @@ SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>& insns
 }
 
 bool
-SgAsmM68kInstruction::get_branch_target(rose_addr_t *target)
+SgAsmM68kInstruction::getBranchTarget(rose_addr_t *target)
 {
     size_t labelArg = 999;                              // which argument is the target?
     bool useEffectiveAddress = false;                   // use the effective address as the target

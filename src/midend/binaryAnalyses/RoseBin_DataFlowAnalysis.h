@@ -70,7 +70,7 @@ class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
 
 
-  bool exceptionCall(SgAsmx86Instruction* call);
+  bool exceptionCall(SgAsmX86Instruction* call);
 
 
  public:

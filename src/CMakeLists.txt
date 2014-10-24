@@ -191,6 +191,8 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompAstConstruction.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompFortranParser.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/dwarfSupport.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/atermSupport.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/nodeBuildFunctionsForAterms.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/rose_graph_support.C
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C

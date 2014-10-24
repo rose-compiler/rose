@@ -151,7 +151,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
                                          bool &isVarDecl1,
                                          bool &isAssign0,
                                          bool &isAssign1,
-                                         SgAsmx86Instruction* mov
+                                         SgAsmX86Instruction* mov
                                          );
 
  public:

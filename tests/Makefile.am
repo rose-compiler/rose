@@ -9,6 +9,11 @@ SUBDIRS = . CompileTests
 
 if !ROSE_USE_CLANG_FRONTEND
 
+# JP (10/3/14): In order to be able to run the unit tests, we want to build the test support,
+# this includes google test as well as our own header, providing some necessary helper functions
+SUBDIRS += testSupport
+
+
 #if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring this whole directory might be over kill. But I have had problems, 
 # only on Hudson, just compiling a number of these subdirectories.

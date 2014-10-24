@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
+#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
@@ -1078,6 +1079,13 @@ SwitchGroup::resetValueSeparators(const std::string &s1, const std::string &s2,
 SAWYER_EXPORT SwitchGroup&
 SwitchGroup::insert(const Switch &sw) {
     switches_.push_back(sw);
+    return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::insert(const SwitchGroup &other) {
+    BOOST_FOREACH (const Switch &sw, other.switches_)
+        switches_.push_back(sw);
     return *this;
 }
 

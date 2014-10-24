@@ -414,7 +414,16 @@ DoxygenFile::DoxygenFile(SgProject *prj, string filename)
    {
      Sg_File_Info *info = new Sg_File_Info(filename, 0, 0);
 
-     SgInitializedName *iname = new SgInitializedName;
+#if 0
+  // DQ (10/13/2014): Fixed to handle new minor change to the constructor API.
+  // SgInitializedName *iname = new SgInitializedName;
+     SgName empty_name = "";
+     SgInitializedName *iname = new SgInitializedName(empty_name,NULL,NULL);
+#else
+  // Added support for the original API (default constructor).
+     SgInitializedName *iname = new SgInitializedName();
+#endif
+
      stringstream sname;
      sname << "SAGE_Doxygen_Dummy_" << rand();
      iname->set_name(sname.str());

@@ -75,6 +75,40 @@ public:
     virtual bool operator()(bool chain, const Args&) /*override*/;
 };
 
+/** Basic block callback to detect "switch" statements.
+ *
+ *  Examines the instructions of a basic block to determine if they are from a C "switch"-like statement and attempts to find
+ *  the "case" labels, adding them as successors to this basic block. */
+class SwitchSuccessors: public BasicBlockCallback {
+public:
+    /** Allocating constructor. */
+    static Ptr instance() { return Ptr(new SwitchSuccessors); }
+    virtual bool operator()(bool chain, const Args&) /*override*/;
+};
+
+/** Reads a table of code addresses.
+ *
+ *  Reads a table that starts at the lower limit of @p tableLimits and does not extend past the upper limit.  Each entry in the
+ *  table is an instruction address of @p tableEntrySize bytes and the entry must exist in read-only memory.  The address
+ *  stored in the entry must be within the @p targetLimits interval and must be an address that is mapped with execute
+ *  permission.  As many entries as possible are read into the return vector.  Upon return, the @p tableLimits is adjusted to
+ *  indicate the actual location of the table. */
+std::vector<rose_addr_t> scanCodeAddressTable(const Partitioner&, AddressInterval &tableLimits /*in,out*/,
+                                              const AddressInterval &targetLimits, size_t tableEntrySize);
+
+/** Try to match a base+offset expression.
+ *
+ *  Matches expressions like:
+ *
+ * @li base + register
+ * @li base + register * size
+ * @li [ base + register ]
+ * @li [ base + register * size ]
+ *
+ * Returns the numeric value of @c base or nothing if the expression is not a recognized form. */
+Sawyer::Optional<rose_addr_t> findTableBase(SgAsmExpression*);
+
+
 } // namespace
 } // namespace
 } // namespace
