@@ -39,10 +39,16 @@ class Operator : public D
           Operator();
           Operator(D d);
 
+       // This is the application of the Operator to the GridFunction.
           GridFunction operator()(GridFunction & u);
 
+       // Note that "Operator Lap2D = DPDMx + DPDMy;" evaluates more explicitly to
+       // "Operator::operator=(Operator(DPDMx) + Operator(DPDMy));" where the 
+       // operator=() function is default generated.
           Operator operator+(const Operator & x);
-          GridFunction operator=(const D & d);
+
+       // This function is not need in the API.
+       // GridFunction operator=(const D & d);
 
    };
 

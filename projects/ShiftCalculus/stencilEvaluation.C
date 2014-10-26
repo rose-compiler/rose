@@ -8,7 +8,7 @@
 #include "stencilAndStencilOperatorDetection.h"
 #include "stencilEvaluation.h"
 
-// This code will make calles to the finite state machine representing the stencil 
+// This code will make calls to the finite state machine representing the stencil 
 // so that we can execute events and accumulate state (and then read the state as
 // and intermediate form for the stencil (maybe saved as an attribute).  This data
 // is then the jumping off point for different groups to experiment with the generation
@@ -127,181 +127,208 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
 
      bool foundPairShiftDoubleConstructor = false;
 
-  // This is for stencil specifications using vectors of points to represent offsets.
+  // This is for stencil specifications using vectors of points to represent offsets (not finished).
   // bool foundVariableDeclarationForStencilInput = false;
 
      double stencilCoeficientValue = 0.0;
+
   // StencilOffsetFSM offset;
      StencilOffsetFSM* stencilOffsetFSM = NULL;
 
-  // We need to find variables of type "Point" so that we can construct the associated finite state machines that will 
-  // use the same name as a the variable.  This code identifies variable of type "Point" and their associated initializers.
-  // The initializers are recognized and define specific semantics used to define events to the finite state machines
-  // used to model each "Point" data member.  See below how we recognize functions "getZeros" and "getUnitv" to 
-  // setup the constructed finite state machines which we then save in a map for later use.
-     SgVariableDeclaration* variableDeclarationForPoint = isSgVariableDeclaration(astNode);
-     if (variableDeclarationForPoint != NULL)
+  // We want to interogate the SgAssignInitializer, but we need to generality in the refactored function to use any SgInitializer (e.g. SgConstructorInitializer, etc.).
+     SgInitializedName* initializedName = detectVariableDeclarationOfSpecificType (astNode,"Point");
+
+     if (initializedName != NULL)
         {
-       // Get the SgInitializedName from the SgVariableDeclaration.
-          SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclarationForPoint);
-#if 0
-          printf ("initializedName->get_name() = %s initializedName->get_type() = %s \n",initializedName->get_name().str(),initializedName->get_type()->class_name().c_str());
-       // printf ("initializedName->get_type() = %s \n",initializedName->get_type()->class_name().c_str());
-#endif
-          SgClassType* classType = isSgClassType(initializedName->get_type());
-#if 0
-          if (classType == NULL)
+       // This is the code that is specific to the DSL (e.g. the semantics of getZeros() and getUnitv() functions).
+       // So this may be the limit of what can be refactored to common DSL support code.
+       // Or I can maybe do a second pass at atempting to refactor more code later.
+
+          string name = initializedName->get_name();
+
+          SgInitializer* initializer = initializedName->get_initptr();
+
+          SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
+          if (assignInitializer != NULL)
              {
-            // Check for SgModifierType and strip away to get at possible SgClassType.
-               printf ("initializedName type is not a SgClassType, check for SgModifierType and strip away to get at possible SgClassType (not implemented) \n");
-             }
-#endif
-          if (classType != NULL)
-             {
-               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-               ROSE_ASSERT(classDeclaration != NULL);
-#if 0
-               printf ("initializedName->get_name()  = %s \n",initializedName->get_name().str());
-               printf ("classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
-#endif
-            // We might want to be more flexiable about the type of the 2nd parameter (allow SgTypeFloat, SgTypeComplex, etc.).
-               if (classDeclaration->get_name() == "Point")
+               SgExpression* exp = assignInitializer->get_operand();
+               ROSE_ASSERT(exp != NULL);
+               SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exp);
+               if (functionCallExp != NULL)
                   {
-                 // Found a variable of type Point.
-#if 0
-                    printf ("initializedName->get_name()  = %s \n",initializedName->get_name().str());
-                    printf ("classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
-#endif
-
-                    string name = initializedName->get_name();
-
-                 // Build a finite state machine for StencilOffset and put in map using key defined by the variable name.
-
-                 // Check the initializer so that we can initialize this FSM correctly (using the desinged semantics of the stencil specification).
-                    SgInitializer* initializer = initializedName->get_initptr();
-#if 0
-                    if (initializer != NULL)
+                    SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
+                    if (functionRefExp != NULL)
                        {
-                         printf ("initializer = %p = %s \n",initializer,initializer->class_name().c_str());
-                       }
+                         SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+                         ROSE_ASSERT(functionSymbol != NULL);
+                         string functionName = functionSymbol->get_name();
+#if 0
+                         printf ("functionName = %s \n",functionName.c_str());
 #endif
-                    SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
-                    if (assignInitializer != NULL)
-                       {
-                         SgExpression* exp = assignInitializer->get_operand();
-                         ROSE_ASSERT(exp != NULL);
-                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exp);
-                         if (functionCallExp != NULL)
+                         if (functionName == "getZeros")
                             {
-                              SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
-                              if (functionRefExp != NULL)
+                           // We leverage the semantics of known functions used to initialize "Point" objects ("getZeros" initialized the Point object to be all zeros).
+                           // In a stencil this will be the center point from which all other points will have non-zero offsets.
+                           // For a common centered difference discretization this will be the center point of the stencil.
+#if 0
+                              printf ("Identified and interpreting the semantics of getZeros() function \n");
+#endif
+                              stencilOffsetFSM = new StencilOffsetFSM(0,0,0);
+                              ROSE_ASSERT(stencilOffsetFSM != NULL);
+                            }
+
+                         if (functionName == "getUnitv")
+                            {
+                           // We leverage the semantics of known functions used to initialize "Point" objects 
+                           // ("getUnitv" initializes the Point object to be a unit vector for a specific input dimention).
+                           // In a stencil this will be an ofset from the center point.
+#if 0
+                              printf ("Identified and interpreting the semantics of getUnitv() function \n");
+#endif
+                           // Need to get the dimention argument.
+                              SgExprListExp* argumentList = functionCallExp->get_args();
+                              ROSE_ASSERT(argumentList != NULL);
+                           // This function has a single argument.
+                              ROSE_ASSERT(argumentList->get_expressions().size() == 1);
+                              SgExpression* functionArg = argumentList->get_expressions()[0];
+                              ROSE_ASSERT(functionArg != NULL);
+                              SgIntVal* intVal = isSgIntVal(functionArg);
+                           // ROSE_ASSERT(intVal != NULL);
+                              if (intVal != NULL)
                                  {
-                                   SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
-                                   ROSE_ASSERT(functionSymbol != NULL);
-                                   string functionName = functionSymbol->get_name();
+                                   int value = intVal->get_value();
 #if 0
-                                   printf ("functionName = %s \n",functionName.c_str());
+                                   printf ("value = %d \n",value);
 #endif
-                                   if (functionName == "getZeros")
+                                   switch(value)
                                       {
-                                     // We leverage the semantics of known functions used to initialize "Point" objects ("getZeros" initialized the Point object to be all zeros).
-                                     // In a stencil this will be the center point from which all other points will have non-zero offsets.
-                                     // For a common centered difference discretization this will be the center point of the stencil.
-#if 0
-                                        printf ("Identified and interpreting the semantics of getZeros() function \n");
-#endif
-                                        stencilOffsetFSM = new StencilOffsetFSM(0,0,0);
-                                        ROSE_ASSERT(stencilOffsetFSM != NULL);
-                                      }
+                                        case 0: stencilOffsetFSM = new StencilOffsetFSM(1,0,0); break;
+                                        case 1: stencilOffsetFSM = new StencilOffsetFSM(0,1,0); break;
+                                        case 2: stencilOffsetFSM = new StencilOffsetFSM(0,0,1); break;
 
-                                   if (functionName == "getUnitv")
-                                      {
-                                     // We leverage the semantics of known functions used to initialize "Point" objects 
-                                     // ("getUnitv" initializes the Point object to be a unit vector for a specific input dimention).
-                                     // In a stencil this will be an ofset from the center point.
-#if 0
-                                        printf ("Identified and interpreting the semantics of getUnitv() function \n");
-#endif
-                                     // Need to get the dimention argument.
-                                        SgExprListExp* argumentList = functionCallExp->get_args();
-                                        ROSE_ASSERT(argumentList != NULL);
-                                     // This function has a single argument.
-                                        ROSE_ASSERT(argumentList->get_expressions().size() == 1);
-                                        SgExpression* functionArg = argumentList->get_expressions()[0];
-                                        ROSE_ASSERT(functionArg != NULL);
-                                        SgIntVal* intVal = isSgIntVal(functionArg);
-                                     // ROSE_ASSERT(intVal != NULL);
-                                        if (intVal != NULL)
+                                        default:
                                            {
-                                        int value = intVal->get_value();
-#if 0
-                                        printf ("value = %d \n",value);
-#endif
-                                        switch(value)
-                                           {
-                                             case 0: stencilOffsetFSM = new StencilOffsetFSM(1,0,0); break;
-                                             case 1: stencilOffsetFSM = new StencilOffsetFSM(0,1,0); break;
-                                             case 2: stencilOffsetFSM = new StencilOffsetFSM(0,0,1); break;
-
-                                             default:
-                                                {
-                                                  printf ("Error: default reached in switch: value = %d (for be value of 0, 1, or 2) \n",value);
-                                                  ROSE_ASSERT(false);
-                                                }
-                                           }
-
-                                        ROSE_ASSERT(stencilOffsetFSM != NULL);
-
-                                        // End of test for intVal != NULL
-                                           }
-                                          else
-                                           {
-#if 0
-                                             printf ("functionArg = %p = %s \n",functionArg,functionArg->class_name().c_str());
-#endif
+                                             printf ("Error: default reached in switch: value = %d (for be value of 0, 1, or 2) \n",value);
+                                             ROSE_ASSERT(false);
                                            }
                                       }
 
-                                // ROSE_ASSERT(stencilOffsetFSM != NULL);
+                                   ROSE_ASSERT(stencilOffsetFSM != NULL);
+
+                                // End of test for intVal != NULL
+                                 }
+                                else
+                                 {
+#if 0
+                                   printf ("functionArg = %p = %s \n",functionArg,functionArg->class_name().c_str());
+#endif
                                  }
                             }
+
+                          // ROSE_ASSERT(stencilOffsetFSM != NULL);
                        }
-
-                    if (stencilOffsetFSM != NULL)
-                       {
-                      // Put the FSM into the map.
-#if 0
-                         printf ("Put the stencilOffsetFSM = %p into the StencilOffsetMap using key = %s \n",stencilOffsetFSM,name.c_str());
-#endif
-                         ROSE_ASSERT(StencilOffsetMap.find(name) == StencilOffsetMap.end());
-
-                      // We have a choice of syntax to add the element to the map.
-                      // StencilOffsetMap.insert(pair<string,StencilOffsetFSM*>(name,stencilOffsetFSM));
-                         StencilOffsetMap[name] = stencilOffsetFSM;
-                       }
-
-                 // new StencilOffsetFSM();
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-#endif
                   }
+             }
+
+           if (stencilOffsetFSM != NULL)
+             {
+            // Put the FSM into the map.
+#if 0
+               printf ("Put the stencilOffsetFSM = %p into the StencilOffsetMap using key = %s \n",stencilOffsetFSM,name.c_str());
+#endif
+               ROSE_ASSERT(StencilOffsetMap.find(name) == StencilOffsetMap.end());
+
+            // We have a choice of syntax to add the element to the map.
+            // StencilOffsetMap.insert(pair<string,StencilOffsetFSM*>(name,stencilOffsetFSM));
+               StencilOffsetMap[name] = stencilOffsetFSM;
+             }
+
+       // new StencilOffsetFSM();
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if 1
+  // Recognize member function calls on "Point" objects so that we can trigger events on those associated finite state machines.
+     bool isTemplateClass = false;
+     bool isTemplateFunctionInstantiation = false;
+     SgInitializedName* initializedNameUsedToCallMemberFunction = NULL;
+     SgFunctionCallExp* functionCallExp = detectMemberFunctionOfSpecificClassType(astNode,initializedNameUsedToCallMemberFunction,"Point",isTemplateClass,"operator*=",isTemplateFunctionInstantiation);
+     if (functionCallExp != NULL)
+        {
+       // This is the DSL specific part (capturing the semantics of operator*= with specific integer values.
+
+       // The name of the variable off of which the member function is called (variable has type "Point").
+          ROSE_ASSERT(initializedNameUsedToCallMemberFunction != NULL);
+          string name = initializedNameUsedToCallMemberFunction->get_name();
+
+       // Need to get the dimention argument.
+          SgExprListExp* argumentList = functionCallExp->get_args();
+          ROSE_ASSERT(argumentList != NULL);
+       // This function has a single argument.
+          ROSE_ASSERT(argumentList->get_expressions().size() == 1);
+          SgExpression* functionArg = argumentList->get_expressions()[0];
+          ROSE_ASSERT(functionArg != NULL);
+          SgIntVal* intVal = isSgIntVal(functionArg);
+
+          bool usingUnaryMinus = false;
+          if (intVal == NULL)
+             {
+               SgMinusOp* minusOp = isSgMinusOp(functionArg);
+               if (minusOp != NULL)
+                  {
+#if 0
+                    printf ("Using SgMinusOp on stencil constant \n");
+#endif
+                    usingUnaryMinus = true;
+                    intVal = isSgIntVal(minusOp->get_operand());
+                  }
+             }
+
+          ROSE_ASSERT(intVal != NULL);
+          int value = intVal->get_value();
+
+          if (usingUnaryMinus == true)
+             {
+               value *= -1;
+             }
+#if 0
+          printf ("value = %d \n",value);
+#endif
+       // Look up the stencil offset finite state machine
+          ROSE_ASSERT(StencilOffsetMap.find(name) != StencilOffsetMap.end());
+          StencilOffsetFSM* stencilOffsetFSM = StencilOffsetMap[name];
+          ROSE_ASSERT(stencilOffsetFSM != NULL);
+#if 0
+          printf ("We have found the StencilOffsetFSM associated with the StencilOffset named %s \n",name.c_str());
+#endif
+#if 0
+          stencilOffsetFSM->display("before multiply event");
+#endif
+          if (value == -1)
+             {
+            // Execute the event on the finte state machine to accumulate the state.
+               stencilOffsetFSM->operator*=(-1);
              }
             else
              {
-            // If "const" is used, then this will be a SgModifierType.
-#if 0
-               printf ("initializedName->get_type() = %s \n",initializedName->get_type()->class_name().c_str());
-#endif
+               printf ("Error: constant value other than -1 are not supported \n");
+               ROSE_ASSERT(false);
              }
+#if 0
+          stencilOffsetFSM->display("after multiply event");
+#endif
         }
-
-
+#else
   // Recognize member function calls on "Point" objects so that we can trigger events on those associated finite state machines.
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
      if (functionCallExp != NULL)
         {
        // printf ("*** functionCallExp->get_function() = %s \n",functionCallExp->get_function()->class_name().c_str());
+
+#error "DEAD CODE!"
 
           SgDotExp* dotExp = isSgDotExp(functionCallExp->get_function());
           if (dotExp != NULL)
@@ -314,6 +341,8 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                     ROSE_ASSERT(varRefExp->get_symbol() != NULL);
                     SgInitializedName* initializedName = varRefExp->get_symbol()->get_declaration();
                     ROSE_ASSERT(initializedName != NULL);
+
+#error "DEAD CODE!"
 
                     string name = initializedName->get_name();
 
@@ -342,6 +371,8 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                           ROSE_ASSERT(functionArg != NULL);
                           SgIntVal* intVal = isSgIntVal(functionArg);
 
+#error "DEAD CODE!"
+
                           bool usingUnaryMinus = false;
                           if (intVal == NULL)
                              {
@@ -355,6 +386,8 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                                     intVal = isSgIntVal(minusOp->get_operand());
                                   }
                              }
+
+#error "DEAD CODE!"
 
                           ROSE_ASSERT(intVal != NULL);
                           int value = intVal->get_value();
@@ -386,6 +419,9 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                                printf ("Error: constant value other than -1 are not supported \n");
                                ROSE_ASSERT(false);
                              }
+
+#error "DEAD CODE!"
+
 #if 0
                           stencilOffsetFSM->display("after multiply event");
 #endif
@@ -397,6 +433,7 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                   }
              }
         }
+#endif
 
   // Detection of "pair<Shift,double>(xdir,ident)" defined as an event in the stencil finite machine model.
   // Actually, it is the Stencil that is create using the "pair<Shift,double>(xdir,ident)" that should be the event.
@@ -597,13 +634,37 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                                              valueExp = isSgValueExp(minusOp->get_operand());
                                            }
                                       }
+
                                    SgDoubleVal* doubleVal = isSgDoubleVal(valueExp);
-                                   ROSE_ASSERT(doubleVal != NULL);
-#if 0
-                                   printf ("SgDoubleVal value = %f \n",doubleVal->get_value());
+                                // ROSE_ASSERT(doubleVal != NULL);
+                                   double value = 0.0;
+                                   if (doubleVal == NULL)
+                                      {
+                                     // Call JP's function to evaluate the constant expression.
+                                        ROSE_ASSERT(valueExp == NULL);
+                                        ROSE_ASSERT(stencilCoeficent != NULL);
+                                        DSL_Support::const_numeric_expr_t const_expression = DSL_Support::evaluateConstNumericExpression(stencilCoeficent);
+                                        if (const_expression.hasValue_ == true)
+                                           {
+                                             ROSE_ASSERT(const_expression.isIntOnly_ == false);
+                                             value = const_expression.value_;
+
+                                             printf ("const expression evaluated to value = %4.2f \n",value);
+                                           }
+                                          else
+                                           {
+                                             printf ("constnat value expression could not be evaluated to a constant \n");
+                                             ROSE_ASSERT(false);
+                                           }
+                                      }
+                                     else
+                                      {
+#if 1
+                                        printf ("SgDoubleVal value = %f \n",doubleVal->get_value());
 #endif
-                                   double value = (usingUnaryMinus == false) ? doubleVal->get_value() : -(doubleVal->get_value());
-#if 0
+                                        value = (usingUnaryMinus == false) ? doubleVal->get_value() : -(doubleVal->get_value());
+                                      }
+#if 1
                                    printf ("Stencil coeficient = %f \n",value);
 #endif
                                    foundStencilCoeficient = true;
@@ -612,8 +673,28 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
                                  }
                                 else
                                  {
-                                   printf ("Error: second parameter in pair for stencil is not a SgVarRefExp (might be explicit value not yet supported) \n");
-                                   ROSE_ASSERT(false);
+                                // When we turn on constant folding in the frontend we eveluate directly to a SgDoubleVal.
+                                   SgDoubleVal* doubleVal = isSgDoubleVal(stencilCoeficent);
+                                   if (doubleVal != NULL)
+                                      {
+                                        ROSE_ASSERT(doubleVal != NULL);
+#if 0
+                                        printf ("SgDoubleVal value = %f \n",doubleVal->get_value());
+#endif
+                                        double value = doubleVal->get_value();
+#if 0
+                                        printf ("Stencil coeficient = %f \n",value);
+#endif
+                                        foundStencilCoeficient = true;
+
+                                        stencilCoeficientValue = value;
+                                      }
+                                     else
+                                      {
+                                        printf ("Error: second parameter in pair for stencil is not a SgVarRefExp (might be explicit value not yet supported) \n");
+                                        printf ("   --- stencilCoeficent = %p = %s \n",stencilCoeficent,stencilCoeficent->class_name().c_str());
+                                        ROSE_ASSERT(false);
+                                      }
                                  }
                             }
 #if 0

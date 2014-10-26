@@ -1016,6 +1016,10 @@ HEADER_CAST_EXPRESSION_START
           virtual bool isLValue() const;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
+       // DQ (10/24/2014): Added support to determine when cast should be allowable.
+       // This is used in the SageInterace support for evaluation of constant expressions.
+          bool cast_looses_precision();
+
 HEADER_CAST_EXPRESSION_END
 
 
@@ -5159,6 +5163,33 @@ SgCastExp::get_type() const
      ROSE_ASSERT(p_expression_type != NULL);
      return p_expression_type;
    }
+
+bool 
+SgCastExp::cast_looses_precision()
+   {
+  // DQ (10/24/2014): Added support to determine when cast should be allowable.
+  // This is used in the SageInterace support for evaluation of constant expressions.
+
+     bool result = false;
+     if (isSgTypeDouble(p_expression_type) != NULL && isSgTypeFloat(p_expression_type) != NULL)
+        {
+          SgExpression* operand = this->get_operand();
+          ROSE_ASSERT(operand != NULL);
+
+          SgType* operantType = operand->get_type();
+          ROSE_ASSERT(operantType != NULL);
+
+          if (isSgTypeInt(operantType) != NULL         || isSgTypeLong(operantType) != NULL         || isSgTypeShort(operantType) != NULL         || isSgTypeChar(operantType) != NULL ||
+              isSgTypeUnsignedInt(operantType) != NULL || isSgTypeUnsignedLong(operantType) != NULL || isSgTypeUnsignedShort(operantType) != NULL || isSgTypeUnsignedChar(operantType) != NULL ||
+              isSgTypeSignedInt(operantType) != NULL   || isSgTypeSignedLong(operantType) != NULL   || isSgTypeSignedShort(operantType) != NULL   || isSgTypeSignedChar(operantType) != NULL)
+             {
+               result = true;
+             }  
+        }
+
+     return result;
+   }
+
 
 SOURCE_CAST_EXPRESSION_END
 

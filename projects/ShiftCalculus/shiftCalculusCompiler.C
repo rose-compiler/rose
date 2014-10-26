@@ -17,18 +17,29 @@ int main( int argc, char * argv[] )
   // If we want this translator to take specific options (beyond those defined 
   // by ROSE) then insert command line processing for new options here.
 
+  // To better support the stencil specification that might benifit from constant 
+  // folding, I have turned this ON is hte frontend.  By default it is OFF so that
+  // we can preserve source code as much as possible (original expression trees).
+  // The Stencil DSL can be made to work in eithr setting, but this make sure that
+  // dimension dependent processing of the stencil coeficients will be evaluated 
+  // to constants.  I will turn this off (and thus use a less blunt axe) when the new
+  // constant expression evaluation in ROSE is fixed to support more general types
+  // than integer expresion (should be done by JP later today).
+  // bool frontendConstantFolding = true;
+     bool frontendConstantFolding = false;
+
   // Generate the ROSE AST.
-     SgProject* project = frontend(argc,argv);
+     SgProject* project = frontend(argc,argv,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);
 
 #if DEBUG_USING_DOT_GRAPHS
   // generateDOTforMultipleFile(*project);
      generateDOT(*project,"_before_transformation");
 #endif
-#if DEBUG_USING_DOT_GRAPHS && 0
+#if DEBUG_USING_DOT_GRAPHS && 1
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 12000;
 #endif
-#if DEBUG_USING_DOT_GRAPHS && 0
+#if DEBUG_USING_DOT_GRAPHS && 1
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_before");
 #endif

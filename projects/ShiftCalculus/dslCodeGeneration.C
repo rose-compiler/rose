@@ -62,7 +62,14 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
      arraySizeNameList.push_back("arraySize_X");
      arraySizeNameList.push_back("arraySize_Y");
 
+     if (stencilDimension != 2)
+        {
+          printf ("Sorry, code generation only implemented and tested for 2D stencils at present: stencilDimension = %d \n",stencilDimension);
+          ROSE_ASSERT(false);
+        }
+  // This fails for the 0D identity stencil specification.
      ROSE_ASSERT(stencilDimension > 0);
+
 
      for (int k = 0; k < stencilDimension; k++)
         {
@@ -142,13 +149,13 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
 
        // Use the previously build scope (forStatementScope)
           SageBuilder::buildForStatement_nfi(forStatementScope, for_loop_initialization, testStatement, incrementExpression, loopBody);
-
+#if 0
           printf ("dimension: k = %d \n",k);
-
+#endif
        // For loop nests with more than one level we need to insert the for loop into the body of the previous for loop.
           if (k == 0)
              {
-            // Save the outeer most forStatementScope.
+            // Save the outer most forStatementScope.
                loopNest = forStatementScope;
                currentLoopBody = loopBody;
              }

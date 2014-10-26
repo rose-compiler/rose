@@ -1,9 +1,9 @@
 // This is the second simple test that applies a Laplacian operator
 // with 2*DIM+1 size stencil with one ghost cell along each face
 // of the data box. Thus the size of the destination box is 
-//BLOCKSIZE^DIM and the size of the source box is (BLOCKSIZE+2)^DIM
-//FOR these tests BLOCKSIZE=DOMAINSIZE because we are working with 
-//a single box. BLOCKSIZE, DOMAINSIZE and DIM are set in the Makefile
+// BLOCKSIZE^DIM and the size of the source box is (BLOCKSIZE+2)^DIM
+// FOR these tests BLOCKSIZE=DOMAINSIZE because we are working with 
+// a single box. BLOCKSIZE, DOMAINSIZE and DIM are set in the Makefile
 
 #define DIM 2
 #define BLOCKSIZE 5
@@ -36,7 +36,12 @@ int main(int argc, char* argv[])
 
   // all the coefficients I need for this operation
      const double ident =  1.0;
-     const double C0    = -4.0;
+
+  // This should be dimension dependent, this works now
+  // and is evaluated as a constant expression to a 
+  // proper value instead of an expression.
+  // const double C0    = -4.0;
+     const double C0    = -2.0 * DIM;
 
   // This is a simpler interface to interpret (suggested by Anshu).
      Stencil<double> laplace(pair<Shift,double>(zero,C0));

@@ -26,6 +26,7 @@ SUBDIRS = \
 	HeaderFilesInclusion \
 	MPI_Tools \
 	MacroRewrapper \
+   MapleDSL \
 	OpenMP_Analysis \
    OpenMP_Checker \
 	QtDesignerPlugins \
