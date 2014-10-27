@@ -2379,7 +2379,6 @@ SgExpression::set_explicitly_stored_type( SgType* type )
         }
    }
 
-
 SOURCE_BASECLASS_EXPRESSION_END
 
 

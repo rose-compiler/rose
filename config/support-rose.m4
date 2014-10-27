@@ -2128,6 +2128,8 @@ tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
 tests/roseTests/astInterfaceTests/Makefile
+tests/roseTests/astInterfaceTests/unitTests/Makefile
+tests/roseTests/astInterfaceTests/typeEquivalenceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
@@ -2177,6 +2179,9 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
+tests/testSupport/Makefile
+tests/testSupport/gtest/Makefile
+tests/roseTests/ROSETTA/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile

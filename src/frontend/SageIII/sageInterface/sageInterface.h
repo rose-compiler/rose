@@ -7,6 +7,7 @@
 
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
+
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 #else
@@ -1935,8 +1936,8 @@ SgBasicBlock* ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs);
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 
-//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not.
-ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
+//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not when the flag is true.
+ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs, bool createEmptyBody = true);
 
 //! Check if the body of a 'catch' statement is a SgBasicBlock, create one if not.
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
@@ -1950,7 +1951,7 @@ ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatemen
 bool isBodyStatement (SgStatement* s);
 
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
-void changeAllBodiesToBlocks(SgNode* top);
+void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
 //! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
 void changeAllLoopBodiesToBlocks(SgNode* top);
@@ -2319,6 +2320,18 @@ bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*=
 
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
+
+// JP (10/14/24): Moved code to evaluate a const integer expression (like in array size definitions) to SageInterface
+  /*! The datastructure is used as the return type for SageInterface::evaluateConstIntegerExpression(). One needs to always check whether hasValue_ is true before accessing value_ */
+  struct const_int_expr_t {
+    size_t value_;
+    bool hasValue_;
+  };
+  /*! \brief The function tries to evaluate const integer expressions (such as are used in array dimension sizes). It follows variable symbols, and requires constness. */
+  struct const_int_expr_t evaluateConstIntegerExpression(SgExpression *expr);
+
+// JP (9/17/14): Added function to test whether two SgType* are equivalent or not
+   bool checkTypesAreEqual(SgType *typeA, SgType *typeB);
 
 //--------------------------------Java interface functions ---------------------
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
