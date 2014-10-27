@@ -241,6 +241,40 @@ AC_ARG_ENABLE([java],
                   LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
                   [echo "[[Java support]] disabling Java language support, which requires Java, because you specified --with-java='$with_java'"] 
                 fi)
+AC_ARG_ENABLE([x10],
+               AS_HELP_STRING([--enable-x10],[Enable X10 language support in ROSE (default=yes). Note: --without-x10 turns off support for ALL components in ROSE that depend on X10, including X10 language support]),
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "x10"
+                if test $? = 0 ; then 
+                  list_has_x10=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                        if test "x$rose_with_x10" = "xno" ; then
+                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-x10=$enableval' enables X10-language support, but '--with-x10=$rose_with_x10' disables it])]
+                        fi
+                        if test "x$USE_X10" = "x0" ; then
+                          [AC_MSG_FAILURE([[[X10 Support]] you requested to build X10 language support with '--enable-x10=$enableval', which requires X10, but X10 was not found. Do you need to explicitly specify your X10 using the "--with-x10" configure-option? (See ./configure --help)])]
+                        fi
+
+                  	if test "x$list_has_x10" != "xyes" ; then
+                          # --enable-languages does not include X10, but --enable-x10=yes
+                  	  LANGUAGES_TO_SUPPORT+=" x10"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'X10' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-x10='$enableval' is not supported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ,
+                if test "x$rose_with_x10" = "xno" ; then
+                  enable_x10=no
+                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
+                  [echo "[[X10 support]] disabling X10 language support, which requires Java, because you specified --with-x10='$rose_with_x10'"] 
+                fi)
 AC_ARG_ENABLE([php],
                AS_HELP_STRING([--enable-php],[Enable PHP language support in ROSE (default=yes)]),
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "php"
@@ -576,6 +610,18 @@ elif test $count_of_languages_to_support = 1 ; then
   fi
 
   #
+<<<<<<< HEAD
+=======
+  # X10
+  #
+  if test "x$rose_with_x10" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with X10"
+  elif test "x$rose_with_x10" = "xno" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without X10"
+  fi
+
+  #
+>>>>>>> e6a5cc0... (Autoconf) (X10) Fix X10 language option; disable if X10 not found/provided
   # PHP
   #
   if test "x$with_php" = "xyes" ; then
@@ -828,6 +874,30 @@ AC_ARG_ENABLE([only-java],
                 esac
                ,)
 
+<<<<<<< HEAD
+=======
+AC_ARG_ENABLE([only-x10],
+              AS_HELP_STRING([--enable-only-x10(=yes)],
+                             [Enable ONLY X10 support in ROSE (Warning: '--enable-only-x10=no' and '--disable-only-x10' are no longer supported)]),
+                case "$enableval" in
+                  [yes)]
+                        if test "x$rose_with_x10" = "xno" ; then
+                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-only-x10=$enableval' enables X10-language support, but '--with-x10=$rose_with_x10' disables it])]
+                        else  
+                  	  LANGUAGES_TO_SUPPORT="x10"
+                          USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                        fi
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' and --disable-only-x10 are no longer supported. Use '--disable-x10' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' is not supported. Use '--enable-only-x10(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ,)
+
+>>>>>>> e6a5cc0... (Autoconf) (X10) Fix X10 language option; disable if X10 not found/provided
 AC_ARG_ENABLE([only-php],
               AS_HELP_STRING([--enable-only-php(=yes)],
                              [Enable ONLY PHP support in ROSE (Warning: '--enable-only-php=no' and '--disable-only-php' are no longer supported)]),
