@@ -18412,11 +18412,17 @@ Scope_Node*  Scope_Node::findFirstBranchNode()
   while (first_branch_node->children.size()==1)
     first_branch_node = first_branch_node->children[0];
 
+#if 0 // this adjustment should not be done until we figure out if the variable can be
+      // moved downward into the two branch scopes or not.
+      // We only adjust if we cannot move downward further,but trying to move var decl to if-stmt.
+      // With this consideration, we do this adjust later after considering liveness between mutliple scopes.
+      //
   // Adjust for if-stmt: special adjustment
   // switch stmt needs not to be adjusted since there is a middle scope as the innermost scope
   // if a variable is used in multiple case: scopes. 
    if (isSgIfStmt (first_branch_node->scope))
       first_branch_node = first_branch_node->parent;
+#endif
   // now the node must has either 0 or >1 children.
   return first_branch_node; 
 }
@@ -18720,6 +18726,18 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   ROSE_ASSERT (target_scope != NULL);
   ROSE_ASSERT (target_scope != decl->get_scope());
 
+#if 0 // at this stage, we focus on legal move only, any scope adjustment should be done earlier!
+  // Special handling for If-Stmt, may need to climb up one level of scope when:
+  // two bodies of if uses the same variable, but cannot be pushed down into each body.
+  // If-stmt will be the innermost common scope for the variable.
+  // But we should not move the declaration to if-stmt. We can only move it to the parent scope of if-stmt.
+  if (isSgIfStmt (target_scope))
+  {
+    target_scope = SageInterface::getEnclosingScope (target_scope, false);
+    if (target_scope == )
+  }
+# endif 
+
   // Move the declaration 
   //TODO: consider another way: copy the declaration, insert the copy, replace varRefExp, and remove (delete) the original declaration 
   SageInterface::removeStatement(decl); 
@@ -18731,6 +18749,13 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
         SageInterface::prependStatement (decl, target_scope);
         break;
       }
+#if 0 // this check should be done earlier before any side effects can happen
+    case V_SgIfStmt: 
+    {
+       // adjust to parent scope of if-stmt
+       break;
+    }
+#endif
     case V_SgForStatement: 
       {
         // we move int i; to be for (int i=0; ...);
@@ -19106,9 +19131,16 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
         target_scopes.push_back (bottom_scope);
       }
     }
-    else // we still can move it to the innermost common scope
+    else // we still have to move it to the innermost common scope
     {
       SgScopeStatement* bottom_scope = first_branch_node->scope;
+#if 1
+      // special adjustment here for if-stmt as the single bottom scope  to be inserted into the var decl.
+      // we should adjust here, not any other places !!
+      // TODO may have to include other special stmt like while?
+      if (isSgIfStmt(bottom_scope))
+        bottom_scope = SageInterface::getEnclosingScope(bottom_scope, false);
+#endif 
       if (decl->get_scope() != bottom_scope)
       {
         target_scopes.push_back(bottom_scope);
