@@ -250,7 +250,6 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
 #endif
         }
 
-#if 1
   // Recognize member function calls on "Point" objects so that we can trigger events on those associated finite state machines.
      bool isTemplateClass = false;
      bool isTemplateFunctionInstantiation = false;
@@ -258,7 +257,7 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
      SgFunctionCallExp* functionCallExp = detectMemberFunctionOfSpecificClassType(astNode,initializedNameUsedToCallMemberFunction,"Point",isTemplateClass,"operator*=",isTemplateFunctionInstantiation);
      if (functionCallExp != NULL)
         {
-       // This is the DSL specific part (capturing the semantics of operator*= with specific integer values.
+       // This is the DSL specific part (capturing the semantics of operator*= with specific integer values).
 
        // The name of the variable off of which the member function is called (variable has type "Point").
           ROSE_ASSERT(initializedNameUsedToCallMemberFunction != NULL);
@@ -321,122 +320,12 @@ StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Stencil
           stencilOffsetFSM->display("after multiply event");
 #endif
         }
-#else
-  // Recognize member function calls on "Point" objects so that we can trigger events on those associated finite state machines.
-     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
-     if (functionCallExp != NULL)
-        {
-       // printf ("*** functionCallExp->get_function() = %s \n",functionCallExp->get_function()->class_name().c_str());
-
-#error "DEAD CODE!"
-
-          SgDotExp* dotExp = isSgDotExp(functionCallExp->get_function());
-          if (dotExp != NULL)
-             {
-               SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-
-               if (varRefExp != NULL && memberFunctionRefExp != NULL)
-                  {
-                    ROSE_ASSERT(varRefExp->get_symbol() != NULL);
-                    SgInitializedName* initializedName = varRefExp->get_symbol()->get_declaration();
-                    ROSE_ASSERT(initializedName != NULL);
-
-#error "DEAD CODE!"
-
-                    string name = initializedName->get_name();
-
-                    bool isTemplateClass = false;
-                    bool isPointType = isMatchingClassType(initializedName->get_type(),"Point",isTemplateClass);
-#if 0
-                    printf ("isPointType = %s \n",isPointType ? "true" : "false");
-                    printf ("Calling isMatchingMemberFunction() \n");
-#endif
-                    bool isTemplateFunctionInstantiation = false;
-                    bool isPointMultiplyOperator = isMatchingMemberFunction(memberFunctionRefExp,"operator*=",isTemplateFunctionInstantiation);
-#if 0
-                    printf ("isPointMultiplyOperator = %s \n",isPointMultiplyOperator ? "true" : "false");
-#endif
-                    if (isPointMultiplyOperator == true && isPointType == true)
-                       {
-#if 0
-                         printf ("Found Point::operator*() \n");
-#endif
-                       // Need to get the dimention argument.
-                          SgExprListExp* argumentList = functionCallExp->get_args();
-                          ROSE_ASSERT(argumentList != NULL);
-                       // This function has a single argument.
-                          ROSE_ASSERT(argumentList->get_expressions().size() == 1);
-                          SgExpression* functionArg = argumentList->get_expressions()[0];
-                          ROSE_ASSERT(functionArg != NULL);
-                          SgIntVal* intVal = isSgIntVal(functionArg);
-
-#error "DEAD CODE!"
-
-                          bool usingUnaryMinus = false;
-                          if (intVal == NULL)
-                             {
-                               SgMinusOp* minusOp = isSgMinusOp(functionArg);
-                               if (minusOp != NULL)
-                                  {
-#if 0
-                                    printf ("Using SgMinusOp on stencil constant \n");
-#endif
-                                    usingUnaryMinus = true;
-                                    intVal = isSgIntVal(minusOp->get_operand());
-                                  }
-                             }
-
-#error "DEAD CODE!"
-
-                          ROSE_ASSERT(intVal != NULL);
-                          int value = intVal->get_value();
-
-                          if (usingUnaryMinus == true)
-                             {
-                               value *= -1;
-                             }
-#if 0
-                          printf ("value = %d \n",value);
-#endif
-                       // Look up the stencil offset finite state machine
-                          ROSE_ASSERT(StencilOffsetMap.find(name) != StencilOffsetMap.end());
-                          StencilOffsetFSM* stencilOffsetFSM = StencilOffsetMap[name];
-                          ROSE_ASSERT(stencilOffsetFSM != NULL);
-#if 0
-                          printf ("We have found the StencilOffsetFSM associated with the StencilOffset named %s \n",name.c_str());
-#endif
-#if 0
-                          stencilOffsetFSM->display("before multiply event");
-#endif
-                          if (value == -1)
-                             {
-                            // Execute the event on the finte state machine to accumulate the state.
-                               stencilOffsetFSM->operator*=(-1);
-                             }
-                            else
-                             {
-                               printf ("Error: constant value other than -1 are not supported \n");
-                               ROSE_ASSERT(false);
-                             }
-
-#error "DEAD CODE!"
-
-#if 0
-                          stencilOffsetFSM->display("after multiply event");
-#endif
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                  }
-             }
-        }
-#endif
 
   // Detection of "pair<Shift,double>(xdir,ident)" defined as an event in the stencil finite machine model.
-  // Actually, it is the Stencil that is create using the "pair<Shift,double>(xdir,ident)" that should be the event.
+  // Actually, it is the Stencil that is create using the "pair<Shift,double>(xdir,ident)" that should be the 
+  // event so we first detect the SgConstructorInitializer.  There is not other code similar to this which 
+  // has to test for the template arguments, so this has not yet refactored into the dslSupport.C file.
+  // I will do this later since this is general support that could be resused in other DSL compilers.
      SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(astNode);
      if (constructorInitializer != NULL)
         {
@@ -907,77 +796,44 @@ StencilEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Stenc
              }
         }
 
-  // Need to look for the Stencil<>::operator+() so that we can excute the event on the stencil's finite state machine.
-     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
+  // Recognize member function calls on "Stencil" objects so that we can trigger events on those associated finite state machines.
+     bool isTemplateClass = true;
+     bool isTemplateFunctionInstantiation = true;
+     SgInitializedName* initializedNameUsedToCallMemberFunction = NULL;
+     SgFunctionCallExp* functionCallExp = detectMemberFunctionOfSpecificClassType(astNode,initializedNameUsedToCallMemberFunction,"Stencil",isTemplateClass,"operator+",isTemplateFunctionInstantiation);
      if (return_synthesizedAttribute.stencilOffsetFSM != NULL && functionCallExp != NULL)
         {
+       // This is the DSL specific part of the synthesized attribute evaluation.
+
+          ROSE_ASSERT(initializedNameUsedToCallMemberFunction != NULL);
+          string name = initializedNameUsedToCallMemberFunction->get_name();
 #if 0
-          printf ("functionCallExp = %p \n",functionCallExp);
+          printf ("This is verified to be the operator+ member function of the Stencil templated class (so this corresponds to an event in the Stencil finite state machine) \n");
+          printf ("   --- stencil object name = %s \n",name.c_str());
 #endif
-          SgDotExp* dotExp = isSgDotExp(functionCallExp->get_function());
-          if (dotExp != NULL)
-             {
-               SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_lhs_operand());
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-
-               if (varRefExp != NULL && memberFunctionRefExp != NULL)
-                  {
-                    ROSE_ASSERT(varRefExp->get_symbol() != NULL);
-                    SgInitializedName* initializedName = varRefExp->get_symbol()->get_declaration();
-                    ROSE_ASSERT(initializedName != NULL);
-
-                    string name = initializedName->get_name();
-
-                    bool isTemplateClass = true;
-                    bool isStencilTemplateType = isMatchingClassType(initializedName->get_type(),"Stencil",isTemplateClass);
-
-                    bool isTemplateInstantiation = true;
-                    bool isStencilMemberFunction = isMatchingMemberFunction(memberFunctionRefExp,"operator+",isTemplateInstantiation);
-                 // if (isStencilMemberFunction == true)
-                    if (isStencilTemplateType == true && isStencilMemberFunction == true)
-                       {
+       // Lookup the stencil FSM in the map of stencil FSMs using the name as the key.
+          ROSE_ASSERT(stencilMap.find(name) != stencilMap.end());
+          StencilFSM* stencilFSM = stencilMap[name];
+          ROSE_ASSERT(stencilFSM != NULL);
 #if 0
-                         printf ("This is verified to be the operator+ member function of the Stencil templated class (so this corresponds to an event in the Stencil finite state machine) \n");
-                         printf ("   --- stencil object name = %s \n",name.c_str());
+          printf ("Trigger an event on the stencilFSM ========================== %p \n",stencilFSM);
+          printf ("   --- Use the return_synthesizedAttribute.stencilOffsetFSM = %p \n",return_synthesizedAttribute.stencilOffsetFSM);
 #endif
-                      // Lookup the stencil FSM in the map of stencil FSMs using the name as the key.
+       // Make sure we have the input parameter for the stencil's finite state machine.
+          ROSE_ASSERT(return_synthesizedAttribute.stencilOffsetFSM != NULL);
 
-                         ROSE_ASSERT(stencilMap.find(name) != stencilMap.end());
-                      // stencilMap[name] = new StencilFSM();
-                         StencilFSM* stencilFSM = stencilMap[name];
-                         ROSE_ASSERT(stencilFSM != NULL);
+       // Trigger the event on the finite state machine using the elements saved in the synthesized attribute.
+          StencilFSM stencil_rhs (*(return_synthesizedAttribute.stencilOffsetFSM),return_synthesizedAttribute.stencilCoeficientValue);
+
+       // This reproduces the same semantics in our finite state machine as the Stencil class's operator+()
+       // in the stencil specification. but this permits use to accumulate the state at compile time.
+          stencilFSM->operator+(stencil_rhs);
+
+       // We have now used these values so avoid letting then be used again.
+          return_synthesizedAttribute.stencilOffsetFSM       = NULL;
+          return_synthesizedAttribute.stencilCoeficientValue = 0.0;
 #if 0
-                         printf ("Trigger an event on the stencilFSM ========================== %p \n",stencilFSM);
-                         printf ("   --- Use the return_synthesizedAttribute.stencilOffsetFSM = %p \n",return_synthesizedAttribute.stencilOffsetFSM);
-#endif
-                      // Make sure we have the input parameter for the stencil's finite state machine.
-                         ROSE_ASSERT(return_synthesizedAttribute.stencilOffsetFSM != NULL);
-
-                      // Trigger the event on the finite state machine using the elements saved in the synthesized attribute.
-                         StencilFSM stencil_rhs (*(return_synthesizedAttribute.stencilOffsetFSM),return_synthesizedAttribute.stencilCoeficientValue);
-
-                      // This reproduces the same semantics in our finite state machine as the Stencil class's operator+()
-                      // in the stencil specification. but this permits use to accumulate the state at compile time.
-                         stencilFSM->operator+(stencil_rhs);
-
-                      // I think that we can clear the entries in the eturn_synthesizedAttribute.
-                      // Note that this should be deleted since this would be a memory leak.
-                      // printf ("WARNING: possible memory leak of the return_synthesizedAttribute.stencilOffsetFSM = %p \n",return_synthesizedAttribute.stencilOffsetFSM);
-                      // return_synthesizedAttribute.stencilOffsetFSM       = NULL;
-                      // return_synthesizedAttribute.stencilCoeficientValue = 0.0;
-
-                      // We have now used these values so avoid letting then be used again.
-                         return_synthesizedAttribute.stencilOffsetFSM       = NULL;
-                         return_synthesizedAttribute.stencilCoeficientValue = 0.0;
-#if 0
-                         stencilFSM->display("after FSM stencil union event: StencilEvaluationTraversal::evaluateSynthesizedAttribute()");
-#endif
-                       }
-                  }
-             }
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          stencilFSM->display("after FSM stencil union event: StencilEvaluationTraversal::evaluateSynthesizedAttribute()");
 #endif
         }
 

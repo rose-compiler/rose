@@ -103,10 +103,13 @@ DSL_Support::isMatchingMemberFunction(SgMemberFunctionRefExp* memberFunctionRefE
         // It is interesting that for operator+, the names of all three ways of computing then are the same.
 #if 0
            printf ("memberFunctionDeclaration->get_name()                       = %s \n",memberFunctionDeclaration->get_name().str());
-           printf ("templateInstantiationMemberFunctionDecl->get_name()         = %s \n",templateInstantiationMemberFunctionDecl->get_name().str());
-           printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+           if (templateInstantiationMemberFunctionDecl != NULL)
+              {
+                printf ("templateInstantiationMemberFunctionDecl->get_name()         = %s \n",templateInstantiationMemberFunctionDecl->get_name().str());
+                printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+              }
 #endif
-           if (templateInstantiationMemberFunctionDecl->get_templateName() == name)
+           if (templateInstantiationMemberFunctionDecl != NULL && templateInstantiationMemberFunctionDecl->get_templateName() == name)
               {
                 returnValue = true;
               }
