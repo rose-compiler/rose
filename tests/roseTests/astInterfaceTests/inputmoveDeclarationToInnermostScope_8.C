@@ -31,6 +31,14 @@ void foo(int cond, int* blockx, int loSt)
       blockx --;
    }
 
+// static variable should not be moved
+  static int stmp ;
+
+  if (cond) 
+  { stmp = 6; printf("%d", stmp) ; }
+  else 
+  { stmp = 7 ; printf("%d", stmp) ; }  
+
 
 }
 
