@@ -71,7 +71,7 @@ create table clusters (
 );
 
 create table postprocessed_clusters (
-       row_number integer primary key,
+       row_number SERIAL primary key,
        cluster integer,
        function_id integer references semantic_functions(id),
        index_within_function integer,

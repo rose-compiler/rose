@@ -97,7 +97,7 @@ computeStatistics_SOURCES = computeStatistics.C
 
 # undocumented
 bin_PROGRAMS += exactCloneDetection
-exactCloneDetection_SOURCES = findExactClones.C lsh.C  lsh.h vectorCompression.h vectorCompression.C
+exactCloneDetection_SOURCES = findExactClones.C findExactClones2.C lsh.C  lsh.h vectorCompression.h vectorCompression.C
 
 # undocumented
 bin_PROGRAMS += printOutClones
