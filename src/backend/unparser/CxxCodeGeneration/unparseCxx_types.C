@@ -128,11 +128,21 @@ string get_type_name(SgType* t)
        // DQ (8/27/2006): Added require imaginary support to complete the complex support.
           case T_IMAGINARY:
              {
-                string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                 SgTypeImaginary* imaginaryType = isSgTypeImaginary(t);
                 ROSE_ASSERT(imaginaryType != NULL);
                 string returnString = get_type_name(imaginaryType->get_base_type());
-                if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx") {
+
+                bool usingGcc = false;
+                #ifdef USE_CMAKE
+                  #ifdef CMAKE_COMPILER_IS_GNUCC
+                    usingGcc = true;
+                  #endif
+                #else
+                  string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                  usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+                #endif
+
+                if (usingGcc) {
                   // Handle special case of GNU compilers
                 } else {
                   returnString + " _Imaginary";
@@ -269,9 +279,18 @@ string get_type_name(SgType* t)
                 if (mod_type->get_typeModifier().isRestrict())
                    {
                   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
-                  // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
-                     string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                     if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
+
+                     bool usingGcc = false;
+                     #ifdef USE_CMAKE
+                       #ifdef CMAKE_COMPILER_IS_GNUCC
+                         usingGcc = true;
+                       #endif
+                     #else
+                       string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                       usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx");
+                     #endif
+
+                     if ( usingGcc )
                         res = res + "__restrict__ ";
                      else
                         res = res + "restrict ";
@@ -2280,8 +2299,16 @@ Unparse_Type::unparseRestrictKeyword()
      string returnString;
 
   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
-  // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
-     string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+  bool usingGcc = false;
+  #ifdef USE_CMAKE
+    #ifdef CMAKE_COMPILER_IS_GNUCC
+      usingGcc = true;
+    #endif
+  #else
+    string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+    usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx");
+  #endif
+
   // Liao 6/11/2008, Preserve the original "restrict" for UPC
   // regardless types of the backend compiler
      if (SageInterface::is_UPC_language() == true )
@@ -2291,7 +2318,7 @@ Unparse_Type::unparseRestrictKeyword()
         }
        else
         {
-          if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
+          if ( usingGcc )
              {
             // GNU uses a string variation on the C99 spelling of the "restrict" keyword
             // DQ (12/12/2012): We need the white space before and after the keyword.

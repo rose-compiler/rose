@@ -349,11 +349,21 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 
   // DQ (10/3/2008): Added special case code generation to support an inconsistant 
   // behavior between gfortran 4.2 and previous versions in the Fortran include mechanism.
-     string fortranCompilerName = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
      string includeFileName = includeLine->get_filename();
 
 #if USE_GFORTRAN_IN_ROSE
-     if (fortranCompilerName == "gfortran")
+
+     bool usingGfortran = false;
+     #ifdef USE_CMAKE
+       #ifdef CMAKE_COMPILER_IS_GNUG77
+         usingGfortran = true;
+       #endif
+     #else
+       string fortranCompilerName = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+       usingGfortran = (fortranCompilerName == "gfortran");
+     #endif
+
+     if (usingGfortran)
         {
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
                ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
