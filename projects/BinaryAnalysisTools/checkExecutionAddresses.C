@@ -53,8 +53,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     tool.insert(Switch("trace")
                 .intrinsicValue(true, settings.trace)
                 .doc("When @s{trace} is specified each execution address is printed to a file named \"@v{pid}.trace\" where "
-                     "@v{pid} is the process ID of the specimen.  Each line of the file will contain the following space-separated "
-                     "fields:"
+                     "@v{pid} is the process ID of the specimen.  Each line of the file will contain the following "
+                     "space-separated fields:"
                      "@bullet{The hexadecimal address of the instruction that was executed.}"
                      "@bullet{The number of times this address has been executed so far.}"
                      "@bullet{The letter '1' or '0' to indicate whether the address known (from the @v{address_file}) or not.}"
@@ -89,8 +89,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 
     tool.insert(Switch("show-unmapped")
                 .intrinsicValue(true, settings.showUnmapped)
-                .doc("List addresses that were executed but are not present in the memory map.  These are probably instructions that "
-                     "belong to the dynamic linker, dynamically-linked libraries, or virtual dynamic shared objects.  The "
+                .doc("List addresses that were executed but are not present in the memory map.  These are probably instructions "
+                     "that belong to the dynamic linker, dynamically-linked libraries, or virtual dynamic shared objects.  The "
                      "@s{no-show-unampped} switch turns this listing off.  The default is to " +
                      std::string(settings.showUnmapped?"":"not ") + "show this information."));
 
@@ -103,9 +103,9 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
         .doc("description",
              "Reads instruction addresses from a file, the so-called \"expected\" addresses and and then executes the specimen "
-             "and compares actual executed addresses with the expected addresses.  An actual executed address falls into one of three "
-             "categories:  (1) the address is an expected address, or else (2) the address is not mapped, or else (3) the address not "
-             "expected.\n\n"
+             "and compares actual executed addresses with the expected addresses.  An actual executed address falls into one of "
+             "three categories:  (1) the address is an expected address, or else (2) the address is not mapped, or else (3) the "
+             "address not expected.\n\n"
 
              "One method of obtaining a list of expected addresses is to use the @man{recursiveDisassemble}{--help} tool's "
              "@s{list-instruction-addressses} switch. Although this produces output that contains instruction sizes as well as "
