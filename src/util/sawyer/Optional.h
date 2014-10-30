@@ -17,7 +17,15 @@ namespace Sawyer {
  *  Optional<int> opt3 = 123;
  *  opt3 = Nothing();
  * @endcode */
-class Nothing {};
+class Nothing {                                         // final
+public:
+    bool operator==(const Nothing&) const { return true; }
+    bool operator!=(const Nothing&) const { return false; }
+    bool operator>(const Nothing&) const { return false; }
+    bool operator>=(const Nothing&) const { return true; }
+    bool operator<(const Nothing&) const { return false; }
+    bool operator<=(const Nothing&) const { return true; }
+};
 
 /** Holds a value or nothing.
  *
