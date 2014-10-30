@@ -137,6 +137,7 @@ set( STORAGECLASSES_SRC
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/GraphTraversal.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupPod.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C

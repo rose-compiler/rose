@@ -65,6 +65,7 @@ noinst_LTLIBRARIES += libroseSawyer.la
 libroseSawyer_la_SOURCES =			\
 	sawyer/Assert.C				\
 	sawyer/CommandLine.C			\
+	sawyer/GraphTraversal.C			\
 	sawyer/Markup.C				\
 	sawyer/MarkupPod.C			\
 	sawyer/Message.C			\
@@ -88,6 +89,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/DefaultAllocator.h		\
 	sawyer/Graph.h				\
 	sawyer/GraphBoost.h			\
+	sawyer/GraphTraversal.h			\
 	sawyer/IndexedList.h			\
 	sawyer/Interval.h			\
 	sawyer/IntervalMap.h			\
