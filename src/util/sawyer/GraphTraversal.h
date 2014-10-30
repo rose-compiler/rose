@@ -230,24 +230,29 @@ class BreadthFirstTraversalTag {};
  *      if (t.event() == ENTER_VERTEX) {
  *          reachable[t.vertex()->id()] = true;
  *      } else if (t.edge()->value().isFunctionCall()) {
+ *          ASSERT_require(t.event() == ENTER_EDGE);
  *          t.skipChildren();
  *      }
  *  }
  * @endcode
  *
  *  Traversals are suitable for using in generic functions as well.  For instance, the next example is a generic function that
- *  computes a vertex reachability vector for any type of %Sawyer graph.  It operates on const or non-const graphs for
- *  demonstration purposes; in real life one might advertise that the function doesn't modify the graph by having an explicit
- *  const qualifier. The GraphTraits is used to obtain the appropriate const/non-const vertex iterator type.
+ *  prints a graph using a depth-first traversal.  It operates on const or non-const graphs for demonstration purposes; in real
+ *  life one might advertise that the function doesn't modify the graph by having an explicit const qualifier. The @ref
+ *  GraphTraits is used to obtain the appropriate const/non-const vertex iterator type.
  *
  * @code
  *  template<class Graph>
- *  std::vector<bool> reachable(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startingVertex) {
- *      std::vector<bool> retval(graph.nVertices(), false);
- *      DepthFirstForwardVertexTraversal<Graph> traversal(graph, startingVertex);
- *      while (traversal.hasNext())
- *          retval[traversal.next().id()] = true;
- *      return retval;
+ *  void printGraph(std::ostream &out, Graph &graph,
+ *                  typename GraphTraits<Graph>::VertexNodeIterator start) {
+ *      for (DepthFirstForwardGraphTraversal t(graph, start, ENTER_EVENTS); t; ++t) {
+ *          if (t.event() == ENTER_VERTEX) {
+ *              out <<"vertex " <<t->vertex()->id() <<"\t= " <<t->vertex()->value() <<"\n";
+ *          } else {
+ *              ASSERT_require(t.event() == ENTER_EDGE);
+ *              out <<"edge   " <<t->edge()->id() <<"\t= " <<t->edge()->value() <<"\n";
+ *          }
+ *      }
  *  }
  * @endcode */
 template<class Graph, class Order=DepthFirstTraversalTag, class Direction=ForwardTraversalTag>
@@ -336,6 +341,8 @@ protected:
         enqueue(newWork, Order());
         setDiscovered(startVertex);
         latestDiscovered_ = newWork;
+        while (!isAtEnd() && !isSignificant(event()))
+            advance();
     }
 
     // Initialize traversal to start at the specified edge.
@@ -348,6 +355,8 @@ protected:
         enqueue(newWork, Order());
         setVisited(startEdge);
         workList_.front().event = ENTER_EDGE;
+        while (!isAtEnd() && !isSignificant(event()))
+            advance();
     }
 
 public:
@@ -473,6 +482,7 @@ public:
                 current().event = LEAVE_EDGE;
                 if (isSignificant(LEAVE_EDGE) && current().edge != graph_.edges().end())
                     return LEAVE_EDGE;
+                continue;
             }
 
             // Enter a discovered vertex
@@ -480,6 +490,7 @@ public:
                 current().event = ENTER_VERTEX;
                 if (isSignificant(ENTER_VERTEX))
                     return ENTER_VERTEX;
+                continue;
             }
 
             // Visit the edge after entering the vertex or returning from another edge
