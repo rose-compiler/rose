@@ -1,0 +1,159 @@
+
+module FortranLex
+
+%%
+%% Input restrictions:
+%% -Make sure that the last statement at the end of the file has a '\n' to prevent a parse error.
+%% -Userdefined operators (.XYZ.) are not handled yet
+%% -include 'file' lines must first be processed or make it a comment (put a ! in front)
+%%
+
+exports
+ 
+sorts
+
+  BinaryConstant Character Comma Comment StartCommentBlock
+  Dop EOL EOLOrSemicolon EOS EOStmt HexConstant
+  Icon Ident Label LblDef LblRef
+  Letter OctalConstant
+  Rcon ScalarIntLiteralConstant Scon
+  SconDouble SconSingle
+
+%%TODO-DELETE  SignedIntLiteralConstant            %% R406
+%%TODO-DELETE  IntLiteralConstant                  %% R407
+%%TODO-DELETE  Sign                                %% R411
+
+%%TODO-F08  FixedComment
+
+lexical syntax
+
+  ","    -> Comma
+
+%% \r\n needed for DOS files
+%%
+  [\n]      -> EOL
+  [\r] [\n] -> EOL
+
+%% Semicolon acts like an EOL
+%%
+  EOL       -> EOLOrSemicolon
+  ";"       -> EOLOrSemicolon
+
+%% Everything following a ! is comment. With the \n it is an End of Statement
+%% Treat preprocessor directives as comments
+%% TODO-F08 enforce leading pound character
+%% TODO-F08 name # as Directive and fix
+%%
+  "!" ~[\n\r]*                          -> Comment
+  "#" ~[\n\r]*                          -> Comment
+
+  (Comment? EOLOrSemicolon [\ \t]* )+   -> EOStmt
+
+%% Comment lines at the start of a file/program are handled separately
+%%
+  EOStmt                                -> StartCommentBlock
+
+%% Layout does NOT have a \n since that's part of EOS
+%%
+  [\ \t]                                -> LAYOUT
+
+%% Number as label: max 5 digits with space in 6th pos
+%%
+  [0-9][0-9][0-9][0-9][0-9]             -> LblDef
+  [0-9][0-9][0-9][0-9]                  -> LblDef
+  [0-9][0-9][0-9]                       -> LblDef   
+  [0-9][0-9]                            -> LblDef
+  [0-9]                                 -> LblDef
+
+%%3.1.2
+%%
+  [a-zA-Z]                       -> Letter
+  [A-Za-z][A-Za-z0-9\_]*         -> Ident
+
+%% Integer Constant
+%%
+  [0-9]+                         -> Icon
+
+%%R420 Character constants allow '' and "" as escaped ' and " in string literals like 'don''t' (="don't")
+%% separate names needed for lexical restrictions later 
+%% NOTE: continuated strings like 'hello&\n   &world' will be parsed as one string with & embedded.
+%%
+  [\'] (~[\'] | "''")*  [\']    -> SconSingle
+  [\"] (~[\"] | '""')*  [\"]    -> SconDouble
+  SconSingle | SconDouble       -> Scon
+
+%%R301: character definition with the 21 specials from table 3.1
+%%
+  [a-zA-Z0-9\ \=\+\-\*\/\(\)\,\;\'\:\!\"\%\&\<\>\\\?\$] -> Character
+
+%%R412-R416 Real and Double Literal Constant. Kind is handled in R400Datatypes.sdf
+%% [sign] significant [exponent-letter exponent] [__kind-param]
+%% JD: [\+\-]? removed because of Sign in R707
+          [0-9]+ "." [0-9]* ([EeDd] [\+\-]? [0-9]+)?            -> Rcon
+%% [sign] digit-string exponent-letter exponent [__kind-param]
+                 "." [0-9]+ ([EeDd] [\+\-]? [0-9]+)?            -> Rcon
+%% or [sign] digit-string exponent-letter exponent [__kind-param]
+          [0-9]+ [EeDd] [\+\-]? [0-9]+                          -> Rcon
+
+%%R406
+%%TODO-DELETE  Sign? IntLiteralConstant         -> SignedIntLiteralConstant
+
+%%R408
+  [Bb] [\'] [01]+ [\']             -> BinaryConstant
+  [Bb] [\"] [01]+ [\"]             -> BinaryConstant
+
+%%R409
+  [Oo] [\'] [0-7]+ [\']            -> OctalConstant
+  [Oo] [\"] [0-7]+ [\']            -> OctalConstant
+
+%%R410
+  [Zz] [\'] [0-9A-Fa-f]+ [\"]      -> HexConstant
+  [Zz] [\"] [0-9A-Fa-f]+ [\"]      -> HexConstant
+
+%%R411
+%%TODO-DELETE    '+' | '-'                      -> Sign
+
+%%
+  [0-9]+                        -> ScalarIntLiteralConstant 
+
+%%R703,R723 defined-unary-operator and defined-binary-operator
+  "." Letter+ "."               -> Dop
+  '.EQ.'                        -> Dop  {reject}
+  '.NE.'                        -> Dop  {reject}
+  '.LT.'                        -> Dop  {reject}
+  '.LE.'                        -> Dop  {reject}
+  '.GT.'                        -> Dop  {reject}
+  '.GE.'                        -> Dop  {reject}
+  '.NOT.'                       -> Dop  {reject}
+  '.AND.'                       -> Dop  {reject}
+  '.OR.'                        -> Dop  {reject}
+  '.EQV.'                       -> Dop  {reject}
+  '.NEQV.'                      -> Dop  {reject}
+
+lexical restrictions
+
+  SconSingle -/- [\']
+  SconDouble -/- [\"]
+
+%% Comment line should be the complete line until newline. This must be lexical restriction
+%%  Comment  -/- ~[\n\r]  
+
+%% If (Comment "\n" [\ \t]* )+ -> EOS, then to prevent ambig with layout:
+%%
+  EOStmt -/- [\ \t]
+
+context-free restrictions
+
+%% Layout definition **without** \n due to the EOS definition. Lines are important in Fortran.
+%%
+  LAYOUT? -/- [\ \t]
+
+%% To prevent layout/comment parsed as after LblDef (which causes ambigs)
+%%
+  LblDef -/- [\!]
+
+context-free syntax
+
+  LblDef  -> LblRef
+
+  EOStmt  -> EOS                           {cons("eos")}

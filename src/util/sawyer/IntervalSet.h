@@ -17,6 +17,30 @@ namespace Container {
  *  numbers of values are contiguous.  It adds the ability to insert and erase intervals as well as scalars, and provides a
  *  mechanism to iterate over the storage nodes (intervals) rather than over the scalar values.
  *
+ *  An interval set always maintains a list containing a minimum number of largest possible intervals regardless of what
+ *  intervals are inserted and erased.  This feature makes for a very convenient way to compute address ranges for small
+ *  things, or things that might overlap.  For instance, if one has a list of intervals corresponding to machine instructions
+ *  that belong to a single function in an executable (some of which might even overlap), we can easily compute whether the
+ *  function is contiguous in memory, and whether any instructions overlap with each other:
+ *
+ * @code
+ *  // Input is a list of intervals for instructions in a function
+ *  typedef Sawyer::Container::Interval<uint32_t> AddressInterval;
+ *  std::vector<AddressInterval> instructionIntervals = ...;
+ *
+ *  // Build the functionExtent and count total instruction size
+ *  Sawyer::Container::IntervalSet<AddressInterval> functionExtent;
+ *  uint32_t insnTotalSize = 0;
+ *  BOOST_FOREACH (const AddressInterval insnInterval, instructionIntervals) {
+ *      functionExtent.insert(insnInterval);
+ *      insnTotalSize += insnInterval.size();
+ *  }
+ *
+ *  // Final results
+ *  bool isFunctionContiguous = functionExtent.nIntervals() <= 1;
+ *  bool isInsnsDisjoint = functionExtent.size() == insnTotalSize;
+ * @endcode
+ *
  *  The @p Interval template parameter must implement the Sawyer::Container::Interval API, at least to some extent. */
 template<class I>
 class IntervalSet {
@@ -27,24 +51,25 @@ public:
     typedef I Interval;
     typedef typename I::Value Scalar;                   /**< Type of scalar values stored in this set. */
 
-    /** Node iterator.
+    /** Interval iterator.
      *
-     *  Iterates over the storage nodes of the container, which are the Interval type provided as a class template
+     *  Iterates over the intervals of the container, which are the Interval type provided as a class template
      *  parameter. Dereferencing the iterator will return a const reference to an interval (possibly a singlton interval). */
-    class ConstNodeIterator: public boost::iterator_facade<ConstNodeIterator, const Interval,
-                                                           boost::bidirectional_traversal_tag> {
+    class ConstIntervalIterator: public boost::iterator_facade<ConstIntervalIterator, const Interval,
+                                                               boost::bidirectional_traversal_tag> {
         typedef typename IntervalMap<Interval, int>::ConstNodeIterator MapNodeIterator;
         MapNodeIterator iter_;
     public:
-        ConstNodeIterator() {}
+        ConstIntervalIterator() {}
     private:
         friend class boost::iterator_core_access;
         friend class IntervalSet;
-        explicit ConstNodeIterator(MapNodeIterator iter): iter_(iter) {}
+        explicit ConstIntervalIterator(MapNodeIterator iter): iter_(iter) {}
         const Interval& dereference() const { return iter_->key(); }
-        bool equal(const ConstNodeIterator &other) const { return iter_ == other.iter_; }
+        bool equal(const ConstIntervalIterator &other) const { return iter_ == other.iter_; }
         void increment() { ++iter_; }
         void decrement() { --iter_; }
+        MapNodeIterator base() const { return iter_; }
     };
 
     /** Scalar value iterator.
@@ -56,12 +81,12 @@ public:
      *  @li Iterating over values for a non-integral type is most likely nonsensical. */
     class ConstScalarIterator: public boost::iterator_facade<ConstScalarIterator, const typename Interval::Value,
                                                              boost::bidirectional_traversal_tag> {
-        ConstNodeIterator iter_;
+        ConstIntervalIterator iter_;
         typename Interval::Value offset_;
         mutable typename Interval::Value value_;        // so dereference() can return a reference
     public:
         ConstScalarIterator(): offset_(0) {}
-        ConstScalarIterator(ConstNodeIterator iter): iter_(iter), offset_(0) {}
+        ConstScalarIterator(ConstIntervalIterator iter): iter_(iter), offset_(0) {}
     private:
         friend class boost::iterator_core_access;
         friend class IntervalSet;
@@ -108,8 +133,8 @@ public:
      *  The newly constructed set will contain copies of the nodes from @p other. */
     template<class Interval2>
     IntervalSet(const IntervalSet<Interval2> &other) {
-        typedef typename IntervalSet<Interval2>::ConstNodeIterator OtherNodeIterator;
-        for (OtherNodeIterator otherIter=other.nodes().begin(); otherIter!=other.nodes().end(); ++otherIter)
+        typedef typename IntervalSet<Interval2>::ConstIntervalIterator OtherIntervalIterator;
+        for (OtherIntervalIterator otherIter=other.intervals().begin(); otherIter!=other.intervals().end(); ++otherIter)
             insert(*otherIter);
     }
 
@@ -131,8 +156,8 @@ public:
     template<class Interval2>
     IntervalSet& operator=(const IntervalSet<Interval2> &other) {
         clear();
-        typedef typename IntervalSet<Interval2>::ConstNodeIterator OtherNodeIterator;
-        for (OtherNodeIterator otherIter=other.nodes().begin(); otherIter!=other.nodes().end(); ++otherIter)
+        typedef typename IntervalSet<Interval2>::ConstIntervalIterator OtherIntervalIterator;
+        for (OtherIntervalIterator otherIter=other.intervals().begin(); otherIter!=other.intervals().end(); ++otherIter)
             insert(*otherIter);
         return *this;
     }
@@ -156,37 +181,72 @@ public:
     //                                  Iteration
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** Iterator range for all interval nodes actually stored by this set. */
-    boost::iterator_range<ConstNodeIterator> nodes() const {
-        return boost::iterator_range<ConstNodeIterator>(ConstNodeIterator(map_.nodes().begin()),
-                                                        ConstNodeIterator(map_.nodes().end()));
+    /** Iterator range for all intervals actually stored by this set. */
+    boost::iterator_range<ConstIntervalIterator> intervals() const {
+        return boost::iterator_range<ConstIntervalIterator>(ConstIntervalIterator(map_.nodes().begin()),
+                                                            ConstIntervalIterator(map_.nodes().end()));
     }
 
     /** Iterator range for all scalar values logically represented by this set. */
     boost::iterator_range<ConstScalarIterator> scalars() const {
-        return boost::iterator_range<ConstScalarIterator>(ConstScalarIterator(nodes().begin()),
-                                                          ConstScalarIterator(nodes().end()));
+        return boost::iterator_range<ConstScalarIterator>(ConstScalarIterator(intervals().begin()),
+                                                          ConstScalarIterator(intervals().end()));
     }
 
     /** Find the first node whose interval ends at or above the specified scalar key.
      *
      *  Returns an iterator to the node, or the end iterator if no such node exists. */
-    ConstNodeIterator lowerBound(const typename Interval::Value &scalar) const {
-        return ConstNodeIterator(map_.lowerBound(scalar));
+    ConstIntervalIterator lowerBound(const typename Interval::Value &scalar) const {
+        return ConstIntervalIterator(map_.lowerBound(scalar));
+    }
+
+    /** Find the first node whose interval begins above the specified scalar key.
+     *
+     *  Returns an iterator to the node, or the end iterator if no such node exists. */
+    ConstIntervalIterator upperBound(const typename Interval::Value &scalar) const {
+        return ConstIntervalIterator(map_.upperBound(scalar));
     }
 
     /** Find the last node whose interval starts at or below the specified scalar key.
      *
      *  Returns an iterator to the node, or the end iterator if no such node exists. */
-    ConstNodeIterator findPrior(const typename Interval::Value &scalar) const {
-        return ConstNodeIterator(map_.findPrior(scalar));
+    ConstIntervalIterator findPrior(const typename Interval::Value &scalar) const {
+        return ConstIntervalIterator(map_.findPrior(scalar));
     }
 
     /** Find the node containing the specified scalar key.
      *
      *  Returns an iterator to the matching node, or the end iterator if no such node exists. */
-    ConstNodeIterator find(const typename Interval::Value &scalar) const {
-        return ConstNodeIterator(map_.find(scalar));
+    ConstIntervalIterator find(const typename Interval::Value &scalar) const {
+        return ConstIntervalIterator(map_.find(scalar));
+    }
+
+    /** Finds all nodes overlapping the specified interval.
+     *
+     *  Returns an iterator range that enumerates the nodes that overlap with the specified interval. */
+    boost::iterator_range<ConstIntervalIterator> findAll(const Interval &interval) const {
+        boost::iterator_range<typename Map::ConstNodeIterator> range = map_.findAll(interval);
+        return boost::iterator_range<ConstIntervalIterator>(ConstIntervalIterator(range.begin()),
+                                                            ConstIntervalIterator(range.end()));
+    }
+
+    /** Finds first node that overlaps with the specified interval.
+     *
+     *  Returns an iterator to the matching node, or the end iterator if no such node exists. */
+    ConstIntervalIterator findFirstOverlap(const Interval &interval) const {
+        return ConstIntervalIterator(map_.findFirstOverlap(interval));
+    }
+    /** @} */
+
+    /** Find first nodes that overlap.
+     *
+     *  Given two ranges of iterators for two sets, advance the iterators to the closest nodes that overlap with each other,
+     *  and return the result as two iterators.  If no overlaps can be found then the return value is two end iterators. */
+    std::pair<ConstIntervalIterator, ConstIntervalIterator>
+    findFirstOverlap(ConstIntervalIterator thisIter, const IntervalSet &other, ConstIntervalIterator otherIter) const {
+        std::pair<typename Map::ConstNodeIterator, typename Map::ConstNodeIterator> found =
+            map_.findFirstOverlap(thisIter.base(), other.map_, otherIter.base());
+        return std::make_pair(ConstIntervalIterator(found.first), ConstIntervalIterator(found.second));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,12 +328,22 @@ public:
     }
     /** @} */
 
-
+    /** Determines if a value exists in the set.
+     *
+     *  Returns true if the specified value is a member of the set. */
+    bool exists(const typename Interval::Value &scalar) const {
+        return find(scalar)!=intervals().end();
+    }
+    
     /** Determines whether this set fully contains the argument.
      *
      *  Returns true if this set contains all values represented by the argument.
      *
      * @{ */
+    bool contains(const typename Interval::Value &scalar) const {
+        return exists(scalar);
+    }
+
     template<class Interval2>
     bool contains(const Interval2 &interval) const {
         return map_.contains(interval);
@@ -347,8 +417,8 @@ public:
      *  then it is entirely likely that the size will overflow.  In fact, it is also possible that unsigned sizes overflow
      *  since, for example, an 8-bit unsigned size cannot hold the size of an interval representing the entire 8-bit space.
      *  Therefore, use this method with care. */
-    ConstNodeIterator firstFit(const typename Interval::Value &size, ConstNodeIterator start) const {
-        return ConstNodeIterator(map_.firstFit(size, start.iter_));
+    ConstIntervalIterator firstFit(const typename Interval::Value &size, ConstIntervalIterator start) const {
+        return ConstIntervalIterator(map_.firstFit(size, start.iter_));
     }
 
     /** Find the best fit node at or after a starting point.
@@ -361,8 +431,8 @@ public:
      *  then it is entirely likely that the size will overflow.  In fact, it is also possible that unsigned sizes overflow
      *  since, for example, an 8-bit unsigned size cannot hold the size of an interval representing the entire 8-bit space.
      *  Therefore, use this method with care. */
-    ConstNodeIterator bestFit(const typename Interval::Value &size, ConstNodeIterator start) const {
-        return ConstNodeIterator(map_.bestFit(size, start.iter_));
+    ConstIntervalIterator bestFit(const typename Interval::Value &size, ConstIntervalIterator start) const {
+        return ConstIntervalIterator(map_.bestFit(size, start.iter_));
     }
 
 
@@ -378,6 +448,13 @@ public:
         map_.clear();
     }
 
+    /** Invert.
+     *
+     *  Invert this set in place. */
+    void invert() {
+        invert(Interval::whole());
+    }
+
     /** Invert and intersect.
      *
      *  Inverts this set and then intersects it with @p restricted. */
@@ -386,7 +463,8 @@ public:
         if (!restricted.isEmpty()) {
             typename Interval::Value pending = restricted.least();
             bool insertTop = true;
-            for (typename Map::ConstKeyIterator iter=map_.lowerBound(restricted.least()); iter!=map_.keys().end(); ++iter) {
+            for (typename Map::ConstIntervalIterator iter=map_.lowerBound(restricted.least());
+                 iter!=map_.intervals().end(); ++iter) {
                 if (iter->least() > restricted.greatest())
                     break;
                 if (pending < iter->least())
@@ -417,15 +495,15 @@ public:
 
     template<class Interval2>
     void insertMultiple(const IntervalSet<Interval2> &other) {
-        typedef typename IntervalSet<Interval2>::ConstNodeIterator OtherIterator;
-        for (OtherIterator otherIter=other.nodes().begin(); otherIter!=other.nodes().end(); ++otherIter)
+        typedef typename IntervalSet<Interval2>::ConstIntervalIterator OtherIterator;
+        for (OtherIterator otherIter=other.intervals().begin(); otherIter!=other.intervals().end(); ++otherIter)
             map_.insert(*otherIter, 0);
     }
 
     template<class Interval2, class T, class Policy>
     void insertMultiple(const IntervalMap<Interval2, T, Policy> &other) {
-        typedef typename IntervalMap<Interval2, T, Policy>::ConstKeyIterator OtherIterator;
-        for (OtherIterator otherIter=other.keys().begin(); otherIter!=other.keys().end(); ++otherIter)
+        typedef typename IntervalMap<Interval2, T, Policy>::ConstIntervalIterator OtherIterator;
+        for (OtherIterator otherIter=other.intervals().begin(); otherIter!=other.intervals().end(); ++otherIter)
             map_.insert(*otherIter, 0);
     }
     /** @} */
@@ -444,15 +522,15 @@ public:
     template<class Interval2>
     void eraseMultiple(const IntervalSet<Interval2> &other) {
         ASSERT_forbid2((void*)&other==(void*)this, "use IntervalSet::clear() instead");
-        typedef typename IntervalSet<Interval2>::ConstNodeIterator OtherNodeIterator;
-        for (OtherNodeIterator otherIter=other.nodes().begin(); otherIter!=other.nodes().end(); ++otherIter)
+        typedef typename IntervalSet<Interval2>::ConstIntervalIterator OtherIntervalIterator;
+        for (OtherIntervalIterator otherIter=other.intervals().begin(); otherIter!=other.intervals().end(); ++otherIter)
             map_.erase(*otherIter);
     }
 
     template<class Interval2, class T, class Policy>
     void eraseMultiple(const IntervalMap<Interval2, T, Policy> &other) {
-        typedef typename IntervalMap<Interval2, T, Policy>::ConstNodeIterator OtherNodeIterator;
-        for (OtherNodeIterator otherIter=other.nodes().begin(); otherIter!=other.nodes().end(); ++otherIter)
+        typedef typename IntervalMap<Interval2, T, Policy>::ConstIntervalIterator OtherIntervalIterator;
+        for (OtherIntervalIterator otherIter=other.intervals().begin(); otherIter!=other.intervals().end(); ++otherIter)
             map_.erase(otherIter->first);
     }
     /** @} */
@@ -460,20 +538,94 @@ public:
     /** Interset with specified values.
      *
      *  Computes in place intersection of this container with the specified argument.  The argument may be an interval (or
-     *  scalar if the interval has an implicit constructor), another set whose interval type is convertible to this set's
-     *  interval type, or an IntervalMap whose intervals are convertible.
+     *  scalar if the interval has an implicit constructor), or another set whose interval type is convertible to this set's
+     *  interval type.
      *
      * @{ */
     template<class Interval2>
-    void intersect(const Interval2 &interval);          // FIXME[Robb Matzke 2014-04-12]: not implemented yet
+    void intersect(const Interval2 &interval) {
+        if (isEmpty())
+            return;
+        if (interval.isEmpty()) {
+            clear();
+            return;
+        }
+        if (hull().least() < interval.least())
+            map_.eraseMultiple(Interval::hull(hull().least(), interval.least()-1));
+        if (hull().greatest() > interval.greatest())
+            map_.eraseMultiple(Interval::hull(interval.greatest(), hull().greatest()));
+    }
 
     template<class Interval2>
-    void intersect(const IntervalSet<Interval2> &other);// FIXME[Robb Matzke 2014-04-12]: not implemented yet
+    void intersect(IntervalSet<Interval2> other) {
+        other.invert(hull());
+        map_.eraseMultiple(other.map_);
+    }
 
     template<class Interval2, class T, class Policy>
     void intersect(const IntervalMap<Interval2, T, Policy> &other);// FIXME[Robb Matzke 2014-04-12]: not implemented yet
     /** @} */
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Operators
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Determines if two sets contain the same elements. */
+    bool operator==(const IntervalSet &other) const {
+        return !(*this!=other);
+    }
+
+    /** Determines if two sets contain different elements. */
+    bool operator!=(const IntervalSet &other) const {
+        if (map_.nIntervals()!=other.map_.nIntervals())
+            return true;
+        for (ConstIntervalIterator ai=intervals().begin(), bi=other.intervals().begin(); ai!=intervals().end(); ++ai, ++bi) {
+            if (*ai!=*bi)
+                return true;
+        }
+        return false;
+    }
+        
+    /** Return inverse of specified set. */
+    IntervalSet operator~() const {
+        IntervalSet tmp = *this;
+        tmp.invert();
+        return tmp;
+    }
+
+    /** Union of two sets. */
+    IntervalSet operator|(const IntervalSet &other) const {
+        if (nIntervals() < other.nIntervals()) {
+            IntervalSet tmp = other;
+            tmp.insertMultiple(*this);
+            return tmp;
+        }
+        IntervalSet tmp = *this;
+        tmp.insertMultiple(other);
+        return tmp;
+    }
+
+    /** Intersection of two sets. */
+    IntervalSet operator&(const IntervalSet &other) const {
+        if (nIntervals() < other.nIntervals()) {
+            IntervalSet tmp = other;
+            tmp.intersect(*this);
+            return tmp;
+        }
+        IntervalSet tmp = *this;
+        tmp.intersect(other);
+        return tmp;
+    }
+
+    /** Subtract another set from this one.
+     *
+     *  <code>A-B</code> is equivalent to <code>A & ~B</code> but perhaps faster. */
+    IntervalSet operator-(const IntervalSet &other) const {
+        IntervalSet tmp = *this;
+        tmp.eraseMultiple(other);
+        return tmp;
+    }
 };
 
 } // namespace

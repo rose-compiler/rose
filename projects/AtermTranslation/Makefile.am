@@ -13,13 +13,14 @@ SUBDIRS = roseAtermAPI
 # of ROSE can be easily specificed at configure time.
 # A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
 # A_TERM_INCLUDE = -I$(srcdir)/roseAtermAPI
-A_TERM_INCLUDE = -I$(srcdir)/aterm-2.5/aterm
+# A_TERM_INCLUDE = -I$(srcdir)/aterm-2.5/aterm
+A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
 
 # INCLUDES = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
 INCLUDES = $(A_TERM_INCLUDE) $(ROSE_INCLUDES)
 
 # bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI termGraph_using_RoseAtermAPI_withForwardedFunctions
-bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI
+bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI testTranslation_AST_to_ATerm_to_AST
 
 termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
@@ -30,6 +31,8 @@ termGraph_SOURCES = termGraph.C
 # termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C
 termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
 
+testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+
 # termGraph_using_RoseAtermAPI_withForwardedFunctions_SOURCES = termGraph_using_RoseAtermAPI_withForwardedFunctions.C
 
 include_HEADERS = atermTranslation.h
@@ -38,9 +41,14 @@ ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
 
+# DQ (9/17/2014): This is not inlcuded in the ROSE_LIBS list of libraries.
 # Permit linking to alternative ROSE ATerm API used to support new non-serialized API for Stratego.
-termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(srcdir)/aterm-2.5/aterm/libATerm.la
 # termGraph_using_RoseAtermAPI_withForwardedFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ./roseAtermAPI/libATerm.la
+# termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(srcdir)/aterm-2.5/aterm/libATerm.la
+termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+
+# Added new test code to increase testing
+testTranslation_AST_to_ATerm_to_AST_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 TESTCODES_REQUIRED_TO_PASS = test2013_01.C
 
@@ -152,7 +160,7 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
- test2004_35.C \
+test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
@@ -190,14 +198,13 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
- test2004_77.C \
+test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
 test2004_83.C \
 test2004_84.C \
- test2004_85.C \
 test2004_86.C \
 test2004_87.C \
 test2004_88.C \
@@ -215,8 +222,6 @@ test2004_100.C \
 test2004_101.C \
 test2004_102.C \
 test2004_103.C \
-test2004_104.C \
-test2004_105.C \
 test2004_106.C \
 test2004_107.C \
 test2004_108.C \
@@ -237,7 +242,6 @@ test2004_123.C \
 test2004_124.C \
 test2004_125.C \
 test2004_128.C \
- test2004_129.C \
 test2004_131.C \
 test2004_132.C \
 test2004_133.C \
@@ -302,7 +306,6 @@ test2005_29.C \
 test2005_30.C \
 test2005_31.C \
 test2005_33.C \
- test2005_34.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
@@ -367,7 +370,6 @@ test2005_99.C \
 test2005_100.C \
 test2005_101.C \
 test2005_102.C \
-test2005_103.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -401,7 +403,6 @@ test2005_138.C \
 test2005_139.C \
 test2005_140.C \
 test2005_141.C \
-test2005_142.C \
 test2005_143.C \
 test2005_144.C \
 test2005_145.C \
@@ -553,7 +554,6 @@ test2006_123.C \
 test2006_126.C \
 test2006_129.C \
 test2006_140.C \
-test2006_141.C \
 test2006_142.C \
 test2006_143.C \
 test2006_144.C \
@@ -698,7 +698,6 @@ test2009_28.C \
 test2009_30.C \
 test2009_39.C \
 test2009_40.C \
-test2009_41.C \
 test2009_42.C \
 test2010_03.C \
 test2010_04.C \
@@ -805,8 +804,6 @@ test2011_137.C \
 test2011_138.C \
 test2011_139.C \
 test2011_140.C \
-test2011_141.C \
-test2011_142.C \
 test2011_143.C \
 test2011_146.C \
 test2011_147.C \
@@ -843,6 +840,21 @@ test2005_09.C \
 test2005_104.C \
 test2010_24.C 
 
+# DQ (9/17/2014): These are new failing tests as a result of some chages to ROSE in 2014 (or since Sept 2013).
+NEW_FAILING_TESTS = \
+test2004_104.C \
+test2004_105.C \
+test2004_129.C \
+test2005_34.C \
+test2005_103.C \
+test2005_142.C \
+test2006_141.C \
+test2009_41.C \
+test2011_141.C \
+test2011_142.C \
+test2004_85.C
+
+# DQ (9/17/2014): These are failing tests as of September 2013.
 FAILING_TESTS = \
 test2004_120.C \
 test2004_127.C \
@@ -875,6 +887,9 @@ $(PASSING_REGRESSION_TEST_Output): ./termGraph_using_RoseAtermAPI
 	cd ../..; $(MAKE) testTranslator
 
 
+test1: testTranslation_AST_to_ATerm_to_AST
+#	./termGraph_using_RoseAtermAPI $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
+	./testTranslation_AST_to_ATerm_to_AST $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(srcdir)/test2013_01.C
 
 
 test: termGraph

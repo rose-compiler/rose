@@ -21,7 +21,7 @@ void foo2a (myClass::Domain X);
 // void foo2b (myClass::Domain X);
 // void foo3 (myNamespace::Domain X);
 
-#if 0
+#if 1
 void foo (myClass::Domain & X);
 
 class Domain {};

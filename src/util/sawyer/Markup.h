@@ -5,10 +5,21 @@
 #include <sawyer/Map.h>
 
 #include <cstring>
+#include <ostream>
 #include <sawyer/Sawyer.h>
 #include <sawyer/SharedPointer.h>
 #include <string>
 #include <vector>
+
+// Any header that #defines words that are this common is just plain stupid!
+#if defined(emit)
+# ifdef _MSC_VER
+#  pragma message("Undefining common words from the global namespace: emit")
+# else
+#  warning "Undefining common words from the global namespace: emit"
+# endif
+# undef emit
+#endif
 
 namespace Sawyer {
 
@@ -106,7 +117,7 @@ public:
     DivSpan type() const { return type_; }
 };
 
-class SAWYER_EXPORT Tag: public SharedFromThis<Tag> {
+class SAWYER_EXPORT Tag: public SharedObject, public SharedFromThis<Tag> {
 #include <sawyer/WarningsOff.h>
     DivSpan divspan_;                                   // tag type
     std::string name_;                                  // tag name without the leading "@"
@@ -142,7 +153,7 @@ private:
     void checkArgDecls() const;
 public:
     virtual ~Tag() {}
-    Ptr self() { return sharedFromThis().dynamicCast<Tag>(); }
+    Ptr self() { return sharedFromThis(); }
     virtual ContentPtr eval(const TagArgs&);
     const std::string &name() const { return name_; }
     DivSpan type() const { return divspan_; }
@@ -406,7 +417,7 @@ public:
 enum TextMode { PROSE, NONPROSE };
 
 /** Base class for formatting markup. */
-class SAWYER_EXPORT Formatter: public SharedFromThis<Formatter> {
+class SAWYER_EXPORT Formatter: public SharedObject, public SharedFromThis<Formatter> {
 #include <sawyer/WarningsOff.h>
     std::vector<TextMode> textModeStack_;
 #include <sawyer/WarningsRestore.h>

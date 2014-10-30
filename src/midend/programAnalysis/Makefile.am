@@ -30,6 +30,7 @@ include $(srcdir)/sideEffectAnalysis/Makefile_variables
 include $(srcdir)/staticInterproceduralSlicing/Makefile_variables
 include $(srcdir)/valuePropagation/Makefile_variables
 include $(srcdir)/variableRenaming/Makefile_variables
+include $(srcdir)/EditDistance/Makefile_variables
 
 
 mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
@@ -48,6 +49,7 @@ mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
 mpaStaticInterproceduralSlicingPath=$(srcdir)/staticInterproceduralSlicing#
 mpaValuePropagationPath=$(srcdir)/valuePropagation#
 mpaVariableRenamingPath=$(srcdir)/variableRenaming#
+mpaEditDistancePath=$(srcdir)/EditDistance#
 
 ###############################################################################
 
@@ -76,6 +78,7 @@ INCLUDES=\
 	$(mpaStaticInterproceduralSlicing_includes) \
 	$(mpaValuePropagation_includes) \
 	$(mpaVariableRenaming_includes) \
+	$(mpaEditDistance_includes) \
 	$(INCLUDES_OMP)
 
 
@@ -103,7 +106,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaSideEffectAnalysis_la_sources) \
 	$(mpaStaticInterproceduralSlicing_la_sources) \
 	$(mpaValuePropagation_la_sources) \
-	$(mpaVariableRenaming_la_sources)
+	$(mpaVariableRenaming_la_sources) \
+	$(mpaEditDistance_la_sources)
 
 libprogramAnalysis_la_LIBADD = \
 	staticSingleAssignment/libSSA.la \
@@ -125,7 +129,8 @@ pkginclude_HEADERS=\
 	$(mpaSideEffectAnalysis_includeHeaders) \
 	$(mpaStaticInterproceduralSlicing_includeHeaders) \
 	$(mpaValuePropagation_includeHeaders) \
-	$(mpaVariableRenaming_includeHeaders)
+	$(mpaVariableRenaming_includeHeaders) \
+	$(mpaEditDistance_includeHeaders)
 
 
 noinst_HEADERS=\
@@ -151,7 +156,8 @@ EXTRA_DIST=\
 	$(mpaSideEffectAnalysis_extraDist) \
 	$(mpaStaticInterproceduralSlicing_extraDist) \
 	$(mpaValuepropagation_extraDist) \
-	$(mpaVariableRenaming_extraDist)
+	$(mpaVariableRenaming_extraDist) \
+	$(mpaEditDistance_extraDist)
 
 
 clean-local:
@@ -170,6 +176,7 @@ clean-local:
 	$(mpaStaticInterproceduralSlicing_cleanLocal)
 	$(mpaValuePropagation_cleanLocal)
 	$(mpaVariableRenaming_cleanLocal)
+	$(mpaEditDistance_cleanLocal)
 
 
 distclean-local:
@@ -187,6 +194,7 @@ distclean-local:
 	$(mpaStaticInterproceduralSlicing_distCleanLocal)
 	$(mpaValuePropagation_distCleanLocal)
 	$(mpaVariableRenaming_distCleanLocal)
+	$(mpaEditDistance_distCleanLocal)
 
 
 

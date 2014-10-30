@@ -5,6 +5,10 @@
 #include "Disassembler.h"
 #include <sawyer/Optional.h>
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 #ifndef NAN
 #define INFINITY (DBL_MAX+DBL_MAX)
 #define NAN (INFINITY-INFINITY)
@@ -145,7 +149,9 @@ protected:
         BasicBlock *bblock;                     /**< Block to which this instruction belongs, if any. */
 
         /* These methods are forwarded to the underlying instruction node for convenience. */
-        Disassembler::AddressSet get_successors(bool *complete) const { return node->get_successors(complete); }
+        Disassembler::AddressSet get_successors(bool *complete) const {
+            return node->get_successors(complete);
+        }
         rose_addr_t get_address() const { return node->get_address(); }
         size_t get_size() const { return node->get_size(); }
         bool terminates_basic_block() const { return node->terminates_basic_block(); }
@@ -829,10 +835,10 @@ public:
      *  The Partitioner never instantiates a CodeCriteria object directly, but rather always uses the new_code_criteria()
      *  virtual method.  This allows the user to easily augment this class to do something more interesting.
      *
-     *  Here's an example of using this class to determine if some uncategorized region of memory contains code.  First we compute
-     *  aggregate statistics across all the known functions.  Then we use the mean and variance in those statistics to create a
-     *  code criteria specification.  Then we run the same analyses over the uncategorized region of memory and ask whether the
-     *  results satisfy the criteria.  This example is essentially the implementation of Partitioner::is_code().
+     *  Here's an example of using this class to determine if some uncategorized region of memory contains code.  First we
+     *  compute aggregate statistics across all the known functions.  Then we use the mean and variance in those statistics to
+     *  create a code criteria specification.  Then we run the same analyses over the uncategorized region of memory and ask
+     *  whether the results satisfy the criteria.  This example is essentially the implementation of Partitioner::is_code().
      *
      *  @code
      *  partitioner->aggregate_statistics(); // compute stats if not already cached
@@ -1894,5 +1900,9 @@ public:
 public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
+
+} // namespace
+} // namespace
+
 
 #endif

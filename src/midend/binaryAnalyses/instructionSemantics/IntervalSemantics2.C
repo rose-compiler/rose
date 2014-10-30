@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "IntervalSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace IntervalSemantics {
@@ -736,6 +737,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     // FIXME
 }
 
-} /*namespace*/
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+} // namespace

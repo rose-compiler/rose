@@ -189,9 +189,9 @@ static SgFile* parseJavaFile(const std::string &fileName)
     // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
     std::string sourceCode;
     {
-        MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(fileName);
+        MemoryMap::Buffer::Ptr buffer = MemoryMap::MappedBuffer::instance(fileName);
         char *charBuf = new char[buffer->size()];
-        buffer->read(charBuf, 0, buffer->size());
+        buffer->read((uint8_t*)charBuf, 0, buffer->size());
         sourceCode = std::string(charBuf, buffer->size());
     }
 

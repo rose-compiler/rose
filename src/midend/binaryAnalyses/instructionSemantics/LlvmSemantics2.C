@@ -4,8 +4,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 
-using namespace rose;                                   // temporary until this stuff is all inside that namespace
-
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace LlvmSemantics {
@@ -286,10 +285,14 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     //       case we treat it like a function call.  LLVM requires us to treat all inter-function control flow as a
     //       function call even though the same restriction isn't present in the binary. FIXME[Robb P. Matzke 2014-01-09]
     //    2. It is an unconditional intra-function branch which can be translated to an LLVM unconditional "br" instruction.
+    //    3. It is the fall-through address added by transcodeBasicBlock for an instruction for which semantics failed when
+    //       quiet-errors mode is enabled, and therefore might be completely invalid.
     if (eip->is_number()) {
         SgAsmInstruction *dst_insn = insns.get_value_or(eip->get_number(), NULL);
         SgAsmFunction *dst_func = getEnclosingNode<SgAsmFunction>(dst_insn);
-        if (func!=dst_func) {                       // one or both could be null
+        if (!dst_func) {
+            o <<prefix() <<"unreachable\n";
+        } else if (func!=dst_func) {                    // func could be null
             std::string funcname = function_label(dst_func);
             o <<prefix() <<"call void " <<funcname <<"()\n";
             rose_addr_t ret_addr = fallthrough_va;
@@ -1199,7 +1202,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
             case InsnSemanticsExpr::OP_NOOP:
             case InsnSemanticsExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyInsnSemanticsExprOperator(inode->get_operator()) +
+                                               stringifyBinaryAnalysisInsnSemanticsExprOperator(inode->get_operator()) +
                                                " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
@@ -1481,6 +1484,7 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp)
     return ss.str();
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

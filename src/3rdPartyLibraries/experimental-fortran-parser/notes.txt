@@ -39,3 +39,10 @@ Ran "make"
 
 cp ofp-sdf/fortran/syntax/* to src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14
 
+
+September 9th, 2014:
+   1) Makefile.am will have a target to copy files out of the OFP repository and into ROSE.
+
+   2) Need to have the stratego_transformations/Makefile.am put generated files into the build tree.
+
+

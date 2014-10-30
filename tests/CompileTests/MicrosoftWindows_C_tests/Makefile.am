@@ -38,7 +38,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2014_17.c  test2014_39.c   test2014_83.c   test2008_02.c   test2009_16.c  \
    test2011_05.c  test2012_148.c  test2012_22.c   test2012_37.c   test2012_67.c \
    test2012_84.c  test2013_100.c  test2013_30.c   test2013_64.c   test2013_83.c \
-   test2013_93.c  test2014_12.c   test2014_21.c   test2014_40.c   test2014_84.c
+   test2013_93.c  test2014_12.c   test2014_21.c   test2014_40.c   test2014_84.c \
+   hello.c
 
 
 TESTCODES_REQUIRED_TO_RUN =
@@ -53,10 +54,16 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
+# DQ (2/4/2014): Unparse the asm commands as a test.
+SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
+
+# DQ (8/18/2014): When unparsing Microsoft extensions we can't pass this the generated code to the GNU g++ compiler.
 # DQ (3/28/2013): Now that we have changed the default C behavior to C99 (from C89), we need 
 # to explicitly specify the C89 behavior for make of the C test codes in this directory.
 # ROSE_FLAGS = -rose:C
-ROSE_FLAGS = -rose:C89 -pedantic-errors
+# ROSE_FLAGS = -rose:C89 -pedantic-errors
+# ROSE_FLAGS = -rose:C89 --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors
+ROSE_FLAGS = -rose:C89 --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors
 
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
@@ -111,11 +118,15 @@ $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
+if ROSE_USING_GCC_VERSION_LATER_4_4
 	@echo "Tests for C."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 #	@$(MAKE) $(PASSING_TEST_Objects_passed)
 	@$(MAKE) $(PASSING_TEST_Source_passed)
+else
+	@echo "Microsoft C tests require GNU version 4.4 (or greater) backend compilers."
+endif
 	@echo "**************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_C_tests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************************"

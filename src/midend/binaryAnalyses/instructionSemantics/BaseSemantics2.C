@@ -2,6 +2,7 @@
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
@@ -88,7 +89,7 @@ std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
 void
 Exception::print(std::ostream &o) const
 {
-    o <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
+    o <<"rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
         o <<": " <<unparseInstructionWithAddress(insn);
     o <<"\n";
@@ -1450,11 +1451,8 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
         retval = operators->unsignedExtend(retval, value_nbits);
     return retval;
 }
-
-
     
-    
-
+} // namespace
 } // namespace
 } // namespace
 } // namespace

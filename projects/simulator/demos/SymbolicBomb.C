@@ -18,6 +18,9 @@
 #include "InsnSemanticsExpr.h"
 #include "threadSupport.h"
 
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 // Everything about detecting symbolic complexity is encapsulated in this single class.  The class' instruction callback is
 // invoked for each instruction and when it hits the @p when address an analysis is triggered (only once, and only by the first
 // thread to reach the address).  The analysis disassembles the entire process memory and then analyzes each function

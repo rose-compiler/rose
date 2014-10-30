@@ -1,6 +1,10 @@
 #include "rose.h"
 #include "findConstants.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace FindConstants {
+
 uint64_t xvarNameCounter = 0;
 SgAsmx86Instruction* currentInstruction = NULL;
 
@@ -65,3 +69,7 @@ operator<<(std::ostream& o, const RegisterSet& rs)
     }
     return o;
 }
+
+} // namespace
+} // namespace
+} // namespace

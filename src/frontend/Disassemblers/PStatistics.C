@@ -18,6 +18,10 @@ using boost::math::erf;
 using std::isnan;
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 /******************************************************************************************************************************
  *                                      RegionStats
  ******************************************************************************************************************************/
@@ -719,10 +723,10 @@ Partitioner::count_size_variance(const InstructionMap &insns)
 Partitioner::RegionStats *
 Partitioner::region_statistics()
 {
-    MemoryMap mymap = *map;
-    mymap.prune(MemoryMap::MM_PROT_EXEC);
-    ExtentMap emap = toExtentMap(mymap.va_extents());
-    return region_statistics(emap);
+    MemoryMap onlyExecutable = *map;
+    onlyExecutable.require(MemoryMap::EXECUTABLE).keep();
+    ExtentMap executableExtent = toExtentMap(AddressIntervalSet(onlyExecutable));
+    return region_statistics(executableExtent);
 }
 
 Partitioner::RegionStats *
@@ -946,3 +950,6 @@ Partitioner::is_code(const ExtentMap &region, double *raw_vote_ptr, std::ostream
 
     return retval;
 }
+
+} // namespace
+} // namespace

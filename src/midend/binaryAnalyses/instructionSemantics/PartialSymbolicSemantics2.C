@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
@@ -546,9 +547,9 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
-        size_t nread = map->read(buf, address->get_number(), nbytes);
+        size_t nread = map->readQuick(buf, address->get_number(), nbytes);
         if (nread == nbytes) {
-            ByteOrder::convert(buf, nbytes, map->get_byte_order(), ByteOrder::ORDER_LSB);
+            ByteOrder::convert(buf, nbytes, map->byteOrder(), ByteOrder::ORDER_LSB);
             uint64_t dflt_val = 0;
             for (size_t i=0; i<nbytes; ++i)
                 dflt_val |= IntegerOps::shiftLeft2<uint64_t>(buf[i], 8*i);
@@ -562,6 +563,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     return retval;
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

@@ -19,27 +19,17 @@ struct Options {
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[], Options &opts) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup switches;
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
 
-    switches.insert(Switch("help", 'h')
-                    .action(showHelpAndExit(0))
-                    .doc("Shows this documentation and exits."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
-    switches.insert(Switch("log", 'L')
-                    .action(configureDiagnostics("log", Diagnostics::facilities))
-                    .argument("logspec")
-                    .whichValue(SAVE_ALL)
-                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
-    switches.insert(Switch("quiet", 'q')
-                    .intrinsicValue(true, opts.quiet)
-                    .doc("Suppresses the hexdump output."));
-    switches.insert(Switch("binary", 'b')
-                    .argument("prefix", anyParser(opts.prefix))
-                    .doc("Causes files to be created that contain the raw memory from loading the S-Records. The file "
-                         "names are constructed from the specified @v{prefix} and an 8-character hexadecimal string "
-                         "which is the starting address for a contiguous region of memory."));
+    SwitchGroup tool("Tool-specific switches");
+    tool.insert(Switch("quiet", 'q')
+                .intrinsicValue(true, opts.quiet)
+                .doc("Suppresses the hexdump output."));
+    tool.insert(Switch("binary", 'b')
+                .argument("prefix", anyParser(opts.prefix))
+                .doc("Causes files to be created that contain the raw memory from loading the S-Records. The file "
+                     "names are constructed from the specified @v{prefix} and an 8-character hexadecimal string "
+                     "which is the starting address for a contiguous region of memory."));
 
     Parser parser;
     parser.errorStream(mlog[FATAL]);
@@ -51,7 +41,7 @@ parseCommandLine(int argc, char *argv[], Options &opts) {
                "Reads the ASCII @v{SRecord_File} specified on the command-line, loads it into memory, and then produces "
                "a hexdump and/or binary files for the resulting memory.");
 
-    return parser.with(switches).parse(argc, argv).apply();
+    return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
 
 int
@@ -59,7 +49,7 @@ main(int argc, char *argv[]) {
     // Initialization
     Diagnostics::initialize();
     mlog.initStreams(rose::Diagnostics::destination);
-    Diagnostics::facilities.insertAndAdjust(mlog);
+    Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line
     Options opts;
@@ -95,7 +85,7 @@ main(int argc, char *argv[]) {
     // Load S-Records into memory
     mlog[WHERE] <<"loading S-Records into memory map\n";
     MemoryMap map;
-    rose_addr_t startAddr = BinaryAnalysis::SRecord::load(srecs, map, true/*create*/, MemoryMap::MM_PROT_RX);
+    rose_addr_t startAddr = BinaryAnalysis::SRecord::load(srecs, map, true/*create*/, MemoryMap::READABLE|MemoryMap::EXECUTABLE);
     std::cout <<"Memory map:\n";
     map.dump(std::cout, "    ");
     if (startAddr)
@@ -104,13 +94,13 @@ main(int argc, char *argv[]) {
     // Create binary files
     if (!opts.prefix.empty()) {
         mlog[WHERE] <<"dumping memory to binary files\n";
-        BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
+        BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
             const AddressInterval &interval = node.key();
             const MemoryMap::Segment &segment = node.value();
             std::string outputName = opts.prefix + StringUtility::addrToString(interval.least()).substr(2);// skip "0x"
             mlog[TRACE] <<"  dumping " <<StringUtility::plural(interval.size(), "bytes") <<" to " <<outputName <<"\n";
             std::ofstream output(outputName.c_str());
-            const char *data = (const char*)segment.get_buffer()->get_data_ptr();
+            const char *data = (const char*)segment.buffer()->data();
             if (data)
                 output.write(data, interval.size());
             if (!output.good())
@@ -124,10 +114,10 @@ main(int argc, char *argv[]) {
         HexdumpFormat fmt;
         fmt.numeric_fmt_special[0x00] = " .";           // make zeros less obtrusive
         fmt.numeric_fmt_special[0xff] = "##";           // make 0xff more obtrusive
-        BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
+        BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
             const AddressInterval &interval = node.key();
             const MemoryMap::Segment &segment = node.value();
-            const unsigned char *data = (const unsigned char*)segment.get_buffer()->get_data_ptr();
+            const unsigned char *data = (const unsigned char*)segment.buffer()->data();
             if (data) {
                 std::cout <<"\n\n";
                 SgAsmExecutableFileFormat::hexdump(std::cout, interval.least(), data, interval.size(), fmt);
