@@ -27,6 +27,14 @@ recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Single-step a process and compare execution addresses with a list of addresses
+
+bin_PROGRAMS += checkExecutionAddresses
+checkExecutionAddresses_SOURCES = checkExecutionAddresses.C
+checkExecutionAddresses_CPPFLAGS = $(ROSE_INCLUDES)
+checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Experimental "binary ROSE on-line workbench for specimen exploration"
 
 if ROSE_USE_WT
