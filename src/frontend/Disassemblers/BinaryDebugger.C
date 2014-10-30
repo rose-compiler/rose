@@ -164,15 +164,28 @@ BinaryDebugger::attach(int child, bool attach) {
 
 void
 BinaryDebugger::attach(const std::string &exeName) {
+    std::vector<std::string> exeNameAndArgs(1, exeName);
+    attach(exeNameAndArgs);
+}
+
+void
+BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs) {
+    ASSERT_forbid(exeNameAndArgs.empty());
     detach();
+
     child_ = fork();
     if (0==child_) {
+        char **argv = new char*[exeNameAndArgs.size()+1];
+        for (size_t i=0; i<exeNameAndArgs.size(); ++i)
+            argv[i] = strdup(exeNameAndArgs[i].c_str());
+        argv[exeNameAndArgs.size()] = NULL;
+
         if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
             std::cerr <<"BinaryDebugger::attach: ptrace_traceme failed: " <<strerror(errno) <<"\n";
             exit(1);
         }
-        execl(exeName.c_str(), exeName.c_str(), NULL);
-        std::cerr <<"BinaryDebugger::attach: exec \"" <<StringUtility::cEscape(exeName) <<"\" failed: " <<strerror(errno) <<"\n";
+        execv(argv[0], argv);
+        std::cerr <<"BinaryDebugger::attach: exec \"" <<StringUtility::cEscape(argv[0]) <<"\" failed: " <<strerror(errno) <<"\n";
         exit(1);
     }
 

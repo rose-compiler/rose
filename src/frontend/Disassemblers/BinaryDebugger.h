@@ -30,6 +30,11 @@ public:
         attach(exeName);
     }
 
+    BinaryDebugger(const std::vector<std::string> &exeNameAndArgs)
+        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0) {
+        attach(exeNameAndArgs);
+    }
+    
     ~BinaryDebugger() {
         detach();
     }
@@ -45,8 +50,14 @@ public:
      *  process and gain control, otherwise it assumes that the calling process has already done that. */
     void attach(int pid, bool attach=true);
 
-    /** Program to debug. */
+    /** Program to debug.
+     *
+     *  The program can be specified as a single name or as a name and arguments.
+     *
+     * @{ */
     void attach(const std::string &fileName);
+    void attach(const std::vector<std::string> &fileNameAndArgs);
+    /** @} */
 
     /** Returns true if attached to a subordinate.  Return value is the subordinate process ID. */
     int isAttached() { return child_; }
