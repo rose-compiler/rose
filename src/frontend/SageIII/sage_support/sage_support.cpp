@@ -3205,8 +3205,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
+               bool usingGfortran = false;
                string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-               if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+               #ifdef USE_CMAKE
+                 #ifdef CMAKE_COMPILER_IS_GNUG77
+                   usingGfortran = true;
+                 #endif
+               #else
+                 usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+               #endif
+
+               if (usingGfortran)
                   {
                  // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
                  // warnings += " -Wunused-labels";
