@@ -38,7 +38,7 @@ ROSE_SUPPORT_X10_FRONTEND()
 #
 ##
   #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
-  ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
+  ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php x10     opencl"
   #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
 ##
 #
@@ -60,7 +60,7 @@ ROSE_SUPPORT_X10_FRONTEND()
 #  especially if they are conflicting.
 if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
 AC_ARG_ENABLE([languages],
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,opencl,php,python (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,x10,opencl,php,python (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages
@@ -400,6 +400,7 @@ none|no)
 	support_cuda_frontend=no
 	support_fortran_frontend=no
 	support_java_frontend=no
+	support_x10_frontend=no
 	support_php_frontend=no
 	support_python_frontend=no
 	support_opencl_frontend=no
@@ -446,6 +447,10 @@ java)
           AC_MSG_FAILURE([[[Java support]] Java dependencies not found: required for parser support in ROSE -- uses the  Eclipse Compiler for Java (ECJ).
                          Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
         fi
+	;;
+x10)
+	support_x10_frontend=yes
+	AC_DEFINE([ROSE_BUILD_X10_LANGUAGE_SUPPORT], [], [Build ROSE to support the X10 langauge])
 	;;
 php)
 	support_php_frontend=yes
@@ -564,6 +569,16 @@ elif test $count_of_languages_to_support = 1 ; then
   fi
 
   #
+  # Only X10
+  #
+  if test "x$support_x10_frontend" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+  #
   # Only PHP 
   #
   if test "x$support_php_frontend" = "xyes" ; then
@@ -610,8 +625,6 @@ elif test $count_of_languages_to_support = 1 ; then
   fi
 
   #
-<<<<<<< HEAD
-=======
   # X10
   #
   if test "x$rose_with_x10" = "xyes" ; then
@@ -621,7 +634,6 @@ elif test $count_of_languages_to_support = 1 ; then
   fi
 
   #
->>>>>>> e6a5cc0... (Autoconf) (X10) Fix X10 language option; disable if X10 not found/provided
   # PHP
   #
   if test "x$with_php" = "xyes" ; then
@@ -692,6 +704,7 @@ AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_frontend" = xye
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [test "x$support_x10_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries_frontend" = xyes])
@@ -735,6 +748,13 @@ fi
 
 AC_MSG_CHECKING([if the Java frontend is enabled])
 if test "x$support_java_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the X10 frontend is enabled])
+if test "x$support_x10_frontend" = "xyes"; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
@@ -874,8 +894,6 @@ AC_ARG_ENABLE([only-java],
                 esac
                ,)
 
-<<<<<<< HEAD
-=======
 AC_ARG_ENABLE([only-x10],
               AS_HELP_STRING([--enable-only-x10(=yes)],
                              [Enable ONLY X10 support in ROSE (Warning: '--enable-only-x10=no' and '--disable-only-x10' are no longer supported)]),
@@ -897,7 +915,6 @@ AC_ARG_ENABLE([only-x10],
                 esac
                ,)
 
->>>>>>> e6a5cc0... (Autoconf) (X10) Fix X10 language option; disable if X10 not found/provided
 AC_ARG_ENABLE([only-php],
               AS_HELP_STRING([--enable-only-php(=yes)],
                              [Enable ONLY PHP support in ROSE (Warning: '--enable-only-php=no' and '--disable-only-php' are no longer supported)]),
