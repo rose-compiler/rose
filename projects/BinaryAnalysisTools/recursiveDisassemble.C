@@ -52,6 +52,7 @@ struct Settings {
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
     bool doListFunctions;                               // produce a function index
     bool doListFunctionAddresses;                       // list function entry addresses
+    bool doListInstructionAddresses;                    // show instruction addresses
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
@@ -59,8 +60,8 @@ struct Settings {
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
-          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doShowMap(false), doShowStats(false),
-          doListUnused(false) {}
+          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false),
+          doShowMap(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -184,22 +185,34 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(false, settings.doListFunctions)
                .hidden(true));
 
-    out.insert(Switch("list-function-entries")
+    out.insert(Switch("list-function-addresses")
                .intrinsicValue(true, settings.doListFunctionAddresses)
                .doc("Produce a listing of function entry addresses, one address per line in hexadecimal format. Each address "
                     "is followed by the word \"existing\" or \"missing\" depending on whether a non-empty basic block exists "
-                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-entries}."));
-    out.insert(Switch("no-list-function-entries")
-               .key("list-function-entries")
+                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-addresses}."));
+    out.insert(Switch("no-list-function-addresses")
+               .key("list-function-addresses")
                .intrinsicValue(false, settings.doListFunctionAddresses)
                .hidden(true));
 
-    out.insert(Switch("list-unused")
+    out.insert(Switch("list-instruction-addresses")
+               .intrinsicValue(true, settings.doListInstructionAddresses)
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain one address interval "
+                    "represented in the standard format: a hexadecimal address with leading \"0x\" followed by a plus sign (\"+\") "
+                    "followed by the decimal size of the instruction in bytes.  This listing is disabled with the "
+                    "@s{no-list-instruction-addresses} switch.  The default is to " +
+                    std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
+    out.insert(Switch("no-list-instruction-addresses")
+               .key("list-instruction-addresses")
+               .intrinsicValue(false, settings.doListInstructionAddresses)
+               .hidden(true));
+
+    out.insert(Switch("list-unused-addresses")
                .intrinsicValue(true, settings.doListUnused)
                .doc("Produce a listing of all specimen addresses that are not represented in the control flow graph. This "
                     "listing can be disabled with @s{no-list-unused}."));
-    out.insert(Switch("no-list-unused")
-               .key("list-unused")
+    out.insert(Switch("no-list-unused-addresses")
+               .key("list-unused-addresses")
                .intrinsicValue(false, settings.doListUnused)
                .hidden(true));
 
@@ -511,6 +524,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.doListInstructionAddresses) {
+        std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(AddressInterval::whole());
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+            std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size() <<"\n";
+    }
+    
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         if (!globalBlock)
