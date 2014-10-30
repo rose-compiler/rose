@@ -121,17 +121,31 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
      if (firstNondefiningDeclaration == NULL)
         {
        // It appears that some loop transformations (pass3.C) don't set the firstNondefiningDeclaration.
+#if 0
           printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): firstNondefiningDeclaration == NULL: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
           return;
         }
      ROSE_ASSERT(firstNondefiningDeclaration != NULL);
 
      if (decl == firstNondefiningDeclaration)
         {
+#if 0
+          if (isSgTypedefDeclaration(decl) != NULL)
+             {
+               printf ("TOP of SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+             }
+#endif
           if (declarationMap.find(firstNondefiningDeclaration) == declarationMap.end())
              {
 #if 0
                printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#endif
+#if 0
+               if (isSgTypedefDeclaration(decl) != NULL)
+                  {
+                    printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+                  }
 #endif
             // Add a new set.
                declarationMap[decl] = new set<SgDeclarationStatement*>();
@@ -149,13 +163,19 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 #if 0
                     printf ("In SageInterface::DeclarationSets::addDeclaration(): Add the declaration to the existing set: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
 #endif
+#if 0
+                    if (isSgTypedefDeclaration(decl) != NULL)
+                       {
+                         printf ("In SageInterface::DeclarationSets::addDeclaration(): Add the declaration to the existing set: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+                       }
+#endif
                  // Add a declaration to an existing set.
                     declarationMap[firstNondefiningDeclaration]->insert(decl);
                   }
                  else
                   {
-#if 0
-                    printf ("ERROR: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
+#if 1
+                    printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
 #endif
                  // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
                  // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.
@@ -163,9 +183,15 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 
                  // DQ (4/17/2014): This is required for the EDG version 4.8 and I don't know why.
                  // Currently the priority is to pass our existing tests.
-                 // An idea is that this is sharing introduced as a result of the use of defaul parameters.
+                 // An idea is that this is sharing introduced as a result of the use of default parameters.
 #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
                     ignore_error = ignore_error || (isSgTemplateInstantiationDecl(decl) != NULL);
+#else
+                 // DQ (7/2/2014): I am seeing that this is required for a new application using GNU 4.4.7.
+                 // It allows a boost issue specific to a revisited SgTypedefDeclaration pass, but I still
+                 // don't understand the problem.  so this needs a better fix.
+                 // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL);
+                    ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
 #endif
 
                     if (ignore_error == true)
@@ -182,6 +208,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                        {
                          printf ("declarationMap[firstNondefiningDeclaration]->size() = %zu \n",declarationMap[firstNondefiningDeclaration]->size());
 
+                         printf ("decl                             = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
                          printf ("decl->get_parent()->get_parent() = %p = %s = %s \n",decl->get_parent()->get_parent(),decl->get_parent()->get_parent()->class_name().c_str(),get_name(decl->get_parent()->get_parent()).c_str());
 
@@ -199,9 +226,10 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 
                          firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
                          decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
-
+#if 1
                          printf ("Can not ignore this error \n");
                          ROSE_ASSERT(false);
+#endif
                        }
                   }
              }
@@ -4042,6 +4070,8 @@ SageInterface::getProject()
   return projectTraversal.project;
 #endif
   std::vector<SgProject* > resultlist = getSgNodeListFromMemoryPool<SgProject>();
+  if (resultlist.empty())
+      return NULL;
   ROSE_ASSERT(resultlist.size()==1);
   return resultlist[0];
 }
@@ -8247,7 +8277,7 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
 //! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
 // Her loop translation does not pass AST consistency tests so we rewrite some of them here
 // NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
-bool SageInterface::forLoopNormalization(SgForStatement* loop)
+bool SageInterface::forLoopNormalization(SgForStatement* loop, bool foldConstant /*= true*/)
 {
   ROSE_ASSERT(loop != NULL);
   // Normalize initialization statement of the for loop
@@ -8346,10 +8376,12 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
    // Liao, 9/22/2009
    // folding entire loop may cause decreased accuracy for floating point operations
    // we only want to fold the loop controlling expressions
-  //constantFolding(loop->get_parent());
-  constantFolding(loop->get_test());
-  constantFolding(loop->get_increment());
-
+  if (foldConstant)
+  {
+    //constantFolding(loop->get_parent());
+    constantFolding(loop->get_test());
+    constantFolding(loop->get_increment());
+  }
 
   return true;
 }
@@ -8538,23 +8570,20 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    {
      SgBasicBlock* body = isSgBasicBlock(deepCopy(fringe_loop->get_loop_body())); // normalized loop has a BB body
      ROSE_ASSERT(body);
-     // replace reference to ivar with ivar +/- step*i
-     SgExpression* new_exp = NULL;
      std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
      for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
      {
        SgVarRefExp* refexp = *iter;
        if (refexp->get_symbol()==ivar->get_symbol_from_symbol_table())
        {
-         //build replacement  expression if it is NULL
-         if (new_exp == NULL)
-         {
-           if (isPlus) //ivar +/- step * i
-           new_exp = buildAddOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
-           else
-           new_exp = buildSubtractOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
+         // replace reference to ivar with ivar +/- step*i
+         SgExpression* new_exp = NULL;
+         //build replacement  expression for every appearance 
+         if (isPlus) //ivar +/- step * i
+         new_exp = buildAddOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
+         else
+         new_exp = buildSubtractOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
 
-         }
          // replace it with the right one
          replaceExpression(refexp, new_exp);
        }

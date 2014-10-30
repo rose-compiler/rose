@@ -347,9 +347,12 @@ $CLASSNAME::getVariant() const
 // (since the "T" was ment to stand for temporary).
 // When this happens the variantT() will be depricated.
 VariantT
-$CLASSNAME::variantT() const {
-  return V_$CLASSNAME;
-}
+$CLASSNAME::variantT() const 
+   {
+  // DQ (7/30/2014): Added assertion so that we can make sure we have a valid IR node.
+     ROSE_ASSERT(this != NULL);
+     return V_$CLASSNAME;
+   }
 
 #if 0
 int

@@ -2,10 +2,12 @@
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 
-using namespace rose;                                   // temporary until this API lives inside the "rose" name space
-using namespace rose::Diagnostics;
+namespace rose {
+namespace BinaryAnalysis {
 
-Sawyer::Message::Facility AsmUnparser::mlog("AsmUnparser");
+using namespace Diagnostics;
+
+Sawyer::Message::Facility AsmUnparser::mlog;
 
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
  *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
@@ -70,8 +72,8 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
+        Diagnostics::mfacilities.insert(mlog);
     }
 }
 
@@ -976,8 +978,8 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
         SgUnsignedCharList data = args.data->get_raw_bytes();
         MemoryMap map;
         map.insert(AddressInterval::baseSize(args.data->get_address(), data.size()),
-                   MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
-                                      MemoryMap::MM_PROT_RX, "static data block"));
+                   MemoryMap::Segment::staticInstance(&data[0], data.size(), MemoryMap::READABLE|MemoryMap::EXECUTABLE,
+                                                      "static data block"));
         unparser->set_prefix_format(args.unparser->get_prefix_format());
         rose_addr_t offset=0, nskipped=0;
         while (offset < data.size()) {
@@ -1208,3 +1210,6 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
     }
     return enabled;
 }
+
+} // namespace
+} // namespace

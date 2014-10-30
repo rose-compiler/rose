@@ -3,6 +3,44 @@
 
 #include "sage3basic.h"
 
+/** Returns instruction kind for any architecture.
+ *
+ *  Instruction kinds are specific to the architecture so it doesn't make sense to compare an instruction kind from x86 with an
+ *  instruction kind from m68k.  However, this virtual function exists so that we don't need to implement switch statements
+ *  every time we want to compare two instructions from the same architecture.  For instance, instead of code like this:
+ *
+ * @code
+ *  bool areSame(SgAsmInstruction *a, SgAsmInstruction *b) {
+ *      if (a->variantT() != b->variantT())
+ *          return false;
+ *      if (SgAsmM68kInstruction *aa = isSgAsmM68kInstruction(a)) {
+ *          SgAsmM68kInstruction *bb = isSgAsmM68kInstruction(b);
+ *          return aa->get_kind() == bb->get_kind();
+ *      }
+ *      if (SgAsmMipsInstruction *aa = isSgAsmMipsInstruction(a)) {
+ *          SgAsmMipsInstruction *bb = isSgAsmMipsInstruction(b);
+ *          return aa->get_kind() == bb->get_kind();
+ *      }
+ *      ...
+ *      ... // and many others
+ *      ...
+ *      ASSERT_not_reachable("architecture is not implemented yet");
+ *  }
+ * @endcode
+ *
+ *  we can write future-proof code:
+ *
+ * @code
+ *  bool areSame(SgAsmInstruction *a, SgAsmInstruction *b) {
+ *      return a->variantT()==b->variantT() && a->get_anyKind()==b->get_anyKind();
+ *  }
+ * @endcode */
+unsigned
+SgAsmInstruction::get_anyKind() const {
+    // ROSETTA doesn't support pure virtual, so run-time errors is the best we can do.
+    ASSERT_not_reachable("SgAsmInstruction::get_kind() should have been implemented in " + class_name());
+}
+
 /** Control flow successors for a single instruction.  The return value does not consider neighboring instructions, and
  *  therefore is quite naive.  It returns only the information it can glean from this single instruction.  If the returned set
  *  of virtual instructions is fully known then the @p complete argument will be set to true, otherwise false.  The base class
@@ -24,7 +62,7 @@ SgAsmInstruction::get_successors(bool *complete) {
  *  might want to override this to do something more sophisticated. */
 std::set<rose_addr_t>
 SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
-                                 MemoryMap *initial_memory/*=NULL*/)
+                                 const MemoryMap *initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;

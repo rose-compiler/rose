@@ -3,6 +3,11 @@
 
 #include "sage3basic.h"
 
+unsigned
+SgAsmMipsInstruction::get_anyKind() const {
+    return p_kind;
+}
+
 // see base class
 bool
 SgAsmMipsInstruction::terminates_basic_block()
