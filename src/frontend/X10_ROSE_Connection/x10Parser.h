@@ -202,10 +202,10 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationHeader
 /*
  * Class:     x10rose_visit_JNI
  * Method:    cactionTypeDeclarationEnd
- * Signature: (LX10Token;)V
+ * Signature: (jboolean, LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationEnd
-  (JNIEnv *, jclass, jobject);
+  (JNIEnv *, jclass, jboolean, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
@@ -290,7 +290,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeParameterReference
  * Signature: (Ljava/lang/String;Ljava/lang/String;LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference
-  (JNIEnv *, jclass, jstring, jstring, jobject);
+  (JNIEnv *, jclass, jstring, jstring, jobject, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
@@ -359,13 +359,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMessageSend
 /*
  * Class:     x10rose_visit_JNI
  * Method:    cactionMessageSendEnd
- * Signature: (ZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IIILX10Token;)V
+ * Signature: (ZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IIILjava/lang/Ojbect;LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMessageSendEnd
 #if 0
   (JNIEnv *, jclass, jboolean, jboolean, jstring, jstring, jstring, jint, jint, jint, jobject);
 #else
-  (JNIEnv *, jclass, jboolean, jboolean, jstring, jint, jint, jint, jobject);
+  (JNIEnv *, jclass, jboolean, jboolean, jstring, jint, jint, jint, /*jobject,*/ jobject);
 #endif
 
 
@@ -1307,7 +1307,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildTypeParameterSupport
  * Signature: (Ljava/lang/String;Ljava/lang/String;LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdatePushMethodParameterScope
-  (JNIEnv *, jclass, jstring, jstring, jobject);
+  (JNIEnv *, jclass, jstring, jint, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
@@ -1331,7 +1331,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdatePopMethodParameterSco
  * Signature: (IZILX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassExtendsAndImplementsSupport
+#if 0
   (JNIEnv *, jclass, jint, jboolean, jint, jobject);
+#else
+  (JNIEnv *, jclass, jint, jobjectArray, jboolean, jstring, jint, jobjectArray, jobject);
+#endif
 
 /*
  * Class:     x10rose_visit_JNI
@@ -1457,6 +1461,85 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArgumentName
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionArgumentModifiers
   (JNIEnv *, jclass, jint);
 
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionGetCurrentClassName
+ * Signature: ()V
+ */
+JNIEXPORT jstring JNICALL Java_x10rose_visit_JNI_cactionGetCurrentClassName 
+        (JNIEnv *env, jclass clz);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionSetCurrentClassName
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassName
+        (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionSetCurrentFilePath
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentFilePath
+        (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAsync
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAsync
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAsyncEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAsyncEnd
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionFinish
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinish
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionFinishEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishEnd
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAt
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAt
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAtEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtEnd
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionHere
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionHere
+        (JNIEnv *, jclass, jobject);
 }
 #ifdef __cplusplus
 #endif
