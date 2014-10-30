@@ -24,9 +24,11 @@ static const double lookahead = 1.0;
 /* Event processing routine. Perform the relevant actions when event
    m happens to object s. */
 
+RunTimeLpStateStorage rtlpss;
+
 void ctr_event_handler(ctr_state *s,tw_bf *bf,ctr_message *m,tw_lp *lp)
 {
-  Backstroke::RunTimeStateStorage* rts=rtl->rossLpMapping(lp);
+  Backstroke::RunTimeStateStorage* rts=rtlpss->rossLpMapping((void*)lp);
   /* We received the message m. Update local particle count,
      and number of particles in transit by number of received particles. */
   {
@@ -76,7 +78,7 @@ void ctr_event_handler_rc(ctr_state *s,tw_bf *bf,ctr_message *m,tw_lp *lp)
     tw_rand_reverse_unif(lp -> rng);
   }
   /* call backstroke-reverse function now */ {
-    Backstroke::RunTimeStateStorage* rts=rtl->rossLpMapping(lp);
+    Backstroke::RunTimeStateStorage* rts=rtlpss->rossLpMapping(lp);
     rts->reverseEvent();
   }
 }

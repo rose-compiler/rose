@@ -176,5 +176,5 @@ bool Backstroke::RunTimeSystem::is_stack_ptr(void *ptr) {
 #endif
   
 size_t Backstroke::RunTimeSystem::currentEventLength() {
-  currentEventRecord->stack_bitype.size();
+  return currentEventRecord->stack_bitype.size();
 }

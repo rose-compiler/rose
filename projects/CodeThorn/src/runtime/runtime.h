@@ -5,6 +5,7 @@
 #include <queue>
 #include <deque>
 #include <inttypes.h>
+#include <map>
 
 using namespace std;
 
@@ -96,5 +97,30 @@ class RunTimeSystem {
 
  typedef RunTimeSystem RunTimeStateStorage;
 
+ class RunTimeLpStateStorage {
+   typedef std::map<void*, RunTimeStateStorage*> LpToRTSSMapping;
+ public:
+   RunTimeStateStorage* getLpStateStorage(void* lp) {
+     return lp_ss_mapping[lp];
+   }
+   void setLpStateStorage(void* lp, RunTimeStateStorage* ss) {
+     lp_ss_mapping[lp]=ss;
+   }
+   bool isSetLp(void* lp) {
+     LpToRTSSMapping::iterator it=lp_ss_mapping.find(lp);
+     return it!=lp_ss_mapping.end();
+   }
+   RunTimeStateStorage* getLpStateStorageAutoAllocated(void* lp) {
+     if(isSetLp(lp)) {
+       return lp_ss_mapping[lp];
+     } else {
+       RunTimeStateStorage* rtss=new RunTimeStateStorage();
+       lp_ss_mapping[lp]=rtss;
+       return rtss;
+     }
+   }   
+ private:
+   LpToRTSSMapping lp_ss_mapping;
+ };
 }
 #endif
