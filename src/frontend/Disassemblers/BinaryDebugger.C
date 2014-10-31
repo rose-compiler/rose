@@ -45,7 +45,7 @@ static int fork() {                                     // Windows dud
     return -1;
 }
 
-static int execl(const char*, ...) {                    // Windows dud
+static int execv(const char*, char *const argv[]) {     // Windows dud
     errno = ENOSYS;
     return -1;
 }
