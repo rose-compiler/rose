@@ -9,7 +9,18 @@
 
 using namespace std;
 
+#include <ross.h>
+
 namespace Backstroke {
+
+class SimTime {
+ public:
+  SimTime();
+  SimTime(tw_stime simTime);
+  bool operator<(const SimTime& other);
+ private:
+  tw_stime _simTime;
+};
 
 #include "runtime_macros.h"
 
@@ -18,8 +29,10 @@ class RunTimeSystem {
   RunTimeSystem();
   typedef void* ptr;
   void initializeForwardEvent();
+  void setEventSimTime(Backstroke::SimTime simTime);
   void finalizeForwardEvent();
   void reverseEvent();
+  void commitEventsUntil(Backstroke::SimTime simTime);
   void commitEvent();
   void registerForCommit(ptr p);
 
@@ -84,6 +97,7 @@ class RunTimeSystem {
     void deallocateHeapQueue();
     stack<BuiltInType> stack_bitype;
     queue<ptr> registeredHeapQueue;
+    SimTime simTime;
   };
   deque<EventRecord*> eventRecordDeque;
   size_t typeSize(BuiltInType biType);

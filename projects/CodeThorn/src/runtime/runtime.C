@@ -5,6 +5,16 @@
 
 using namespace std;
 
+Backstroke::SimTime::SimTime():_simTime(0) {
+}
+
+Backstroke::SimTime::SimTime(tw_stime simTime):_simTime(simTime) {
+}
+
+bool Backstroke::SimTime::operator<(const SimTime& other) {
+  return _simTime<other._simTime;
+}
+
 // this function is called when an event is reversed ("de-register") and when an event is committed.
 void Backstroke::RunTimeSystem::EventRecord::deallocateHeapQueue() {
   while(!registeredHeapQueue.empty()) {
@@ -56,6 +66,14 @@ void Backstroke::RunTimeSystem::reverseEvent() {
 
 void Backstroke::RunTimeSystem::registerForCommit(ptr p) {
   currentEventRecord->registeredHeapQueue.push(p);
+}
+
+void Backstroke::RunTimeSystem::setEventSimTime(Backstroke::SimTime simTime) {
+  currentEventRecord->simTime=simTime;
+}
+
+// deallocates EventRecord
+void Backstroke::RunTimeSystem::commitEventsUntil(Backstroke::SimTime simTime) {
 }
 
 // deallocates EventRecord

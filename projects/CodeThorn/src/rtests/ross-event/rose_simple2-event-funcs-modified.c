@@ -29,6 +29,9 @@ RunTimeLpStateStorage rtlpss;
 void ctr_event_handler(ctr_state *s,tw_bf *bf,ctr_message *m,tw_lp *lp)
 {
   Backstroke::RunTimeStateStorage* rts=rtlpss->rossLpMapping((void*)lp);
+  tw_stime eventSimTime=tw_now(lp);
+  rts->setEventSimTime(eventSimTime);
+  rts->commitEventsLessThanSimTime(lp->pe->GVT));
   /* We received the message m. Update local particle count,
      and number of particles in transit by number of received particles. */
   {

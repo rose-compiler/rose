@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "runtime.C"
+#include "runtime.h"
 
 using namespace Backstroke;
 using namespace std;
@@ -57,7 +57,6 @@ int main() {
     const int asize=10;
     short int* a=new short int[asize];
     Event* event=new Event(n);
-    short int* ap1;
     for(int i=0;i<asize;i++) {
       a[i]=0;
     }
