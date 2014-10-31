@@ -29,3 +29,6 @@ do
     [ -f "$srcbase.C" ] && cp "$srcbase.C" .
 done
 
+
+# Add a comment to the Message.h file
+sed --in-place -e '1i// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h

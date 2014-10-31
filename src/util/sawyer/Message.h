@@ -1,3 +1,4 @@
+// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h
 #ifndef Sawyer_Message_H
 #define Sawyer_Message_H
 
