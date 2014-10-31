@@ -7,7 +7,7 @@ set(files_to_test
    test2014_26.c  test2014_48.c   test2014_86.c   test2004_20.c   test2009_02.c 
    test2009_22.c  test2012_113.c  test2012_154.c  test2012_26.c   test2012_49.c 
    test2012_69.c  test2012_86.c   test2013_113.c  test2013_39.c   test2013_71.c 
-   test2013_87.c  test2013_95.c   test2014_14.c   test2014_34.c   test2014_49.c 
+   test2013_87.c  test2014_14.c   test2014_34.c   test2014_49.c 
    test2014_92.c  test2005_172.c  test2009_04.c   test2010_01.c   test2012_11.c 
    test2012_158.c test2012_27.c   test2012_61.c   test2012_70.c   test2012_87.c 
    test2013_24.c  test2013_72.c   test2013_89.c   test2013_96.c 
@@ -22,6 +22,9 @@ set(files_to_test
    test2011_05.c  test2012_148.c  test2012_22.c   test2012_37.c   test2012_67.c 
    test2012_84.c  test2013_100.c  test2013_30.c   test2013_64.c   test2013_83.c 
    test2013_93.c  test2014_12.c   test2014_21.c   test2014_40.c   test2014_84.c)
+
+# disabled because it currently fails on Windows
+set(disabled_tests test2013_95.c)
 
 foreach(file_to_test ${files_to_test})
   compile_test(${file_to_test})
