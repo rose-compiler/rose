@@ -139,7 +139,7 @@ isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap &map, rose_addr
 static std::pair<size_t, size_t>
 execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryDebugger &debugger, const MemoryMap &map,
         AddressCounts &executed /*in,out*/) {
-    Sawyer::ProgressBar<size_t> progress(mlog[INFO], "instructions");
+    Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
     if (settings.trace)
         trace.open((numberToString(debugger.isAttached()) + ".trace").c_str());

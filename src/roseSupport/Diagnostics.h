@@ -249,16 +249,17 @@ namespace Diagnostics {
 
 // Make Sawyer message importance levels available here. That way, we don't have to "use namespace Sawyer::Message", which
 // also sucks in a lot of other stuff.
-using Sawyer::Message::DEBUG;
-using Sawyer::Message::TRACE;
-using Sawyer::Message::WHERE;
-using Sawyer::Message::INFO;
-using Sawyer::Message::WARN;
-using Sawyer::Message::ERROR;
-using Sawyer::Message::FATAL;
+using Sawyer::Message::DEBUG;                           // very low-level debugging mostly for developers
+using Sawyer::Message::TRACE;                           // more low-level debugging but maybe more interesting to users
+using Sawyer::Message::WHERE;                           // higher-level debugging to help users understand ROSE flow
+using Sawyer::Message::MARCH;                           // progress bars and other high-frequency messages
+using Sawyer::Message::INFO;                            // useful information about normal behavior such as stats
+using Sawyer::Message::WARN;                            // warnings that users should almost certainly see at least once
+using Sawyer::Message::ERROR;                           // recoverable errors, possibly followed by throw
+using Sawyer::Message::FATAL;                           // errors which are immediately followed by exit, abort, or similar
 
-using Sawyer::Message::Stream;
-using Sawyer::Message::Facility;
+using Sawyer::Message::Stream;                          // one message stream, e.g., 'mlog[INFO]'
+using Sawyer::Message::Facility;                        // collection of related streams, e.g., 'mlog'
 
 /** Default destination for ROSE diagnostics.  The user may set this explicitly before rose::Diagnostics::initialize is called,
  *  otherwise that function will create a destination that points to standard error and uses the optional

@@ -105,7 +105,7 @@ Partitioner::reportProgress() const {
     }
     
     if (!bar)
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "cfg");
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[MARCH], "cfg");
 
     if (progressTotal_) {
         // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are

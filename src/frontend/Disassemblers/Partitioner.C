@@ -139,7 +139,7 @@ Partitioner::update_progress() const
 {
     static Sawyer::ProgressBar<size_t, ProgressSuffix> *progressBar = NULL;
     if (!progressBar)
-        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[INFO], "");
+        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[MARCH], "");
     progressBar->suffix(ProgressSuffix(this));
     progressBar->value(basic_blocks.size());
 }

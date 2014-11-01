@@ -334,7 +334,7 @@ main(int argc, char *argv[]) {
 
         // Run the specimen natively under a debugger.
         info <<"running selected functions natively under a debugger\n";
-        Sawyer::ProgressBar<size_t> progress(functions.size(), mlog[INFO]);
+        Sawyer::ProgressBar<size_t> progress(functions.size(), mlog[MARCH]);
         BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
             mlog[WHERE] <<"running function " <<addrToString(function->address()) <<" \"" <<function->name() <<"\"\n";
             ++progress;
@@ -364,7 +364,7 @@ main(int argc, char *argv[]) {
 
         // Run the speciment natively at each selected instruction.
         info <<"running selected instructions natively under a debugger\n";
-        Sawyer::ProgressBar<size_t> progress(insns.size(), mlog[INFO]);
+        Sawyer::ProgressBar<size_t> progress(insns.size(), mlog[MARCH]);
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
             mlog[WHERE] <<"running instruction " <<addrToString(insn->get_address()) <<"\"\n";
             ++progress;

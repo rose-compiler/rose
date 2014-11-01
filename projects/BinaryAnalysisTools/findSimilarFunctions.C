@@ -274,7 +274,7 @@ class MyWorkList {
     Sawyer::ProgressBar<size_t> progress_;
     size_t next_;
 public:
-    MyWorkList(size_t matrixSize, size_t nItems): progress_(mlog[INFO]) {
+    MyWorkList(size_t matrixSize, size_t nItems): progress_(mlog[MARCH]) {
         size_t itemSize = (size_t)ceil(sqrt((double)matrixSize*matrixSize/nItems));
         ASSERT_require(itemSize>0);
         for (size_t i=0; i<matrixSize; i+=itemSize) {
