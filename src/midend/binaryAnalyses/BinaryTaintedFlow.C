@@ -13,7 +13,7 @@ TaintedFlow::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::TaintedFlow", Diagnostics::destination);
-        rose::Diagnostics::mfacilities.insert(mlog);
+        rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 

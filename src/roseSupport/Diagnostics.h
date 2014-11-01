@@ -81,9 +81,10 @@ namespace rose {
  *  C++ symbol names, dots, and "::".  This name is used to enable/disable the facility from the command-line, and will show up
  *  as part of the output for any message emitted using this facility.
  *
- *  The call to Sawyer::Message::Facilities::insert adds this @c mlog facility to the global list of facilities so it can be
- *  controlled from the command line.  Facilities are still usable if they're not registered in the global list -- they just
- *  can't be controlled by the user in the typical way.
+ *  The call to Sawyer::Message::Facilities::insertAndAdjust adds this @c mlog facility to the global list of facilities so it
+ *  can be controlled from the command line. It also immediately enables/disables the Facility Stream objects according to the
+ *  settings in @c mfacilities.  Facilities are still usable if they're not registered in the global list -- they just can't be
+ *  controlled by the user in the typical way.
  *
  * @code
  *  // class method in BinaryLoader.C
@@ -92,7 +93,7 @@ namespace rose {
  *      if (!initialized) {
  *          initialized = true;
  *          mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BinaryLoader", Diagnostics::destination);
- *          Diagnostics::mfacilities.insert(mlog);
+ *          Diagnostics::mfacilities.insertAndAdjust(mlog);
  *      }
  *  }
  * @endcode

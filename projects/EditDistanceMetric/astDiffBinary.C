@@ -72,7 +72,7 @@ main(int argc, char *argv[]) {
     // Initialize
     rose::Diagnostics::initialize();                    // because librose doesn't initialize itself until frontend();
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insert(mlog);
+    Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line (see --help for usage)
     Settings settings;
