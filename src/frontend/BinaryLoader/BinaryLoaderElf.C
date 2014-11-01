@@ -370,8 +370,18 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
             if ((elf_section->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_TLS) &&
                 elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
+            } else if (retval != NULL) {
+                using namespace StringUtility;
+                mlog[ERROR] <<"find_section_by_preferred_va: multiple sections match " <<addrToString(va) <<"\n";
+                mlog[ERROR] <<"  section at " <<addrToString(retval->get_mapped_actual_va())
+                            <<" + " <<addrToString(retval->get_mapped_size())
+                            <<" = " <<addrToString(retval->get_mapped_actual_va() + retval->get_mapped_size())
+                            <<" " <<cEscape(retval->get_name()->get_string()) <<"\n";
+                mlog[ERROR] <<"  section at " <<addrToString(elf_section->get_mapped_actual_va())
+                            <<" + " <<addrToString(elf_section->get_mapped_size())
+                            <<" = " <<addrToString(elf_section->get_mapped_actual_va() + elf_section->get_mapped_size())
+                            <<" " <<cEscape(elf_section->get_name()->get_string()) <<"\n";
             } else {
-                ASSERT_require2(retval!=NULL, "there should be only one matching section");
                 retval = elf_section;
             }
         }
