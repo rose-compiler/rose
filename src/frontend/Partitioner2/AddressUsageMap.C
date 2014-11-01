@@ -53,7 +53,9 @@ AddressUsers::instructionExists(SgAsmInstruction *insn) const {
     if (!insn)
         return BasicBlock::Ptr();
     AddressUser needle(insn, BasicBlock::Ptr());      // basic block is not used for binary search
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->insn()!=insn)
         return BasicBlock::Ptr();
@@ -66,7 +68,9 @@ AddressUsers::dataBlockExists(const DataBlock::Ptr &dblock) const {
     if (dblock==NULL)
         return Sawyer::Nothing();
     AddressUser needle = AddressUser(OwnedDataBlock(dblock));
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
     if (lb==users_.end() || lb->dataBlock()!=dblock)
         return Sawyer::Nothing();
@@ -101,18 +105,24 @@ AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &b
     ASSERT_not_null(insn);
     ASSERT_not_null(bblock);
     ASSERT_forbid(instructionExists(insn));
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
     AddressUser user(insn, bblock);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
     ASSERT_require2(lb==users_.end() || lb->insn()!=user.insn(), "instruction already exists in the list");
     users_.insert(lb, user);
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
 }
 
 void
 AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
     AddressUser user(odb);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
     if (lb==users_.end() || lb->dataBlock()!=odb.dataBlock()) {
@@ -125,30 +135,40 @@ AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
         BOOST_FOREACH (const BasicBlock::Ptr &bblock, odb.owningBasicBlocks())
             lb->dataBlockOwnership().insertOwner(bblock);
     }
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
 }
 
 void
 AddressUsers::eraseInstruction(SgAsmInstruction *insn) {
     if (insn!=NULL) {
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
         ASSERT_require(isConsistent());
+#endif
         AddressUser needle(insn, BasicBlock::Ptr());
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->insn()==insn)
             users_.erase(lb);
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
         ASSERT_require(isConsistent());
+#endif
     }
 }
 
 void
 AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock!=NULL) {
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
         ASSERT_require(isConsistent());
+#endif
         AddressUser needle = AddressUser(OwnedDataBlock(dblock));
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
         if (lb!=users_.end() && lb->dataBlock()==dblock)
             users_.erase(lb);
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
         ASSERT_require(isConsistent());
+#endif
     }
 }
 
@@ -203,7 +223,9 @@ AddressUsers::intersection(const AddressUsers &other) const {
             ++j;
         }
     }
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(retval.isConsistent());
+#endif
     return retval;
 }
 
@@ -226,7 +248,9 @@ AddressUsers::union_(const AddressUsers &other) const {
         retval.users_.push_back(users_[i++]);
     while (j<other.size())
         retval.users_.push_back(other.users_[j++]);
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(retval.isConsistent());
+#endif
     return retval;
 }
 
@@ -241,7 +265,9 @@ AddressUsers::insert(const AddressUsers &other) {
                 users_.insert(lb, user);
         }
     }
+#ifdef ROSE_PARTITIONER_EXPENSIVE_CHECKS
     ASSERT_require(isConsistent());
+#endif
 }
 
 bool

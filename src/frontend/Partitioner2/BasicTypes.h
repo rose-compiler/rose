@@ -1,6 +1,11 @@
 #ifndef ROSE_Partitioner2_BasicTypes_H
 #define ROSE_Partitioner2_BasicTypes_H
 
+// Define this if you want extra invariant checks that are quite expensive. This only makes a difference if NDEBUG and
+// SAWYER_NDEBUG are both undefined--if either one of them are defined then no expensive (or inexpensive) checks are
+// performed.
+//#define ROSE_PARTITIONER_EXPENSIVE_CHECKS
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {

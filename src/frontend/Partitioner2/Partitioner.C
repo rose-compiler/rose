@@ -15,10 +15,6 @@
 #include <sawyer/ProgressBar.h>
 #include <sawyer/Stack.h>
 
-// Defining this will cause the partitioner to continuously very that the CFG and AUM are consistent.  Doing so will impose a
-// substantial slow-down.  Defining this has little effect if NDEBUG or SAWYER_NDEBUG is also defined.
-#undef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
 
