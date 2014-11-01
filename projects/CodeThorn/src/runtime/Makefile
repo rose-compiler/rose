@@ -8,7 +8,7 @@ ROSS_FLAGS=-I${ROSS_HOME}/include -D_GNU_SOURCE -g -Wall \
 all: testruntimesystem
 
 testruntimesystem: testruntimesystem.C runtime.h runtime.C 
-	g++ runtime.C testruntimesystem.C -lpthread ${ROSS_FLAGS} -I/usr/include/mpich2 -otestruntimesystem -I/usr/include
+	mpiCC runtime.C testruntimesystem.C -lpthread ${ROSS_FLAGS} -I/usr/include/mpich2 -otestruntimesystem -I/usr/include -I${MPI_HOME}/include
 
 check: testruntimesystem
 	./testruntimesystem
