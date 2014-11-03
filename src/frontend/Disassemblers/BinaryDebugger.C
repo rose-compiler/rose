@@ -80,14 +80,22 @@ sendCommand(__ptrace_request request, int child, void *addr=0, void *data=0) {
 }
 
 #if defined(BOOST_WINDOWS) || __WORDSIZE==32
-static long int &
-instructionPointer(user_regs_struct &regs) {
+static rose_addr_t
+getInstructionPointer(const user_regs_struct &regs) {
     return regs.eip;
 }
+static void
+setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
+    regs.eip = va;
+}
 #else
-static unsigned long &
-instructionPointer(user_regs_struct &regs) {
+static rose_addr_t
+getInstructionPointer(const user_regs_struct &regs) {
     return regs.rip;
+}
+static void
+setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
+    regs.rip = va;
 }
 #endif
 
@@ -199,7 +207,7 @@ void
 BinaryDebugger::executionAddress(rose_addr_t va) {
     user_regs_struct regs;
     sendCommand(PTRACE_GETREGS, child_, 0, &regs);
-    instructionPointer(regs) = va;
+    setInstructionPointer(regs, va);
     sendCommand(PTRACE_SETREGS, child_, 0, &regs);
 }
 
@@ -207,7 +215,7 @@ rose_addr_t
 BinaryDebugger::executionAddress() {
     user_regs_struct regs;
     sendCommand(PTRACE_GETREGS, child_, 0, &regs);
-    return instructionPointer(regs);
+    return getInstructionPointer(regs);
 }
 
 void
@@ -238,7 +246,7 @@ BinaryDebugger::runToBreakpoint() {
                 break;
             user_regs_struct regs;
             sendCommand(PTRACE_GETREGS, child_, 0, &regs);
-            if (breakpoints_.exists(instructionPointer(regs)))
+            if (breakpoints_.exists(getInstructionPointer(regs)))
                 break;
         }
     }

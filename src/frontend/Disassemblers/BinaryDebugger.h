@@ -68,8 +68,10 @@ public:
     /** Terminate the subordinate. */
     void terminate();
 
-    /** Set execution position. */
+    /** Set execution address. */
     void executionAddress(rose_addr_t va);
+
+    /** Get execution address. */
     rose_addr_t executionAddress();
 
     /** Set breakpoints. */
