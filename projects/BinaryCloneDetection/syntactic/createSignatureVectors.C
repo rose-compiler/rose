@@ -34,8 +34,6 @@ struct hash<void*> {
 
 #define NORMALIZED_UNPARSED_INSTRUCTIONS
 
-enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
-
 #if 0
 static const size_t numberOfInstructionKinds = x86_last_instruction;
 inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->get_kind();}
@@ -75,61 +73,6 @@ unparseAndIntern(SgAsmExpression* e)
         return i->second;
     }
 }
- 
-class SignatureVector {
-public:
-    static const size_t Size = numberOfInstructionKinds * 4 + 300 + 9 + 3;
-    typedef uint16_t ElementType;
-
-private:
-    ElementType values[Size];
-
-public:
-    SignatureVector() {
-        clear();
-    }
-
-    void clear() {
-        for (size_t i = 0; i < Size; ++i)
-            values[i] = 0;
-    }
-
-    ElementType operator[](size_t i) const {
-        assert(i < Size);
-        return values[i];
-    }
-
-    ElementType& totalForVariant(size_t var) {
-        assert(var < numberOfInstructionKinds);
-        return values[var * 4];
-    }
-
-    ElementType& opsForVariant(ExpressionCategory cat, size_t var) {
-        assert(var < numberOfInstructionKinds);
-        return values[var * 4 + (int)cat + 1];
-    }
-
-    ElementType& specificOp(ExpressionCategory cat, size_t num) {
-	static ElementType dummyVariable = 0;
-	if (num < 100) {
-            return values[numberOfInstructionKinds * 4 + 100 * (int)cat + num];
-	} else {
-            return dummyVariable;
-        }
-    }
-
-    ElementType& operandPair(ExpressionCategory a, ExpressionCategory b) {
-        return values[numberOfInstructionKinds * 4 + 300 + (int)a * 3 + (int)b];
-    }
-
-    ElementType& operandTotal(ExpressionCategory a) {
-        return values[numberOfInstructionKinds * 4 + 300 + 9 + (int)a];
-    }
-
-    const ElementType* getBase() const {
-        return values;
-    }
-};
 
 inline ExpressionCategory
 getCategory(SgAsmExpression* e)

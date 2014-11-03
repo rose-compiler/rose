@@ -360,7 +360,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
                 elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
             } else {
-                ASSERT_require2(retval!=NULL, "there should be only one matching section");
+                ASSERT_require2(retval==NULL, "there should be only one matching section");
                 retval = elf_section;
             }
         }
