@@ -242,10 +242,13 @@ int main( int argc, char * argv[] )
   for(vector<SgForStatement*>::iterator i=loopList.begin(); i!=loopList.end(); ++i)
   {
     SgForStatement* forStatement = isSgForStatement(*i);
+    SgForStatement* remainingForStmt = SageInterface::deepCopy(forStatement);
     SageInterface::forLoopNormalization(forStatement);
     if(isInnermostLoop(forStatement) && isStrideOneLoop(forStatement)){
       updateLoopIteration(forStatement,VF);
       normalizeCompoundAssignOp(forStatement);
+      SageInterface::insertStatement(forStatement,remainingForStmt, false);
+      changeRemainingLowerBound(remainingForStmt,VF);
     }
   }
 //  defuse = new DefUseAnalysis(project);
@@ -270,7 +273,7 @@ int main( int argc, char * argv[] )
 
       scalarVariableConversion(forStatement, liveIns, liveOuts);
 
-      translateMultiplyAccumulateOperation(loopBody);
+      //translateMultiplyAccumulateOperation(loopBody);
   
       vectorizeLoopTraversal innerLoopTransformation;
       innerLoopTransformation.traverse(loopBody,postorder);

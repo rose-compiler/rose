@@ -40,6 +40,8 @@ namespace SIMDVectorization
 //  Perform strip-mining transformation on a vectorizable loop, update its loop stride.
   void updateLoopIteration(SgForStatement*, int);
 
+  void changeRemainingLowerBound(SgForStatement*, int);
+
 //  vectorize unary operations insize vectorizable loop
   void vectorizeUnaryOp(SgUnaryOp*);
 
@@ -82,6 +84,9 @@ namespace SIMDVectorization
 // Add expression for true statement into ConditionalStmtTable
   void insertConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&, int);
   void updateConditionalStmtTable(SgStatement*, std::map<SgName,conditionalStmts*>&);
+
+// check if expression is in subscript
+  bool isSubscriptExpression(SgExpression*);
 }
 
 
