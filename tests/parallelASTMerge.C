@@ -16,36 +16,13 @@
 #include <boost/progress.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
-// #include <rose.h>
+#include <sawyer/Stopwatch.h>
 
 using namespace std;
 
 using namespace boost;
 
 
-class XTimer {
-    public:
-        XTimer() 
-        {
-            xtime_get(&_start_time, boost::TIME_UTC);
-        }
-
-        XTimer(const XTimer& other)
-            : _start_time(other._start_time)
-        {
-        }
-
-        double elapsed() const 
-        {
-            boost::xtime now;
-            xtime_get(&now, boost::TIME_UTC);
-            return boost::lexical_cast<double>(now.sec - _start_time.sec) + 
-                boost::lexical_cast<double>(now.nsec - _start_time.nsec) / 1000000000;
-        }
-
-    private:
-        boost::xtime _start_time;
-};
 
 struct FileSizeCompare
 {
@@ -251,12 +228,11 @@ int main ( int argc, char * argv[] )
     //ofstream ifs("timer.txt");
     for (int i = 1; i < 6; i += 1)
     {
-        XTimer t;
+        Sawyer::Stopwatch t;
         string output = "output" + lexical_cast<string>(i);
         output = "output" + lexical_cast<string>(i) + ".txt";
         MergeAstFiles(fileNames, output, i);
-        //ifs << i << " : " << t.elapsed() << endl;
-        cout << i << " : " << t.elapsed() << endl;
+        cout << i << " : " << t <<" seconds" << endl;
     }
 
     return 0;

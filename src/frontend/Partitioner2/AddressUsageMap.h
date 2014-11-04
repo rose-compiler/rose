@@ -146,9 +146,9 @@ public:
     /** Determines if a data block exists in the list.
      *
      *  If a data block with the specified starting address exists in the list then its ownership information is returned,
-     *  otherwise nothing is returned. */
+     *  otherwise nothing is returned. It is possible that multiple data blocks can exist at a particular address, in which
+     *  case an arbitrary one is returned. */
     Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t dbStart) const;
-
 
     /** Insert an instruction/basic block pair.
      *
@@ -224,6 +224,13 @@ public:
      *
      *  Returns a new list of address users that contains only the data block users from this list. */
     AddressUsers dataBlockUsers() const { return select(selectDataBlocks); }
+
+    /** Returns all instructions.
+     *
+     *  Returns a list of distinct instructions sorted by starting address.  The return value is not an AddressUsers because it
+     *  is more useful to have a list of distinct instructions, and because the @ref instructionUsers method returns the other
+     *  information already. */
+    std::vector<SgAsmInstruction*> instructions() const;
 
     /** Returns all basic blocks.
      *

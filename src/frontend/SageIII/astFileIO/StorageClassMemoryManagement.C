@@ -4376,3 +4376,73 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
      return emap;
    }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementations for AddressIntervalSet
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+EasyStorage<AddressIntervalSet>::storeDataInEasyStorageClass(const AddressIntervalSet &set)
+{
+    // Since the set's elements are of type Sawyer::Container::Interval<rose_addr_t> we can store the interval endpoints
+    // in a single pool that is twice as large as the number of intervals in the set.
+    std::vector<rose_addr_t> data_;
+    BOOST_FOREACH (const AddressInterval &interval, set.intervals()) {
+        assert(!interval.isEmpty());
+        data_.push_back(interval.least());
+        data_.push_back(interval.greatest());
+    }
+
+    std::vector<rose_addr_t>::const_iterator dat = data_.begin();
+    long offset = Base::setPositionAndSizeAndReturnOffset(data_.size());
+    if (0 < offset) {
+        /* The new data does not fit in the actual block, but store what we can in the actual block. */
+        if (offset < Base::getSizeOfData() && Base::actual != NULL) {
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+        }
+
+        /* Put data in additional blocks if it did not fit in the previous block. */
+        while (Base::blockSize < (unsigned long)(offset)) {
+            Base::actual = Base::getNewMemoryBlock();
+            for (/*void*/;
+                 (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize;
+                 ++Base::actual, ++dat) {
+                *Base::actual = *dat;
+            }
+            offset -= Base::blockSize;
+        }
+
+        /* get a new memory block because we've filled up previous blocks */
+        Base::actual = Base::getNewMemoryBlock();
+    }
+
+    /* put (the rest of) the data in a (new) memory block */
+    for (/*void*/; dat != data_.end(); ++dat, ++Base::actual)
+        *Base::actual = *dat;
+}
+
+AddressIntervalSet
+EasyStorage<AddressIntervalSet>::rebuildDataStoredInEasyStorageClass() const
+{
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+    assert(Base::actualBlock <= 1);
+    assert((0 < Base::getSizeOfData() && Base::actual!= NULL) || (Base::getSizeOfData() == 0));
+    assert(0 == Base::getSizeOfData() % 2);             // vector holds interval endpoints or
+#endif
+
+    AddressIntervalSet retval;
+    if (Base::actual!=NULL && Base::getSizeOfData()>0) {
+        rose_addr_t *pointer = Base::getBeginningOfDataBlock();
+        for (long i=0; i<Base::getSizeOfData(); i+=2) {
+            rose_addr_t lo = pointer[i+0];
+            rose_addr_t hi = pointer[i+1];
+            assert(lo <= hi);
+            retval.insert(AddressInterval::hull(lo, hi));
+        }
+    }
+    return retval;
+}
+

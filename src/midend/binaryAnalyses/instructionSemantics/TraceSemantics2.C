@@ -229,7 +229,7 @@ RiscOperators::get_solver() const
 }
 
 BaseSemantics::StatePtr
-RiscOperators::get_state()
+RiscOperators::get_state() const
 {
     check_subdomain();
     return subdomain->get_state();

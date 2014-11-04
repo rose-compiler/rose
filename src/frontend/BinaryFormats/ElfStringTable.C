@@ -71,11 +71,11 @@ SgAsmElfStringSection::set_size(rose_addr_t newsize)
         if (get_size() > orig_size) {
             /* Add new address space to string table free list */
             rose_addr_t n = get_size() - orig_size;
-            strtab->get_freelist().insert(Extent(orig_size, n));
+            strtab->get_freelist().insert(AddressInterval::baseSize(orig_size, n));
         } else if (get_size() < orig_size) {
             /* Remove deleted address space from string table free list */
             rose_addr_t n = orig_size - get_size();
-            strtab->get_freelist().erase(Extent(get_size(), n));
+            strtab->get_freelist().erase(AddressInterval::baseSize(get_size(), n));
         }
     }
 }
@@ -239,8 +239,9 @@ SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
                        0==storage->get_string().compare(need-have, have, existing->get_string())) {
                 /* New string ends with an existing string. Check for, and allocate, free space. */
                 rose_addr_t offset = existing->get_offset() - (need-have); /* positive diffs checked above */
-                if (get_freelist().subtract_from(Extent(offset, need-have)).size()==0) {
-                    get_freelist().allocate_at(Extent(offset, need-have));
+                AddressInterval allocationRequest = AddressInterval::baseSize(offset, need-have);
+                if (get_freelist().contains(allocationRequest)) {
+                    get_freelist().erase(allocationRequest);
                     storage->set_offset(offset);
                     return;
                 }
@@ -264,7 +265,6 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
     }
     
     /* Fill free areas with zero */
-    for (ExtentMap::const_iterator i=get_freelist().begin(); i!=get_freelist().end(); ++i) {
-        container->write(f, i->first.first(), std::string(i->first.size(), '\0'));
-    }
+    BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals())
+        container->write(f, interval.least(), std::string(interval.size(), '\0'));
 }

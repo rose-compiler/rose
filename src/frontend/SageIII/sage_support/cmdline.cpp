@@ -871,6 +871,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+  //
+  // appendPID
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","appendPID",false) == true )
+        {
+#if 0
+          printf ("detected use of appendPID mode \n");
+#endif
+          set_appendPID(true);
+        }
   //
   // specify compilation only option (new style command line processing)
   //
@@ -3231,6 +3242,9 @@ SgFile::usage ( int status )
 "     -rose:noclobber_if_different_output_file\n"
 "                             force error on rewrite of existing output file only if result\n"
 "                             if a different output file (default: false). \n"
+"     -rose:appendPID\n"
+"                             append PID into the temporary output name. \n"
+"                             This can avoid issues in parallel compilation (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -5073,6 +5087,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      optionCount = sla(argv, "-rose:", "($)", "noclobber_if_different_output_file",1);
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
@@ -5362,6 +5378,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
      vector<string> commandLine;
+
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    // Search dir for header files, after all directories specified by -I but
+    // before the standard system directories.
+    commandLine.push_back("--sys_include");
+    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    #endif
 
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
@@ -6306,6 +6330,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // the default value of "originalCompilerName" is "CC"
      vector<string> compilerNameString;
      compilerNameString.push_back(compilerName);
+
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    if (get_C_only() || get_Cxx_only())
+    {
+        // Search dir for header files, after all directories specified by -I but
+        // before the standard system directories.
+        compilerNameString.push_back("-isystem");
+        compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    }
+    #endif
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);

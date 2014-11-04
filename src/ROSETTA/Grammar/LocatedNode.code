@@ -520,6 +520,10 @@ HEADER_HEADER_FILE_BODY_END
 
 
 HEADER_UNTYPED_NODE_START
+     public:
+       // DQ (9/14/2014): Added to support more general unparsing for untyped ASTs.
+          virtual void unparse(SgUnparse_Info& info);
+
 HEADER_UNTYPED_NODE_END
 
 HEADER_UNTYPED_EXPRESSION_START
@@ -1275,6 +1279,13 @@ SOURCE_HEADER_FILE_BODY_END
 
 
 SOURCE_UNTYPED_NODE_START
+// DQ (9/14/2014): Added to support more general unparsing for untyped ASTs.
+void SgUntypedNode::unparse(SgUnparse_Info& info)
+   {
+  // DQ (9/14/2014): Until we decide what the best implementation is this is enough.
+     printf ("SgUntypedNode::unparse() function not implemented! (should maybe be a pure virtual member function) \n");
+   }
+
 SOURCE_UNTYPED_NODE_END
 
 SOURCE_UNTYPED_EXPRESSION_START

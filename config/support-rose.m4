@@ -123,6 +123,7 @@ AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 # Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
+ROSE_CONFIGURE_SECTION([GNU Fortran])
 # DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
@@ -677,7 +678,7 @@ ROSE_SUPPORT_PYTHON
 
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
 
-AX_PYTHON_DEVEL([0.0.0], [3.0.0])
+AX_PYTHON_DEVEL([0.0.0], [3.1.4])
 PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
 PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
 PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
@@ -1721,8 +1722,9 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/experimental-fortran-parser/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/syntax-v0.14/Makefile
-src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/Makefile
+src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Makefile
@@ -2124,6 +2126,8 @@ tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
 tests/roseTests/astInterfaceTests/Makefile
+tests/roseTests/astInterfaceTests/unitTests/Makefile
+tests/roseTests/astInterfaceTests/typeEquivalenceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
@@ -2173,6 +2177,9 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
+tests/testSupport/Makefile
+tests/testSupport/gtest/Makefile
+tests/roseTests/ROSETTA/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile

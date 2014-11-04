@@ -193,7 +193,7 @@ static bool do_usedef = true;
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
             cur_state = rsets[addr];
-            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmx86Instruction(insn);
+            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmX86Instruction(insn);
         }
         void print(std::ostream &out) {
             out <<cur_state <<"    ip = " <<newIp <<"\n";
@@ -217,7 +217,7 @@ static bool do_usedef = true;
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
             cur_state = rsets[addr];
-            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmx86Instruction(insn);
+            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmX86Instruction(insn);
         }
         void print(std::ostream &out) {
             out <<cur_state <<"    ip = " <<newIp <<"\n";
@@ -334,9 +334,9 @@ static void
 analyze_interp(SgAsmInterpretation *interp)
 {
     /* Get the set of all instructions except instructions that are part of left-over blocks. */
-    struct AllInstructions: public SgSimpleProcessing, public std::map<rose_addr_t, SgAsmx86Instruction*> {
+    struct AllInstructions: public SgSimpleProcessing, public std::map<rose_addr_t, SgAsmX86Instruction*> {
         void visit(SgNode *node) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(node);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(node);
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
                 insert(std::make_pair(insn->get_address(), insn));
@@ -349,7 +349,7 @@ analyze_interp(SgAsmInterpretation *interp)
                   <<"=== Starting a new basic block                                                    ===\n"
                   <<"=====================================================================================\n";
         AllInstructions::iterator si = insns.begin();
-        SgAsmx86Instruction *insn = si->second;
+        SgAsmX86Instruction *insn = si->second;
         insns.erase(si);
 
 #if SEMANTIC_API == NEW_API
@@ -544,10 +544,10 @@ int main(int argc, char *argv[]) {
 #if SEMANTIC_API == NEW_API
     std::ostream &info = std::cerr; // do not include in answer because objects vary in size per architecture
     info <<"Before vacuum...\n";
-    BaseSemantics::SValue::allocator.printStatistics(info);
-    BaseSemantics::SValue::allocator.vacuum();
+    BaseSemantics::SValue::poolAllocator().showInfo(info);
+    BaseSemantics::SValue::poolAllocator().vacuum();
     info <<"After vacuum...\n";
-    BaseSemantics::SValue::allocator.printStatistics(info);
+    BaseSemantics::SValue::poolAllocator().showInfo(info);
 #endif
 
     return 0;

@@ -1,9 +1,11 @@
-#ifndef ROSE_Partitioner2_Modules_H
+#ifndef ROSE_Partitioner2_Modules_H 
 #define ROSE_Partitioner2_Modules_H
 
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/Utility.h>
 
 #include <sawyer/SharedPointer.h>
 
@@ -66,7 +68,6 @@ public:
     virtual bool operator()(bool chain, const Args&) = 0;
 };
 
-
 /** Base class for matching an instruction pattern.
  *
  *  Instruction matchers are generally reference from the partitioner via shared-ownership pointers.  Subclasses must
@@ -117,11 +118,148 @@ public:
     virtual Function::Ptr function() const = 0;
 };
 
+
+/** Base class for matching function padding.
+ *
+ *  Function padding is bytes that appear immediately prior to the entry address of a function usually in order to align the
+ *  function on a suitable boundary.  Some assemblers emit zero bytes, others emit no-op instructions, and still others emit
+ *  combinations of no-ops and zeros.  It's conceivable that some compiler might even emit random garbage. */
+class FunctionPaddingMatcher: public Sawyer::SharedObject {
+public:
+    /** Shared-ownership pointer.  The partitioner never explicitly frees matches. Their pointers are copied when partitioners
+     *  are copied. */
+    typedef Sawyer::SharedPointer<FunctionPaddingMatcher> Ptr;
+
+    /** Attempt to match padding.
+     *
+     *  Attempts to match function padding that ends at the address immediately prior to @p anchor.  If a match is successful
+     *  then the return value is the starting address for the padding and must be less than @p anchor. When no match is found
+     *  then @p anchor is returned. The size of the matched padding is always <code>anchor-retval</code> where @c retval is
+     *  the returned value. */
+    virtual rose_addr_t match(const Partitioner*, rose_addr_t anchor) = 0;
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Generic modules
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Modules {
+
+/** Follow basic block ghost edges.
+ *
+ *  If this callback is registered as a partitioner basic block callback then the partitioner will follow ghost edges when
+ *  discovering instructions for basic blocks.  A ghost edge is a control flow edge whose target address is mentioned in the
+ *  machine instruction but which is never followed.  Examples are branch instructions with opaque predicates due to the
+ *  compiler not optimizing away the branch.
+ *
+ *  An alternative to following ghost edges as basic block instructions are discovered is to look for dead code after the
+ *  function is discovered.  That way the CFG does not contain edges into the dead code, which can make things like data flow
+ *  analysis faster. */
+class AddGhostSuccessors: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new AddGhostSuccessors); }
+    virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+};
+
+/** Prevent discontiguous basic blocks.
+ *
+ *  This basic block callback causes the basic block to terminate when it encounters an unconditional branch, in effect causing
+ *  all basic blocks to have instructions that are contiguous in memory and ordered by their address.  ROSE normally does not
+ *  require such strict constraints: a basic block is normally one or more distinct instructions having a single entry point
+ *  and a single exit point and with control flowing linearly across all instructions. */
+class PreventDiscontiguousBlocks: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
+    virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+};
+
+/** List some instructions at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class InstructionLister: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // which basic block(s) we should we monitor
+        Trigger::Settings when;                         // once found, how often we produce a list
+        AddressInterval what;                           // what instructions to list
+        Settings(): what(AddressInterval::whole()) {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    explicit InstructionLister(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new InstructionLister(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+};
+
+/** Produce a GraphViz file for the CFG at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class CfgGraphVizDumper: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) we should monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers the output
+        AddressInterval what;                           // which basic blocks should be in the output
+        bool showNeighbors;                             // should neighbor blocks be included in the output?
+        std::string fileName;                           // name of output; '%' gets expanded to a distinct identifier
+        Settings(): what(AddressInterval::whole()), showNeighbors(true), fileName("cfg-%.dot") {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    CfgGraphVizDumper(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new CfgGraphVizDumper(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+};
+
+/** Produce a hexdump at a certain time.
+ *
+ *  See @ref docString for full documentation. */
+class HexDumper: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) we should monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers the output
+        AddressInterval what;                           // which bytes should be in the output
+        bool accentSpecialValues;                       // use "." and "##" for 0 and 0xff?
+        Settings(): accentSpecialValues(true) {}
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    HexDumper(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new HexDumper(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+};
+
+/** Remove execute permissions for zeros.
+ *
+ *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
+ *  access permissions were changed.  Only occurrences of at least @p threshold consecutive zeros are changed. If @p threshold
+ *  is zero then nothing happens. */
+AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold);
 
 /** Finds functions for which symbols exist.
  *

@@ -59,6 +59,16 @@ rose_addr_t
 BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
 {
     static const size_t maximum_alignment = 8192;
+    AddressInterval mappableArea = AddressInterval::whole();
+
+#if 0 // [Robb P. Matzke 2014-10-09]
+    // If this is a library then restrict where it can be mapped.  This is to try to make BinaryLoaderElf behave more like the
+    // native loader on Linux (at least when run with "i386 --addr-compat-layout --addr-no-randomize), but it's a failing
+    // proposition because the headers in ROSE are apparently not processed in the same order as in Linux.
+    SgAsmGenericFormat *fmt = header->get_exec_format();
+    if (fmt->get_purpose() == SgAsmGenericFormat::PURPOSE_LIBRARY)
+        mappableArea = AddressInterval::hull(0x55555000, mappableArea.greatest());
+#endif
 
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
@@ -67,7 +77,11 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
     rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
 
     // Minimum address at which to map
-    rose_addr_t map_base_va = ALIGN_UP(map->find_last_free(), maximum_alignment);
+    AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
+    freeSpace = freeSpace & mappableArea;
+    if (freeSpace.isEmpty())
+        throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
+    rose_addr_t map_base_va = ALIGN_UP(freeSpace.least(), maximum_alignment);
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
@@ -324,7 +338,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 
 /* Reference Elf TIS Portal Formats Specification, Version 1.1 */
 void
-BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) /*override*/
+BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) ROSE_OVERRIDE
 {
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     build_master_symbol_table(interp);
@@ -356,8 +370,18 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
             if ((elf_section->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_TLS) &&
                 elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
+            } else if (retval != NULL) {
+                using namespace StringUtility;
+                mlog[ERROR] <<"find_section_by_preferred_va: multiple sections match " <<addrToString(va) <<"\n";
+                mlog[ERROR] <<"  section at " <<addrToString(retval->get_mapped_actual_va())
+                            <<" + " <<addrToString(retval->get_mapped_size())
+                            <<" = " <<addrToString(retval->get_mapped_actual_va() + retval->get_mapped_size())
+                            <<" " <<cEscape(retval->get_name()->get_string()) <<"\n";
+                mlog[ERROR] <<"  section at " <<addrToString(elf_section->get_mapped_actual_va())
+                            <<" + " <<addrToString(elf_section->get_mapped_size())
+                            <<" = " <<addrToString(elf_section->get_mapped_actual_va() + elf_section->get_mapped_size())
+                            <<" " <<cEscape(elf_section->get_name()->get_string()) <<"\n";
             } else {
-                ASSERT_require2(retval!=NULL, "there should be only one matching section");
                 retval = elf_section;
             }
         }
@@ -923,7 +947,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
     switch (nbytes) {
         case 4: {
             uint32_t guest;
-            size_t nread = memmap->read(&guest, target_va, sizeof guest);
+            size_t nread = memmap->readQuick(&guest, target_va, sizeof guest);
             if (nread<sizeof guest) {
                 trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
@@ -933,7 +957,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
         }
         case 8: {
             uint64_t guest;
-            size_t nread = memmap->read(&guest, target_va, sizeof guest);
+            size_t nread = memmap->readQuick(&guest, target_va, sizeof guest);
             if (nread<sizeof guest) {
                 trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
@@ -1029,7 +1053,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
         case 4: {
             uint32_t guest;
             ByteOrder::host_to_disk(sex, value, &guest);
-            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            size_t nwrite = memmap->writeQuick(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
                 throw Exception("short write at " + StringUtility::addrToString(target_va));
@@ -1039,7 +1063,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
         case 8: {
             uint64_t guest;
             ByteOrder::host_to_disk(sex, value, &guest);
-            size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
+            size_t nwrite = memmap->writeQuick(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
                 throw Exception("short write at " + StringUtility::addrToString(target_va));
@@ -1067,14 +1091,14 @@ BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const Symver
         uint8_t buf[4096];
         size_t nbytes = std::min(symbol_sz, sizeof buf);
 
-        size_t nread = memmap->read(buf, symbol_va, nbytes);
+        size_t nread = memmap->readQuick(buf, symbol_va, nbytes);
         if (nread<nbytes) {
             trace <<"    short read (only " <<StringUtility::plural(nread, "bytes")
                   <<" but expected " <<nbytes <<") at " <<StringUtility::addrToString(symbol_va) <<"\n";
             throw Exception("short read at " + StringUtility::addrToString(symbol_va));
         }
 
-        size_t nwrite = memmap->write(buf, target_va, nbytes);
+        size_t nwrite = memmap->writeQuick(buf, target_va, nbytes);
         if (nwrite<nbytes) {
             trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes")
                   <<" but expected " <<nbytes <<" at " <<StringUtility::addrToString(target_va) <<"\n";

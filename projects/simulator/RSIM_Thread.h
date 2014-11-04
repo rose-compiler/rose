@@ -582,7 +582,7 @@ public:
     /** Returns instruction at current IP, disassembling it if necessary, and caching it.  Since the simulated memory belongs
      *  to the entire RSIM_Process, all this method does is obtain the thread's current instruction address and then has the
      *  RSIM_Process disassemble the instruction. */
-    SgAsmx86Instruction *current_insn();
+    SgAsmX86Instruction *current_insn();
 
 
     /**************************************************************************************************************************

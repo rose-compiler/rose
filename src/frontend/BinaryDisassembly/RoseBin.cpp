@@ -4,7 +4,7 @@
  * Date : 3Apr07
  * Decription : Interface to user
  ****************************************************/
-#include "rose.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
 #include <sys/time.h>
 
 using namespace std;

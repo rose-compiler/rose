@@ -827,7 +827,7 @@ DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
     if (0!=start_va%2)
         throw Exception("instruction is not properly aligned", start_va);
     uint8_t buf[sizeof(iwords)]; // largest possible instruction
-    size_t nbytes = map->read(buf, start_va, sizeof buf, get_protection());
+    size_t nbytes = map->at(start_va).limit(sizeof buf).require(get_protection()).read(buf).size();
     niwords = nbytes / sizeof(iwords[0]);
     if (0==niwords)
         throw Exception("short read from memory map", start_va);
@@ -847,7 +847,7 @@ DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
 
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->get_successors(&complete);
+        AddressSet suc2 = insn->getSuccessors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 

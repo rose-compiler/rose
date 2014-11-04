@@ -29,17 +29,17 @@ public:
 
     virtual ~DisassemblerX86() {}
 
-    virtual DisassemblerX86 *clone() const /*override*/ { return new DisassemblerX86(*this); }
+    virtual DisassemblerX86 *clone() const ROSE_OVERRIDE { return new DisassemblerX86(*this); }
 
     /** See Disassembler::can_disassemble */
-    virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
+    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
     /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) /*override*/;
+                                             AddressSet *successors=NULL) ROSE_OVERRIDE;
 
     /** Make an unknown instruction from an exception. */
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) /*override*/;
+    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) ROSE_OVERRIDE;
 
 
     /*========================================================================================================================
@@ -168,7 +168,7 @@ private:
      *  disassembler object (see the instruction-related data members below). In order that the new instruction contains the
      *  correct number of raw instruction bytes (p_raw_bytes) it should be called after all the instruction bytes have been
      *  read, otherwise remember to call set_raw_bytes() explicitly. */
-    SgAsmx86Instruction *makeInstruction(X86InstructionKind kind, const std::string &mnemonic,
+    SgAsmX86Instruction *makeInstruction(X86InstructionKind kind, const std::string &mnemonic,
                                          SgAsmExpression *op1=NULL, SgAsmExpression *op2=NULL,
                                          SgAsmExpression *op3=NULL, SgAsmExpression *op4=NULL);
 
@@ -270,77 +270,77 @@ private:
 
     /** Disassembles an instruction. This is the workhorse: it reads and decodes bytes of the instruction in a huge switch
      *  statement. */
-    SgAsmx86Instruction *disassemble();
+    SgAsmX86Instruction *disassemble();
 
     /** Disassemble an instruction following the 0x0f prefix. */
-    SgAsmx86Instruction *decodeOpcode0F();
+    SgAsmX86Instruction *decodeOpcode0F();
 
     /** Disassemble SSE3 instructions. */
-    SgAsmx86Instruction *decodeOpcode0F38();
+    SgAsmX86Instruction *decodeOpcode0F38();
 
     /** Disassembles an instruction with primary opcode 0xd8 */
-    SgAsmx86Instruction *decodeX87InstructionD8();
+    SgAsmX86Instruction *decodeX87InstructionD8();
 
     /** Disassembles an instruction with primary opcode 0xd9 */
-    SgAsmx86Instruction *decodeX87InstructionD9();
+    SgAsmX86Instruction *decodeX87InstructionD9();
 
     /** Disassembles an instruction with primary opcode 0xda */
-    SgAsmx86Instruction *decodeX87InstructionDA();
+    SgAsmX86Instruction *decodeX87InstructionDA();
 
     /** Disassembles an instruction with primary opcode 0xdb */
-    SgAsmx86Instruction *decodeX87InstructionDB();
+    SgAsmX86Instruction *decodeX87InstructionDB();
 
     /** Disassembles an instruction with primary opcode 0xdc */
-    SgAsmx86Instruction *decodeX87InstructionDC();
+    SgAsmX86Instruction *decodeX87InstructionDC();
 
     /** Disassembles an instruction with primary opcode 0xdd */
-    SgAsmx86Instruction *decodeX87InstructionDD();
+    SgAsmX86Instruction *decodeX87InstructionDD();
 
     /** Disassembles an instruction with primary opcode 0xde */
-    SgAsmx86Instruction *decodeX87InstructionDE();
+    SgAsmX86Instruction *decodeX87InstructionDE();
 
     /** Disassembles an instruction with primary opcode 0xdf */
-    SgAsmx86Instruction *decodeX87InstructionDF();
+    SgAsmX86Instruction *decodeX87InstructionDF();
 
     /** Disassembles ADD, OR, ADC, SBB, AND, SUB, XOR, CMP. */
-    SgAsmx86Instruction *decodeGroup1(SgAsmExpression *imm);
+    SgAsmX86Instruction *decodeGroup1(SgAsmExpression *imm);
 
     /** Disassembles POP */
-    SgAsmx86Instruction *decodeGroup1a();
+    SgAsmX86Instruction *decodeGroup1a();
 
     /** Disassembles ROL, ROR, RCL, RCR, SHL, SHR, SHL, SAR */
-    SgAsmx86Instruction *decodeGroup2(SgAsmExpression *count);
+    SgAsmX86Instruction *decodeGroup2(SgAsmExpression *count);
 
     /** Disassembles TEST, NOT, NEG, MUL, IMUL, DIV, IDIV */
-    SgAsmx86Instruction *decodeGroup3(SgAsmExpression *immMaybe);
+    SgAsmX86Instruction *decodeGroup3(SgAsmExpression *immMaybe);
 
     /** Disassembles INC, DEC */
-    SgAsmx86Instruction *decodeGroup4();
+    SgAsmX86Instruction *decodeGroup4();
 
     /** Disassembles INC, DEC, CALL, FARCALL, JMP, FARJMP, PUSH */
-    SgAsmx86Instruction *decodeGroup5();
+    SgAsmX86Instruction *decodeGroup5();
 
     /** Disassembles SLDT, STR, LLDT, LTR, VERR, VERW */
-    SgAsmx86Instruction *decodeGroup6();
+    SgAsmX86Instruction *decodeGroup6();
 
     /** Disassembles VMCALL, VMLAUNCH, VMRESUME, VMXOFF, SGDT, MONITOR, MWAIT, SIDT, SGDT, XGETBV, XSETBV, LGDT, VMRUN,
      *  VMMCALL, VMLOAD, VMSAVE, STGI, CLGI, SKINIT, INVLPGA, LIDT, SMSW, LMSW, SWAPGS, RDTSCP, INVLPG */
-    SgAsmx86Instruction *decodeGroup7();
+    SgAsmX86Instruction *decodeGroup7();
 
     /** Disassembles BT, BTS, BTR, BTC */
-    SgAsmx86Instruction *decodeGroup8(SgAsmExpression *imm);
+    SgAsmX86Instruction *decodeGroup8(SgAsmExpression *imm);
 
     /** Disassembles MOV */
-    SgAsmx86Instruction *decodeGroup11(SgAsmExpression *imm);
+    SgAsmX86Instruction *decodeGroup11(SgAsmExpression *imm);
 
     /** Disassembles FXSAVE, FXRSTOR, LDMXCSR, STMXCSR, XSAVE, LFENCE, XRSTOR, MFENCE, SFENCE, CLFLUSH */
-    SgAsmx86Instruction *decodeGroup15();
+    SgAsmX86Instruction *decodeGroup15();
 
     /** Disassembles PREFETCHNTA, PREFETCH0, PREFETCH1, PREFETCH2, PREFETCH */
-    SgAsmx86Instruction *decodeGroup16();
+    SgAsmX86Instruction *decodeGroup16();
 
     /** Disassembles PREFETCH, PREFETCHW */
-    SgAsmx86Instruction *decodeGroupP();
+    SgAsmX86Instruction *decodeGroupP();
 
 
 
@@ -353,7 +353,7 @@ private:
     void init(size_t wordsize);
 
     /** Resets disassembler state to beginning of an instruction for assembly. */
-    void startInstruction(SgAsmx86Instruction *insn) {
+    void startInstruction(SgAsmX86Instruction *insn) {
         startInstruction(insn->get_address(), NULL, 0);
         insnSize = insn->get_baseSize();
         lock = insn->get_lockPrefix();

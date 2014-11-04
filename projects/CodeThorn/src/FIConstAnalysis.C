@@ -1,4 +1,5 @@
 // analysis
+#include <rose.h>
 #include "FIConstAnalysis.h"
 #include "AType.h"
 #include "CPAstAttribute.h"

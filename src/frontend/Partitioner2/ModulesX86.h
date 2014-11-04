@@ -24,8 +24,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -39,8 +39,18 @@ public:
 class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+};
+
+/** Matches an x86 <cde>MOV EDI,EDI; PUSH ESI</code> function prologe. */
+class MatchAbbreviatedPrologue: public FunctionPrologueMatcher {
+protected:
+    Function::Ptr function_;
+public:
+    static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
@@ -49,9 +59,55 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const /*override*/ { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) /*override*/;
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
+
+/** Basic block callback to detect function returns.
+ *
+ *  The architecture agnostic isFunctionReturn test for basic blocks does not detect x86 "RET N" (N!=0) instructions as
+ *  returning from a function because such instructions have side effects that apply after the return-to address is popped from
+ *  the stack.  Therefore this basic block callback looks for such instructions and sets the isFunctionReturn property for the
+ *  basic block. */
+class FunctionReturnDetector: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new FunctionReturnDetector); } /**< Allocating constructor. */
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+};
+
+/** Basic block callback to detect "switch" statements.
+ *
+ *  Examines the instructions of a basic block to determine if they are from a C "switch"-like statement and attempts to find
+ *  the "case" labels, adding them as successors to this basic block. */
+class SwitchSuccessors: public BasicBlockCallback {
+public:
+    /** Allocating constructor. */
+    static Ptr instance() { return Ptr(new SwitchSuccessors); }
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+};
+
+/** Reads a table of code addresses.
+ *
+ *  Reads a table that starts at the lower limit of @p tableLimits and does not extend past the upper limit.  Each entry in the
+ *  table is an instruction address of @p tableEntrySize bytes and the entry must exist in read-only memory.  The address
+ *  stored in the entry must be within the @p targetLimits interval and must be an address that is mapped with execute
+ *  permission.  As many entries as possible are read into the return vector.  Upon return, the @p tableLimits is adjusted to
+ *  indicate the actual location of the table. */
+std::vector<rose_addr_t> scanCodeAddressTable(const Partitioner&, AddressInterval &tableLimits /*in,out*/,
+                                              const AddressInterval &targetLimits, size_t tableEntrySize);
+
+/** Try to match a base+offset expression.
+ *
+ *  Matches expressions like:
+ *
+ * @li base + register
+ * @li base + register * size
+ * @li [ base + register ]
+ * @li [ base + register * size ]
+ *
+ * Returns the numeric value of @c base or nothing if the expression is not a recognized form. */
+Sawyer::Optional<rose_addr_t> findTableBase(SgAsmExpression*);
+
 
 } // namespace
 } // namespace

@@ -317,6 +317,9 @@ Grammar::setUpTypes ()
      Type.setSubTreeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
      Type.excludeFunctionSource       ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 
+#if 0
+  // DQ (10/12/2014): This is no longer used (commented out code).
+
   // DQ (12/26/2005): Support for builtin type traversal
      Type.setSubTreeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      Type.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -363,23 +366,36 @@ Grammar::setUpTypes ()
   // TemplateType.excludeFunctionPrototype      ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
   // TemplateType.excludeFunctionSource         ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
-#if 1
      TypeComplex.excludeFunctionPrototype       ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TypeComplex.excludeFunctionSource          ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeComplex.excludeFunctionPrototype       ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
-     TypeComplex.excludeFunctionSource          ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 
      TypeImaginary.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TypeImaginary.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+     TypeString.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeString.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+#endif
+
+#if 1
+     TypeComplex.excludeFunctionPrototype       ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     TypeComplex.excludeFunctionSource          ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+
      TypeImaginary.excludeFunctionPrototype     ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
      TypeImaginary.excludeFunctionSource        ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 #endif
 
   // DQ (8/17/2010): Don't use the static builtin type for the SgTypeString IR node.
-     TypeString.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TypeString.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TypeString.excludeFunctionPrototype ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
   // TypeString.excludeFunctionPrototype ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
+
+  // DQ (10/12/2014): I now think that the builtin_type data member should not be marked as 
+  // part of the type traversal (TYPE_TRAVERSAL). It is a static data member used within the
+  // management of types to define the required sharing that we seek for all types independent
+  // (but related to) the global type table support added 2 years ago.  Fixing this might be
+  // a better way to support the ATerm support in ROSE and eliminate the special case handling 
+  // to exclude this from the successor containers that are computed in the grammar.C file in 
+  // the Grammar::buildTreeTraversalFunctions() function.  I wish to discuss this internally 
+  // before making the change.
 
      TypeUnknown.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeChar.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -462,9 +478,13 @@ Grammar::setUpTypes ()
         typeObjectName.excludeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" ); \
         typeObjectName.setFunctionPrototype     ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" ); \
         typeObjectName.editSubstitute           ( "CREATE_TYPE_PARAMETER", parameterString ); \
-        typeObjectName.setFunctionSource        ( sourceCodeName, "../Grammar/Type.code" ); \
+        typeObjectName.setFunctionSource        ( sourceCodeName, "../Grammar/Type.code" );
+
+#if 0
+     // DQ (10/12/2014): This is no longer used (commented out code).
         typeObjectName.setFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" ); \
         typeObjectName.setFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+#endif
 
      CUSTOM_CREATE_TYPE_MACRO(TypeInt,
             "SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE",

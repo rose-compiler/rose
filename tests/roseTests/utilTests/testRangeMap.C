@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include <vector>
 
+#include <boost/config.hpp>
+#ifndef BOOST_WINDOWS
+# include <unistd.h>
+#endif
+
 /* If defined, then check RangeMap implementation against a very simple bitmap implementation. */
 #define CHECK
 

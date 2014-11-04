@@ -281,9 +281,16 @@ pchange(size_t n0, size_t n) {
 }
 
 static void
+dumpExtents(const AddressIntervalSet &set) {
+    BOOST_FOREACH (const AddressInterval &interval, set.intervals()) {
+        std::cout <<"    " <<interval <<" " <<StringUtility::plural(interval.size(), "bytes") <<"\n";
+    }
+}
+
+static void
 statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns, IdaInfo &ida)
 {
-    ExtentMap emap;
+    AddressIntervalSet emap;
     static int width=20;
     char tmp[128];
     int note=1;
@@ -324,9 +331,9 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     fprintf(stderr, "-------------\n");
     
     // Number of bytes disassembled (including those not assigned to any function, and counting overlaps twice)
-    ExtentMap disassembled_bytes;
+    AddressIntervalSet disassembled_bytes;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-        disassembled_bytes.insert(Extent(ii->first, ii->second->get_size()));
+        disassembled_bytes.insert(AddressInterval::baseSize(ii->first, ii->second->get_size()));
     size_t ndis0 = disassembled_bytes.size();
     fprintf(stderr, "Disassembled:                           %-*zu", width, ndis0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
@@ -341,11 +348,11 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
         emap = disassembled_bytes;
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            emap.erase(Extent(ii->first, ii->second->get_size()));
+            emap.erase(AddressInterval::baseSize(ii->first, ii->second->get_size()));
         size_t n = emap.size();
         if (n>0) {
             printf("[NOTE %d] Bytes disassembled by IDA[%d] (%s) but not ROSE:\n", note, ida_i->id, ida_i->name.c_str());
-            emap.dump_extents(stdout, "    ", "", false);
+            dumpExtents(emap);
             sprintf(tmp, "%zu[%d]", n, note++);
         } else {
             sprintf(tmp, "%zu", n);
@@ -433,7 +440,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
             if (ida_i->function.find(rose_functions[i]->get_entry_va())==ida_i->function.end()) {
                 entries.insert(rose_functions[i]->get_entry_va());
                 ExtentMap func_bytes;
-                std::vector<SgAsmx86Instruction*> func_insns = SageInterface::querySubTree<SgAsmx86Instruction>(rose_functions[i]);
+                std::vector<SgAsmX86Instruction*> func_insns = SageInterface::querySubTree<SgAsmX86Instruction>(rose_functions[i]);
                 for (size_t j=0; j<func_insns.size(); j++)
                     func_bytes.insert(Extent(func_insns[j]->get_address(), func_insns[j]->get_size()));
                 nbytes += func_bytes.size();
@@ -545,25 +552,6 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
         fprintf(stderr, "Notes (\"[#]\") referenced above can be found at the end of stdout.\n");
 }
 
-struct WritableRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const AddressInterval&, const MemoryMap::Segment &segment) {
-        return 0 != (segment.get_mapperms() & MemoryMap::MM_PROT_WRITE);
-    }
-} writable_region;
-
-/* Returns true for any anonymous memory region containing more than a certain size. */
-static rose_addr_t large_anonymous_region_limit = 8192;
-struct LargeAnonymousRegion: public MemoryMap::Visitor {
-    virtual bool operator()(const MemoryMap*, const AddressInterval &range, const MemoryMap::Segment &segment) {
-        if (range.size()>large_anonymous_region_limit && segment.get_buffer()->is_zero()) {
-            fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                    range.least(), range.size(), range.greatest()+1);
-            return true;
-        }
-        return false;
-    }
-} large_anonymous_region;
-
 int
 main(int argc, char *argv[])
 {
@@ -623,14 +611,14 @@ main(int argc, char *argv[])
             if (isec) {
                 rose_addr_t addr = isec->get_mapped_actual_va();
                 size_t size = isec->get_mapped_size();
-                map->mprotect(AddressInterval::baseSize(addr, size), MemoryMap::MM_PROT_READ, true/*relax*/);
+                map->atOrAfter(addr).limit(size).changeAccess(MemoryMap::READABLE, MemoryMap::WRITABLE);
             }
 
             SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
             if (idir && idir->get_iat_rva().get_rva()!=0) {
                 rose_addr_t iat_va = idir->get_iat_rva().get_va();
                 size_t iat_sz = idir->get_iat_nalloc();
-                map->mprotect(AddressInterval::baseSize(iat_va, iat_sz), MemoryMap::MM_PROT_READ, true/*relax*/);
+                map->atOrAfter(iat_va).limit(iat_sz).changeAccess(MemoryMap::READABLE, MemoryMap::WRITABLE);
             }
         }
     };
@@ -639,8 +627,8 @@ main(int argc, char *argv[])
     MemoryMap ro_map = *map;
     for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi)
         ReadonlyImports(&ro_map, *hi).traverse(*hi, preorder);
-    ro_map.prune(writable_region);
-    map->prune(large_anonymous_region);
+    ro_map.prohibit(MemoryMap::WRITABLE).prune();
+    map->eraseZeros(8192);
 
     std::cerr <<"Disassembly map:\n";
     map->dump(stderr, "    ");

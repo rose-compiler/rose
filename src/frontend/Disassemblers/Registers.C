@@ -309,7 +309,7 @@ RegisterDictionary::dictionary_i8086() {
         regs->insert("di", x86_regclass_gpr, x86_gpr_di, 0, 16);
         regs->insert("dil", x86_regclass_gpr, x86_gpr_di, 0, 8);
 
-        /* Flags. Reserved flags have no names but can be accessed by reading the entire "flags" register. */
+        /* Flags with official names. */
         regs->insert("flags", x86_regclass_flags, x86_flags_status,  0, 16); /* all flags */
         regs->insert("cf",    x86_regclass_flags, x86_flags_status,  0,  1); /* carry status flag */
         regs->insert("pf",    x86_regclass_flags, x86_flags_status,  2,  1); /* parity status flag */
@@ -321,6 +321,14 @@ RegisterDictionary::dictionary_i8086() {
         regs->insert("df",    x86_regclass_flags, x86_flags_status, 10,  1); /* direction control flag */
         regs->insert("of",    x86_regclass_flags, x86_flags_status, 11,  1); /* overflow status flag */
         regs->insert("nt",    x86_regclass_flags, x86_flags_status, 14,  1); /* nested task system flag */
+
+        /* Flags without names */
+        regs->insert("f1",    x86_regclass_flags, x86_flags_status,  1,  1);
+        regs->insert("f3",    x86_regclass_flags, x86_flags_status,  3,  1);
+        regs->insert("f5",    x86_regclass_flags, x86_flags_status,  5,  1);
+        regs->insert("f12",   x86_regclass_flags, x86_flags_status, 12,  1);
+        regs->insert("f13",   x86_regclass_flags, x86_flags_status, 13,  1);
+        regs->insert("f15",   x86_regclass_flags, x86_flags_status, 15,  1);
     }
     return regs;
 }
@@ -389,6 +397,10 @@ RegisterDictionary::dictionary_i386()
         regs->insert("rf", x86_regclass_flags, x86_flags_status, 16, 1); /* resume system flag */
         regs->insert("vm", x86_regclass_flags, x86_flags_status, 17, 1); /* virtual 8086 mode flag */
 
+        /* Additional flag bits that have no official names */
+        for (unsigned i=18; i<32; ++i)
+            regs->insert("f"+StringUtility::numberToString(i), x86_regclass_flags, x86_flags_status, i, 1);
+        
         /* Control registers */
         regs->insert("cr0", x86_regclass_cr, 0, 0, 32);
         regs->insert("cr1", x86_regclass_cr, 1, 0, 32);
@@ -618,6 +630,10 @@ RegisterDictionary::dictionary_amd64()
             regs->insert(std::string("xmm")+StringUtility::numberToString(i),
                          x86_regclass_xmm, i, 0, 128);
         }
+
+        /* Additional flag bits with no official names */
+        for (unsigned i=32; i<64; ++i)
+            regs->insert("f"+StringUtility::numberToString(i), x86_regclass_flags, x86_flags_status, i, 1);
 
         /* Control registers become 64 bits, and cr8 is added */
         regs->resize("cr0", 64);

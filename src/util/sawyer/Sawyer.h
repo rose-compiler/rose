@@ -169,7 +169,12 @@
 // FIXME[Robb Matzke 2014-06-18]: get rid of ROSE_UTIL_EXPORTS; cmake can only have one DEFINE_SYMBOL
 #   if defined(SAWYER_DO_EXPORTS) || defined(ROSE_UTIL_EXPORTS) // defined in CMake when compiling libsawyer
 #       define SAWYER_EXPORT __declspec(dllexport)
-#       define SAWYER_EXPORT_NORETURN __declspec(dllexport noreturn)
+#       if _MSC_VER
+#           define SAWYER_EXPORT_NORETURN __declspec(dllexport noreturn)
+#       else
+            // MinGW complains about __declspec(dllexport noreturn), so use only __declspec(dllexport) instead.
+#           define SAWYER_EXPORT_NORETURN __declspec(dllexport)
+#       endif
 #   else
 #       define SAWYER_EXPORT __declspec(dllimport)
 #       define SAWYER_EXPORT_NORETURN __declspec(noreturn)
@@ -213,6 +218,11 @@ SAWYER_EXPORT FILE *popen(const std::string&, const char *how);
 /** Semi-portable replacement for pclose. */
 SAWYER_EXPORT int pclose(FILE*);
 
+/** Generate a sequential name.
+ *
+ *  A new string is generated each time this is called. */
+SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
+
 } // namespace
 
 // Define only when we have the Boost Chrono library, which was first available in boost-1.47.
@@ -238,6 +248,7 @@ SAWYER_EXPORT int pclose(FILE*);
 # define SAWYER_ATTR_NORETURN /*noreturn*/
 # define SAWYER_PRETTY_FUNCTION __FUNCSIG__
 # define SAWYER_MAY_ALIAS /*void*/
+# define SAWYER_STATIC_INIT /*void*/
 
 // MVC doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector, which will be
 // cleaned up propertly at end of scope or exceptions.
@@ -250,6 +261,9 @@ SAWYER_EXPORT int pclose(FILE*);
 # define SAWYER_ATTR_NORETURN __attribute__((noreturn))
 # define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
 # define SAWYER_MAY_ALIAS __attribute__((may_alias))
+
+// Sawyer globals need to be initialized after the C++ standard runtime
+# define SAWYER_STATIC_INIT __attribute__((init_priority(65534)))
 
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     TYPE NAME[SIZE];

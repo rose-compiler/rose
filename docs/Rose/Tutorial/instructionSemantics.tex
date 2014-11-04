@@ -72,9 +72,9 @@ serves to demonstrate a simple way to track constants.
 29                        <<"==============================================\n";
 30              FindConstantsPolicy policy;
 31              X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
-32              std::vector<SgNode*> instructions = NodeQuery::querySubTree(func, V\_SgAsmx86Instruction);
+32              std::vector<SgNode*> instructions = NodeQuery::querySubTree(func, V\_SgAsmX86Instruction);
 33              for (size\_t i=0; i<instructions.size(); i++) {
-34                  SgAsmx86Instruction *insn = isSgAsmx86Instruction(instructions[i]);
+34                  SgAsmX86Instruction *insn = isSgAsmX86Instruction(instructions[i]);
 35                  ROSE\_ASSERT(insn);
 36                  t.processInstruction(insn);
 37                  RegisterSet rset = policy.currentRset;
@@ -321,7 +321,7 @@ remaining instructions. For example:
 
 \begin{verbatim}
 /* Augments super::translate() to override rep\_stos instructions */
-virtual void translate(SgAsmx86Instruction *insn) {
+virtual void translate(SgAsmX86Instruction *insn) {
     switch (insn->get\_kind()) {
         case x86\_rep\_stosb: updateIP(insn); rep\_stos\_semantics<1>(insn); break;
         case x86\_rep\_stosw: updateIP(insn); rep\_stos\_semantics<2>(insn); break;

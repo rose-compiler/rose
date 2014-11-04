@@ -1,5 +1,6 @@
-#include "ssaUnfilteredCfg.h"
 #include "rose.h"
+
+#include "ssaUnfilteredCfg.h"
 #include "VariableRenaming.h"
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>

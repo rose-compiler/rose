@@ -181,6 +181,19 @@ if ROSE_USE_ETHER
   ROSE_ETHER_LIBS    = -L$(ETHER_PREFIX)/lib -lxenctrl
 endif
 
+if ROSE_WITH_ATERM
+  ROSE_ATERM_INCLUDE = -I$(ATERM_LIBRARY_PATH)/../include
+  ROSE_ATERM_LIBS    = -L$(ATERM_LIBRARY_PATH) -lATerm
+endif
+
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
+   libroseExperimentalOpenFortranParserlibraries =
+#   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
+#   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
+    ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
+endif
+
 # DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
 if USING_INTEL_COMPILER
 #  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
@@ -245,7 +258,8 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/roseExtensions/failSafe \
-     $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA 
+     $(ROSE_ATERM_INCLUDE) \
+     $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 else
 # ROSE_INCLUDES = 
 #     $(ROSE_BOOST_PREINCLUDE_PATH) 
@@ -369,10 +383,11 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
      $(SQLITE3_CFLAGS) \
-     $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA \
+     $(ROSE_BOOST_NORMAL_INCLUDE_PATH) \
      $(ROSE_PCH_INCLUDE) \
      $(INTEL_PIN_INCLUDE_PATHS) \
-     $(ROSE_ETHER_INCLUDE)
+     $(ROSE_ETHER_INCLUDE) \
+     $(ROSE_ATERM_INCLUDE)
 endif
 
 SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
@@ -415,10 +430,10 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) \
   $(SQLITE_DATABASE_LIBS) $(QT_LIBS)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-  $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
+  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
-  $(ROSE_INTEL_COMPILER_MATH_LIBS)
+  $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS)
 
 # DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
 # (this is because it has been moved from being linked statically to being linked dynamically).

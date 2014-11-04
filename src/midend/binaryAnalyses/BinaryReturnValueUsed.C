@@ -103,29 +103,29 @@ public:
         return RegisterStatePtr(new RegisterState(protoval, regdict));
     }
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const RegisterDictionary *regdict) const /*override*/ {
+                                                   const RegisterDictionary *regdict) const ROSE_OVERRIDE {
         return instance(protoval, regdict);
     }
-    virtual BaseSemantics::RegisterStatePtr clone() const /*override*/ {
+    virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStatePtr(new RegisterState(*this));
     }
-    virtual void clear()/*override*/ {
+    virtual void clear()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
-    virtual void zero()/*override*/ {
+    virtual void zero()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators*)/*override*/ {
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !wroteValue_)
             readUninitialized_ = true;
         return get_protoval()->undefined_(reg.get_nbits());
     }
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr&,
-                               BaseSemantics::RiscOperators*)/*override*/ {
+                               BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax)
             wroteValue_ = true;
     }
-    virtual void print(std::ostream &o, BaseSemantics::Formatter&) const /*override*/ {
+    virtual void print(std::ostream &o, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
         if (readUninitialized_) {
             o <<"readUninitialized\n";
         } else if (wroteValue_) {

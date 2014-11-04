@@ -63,7 +63,7 @@ public:
  *******************************************************************************************************************************/
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
-typedef BaseSemantics::Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the PartialSymbolicSemantics domain. A value is either known or unknown. Unknown values have
  *  a base name (unique ID number), offset, and sign. */
@@ -115,15 +115,15 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
 
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
         return instance(nbits, value);
     }
 
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
@@ -141,30 +141,30 @@ public:
     /** Promote a base value to a PartialSymbolicSemantics value. The value @p v must have a
      *  PartialSymbolicSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
+        SValuePtr retval = v.dynamicCast<SValue>();
+        ASSERT_not_null(retval);
         return retval;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other stuff we inherited from the super class
 public:
-    virtual void set_width(size_t nbits) /*override*/ {
+    virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         BaseSemantics::SValue::set_width(nbits);
         offset &= IntegerOps::genMask<uint64_t>(nbits);
     }
 
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
     
-    virtual bool is_number() const /*override*/ {
+    virtual bool is_number() const ROSE_OVERRIDE {
         return 0==name;
     }
 
-    virtual uint64_t get_number() const /*override*/ {
-        assert(is_number());
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
+        ASSERT_require(is_number());
         return offset;
     }
 };
@@ -196,15 +196,15 @@ protected:
           const BaseSemantics::MemoryStatePtr &memory)
         : BaseSemantics::State(registers, memory) {
         // This state should use PartialSymbolicSemantics values (or subclasses thereof)
-        assert(registers!=NULL);
+        ASSERT_not_null(registers);
         (void) SValue::promote(registers->get_protoval());
-        assert(memory!=NULL);
+        ASSERT_not_null(memory);
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
         BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
-        assert(!mcl->get_byte_restricted());
+        ASSERT_require(!mcl->get_byte_restricted());
     }
 
     State(const State &other): BaseSemantics::State(other) {}
@@ -227,11 +227,11 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
-                                           const BaseSemantics::MemoryStatePtr &memory) const /*override*/ {
+                                           const BaseSemantics::MemoryStatePtr &memory) const ROSE_OVERRIDE {
         return instance(registers, memory);
     }
 
-    virtual BaseSemantics::StatePtr clone() const /*override*/ {
+    virtual BaseSemantics::StatePtr clone() const ROSE_OVERRIDE {
         StatePtr self = promote(boost::const_pointer_cast<BaseSemantics::State>(shared_from_this()));
         return instance(self);
     }
@@ -241,7 +241,7 @@ public:
 public:
     static StatePtr promote(const BaseSemantics::StatePtr &x) {
         StatePtr retval = boost::dynamic_pointer_cast<State>(x);
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return retval;
     }
 
@@ -290,21 +290,7 @@ protected:
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      * PartialSymbolicSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-#if defined(__GNUC__)
-#if __GNUC__==4 && __GNUC_MINOR__==2
-        // This is needed to work around a bug in GCC-4.2.4 optimization. [Robb P. Matzke 2014-07-16]
-        volatile int x = protoval.get()->nrefs__;
-#endif
-#endif
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
-        memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        SMTSolver *solver = NULL;
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict);
 
     /** Instantiates a new RiscOperators object with specified prototypical values. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
@@ -320,12 +306,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const /*override*/ {
+                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const /*override*/ {
+                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 
@@ -336,7 +322,7 @@ public:
      *  fail if @p from does not point to a PartialSymbolicSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
@@ -354,62 +340,62 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Risc operators inherited
 public:
-    virtual void interrupt(int majr, int minr) /*override*/;
+    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
-                                          const BaseSemantics::SValuePtr &b_) /*override*/;
+                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) /*override*/;
+                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a_,
-                                          const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a_) /*override*/;
+                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr &a_,
-                                             size_t begin_bit, size_t end_bit) /*override*/;
+                                             size_t begin_bit, size_t end_bit) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr &a_,
-                                            const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) /*override*/;
-    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) /*override*/;
+                                            const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr &a_,
-                                                const BaseSemantics::SValuePtr &sa_) /*override*/;
+                                                const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr &a_,
-                                                 const BaseSemantics::SValuePtr &sa_) /*override*/;
+                                                 const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr &a_,
-                                               const BaseSemantics::SValuePtr &sa_) /*override*/;
+                                               const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr &a_,
-                                                const BaseSemantics::SValuePtr &sa_) /*override*/;
+                                                const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a_,
-                                                          const BaseSemantics::SValuePtr &sa_) /*override*/;
-    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) /*override*/;
+                                                          const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
                                          const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) /*override*/;
+                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) /*override*/;
+                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
                                                     BaseSemantics::SValuePtr &carry_out/*out*/);
-    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) /*override*/;
+    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
-                                                  const BaseSemantics::SValuePtr &b_) /*override*/;
+                                                  const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr &a_,
-                                                  const BaseSemantics::SValuePtr &b_) /*override*/;
+                                                  const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) /*override*/;
+                                                    const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) /*override*/;
+                                                    const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) /*override*/;
+                                                    const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
-                                                      const BaseSemantics::SValuePtr &b_) /*override*/;
+                                                      const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) /*override*/;
+                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
     virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
-                             const BaseSemantics::SValuePtr &cond) /*override*/;
+                             const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 
 #if 0

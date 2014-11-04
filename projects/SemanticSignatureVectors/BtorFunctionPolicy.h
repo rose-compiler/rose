@@ -311,8 +311,8 @@ struct BtorFunctionPolicy {
 
   void startBlock(uint64_t addr);
   void finishBlock(uint64_t addr);
-  void startInstruction(SgAsmx86Instruction* insn);
-  void finishInstruction(SgAsmx86Instruction* insn);
+  void startInstruction(SgAsmX86Instruction* insn);
+  void finishInstruction(SgAsmX86Instruction* insn);
 
   /** Reads from a named register. */
   template<size_t Len/*bits*/>
@@ -530,5 +530,5 @@ struct BtorFunctionPolicy {
   }
 };
 
-std::string btorTranslate(BtorFunctionPolicy& policy, const std::vector<SgAsmx86Instruction*>& instructions);
+std::string btorTranslate(BtorFunctionPolicy& policy, const std::vector<SgAsmX86Instruction*>& instructions);
 
