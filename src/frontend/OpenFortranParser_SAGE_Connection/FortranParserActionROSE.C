@@ -7139,7 +7139,13 @@ void c_action_label(Token_t * lbl)
                     SgName mangledName = functionType->get_mangled_type();
                     SgNode::get_globalFunctionTypeTable()->insert_function_type(mangledName, functionType);
 
+#if 0
+                 // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+                    SgMemberFunctionDeclaration* memberfuncdecl = new SgMemberFunctionDeclaration(functionName, NULL, functionType, NULL);
+#else
                     SgMemberFunctionDeclaration* memberfuncdecl = new SgMemberFunctionDeclaration(functionName, functionType, NULL);
+#endif
+
                     ROSE_ASSERT(classType->get_declaration() != NULL);
                     SgScopeStatement* typeDeclarationScope = classType->get_declaration()->get_scope();
                     ROSE_ASSERT(typeDeclarationScope != NULL);
@@ -15869,9 +15875,13 @@ void c_action_label(Token_t * lbl)
 
         // We should test if this is in the function type table, but do this later
         SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(), false);
-        SgProgramHeaderStatement* programDeclaration =
-        new SgProgramHeaderStatement(programName, functionType, NULL);
 
+#if 0
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, NULL, functionType, NULL);
+#else
+        SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, functionType, NULL);
+#endif
         // This is the defining declaration and there is no non-defining declaration!
         programDeclaration->set_definingDeclaration(programDeclaration);
 
@@ -17084,9 +17094,13 @@ void c_action_label(Token_t * lbl)
 
         // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
         // The SgProcedureHeaderStatement can be used for a Fortran function, subroutine, or block data declaration.
-        SgProcedureHeaderStatement* blockDataDeclaration =
-        new SgProcedureHeaderStatement(name, functionType, NULL);
 
+#if 0
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgProcedureHeaderStatement* blockDataDeclaration = new SgProcedureHeaderStatement(name, NULL, functionType, NULL);
+#else
+        SgProcedureHeaderStatement* blockDataDeclaration = new SgProcedureHeaderStatement(name, functionType, NULL);
+#endif
         // DQ (1/21/2008): Set the source position to avoid it being set without accurate token position information
         ROSE_ASSERT(blockKeyword != NULL);
         setSourcePosition(blockDataDeclaration, blockKeyword);
@@ -17784,9 +17798,12 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
         SgName programName = "procedure";
         // SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName,functionType,NULL);
-        SgProcedureHeaderStatement* programDeclaration =
-        new SgProcedureHeaderStatement(programName, functionType, NULL);
-
+#if 0
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgProcedureHeaderStatement* programDeclaration = new SgProcedureHeaderStatement(programName, NULL, functionType, NULL);
+#else
+        SgProcedureHeaderStatement* programDeclaration = new SgProcedureHeaderStatement(programName, functionType, NULL);
+#endif
         ROSE_ASSERT(id != NULL);
 
         setSourcePosition(programDeclaration->get_parameterList(), id);
@@ -18337,8 +18354,12 @@ void c_action_label(Token_t * lbl)
 #endif
 
         // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
+#if 0
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(tempName, NULL, functionType, NULL);
+#else
         SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(tempName, functionType, NULL);
-
+#endif
         // DQ (1/21/2008): Set the source position to avoid it being set without accurate token position information
         // setSourcePosition(functionDeclaration,name);
         ROSE_ASSERT(keyword != NULL);
@@ -18484,9 +18505,12 @@ void c_action_label(Token_t * lbl)
         SgName arg_name = astNameStack.front()->text;
 
         // printf ("Warning: type for return parameter to function assumed to be integer (arg_name = %s) \n",arg_name.str());
-
+#if 1
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgInitializedName* initializedName = new SgInitializedName(arg_name, generateImplicitType(arg_name.str()),NULL);
+#else
         SgInitializedName* initializedName = new SgInitializedName(arg_name, generateImplicitType(arg_name.str()));
-
+#endif
         // printf ("In c_action_result_name(): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
         astNodeStack.push_front(initializedName);
 
@@ -18669,9 +18693,13 @@ void c_action_label(Token_t * lbl)
 #endif
 
         // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
-        SgProcedureHeaderStatement* subroutineDeclaration =
-        new SgProcedureHeaderStatement(tempName, functionType, NULL);
 
+#if 0
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgProcedureHeaderStatement* subroutineDeclaration = new SgProcedureHeaderStatement(tempName, NULL, functionType, NULL);
+#else
+        SgProcedureHeaderStatement* subroutineDeclaration = new SgProcedureHeaderStatement(tempName, functionType, NULL);
+#endif
         // DQ (1/21/2008): Set the source position to avoid it being set without accurate token position information
         // setSourcePosition(subroutineDeclaration,name);
         ROSE_ASSERT(keyword != NULL);
@@ -18952,9 +18980,12 @@ void c_action_label(Token_t * lbl)
         SgFunctionDefinition* entryFunctionDefinition = NULL;
 
         // SgEntryStatement* entryStatement = new SgEntryStatement(entryFunctionName,functionType,functionDefinition);
-        SgEntryStatement* entryStatement = new SgEntryStatement(entryFunctionName,
-                functionType, entryFunctionDefinition);
-
+#if 0
+     // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
+        SgEntryStatement* entryStatement = new SgEntryStatement(entryFunctionName, NULL, functionType, entryFunctionDefinition);
+#else
+        SgEntryStatement* entryStatement = new SgEntryStatement(entryFunctionName, functionType, entryFunctionDefinition);
+#endif
         // Set the scope of the entryStatement (the scope is stroed explicit since SgEntryStatement is derived from a SgFunctionDeclaration
         entryStatement->set_scope(functionDefinition);
 

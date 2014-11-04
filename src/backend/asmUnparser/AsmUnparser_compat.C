@@ -34,8 +34,8 @@ std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnpar
 /* FIXME: This should be a SgAsmInstruction class method. */
 std::string unparseMnemonic(SgAsmInstruction *insn) {
     switch (insn->variantT()) {
-        case V_SgAsmx86Instruction:
-            return unparseX86Mnemonic(isSgAsmx86Instruction(insn));
+        case V_SgAsmX86Instruction:
+            return unparseX86Mnemonic(isSgAsmX86Instruction(insn));
         case V_SgAsmArmInstruction:
             return unparseArmMnemonic(isSgAsmArmInstruction(insn));
         case V_SgAsmPowerpcInstruction:
@@ -65,7 +65,7 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
         return unparseX86Expression(expr, labels, registers, false);
         
     switch (insn->variantT()) {
-        case V_SgAsmx86Instruction:
+        case V_SgAsmX86Instruction:
             return unparseX86Expression(expr, labels, registers);
         case V_SgAsmArmInstruction:
             return unparseArmExpression(expr, labels, registers);
@@ -90,7 +90,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
     std::ostringstream s;
     AsmUnparser u;
     switch (stmt->variantT()) {
-        case V_SgAsmx86Instruction:
+        case V_SgAsmX86Instruction:
         case V_SgAsmArmInstruction:
         case V_SgAsmPowerpcInstruction:
         case V_SgAsmMipsInstruction:

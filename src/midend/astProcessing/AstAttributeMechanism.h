@@ -8,6 +8,7 @@
 
 #include "AttributeMechanism.h"
 #include "rosedll.h"
+#include "rose_override.h"
 
 class SgNode;
 class SgNamedType;
@@ -203,7 +204,7 @@ class ROSE_DLL_API AstRegExAttribute : public AstAttribute
 
           AstRegExAttribute();
           AstRegExAttribute(const std::string & s);
-          virtual AstAttribute* copy() /*override*/;
+          virtual AstAttribute* copy() ROSE_OVERRIDE;
    };
 
 // PC (10/21/2012): Added new kind of attribute for handling regex trees.
@@ -223,7 +224,7 @@ class ROSE_DLL_API AstSgNodeAttribute : public AstAttribute
 
           AstSgNodeAttribute();
           AstSgNodeAttribute(SgNode *node);
-          virtual AstAttribute* copy() /*override*/;
+          virtual AstAttribute* copy() ROSE_OVERRIDE;
    };
 
 class ROSE_DLL_API AstSgNodeListAttribute : public AstAttribute
@@ -240,7 +241,7 @@ class ROSE_DLL_API AstSgNodeListAttribute : public AstAttribute
           AstSgNodeListAttribute();
           AstSgNodeListAttribute(std::vector<SgNode *> &);
 
-          virtual AstAttribute* copy() /*override*/;
+          virtual AstAttribute* copy() ROSE_OVERRIDE;
    };
 
 class ROSE_DLL_API AstIntAttribute : public AstAttribute
@@ -252,7 +253,7 @@ class ROSE_DLL_API AstIntAttribute : public AstAttribute
 
           AstIntAttribute(int value_);
 
-          virtual AstAttribute* copy() /*override*/;
+          virtual AstAttribute* copy() ROSE_OVERRIDE;
    };
 
 class ROSE_DLL_API AstParameterizedTypeAttribute : public AstAttribute {
@@ -266,7 +267,7 @@ class ROSE_DLL_API AstParameterizedTypeAttribute : public AstAttribute {
         bool argumentsMatch(SgTemplateParameterList *type_arg_list, std::vector<SgTemplateParameter *> *new_args);
         SgJavaParameterizedType *findOrInsertParameterizedType(std::vector<SgTemplateParameter *> *new_args);
 
-        virtual AstAttribute* copy() /*override*/;
+        virtual AstAttribute* copy() ROSE_OVERRIDE;
 };
 
 

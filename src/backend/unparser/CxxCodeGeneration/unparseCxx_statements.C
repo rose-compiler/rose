@@ -4229,9 +4229,17 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
   // DQ (7/25/2014): We can assume that if this is g++ then we are using gcc for the backend C compiler.
-     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-#ifndef _MSC_VER
-     if (backEndCompiler == "g++")
+     bool usingGxx = false;
+     #ifdef USE_CMAKE
+       #ifdef CMAKE_COMPILER_IS_GNUCXX
+         usingGxx = true;
+       #endif
+     #else
+       string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+       usingGxx = (backEndCompiler == "g++");
+     #endif
+
+     if (usingGxx)
         {
           SgFile* file = TransformationSupport::getFile(vardecl_stmt);
 #if 0
@@ -4273,9 +4281,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
         }
-#else
-  // Not sure what the status is of MSVC C11 support for thread local storage.
-#endif
 
 #if 0
      vardecl_stmt->get_declarationModifier().display("Called from unparseVarDeclStmt()");

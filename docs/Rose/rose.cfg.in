@@ -488,6 +488,7 @@ INPUT                  =										     \
                          @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C			     \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C					     \
                          @top_srcdir@/src/frontend/BinaryLoader						     \
+                         @top_srcdir@/src/frontend/Partitioner2						     \
                          @top_srcdir@/src/frontend/SageIII/						     \
                          @top_srcdir@/src/frontend/SageIII/docs						     \
                          @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C	     \
@@ -517,6 +518,7 @@ INPUT                  =										     \
 			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/simpleAnalyses	 	     \
 			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/state			     \
 			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/variables		     \
+			 @top_srcdir@/src/midend/programAnalysis/EditDistance				     \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs		     \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
                          @top_srcdir@/src/midend/astProcessing						     \

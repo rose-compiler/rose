@@ -248,20 +248,20 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     
     /* Make sure area is not already in free list.  The freelist.insert() handles this gracefully, but if we're freeing
      * something that's already in the list then we have a logic error somewhere. */
-    ROSE_ASSERT(!get_freelist().overlaps(Extent(offset, size)));
+    ROSE_ASSERT(!get_freelist().isOverlapping(AddressInterval::baseSize(offset, size)));
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::unalloced to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
-    ExtentMap s_extents;
+    AddressIntervalSet toFree;
+    toFree.insert(AddressInterval::baseSize(offset, size));
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
         if (storage->get_offset()!=SgAsmGenericString::unallocated)
-            s_extents.insert(Extent(storage->get_offset(), get_storage_size(storage)));
+            toFree.erase(AddressInterval::baseSize(storage->get_offset(), get_storage_size(storage)));
     }
-    ExtentMap to_free = s_extents.subtract_from(Extent(offset, size));
 
-    /* Add un-refrened extents to free list. */
-    get_freelist().insert_ranges(to_free);
+    /* Add un-referenced extents to free list. */
+    get_freelist().insertMultiple(toFree);
 }
 
 /** Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
@@ -295,7 +295,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
-        get_freelist().erase(Extent(p_dont_free->get_offset(), p_dont_free->get_string().size()+1));
+        get_freelist().erase(AddressInterval::baseSize(p_dont_free->get_offset(), p_dont_free->get_string().size()+1));
 }
 
 /** Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
@@ -357,8 +357,15 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmGenericString::unallocated) {
             try {
-                Extent e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
-                rose_addr_t new_offset = e.first();
+                size_t need = storage->get_string().size() + 1;
+                AddressIntervalSet::ConstIntervalIterator iter = get_freelist().bestFit(need,
+                                                                                        get_freelist().intervals().begin());
+                if (iter==get_freelist().intervals().end())
+                    throw std::bad_alloc();
+                ASSERT_require(iter->size() >= need);
+                AddressInterval allocated = AddressInterval::baseSize(iter->least(), need);
+                get_freelist().erase(allocated);
+                rose_addr_t new_offset = allocated.least();
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
                 /* nothing large enough on the free list */
@@ -394,9 +401,12 @@ SgAsmGenericStrtab::reallocate(bool shrink)
     } else if (shrink && get_freelist().size()>0) {
         /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
          * method will adjust the free list by removing some bytes from it. */
-        Extent hi = get_freelist().rbegin()->first;
-        if (hi.first() + hi.size() == container->get_size())
-            container->set_size(hi.first());
+        AddressIntervalSet::ConstIntervalIterator iter = get_freelist().intervals().end();
+        ASSERT_forbid(iter == get_freelist().intervals().begin());
+        --iter;
+        AddressInterval hi = *iter;
+        if (hi.least() + hi.size() == container->get_size())
+            container->set_size(hi.least());
     }
 
     if (reallocated)
@@ -406,12 +416,12 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 
 /** Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
  *  free list. */
-const ExtentMap&
+const AddressIntervalSet&
 SgAsmGenericStrtab::get_freelist() const
 {
     return p_freelist;
 }
-ExtentMap&
+AddressIntervalSet&
 SgAsmGenericStrtab::get_freelist()
 {
     return p_freelist;
@@ -451,5 +461,13 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     fprintf(f, "%s%-*s = %"PRIu64" free regions\n", p, w, "freelist", get_freelist().size());
-    get_freelist().dump_extents(f, p, "freelist");
+    BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals()) {
+        fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"),"
+                " for 0x%08"PRIx64" (%"PRIu64") byte%s,"
+                " ending at 0x%08"PRIx64" (%"PRIu64")\n",
+                p, w, "",
+                interval.least(), interval.least(),
+                interval.size(), interval.size(), 1==interval.size()?"":"s",
+                interval.greatest()+1, interval.greatest()+1);
+    }
 }

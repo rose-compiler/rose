@@ -325,13 +325,14 @@ AC_ARG_ENABLE([python],
                 esac
                ,
 
-                # Warn if --with-python is specified
+                dnl  Warn if --with-python is specified and --enable-python is not specified. The "--with-python=PATH"
+		dnl  switch is used to specify a non-standard location for the Python interpreter, while the "--enable-python"
+		dnl  switch causes librose to contain a python interpreter as part of its frontend.  Do not automatically
+		dnl  turn on "--enable-python" because then there's no way for users to specify the name of the python
+		dnl  interpreter (which might be needed by some ROSE projects) without also enabling the python parser
+		dnl  in ROSE's frontend (which has stricter version requirements and might not compile).
                 if test "x$with_python" != "x"; then
-                    AC_MSG_WARN([--with-python specified without --enable-python. Enabling anyway.])
-                    echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
-                    if test $? != 0 ; then
-                        LANGUAGES_TO_SUPPORT+=" python"
-                    fi
+                    AC_MSG_WARN([--with-python specified without --enable-python. ROSE will not have a python frontend parser.])
                 fi
                )
 AC_ARG_ENABLE([opencl],
