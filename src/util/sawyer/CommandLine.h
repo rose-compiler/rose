@@ -800,13 +800,19 @@ public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<IntegerParser> Ptr;
 
-    /** Allocating constructor. Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref
-     *  integerParser factory instead, which requires less typing.
+    /** Allocating constructor.
+     *
+     *  Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref integerParser factory
+     *  instead, which requires less typing.
+     *
      * @sa parser_factories */
     static Ptr instance() { return Ptr(new IntegerParser); }
 
-    /** Allocating constructor. Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref
-     *  integerParser factory instead, which takes the same arguments, but requires less typing.
+    /** Allocating constructor.
+     *
+     *  Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref integerParser factory
+     *  instead, which takes the same arguments, but requires less typing.
+     *
      * @sa parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new IntegerParser(valueSaver)); }
 private:
