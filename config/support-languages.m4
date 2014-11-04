@@ -249,8 +249,8 @@ AC_ARG_ENABLE([x10],
                 fi
                 case "$enableval" in
                   [yes)]
-                        if test "x$with_x10" = "xno" ; then
-                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-x10=$enableval' enables X10-language support, but '--with-x10=$with_x10' disables it])]
+                        if test "x$rose_with_x10" = "xno" ; then
+                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-x10=$enableval' enables X10-language support, but '--with-x10=$rose_with_x10' disables it])]
                         fi
                         if test "x$USE_X10" = "x0" ; then
                           [AC_MSG_FAILURE([[[X10 Support]] you requested to build X10 language support with '--enable-x10=$enableval', which requires X10, but X10 was not found. Do you need to explicitly specify your X10 using the "--with-x10" configure-option? (See ./configure --help)])]
@@ -270,10 +270,10 @@ AC_ARG_ENABLE([x10],
                  	;;
                 esac
                ,
-                if test "x$with_x10" = "xno" ; then
+                if test "x$rose_with_x10" = "xno" ; then
                   enable_x10=no
                   LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
-                  [echo "[[X10 support]] disabling X10 language support, which requires Java, because you specified --with-x10='$with_x10'"] 
+                  [echo "[[X10 support]] disabling X10 language support, which requires Java, because you specified --with-x10='$rose_with_x10'"] 
                 fi)
 AC_ARG_ENABLE([php],
                AS_HELP_STRING([--enable-php],[Enable PHP language support in ROSE (default=yes)]),
@@ -628,9 +628,9 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   # X10
   #
-  if test "x$with_x10" = "xyes" ; then
+  if test "x$rose_with_x10" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] with X10"
-  elif test "x$with_x10" = "xno" ; then
+  elif test "x$rose_with_x10" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] without X10"
   fi
 
@@ -900,8 +900,8 @@ AC_ARG_ENABLE([only-x10],
                              [Enable ONLY X10 support in ROSE (Warning: '--enable-only-x10=no' and '--disable-only-x10' are no longer supported)]),
                 case "$enableval" in
                   [yes)]
-                        if test "x$with_x10" = "xno" ; then
-                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-only-x10=$enableval' enables X10-language support, but '--with-x10=$with_x10' disables it])]
+                        if test "x$rose_with_x10" = "xno" ; then
+                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-only-x10=$enableval' enables X10-language support, but '--with-x10=$rose_with_x10' disables it])]
                         else  
                   	  LANGUAGES_TO_SUPPORT="x10"
                           USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
