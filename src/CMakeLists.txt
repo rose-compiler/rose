@@ -117,6 +117,7 @@ set( STORAGECLASSES_SRC
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
+      ${CMAKE_SOURCE_DIR}/src/util/FileSystem.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/DGBaseGraphImpl.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/SCCAnalysis.C
       ${CMAKE_SOURCE_DIR}/src/util/graphs/TransAnalysis.C
