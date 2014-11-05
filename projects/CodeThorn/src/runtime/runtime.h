@@ -32,7 +32,7 @@ class RunTimeSystem {
   void setEventSimTime(Backstroke::SimTime simTime);
   void finalizeForwardEvent();
   void reverseEvent();
-  void commitEventsUntil(Backstroke::SimTime simTime);
+  void commitEventsLessThanSimTime(Backstroke::SimTime simTime);
   void commitEvent();
   void registerForCommit(ptr p);
 

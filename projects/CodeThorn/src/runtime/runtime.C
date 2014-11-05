@@ -73,7 +73,7 @@ void Backstroke::RunTimeSystem::setEventSimTime(Backstroke::SimTime simTime) {
 }
 
 // deallocates EventRecord
-void Backstroke::RunTimeSystem::commitEventsUntil(Backstroke::SimTime simTime) {
+void Backstroke::RunTimeSystem::commitEventsLessThanSimTime(Backstroke::SimTime simTime) {
 }
 
 // deallocates EventRecord
