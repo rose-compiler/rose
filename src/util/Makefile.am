@@ -26,6 +26,7 @@ noinst_LTLIBRARIES = libroseutil.la
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_SOURCES =			\
 	compilationFileDatabase.C		\
+	FileSystem.C				\
 	processSupport.C			\
 	rose_getline.C				\
 	rose_strtoull.C
@@ -44,6 +45,7 @@ libroseutil_la_LIBADD = \
 
 pkginclude_HEADERS =				\
 	compilationFileDatabase.h		\
+	FileSystem.h				\
 	FormatRestorer.h			\
 	GraphUtility.h				\
 	Map.h					\
