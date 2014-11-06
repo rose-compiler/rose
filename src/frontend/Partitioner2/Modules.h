@@ -254,6 +254,31 @@ public:
     virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
 };
 
+/** Convenient place to attach a debugger.
+ *
+ *  See @ref docString for full documentation. */
+class Debugger: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) should we monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    Debugger(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new Debugger(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    void debug(rose_addr_t, const BasicBlock::Ptr&);
+};
+
 /** Remove execute permissions for zeros.
  *
  *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
