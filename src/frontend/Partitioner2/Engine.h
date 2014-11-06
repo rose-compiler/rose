@@ -400,6 +400,15 @@ public:
      *  the individual calls. */
     virtual std::vector<DataBlock::Ptr> attachPaddingToFunctions(Partitioner&);
 
+    /** Attach intra-function basic blocks to functions.
+     *
+     *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
+     *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
+     *  created at the beginning of the interval and added to the function.
+     *
+     *  Returns the number of new placeholders created. */
+    size_t attachSurroundedCodeToFunctions(Partitioner&);
+    
     /** Attach intra-function data to functions.
      *
      *  Looks for addresses that are not part of the partitioner's CFG/AUM and which are surrounded immediately below and above

@@ -462,7 +462,7 @@ Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
         size_t nFailures = partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges);
         if (nFailures > 0) {
             insertUnique(retval, function, sortFunctionsByAddress);
-            if (mlog[WARN]) {
+            if (mlog[WARN] && emitWarnings) {
                 mlog[WARN] <<"discovery for " <<partitioner.functionName(function)
                                <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                                <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
@@ -527,6 +527,52 @@ Engine::attachDeadCodeToFunctions(Partitioner &partitioner, size_t maxIterations
     }
     return retval;
 }
+
+// Assumes that each unused address interaval that's surrounded by a single function begins coincident with the beginning of an
+// as yet undiscovered basic block and adds a basic block placeholder to the surrounding function.  This could be further
+// improved by testing to see if the candidate address looks like a valid basic block.
+size_t
+Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
+    size_t nNewBlocks = 0;
+    if (partitioner.aum().isEmpty())
+        return 0;
+    rose_addr_t va = partitioner.aum().hull().least() + 1;
+    while (va < partitioner.aum().hull().greatest()) {
+        // Find an address interval that's unused and also executable.
+        AddressInterval unusedAum = partitioner.aum().nextUnused(va);
+        if (!unusedAum || unusedAum.greatest() > partitioner.aum().hull().greatest())
+            break;
+        AddressInterval interval = partitioner.memoryMap().within(unusedAum).require(MemoryMap::EXECUTABLE).available();
+        if (interval == unusedAum) {
+            // Is this interval immediately surrounded by a single function?
+            typedef std::vector<Function::Ptr> Functions;
+            Functions beforeFuncs = partitioner.functionsOverlapping(interval.least()-1);
+            Functions afterFuncs = partitioner.functionsOverlapping(interval.greatest()+1);
+            Functions enclosingFuncs(beforeFuncs.size());
+            Functions::iterator final = std::set_intersection(beforeFuncs.begin(), beforeFuncs.end(),
+                                                              afterFuncs.begin(), afterFuncs.end(), enclosingFuncs.begin());
+            enclosingFuncs.resize(final-enclosingFuncs.begin());
+            if (1 == enclosingFuncs.size()) {
+                Function::Ptr function = enclosingFuncs[0];
+
+                // Add the address to the function
+                mlog[DEBUG] <<"attachSurroundedCodeToFunctions: basic block " <<StringUtility::addrToString(interval.least())
+                            <<" is attached now to function " <<function->printableName() <<"\n";
+                partitioner.detachFunction(function);
+                function->insertBasicBlock(interval.least());
+                partitioner.attachFunction(function);
+                ++nNewBlocks;
+            }
+        }
+
+        // Advance to next unused interval
+        if (unusedAum.greatest() > partitioner.aum().hull().greatest())
+            break;                                      // prevent possible overflow
+        va = unusedAum.greatest() + 1;
+    }
+    return nNewBlocks;
+}
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Data block functions
