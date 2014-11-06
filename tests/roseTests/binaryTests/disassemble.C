@@ -921,6 +921,21 @@ main(int argc, char *argv[])
                   .intrinsicValue(false, do_show_hashes)
                   .hidden(true));
 
+    bool do_show_instruction_addresses = false;
+    output.insert(Switch("show-instruction-addresses")
+                  .intrinsicValue(true, do_show_instruction_addresses)
+                  .doc("Produce a listing of instruction addresses.  Each line of output will contain three space-separated "
+                       "items: the address interval for the instruction (address followed by \"+\" followed by size), the "
+                       "address of the basic block to which the instruction belongs, and the address of the function to which "
+                       "the basic block belongs.  If the basic block doesn't belong to a function then the string \"nil\" is "
+                       "printed for the function address field.  This listing is disabled with the "
+                       "@s{no-show-instruction-addresses} switch.  The default is to " +
+                       std::string(do_show_instruction_addresses?"":"not ") + "show this information."));
+    output.insert(Switch("no-show-instruction-addresses")
+                  .key("show-instruction-addresses")
+                  .intrinsicValue(false, do_show_instruction_addresses)
+                  .hidden(true));
+
     SyscallMethod do_syscall_names = SYSCALL_LINUX32;
     output.insert(Switch("syscalls")
                     .argument("method", Sawyer::CommandLine::enumParser(do_syscall_names)
@@ -1569,6 +1584,22 @@ main(int argc, char *argv[])
     if (!do_generate_ipd.empty()) {
         std::ofstream ipdfile(do_generate_ipd.c_str());
         Partitioner::IPDParser::unparse(ipdfile, block);
+    }
+
+    if (do_show_instruction_addresses) {
+        struct: AstSimpleProcessing {
+            void visit(SgNode *node) {
+                if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
+                    SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
+                    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(bb);
+                    ASSERT_not_null(bb);
+                    std::cout <<addrToString(insn->get_address()) <<"+" <<insn->get_size()
+                              <<"\t" <<addrToString(bb->get_address())
+                              <<"\t" <<(func ? addrToString(func->get_entry_va()) : std::string("nil")) <<"\n";
+                }
+            }
+        } t1;
+        t1.traverse(block, preorder);
     }
 
     /*------------------------------------------------------------------------------------------------------------------------
