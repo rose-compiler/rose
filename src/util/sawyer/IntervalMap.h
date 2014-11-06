@@ -533,7 +533,7 @@ public:
     /** Returns true if element exists.
      *
      *  Returns true if and only if the specified key exists in the map. */
-    bool exists(const typename Interval::Value &size) {
+    bool exists(const typename Interval::Value &size) const {
         return find(size)!=nodes().end();
     }
     
