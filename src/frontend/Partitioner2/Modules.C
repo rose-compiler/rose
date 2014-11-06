@@ -285,24 +285,90 @@ HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
 
         rose_addr_t va = settings_.what.least();
         while (AddressInterval avail = args.partitioner->memoryMap().atOrAfter(va).singleSegment().available()) {
+            if (avail.least() > settings_.what.greatest())
+                break;
+            const size_t nPrint = std::min(settings_.what.greatest()+1-avail.least(), avail.size());
             const MemoryMap::Node &node = *args.partitioner->memoryMap().find(avail.least());
             const MemoryMap::Segment &segment = node.value();
             const AddressInterval segmentInterval = node.key();
-            size_t bufferOffset = avail.least() - segmentInterval.least();
-            debug <<"  Segment \"" <<cEscape(segment.name()) <<"\" + " <<toHex(bufferOffset) <<"\n";
-            ASSERT_require(bufferOffset<segment.buffer()->size());
-            ASSERT_require(avail.size() < segment.buffer()->available(bufferOffset));
-            const unsigned char *data = (const unsigned char*)segment.buffer()->data() + bufferOffset;
+            size_t offsetWithinSegment = avail.least() - segmentInterval.least();
+            size_t offsetWithinBuffer = segment.offset() + offsetWithinSegment;
+            debug <<"  Segment \"" <<cEscape(segment.name()) <<"\" + " <<toHex(offsetWithinSegment) <<"\n";
+            ASSERT_require(offsetWithinBuffer < segment.buffer()->size());
+            ASSERT_require(nPrint <= segment.buffer()->available(offsetWithinBuffer));
+            const unsigned char *data = (const unsigned char*)segment.buffer()->data() + offsetWithinBuffer;
             ASSERT_not_null(data);
             debug <<fmt.prefix;
-            SgAsmExecutableFileFormat::hexdump(debug, avail.least(), data, avail.size(), fmt);
+            SgAsmExecutableFileFormat::hexdump(debug, avail.least(), data, nPrint, fmt);
             debug <<"\n";
-            if (avail.greatest()==settings_.what.greatest())
+            if (avail.least() + (nPrint-1) == settings_.what.greatest())
                 break;                                  // avoid possible overflow
             va = avail.greatest() + 1;
         }
     }
     return chain;
+}
+
+// class method
+Sawyer::CommandLine::SwitchGroup
+Debugger::switches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup switches;
+    switches.insert(Switch("bblock")
+                    .argument("interval", addressIntervalParser(settings.where))
+                    .doc("Address or address interval for basic blocks that trigger this debugging aid.  This debugging "
+                         "aid is triggered (subject to other constraints) Whenever a basic block whose starting address "
+                         "is equal to the specified address or falls within the specified interval is attached to the "
+                         "CFG."));
+    switches.insert(Trigger::switches(settings.when));
+    return switches;
+}
+
+// class method
+std::string
+Debugger::docString() {
+    Settings settings;
+    return ("Calls Debugger::debug, which is a convenient point to attach a debugger such as GDB.  The method is called "
+            "when a basic block or placeholder whose address is in the specified @s{bblock} address interval is attached "
+            "to the CFG." + Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches());
+}
+
+// class method
+Debugger::Ptr
+Debugger::instance(const std::string &config) {
+    std::vector<std::string> args;
+    BOOST_FOREACH (const std::string &s, StringUtility::split(':', config))
+        args.push_back(":"+s);
+    return instance(args);
+}
+
+// class method
+Debugger::Ptr
+Debugger::instance(const std::vector<std::string> &args) {
+    Settings settings;
+    Sawyer::CommandLine::Parser parser;
+    parser.with(switches(settings)).longPrefix(":").longPrefix(":--").programName("Debugger");
+    Sawyer::CommandLine::ParserResult cmdline = parser.parse(args).apply();
+    if (!cmdline.unreachedArgs().empty())
+        throw std::runtime_error("Debugger: invalid config: \"" + StringUtility::join("", args) + "\"");
+    return instance(settings);
+}
+
+bool
+Debugger::operator()(bool chain, const AttachedBasicBlock &args) {
+    if (chain && settings_.where.isContaining(args.startVa) && trigger_.shouldTrigger())
+        debug(args.startVa, args.bblock);
+    return chain;
+}
+
+void
+Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
+    using namespace StringUtility;
+    Stream debug(mlog[DEBUG]);
+    debug.enable();
+    size_t callNumber = trigger_.nCalls() - 1;
+    bool isBblock = bblock != NULL;
+    debug <<"Debugger triggered: #" <<callNumber <<" for " <<(isBblock?"bblock=":"placeholder=") <<addrToString(va) <<"\n";
 }
 
 AddressIntervalSet

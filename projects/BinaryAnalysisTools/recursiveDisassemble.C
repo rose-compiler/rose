@@ -197,9 +197,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 
     out.insert(Switch("list-instruction-addresses")
                .intrinsicValue(true, settings.doListInstructionAddresses)
-               .doc("Produce a listing of instruction addresses.  Each line of output will contain one address interval "
-                    "represented in the standard format: a hexadecimal address with leading \"0x\" followed by a plus sign (\"+\") "
-                    "followed by the decimal size of the instruction in bytes.  This listing is disabled with the "
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain three space-separated "
+                    "items: the address interval for the instruction (address followed by \"+\" followed by size), the "
+                    "address of the basic block to which the instruction belongs, and the address of the function to which "
+                    "the basic block belongs.  If the basic block doesn't belong to a function then the string \"nil\" is "
+                    "printed for the function address field.  This listing is disabled with the "
                     "@s{no-list-instruction-addresses} switch.  The default is to " +
                     std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
     out.insert(Switch("no-list-instruction-addresses")
@@ -264,6 +266,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "@named{cfg-dot}{" + P2::Modules::CfgGraphVizDumper::docString() + "}"
                     "@named{hexdump}{" + P2::Modules::HexDumper::docString() + "}"
                     "@named{insn-list}{" + P2::Modules::InstructionLister::docString() + "}"
+                    "@named{debugger}{" + P2::Modules::Debugger::docString() + "}"
                     ));
     
 
@@ -434,6 +437,9 @@ int main(int argc, char *argv[]) {
         } else if (boost::starts_with(s, "insn-list:")) {
             P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
             partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "debugger:")) {
+            P2::Modules::Debugger::Ptr aid = P2::Modules::Debugger::instance(s.substr(9));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
         } else {
             throw std::runtime_error("invalid debugging aid for \"trigger\" switch: " + s);
         }
@@ -525,11 +531,17 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.doListInstructionAddresses) {
-        std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(AddressInterval::whole());
-        BOOST_FOREACH (SgAsmInstruction *insn, insns)
-            std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size() <<"\n";
+        std::vector<P2::BasicBlock::Ptr> bblocks = partitioner.basicBlocks();
+        BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
+            P2::Function::Ptr function = partitioner.findFunctionOwningBasicBlock(bblock);
+            BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+                std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size();
+                std::cout <<"\t" <<StringUtility::addrToString(bblock->address());
+                std::cout <<"\t" <<(function ? StringUtility::addrToString(function->address()) : std::string("nil")) <<"\n";
+            }
+        }
     }
-    
+
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         if (!globalBlock)
