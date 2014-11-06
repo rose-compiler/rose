@@ -46,6 +46,7 @@ struct Settings {
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findFunctionPadding;                           // look for pre-entry-point padding?
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
+    bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
@@ -59,9 +60,9 @@ struct Settings {
     std::vector<std::string> triggers;                  // debugging aids
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
-          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false),
-          doShowMap(false), doShowStats(false), doListUnused(false) {}
+          findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true), doListCfg(false),
+          doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
+          doListInstructionAddresses(false), doShowMap(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -88,6 +89,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
+
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
                .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
@@ -102,6 +104,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("allow-discontiguous-blocks")
                .intrinsicValue(false, settings.allowDiscontiguousBlocks)
                .hidden(true));
+
     dis.insert(Switch("find-function-padding")
                .intrinsicValue(true, settings.findFunctionPadding)
                .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
@@ -112,6 +115,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-function-padding")
                .intrinsicValue(false, settings.findFunctionPadding)
                .hidden(true));
+
     dis.insert(Switch("follow-ghost-edges")
                .intrinsicValue(true, settings.followGhostEdges)
                .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -121,6 +125,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("follow-ghost-edges")
                .intrinsicValue(false, settings.followGhostEdges)
                .hidden(true));
+
     dis.insert(Switch("find-dead-code")
                .intrinsicValue(true, settings.findDeadCode)
                .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
@@ -131,6 +136,22 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
                .hidden(true));
+
+    dis.insert(Switch("intra-function-code")
+               .intrinsicValue(true, settings.intraFunctionCode)
+               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
+                    "followed by the same single function then a basic block is create at the beginning of that region and "
+                    "added as a member of the surrounding function.  A function block discover phase follows in order to "
+                    "find the instructions for the new basic blocks and to follow their control flow to add additional "
+                    "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
+                    "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
+                    "switch turns this off. The default is to " + std::string(settings.intraFunctionCode?"":"not ") +
+                    "perform this analysis."));
+    dis.insert(Switch("no-intra-function-code")
+               .key("intra-function-code")
+               .intrinsicValue(false, settings.intraFunctionCode)
+               .hidden(true));
+
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
                .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
@@ -141,6 +162,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("intra-function-data")
                .intrinsicValue(false, settings.intraFunctionData)
                .hidden(true));
+
     dis.insert(Switch("remove-zeros")
                .argument("size", nonNegativeIntegerParser(settings.deExecuteZeros), "128")
                .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
@@ -463,6 +485,16 @@ int main(int argc, char *argv[]) {
         engine.attachDeadCodeToFunctions(partitioner);  // find unreachable code and add it to functions
     if (settings.findFunctionPadding)
         engine.attachPaddingToFunctions(partitioner);   // find function alignment padding before entry points
+    if (settings.intraFunctionCode) {
+        while (engine.attachSurroundedCodeToFunctions(partitioner)) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-11-06]
+            mlog[INFO] <<"ROBB: attached surrounded code to functions\n";
+#endif
+            engine.discoverBasicBlocks(partitioner);    // discover instructions and more basic blocks by following control
+            engine.makeCalledFunctions(partitioner);    // we might have found more function calls from the new blocks
+            engine.attachBlocksToFunctions(partitioner);// attach new blocks to functions wherever possible
+        }
+    }
     if (settings.intraFunctionData)
         engine.attachSurroundedDataToFunctions(partitioner); // find data areas that are enclosed by functions
 
