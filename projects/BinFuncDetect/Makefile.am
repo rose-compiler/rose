@@ -15,12 +15,12 @@ analyzer_SOURCES = analyzer.C
 analyzer_CPPFLAGS = $(ROSE_INCLUDES)
 analyzer_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += generateRoseCsvFile
-generateRoseCsvFile_SOURCES = generateRoseCsvFile.C
-generateRoseCsvFile_CPPFLAGS = $(ROSE_INCLUDES)
-generateRoseCsvFile_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
 noinst_PROGRAMS += feasibility
 feasibility_SOURCES = feasibility.C
 feasibility_CPPFLAGS = $(ROSE_INCLUDES)
 feasibility_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += compareResults
+compareResults_SOURCES = compareResults.C
+compareResults_CPPFLAGS = $(ROSE_INCLUDES)
+compareResults_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
