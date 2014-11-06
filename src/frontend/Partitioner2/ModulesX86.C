@@ -200,8 +200,9 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
         rose_addr_t tableEntryVa = tableLimits.least() + successors.size() * tableEntrySize;
         if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize)))
             break;                                      // table entry is outside of table boundary
-        if (tableEntrySize != map.at(tableEntryVa).limit(tableEntrySize).access(MemoryMap::READABLE).read(bytes).size())
-            break;                                      // table entry is not entirely in read-only memory
+        if (tableEntrySize != (map.at(tableEntryVa).limit(tableEntrySize)
+                               .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
+            break;                                      // table entry must be readable but not writable
         rose_addr_t target = 0;
         for (size_t i=0; i<tableEntrySize; ++i)
             target |= bytes[i] << (8*i);
@@ -214,13 +215,41 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
 
         successors.push_back(target);
     }
-
-    // Return values
     if (successors.empty()) {
         tableLimits = AddressInterval();
-    } else {
-        tableLimits = AddressInterval::baseSize(tableLimits.least(), successors.size()*tableEntrySize);
+        return successors;
     }
+
+    // Sometimes the jump table is followed by 1-byte offsets into the jump table, and we should read those offsets as part of
+    // the table.  For an example, look at tetris.exe compiled with MSVC 2010 (md5sum 30f1442a16d0275c2db4f52e9c78b5cd): eax is
+    // the zero-origin value of the switch expression, which is looked up in the byte array at 0x00401670, which in turn is
+    // used to index into the jump address array at 0x004165c.  Only do this for small tables, otherwise it will eat up all
+    // kinds of stuff.
+    //     0x0040150a: 3d a2 00 00 00          |=....   |   cmp    eax, 0x000000a2
+    //     0x0040150f: 0f 87 86 00 00 00       |......  |   ja     0x0040159b
+    //     0x00401515: 0f b6 90 70 16 40 00    |...p.@. |   movzx  edx, BYTE PTR ds:[eax + 0x00401670]
+    //     0x0040151c: ff 24 95 5c 16 40 00    |.$.\.@. |   jmp    DWORD PTR ds:[0x0040165c + edx*0x04]
+    //
+    //     [0x0040165c,0x0040166f]: uint32_t addresses[5] = { <target addresses> };
+    //
+    //     [0x00401670,0x00401712]: uint8_t index[0xa3] = { <values 0..4> };
+    rose_addr_t indexArrayStartVa = tableLimits.least() + successors.size()*tableEntrySize;
+    rose_addr_t indexArrayCurrentVa = indexArrayStartVa;
+    if (successors.size() <= 16 /*arbitrarily small tables*/) {
+        while (indexArrayCurrentVa <= tableLimits.greatest()) {
+            uint8_t byte;
+            if (!map.at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
+                break;
+            if (byte >= successors.size())
+                break;
+            if (indexArrayCurrentVa == tableLimits.greatest())
+                break;                                  // avoid overflow
+            ++indexArrayCurrentVa;
+        }
+    }
+    
+    // Return values
+    tableLimits = AddressInterval::hull(tableLimits.least(), indexArrayCurrentVa-1);
     return successors;
 }
 
