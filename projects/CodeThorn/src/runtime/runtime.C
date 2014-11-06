@@ -2,10 +2,11 @@
 
 #include <pthread.h>
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 
-Backstroke::SimTime::SimTime():_simTime(0) {
+Backstroke::SimTime::SimTime():_simTime(-1.0) {
 }
 
 Backstroke::SimTime::SimTime(tw_stime simTime):_simTime(simTime) {
@@ -74,15 +75,32 @@ void Backstroke::RunTimeSystem::setEventSimTime(Backstroke::SimTime simTime) {
 
 // deallocates EventRecord
 void Backstroke::RunTimeSystem::commitEventsLessThanSimTime(Backstroke::SimTime simTime) {
+  while(eventRecordDeque.size()>0) {
+    EventRecord* commitEventRecord=eventRecordDeque.front();
+    assert(commitEventRecord!=0);
+    if(commitEventRecord->simTime<simTime) {
+      eventRecordDeque.pop_front();
+      deallocate(commitEventRecord);
+    } else {
+      break;
+    }
+  }
+  //cout<<"INFO: record queue empty - all events committed."<<endl;
 }
 
-// deallocates EventRecord
+// pops event-record from event-record-queue and deallocates event-record
 void Backstroke::RunTimeSystem::commitEvent() {
   EventRecord* commitEventRecord=eventRecordDeque.front();
   eventRecordDeque.pop_front();
+  deallocate(commitEventRecord);
+}
+
+// deallocates EventRecord
+void Backstroke::RunTimeSystem::deallocate(EventRecord* commitEventRecord) {
+  //cerr<<"INFO: committing and deallocating event "<<commitEventRecord<<endl;
   commitEventRecord->deallocateHeapQueue();
-  delete commitEventRecord; // deallocateHeapQueue could be called by destructor
-  commitEventRecord=0;
+  // alternatively deallocateHeapQueue could be called by destructor
+  delete commitEventRecord; 
 }
 
 void Backstroke::RunTimeSystem::restore(BuiltInType bitype) {

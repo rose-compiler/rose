@@ -13,27 +13,52 @@ using namespace std;
 
 namespace Backstroke {
 
-class SimTime {
- public:
-  SimTime();
-  SimTime(tw_stime simTime);
-  bool operator<(const SimTime& other);
- private:
-  tw_stime _simTime;
-};
-
+  class SimTime {
+  public:
+    SimTime();
+    SimTime(tw_stime simTime);
+    bool operator<(const SimTime& other);
+  private:
+    tw_stime _simTime;
+  };
+  
 #include "runtime_macros.h"
 
 class RunTimeSystem {
+ private:
+  enum BuiltInType {
+    BITYPE_BOOL,
+    BITYPE_CHAR,
+    BITYPE_SHORT_INT,
+    BITYPE_INT,
+    BITYPE_LONG_INT,
+    BITYPE_LONG_LONG_INT,
+    BITYPE_USHORT_INT,
+    BITYPE_UINT,
+    BITYPE_ULONG_INT,
+    BITYPE_ULONG_LONG_INT,
+    BITYPE_FLOAT,
+    BITYPE_DOUBLE,
+    BITYPE_LONG_DOUBLE,
+    BITYPE_PTR,
+    BITYPE_NUM
+  };
  public:
-  RunTimeSystem();
   typedef void* ptr;
+  struct EventRecord {
+    void deallocateHeapQueue();
+    stack<BuiltInType> stack_bitype;
+    queue<ptr> registeredHeapQueue;
+    SimTime simTime;
+  };
+  RunTimeSystem();
   void initializeForwardEvent();
   void setEventSimTime(Backstroke::SimTime simTime);
   void finalizeForwardEvent();
   void reverseEvent();
   void commitEventsLessThanSimTime(Backstroke::SimTime simTime);
   void commitEvent();
+  void deallocate(EventRecord* commitEventRecord);
   void registerForCommit(ptr p);
 
   size_t numberOfUncommittedEvents();
@@ -73,32 +98,7 @@ class RunTimeSystem {
     return is_stack_ptr;
   }
 
-
- private:
-  enum BuiltInType {
-    BITYPE_BOOL,
-    BITYPE_CHAR,
-    BITYPE_SHORT_INT,
-    BITYPE_INT,
-    BITYPE_LONG_INT,
-    BITYPE_LONG_LONG_INT,
-    BITYPE_USHORT_INT,
-    BITYPE_UINT,
-    BITYPE_ULONG_INT,
-    BITYPE_ULONG_LONG_INT,
-    BITYPE_FLOAT,
-    BITYPE_DOUBLE,
-    BITYPE_LONG_DOUBLE,
-    BITYPE_PTR,
-    BITYPE_NUM
-  };
   void restore(BuiltInType bitype);
-  struct EventRecord {
-    void deallocateHeapQueue();
-    stack<BuiltInType> stack_bitype;
-    queue<ptr> registeredHeapQueue;
-    SimTime simTime;
-  };
   deque<EventRecord*> eventRecordDeque;
   size_t typeSize(BuiltInType biType);
   EventRecord* currentEventRecord;
