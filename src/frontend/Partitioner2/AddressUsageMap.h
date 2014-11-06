@@ -319,6 +319,13 @@ public:
     AddressIntervalSet unusedExtent(const AddressIntervalSet&) const;
     /** @} */
 
+    /** Next unused address interval.
+     *
+     *  Returns the next address interval that begins at or after the specified address and which does not correspond to any
+     *  instruction, basic block, data block, or function. The largest such interval is returned, but it will not contain any
+     *  values less than @p minVa. Returns an empty interval if no such interval exists. */
+    AddressInterval nextUnused(rose_addr_t minVa) const;
+
     /** Determines whether an instruction exists in the map.
      *
      *  If the instruction exists in the map then a pointer to its basic block is returned, otherwise a null pointer is
