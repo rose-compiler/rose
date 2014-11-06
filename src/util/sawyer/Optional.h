@@ -243,6 +243,24 @@ public:
             return true;
         }
     }
+
+    /** Compare two values.
+     *
+     *  Compares two optionals and returns true if they are both empty or if neither is empty and their values compare equal.
+     *  This method should be used instead of <code>==</code>. The <code>==</code> operator is disabled because it is prone to
+     *  misuse in the presense of implicit conversion to @c bool.
+     *
+     * @{ */
+    bool isEqual(const Optional &other) const {
+        return (isEmpty_ && other.isEmpty_) || (!isEmpty_ && !other.isEmpty_ && get()==other.get());
+    }
+    bool isEqual(const Value &other) const {
+        return !isEmpty_ && get()==other;
+    }
+    bool isEqual(const Nothing&) const {
+        return isEmpty_;
+    }
+    /** @} */
     
     // The following trickery is to allow things like "if (x)" to work but without having an implicit
     // conversion to bool which would cause no end of other problems. This is fixed in C++11.
