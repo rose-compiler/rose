@@ -8,4 +8,4 @@ ROSS_FLAGS="-I${ROSS_HOME}/include -D_GNU_SOURCE -g -Wall \
     -DARCH_x86_64"
 
 rm -f simple2
-mpiCC ${ROSS_FLAGS} -o simple2{,.c} -L${ROSS_HOME}/lib -lROSS -lm  -lpthread 
+mpiCC ${ROSS_FLAGS} -O3 -o simple2{,.c} -L${ROSS_HOME}/lib -lROSS -lm  -lpthread 
