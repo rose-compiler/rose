@@ -63,6 +63,26 @@ public:
     virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
+/** Match thunk.
+ *
+ *  Match a thunk of the form:
+ *
+ * @code
+ *  LEA ECX, [EBP + constant]
+ *  JMP address
+ * @endcode
+ *
+ * where @em address can be an undiscovered address or the starting address for an existing instruction, but cannot be in the
+ * middle of an instruction. */
+class MatchLeaJmpThunk: public FunctionPrologueMatcher {
+protected:
+    Function::Ptr function_;
+public:
+    static Ptr instance() { return Ptr(new MatchLeaJmpThunk); } /**< Allocating constructor. */
+    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
+    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+};
+
 /** Basic block callback to detect function returns.
  *
  *  The architecture agnostic isFunctionReturn test for basic blocks does not detect x86 "RET N" (N!=0) instructions as
@@ -85,6 +105,29 @@ public:
     static Ptr instance() { return Ptr(new SwitchSuccessors); }
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
+
+/** Matches "ENTER x, 0" */
+bool matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "JMP constant".
+ *
+ *  Returns the constant if matched, nothing otherwise. */
+Sawyer::Optional<rose_addr_t> matchJmpConst(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "LEA ECX, [EBP + constant]" or variant. */
+bool matchLeaCxMemBpConst(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "MOV EBP, ESP" or variant. */
+bool matchMovBpSp(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "MOV EDI, EDI" or variant. */
+bool matchMovDiDi(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "PUSH EBP" or variant. */
+bool matchPushBp(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "PUSH SI" or variant. */
+bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
 
 /** Reads a table of code addresses.
  *

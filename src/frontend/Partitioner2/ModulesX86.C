@@ -16,45 +16,23 @@ namespace ModulesX86 {
 bool
 MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     ASSERT_not_null(partitioner);
-    const RegisterDescriptor bp(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner->instructionProvider().instructionPointerRegister().get_nbits());
-    const RegisterDescriptor sp(x86_regclass_gpr, x86_gpr_sp, 0, bp.get_nbits());
 
     // Look for PUSH EBP
     SgAsmX86Instruction *insn = NULL; 
-    {
-        rose_addr_t pushVa = anchor;
-        if (partitioner->instructionExists(pushVa))
-            return false;                               // already in the CFG/AUM
-        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
-        if (!insn || insn->get_kind()!=x86_push)
-            return false;
-        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-        if (opands.size()!=1)
-            return false;                               // crazy operands!
-        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-        if (!rre || rre->get_descriptor()!=bp)
-            return false;
-    }
+    rose_addr_t pushVa = anchor;
+    if (partitioner->instructionExists(pushVa))
+        return false;                                   // already in the CFG/AUM
+    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
+    if (!matchPushBp(*partitioner, insn))
+        return false;
 
     // Look for MOV RBP,RSP following the PUSH.
-    {
-        rose_addr_t moveVa = insn->get_address() + insn->get_size();
-        if (partitioner->instructionExists(moveVa))
-            return false;                               // already in the CFG/AUM
-        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
-        if (!insn || insn->get_kind()!=x86_mov)
-            return false;
-        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-        if (opands.size()!=2)
-            return false;                               // crazy operands!
-        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-        if (!rre || rre->get_descriptor()!=bp)
-            return false;
-        rre = isSgAsmRegisterReferenceExpression(opands[1]);
-        if (!rre || rre->get_descriptor()!=sp)
-            return false;
-    }
+    rose_addr_t moveVa = insn->get_address() + insn->get_size();
+    if (partitioner->instructionExists(moveVa))
+        return false;                                   // already in the CFG/AUM
+    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
+    if (!matchMovBpSp(*partitioner, insn))
+        return false;
 
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
     return true;
@@ -62,23 +40,12 @@ MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
 
 bool
 MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    // Look for optional MOV EDI, EDI
+    // Match MOV EDI, EDI
     rose_addr_t moveVa = anchor;
     if (partitioner->instructionExists(moveVa))
         return false;                               // already in the CFG/AUM
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
-    if (!insn || insn->get_kind()!=x86_mov)
-        return false;
-    const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-    if (opands.size()!=2)
-        return false;
-    SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
-    if (!dst ||
-        dst->get_descriptor().get_major()!=x86_regclass_gpr ||
-        dst->get_descriptor().get_minor()!=x86_gpr_di)
-        return false;
-    SgAsmDirectRegisterExpression *src = isSgAsmDirectRegisterExpression(opands[1]);
-    if (!src || dst->get_descriptor()!=src->get_descriptor())
+    if (!matchMovDiDi(*partitioner, insn))
         return false;
 
     // Match a standard prologue immediately following the hot-patch
@@ -92,43 +59,21 @@ MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
 // Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
 bool
 MatchAbbreviatedPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    SgAsmX86Instruction *insn = NULL;
     // Look for MOV EDI, EDI
-    {
-        static const RegisterDescriptor REG_EDI(x86_regclass_gpr, x86_gpr_di, 0, 32);
-        rose_addr_t moveVa = anchor;
-        if (partitioner->instructionExists(moveVa))
-            return false;                               // already in the CFG/AUM
-        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
-        if (!insn || insn->get_kind()!=x86_mov)
-            return false;
-        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-        if (opands.size()!=2)
-            return false;
-        SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
-        if (!dst || dst->get_descriptor()!=REG_EDI)
-            return false;
-        SgAsmDirectRegisterExpression *src = isSgAsmDirectRegisterExpression(opands[1]);
-        if (!src || dst->get_descriptor()!=src->get_descriptor())
-            return false;
-    }
+    rose_addr_t movVa = anchor;
+    if (partitioner->instructionExists(movVa))
+        return false;                                   // already in the CFG/AUM
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(movVa));
+    if (!matchMovDiDi(*partitioner, insn))
+        return false;
 
     // Look for PUSH ESI
-    {
-        static const RegisterDescriptor REG_ESI(x86_regclass_gpr, x86_gpr_si, 0, 32);
-        rose_addr_t pushVa = insn->get_address() + insn->get_size();
-        insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
-        if (partitioner->instructionExists(pushVa))
-            return false;                               // already in the CFG/AUM
-        if (!insn || insn->get_kind()!=x86_push)
-            return false;
-        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
-        if (opands.size()!=1)
-            return false;                               // crazy operands!
-        SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
-        if (!rre || rre->get_descriptor()!=REG_ESI)
-            return false;
-    }
+    rose_addr_t pushVa = insn->get_address() + insn->get_size();
+    if (partitioner->instructionExists(pushVa))
+        return false;                                   // already in the CFG/AUM
+    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
+    if (!matchPushSi(*partitioner, insn))
+        return false;
 
     // Seems good!
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
@@ -141,16 +86,42 @@ MatchEnterPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
     if (partitioner->instructionExists(anchor))
         return false;                                   // already in the CFG/AUM
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor));
-    if (!insn || insn->get_kind()!=x86_enter)
+    if (!matchEnterAnyZero(*partitioner, insn))
         return false;
-    const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
-    if (2!=args.size())
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    return true;
+}
+
+bool
+MatchLeaJmpThunk::match(const Partitioner *partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
+    // LEA ECX, [EBP + constant]
+    rose_addr_t leaVa = anchor;
+    if (partitioner->instructionExists(leaVa))
         return false;
-    SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
-    if (!arg || 0!=arg->get_absoluteValue())
+    SgAsmX86Instruction *lea = isSgAsmX86Instruction(partitioner->discoverInstruction(leaVa));
+    if (!matchLeaCxMemBpConst(*partitioner, lea))
         return false;
 
-    function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+    // JMP address
+    rose_addr_t jmpVa = lea->get_address() + lea->get_size();
+    if (partitioner->instructionExists(jmpVa))
+        return false;
+    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(partitioner->discoverInstruction(jmpVa));
+    rose_addr_t targetVa;
+    if (!matchJmpConst(*partitioner, jmp).assignTo(targetVa))
+        return false;
+
+    // Check target address
+    if (!partitioner->instructionExists(targetVa) && !partitioner->instructionsOverlapping(targetVa).empty())
+        return false;                                   // target cannot be in the middle of some instruction
+    SgAsmX86Instruction *targetInsn = isSgAsmX86Instruction(partitioner->discoverInstruction(targetVa));
+    if (!targetInsn)
+        return false;                                   // we must be able to disassemble an instruction there
+
+    // Anchor must be a function.
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_THUNK);
     return true;
 }
 
@@ -183,6 +154,154 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
     }
     return chain;
 };
+
+bool
+matchEnterAnyZero(const Partitioner &partitioner, SgAsmX86Instruction *enter) {
+    if (!enter || enter->get_kind()!=x86_enter)
+        return false;
+
+    const SgAsmExpressionPtrList &args = enter->get_operandList()->get_operands();
+    if (2!=args.size())
+        return false;
+
+    SgAsmIntegerValueExpression *arg = isSgAsmIntegerValueExpression(args[1]);
+    if (!arg || 0!=arg->get_absoluteValue())
+        return false;
+
+    return true;
+}
+
+Sawyer::Optional<rose_addr_t>
+matchJmpConst(const Partitioner &partitioner, SgAsmX86Instruction *jmp) {
+    if (!jmp || jmp->get_kind()!=x86_jmp)
+        return Sawyer::Nothing();
+
+    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
+    if (1!=jmpArgs.size())
+        return Sawyer::Nothing();
+
+    SgAsmIntegerValueExpression *target = isSgAsmIntegerValueExpression(jmpArgs[0]);
+    if (!target)
+        return Sawyer::Nothing();
+
+    return target->get_absoluteValue();
+}
+
+bool
+matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
+    if (!lea || lea->get_kind()!=x86_lea)
+        return false;
+
+    const SgAsmExpressionPtrList &leaArgs = lea->get_operandList()->get_operands();
+    if (2!=leaArgs.size())
+        return false;
+
+    const RegisterDescriptor CX(x86_regclass_gpr, x86_gpr_cx, 0,
+                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+    SgAsmDirectRegisterExpression *cxReg = isSgAsmDirectRegisterExpression(leaArgs[0]);
+    if (!cxReg || cxReg->get_descriptor()!=CX)
+        return false;
+
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(leaArgs[1]);
+    if (!mre)
+        return false;
+
+    SgAsmBinaryAdd *sum = isSgAsmBinaryAdd(mre->get_address());
+    if (!sum)
+        return false;
+
+    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
+                                partitioner.instructionProvider().stackPointerRegister().get_nbits());
+    SgAsmDirectRegisterExpression *bpReg = isSgAsmDirectRegisterExpression(sum->get_lhs());
+    if (!bpReg || bpReg->get_descriptor()!=BP)
+        return false;
+
+    SgAsmIntegerValueExpression *offset = isSgAsmIntegerValueExpression(sum->get_rhs());
+    if (!offset)
+        return false;
+    if (offset->get_signedValue() > 0)
+        return false;
+
+    return true;
+}
+
+bool
+matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
+    if (!mov || mov->get_kind()!=x86_mov)
+        return false;
+
+    const SgAsmExpressionPtrList &opands = mov->get_operandList()->get_operands();
+    if (opands.size()!=2)
+        return false;                                   // crazy operands!
+
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0, SP.get_nbits());
+    SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
+    if (!rre || rre->get_descriptor()!=BP)
+        return false;
+
+    rre = isSgAsmDirectRegisterExpression(opands[1]);
+    if (!rre || rre->get_descriptor()!=SP)
+        return false;
+}
+
+bool
+matchMovDiDi(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
+    if (!mov || mov->get_kind()!=x86_mov)
+        return false;
+
+    const SgAsmExpressionPtrList &opands = mov->get_operandList()->get_operands();
+    if (opands.size()!=2)
+        return false;
+
+    const RegisterDescriptor DI(x86_regclass_gpr, x86_gpr_di, 0,
+                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+    SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
+    if (!dst || dst->get_descriptor()!=DI)
+        return false;
+
+    SgAsmDirectRegisterExpression *src = isSgAsmDirectRegisterExpression(opands[1]);
+    if (!src || src->get_descriptor()!=DI)
+        return false;
+
+    return true;
+}
+
+bool
+matchPushBp(const Partitioner &partitioner, SgAsmX86Instruction *push) {
+    if (!push || push->get_kind()!=x86_push)
+        return false;
+
+    const SgAsmExpressionPtrList &opands = push->get_operandList()->get_operands();
+    if (opands.size()!=1)
+        return false;                                   // crazy operands!
+
+    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
+                                partitioner.instructionProvider().stackPointerRegister().get_nbits());
+    SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
+    if (!rre || rre->get_descriptor()!=BP)
+        return false;
+
+    return true;
+}
+
+bool
+matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
+    if (!push || push->get_kind()!=x86_push)
+        return false;
+
+    const SgAsmExpressionPtrList &opands = push->get_operandList()->get_operands();
+    if (opands.size()!=1)
+        return false;                                   // crazy operands!
+
+    const RegisterDescriptor SI(x86_regclass_gpr, x86_gpr_si, 0,
+                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
+    if (!rre || rre->get_descriptor()!=SI)
+        return false;
+
+    return true;
+}
 
 std::vector<rose_addr_t>
 scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
