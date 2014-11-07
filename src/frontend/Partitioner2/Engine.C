@@ -169,6 +169,8 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+    p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
+    p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
@@ -192,6 +194,8 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         return p;
@@ -308,8 +312,9 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        if (Function::Ptr function = makeNextPrologueFunction(partitioner, nextPrologueVa)) {
-            nextPrologueVa = function->address();       // avoid "+1" because it may overflow
+        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa);
+        if (!newFunctions.empty()) {
+            nextPrologueVa = newFunctions[0]->address();   // avoid "+1" because it may overflow
             continue;
         }
 
@@ -426,13 +431,13 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 }
 
 // Looks for a function prologue at or above the specified starting address and makes a function there.
-Function::Ptr
+std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
-    if (Function::Ptr function = partitioner.nextFunctionPrologue(startVa)) {
+    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
+    BOOST_FOREACH (const Function::Ptr &function, functions) {
         partitioner.attachFunction(function);
-        return function;
     }
-    return Function::Ptr();
+    return functions;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

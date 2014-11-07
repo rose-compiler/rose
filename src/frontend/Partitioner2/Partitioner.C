@@ -1174,6 +1174,9 @@ Partitioner::edgeNameDst(const ControlFlowGraph::EdgeNode &edge) {
         case E_FUNCTION_CALL:
             retval += "<fcall>";
             break;
+        case E_FUNCTION_XFER:
+            retval += "<fxfer>";
+            break;
         case E_FUNCTION_RETURN:
             retval += "<return>";
             break;
@@ -1195,6 +1198,9 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) {
         case E_FUNCTION_CALL:
             retval += "<fcall>";
             break;
+        case E_FUNCTION_XFER:
+            retval += "<fxfer>";
+            break;
         case E_FUNCTION_RETURN:
             retval += "<return>";
             break;
@@ -1214,6 +1220,9 @@ Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
             break;
         case E_FUNCTION_CALL:
             retval += "(fcall)";
+            break;
+        case E_FUNCTION_XFER:
+            retval += "(fxfer)";
             break;
         case E_FUNCTION_RETURN:
             retval += "(return)";
@@ -1411,6 +1420,9 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
             case E_FUNCTION_CALL:
                 edgeAttrs = "label=\"call\"";
                 break;
+            case E_FUNCTION_XFER:
+                edgeAttrs = "label=\"fxfer\"";
+                break;
             case E_FUNCTION_RETURN:
                 edgeAttrs = "label=\"ret\"";
                 break;
@@ -1427,17 +1439,18 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
     out <<"}\n";
 }
 
-Function::Ptr
+std::vector<Function::Ptr>
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
     while (memoryMap_.atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
         if (!unmappedVa)
-            return Function::Ptr();                   // no higher unused address
+            return std::vector<Function::Ptr>();        // empty; no higher unused address
         if (startVa == *unmappedVa) {
             BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
                 if (matcher->match(this, startVa)) {
-                    if (Function::Ptr function = matcher->function())
-                        return function;
+                        std::vector<Function::Ptr> newFunctions = matcher->functions();
+                    ASSERT_forbid(newFunctions.empty());
+                    return newFunctions;
                 }
             }
             ++startVa;
@@ -1445,7 +1458,7 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
             startVa = *unmappedVa;
         }
     }
-    return Function::Ptr();
+    return std::vector<Function::Ptr>();
 }
 
 DataBlock::Ptr
@@ -1666,7 +1679,7 @@ Partitioner::discoverCalledFunctions() const {
     BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
         if (vertex.value().type() == V_BASIC_BLOCK && !functions_.exists(vertex.value().address())) {
             BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex.inEdges()) {
-                if (edge.value().type() == E_FUNCTION_CALL) {
+                if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                     rose_addr_t entryVa = vertex.value().address();
                     insertUnique(functions, Function::instance(entryVa), sortFunctionsByAddress);
                     break;
@@ -1719,6 +1732,39 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
     return retval;
 }
 
+Sawyer::Optional<Partitioner::Thunk>
+Partitioner::functionIsThunk(const Function::Ptr &function) const {
+    if (function==NULL || 0==(function->reasons() & SgAsmFunction::FUNC_THUNK) || function->nBasicBlocks()!=1)
+        return Sawyer::Nothing();
+
+    // Find the basic block for the thunk
+    BasicBlock::Ptr bblock = basicBlockExists(function->address());
+    if (!bblock)
+        bblock = discoverBasicBlock(function->address());
+    if (!bblock)
+        return Sawyer::Nothing();
+
+    // Basic block should have only one successor, which must be concrete
+    BasicBlock::Successors succs = basicBlockSuccessors(bblock);
+    if (succs.size()!=1)
+        return Sawyer::Nothing();
+    std::vector<rose_addr_t> concreteSuccessors = basicBlockConcreteSuccessors(bblock);
+    if (concreteSuccessors.size()!=1)
+        return Sawyer::Nothing();
+
+    // Make sure the successor is of type E_FUNCTION_XFER
+    if (succs[0].type() != E_FUNCTION_XFER) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-11-07]
+        mlog[INFO] <<"ROBB: changing thunk edge " <<StringUtility::addrToString(function->address())
+                   <<" -> " <<StringUtility::addrToString(concreteSuccessors[0]) <<" to E_FUNCTION_XFER\n";
+#endif
+        succs[0] = BasicBlock::Successor(succs[0].expr(), E_FUNCTION_XFER);
+        bblock->successors_.set(succs);                 // okay even if bblock is locked since we only change edge type
+    }
+
+    return Thunk(bblock, concreteSuccessors.front());
+}
+
 size_t
 Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
                                          std::vector<size_t> &inwardInterFunctionEdges /*out*/,
@@ -1727,10 +1773,15 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
     if (function->isFrozen())
         throw FunctionError(function, functionName(function) +
                             " is frozen or attached to CFG/AUM when discovering basic blocks");
-    
+
     Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"discoverFunctionBlocks(" <<functionName(function) <<")\n";
     size_t nConflictsOrig = inwardInterFunctionEdges.size() + outwardInterFunctionEdges.size();
+
+    // Thunks are handled specially. They only ever contain one basic block. As a side effect, the thunk's outgoing edge is
+    // changed to type E_FUNCTION_XFER.
+    if (functionIsThunk(function))
+        return 0;
 
     typedef Sawyer::Container::Map<size_t /*vertexId*/, Function::Ownership> VertexOwnership;
     VertexOwnership ownership;                          // contains only OWN_EXPLICIT and OWN_PROVISIONAL entries
@@ -1754,7 +1805,7 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
     while (!worklist.isEmpty()) {
         const ControlFlowGraph::VertexNode &source = *cfg_.findVertex(worklist.pop());
         BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, source.outEdges()) {
-            if (edge.value().type()!=E_FUNCTION_CALL && !edge.isSelfEdge()) {
+            if (edge.value().type()!=E_FUNCTION_CALL && edge.value().type()!=E_FUNCTION_XFER && !edge.isSelfEdge()) {
                 const ControlFlowGraph::VertexNode &target = *edge.target();
                 if (target.value().type()==V_BASIC_BLOCK && !ownership.exists(target.id())) {
                     if (target.value().function()) {
@@ -1838,7 +1889,8 @@ Partitioner::functionCallGraph() const {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
             Function::Ptr source = edge.source()->value().function();
             Function::Ptr target = edge.target()->value().function();
-            if (source!=NULL && target!=NULL && (source!=target || edge.value().type()==E_FUNCTION_CALL))
+            if (source!=NULL && target!=NULL &&
+                (source!=target || edge.value().type()==E_FUNCTION_CALL || edge.value().type()==E_FUNCTION_XFER))
                 cg.insert(source, target);
         }
     }
@@ -1970,7 +2022,7 @@ Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const
     // Is the function the target of a function call?
     if (entryVertex != cfg_.vertices().end()) {
         BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, entryVertex->inEdges()) {
-            if (edge.value().type() == E_FUNCTION_CALL) {
+            if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                 reasons |= SgAsmFunction::FUNC_CALL_TARGET;
                 break;
             }

@@ -337,14 +337,16 @@ public:
     /** Make function at prologue pattern.
      *
      *  Scans executable memory starting at the specified address and which is not represented in the CFG/AUM and looks for
-     *  byte patterns and/or instruction patterns that indicate the start of a function.  When a pattern is found a function is
-     *  created and inserted into the specified partitioner's CFG/AUM.
+     *  byte patterns and/or instruction patterns that indicate the start of a function.  When a pattern is found a function
+     *  (or multiple functions, depending on the type of matcher) is created and inserted into the specified partitioner's
+     *  CFG/AUM.
      *
      *  Patterns are found by calling the @ref Partitioner::nextFunctionPrologue method, which most likely invokes a variety of
      *  predefined and user-defined callbacks to search for the next pattern.
      *
-     *  Returns a pointer to the newly inserted function if one was found, otherwise returns the null pointer. */
-    virtual Function::Ptr makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
+     *  Returns a vector of non-null function pointers pointer for the newly inserted functions, otherwise returns an empty
+     *  vector. */
+    virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -211,6 +211,14 @@ public:
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
     typedef std::vector<FunctionPrologueMatcher::Ptr> FunctionPrologueMatchers; /**< See @ref functionPrologueMatchers. */
     typedef std::vector<FunctionPaddingMatcher::Ptr> FunctionPaddingMatchers; /**< See @ref functionPaddingMatchers. */
+
+    /** Represents information about a thunk. */
+    struct Thunk {
+        BasicBlock::Ptr bblock;                         /**< The one and only basic block for the thunk. */
+        rose_addr_t target;                             /**< The one and only successor for the basic block. */
+        Thunk(const BasicBlock::Ptr &bblock, rose_addr_t target): bblock(bblock), target(target) {}
+    };
+    
 private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
@@ -1039,6 +1047,15 @@ public:
      *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method. */
     std::vector<Function::Ptr> discoverFunctionEntryVertices() const;
 
+    /** True if function is a thunk.
+     *
+     *  If the function is non-null and a thunk then some information about the thunk is returned, otherwise nothing is
+     *  returned.  A function is a thunk if it has the @ref SgAsmFunction::FUNC_THUNK bit set in its reason mask, and it has
+     *  exactly one basic block, and the basic block has exactly one successor, and the successor is concrete.
+     *
+     *  As a side effect, the basic block's outgoing edge type is changed to E_FUNCTION_XFER. */
+    Sawyer::Optional<Thunk> functionIsThunk(const Function::Ptr&) const;
+
     /** Adds basic blocks to a function.
      *
      *  Attempts to discover the basic blocks that should belong to the specified function.  This is done as follows:
@@ -1130,7 +1147,7 @@ public:
     const FunctionPrologueMatchers& functionPrologueMatchers() const { return functionPrologueMatchers_; }
     /** @} */
 
-    /** Finds the next function by search for a function prologue.
+    /** Finds the next function by searching for a function prologue.
      *
      *  Scans executable memory starting at @p startVa and tries to match a function prologue pattern.  The patterns are
      *  represented by matchers that have been inserted into the vector reference returned by @ref functionPrologueMatchers.
@@ -1143,8 +1160,11 @@ public:
      *  instructions followed by the function prologue, in which case the address after the no-ops is the one used as the
      *  entry point of the returned function.
      *
-     *  If no match is found then a null pointer is returned. */
-    Function::Ptr nextFunctionPrologue(rose_addr_t startVa);
+     *  Some function prologue matchers can return multiple functions. For instance, a matcher for a thunk might return the
+     *  thunk and the function to which it points.  In any case, the first function is the primary one.
+     *
+     *  If no match is found then an empty vector is returned. */
+    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa);
 
 public:
     /** Ordered list of function padding matchers.

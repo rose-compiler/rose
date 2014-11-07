@@ -31,6 +31,12 @@ enum EdgeType {
                                                          *   represent the fact that the called function eventually returns
                                                          *   even if the instructions for the called function are not available
                                                          *   to analyze. */
+    E_FUNCTION_XFER,                                    /**< Edge is a function call transfer. A function call transfer is
+                                                         *   similar to @ref E_FUNCTION_CALL except the entire call frame is
+                                                         *   transferred to the target function and this function is no longer
+                                                         *   considered part of the call stack; a return from the target
+                                                         *   function will skip over this function. Function call transfers
+                                                         *   most often occur as the edge leaving a thunk. */
 };
 
 class Partitioner;

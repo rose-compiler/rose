@@ -120,8 +120,54 @@ MatchLeaJmpThunk::match(const Partitioner *partitioner, rose_addr_t anchor) {
     if (!targetInsn)
         return false;                                   // we must be able to disassemble an instruction there
 
-    // Anchor must be a function.
-    function_ = Function::instance(anchor, SgAsmFunction::FUNC_THUNK);
+    // The thunk is a function, and the thing to which it points is a function.
+    functions_.clear();
+    functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
+    if (!partitioner->functionExists(targetVa))
+        functions_.push_back(Function::instance(targetVa, SgAsmFunction::FUNC_GRAPH));
+
+    return true;
+}
+
+bool
+MatchRetPadPush::match(const Partitioner *partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
+    // RET (prior to anchor)
+    // The RET instruction can be 1 or 3 bytes.
+    SgAsmX86Instruction *ret = NULL;
+    if (partitioner->instructionExists(anchor-1) &&
+        (ret = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor-1))) &&
+        ret->get_kind() == x86_ret && ret->get_size()==1) {
+        // found RET
+    } else if (partitioner->instructionExists(anchor-3) &&
+               (ret = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor-3))) &&
+               ret->get_kind() == x86_ret && ret->get_size()==3) {
+        // found RET x
+    } else {
+        return false;
+    }
+
+    // Optional padding (NOP; or INT3; or MOV EDI,EDI)
+    rose_addr_t padVa = anchor;
+    if (partitioner->instructionExists(padVa))
+        return false;
+    SgAsmX86Instruction *pad = isSgAsmX86Instruction(partitioner->discoverInstruction(padVa));
+    if (!pad)
+        return false;
+    if (pad->get_kind() != x86_nop && pad->get_kind() != x86_int3 && !matchMovDiDi(*partitioner, pad))
+        pad = NULL;
+
+    // PUSH x
+    rose_addr_t pushVa = padVa + (pad ? pad->get_size() : 0);
+    if (partitioner->instructionExists(pushVa))
+        return false;
+    SgAsmX86Instruction *push = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
+    if (!push || push->get_kind()!=x86_push)
+        return false;
+
+    // Looks good
+    function_ = Function::instance(pushVa, SgAsmFunction::FUNC_PATTERN);
     return true;
 }
 
@@ -243,6 +289,8 @@ matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
     rre = isSgAsmDirectRegisterExpression(opands[1]);
     if (!rre || rre->get_descriptor()!=SP)
         return false;
+
+    return true;
 }
 
 bool
