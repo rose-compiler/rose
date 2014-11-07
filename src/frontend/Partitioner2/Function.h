@@ -134,6 +134,15 @@ public:
      *  a frozen state; detaching a function from the CFG thaws it. */
     bool isFrozen() const { return isFrozen_; }
 
+    /** True if function is a thunk.
+     *
+     *  This function is a thunk if it is marked as such in its reason codes via @ref SgAsmFunction::FUNC_THUNK and it has
+     *  exactly one basic block.
+     *
+     *  See also, @ref Partitioner::functionThunkTarget that is a stronger predicate and also returns the address of the thunk
+     *  target. */
+    bool isThunk() const;
+
     /** Number of basic blocks in the function. */
     size_t nBasicBlocks() const { return bblockVas_.size(); }
 
