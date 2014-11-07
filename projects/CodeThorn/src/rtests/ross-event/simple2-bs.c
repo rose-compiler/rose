@@ -101,7 +101,6 @@ static tw_peid ctr_map(tw_lpid gid) {
 
 /* Initialize a logical process (LP) */
 static void ctr_init(ctr_state *s, tw_lp *lp) {
-  std::cerr<<"LP:"<<lp<<" : initialization started."<<std::endl;
   /* Decide how many particles this LP has initially */ {
     s->npart = (int) tw_rand_integer(lp->rng,0,10);
     s->transit = 0;
@@ -127,7 +126,6 @@ static void ctr_init(ctr_state *s, tw_lp *lp) {
     stat_data.npart_tot_init += s->npart + s->transit;
     stat_data.lpcount += 1;
   }
-  std::cerr<<"LP:"<<lp<<" : initialization finished."<<std::endl;
 }
 
 #ifdef BACKSTROKE_GENERATED
