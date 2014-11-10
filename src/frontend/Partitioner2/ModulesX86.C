@@ -133,7 +133,7 @@ bool
 MatchRetPadPush::match(const Partitioner *partitioner, rose_addr_t anchor) {
     ASSERT_not_null(partitioner);
 
-    // RET (prior to anchor)
+    // RET (prior to anchor) must already exist in the CFG/AUM
     // The RET instruction can be 1 or 3 bytes.
     SgAsmX86Instruction *ret = NULL;
     if (partitioner->instructionExists(anchor-1) &&

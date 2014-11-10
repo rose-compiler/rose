@@ -221,7 +221,16 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         function->insertReasons(SgAsmFunction::FUNC_THUNK | SgAsmFunction::FUNC_IMPORT);
     }
 }
-    
+
+void
+buildMayReturnLists(Partitioner &partitioner) {
+    // The following functions never return to their caller
+    partitioner.setMayReturnBlacklisted("TerminateThread@KERNEL32.dll");
+    partitioner.setMayReturnBlacklisted("RaiseException@KERNEL32.dll");
+    partitioner.setMayReturnBlacklisted("TerminateProcess@KERNEL32.dll");
+    partitioner.setMayReturnBlacklisted("ExitProcess@KERNEL32.dll");
+}
+
 } // namespace
 } // namespace
 } // namespace
