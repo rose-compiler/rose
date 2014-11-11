@@ -87,7 +87,8 @@ process_headers()
            echo "Processing c++config header file (removing use of visibility attribute) at $targetName"
            cat "$srcName" | \
              sed 's/# *define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 1/#define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 0/' | \
-             sed 's/# *define _GLIBCXX_ATOMIC_BUILTINS/#undef _GLIBCXX_ATOMIC_BUILTINS/' > "$targetName"
+             sed 's/# *define _GLIBCXX_ATOMIC_BUILTINS/#undef _GLIBCXX_ATOMIC_BUILTINS/' | \
+             sed 's/# *define _GLIBCXX_USE_FLOAT128/#undef _GLIBCXX_USE_FLOAT128/' > "$targetName"
            ;;
          * ) echo "Should not get here -- modify find pattern" >&2; exit 1 ;;
        esac

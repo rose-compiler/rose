@@ -276,7 +276,9 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
           curprint(" throw() ");
         }
 #else
+#if 0
      printf ("Lambda function throw keyword not yet supported! \n");
+#endif
 #endif
 
      if (lambdaExp->get_explicit_return_type() == true)
@@ -1342,8 +1344,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
 
+            // DQ (11/6/2014): C++11 test: test2014_84.C demonstrates that we don't want to output the "...".
             // DQ (7/4/2013): I am not sure if this is correct.
-               curprint("/* varadic template argument */ ...");
+            // curprint("/* varadic template argument */ ...");
+               curprint("/* varadic template argument */ ");
 
                break;
              }

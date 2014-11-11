@@ -1071,6 +1071,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // DQ (8/17/2014): Adding support for Microsoft attributes.
           case V_SgMicrosoftAttributeDeclaration:       unparseMicrosoftAttributeDeclaration (stmt, info); break;
 
+       // DQ 11/3/2014): Adding C++11 templated typedef declaration support.
+          case V_SgTemplateTypedefDeclaration:          unparseTemplateTypedefDeclaration (stmt, info); break;
+
           default:
              {
                printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
@@ -7029,6 +7032,28 @@ donePrintingConstraints: {}
    }
 
 
+// DQ 11/3/2014): Adding C++11 templated typedef declaration support.
+void
+Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgTemplateTypedefDeclaration* templateTypedef_stmt = isSgTemplateTypedefDeclaration(stmt);
+     ROSE_ASSERT(templateTypedef_stmt != NULL);
+
+#if 0
+     printf ("In unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
+#endif
+
+     unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>(stmt,info);
+
+#if 0
+     printf ("Leaving unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 
 void
 Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -7598,11 +7623,12 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
 
 void
 Unparse_ExprStmt::unparseTemplateClassDefnStmt(SgStatement* stmt_, SgUnparse_Info& info)
-{
-    SgTemplateClassDefinition *stmt = isSgTemplateClassDefinition(stmt_);
-    assert(stmt!=NULL);
-    unparseTemplateClassDeclStmt(stmt->get_declaration(), info);
-}
+   {
+     SgTemplateClassDefinition *stmt = isSgTemplateClassDefinition(stmt_);
+     assert(stmt!=NULL);
+     unparseTemplateClassDeclStmt(stmt->get_declaration(), info);
+   }
+
 
 void
 Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -7647,6 +7673,7 @@ Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseTemplateFunctionDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -7658,6 +7685,7 @@ Unparse_ExprStmt::unparseTemplateFunctionDeclStmt(SgStatement* stmt, SgUnparse_I
 
      unparseTemplateDeclarationStatment_support<SgTemplateFunctionDeclaration>(stmt,info);
    }
+
 
 void
 Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -7675,11 +7703,13 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnp
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseTemplateVariableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      unparseTemplateDeclarationStatment_support<SgTemplateVariableDeclaration>(stmt,info);
    }
+
 
 template<class T>
 void
@@ -7728,7 +7758,6 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 
   // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
      curprint ( string("\n" ) + templateString);
-
    }
 
  

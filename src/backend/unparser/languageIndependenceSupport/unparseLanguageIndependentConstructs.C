@@ -5682,6 +5682,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
           case V_SgTemplateParameterVal:   // return 0;
 
+       // DQ (11/10/2014): Added support to support this C++11 value.
+          case V_SgNullptrValExp:
+
           case V_SgBoolValExp:             // return 0;
           case V_SgIntVal:                 // return 0;
           case V_SgThrowOp:                // return 0;
@@ -5785,6 +5788,10 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (9/25/2013): Adding support for C/C++ asm operator (however, I am not certain this is the correct precedence).
           case V_SgAsmOp: // return 0;
+                                     precedence_value = 0; break;
+
+       // DQ (11/10/2014): Not clear if this is the correct precedence for this C++11 expression.
+          case V_SgFunctionParameterRefExp:
                                      precedence_value = 0; break;
 
           default:
