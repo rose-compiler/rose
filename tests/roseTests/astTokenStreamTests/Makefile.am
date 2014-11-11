@@ -361,10 +361,12 @@ TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 
 ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
+# DQ (11/11/2014): Note that we need verbose level 1 to internally activate some internal testing that builds the 
+# output files: token_leading_* and token_trailing_* which are used in the TEST_Mapping_Source_passed tests.
 # DQ (12/1/2013): Use verbose level to set force additional token specific files to be generated (tested below).
 # ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
-# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 1
-ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 0
+ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 1
+# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 0
 
 PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
 TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}

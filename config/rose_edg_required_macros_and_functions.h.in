@@ -256,9 +256,9 @@ constexpr bool __builtin_isgreater(double x, double y);
 constexpr bool __builtin_isgreaterequal(double x, double y);
 constexpr bool __builtin_isless(double x, double y);
 #else
-bool __builtin_isgreater(double x, double y);
-bool __builtin_isgreaterequal(double x, double y);
-bool __builtin_isless(double x, double y);
+int __builtin_isgreater(double x, double y);
+int __builtin_isgreaterequal(double x, double y);
+int __builtin_isless(double x, double y);
 #endif
 int __builtin_ia32_bsrsi(int x);
 unsigned long long __builtin_ia32_rdpmc(int x);
@@ -270,7 +270,7 @@ unsigned char      __builtin_ia32_rorqi(unsigned char __X, int __C);
 unsigned short     __builtin_ia32_rorhi(unsigned short __X, int __C);
 void               __builtin_ia32_pause();
 int                __builtin_ia32_bsrdi(long long __X);
-long long          __builtin_bswap64(long long __X);
+/* long long          __builtin_bswap64(long long __X); */
 
 void               __builtin_ia32_fxsave(void *__P);
 void               __builtin_ia32_fxrstor(void *__P);

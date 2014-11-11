@@ -83,7 +83,7 @@ last.C
 # test2014_46.C 
 # test2014_53.C 
 
-
+# These are incomplete non-compilable code fragments
 TESTCODE_CURRENTLY_FAILING = \
 test2012_03.C \
 test2012_04.C \
