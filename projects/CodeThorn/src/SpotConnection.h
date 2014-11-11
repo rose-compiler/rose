@@ -38,6 +38,7 @@
 #include "tgbaalgos/projrun.hh"
 
 //BOOST includes
+#include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 #include "boost/regex.hpp"
@@ -112,7 +113,7 @@ namespace CodeThorn {
       //returns a SPOT run (used for counter-examples). condensed information (IO only and Input only)
       std::string* formatRun(std::string& run);
        //take a spot run string representation and filter input/output behavior (newer, more modular version than "filter_run_IO_only")
-      std::string filterRunInputOnly(std::string spotRun);
+      std::string filterCounterexample(std::string spotRun, bool includeOutputStates = false);
       //take a spot run string representation and filter input/output behavior
       std::string* filter_run_IO_only(string& spotRun, bool inputOnly = false);
       //small helper function for filter_run_IO_only
