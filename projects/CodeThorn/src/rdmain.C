@@ -128,9 +128,9 @@ int main(int argc, char* argv[]) {
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 
-  substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalyzer->getLabeler(), rdAnalyzer->getVariableIdMapping());
+  //substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalyzer->getLabeler(), rdAnalyzer->getVariableIdMapping());
 
-#if 0
+#if 1
   Flow* flow=rdAnalyzer->getFlow();
 #if 1
   cout << "INFO: computing program statistics."<<endl;
