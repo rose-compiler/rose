@@ -1,5 +1,21 @@
 #!/bin/bash
 
+runtime1=0
+runtime2=0
+factor=0
+
+runevaluation() {
+mpirun -np 2 ./simple2-orig --synch=3 | grep "Total run time" > result1.txt
+mpirun -np 2 ./simple2-bs --synch=3 | grep "Total run time" > result2.txt
+runtime1=`grep --only-matching '[0-9]*\.[0-9]*' result1.txt`
+runtime2=`grep --only-matching '[0-9]*\.[0-9]*' result2.txt`
+factor=`bc <<< "scale=2; ${runtime2}/${runtime1}"`
+vendorid=`lscpu | grep "Vendor ID:" | cut -b 24-50 | grep --only-matching "[a-zA-Z]*"`
+cpumhz=`lscpu | grep "^CPU MHz:" | grep '[0-9]*\.[0-9]*' --only-matching`
+cores=`lscpu | grep "^CPU(s):" | grep '[0-9][0-9]*' --only-matching`
+threadsPerCore=`lscpu | grep "^Thread(s) per core:" | grep '[0-9][0-9]*' --only-matching`
+}
+
 if [[ $# != 1 ]]; then
   echo "usage: <command> orig|bs|compare"
   exit
@@ -22,17 +38,22 @@ bs)
 mpirun -np 2 ./simple2-bs --synch=3
 ;;
 compare)
-mpirun -np 2 ./simple2-orig --synch=3 | grep "Total run time" > result1.txt
-mpirun -np 2 ./simple2-bs --synch=3 | grep "Total run time" > result2.txt
+runevaluation;
 echo "-----------------"
 echo "Evaluation result"
 echo "-----------------"
-runtime1=`grep --only-matching '[0-9]*\.[0-9]*' result1.txt`
-runtime2=`grep --only-matching '[0-9]*\.[0-9]*' result2.txt`
 echo "Original   version total run time: $runtime1 sec"
 echo "Backstroke version total run time: $runtime2 sec"
-factor=`bc <<< "scale=2; ${runtime2}/${runtime1}"`
 echo "Performance penalty: $factor"
+;;
+report)
+runevaluation;
+echo "$runtime1,$runtime2,$factor,$vendorid,$cpumhz,$cores,$threadsPerCore" > evaluation-report-latest.cvs
+cat evaluation-report-latest.cvs
+;;
+appendreport)
+cat evaluation-report-latest.cvs >> evaluation-report-collection.cvs
+cat evaluation-report-collection.cvs
 ;;
 *)
 echo "unknown option."
