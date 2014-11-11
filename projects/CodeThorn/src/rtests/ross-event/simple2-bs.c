@@ -128,6 +128,7 @@ static void ctr_init(ctr_state *s, tw_lp *lp) {
   }
 }
 
+#include "Timer.h"
 #ifdef BACKSTROKE_GENERATED
 #include "runtime.h"
 #include "rose_simple2-event-funcs-modified-2.c"
@@ -289,11 +290,20 @@ int main(int argc, char *argv[]) {
     printf("========================================\n\n");
   }
 
-  if(tw_ismaster()) printf("* Starting simulation...\n");
+  Timer timer;
+  double totalRunTime=0.0;
+  if(tw_ismaster()) {
+    timer.start();
+    printf("* Starting simulation...\n");
+  }
   MPI_Barrier(MPI_COMM_WORLD);
   tw_run();
   MPI_Barrier(MPI_COMM_WORLD);
-  if(tw_ismaster()) printf("* Simulation finished...\n");
+  if(tw_ismaster()) {
+    printf("* Simulation finished...\n");
+    timer.stop();
+    totalRunTime=timer.getElapsedTimeInSec();
+  }
   
   /* Collect final particle counts and print statistics */ {
     double nloc0 = stat_data.npart_tot_init,ntot0;
@@ -310,6 +320,7 @@ int main(int argc, char *argv[]) {
 	     ntot0,ptot,ntot0/ptot);
       printf("Now, there are %.0f particles, of which %.0f are in transit (%.3f%%)\n",
 	     ntot1+txtot,txtot,100.0*txtot/(ntot1+txtot));
+      printf("Total run time: %.2lf sec\n",totalRunTime);
     }
   }
 

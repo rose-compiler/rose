@@ -1,7 +1,44 @@
-./compile.simple2-bs
+#!/bin/bash
+
+if [[ $# != 1 ]]; then
+  echo "usage: <command> orig|bs|compare"
+  exit
+fi
+
+if [[ ! -e simple2-orig || ! -e simple2-bs ]]; then
+  echo "Compiling all model variants."
+  ./compile.simple2-bs
+fi
+
 #  --nlp=n               number of LPs per processor (default 8)
 #  --clock-rate=ts       CPU Clock Rate (default 1000000000.00)
+
+key=$1
+case $key in
+orig)
+mpirun -np 2 ./simple2-orig --synch=3
+;;
+bs)
 mpirun -np 2 ./simple2-bs --synch=3
+;;
+compare)
+mpirun -np 2 ./simple2-orig --synch=3 | grep "Total run time" > result1.txt
+mpirun -np 2 ./simple2-bs --synch=3 | grep "Total run time" > result2.txt
+echo "-----------------"
+echo "Evaluation result"
+echo "-----------------"
+runtime1=`grep --only-matching '[0-9]*\.[0-9]*' result1.txt`
+runtime2=`grep --only-matching '[0-9]*\.[0-9]*' result2.txt`
+echo "Original   version total run time: $runtime1 sec"
+echo "Backstroke version total run time: $runtime2 sec"
+factor=`bc <<< "scale=2; ${runtime2}/${runtime1}"`
+echo "Performance penalty: $factor"
+;;
+*)
+echo "unknown option."
+exit
+;;
+esac
 
 #  
 #  mpirun -np 1 ./simple2 --nlp=64 --synch=1 --end=10000
