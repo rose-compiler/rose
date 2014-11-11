@@ -24,7 +24,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(
 KNOBS = 
 
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_LDADD = -lfl -lrose -lspot -lbdd
+codethorn_LDADD = -lrose -lspot -lbdd
 codethorn_SOURCES = \
   AType.C                          \
   AType.h                          \

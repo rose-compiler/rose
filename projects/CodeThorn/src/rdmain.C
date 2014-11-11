@@ -106,6 +106,7 @@ void substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root
 }
 
 int main(int argc, char* argv[]) {
+  try {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
@@ -127,12 +128,19 @@ int main(int argc, char* argv[]) {
   //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
-
+#if 0
+  cout << "INFO: substituting uses with rhs of defs."<<endl;
   substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalyzer->getLabeler(), rdAnalyzer->getVariableIdMapping());
+#endif
+
+#if 1
+  Flow* flow=rdAnalyzer->getFlow();
+  cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
+  CFAnalyzer* cfAnalyzer0=rdAnalyzer->getCFAnalyzer();
+  int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
+  cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
 
 #if 0
-  Flow* flow=rdAnalyzer->getFlow();
-#if 1
   cout << "INFO: computing program statistics."<<endl;
   ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
                        rdAnalyzer->getLabeler(), 
@@ -193,4 +201,14 @@ int main(int argc, char* argv[]) {
 
   root->unparse(0,0);
   return 0;
+  } catch(char const* s) {
+    cout<<s<<endl;
+    exit(1);
+  } catch(string s) {
+    cout<<s<<endl;
+    exit(1);
+  } catch(...) {
+    cout<<"Error: unknown exception."<<endl;
+    exit(1);
+  }
 }

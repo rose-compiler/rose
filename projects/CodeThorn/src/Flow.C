@@ -318,6 +318,7 @@ string Flow::toDot(Labeler* labeler) {
   if(_dotOptionHeaderFooter)
     ss<<"digraph G {\n";
   LabelSet nlabs=nodeLabels();
+  cout<<"toDot:: Flow label-set size: "<<nlabs.size()<<endl;
   for(LabelSet::iterator i=nlabs.begin();i!=nlabs.end();++i) {
     if(_dotOptionDisplayLabel) {
       ss << *i;
