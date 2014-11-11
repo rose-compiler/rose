@@ -47,7 +47,7 @@ SgAsmInstruction::get_anyKind() const {
  *  implementation always aborts()--it must be defined in an architecture-specific subclass (pure virtual is not possible due
  *  to ROSETTA). */
 std::set<rose_addr_t>
-SgAsmInstruction::get_successors(bool *complete) {
+SgAsmInstruction::getSuccessors(bool *complete) {
     abort();
     // tps (12/9/2009) : MSC requires a return value
     std::set<rose_addr_t> t;
@@ -61,14 +61,14 @@ SgAsmInstruction::get_successors(bool *complete) {
  *  faults, etc).  The base class implementation just calls the single-instruction version, so architecture-specific subclasses
  *  might want to override this to do something more sophisticated. */
 std::set<rose_addr_t>
-SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
-                                 const MemoryMap *initial_memory/*=NULL*/)
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
+                                const MemoryMap *initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;
         return std::set<rose_addr_t>();
     }
-    return basic_block.back()->get_successors(complete);
+    return basic_block.back()->getSuccessors(complete);
 }
 
 /** Determines if an instruction can terminate a basic block.  The analysis only looks at the individual instruction and
@@ -76,36 +76,59 @@ SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_blo
  *  even if its condition is constant.  The base class implementation always aborts; architecture-specific subclasses should
  *  override this to do something useful (pure virtual is not possible due to ROSETTA). */
 bool
-SgAsmInstruction::terminates_basic_block()
+SgAsmInstruction::terminatesBasicBlock()
 {
-    abort();
-    // tps (12/9/2009) : MSC requires a return value
-    return false;
+    abort();                                            // rosetta doesn't support pure virtual functions
+#ifdef _MSC_VER
+    return false;                                       // tps (12/9/2009) : MSC requires a return value
+#endif
 }
 
 /** Returns true if the specified basic block looks like a function call.  This instruction object is only used to select the
- *  appropriate virtual is_function_call(); the basic block to be analyzed is the first argument to the function.  If the basic
- *  block looks like a function call then is_function_call() returns true.  If (and only if) the target address is known (i.e.,
+ *  appropriate virtual method; the basic block to be analyzed is the first argument to the function.  If the basic
+ *  block looks like a function call then this method returns true.  If (and only if) the target address is known (i.e.,
  *  the address of the called function) then @p target is set to this address (otherwise @p target is unmodified). If
  *  the return address is known or can be guessed, then return_va is initialized to the return address, which is normally the
- *  fall-through address of the last instruction; otherwise the return_va is unmodified. */
+ *  fall-through address of the last instruction; otherwise the return_va is unmodified.
+ *
+ *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks only at
+ *  instruction patterns while the slow version might incur more expense by looking at instruction semantics.
+ *
+ * @{ */
 bool
-SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *return_va)
 {
     return false;
 }
+bool
+SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *return_va)
+{
+    return false;
+}
+/** @} */
 
 /** Returns true if the specified basic block looks like a function return. This instruction object is only used to select the
- *  appropriate virtual is_function_return(); the basic block to be analyzed is the first argument to the function. */
+ *  appropriate virtual method; the basic block to be analyzed is the first argument to the function.
+ *  
+ *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks only at
+ *  instruction patterns while the slow version might incur more expense by looking at instruction semantics.
+ *
+ * @{ */
 bool
-SgAsmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&)
+SgAsmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&)
 {
     return false;
 }
+bool
+SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&)
+{
+    return false;
+}
+/** @} */
 
 /** Returns true if this instruction is the first instruction in a basic block. */
 bool
-SgAsmInstruction::is_first_in_block()
+SgAsmInstruction::isFirstInBlock()
 {
     SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
     if (bb) {
@@ -120,7 +143,7 @@ SgAsmInstruction::is_first_in_block()
 
 /** Returns true if this instruction is the last instruction in a basic block. */
 bool
-SgAsmInstruction::is_last_in_block()
+SgAsmInstruction::isLastInBlock()
 {
     SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(this);
     if (bb) {
@@ -136,36 +159,36 @@ SgAsmInstruction::is_last_in_block()
 /** Obtains the virtual address for a branching instruction.  Returns true if this instruction is a branching instruction and
   *  the target address is known; otherwise, returns false and @p target is not modified. */
 bool
-SgAsmInstruction::get_branch_target(rose_addr_t *target/*out*/) {
+SgAsmInstruction::getBranchTarget(rose_addr_t *target/*out*/) {
     return false;
 }
 
 /** Virtual method to determine if a single instruction has an effect. Unless subclass redefines, assume all instructions have
- *  an effect other than adjusting the instruction pointer. See SgAsmx86Instruction implementation for complete
+ *  an effect other than adjusting the instruction pointer. See SgAsmX86Instruction implementation for complete
  *  documentation. */
 bool
-SgAsmInstruction::has_effect()
+SgAsmInstruction::hasEffect()
 {
     return true;
 }
 
 /** Virtual method to determine if an instruction sequence has an effect. Unless subclass redefines, assume all instruction
- *  sequences have an effect. See SgAsmx86Instruction implementation for complete documentation. */
+ *  sequences have an effect. See SgAsmX86Instruction implementation for complete documentation. */
 bool
-SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/,
-                             bool relax_stack_semantics/*false*/)
+SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch/*false*/,
+                            bool relax_stack_semantics/*false*/)
 {
     return true;
 }
 
 /** Virtual method to find subsequences of an instruction sequence that are effectively no-ops. Unless subclass redefines,
- *  assume that the sequence has no no-op subsequences. See SgAsmx86Instruction implementation for complete documentation.
+ *  assume that the sequence has no no-op subsequences. See SgAsmX86Instruction implementation for complete documentation.
  *  
- *  FIXME: Instead of leaving this unimplemented, we could implement it in terms of has_effect() and let the subclasses
+ *  FIXME: Instead of leaving this unimplemented, we could implement it in terms of hasEffect() and let the subclasses
  *         reimplement it only if they can do so more efficiently (which they probably can). [RPM 2010-04-30] */
 std::vector<std::pair<size_t,size_t> >
-SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
-                                         bool relax_stack_semantics/*false*/)
+SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+                                       bool relax_stack_semantics/*false*/)
 {
     std::vector<std::pair<size_t, size_t> > retval;
     return retval;
@@ -184,7 +207,7 @@ SgAsmInstruction::get_size() const
  *  "unknown" instruction to be used when the disassembler is unable to create a real instruction.  This can happen, for
  *  instance, if the bit pattern does not represent a valid instruction for the architecture. */
 bool
-SgAsmInstruction::is_unknown() const
+SgAsmInstruction::isUnknown() const
 {
     abort(); // too bad ROSETTA doesn't allow virtual base classes
     return false;

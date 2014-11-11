@@ -143,7 +143,7 @@ endif()
 
 
 if(enable-rosehpct)
-  list(APPEND rose_LIB_SRCS $<roseExtensions>)
+  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseExtensions>)
 endif()
 
 

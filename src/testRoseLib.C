@@ -1,8 +1,10 @@
 // Example ROSE Preprocessor used for testing ROSE infrastructure
 // This trivial example ROSE translator can be considered to be user code.
 
-// User code typically includes "rose.h", not "sage3basic.h"
-#include "rose.h"
+// User code typically includes "rose.h", not "sage3basic.h". Doing so
+// here is fine, in fact, recommended since this is emulating user behavior,
+// even though the NoRoseIncludes policy complains about it.
+#include "rose.h"                                       // POLICY_OK
 
 
 int

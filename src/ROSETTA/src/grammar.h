@@ -52,6 +52,9 @@
 // DQ (4/12/2011): Added Java specific IR nodes.
 #define USE_JAVA_IR_NODES 1
 
+// MH (6/11/2014): Added X10 specific IR nodes.
+#define USE_X10_IR_NODES 1
+
 #include <vector>
 
 // DQ (12/29/2011): These are now defined automatically in the configuration when EDG 4.3 is used.
@@ -515,135 +518,150 @@ class Grammar
           std::string typeStringOfGrammarString(GrammarString* gs);
 
           // temporary: used as return type by getGrammarNodeInfo
-          class GrammarNodeInfo {
-          public:
-            GrammarNodeInfo():numContainerMembers(0), numSingleDataMembers(0) {}
-            unsigned int numContainerMembers;
-            unsigned int numSingleDataMembers;
-          };
+          class GrammarNodeInfo 
+             {
+               public:
+                    GrammarNodeInfo():numContainerMembers(0), numSingleDataMembers(0) {}
+                    unsigned int numContainerMembers;
+                    unsigned int numSingleDataMembers;
+             };
 
-          // MS: auxiliary function to make tests on GrammarNodes more compact. (should be made a set of member
-          //     functions of GrammarNode at some point (requires many other functions to be moved as well)
-     GrammarNodeInfo getGrammarNodeInfo(Terminal* grammarnode);
+       // MS: auxiliary function to make tests on GrammarNodes more compact. (should be made a set of member
+       //     functions of GrammarNode at some point (requires many other functions to be moved as well)
+          GrammarNodeInfo getGrammarNodeInfo(Terminal* grammarnode);
 
-     // MS: generates the code to implement the creation of the treeTraversalSuccessorContainer in Sage
-     void buildTreeTraversalFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile);
+       // MS: generates the code to implement the creation of the treeTraversalSuccessorContainer in Sage
+          void buildTreeTraversalFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile);
 
-     // MS: create source code for enums used in traversal functions to access synthesized attribute values
-     void buildEnumForNode(Terminal& node, std::string& enumString);
-     std::string EnumStringForNode(Terminal& node,std::string s);
+       // DQ (10/4/2014): Adding ATerm support to be automatically generated via ROSETTA.
+          void buildAtermSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
+          void buildAtermGenerationSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
+          void buildAtermConsumerSupportFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile);
+          void buildDataMember(Terminal & node, GrammarString* grammarString, bool & firstAterm, bool & firstConstructorParameter, 
+                               bool & lastDataMemberWasConstructorParameter, bool & isInConstructorParameterList, 
+                               std::string & constructorArgumentsString, std::string & atermArgumentsSubstring, std::string & atermPatternSubstring, 
+                               std::string & dataMemberString, std::string & dataMemberString_post, int integer_counter );
+          StringUtility::FileWithLineNumbers buildAtermConstructor ( Terminal & node );
+          void buildAtermBuildFunctionsSourceFile( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+          bool isIntegerKind(const std::string & typenameString);
+       // void generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile);
 
-     // MS: build Variants for use in tree traversal (access with getVariantT())
-     std::string buildVariantEnums();
 
-     // PC: build ReferenceToPointerHandler and related classes
-     std::string buildReferenceToPointerHandlerCode();
+       // MS: create source code for enums used in traversal functions to access synthesized attribute values
+          void buildEnumForNode(Terminal& node, std::string& enumString);
+          std::string EnumStringForNode(Terminal& node,std::string s);
 
-     // Milind Chabbi(8/28/2013): Performance refactoring.
-     // Support for table-driven SgXXX node castability.
+       // MS: build Variants for use in tree traversal (access with getVariantT())
+          std::string buildVariantEnums();
 
-     // Generates a table (classHierarchyCatTable) populated with information
-     // about whether a given SgXXX node can be casted to a SgYYY node.
-     // The technique has constant lookup time.
-     std::string generateClassHierarchyCastTable();
+       // PC: build ReferenceToPointerHandler and related classes
+          std::string buildReferenceToPointerHandlerCode();
 
-     // Populates the classHierarchyCastTable with all the types that can be casted to terminal type
-     void buildClassHierarchyCastTable(Terminal * terminal, std::vector<Terminal*> & myParentsDescendents);
+       // Milind Chabbi(8/28/2013): Performance refactoring.
+       // Support for table-driven SgXXX node castability.
 
-     // Gets the number of rows in classHierarchyCastTable
-     size_t getRowsInClassHierarchyCastTable();
+       // Generates a table (classHierarchyCatTable) populated with information
+       // about whether a given SgXXX node can be casted to a SgYYY node.
+       // The technique has constant lookup time.
+          std::string generateClassHierarchyCastTable();
 
-     // Gets the number of columns in classHierarchyCastTable
-     size_t getColumnsInClassHierarchyCastTable();
+       // Populates the classHierarchyCastTable with all the types that can be casted to terminal type
+          void buildClassHierarchyCastTable(Terminal * terminal, std::vector<Terminal*> & myParentsDescendents);
 
-         //AS: build the function to get the class hierarchy subtree 
-     std::string buildClassHierarchySubTreeFunction();
+       // Gets the number of rows in classHierarchyCastTable
+          size_t getRowsInClassHierarchyCastTable();
 
-         //AS: build the funtion to automatically generate the memory pool based traversal on VariantVectors
-     std::string buildMemoryPoolBasedVariantVectorTraversalSupport();
+       // Gets the number of columns in classHierarchyCastTable
+          size_t getColumnsInClassHierarchyCastTable();
 
-     // MS: build VariantEnumnames 
-     std::string buildVariantEnumNames();
+       // AS: build the function to get the class hierarchy subtree 
+          std::string buildClassHierarchySubTreeFunction();
 
-  // DQ (11/27/2005): Support for generation of code to be used for automating name changes and interface fixes in ROSE.
-     std::string buildTransformationSupport();
+       // AS: build the funtion to automatically generate the memory pool based traversal on VariantVectors
+          std::string buildMemoryPoolBasedVariantVectorTraversalSupport();
 
-     // MS: creates Include list (used by buildImplementationForTerminal and travMemberAccessEnums)
-     std::vector<GrammarString*> classMemberIncludeList(Terminal& node);
+       // MS: build VariantEnumnames 
+          std::string buildVariantEnumNames();
 
-     // MK: This member function is used by the member function buildTreeTraversalFunctions()
-     // (see above) in order to determine if the current node of the grammar corresponds
-     // to a grammar class whose objects may actually occur in an AST.
-     bool isAstObject(Terminal& node);
+       // DQ (11/27/2005): Support for generation of code to be used for automating name changes and interface fixes in ROSE.
+          std::string buildTransformationSupport();
 
-     // MK: We need this function to determine if the object is a pointer to an STL container
-     bool isSTLContainerPtr(const std::string& typeString);
+       // MS: creates Include list (used by buildImplementationForTerminal and travMemberAccessEnums)
+          std::vector<GrammarString*> classMemberIncludeList(Terminal& node);
 
-     // MK: We need this function to determine if the object itself is an STL container
-     bool isSTLContainer(const std::string& typeString);
+       // MK: This member function is used by the member function buildTreeTraversalFunctions()
+       // (see above) in order to determine if the current node of the grammar corresponds
+       // to a grammar class whose objects may actually occur in an AST.
+          bool isAstObject(Terminal& node);
 
-  // MK: Method to build the iterator declaration for traversing an STL container
-     std::string getIteratorString(const std::string& typeString);
+       // MK: We need this function to determine if the object is a pointer to an STL container
+          bool isSTLContainerPtr(const std::string& typeString);
 
-  // DQ (5/24/2005): Added support to output sizes of IR nodes 
-     std::string buildMemoryStorageEvaluationSupport();
+       // MK: We need this function to determine if the object itself is an STL container
+          bool isSTLContainer(const std::string& typeString);
 
-  // DQ (11/26/2005): Support for visitor patterns (experimental)
-     std::string buildVisitorBaseClass();
+       // MK: Method to build the iterator declaration for traversing an STL container
+          std::string getIteratorString(const std::string& typeString);
 
-  // DQ (12/23/2005): Support for building the code to use the visitor 
-  // pattern on the IR nodes in memory pools.
-     std::string buildMemoryPoolBasedTraversalSupport();
+       // DQ (5/24/2005): Added support to output sizes of IR nodes 
+          std::string buildMemoryStorageEvaluationSupport();
+
+       // DQ (11/26/2005): Support for visitor patterns (experimental)
+          std::string buildVisitorBaseClass();
+
+       // DQ (12/23/2005): Support for building the code to use the visitor 
+       // pattern on the IR nodes in memory pools.
+          std::string buildMemoryPoolBasedTraversalSupport();
 
      private:
        // file cache for reading files
-       static std::vector<grammarFile*> fileList;
-       std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
-       std::set<std::string> traversedTerminals;
-       GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
-       bool isAbstractTreeGrammarSymbol(std::string);
+          static std::vector<grammarFile*> fileList;
+          std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
+          std::set<std::string> traversedTerminals;
+          GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
+          bool isAbstractTreeGrammarSymbol(std::string);
 
    // JH (01/13/2006) Added to build code for ast file IO
-      public:
-   // JH (11/04/2005): declaration of methods, needed to build the code for the
-   //StorageClasses, after generation of the code located in SageIII/astFileIO/StorageClasses.C
-       std::string myBuildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
+     public:
+       // JH (11/04/2005): declaration of methods, needed to build the code for the
+       // StorageClasses, after generation of the code located in SageIII/astFileIO/StorageClasses.C
+          std::string myBuildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
 
-      void buildStorageClassSourceFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
-      void buildStorageClassHeaderFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
-      void buildIRNodeConstructorOfStorageClassSource ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
-      std::string buildStringForStorageClassSource ( Terminal & node );
-      std::string buildStorageClassDeclarations ( );
+          void buildStorageClassSourceFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStorageClassHeaderFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildIRNodeConstructorOfStorageClassSource ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+          std::string buildStringForStorageClassSource ( Terminal & node );
+          std::string buildStorageClassDeclarations ( );
 
-   // DQ (4/6/2006): Added in Jochen's new version
-      std::string buildStaticDataMemberListClassEntries( Terminal & node);
-      std::string buildAccessFunctionsOfClassEntries( Terminal & node);
-      std::string buildAccessFunctionSources( Terminal & node);
-      std::string buildDataMemberStorageClass( Terminal & node);
-      std::string buildStaticStorageClassPickOutSource( Terminal & node);
-      std::string generateStaticDataConstructorSource(Terminal & node);
-      std::string generateStaticDataWriteEasyStorageDataToFileSource(Terminal & node);
-      std::string generateStaticDataReadEasyStorageDataFromFileSource(Terminal & node);
-      std::string generateStaticDataArrangeEasyStorageInOnePoolSource(Terminal & node);
-      std::string generateStaticDataDeleteEasyStorageMemoryPoolSource(Terminal & node);
-      std::string buildStaticDataMemberListSetStaticDataSource(Terminal & node);
-      std::string buildStaticDataMemberListDeleteStaticDataSource(Terminal & node);
-      std::string buildStaticDataMemberListClassConstructor(Terminal & node);
+       // DQ (4/6/2006): Added in Jochen's new version
+          std::string buildStaticDataMemberListClassEntries( Terminal & node);
+          std::string buildAccessFunctionsOfClassEntries( Terminal & node);
+          std::string buildAccessFunctionSources( Terminal & node);
+          std::string buildDataMemberStorageClass( Terminal & node);
+          std::string buildStaticStorageClassPickOutSource( Terminal & node);
+          std::string generateStaticDataConstructorSource(Terminal & node);
+          std::string generateStaticDataWriteEasyStorageDataToFileSource(Terminal & node);
+          std::string generateStaticDataReadEasyStorageDataFromFileSource(Terminal & node);
+          std::string generateStaticDataArrangeEasyStorageInOnePoolSource(Terminal & node);
+          std::string generateStaticDataDeleteEasyStorageMemoryPoolSource(Terminal & node);
+          std::string buildStaticDataMemberListSetStaticDataSource(Terminal & node);
+          std::string buildStaticDataMemberListDeleteStaticDataSource(Terminal & node);
+          std::string buildStaticDataMemberListClassConstructor(Terminal & node);
 
-      void  generateAST_FILE_IOFiles ( );
-      void  generateStorageClassesFiles ( );
-      std::vector<std::string>& getListOfBuiltinTypes();
+          void  generateAST_FILE_IOFiles ( );
+          void  generateStorageClassesFiles ( );
+          std::vector<std::string>& getListOfBuiltinTypes();
 
-   // DQ (4/6/2006): Added in Jochen's new version
-      std::vector<std::string>& getListOfAbstractClasses();
+       // DQ (4/6/2006): Added in Jochen's new version
+          std::vector<std::string>& getListOfAbstractClasses();
 
-   // JH(10/25/2005): declaration of the grammar functions that build the header and the source of the
-   // AstFileIO class, loacated after the generation in SageIII/astFileIO/AstFileIO.(hC)
-     std::string build_header_AST_FILE_IO_CLASS();
-     std::string build_source_AST_FILE_IO_CLASS();
+       // JH(10/25/2005): declaration of the grammar functions that build the header and the source of the
+       // AstFileIO class, loacated after the generation in SageIII/astFileIO/AstFileIO.(hC)
+          std::string build_header_AST_FILE_IO_CLASS();
+          std::string build_source_AST_FILE_IO_CLASS();
 
-  // DQ (5/18/2007): support for documentation to handle mapping to KDM
-     std::string outputClassesAndFields ( Terminal & node );
+       // DQ (5/18/2007): support for documentation to handle mapping to KDM
+          std::string outputClassesAndFields ( Terminal & node );
    };
 
 // We need a defintion of an arbitrary identifier

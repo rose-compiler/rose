@@ -36,7 +36,7 @@ struct SequenceGenerationTraversal: SgTopDownBottomUpProcessing<size_t, Sawyer::
         ASSERT_require(nodesTraced.size() == nodeDepths.size());
     }
 
-    size_t evaluateInheritedAttribute(SgNode *node, size_t depth) /*override*/ {
+    size_t evaluateInheritedAttribute(SgNode *node, size_t depth) ROSE_OVERRIDE {
         ASSERT_always_forbid(isSgProject(node));
         Sg_File_Info *nodeInfo = node->get_file_info();
         bool trace = (depth >= minDepth && depth <= maxDepth &&
@@ -50,7 +50,7 @@ struct SequenceGenerationTraversal: SgTopDownBottomUpProcessing<size_t, Sawyer::
         return depth+1;
     }
 
-    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t depth, SubTreeSynthesizedAttributes) /*override*/ {
+    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t depth, SubTreeSynthesizedAttributes) ROSE_OVERRIDE {
         return Sawyer::Nothing();
     }
 };
