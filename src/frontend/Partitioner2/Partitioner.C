@@ -401,20 +401,35 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     }
 
     bblock->freeze();
-    bool isFunctionCall = basicBlockIsFunctionCall(bblock);
-    bool isFunctionReturn = basicBlockIsFunctionReturn(bblock);
+
+    // Are any edges marked as function calls?  If not, and this is a function call, then we'll want to convert all the normal
+    // edges to function call edges.  Similarly for function return edges.
+    bool hasFunctionCallEdges = false, hasFunctionReturnEdges = false, hasCallReturnEdges = false;
+    BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bblock)) {
+        switch (successor.type()) {
+            case E_FUNCTION_CALL:       hasFunctionCallEdges = true;    break;
+            case E_FUNCTION_RETURN:     hasFunctionReturnEdges = true;  break;
+            case E_CALL_RETURN:         hasCallReturnEdges = true;      break;
+            default:                                                    break;
+        }
+    }
+    bool convertEdgesToFunctionCalls = !hasFunctionCallEdges && basicBlockIsFunctionCall(bblock);
+    bool convertEdgesToFunctionReturns = !hasFunctionReturnEdges && basicBlockIsFunctionReturn(bblock);
 
     // Make sure placeholders exist for the concrete successors
     bool hadIndeterminate = false;
     typedef std::pair<ControlFlowGraph::VertexNodeIterator, CfgEdge> VertexEdgePair;
     std::vector<VertexEdgePair> successors;
     BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bblock)) {
-        EdgeType edgeType = E_NORMAL;
-        if (isFunctionCall) {
-            edgeType = E_FUNCTION_CALL;
-        } else if (isFunctionReturn) {
-            edgeType = E_FUNCTION_RETURN;
+        EdgeType edgeType = successor.type();
+        if (edgeType == E_NORMAL) {
+            if (convertEdgesToFunctionCalls) {
+                edgeType = E_FUNCTION_CALL;
+            } else if (convertEdgesToFunctionReturns) {
+                edgeType = E_FUNCTION_RETURN;
+            }
         }
+        
         CfgEdge edge(edgeType);
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
@@ -424,12 +439,21 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
         }
     }
 
-    // Function calls get an additional return edge because we assume they return to the fall-through address. This edge
-    // doesn't exist explicitly in the specimen, but we must add it to the partitioner's CFG because if the called function
-    // does not exist (e.g., it's in a dynamically loaded library that is not present) then this edge is the only way to
-    // indicate that the called function eventually returns.
-    if (isFunctionCall)
-        successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), CfgEdge(E_CALL_RETURN)));
+    // If this is a function call and the user hasn't already specified a call-return edge then we might need to add one.
+    // Call-return edges indicate where a function call eventually returns since the CFG doesn't have such edges from function
+    // return statements (return statements usually have an indeterminate successor).  We'll only add the call-return edge if
+    // the user didn't already specify one and if the may-return analysis is positive.
+    if (!hasCallReturnEdges && basicBlockIsFunctionCall(bblock)) {
+        BOOST_FOREACH (const VertexEdgePair &successor, successors) {
+            if (successor.second.type() == E_FUNCTION_CALL) {
+                static const boost::logic::tribool ASSUME_MOST_FUNCTIONS_RETURN = true;
+                if (basicBlockOptionalMayReturn(bblock, ASSUME_MOST_FUNCTIONS_RETURN).orElse(false)) {
+                    successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), CfgEdge(E_CALL_RETURN)));
+                    break;
+                }
+            }
+        }
+    }
 
     // Make CFG edges
     cfg_.clearOutEdges(placeholder);
