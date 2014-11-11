@@ -36,14 +36,32 @@ namespace Partitioner2 {
  *      and @ref partition.
  *
  *  @li The engine's partitioning API always takes a partitioner as an argument. The user can modify the partitioner's behavior
- *      by subclassing, registering partitioner callbacks, or modifying the partitioner state between calls to the engine. */
+ *      by subclassing, registering partitioner callbacks, or modifying the partitioner state between calls to the
+ *      engine. However, the partitioner that's provided to these functions should be one that was created with one of the
+ *      partitioner-creating functions in this library if you want all features to work. */
 class Engine {
+    // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
+    // inserted or erased from the CFG.
+    class BasicBlockWorkList: public CfgAdjustmentCallback {
+    private:
+        DistinctStack<rose_addr_t> pendingCallReturn_;  // blocks that might need an E_CALL_RETURN edge created
+        DistinctStack<rose_addr_t> pendingCallReturnProcessed_; // processed but still indeterminate
+    public:
+        typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
+        static Ptr instance() { return Ptr(new BasicBlockWorkList); }
+        virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+        virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
+        DistinctStack<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
+        DistinctStack<rose_addr_t>& pendingCallReturnProcessed() { return pendingCallReturnProcessed_; }
+    };
+
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
     BinaryLoader *loader_;                              // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap map_;                                     // memory map initialized by load()
+    BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
 public:
-    Engine(): interp_(NULL), loader_(NULL), disassembler_() {}
+    Engine(): interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()) {}
 
     virtual ~Engine() {}
 
@@ -269,6 +287,9 @@ public:
      *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
     virtual BasicBlock::Ptr makeNextBasicBlock(Partitioner&);
 
+private:
+    // See if a new E_CALL_RETURN edge can be inserted into the CFG and do so.
+    bool makeNewCallReturnEdge(Partitioner&, bool assumeCallReturns);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Methods to make functions.
