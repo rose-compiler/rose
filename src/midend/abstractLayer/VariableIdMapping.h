@@ -11,7 +11,8 @@
 #include <vector>
 #include <boost/unordered_set.hpp>
 
-#include "sage3basic.h"
+// rose.h and sage3basic.h should not be included in librose header files. [Robb P. Matzke 2014-10-15]
+// #include "sage3basic.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 

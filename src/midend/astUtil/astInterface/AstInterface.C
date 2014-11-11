@@ -719,7 +719,11 @@ NewVar( SgType* type, const string& _name, bool makeunique, SgScopeStatement* lo
      SgName name(varname.c_str());
      SgType *t = isSgType( type);
      assert(t != 0);
-     SgInitializedName *d = new SgInitializedName( name,  t);
+
+  // DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
+  // SgInitializedName *d = new SgInitializedName( name,  t);
+     SgInitializedName *d = new SgInitializedName( name,  t, NULL);
+
      d->set_file_info(GetFileInfo());
 
      v = AddVar(d, loc);
@@ -741,7 +745,14 @@ NewFunc( const string& name, SgType*  rtype, const list<SgInitializedName*>& arg
 {
   const char *start = name.c_str();
   SgFunctionType *ft = new SgFunctionType(rtype, false);
+
+#if 0
+// DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
+  SgFunctionDeclaration  *d = new SgFunctionDeclaration(GetFileInfo(), start, NULL, ft);
+#else
   SgFunctionDeclaration  *d = new SgFunctionDeclaration(GetFileInfo(), start, ft);
+#endif
+
   for (list<SgInitializedName*>::const_iterator p = args.begin(); p != args.end();
        ++p) {
      SgInitializedName* cur = *p;
@@ -795,7 +806,14 @@ NewMemberFunc( SgClassSymbol* c, const string& name, SgType*  rtype,
   }
 
   SgMemberFunctionType *ft = new SgMemberFunctionType(rtype, false);
+
+#if 0
+// DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
+  SgMemberFunctionDeclaration  *d = new SgMemberFunctionDeclaration(GetFileInfo(), start, NULL, ft, 0);
+#else
   SgMemberFunctionDeclaration  *d = new SgMemberFunctionDeclaration(GetFileInfo(), start, ft, 0);
+#endif
+
   d->set_scope(classDefn);
   for (list<SgInitializedName*>::const_iterator p = args.begin(); p != args.end();
        ++p) {
@@ -3396,8 +3414,12 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
     SgFunctionDefinition* fd = NULL;    // No definition for built-in function.
 
     // SgProcedureHeaderStatement extends SgFunctionDeclaration
+#if 0
+ // DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
+    SgProcedureHeaderStatement *d = new SgProcedureHeaderStatement(name.c_str(), NULL, ft, fd);
+#else
     SgProcedureHeaderStatement *d = new SgProcedureHeaderStatement(name.c_str(), ft, fd);
-
+#endif
     /* Remove function params specification, since min/max can accept arbitary number of params.
     for (list<SgInitializedName*>::const_iterator p = pars.begin(); p != pars.end(); ++p) {
       SgInitializedName* cur = *p;

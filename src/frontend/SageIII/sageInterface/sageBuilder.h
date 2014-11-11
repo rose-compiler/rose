@@ -1201,6 +1201,17 @@ ROSE_DLL_API SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NU
 // ! Build a catch statement.
 ROSE_DLL_API SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition=NULL, SgStatement* body=NULL);
 
+// MH (6/10/2014): Added async support
+ROSE_DLL_API SgAsyncStmt* buildAsyncStmt(SgBasicBlock *body);
+
+// MH (6/11/2014): Added finish support
+ROSE_DLL_API SgFinishStmt* buildFinishStmt(SgBasicBlock *body);
+
+// MH (6/11/2014): Added at support
+ROSE_DLL_API SgAtStmt* buildAtStmt(SgExpression *expression, SgBasicBlock *body);
+
+ROSE_DLL_API SgHereExp* buildHereExpression();
+
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.
 ROSE_DLL_API SgTryStmt* buildTryStmt(SgStatement* body,
@@ -1344,6 +1355,38 @@ ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardExtends(SgType *);
 ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardSuper(SgType *);
 
 //@}
+
+
+//----------------------------------------------------------
+//@{
+/*! @name Untyped IR Node Build Interfaces
+    \brief  Build function for ROSE AST's in terms of Untyped IR nodes.
+
+The ROSE Untyped IR nodes can be a starting place for defining the new language frontend, these IR nodes 
+address the interface from an external language parser and the construction of the ROSE Untyped AST.  
+Later iterations on the ROSE Untyped AST can be used to translate (or construct) a proper ROSE AST in 
+terms of non-untyped IR nodes.
+
+ \todo define translation passes to construct non-untype IR nodes.
+*/
+
+/*! \brief build a concept of scope in the untyped AST.
+*/
+ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+
+ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+
+ROSE_DLL_API SgUntypedFunctionDeclaration*      buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
+ROSE_DLL_API SgUntypedProgramHeaderDeclaration* buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
+ROSE_DLL_API SgUntypedSubroutineDeclaration*    buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
+
+ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
+
+//@}
+
+
 
 } // end of namespace
 
