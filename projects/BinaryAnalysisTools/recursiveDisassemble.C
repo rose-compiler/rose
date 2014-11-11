@@ -4,18 +4,16 @@
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
 #include <BinaryLoader.h>
-#include <DisassemblerArm.h>
-#include <DisassemblerPowerpc.h>
-#include <DisassemblerMips.h>
-#include <DisassemblerX86.h>
-#include <DisassemblerM68k.h>
+#include <Disassembler.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
+#include <Partitioner2/Utility.h>
 
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
+#include <sawyer/Stopwatch.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -31,61 +29,22 @@
  | FindPostFunctionInsns  |                                                           |
  */
 
-// FIXME[Robb P. Matzke 2014-08-28]: SgAsmInstruction::is_function_call repeats most of the instruction semantics that occur in
-// the partitioner and is called when the partitioner semantics failed or were disabled.  Therefore, turning off semantics in
-// the partitioner actually makes the partitioner run slower than normal (because is_function_call is stateless), but if you
-// comment out the semantics inside is_function_call then the speed increase is huge.
-
 using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
-static Disassembler *
-getDisassembler(const std::string &name)
-{
-    if (0==name.compare("list")) {
-        std::cout <<"The following ISAs are supported:\n"
-                  <<"  amd64\n"
-                  <<"  arm\n"
-                  <<"  coldfire\n"
-                  <<"  i386\n"
-                  <<"  m68040\n"
-                  <<"  mips\n"
-                  <<"  ppc\n";
-        exit(0);
-    } else if (0==name.compare("arm")) {
-        return new DisassemblerArm();
-    } else if (0==name.compare("ppc")) {
-        return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
-    } else if (0==name.compare("i386")) {
-        return new DisassemblerX86(4);
-    } else if (0==name.compare("amd64")) {
-        return new DisassemblerX86(8);
-    } else if (0==name.compare("m68040")) {
-        return new DisassemblerM68k(m68k_68040);
-    } else if (0==name.compare("coldfire")) {
-        return new DisassemblerM68k(m68k_freescale_emacb);
-    } else {
-        throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
-    }
-}
-
 static const rose_addr_t NO_ADDRESS(-1);
 
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;                                // instruction set architecture name
-    rose_addr_t mapVa;                                  // where to map the specimen in virtual memory
     size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
     bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findFunctionPadding;                           // look for pre-entry-point padding?
-    bool findSwitchCases;                               // search for C-like "switch" statement cases
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     bool doListCfg;                                     // list the control flow graph
@@ -93,13 +52,16 @@ struct Settings {
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
     bool doListFunctions;                               // produce a function index
     bool doListFunctionAddresses;                       // list function entry addresses
+    bool doListInstructionAddresses;                    // show instruction addresses
+    bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
+    std::vector<std::string> triggers;                  // debugging aids
     Settings()
-        : mapVa(NO_ADDRESS), deExecuteZeros(0), useSemantics(true), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findSwitchCases(true), findDeadCode(true), intraFunctionData(true),
-          doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
-          doShowStats(false), doListUnused(false) {}
+        : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
+          findFunctionPadding(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
+          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false),
+          doShowMap(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -126,11 +88,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-    dis.insert(Switch("map")
-               .argument("virtual-address", nonNegativeIntegerParser(settings.mapVa))
-               .doc("If this switch is present, then the specimen is treated as raw data and mapped in its entirety "
-                    "into the address space beginning at the address specified for this switch. Otherwise the file "
-                    "is interpreted as an ELF or PE container."));
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
                .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
@@ -173,15 +130,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("no-find-dead-code")
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
-               .hidden(true));
-    dis.insert(Switch("find-switch-cases")
-               .intrinsicValue(true, settings.findSwitchCases)
-               .doc("Scan for common encodings of C-like \"switch\" statements so that the cases can be disassembled. The "
-                    "@s{no-find-switch-cases} switch turns this off.  The default is " +
-                    std::string(settings.findSwitchCases?"true":"false") + "."));
-    dis.insert(Switch("no-find-switch-cases")
-               .key("find-switch-cases")
-               .intrinsicValue(false, settings.findSwitchCases)
                .hidden(true));
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
@@ -237,23 +185,44 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(false, settings.doListFunctions)
                .hidden(true));
 
-    out.insert(Switch("list-function-entries")
+    out.insert(Switch("list-function-addresses")
                .intrinsicValue(true, settings.doListFunctionAddresses)
                .doc("Produce a listing of function entry addresses, one address per line in hexadecimal format. Each address "
                     "is followed by the word \"existing\" or \"missing\" depending on whether a non-empty basic block exists "
-                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-entries}."));
-    out.insert(Switch("no-list-function-entries")
-               .key("list-function-entries")
+                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-addresses}."));
+    out.insert(Switch("no-list-function-addresses")
+               .key("list-function-addresses")
                .intrinsicValue(false, settings.doListFunctionAddresses)
                .hidden(true));
 
-    out.insert(Switch("list-unused")
+    out.insert(Switch("list-instruction-addresses")
+               .intrinsicValue(true, settings.doListInstructionAddresses)
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain one address interval "
+                    "represented in the standard format: a hexadecimal address with leading \"0x\" followed by a plus sign (\"+\") "
+                    "followed by the decimal size of the instruction in bytes.  This listing is disabled with the "
+                    "@s{no-list-instruction-addresses} switch.  The default is to " +
+                    std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
+    out.insert(Switch("no-list-instruction-addresses")
+               .key("list-instruction-addresses")
+               .intrinsicValue(false, settings.doListInstructionAddresses)
+               .hidden(true));
+
+    out.insert(Switch("list-unused-addresses")
                .intrinsicValue(true, settings.doListUnused)
                .doc("Produce a listing of all specimen addresses that are not represented in the control flow graph. This "
                     "listing can be disabled with @s{no-list-unused}."));
-    out.insert(Switch("no-list-unused")
-               .key("list-unused")
+    out.insert(Switch("no-list-unused-addresses")
+               .key("list-unused-addresses")
                .intrinsicValue(false, settings.doListUnused)
+               .hidden(true));
+
+    out.insert(Switch("show-map")
+               .intrinsicValue(true, settings.doShowMap)
+               .doc("Show the memory map that was used for disassembly.  The @s{no-show-map} switch turns this off. The "
+                    "default is to " + std::string(settings.doShowMap?"":"not ") + "show the memory map."));
+    out.insert(Switch("no-show-map")
+               .key("show-map")
+               .intrinsicValue(false, settings.doShowMap)
                .hidden(true));
 
     out.insert(Switch("show-stats")
@@ -263,17 +232,55 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("show-stats")
                .intrinsicValue(false, settings.doShowStats)
                .hidden(true));
+
+    SwitchGroup dbg("Debugging switches");
+    dbg.insert(Switch("trigger")
+               .argument("what", anyParser(settings.triggers))
+               .whichValue(SAVE_ALL)
+               .doc("Activates a debugging aid triggered by a certain event. For instance, if you're trying to figure "
+                    "out why a function prologue pattern created a function at a location where you think there should "
+                    "have already been an instruction, then it would be useful to have a list of CFG-attached instructions "
+                    "at the exact point when the function prologue was matched. The switch "
+                    "\"@s{trigger} insn-list:bblock=0x0804cfa1:insns=0x0804ca00,0x0804da10\" will do such a thing. Namely, "
+                    "the first time a basic block at 0x0804cfa1 is added to the CFG it will list all CFG-attached instructions "
+                    "between the addresses 0x0804ca00 and 0x0804da10.  Multiple @s{trigger} switches can be specified. Each "
+                    "one takes a value which is the name of the debugging aid (e.g., \"insn-list\") and zero or more "
+                    "configuration arguments with a colon between the name and each argument."
+                    "\n\n"
+                    "In the descriptions that follow, leading hyphens can be omitted and an equal sign can separate the "
+                    "name and value. That is, \":bblock=0x123\" works just as well as \":--bblock 0x123\".  Integers may "
+                    "generally be specified in C/C++ syntax: hexadecimal (leading \"0x\"), binary (leading \"0b\"), "
+                    "octal (leading \"0\"), or decimal.  Intervals can be specified with a single integer to represent a "
+                    "singleton interval, a minimum and maximum value separated by a comma as in \"20,29\", a beginning "
+                    "and exclusive end separated by a hpyhen as in \"20-30\", or a beginning and size separated by a \"+\" "
+                    "as in \"20+10\"."
+                    "\n\n"
+                    "Debugging aids generally send their output to the rose::BinaryAnalysis::Partitioner2[DEBUG] stream. "
+                    "There is no need to turn this stream on explicitly from the command line since the debugging aids "
+                    "temporarily enable it.  They assume that if you took the time to specify their parameters then you "
+                    "probably want to see their output!"
+                    "\n\n"
+                    "The following debugging aids are available:"
+                    "@named{cfg-dot}{" + P2::Modules::CfgGraphVizDumper::docString() + "}"
+                    "@named{hexdump}{" + P2::Modules::HexDumper::docString() + "}"
+                    "@named{insn-list}{" + P2::Modules::InstructionLister::docString() + "}"
+                    ));
     
 
     Parser parser;
     parser
-        .purpose("tests new partitioner architecture")
+        .purpose("disassembles and partitions binary specimens")
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
         .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_name}")
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
         .doc("description",
-             "This program tests the new partitioner architecture by disassembling the specified file.");
+             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
+        .doc("Specimens", P2::Engine::specimenNameDocumentation())
+        .doc("Bugs", "[999]-bugs",
+             "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
     
-    return parser.with(gen).with(dis).with(out).parse(argc, argv).apply();
+    return parser.with(gen).with(dis).with(out).with(dbg).parse(argc, argv).apply();
 }
 
 
@@ -333,7 +340,7 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
         if (SgAsmInstruction *insn = partitioner.discoverInstruction(va)) {
             std::vector<SgAsmInstruction*> bb(1, insn);
             rose_addr_t target = NO_ADDRESS;
-            if (insn->is_function_call(bb, &target, NULL) &&
+            if (insn->isFunctionCallFast(bb, &target, NULL) &&
                 partitioner.memoryMap().at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 targets.insert(target);
             }
@@ -362,55 +369,31 @@ int main(int argc, char *argv[]) {
     // Parse the command-line
     Settings settings;
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
+    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
     Disassembler *disassembler = NULL;
     if (!settings.isaName.empty())
-        disassembler = getDisassembler(settings.isaName);// do this before we check for positional arguments (for --isa=list)
-    if (positionalArgs.empty())
+        disassembler = Disassembler::lookup(settings.isaName);
+    if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
-    if (positionalArgs.size()>1)
-        throw std::runtime_error("too many specimens specified; see --help");
-    std::string specimenName = positionalArgs[0];
 
     // Create an engine to drive the partitioning.  This is entirely optional.  All an engine does is define the sequence of
     // partitioning calls that need to be made in order to recognize instructions, basic blocks, data blocks, and functions.
     // We instantiate the engine early because it has some nice methods that we can use.
     P2::Engine engine;
 
-    // Load the specimen as raw data or an ELF or PE container
-    SgAsmInterpretation *interp = NULL;
-    MemoryMap map;
-    if (settings.mapVa!=NO_ADDRESS) {
-        if (!disassembler)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        size_t nBytesMapped = map.insertFile(specimenName, settings.mapVa);
-        if (0==nBytesMapped)
-            throw std::runtime_error("problem reading file: " + specimenName);
-        map.at(settings.mapVa).limit(nBytesMapped).changeAccess(MemoryMap::EXECUTABLE, 0);
-    } else {
-        std::vector<std::string> args;
-        args.push_back(argv[0]);
-        args.push_back("-rose:binary");
-        args.push_back("-rose:read_executable_file_format_only");
-        args.push_back(specimenName);
-        SgProject *project = frontend(args);
-        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-        if (interps.empty())
-            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-        interp = interps.back();    // windows PE is always after DOS
-        disassembler = engine.loadSpecimen(interp, disassembler);
-        ASSERT_not_null(interp->get_map());
-        map = *interp->get_map();
-    }
-    disassembler->set_progress_reporting(-1.0);         // turn it off
+    // Load the specimen as raw data or an ELF or PE container.
+    MemoryMap map = engine.load(specimenNames);
+    SgAsmInterpretation *interp = engine.interpretation();
+    if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
+        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
 
 #if 0 // [Robb P. Matzke 2014-08-29]
     // Remove execute permission from all segments of memory except those with ".text" as part of their name.
-    BOOST_FOREACH (const MemoryMap::Segments::Node &node, map.segments().nodes()) {
-        if (!boost::contains(node.value().get_name(), ".text")) {
-            std::cerr <<"ROBB: removing execute from " <<node.value().get_name() <<"\n";
-            unsigned newPerms = node.value().get_mapperms() & ~MemoryMap::MM_PROT_EXEC;
-            map.mprotect(node.key(), newPerms);
+    BOOST_FOREACH (MemoryMap::Segment &segment, map.segments()) {
+        if (!boost::contains(segment.name(), ".text")) {
+            std::cerr <<"ROBB: removing execute from " <<segment.name() <<"\n";
+            unsigned newPerms = segment.accessibility() & ~MemoryMap::EXECUTABLE;
+            segment.accessibility(newPerms);
         }
     }
 #endif
@@ -427,10 +410,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    Stream info(mlog[INFO] <<"Disassembling and partitioning");
+    Sawyer::Stopwatch partitionTime;
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
-    if (settings.findSwitchCases)
-        partitioner.basicBlockCallbacks().append(P2::ModulesM68k::SwitchSuccessors::instance());
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
@@ -439,7 +422,27 @@ int main(int argc, char *argv[]) {
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
     if (false)
         makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
-    partitioner.memoryMap().dump(std::cout);            // show what we'll be working on
+
+    // Insert debugging aids
+    BOOST_FOREACH (const std::string &s, settings.triggers) {
+        if (boost::starts_with(s, "cfg-dot:")) {
+            P2::Modules::CfgGraphVizDumper::Ptr aid = P2::Modules::CfgGraphVizDumper::instance(s.substr(8));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "hexdump:")) {
+            P2::Modules::HexDumper::Ptr aid = P2::Modules::HexDumper::instance(s.substr(8));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "insn-list:")) {
+            P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else {
+            throw std::runtime_error("invalid debugging aid for \"trigger\" switch: " + s);
+        }
+    }
+
+    // Show what we'll be working on (stdout for the record, and diagnostics also)
+    partitioner.memoryMap().dump(mlog[INFO]);
+    if (settings.doShowMap)
+        partitioner.memoryMap().dump(std::cout);
 
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.
@@ -467,6 +470,7 @@ int main(int argc, char *argv[]) {
     // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
     engine.postPartitionFixups(partitioner, interp);
 
+    info <<"; completed in " <<partitionTime <<" seconds.\n";
     SgAsmBlock *globalBlock = NULL;
 
     //-------------------------------------------------------------- 
@@ -520,6 +524,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.doListInstructionAddresses) {
+        std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(AddressInterval::whole());
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+            std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size() <<"\n";
+    }
+    
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         if (!globalBlock)

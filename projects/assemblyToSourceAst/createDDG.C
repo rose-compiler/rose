@@ -302,17 +302,17 @@ public:
 
     struct ReadDependencies
     {
-      std::vector< SgAsmx86Instruction* > readDeps;
+      std::vector< SgAsmX86Instruction* > readDeps;
       std::vector< int > whoWrote;
 
     };
 
 
     //This currently also holds write-depedencies
-    std::pair<SgAsmx86Instruction*, ReadDependencies*> currentReadDependencies;
+    std::pair<SgAsmX86Instruction*, ReadDependencies*> currentReadDependencies;
 
     //The map between an instruction and the instructions it relies upon
-    std::map<SgAsmx86Instruction*, ReadDependencies> ddg;
+    std::map<SgAsmX86Instruction*, ReadDependencies> ddg;
 
     void updateCurrentReadDependencies()
     {
@@ -327,7 +327,7 @@ public:
     }
 
 
-    void addDependency(SgAsmx86Instruction* dep, int whoAdds)
+    void addDependency(SgAsmX86Instruction* dep, int whoAdds)
     {
 
       if( currentInstruction == dep )
@@ -493,13 +493,13 @@ SgIncidenceDirectedGraph* constructDDG( std::vector<SgNode*> instructions)
   X86InstructionSemantics<CreatingDDG, XVariablePtr> ddg_t(ddg_policy);
 
   for (size_t i = 0; i < instructions.size(); ++i) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    SgAsmX86Instruction* insn = isSgAsmX86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
     ddg_t.processInstruction(insn);
     std::cout << "  " << unparseInstructionWithAddress(insn) << std::endl;
   }
 
-  std::map<SgAsmx86Instruction*, CreatingDDG::ReadDependencies> ddg = ddg_policy.ddg;
+  std::map<SgAsmX86Instruction*, CreatingDDG::ReadDependencies> ddg = ddg_policy.ddg;
 
 
   //###### From the internal representation of the DDG create a SgIncidenceGraph
@@ -513,7 +513,7 @@ SgIncidenceDirectedGraph* constructDDG( std::vector<SgNode*> instructions)
   //Add all instructions to the incidence graph with a corresponding SgGraphNode
   for( std::vector<SgNode*>::iterator nodeItr = instructions.begin() ; nodeItr != instructions.end(); ++nodeItr )
   {
-      SgAsmx86Instruction* instr = isSgAsmx86Instruction(*nodeItr);
+      SgAsmX86Instruction* instr = isSgAsmX86Instruction(*nodeItr);
       ROSE_ASSERT(instr != NULL);
       rose_addr_t address = instr->get_address();
 
@@ -525,9 +525,9 @@ SgIncidenceDirectedGraph* constructDDG( std::vector<SgNode*> instructions)
   }
 
   //Create edges between an instruction and it's predecessors
-  for( std::map<SgAsmx86Instruction*, CreatingDDG::ReadDependencies>::const_iterator nodeItr = ddg.begin() ; nodeItr != ddg.end(); ++nodeItr )
+  for( std::map<SgAsmX86Instruction*, CreatingDDG::ReadDependencies>::const_iterator nodeItr = ddg.begin() ; nodeItr != ddg.end(); ++nodeItr )
   {
-    SgAsmx86Instruction* instr = nodeItr->first;
+    SgAsmX86Instruction* instr = nodeItr->first;
     rose_addr_t address = instr->get_address();
 
     for(unsigned int i= 0 ; i < nodeItr->second.readDeps.size() ; i++ )
@@ -589,7 +589,7 @@ int main(int argc, char** argv) {
       binFunc->set_name( "my" + boost::lexical_cast<std::string>(j)   );
 
     std::cout << "Dealing with the function: " << binFunc->get_name() << std::endl; 
-    vector<SgNode*> instructions = NodeQuery::querySubTree(binFunc, V_SgAsmx86Instruction);
+    vector<SgNode*> instructions = NodeQuery::querySubTree(binFunc, V_SgAsmX86Instruction);
 
     //Calling functions to create the DDG
     SgIncidenceDirectedGraph* cur_DDG = constructDDG(instructions);

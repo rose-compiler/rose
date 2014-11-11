@@ -96,11 +96,18 @@ public:
 #   endif
 
     // Accessibility flags
+    static const unsigned NO_ACCESS = 0;
     static const unsigned READABLE = Sawyer::Access::READABLE;
     static const unsigned WRITABLE = Sawyer::Access::WRITABLE;
     static const unsigned EXECUTABLE = Sawyer::Access::EXECUTABLE;
     static const unsigned IMMUTABLE = Sawyer::Access::IMMUTABLE;
     static const unsigned PRIVATE = 0x00000100;
+
+    // Aggregate accessibility flags
+    static const unsigned READ_WRITE = READABLE | WRITABLE;
+    static const unsigned READ_EXECUTE = READABLE | EXECUTABLE;
+    static const unsigned READ_WRITE_EXECUTE = READABLE | WRITABLE | EXECUTABLE;
+    
 
 public:
     /** Exception for MemoryMap operations. */
@@ -185,7 +192,93 @@ public:
      *
      *  Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
      *  creates a new MappedBuffer and inserts it into the mapping. Returns the size of the file mapping. */
-    size_t insertFile(const std::string &fileName, rose_addr_t va, bool writable=false, const std::string &segmentName="");
+    size_t insertFile(const std::string &fileName, rose_addr_t va, bool writable=false, std::string segmentName="");
+
+    /** Insert file contents into memory map.
+     *
+     *  Uses a locator string to load a file into a memory map.
+     *
+     *  Returns the address interval that was inserted into this memory map, or throws an <code>std::runtime_error</code> for
+     *  syntax errors and problems reading the file.
+     *
+     * @section syntax Locator Syntax
+     *
+     *  The locator string is a file name preceded by various other parameters to control where the file is loaded in memory.
+     *  It takes the form:
+     *
+     * @verbatim
+     *  :[ADDR][+VMSIZE][=PERM]:[OFFSET[+FSIZE]]:FILENAME
+     * @endverbatim
+     *
+     *  The fields between the first and second colon are parameters for virtual memory; the fields between the second and
+     *  third colon are parameters for the file.  Their meanings are:
+     *
+     * @li @c ADDR: The virtual address where the first byte of the file is mapped.  This can be specified in decimal,
+     *     octal, or hexadecimal using the usual C syntax.  If no address is specified then the file is mapped at the lowest
+     *     unmapped region which is large enough to hold the file.
+     *
+     * @li @c VMSIZE: Size of virtual memory to map.  If VMSIZE is not specified then it is either the FSIZE (if specified) or
+     *     the file size.  On POSIX systems the file size is that which is reported by @p stat, and on other systems it is
+     *     the number of bytes that can be read from the file. The size can be specified as decimal, octal, or hexadecimal with
+     *     the usual C syntax.  If VMSIZE is greater than the specified or calculated FSIZE then the data from the file is
+     *     padded with zero bytes.
+     *
+     * @li @c PERM: Accessibility for the mapped segment.  If present, it should be any of the letters "r", "w", and/or "x" in
+     *     that order to indicate readable, writable, and/or executable.  If not present, the accessibility of the segment is
+     *     the same as the user's accessibility of the file (on POSIX systems; "rwx" on Windows systems).
+     *
+     * @li @c OFFSET: Byte offset within file for first byte to map. If no offset is specified then zero is assumed. The size
+     *     can be decimal, octal, or hexadecimal in the usual C sytax.
+     *
+     * @li @c FSIZE: Number of file bytes to map.  If not specified the entire readable content of the file is mapped beginning
+     *     at the specified OFFSET but not exceeding a specified VMSIZE.  If this number of bytes cannot be read from the file
+     *     then an error is thrown.
+     *
+     * @li @c FILENAME: Name of file to read. The file must be readable by the user and its contents are copied into the memory
+     *     map.  Once inside the memory map, the segment can be given any accessibility according to PERM.  The name of the
+     *     segment will be the non-directory part of the FILENAME (e.g., on POSIX systems, the part after the final slash).
+     *
+     * @section exampes Examples
+     *
+     *  To load a couple raw files at the lowest available addresses:
+     *
+     * @code
+     *  :::myfile1.bin :::myfile2.bin
+     * @endcode
+     *
+     *  To load a 4k page of zeros with read and execute permission at address 0x7ffff000 (won't work on Microsoft systems):
+     *
+     * @code
+     *  :0x7ffff000+0x1000=rx::/dev/zero
+     * @code
+     *
+     *  On Microsoft Windows one could create a large file containing zeros:
+     *
+     * @code
+     *  :0x7ffff000+0x1000=rx::myzeros.dat
+     * @endcode
+     *
+     *  To load the .text and .data segments from a PE file when we know where they occur in the PE file but the PE file is
+     *  damaged to the point where it cannot be loaded by ROSE's @c frontend. Both sections are zero-padded since the
+     *  memory segment size is larger than the file size.  But if one wants to more closely emulate the Windows loader, leave
+     *  off the file sizes:
+     *
+     * @code
+     *  :0x01000400+0xa00=rx:0x1000+0x9a8:proxycfg.exe
+     *  :0x01000e00+0x200=rw:0x3000+8:proxycfg.exe
+     * @endcode
+     *
+     * @sa insertFileDocumentation */
+    AddressInterval insertFile(const std::string &locatorString);
+
+    /** Documentation string for @ref insertFile. */
+    static std::string insertFileDocumentation();
+
+    /** Insert the memory of some other process into this memory map. */
+    void insertProcess(const std::string &locatorString);
+
+    /** Documentation string for @ref insertProcess. */
+    static std::string insertProcessDocumentation();
 
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void eraseZeros(size_t minsize);

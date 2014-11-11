@@ -166,6 +166,14 @@ echo "ATERM_LIBRARY_PATH = "$ATERM_LIBRARY_PATH
   #  ["$ATERM_VERSION"],
   #  [Version number of the user-specified ATERM compiler])
 
+
+# DQ (10/4/2014): Adding macro for rose_config.h so we know when ATerms are supported.
+# usingAterm = 'test "x$ATERM_LIBRARY_PATH" != "x" && echo "true"'
+# AC_DEFINE(USE_ROSE_ATERM_SUPPORT,[$usingAterm],[Controls use of ROSE support for ATerm Library.])
+if test "x$ATERM_LIBRARY_PATH" != "x"; then
+   AC_DEFINE([USE_ROSE_ATERM_SUPPORT], [1], [Controls use of ROSE support for ATerm Library.])
+fi
+
 # End macro ROSE_SUPPORT_ATERM.
 ])
 

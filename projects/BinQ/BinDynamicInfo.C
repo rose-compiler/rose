@@ -33,7 +33,7 @@ void
 DynamicInfo::visit(SgNode* node) {
   if (!project) {
     // IDA FILE
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(node);
     if (inst && inst->get_kind() == x86_call ) {
       SgAsmOperandList * ops = inst->get_operandList();
       SgAsmExpressionPtrList& opsList = ops->get_operands();
@@ -113,8 +113,8 @@ DynamicInfo::visit(SgNode* node) {
 
   if (!firstIteration)
     // try to resolve call destinations with symbols
-    if (isSgAsmx86Instruction(node) && isSgAsmx86Instruction(node)->get_kind() == x86_call) {
-      SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+    if (isSgAsmX86Instruction(node) && isSgAsmX86Instruction(node)->get_kind() == x86_call) {
+      SgAsmX86Instruction* inst = isSgAsmX86Instruction(node);
       SgAsmOperandList * ops = inst->get_operandList();
       SgAsmExpressionPtrList& opsList = ops->get_operands();
       rose_addr_t addrDest=0;
@@ -130,8 +130,8 @@ DynamicInfo::visit(SgNode* node) {
 	  cerr << "Found call to : " << RoseBin_support::HexToString(addrDest) << endl;
 	// for a given address get the instruction
 
-	SgAsmx86Instruction* destInst = isSgAsmx86Instruction(info->getInstructionAtAddress(addrDest));
-	if (destInst && isSgAsmx86Instruction(destInst)->get_kind() == x86_jmp) {
+	SgAsmX86Instruction* destInst = isSgAsmX86Instruction(info->getInstructionAtAddress(addrDest));
+	if (destInst && isSgAsmX86Instruction(destInst)->get_kind() == x86_jmp) {
 	  // check the operands and resolve the destination
 	  SgAsmOperandList * ops2 = destInst->get_operandList();
 	  SgAsmExpressionPtrList& opsList2 = ops2->get_operands();

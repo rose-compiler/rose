@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
+#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
@@ -1081,6 +1082,13 @@ SwitchGroup::insert(const Switch &sw) {
     return *this;
 }
 
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::insert(const SwitchGroup &other) {
+    BOOST_FOREACH (const Switch &sw, other.switches_)
+        switches_.push_back(sw);
+    return *this;
+}
+
 SAWYER_EXPORT bool
 SwitchGroup::nameExists(const std::string &s) {
     for (size_t i=0; i<switches_.size(); ++i) {
@@ -1969,7 +1977,7 @@ Parser::docForSection(const std::string &sectionName) const {
     } else if (0==docKey.compare("synopsis")) {
         if (doc.empty())
             doc = programName() + " [@v{switches}...]\n";
-    } else if (0==docKey.compare("options")) {
+    } else if (0==docKey.compare("switches")) {
         doc += "\n\n" + docForSwitches();
     } else if (0==docKey.compare("see also")) {
         doc += "\n\n@seeAlso";
@@ -2008,11 +2016,11 @@ Parser::documentationMarkup() const {
     std::string doc = "@section{Name}{" + docForSection("name") + "}\n" +
                       "@section{Synopsis}{" + docForSection("synopsis") + "}\n" +
                       "@section{Description}{" + docForSection("description") + "}\n" +
-                      "@section{Options}{" + docForSection("options") + "}\n";
+                      "@section{Switches}{" + docForSection("switches") + "}\n";
     created.insert("name");
     created.insert("synopsis");
     created.insert("description");
-    created.insert("options");
+    created.insert("switches");
 
     // Append user-defined sections
     BOOST_FOREACH (const std::string &sectionName, sectionOrder_.values()) {

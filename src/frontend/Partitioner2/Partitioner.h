@@ -240,7 +240,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(true) {
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false) {
         init(disassembler, map);
     }
 
@@ -416,8 +416,6 @@ public:
      *  then that same instruction will be returned this time. */
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const;
 
-    
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner basic block placeholder operations
@@ -503,6 +501,13 @@ public:
      *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead. */
     size_t nBasicBlocks() const;
 
+    /** Returns all basic blocks attached to the CFG.
+     *
+     *  The returned list contains distinct basic blocks sorted by their starting address.
+     *
+     * @sa basicBlocksOverlapping, @ref basicBlocksSpanning, @ref basicBlocksContainedIn */
+    std::vector<BasicBlock::Ptr> basicBlocks() const;
+
     /** Determines whether a discovered basic block exists in the CFG/AUM.
      *
      *  If the CFG/AUM contains a basic block that starts at the specified address then a pointer to that basic block is
@@ -553,6 +558,12 @@ public:
      *
      *  The returned list of basic blocks are sorted by their starting address. */
     std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const;
+
+    /** Returns the basic block that contains a specific instruction address.
+     *
+     *  Returns the basic block that contains an instruction that starts at the specified address, or null if no such
+     *  instruction or basic block exists in the CFG/AUM. */
+    BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const;
 
     /** Returns the addresses used by basic block instructions.
      *
@@ -1223,6 +1234,15 @@ public:
      *  cached rather than only consulting the cache. */
     void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true, bool computeProperties=true) const;
 
+    /** Output CFG as GraphViz.
+     *
+     *  Emits all vertices whose starting address falls within the specified address interval, and all vertices that are
+     *  reachable forward or backward by a single edge from those vertices.
+     *
+     *  If @p showNeighbors is false then only edges whose source and target are both selected vertices are shown. */
+    void cfgGraphViz(std::ostream&, const AddressInterval &restrict = AddressInterval::whole(),
+                     bool showNeighbors=true) const;
+
     /** Name of a vertex. */
     static std::string vertexName(const ControlFlowGraph::VertexNode&);
 
@@ -1311,7 +1331,9 @@ private:
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
     virtual void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
-    
+
+    // String for a vertex in a GraphViz file. The attrs are only added for basic block vertices.
+    static std::string cfgGraphVizVertex(const ControlFlowGraph::VertexNode&, const std::string &attrs="");
 };
 
 } // namespace

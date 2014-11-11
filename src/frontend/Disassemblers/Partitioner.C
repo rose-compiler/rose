@@ -43,7 +43,7 @@ void Partitioner::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Partitioner", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -62,17 +62,17 @@ Partitioner::isSgAsmInstruction(SgNode *node)
 }
 
 /* class method */
-SgAsmx86Instruction *
-Partitioner::isSgAsmx86Instruction(const Instruction *insn)
+SgAsmX86Instruction *
+Partitioner::isSgAsmX86Instruction(const Instruction *insn)
 {
-    return insn ? isSgAsmx86Instruction(insn->node) : NULL;
+    return insn ? isSgAsmX86Instruction(insn->node) : NULL;
 }
 
 /* class method */
-SgAsmx86Instruction *
-Partitioner::isSgAsmx86Instruction(SgNode *node)
+SgAsmX86Instruction *
+Partitioner::isSgAsmX86Instruction(SgNode *node)
 {
-    return ::isSgAsmx86Instruction(node);
+    return ::isSgAsmX86Instruction(node);
 }
 
 /* class method */
@@ -139,7 +139,7 @@ Partitioner::update_progress() const
 {
     static Sawyer::ProgressBar<size_t, ProgressSuffix> *progressBar = NULL;
     if (!progressBar)
-        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[INFO], "");
+        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[MARCH], "");
     progressBar->suffix(ProgressSuffix(this));
     progressBar->value(basic_blocks.size());
 }
@@ -251,7 +251,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     using namespace BinaryAnalysis::InstructionSemantics2;
 
     /* Do some cheap up-front checks. */
-    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
+    SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(bb->last_insn());
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
         1!=insn_x86->get_operandList()->get_operands().size())
         return Disassembler::AddressSet();
@@ -269,7 +269,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     ops->set_memory_map(&ro_map);
     try {
         for (size_t i=0; i<bb->insns.size(); ++i) {
-            insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
+            insn_x86 = isSgAsmX86Instruction(bb->insns[i]->node);
             ASSERT_not_null(insn_x86); // we know we're in a basic block of x86 instructions already
             dispatcher->processInstruction(insn_x86);
         }
@@ -335,7 +335,7 @@ Partitioner::update_analyses(BasicBlock *bb)
     std::vector<SgAsmInstruction*> inodes;
     for (InstructionVector::const_iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
         inodes.push_back(isSgAsmInstruction(*ii));
-    bb->cache.sucs = bb->insns.front()->node->get_successors(inodes, &(bb->cache.sucs_complete), &ro_map);
+    bb->cache.sucs = bb->insns.front()->node->getSuccessors(inodes, &(bb->cache.sucs_complete), &ro_map);
 
     /* Try to handle indirect jumps of the form "jmp ds:[BASE+REGISTER*WORDSIZE]".  The trick is to assume that some kind of
      * jump table exists beginning at address BASE, and that the table contains only addresses of valid code.  All we need to
@@ -366,7 +366,7 @@ Partitioner::update_analyses(BasicBlock *bb)
     // things together into one large control flow graph).  It's not generally possible to distinguish between ordinals and
     // addresses, but we can use the fact that ordinals are table indices and are therefore probably relatively small.  We also
     // look for indirect calls through registers so that we can support things like "mov edi, ds:[IAT+X]; ...; call edi"
-    if (SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn())) {
+    if (SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(bb->last_insn())) {
         static const rose_addr_t largest_ordinal = 10000;               // arbitrary
         bool is_call = last_insn->get_kind() == x86_call || last_insn->get_kind() == x86_farcall;
         const SgAsmExpressionPtrList &operands = last_insn->get_operandList()->get_operands();
@@ -394,7 +394,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * to the fall-through address is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
-    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va, NULL);
+    bool looks_like_call = bb->insns.front()->node->isFunctionCallSlow(inodes, &target_va, NULL);
     if (looks_like_call && target_va!=fallthrough_va) {
         bb->cache.is_function_call = true;
         bb->cache.call_target = target_va;
@@ -405,7 +405,7 @@ Partitioner::update_analyses(BasicBlock *bb)
 
     /* Function return analysis */
     bb->cache.function_return = !bb->cache.sucs_complete &&
-                                bb->insns.front()->node->is_function_return(inodes);
+                                bb->insns.front()->node->isFunctionReturnSlow(inodes);
 
     bb->validate_cache();
 }
@@ -515,7 +515,7 @@ Partitioner::pops_return_address(rose_addr_t va)
     if (!bb) return false;
     try {
 
-        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
+        SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(bb->last_insn());
 
         typedef PartialSymbolicSemantics::Policy<> Policy;
         typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
@@ -527,7 +527,7 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         try {
             for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
                 if (!insn) return false;
                 if (insn==last_insn && insn->get_kind()==x86_ret) break;
                 semantics.processInstruction(insn);
@@ -1162,7 +1162,7 @@ Partitioner::mark_ipd_configuration()
 
             mlog[DEBUG] <<"  running semantics for the basic block...\n";
             for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
                 ASSERT_not_null(insn);
                 semantics.processInstruction(insn);
             }
@@ -1251,7 +1251,7 @@ Partitioner::mark_ipd_configuration()
             while (1) {
                 rose_addr_t ip = policy.readRegister<32>("eip").known_value();
                 if (ip==return_va) break;
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(disassembler->disassembleOne(map, ip));
                 mlog[DEBUG] <<"    " <<addrToString(ip) <<": " <<(insn?unparseInstruction(insn):std::string("<null>")) <<"\n";
                 ASSERT_not_null(insn);
                 semantics.processInstruction(insn);
@@ -1369,7 +1369,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
             continue;
         }
         plt_offset += insn->get_size();
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         if (!insn_x86) continue;
 
         rose_addr_t gotplt_va = get_indirection_addr(insn_x86, elf->get_base_va()+gotplt->get_mapped_preferred_rva());
@@ -1489,7 +1489,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
 
     /* Look for optional "mov rdi, rdi"; if found, advance ii iterator to fall-through instruction */
     do {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
         if (!insn || insn->get_kind()!=x86_mov)
             break;
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -1513,7 +1513,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
     {
         if (ii==insns.end())
             return insns.end();
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
         if (!insn || insn->get_kind()!=x86_push)
             return insns.end();
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -1532,7 +1532,7 @@ Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterato
     {
         if (ii==insns.end())
             return insns.end();
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
         if (!insn || insn->get_kind()!=x86_mov)
             return insns.end();
         const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
@@ -1565,7 +1565,7 @@ Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterato
 
     /* Look for three "nop" instructions */
     for (size_t i=0; i<3; i++) {
-        SgAsmx86Instruction *nop = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *nop = isSgAsmX86Instruction(ii->second);
         if (!nop) return insns.end();
         if (nop->get_kind()!=x86_nop) return insns.end();
         if (nop->get_operandList()->get_operands().size()!=0) return insns.end(); /*only zero-arg NOPs allowed*/
@@ -1575,7 +1575,7 @@ Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterato
     }
 
     /* Look for something that's not a "nop"; this is the function entry point. */
-    SgAsmx86Instruction *notnop = isSgAsmx86Instruction(ii->second);
+    SgAsmX86Instruction *notnop = isSgAsmX86Instruction(ii->second);
     if (!notnop) return insns.end();
     if (notnop->get_kind()==x86_nop) return insns.end();
     matches.insert(ii->first);
@@ -1595,7 +1595,7 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 
     /* leave; ret; nop */
     for (size_t i=0; i<3; i++) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
         if (!insn) return insns.end();
         if ((i==0 && insn->get_kind()!=x86_leave) ||
             (i==1 && insn->get_kind()!=x86_ret)   ||
@@ -1608,7 +1608,7 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 
     /* Zero or more "nop" instructions */
     while (1) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
         if (!insn) return insns.end();
         if (insn->get_kind()!=x86_nop) break;
         matches.insert(ii->first);
@@ -1617,7 +1617,7 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
     }
 
     /* This must be something that's not a "nop", but make sure it's an x86 instruction anyway. */
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
     if (!insn) return insns.end();
     matches.insert(ii->first);
 
@@ -1630,7 +1630,7 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 Partitioner::InstructionMap::const_iterator
 Partitioner::pattern4(const InstructionMap &insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(first->second);
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(first->second);
     if (!insn || insn->get_kind()!=x86_enter)
         return insns.end();
     const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
@@ -1715,7 +1715,7 @@ Partitioner::mark_func_patterns()
     struct T1: ByteRangeCallback {
         Partitioner *p;
         T1(Partitioner *p): p(p) {}
-        virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+        virtual bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
             ASSERT_not_null(args.restrict_map);
             uint8_t buf[4096];
             if (enabled) {
@@ -1784,7 +1784,7 @@ Partitioner::mark_call_insns()
         std::vector<SgAsmInstruction*> iv;
         iv.push_back(ii->second->node);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->node->is_function_call(iv, &target_va, NULL) && target_va!=NO_TARGET &&
+        if (ii->second->node->isFunctionCallSlow(iv, &target_va, NULL) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
@@ -2163,7 +2163,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
         if (bb && bb->function)
             break; // insn is already assigned to a function
 
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(p->find_instruction(va));
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(p->find_instruction(va));
         if (!matches && insn_x86) {
             if (x86_kinds.find(insn_x86->get_kind())!=x86_kinds.end())
                 matches = true;
@@ -2392,7 +2392,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
         next_va = va + insn->get_size();
 
         /* Instruction must be an x86 JMP */
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
             continue;
 
@@ -2404,7 +2404,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
         if (validate_targets) {
             /* Instruction must have a single successor */
             bool complete;
-            Disassembler::AddressSet succs = insn->get_successors(&complete);
+            Disassembler::AddressSet succs = insn->getSuccessors(&complete);
             if (!complete && 1!=succs.size())
                 continue;
             rose_addr_t target_va = *succs.begin();
@@ -2487,7 +2487,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
 
             /* Must be a JMP instruction. */
             Instruction *insn = p->find_instruction(va);
-            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+            SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
             if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp)) {
                 in_table = false;
                 continue;
@@ -2565,7 +2565,7 @@ Partitioner::is_thunk(Function *func)
         return false;
 
     Instruction *insn = bb->insns.front();
-    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+    SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
         return false;
 
@@ -2652,7 +2652,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn, rose_addr_t offset)
 {
     rose_addr_t retval = 0;
 
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(g_insn);
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(g_insn);
     if (!insn ||
         !x86InstructionIsUnconditionalBranch(insn) ||
         1!=insn->get_operandList()->get_operands().size())
@@ -2729,7 +2729,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 
         /* The target in the ".plt" section will be an indirect (through the .got.plt section) jump to the actual dynamically
          * linked function (or to the dynamic linker itself). The .got.plt address is what we're really interested in. */
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         ASSERT_not_null(insn_x86);
         rose_addr_t gotplt_va = get_indirection_addr(insn_x86, elf->get_base_va() + gotplt->get_mapped_preferred_rva());
 
@@ -2800,7 +2800,7 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
         if (!func->name.empty())
             continue;
         Instruction *insn = find_instruction(func->entry_va);
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         if (!insn_x86 ||
             (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp) ||
             1!=insn_x86->get_operandList()->get_operands().size())
@@ -3080,7 +3080,7 @@ Partitioner::discover_blocks(Function *f, unsigned reason)
 bool
 Partitioner::is_pe_dynlink_thunk(Instruction *insn)
 {
-    SgAsmx86Instruction *insn_x86 = insn ? isSgAsmx86Instruction(insn->node) : NULL;
+    SgAsmX86Instruction *insn_x86 = insn ? isSgAsmX86Instruction(insn->node) : NULL;
     if (!insn_x86 || x86_jmp!=insn_x86->get_kind() || insn_x86->get_operandList()->get_operands().size()!=1)
         return false; // not a thunk: wrong instruction
     SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
@@ -3299,7 +3299,7 @@ Partitioner::detach_thunk(Function *func)
         return false;
 
     /* Don't split function whose first instruction is not an x86 JMP. */
-    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(entry_bb->insns[0]);
+    SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(entry_bb->insns[0]);
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
         return false;
 
@@ -3655,7 +3655,7 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
         rose_addr_t unused_va = std::max(start_va, ui->first.first());
 
         // get the next mapped address, but it might not be unused
-        rose_addr_t mapped_unused_va;
+        rose_addr_t mapped_unused_va = 0;
         if (!map.atOrAfter(unused_va).next().assignTo(mapped_unused_va))
             return NOT_FOUND;                           // no higher mapped address
         if (unused.contains(Extent(mapped_unused_va)))
@@ -4545,15 +4545,15 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
          * acting more like a "PUSH EIP" (we should probably just look at the CALL instruction itself rather than also looking
          * for the following POP, but since ROSE doesn't currently apply the relocation tables before disassembling, the CALL
          * with a zero offset is quite common. [RPM 2009-08-24] */
-        if (insn->terminates_basic_block()) {
+        if (insn->terminatesBasicBlock()) {
             Disassembler::InstructionMap::const_iterator found = insns.find(next_va);
             if (found!=insns.end()) {
-                SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
-                SgAsmx86Instruction *insn2_x86 = isSgAsmx86Instruction(found->second);
+                SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
+                SgAsmX86Instruction *insn2_x86 = isSgAsmX86Instruction(found->second);
                 rose_addr_t branch_target_va;
                 if (insn_x86 &&
                     (insn_x86->get_kind()==x86_call || insn_x86->get_kind()==x86_farcall) &&
-                    insn->get_branch_target(&branch_target_va) &&
+                    insn->getBranchTarget(&branch_target_va) &&
                     branch_target_va==next_va && insn2_x86->get_kind()==x86_pop) {
                     /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
                 } else if (bb_starts.find(next_va)==bb_starts.end()) {
@@ -4566,7 +4566,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
          * block (provided there's an instruction at that address). However, if there's only one successor and it's the
          * fall-through address then ignore it. */
         bool complete;
-        Disassembler::AddressSet successors = insn->get_successors(&complete);
+        Disassembler::AddressSet successors = insn->getSuccessors(&complete);
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = *si;
             if ((successor_va != next_va || successors.size()>1) && insns.find(successor_va)!=insns.end())

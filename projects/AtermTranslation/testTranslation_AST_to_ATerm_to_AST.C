@@ -72,7 +72,8 @@ main(int argc, char* argv[])
 #if 1
   // DQ (9/17/2014): Adding test for conversion of Aterm back to AST.
      printf ("Testing the reverse process to generate the ROSE AST from the Aterm \n");
-     SgNode* rootOfAST = convertAtermToNode(term);
+  // SgNode* rootOfAST = convertAtermToNode(term);
+     SgNode* rootOfAST = AtermSupport::generate_AST(term);
      printf ("rootOfAST = %p = %s \n",rootOfAST,rootOfAST->class_name().c_str());
 #endif
 
@@ -89,3 +90,4 @@ main(int argc, char* argv[])
 
      return 0;
    }
+

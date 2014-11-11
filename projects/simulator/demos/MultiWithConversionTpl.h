@@ -52,7 +52,7 @@ void
 Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
 {
     if (triggered) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
         trace()->mesg("%s\n", std::string(80, '-').c_str());
         trace()->mesg("%s: executing: %s", name, unparseInstruction(insn).c_str());
@@ -102,7 +102,7 @@ Policy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
         CONCRETE_VALUE<32> eip = convert_to_concrete(this->template readRegister<32>("eip"));
         this->get_policy(CONCRETE).writeRegister("eip", eip);
 
-        Robin::after_instruction(this, isSgAsmx86Instruction(insn));
+        Robin::after_instruction(this, isSgAsmX86Instruction(insn));
 
         // The simulator needs to execute in the concrete domain between instructions. For instance, RSIM_Thread::main() needs
         // to obtain a concrete value for the EIP register by calling the semantic policy's readRegister() method.

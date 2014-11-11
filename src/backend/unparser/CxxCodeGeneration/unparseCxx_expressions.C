@@ -5860,8 +5860,17 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
 
   // Note that the g++ compiler might not be named "g++", it is not clear how to handle this case.
      string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-#ifndef _MSC_VER
-     if (backEndCompiler == "g++")
+
+     bool usingGxx = false;
+     #ifdef USE_CMAKE
+       #ifdef CMAKE_COMPILER_IS_GNUCXX
+         usingGxx = true;
+       #endif
+     #else
+       usingGxx = (backEndCompiler == "g++");
+     #endif
+
+     if (usingGxx)
         {
        // Now check the version of the identified GNU g++ compiler.
           if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
@@ -5888,9 +5897,6 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
                   }
              }
         }
-#else
-  // DQ (2/21/2014): Not clear if this is a similar compiler specific bug to address for Visual MSC++.
-#endif
 
      return nameQualifier;
    }

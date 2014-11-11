@@ -5,8 +5,5 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES
-  $(unparseX10CodeGeneration_headers)
-  DESTINATION
-  ${INCLUDE_INSTALL_DIR})
+install(FILES  unparseX10.h  DESTINATION ${INCLUDE_INSTALL_DIR})
 

@@ -169,15 +169,15 @@ inline Insn* appendOperand(Insn* insn, SgAsmExpression* op) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build instruction; some deprecated because of incorrect capitalization [Robb P. Matzke 2014-07-21]
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind) ROSE_DEPRECATED;
-SgAsmx86Instruction* buildX86Instruction(X86InstructionKind);
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *operand) ROSE_DEPRECATED;
-SgAsmx86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *operand);
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs) ROSE_DEPRECATED;
-SgAsmx86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
-SgAsmx86Instruction* buildx86Instruction(X86InstructionKind, SgAsmOperandList *operands) ROSE_DEPRECATED;
+SgAsmX86Instruction* buildx86Instruction(X86InstructionKind) ROSE_DEPRECATED;
+SgAsmX86Instruction* buildX86Instruction(X86InstructionKind);
+SgAsmX86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *operand) ROSE_DEPRECATED;
+SgAsmX86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *operand);
+SgAsmX86Instruction* buildx86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs) ROSE_DEPRECATED;
+SgAsmX86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
+SgAsmX86Instruction* buildx86Instruction(X86InstructionKind, SgAsmOperandList *operands) ROSE_DEPRECATED;
 SgAsmInstruction* buildMultibyteNopInstruction(int n) ROSE_DEPRECATED;
-SgAsmx86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
+SgAsmX86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build basic blocks

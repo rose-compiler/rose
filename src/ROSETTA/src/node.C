@@ -722,9 +722,16 @@ Grammar::setUpNodes ()
   //      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (10/9/2007): Use the ROSETTA generated version to test failure
-  
+
+#if 0
+  // DQ (10/10/2014): Older version of code (marked as NO_CONSTRUCTOR_PARAMETER).
      InitializedName.setDataPrototype("SgName","name", "= NULL",
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (10/10/2014): Modified to make this more suitable for support via Aterm to AST generation.
+     InitializedName.setDataPrototype("SgName","name", "= NULL",
+          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
      InitializedName.setDataPrototype("SgName","name", "= \"\"",
           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -745,9 +752,17 @@ Grammar::setUpNodes ()
 #endif 
 #endif
 
+#if 0
+  // DQ (10/10/2014): Older version of code (marked as NO_CONSTRUCTOR_PARAMETER).
   // DQ (7/20/2004):  think this is the root of the problems in cycles when we traverse types!
      InitializedName.setDataPrototype("SgType*","typeptr", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (10/10/2014): Modified to make this more suitable for support via Aterm to AST generation.
+     InitializedName.setDataPrototype("SgType*","typeptr", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+#endif
+
   // QY:11/2/04 remove itemptr
   //   InitializedName.setDataPrototype("SgInitializedName*","itemptr", "= NULL",
   //                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL);

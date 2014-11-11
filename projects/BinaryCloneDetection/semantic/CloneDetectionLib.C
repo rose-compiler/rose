@@ -775,7 +775,7 @@ void
 InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top)
 {
     // Find the instructions
-    std::vector<SgAsmx86Instruction*> tmp_insns;
+    std::vector<SgAsmX86Instruction*> tmp_insns;
     InstructionMap instr_map = interp->get_instruction_map(interp);
     if (top != NULL) {
         FindInstructionsVisitor vis;
@@ -783,7 +783,7 @@ InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInter
 
         // Addresses and map of instructions in the subtree of top
         std::vector<rose_addr_t> query_insns_addr;
-        for (std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it)
+        for (std::vector<SgAsmX86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it)
             query_insns_addr.push_back((*it)->get_address());
         std::sort(query_insns_addr.begin(), query_insns_addr.end());
 

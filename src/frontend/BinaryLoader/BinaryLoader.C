@@ -45,8 +45,8 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("BinaryLoader", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BinaryLoader", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -475,7 +475,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                         trace <<"    Unable to map entire desired region.\n";
                         AddressInterval where = AddressInterval::hull(RESOLVE_REMAP_ABOVE==resolve ? va : 0,
                                                                       AddressInterval::whole().greatest());
-                        rose_addr_t new_va;
+                        rose_addr_t new_va = 0;
                         if (!map->findFreeSpace(mem_size, malign_lo, where).assignTo(new_va)) {
                             throw MemoryMap::NoFreeSpace("unable to allocate space in specimen memory map",
                                                          map, mem_size);

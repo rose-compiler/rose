@@ -27,7 +27,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     return undefined_(a->get_width());
 }
 
@@ -36,7 +36,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     return undefined_(a->get_width());
 }
 
@@ -45,7 +45,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     return undefined_(a->get_width());
 }
 
@@ -60,8 +60,8 @@ BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
 {
     SValuePtr a = SValue::promote(a_);
-    assert(end_bit<=a->get_width());
-    assert(begin_bit<end_bit);
+    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(begin_bit<end_bit);
     return undefined_(end_bit-begin_bit);
 }
 
@@ -140,8 +140,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_, const BaseSemantics::SV
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(1==sel->get_width());
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(1==sel->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     return undefined_(a->get_width());
 }
 
@@ -159,7 +159,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     return undefined_(a->get_width());
 }
 
@@ -170,7 +170,7 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
-    assert(a->get_width()==b->get_width() && c->get_width()==1);
+    ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
     carry_out = undefined_(a->get_width());
     return undefined_(a->get_width());
 }
@@ -236,7 +236,7 @@ BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
-    assert(get_state()!=NULL);
+    ASSERT_not_null(get_state());
     (void) SValue::promote(addr);
     (void) SValue::promote(cond);
     return dflt->copy();
@@ -246,7 +246,7 @@ void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                          const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
 {
-    assert(get_state()!=NULL);
+    ASSERT_not_null(get_state());
     (void) SValue::promote(addr);
     (void) SValue::promote(data);
     (void) SValue::promote(cond);

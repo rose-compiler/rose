@@ -2233,6 +2233,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateParameter.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+
      TemplateArgument.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT", "../Grammar/Support.code");
      TemplateArgument.setDataPrototype     ( "SgTemplateArgument::template_argument_enum"   , "argumentType", "= argument_undefined",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

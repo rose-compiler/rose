@@ -1,6 +1,5 @@
 // Support for running tests
 
-#include "sage3basic.h"
 #include "RunTests.h"
 
 #include <cerrno>
@@ -897,7 +896,7 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
         void visit(SgNode *node) {
             if (SgAsmFunction *f = isSgAsmFunction(node)) {
                 func = f;
-            } else if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+            } else if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(node)) {
                 SgAsmFunction *f = func; func = NULL;
                 const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
                 if (!f || x86_jmp!=insn->get_kind() || 1!=args.size())
@@ -1076,7 +1075,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
                 break;
             }
 
-            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns.get_instruction(insn_va))) {
+            if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(insns.get_instruction(insn_va))) {
                 semantics.processInstruction(insn);
             } else {
                 if (opt.verbosity>=EFFUSIVE)

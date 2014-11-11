@@ -19,7 +19,10 @@
 #endif /* NDEBUG */
 
 // #include "Cxx_Grammar.h"
-#include "rose.h"
+
+// DQ (10/5/2014): We can't include this here.
+// #include "rose.h"
+
 
 namespace sg
 {
@@ -1544,8 +1547,8 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmArmInstruction>(*n));
         break;
 
-      case V_SgAsmx86Instruction:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmx86Instruction>(*n));
+      case V_SgAsmX86Instruction:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAsmX86Instruction>(*n));
         break;
 
       case V_SgAsmPowerpcInstruction:

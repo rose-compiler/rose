@@ -274,7 +274,7 @@ numberOperands(SgAsmInstruction* firstInsn[], size_t insnCount, hash_map<SgAsmEx
 {
     hash_map<void*, size_t> stringNumbers[3];
     for (size_t i = 0; i < insnCount; ++i) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(firstInsn[i]);
+        SgAsmX86Instruction* insn = isSgAsmX86Instruction(firstInsn[i]);
 
         if (insn == NULL) {
             assert(!"only x86 instructions currently supported");
@@ -316,7 +316,7 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
 
     // Unparse the normalized forms of the instructions
     for (std::vector<SgAsmInstruction*>::iterator it = insns.begin(); it != insns.end(); ++it) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(*it);
+        SgAsmX86Instruction* insn = isSgAsmX86Instruction(*it);
         assert(insn != NULL);
         size_t var = insn->get_kind();
         if (by_category)

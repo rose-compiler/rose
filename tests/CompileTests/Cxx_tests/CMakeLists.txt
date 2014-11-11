@@ -36,7 +36,7 @@ set(SKIP_UNPARSE_C_ASM_STATEMENTS -rose:skip_unparse_asm_commands)
 
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0
-    ${SKIP_UNPARSE_C_ASM_STATEMENTS} -DBOOST_REGEX_MATCH_EXTRA
+    ${SKIP_UNPARSE_C_ASM_STATEMENTS}
     -I${CMAKE_CURRENT_SOURCE_DIR}
     -I${CMAKE_SOURCE_DIR}/tests/CompileTests/A++Code)
 

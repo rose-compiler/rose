@@ -172,10 +172,10 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	//      item = new Item(false,NULL,0,0,row,0,pos, " ",0);
       }
       //example -- color calls red
-      if (isSgAsmx86Instruction(*it)) {
+      if (isSgAsmX86Instruction(*it)) {
 	length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-	if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) {
-	  SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
+	if (isSgAsmX86Instruction(*it)->get_kind() == x86_call) {
+	  SgAsmX86Instruction* inst = isSgAsmX86Instruction(*it);
 	  SgAsmOperandList * ops = inst->get_operandList();
 	  SgAsmExpressionPtrList& opsList = ops->get_operands();
 	  std::string addrDest="";

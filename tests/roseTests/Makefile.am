@@ -8,7 +8,8 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
-	      astLValueTests abstractMemoryObjectTests
+	      astLValueTests abstractMemoryObjectTests \
+              ROSETTA
 if !ROSE_USE_INSURE
  SUBDIRS += roseHPCToolkitTests 
 endif

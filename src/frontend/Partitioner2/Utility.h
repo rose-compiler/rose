@@ -22,6 +22,7 @@ void initDiagnostics();
 bool sortBasicBlocksByAddress(const BasicBlock::Ptr&, const BasicBlock::Ptr&);
 bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
 bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
+bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
 bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
 bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator&, const ControlFlowGraph::ConstVertexNodeIterator&);
 bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
@@ -109,6 +110,92 @@ std::ostream& operator<<(std::ostream&, const AddressUsers&);
 std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
 std::ostream& operator<<(std::ostream&, const ControlFlowGraph::VertexNode&);
 std::ostream& operator<<(std::ostream&, const ControlFlowGraph::EdgeNode&);
+
+/** Parse an address interval.
+ *
+ *  An interval is specified in one of the following forms, where N and M are non-negative integers:
+ *
+ * @li "N" is a singleton interval.
+ * @li "N,M" is the min/max form specifying the two inclusive end points. M must not be less than N.
+ * @li "N-M" is the begin/end form where M is greater than N and not included in the interval.
+ * @li "N+M" is the base/size form where N is the minimum value and M is the number of items.
+ *
+ * The integers can be specified in decimal, octal, hexadecimal, or binary using the usual C/C++ syntax. */
+class AddressIntervalParser: public Sawyer::CommandLine::ValueParser {
+protected:
+    AddressIntervalParser() {}
+    AddressIntervalParser(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver)
+        : Sawyer::CommandLine::ValueParser(valueSaver) {}
+public:
+    typedef Sawyer::SharedPointer<AddressIntervalParser> Ptr;
+    static Ptr instance() {
+        return Ptr(new AddressIntervalParser);
+    }
+    static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
+        return Ptr(new AddressIntervalParser(valueSaver));
+    }
+    static std::string docString();
+private:
+    virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
+                                                        const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
+};
+
+AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
+AddressIntervalParser::Ptr addressIntervalParser();
+
+/** Trigger based on number of times called. */
+class Trigger {
+public:
+    typedef AddressInterval SizeInterval;               // okay to use 64-bit integers for the counters
+    struct Settings {
+        SizeInterval when;                              // when to trigger based on nCalls_
+        Settings(): when(0) {}
+    };
+private:
+    size_t nCalls_;                                     // number of times called
+    Settings settings_;
+public:
+    /** Trigger armed for single call. */
+    Trigger(): nCalls_(0) {}
+
+    /** Armed for triggering when number of calls falls within @p when. */
+    explicit Trigger(const Settings &settings): nCalls_(0), settings_(settings) {}
+
+    /** Armed for triggering after @p nSkip calls but not more than @p nTimes times. */
+    Trigger(size_t nSkip, size_t nTimes): nCalls_(0) {
+        settings_.when = nTimes ? SizeInterval::baseSize(nSkip, nTimes) : SizeInterval();
+    }
+
+    /** Armed for one call. */
+    static Trigger once() { return Trigger(0, 1); }
+
+    /** Armed to always trigger. */
+    static Trigger always() { return Trigger(0, size_t(-1)); }
+
+    /** Armed to never trigger. */
+    static Trigger never() { return Trigger(); }
+
+    /** True if trigger is armed. */
+    bool isArmed() const { return !settings_.when.isEmpty() && nCalls_<=settings_.when.greatest(); }
+
+    /** Increment calls and return true if triggering. */
+    bool shouldTrigger() { return settings_.when.isContaining(nCalls_++); }
+
+    /** Number of times called. */
+    size_t nCalls() const { return nCalls_; }
+
+    /** Reset number of calls to zero. */
+    void reset() { nCalls_ = 0; }
+
+    /** Command-line switches to initialize settings. */
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+
+    /** Documentation for command-line switches. */
+    static std::string docString();
+};
+
+/** Return the next serial number. */
+size_t serialNumber();
 
 
 

@@ -1560,7 +1560,7 @@ public:
             stack_frame.monitoring_stdcall = false;
             return;
         }
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(bb);
         assert(func!=NULL);
@@ -1621,7 +1621,7 @@ public:
                     size_t nbytes;
                     T1(): nbytes(0) {}
                     void visit(SgNode *node) {
-                        if (SgAsmx86Instruction *ret = isSgAsmx86Instruction(node)) {
+                        if (SgAsmX86Instruction *ret = isSgAsmX86Instruction(node)) {
                             const SgAsmExpressionPtrList &args = ret->get_operandList()->get_operands();
                             if (x86_ret==ret->get_kind() && 1==args.size() && isSgAsmIntegerValueExpression(args[0]))
                                 nbytes = isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
@@ -1652,7 +1652,7 @@ public:
     }
 
     // Returns true if the instruction is of the form "jmp [ebx+OFFSET]"
-    bool is_thunk_ebx(SgAsmx86Instruction *insn, rose_addr_t *offset_ptr/*out*/) {
+    bool is_thunk_ebx(SgAsmX86Instruction *insn, rose_addr_t *offset_ptr/*out*/) {
         const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
         if (x86_jmp!=insn->get_kind() || 1!=args.size())
             return false;
@@ -1683,10 +1683,10 @@ public:
     }
 
     // Called by instruction semantics before each instruction is executed
-    void startInstruction(SgAsmInstruction *insn_) /*override*/ {
+    void startInstruction(SgAsmInstruction *insn_) ROSE_OVERRIDE {
         if (ninsns++ >= params.timeout)
             throw FaultException(AnalysisFault::INSN_LIMIT);
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         assert(func!=NULL);
@@ -1785,8 +1785,8 @@ public:
 
     // Called by instruction semantics after each instruction is executed. Stack frames are not updated until the next
     // call to startInstruction().
-    void finishInstruction(SgAsmInstruction *insn) /*override*/ {
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+    void finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         assert(insn_x86!=NULL);
         state.output_group.set_ninsns(1+state.output_group.get_ninsns());
         rose_addr_t next_eip = state.registers.ip.known_value();
@@ -1875,7 +1875,7 @@ public:
 
     // Handle INT 0x80 instructions: save the system call number (from EAX) in the output group and set EAX to a random
     // value, thus consuming one input.
-    void interrupt(uint8_t inum) /*override*/ {
+    void interrupt(uint8_t inum) ROSE_OVERRIDE {
         if (0x80==inum) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for system call (fall through and consume an input into EAX)\n";

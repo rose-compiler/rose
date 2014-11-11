@@ -171,7 +171,7 @@ public:
             return val(a) != val(b);
         }
         size_t val(SgAsmFunction *x) {
-            ExtentMap extent;
+            AddressIntervalSet extent;
             x->get_extent(&extent);
             return extent.size();
         }

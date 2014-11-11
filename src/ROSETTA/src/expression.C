@@ -226,6 +226,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (StringConversion,          "StringConversion",              "STR_CONV" );
      NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",               "YIELD_EXP" );
 
+#include "x10/exp_terminals.cpp"
+
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -301,7 +303,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-          NonMembershipOp | IsOp            | IsNotOp,
+          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -351,7 +353,7 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp | FunctionParameterRefExp, "Expression", "ExpressionTag", false);
+          ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -1460,9 +1462,11 @@ Grammar::setUpExpressions ()
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
   // JJW (11/22/2008): Changed members to SgValueExp*; real_value can be NULL for imaginary numbers
      ComplexVal.setFunctionPrototype ( "HEADER_COMPLEX_VALUE_EXPRESSION", "../Grammar/Expression.code" );
-     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "",
+  // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
+     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "",
+  // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
+     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ComplexVal.setDataPrototype ( "SgType*", "precisionType", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
