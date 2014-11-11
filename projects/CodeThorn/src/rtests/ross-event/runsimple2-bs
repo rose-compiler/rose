@@ -17,7 +17,7 @@ threadsPerCore=`lscpu | grep "^Thread(s) per core:" | grep '[0-9][0-9]*' --only-
 }
 
 if [[ $# != 1 ]]; then
-  echo "usage: <command> orig|bs|compare"
+  echo "usage: <command> orig|bs|compare|report|appendreport"
   exit
 fi
 
