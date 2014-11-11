@@ -314,10 +314,6 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
         ~Depth() { --depth; }
     } depthObserver;
 
-#if 0 // DEBUGGING [Robb P. Matzke 2014-11-08]
-    debug.enable();
-#endif
-
     ASSERT_require(start != cfg_.vertices().end());
     SAWYER_MESG(debug) <<"[" <<depth <<"] basicBlockMayReturn(" <<vertexName(start)
                        <<", dflt=" <<toString(dflt, "true", "false", "indeterminate")
