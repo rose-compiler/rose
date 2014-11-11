@@ -42,6 +42,9 @@ class GridFunction
 
        // Allow output function in API.
           void print();
+
+       // This is need to support code generation.
+          double* getPointer();
    };
 
 class Operator : public D

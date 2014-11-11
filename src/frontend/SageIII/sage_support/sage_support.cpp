@@ -320,9 +320,16 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (11/10/2014): Adding support for C++11 value "nullptr".
+          case V_SgNullptrValExp:
+             {
+               s = "_nullptr_";
+               break;
+             }
+
           default:
              {
-               printf ("Error case of value = %s not handled \n",this->class_name().c_str());
+               printf ("Error SgValueExp::get_constant_folded_value_as_string(): case of value = %s not handled \n",this->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }

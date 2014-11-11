@@ -363,7 +363,8 @@ ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
 # DQ (12/1/2013): Use verbose level to set force additional token specific files to be generated (tested below).
 # ROSE_FLAGS = -rose:C89 -rose:unparse_tokens
-ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 1
+# ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 1
+ROSE_FLAGS = -rose:C89 -rose:unparse_tokens -rose:verbose 0
 
 PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
 TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
@@ -435,7 +436,7 @@ check-local:
 	@$(MAKE) test_unparsingFileWithCR_UsingTokens
 	@$(MAKE) test_unparsingFileWithText_UsingTokens
 	@$(MAKE) $(PASSING_TEST_Mapping_Source_passed)
-#	@$(MAKE) $(PASSING_TEST_Source_passed)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 #	@$(MAKE) $(LIN_TEST_TARGETS)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astTokenStreamTests: make check rule complete (terminated normally) ******"

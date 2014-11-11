@@ -12,8 +12,12 @@
 
 #include "dslSupport.h"
 
+#include "mapleOperatorAPI.h"
+
 // Added because we call this from the SgExprStatement in the synthisized attribute evaluate.
 #include "dslCodeGeneration.h"
+
+#include "callMaple.h"
 
 using namespace std;
 
@@ -171,6 +175,10 @@ OperatorEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, Operat
 
        // Not clear if I need to worry about setting this in the inherited attribute (might not be required).
        // inheritedAttribute.discretizationFSM = discretizationFSM;
+
+       // We might need the name as part of the Maple code generation.
+          discretizationFSM->discretizationName = name;
+
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -414,7 +422,11 @@ OperatorEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Oper
           ROSE_ASSERT(operatorFSM != NULL);
           operatorMap[name] = operatorFSM;
           ROSE_ASSERT(operatorMap.find(name) != operatorMap.end());
-#if 0
+
+       // Set the name of the operator to support Maple code generation.
+          operatorFSM->operatorName = name;
+
+#if 1
           printf ("Added OperatorFSM to operatorMap using name = %s \n",name.c_str());
 #endif
 #if 0
@@ -571,7 +583,10 @@ OperatorEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Oper
 #if 1
                printf ("Apply the discretization operator to the RHS and assign it to the LHS \n");
 #endif
-#if o
+#if 1
+               expressionStatement->get_file_info()->display("Apply the discretization operator to the RHS and assign it to the LHS");
+#endif
+#if 1
                printf ("Call generateMapleCode to generate example code \n");
 #endif
             // Generate code from operator data structure (stored in return_synthesizedAttribute.operatorApplication).
@@ -579,7 +594,7 @@ OperatorEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Oper
                SgExpression* lhs = return_synthesizedAttribute.operatorApplicationLhs;
                SgExpression* rhs = return_synthesizedAttribute.operatorApplicationOperand;
 
-               generateMapleCode(lhs,rhs,return_synthesizedAttribute.operatorApplication,generateLowlevelCode);
+               string generatedCode = generateMapleCode(lhs,rhs,return_synthesizedAttribute.operatorApplication,generateLowlevelCode);
 #if 0
                printf ("DONE: Call generateMapleCode to generate example code \n");
 #endif
@@ -587,6 +602,21 @@ OperatorEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Oper
                return_synthesizedAttribute.operatorApplicationLhs     = NULL;
                return_synthesizedAttribute.operatorApplicationOperand = NULL;
                return_synthesizedAttribute.operatorApplication        = OperatorFSM();
+
+            // Call Maple using the generateed code.
+               StencilOperator stencil = callMaple(generatedCode);
+
+            // Here we assume that we will get a data structure used to communicate the stencil coefficients.
+            // I need help from jeff to get this generated via Maple (the idea is that we extract the coefficients 
+            // from the Maple generated expression (so we need not generate the code using Maple).  Then from the
+            // Matrix of stencil coefficients we support the code generation by building up the AST.
+
+               printf ("DONE: Building the Maple Operator API \n");
+
+               ROSE_ASSERT(lhs != NULL);
+               ROSE_ASSERT(rhs != NULL);
+
+               generateStencilCode(stencil,lhs,rhs);
 
             // Mark that a transformation was done.
                return_synthesizedAttribute.set_operatorTransformed(true);

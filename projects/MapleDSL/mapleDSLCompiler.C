@@ -8,6 +8,8 @@
 
 #include "mapleDSLCompiler.h"
 
+#include "mapleOperatorAPI.h"
+
 #include "dslCodeGeneration.h"
 
 #define DEBUG_USING_DOT_GRAPHS 1

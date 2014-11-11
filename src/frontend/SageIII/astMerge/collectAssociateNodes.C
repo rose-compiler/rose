@@ -988,6 +988,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (11/3/2014): Adding support for templated typedef.
+          case V_SgTemplateTypedefDeclaration:
+
+       // DQ (11/5/2014): Adding support for templated typedef.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+
           case V_SgTypedefDeclaration:
              {
                SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(node);

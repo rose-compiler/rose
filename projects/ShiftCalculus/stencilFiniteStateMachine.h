@@ -1,3 +1,5 @@
+#ifndef STENCIL_FINITE_STATE_MACHINE_H
+#define STENCIL_FINITE_STATE_MACHINE_H
 
 // This defines the design of the finite state machine for the stencil abstraction.
 // The finite machine is required because we cannot execute the code that we see 
@@ -73,3 +75,5 @@ class StencilFSM
    };
 
 
+// endif for STENCIL_FINITE_STATE_MACHINE_H
+#endif

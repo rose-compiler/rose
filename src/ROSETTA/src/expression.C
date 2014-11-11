@@ -1332,6 +1332,11 @@ Grammar::setUpExpressions ()
      FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/10/2014): We need to store an explicit type pointer in this IR node so that we can support
+  // the get_type() function called from any expression that might have this kind of IR node in its subtree.
+     FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (9/2/2014): Adding support for C++11 lambda expresions.
      LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
      LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
@@ -2010,7 +2015,11 @@ Grammar::setUpExpressions ()
 #endif
 
      Initializer.setFunctionPrototype ( "HEADER_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
-     Initializer.setDataPrototype     ( "bool"               , "is_explicit_cast", "= true",
+     Initializer.setDataPrototype     ( "bool", "is_explicit_cast", "= true",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/6/2014): This is C++11 syntax for direct brace initalization (e.g. int n{}).
+     Initializer.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // SgAggregateInitializer.setFunctionPrototype ( "HEADER_REPLACE_EXPRESSION", "../Grammar/Expression.code" );

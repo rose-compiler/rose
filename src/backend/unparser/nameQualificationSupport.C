@@ -404,6 +404,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSignedLong:
           case V_SgTypeSignedLongLong:
 
+       // DQ (11/6/2014): Added support for C++11 rvalue references.
+          case V_SgRvalueReferenceType:
+
        // DQ (3/24/2014): Added support for 128-bit integers.
           case V_SgTypeSigned128bitInteger:
           case V_SgTypeUnsigned128bitInteger:
@@ -1165,6 +1168,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 #endif
+
+
+                 // DQ (11/10/2014): Added support for templated typedefs (and their instantiations).
+                    case V_SgTemplateTypedefDeclaration:
+                    case V_SgTemplateInstantiationTypedefDeclaration:
+
                     case V_SgTypedefDeclaration:
                        {
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
@@ -2098,6 +2107,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                               break;
                             }
+
+                      // DQ (11/10/2014): Adding support for templated typedef declarations.
+                         case V_SgTemplateTypedefSymbol:
 
                          case V_SgTypedefSymbol:
                             {

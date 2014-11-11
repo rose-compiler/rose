@@ -1468,6 +1468,38 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+            // DQ (11/4/2014): Added support for C++11 template typedefs.
+               case V_SgTemplateTypedefDeclaration:
+                  {
+                    SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=blueviolet,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString  = (templateTypedefDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string flagString2 = (templateTypedefDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
+                    labelWithSourceCode = "\\n  " + templateTypedefDeclaration->get_name().getString() + 
+                                          "\\n  " + flagString +
+                                          "\\n  " + flagString2 +
+                                          "\\n  " + StringUtility::numberToString(templateTypedefDeclaration) + "  ";
+#if 1
+                    printf ("########## templateTypedefDeclaration->get_name() = %s \n",templateTypedefDeclaration->get_name().str());
+#endif
+                    break;
+                  }
+
+            // DQ (11/5/2014): Added support for C++11 template typedefs.
+               case V_SgTemplateInstantiationTypedefDeclaration:
+                  {
+                    SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString  = (templateInstantiationTypedefDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string flagString2 = (templateInstantiationTypedefDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
+                    labelWithSourceCode = "\\n  " + templateInstantiationTypedefDeclaration->get_name().getString() + 
+                                          "\\n  " + flagString +
+                                          "\\n  " + flagString2 +
+                                          "\\n  " + StringUtility::numberToString(templateInstantiationTypedefDeclaration) + "  ";
+                 // printf ("########## templateInstantiationTypedefDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                    break;
+                  }
+
                case V_SgVariableDeclaration:
                   {
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node);

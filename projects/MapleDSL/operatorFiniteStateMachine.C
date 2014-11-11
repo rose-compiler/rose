@@ -42,12 +42,17 @@ DiscretizationFSM::operator()(DiscretizationFSM* X)
   // We might need to save the argument name so that we can support the Maple code generation.
      argumentName = "";
 
+  // We might need the name as part of the Maple code generation.
+  // discretizationName = X->discretizationName;
+     operatorParensArgument->discretizationName = X->discretizationName;
+
      return *this;
    }
 
 void DiscretizationFSM::display(const string & label)
    {
      printf ("In DiscretizationFSM::display(): label = %s \n",label.c_str());
+     printf ("   --- discretizationName      = %s \n",discretizationName.c_str());
      printf ("   --- dimension               = %d \n",dimension);
      printf ("   --- discreticationKind      = %d \n",discreticationKind);
      printf ("   --- builtFromOperatorParens = %s \n",builtFromOperatorParens ? "true" : "false");
@@ -151,6 +156,8 @@ OperatorFSM OperatorFSM::operator=(const OperatorFSM & X)
      discretizationList = X.discretizationList;
      operatorList       = X.operatorList;
 
+     operatorName       = X.operatorName;
+
 #if 0
      printf ("Leaving OperatorFSM operator= \n");
 #endif
@@ -167,12 +174,17 @@ OperatorFSM::OperatorFSM (const OperatorFSM & X)
   // this->operator=(X);
      discretizationList = X.discretizationList;
      operatorList       = X.operatorList;
+
+     operatorName       = X.operatorName;
    }
 
 void
 OperatorFSM::display(const std::string & label)
    {
      printf ("In OperatorFSM::display(): label = %s \n",label.c_str());
+
+     printf ("   --- operatorName = %s \n",operatorName.c_str());
+
      printf ("   --- discretizationList (size = %zu): \n",discretizationList.size());
      for (size_t i = 0; i < discretizationList.size(); i++)
         {

@@ -1173,6 +1173,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = isSgEnumDeclaration(declaration)->get_name().str();
                break;
 
+       // DQ (11/5/2014): Adding support for template typedef declarations (C++11 feature).
+          case V_SgTemplateInstantiationTypedefDeclaration:
+       // DQ (11/3/2014): Adding support for template typedef declarations (C++11 feature).
+          case V_SgTemplateTypedefDeclaration:
           case V_SgTypedefDeclaration:
                name = isSgTypedefDeclaration(declaration)->get_name().str();
                break;

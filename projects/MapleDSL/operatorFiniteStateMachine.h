@@ -48,6 +48,9 @@ class DiscretizationFSM
           DiscretizationFSM* operatorParensArgument;
           SgName argumentName;
 
+       // This is the name of the operator used for Maple code generation.
+          std::string discretizationName;
+
        // This cooresponds to the D_plus and D_minus operator().
           DiscretizationFSM operator()(DiscretizationFSM*);
 
@@ -104,6 +107,9 @@ class OperatorFSM
        // DiscretizationFSM which can hold many DiscretizationFSM objects (by value to avoid 
        // side-effects).
           std::vector<OperatorFSM> operatorList;
+
+       // This is the name of the operator used for Maple code generation.
+          std::string operatorName;
 
      public:
        // Default constructor.

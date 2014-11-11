@@ -2887,6 +2887,10 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
+HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
+
+
 HEADER_PRAGMA_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
@@ -5277,6 +5281,11 @@ SgSymbol*
 SgScopeStatement::find_symbol_from_declaration(const T* node) const
    {
      assert (p_symbol_table != NULL);
+
+#if 0
+     printf ("In SgScopeStatement::find_symbol_from_declaration(): calling p_symbol_table->find(node): node %p = %s \n",node,node->class_name().c_str());
+#endif
+
      return p_symbol_table->find(node);
    }
 
@@ -8128,9 +8137,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                  {
                                 // DQ (5/19/2014): This is not a name that needs to be reset, so I think there is nothing to do here!
                                 // ROSE_ASSERT((*i)->get_templateDeclaration() != NULL);
-
-                                   printf ("Warning: SgTemplateArgument::start_of_pack_expansion_argument not implemented \n");
+#if 0
+                                   printf ("Warning: In SgDeclarationStatement::resetTemplateNameSupport(): SgTemplateArgument::start_of_pack_expansion_argument (no reset of name required) \n");
                                 // ROSE_ASSERT(false);
+#endif
                                    break;
                                  }
 
@@ -14995,6 +15005,11 @@ SgSymbol*
 SgTypedefDeclaration::get_symbol_from_symbol_table() const
    {
      ROSE_ASSERT(get_scope() != NULL);
+
+#if 0
+     printf ("In SgTypedefDeclaration::get_symbol_from_symbol_table(): calling get_scope()->find_symbol_from_declaration(this) \n");
+#endif
+
   // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
   // return get_scope()->get_symbol_table()->find(this);
      return get_scope()->find_symbol_from_declaration(this);
@@ -15009,7 +15024,7 @@ SgTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
         {
           return p_declaration;
         }
-     else
+       else
         {
           return NULL;
         }
@@ -15445,6 +15460,17 @@ SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
 #endif
 
 SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+
+void
+SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (11/4/2014): I don't think we need to do anything here.
+   }
+
+SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_START

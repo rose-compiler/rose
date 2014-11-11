@@ -72,6 +72,8 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
                break;
              }
 
+       // DQ (11/3/2014): Added support for templated typedef (part of C++11 support).
+          case V_SgTemplateTypedefDeclaration:
           case V_SgTypedefDeclaration:
              {
                SgTypedefDeclaration* node = isSgTypedefDeclaration(referencedNode);
