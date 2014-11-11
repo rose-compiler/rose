@@ -52,6 +52,7 @@ struct Settings {
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
     bool doListFunctions;                               // produce a function index
     bool doListFunctionAddresses;                       // list function entry addresses
+    bool doListInstructionAddresses;                    // show instruction addresses
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
@@ -59,8 +60,8 @@ struct Settings {
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
-          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doShowMap(false), doShowStats(false),
-          doListUnused(false) {}
+          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false),
+          doShowMap(false), doShowStats(false), doListUnused(false) {}
 };
 
 // Describe and parse the command-line
@@ -184,22 +185,34 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(false, settings.doListFunctions)
                .hidden(true));
 
-    out.insert(Switch("list-function-entries")
+    out.insert(Switch("list-function-addresses")
                .intrinsicValue(true, settings.doListFunctionAddresses)
                .doc("Produce a listing of function entry addresses, one address per line in hexadecimal format. Each address "
                     "is followed by the word \"existing\" or \"missing\" depending on whether a non-empty basic block exists "
-                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-entries}."));
-    out.insert(Switch("no-list-function-entries")
-               .key("list-function-entries")
+                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-addresses}."));
+    out.insert(Switch("no-list-function-addresses")
+               .key("list-function-addresses")
                .intrinsicValue(false, settings.doListFunctionAddresses)
                .hidden(true));
 
-    out.insert(Switch("list-unused")
+    out.insert(Switch("list-instruction-addresses")
+               .intrinsicValue(true, settings.doListInstructionAddresses)
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain one address interval "
+                    "represented in the standard format: a hexadecimal address with leading \"0x\" followed by a plus sign (\"+\") "
+                    "followed by the decimal size of the instruction in bytes.  This listing is disabled with the "
+                    "@s{no-list-instruction-addresses} switch.  The default is to " +
+                    std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
+    out.insert(Switch("no-list-instruction-addresses")
+               .key("list-instruction-addresses")
+               .intrinsicValue(false, settings.doListInstructionAddresses)
+               .hidden(true));
+
+    out.insert(Switch("list-unused-addresses")
                .intrinsicValue(true, settings.doListUnused)
                .doc("Produce a listing of all specimen addresses that are not represented in the control flow graph. This "
                     "listing can be disabled with @s{no-list-unused}."));
-    out.insert(Switch("no-list-unused")
-               .key("list-unused")
+    out.insert(Switch("no-list-unused-addresses")
+               .key("list-unused-addresses")
                .intrinsicValue(false, settings.doListUnused)
                .hidden(true));
 
@@ -249,6 +262,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "\n\n"
                     "The following debugging aids are available:"
                     "@named{cfg-dot}{" + P2::Modules::CfgGraphVizDumper::docString() + "}"
+                    "@named{hexdump}{" + P2::Modules::HexDumper::docString() + "}"
                     "@named{insn-list}{" + P2::Modules::InstructionLister::docString() + "}"
                     ));
     
@@ -262,18 +276,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "@prop{programName} [@v{switches}] @v{specimen_names}")
         .doc("description",
              "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
-        .doc("Specimens",
-             "The binary specimen can be constructed from files in two ways."
-
-             "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory. All "
-             "such specimens are passed to \"frontend\" at once in a single call.}"
-
-             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
-             "string. " + MemoryMap::insertFileDocumentation() + "}"
-
-             "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
-             "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.")
+        .doc("Specimens", P2::Engine::specimenNameDocumentation())
         .doc("Bugs", "[999]-bugs",
              "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
     
@@ -379,21 +382,10 @@ int main(int argc, char *argv[]) {
     P2::Engine engine;
 
     // Load the specimen as raw data or an ELF or PE container.
-    MemoryMap map = engine.loadSpecimen(specimenNames);
-    SgAsmInterpretation *interp = SageInterface::getProject() ?
-                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
-                                  NULL;
-
-    // Obtain a suitable disassembler if none was specified on the command-line
-    if (!disassembler) {
-        if (!interp)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        disassembler = Disassembler::lookup(interp);
-        if (!disassembler)
-            throw std::runtime_error("unable to find an appropriate disassembler");
-        disassembler = disassembler->clone();
-    }
-    disassembler->set_progress_reporting(-1.0);         // turn it off
+    MemoryMap map = engine.load(specimenNames);
+    SgAsmInterpretation *interp = engine.interpretation();
+    if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
+        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
 
 #if 0 // [Robb P. Matzke 2014-08-29]
     // Remove execute permission from all segments of memory except those with ".text" as part of their name.
@@ -420,7 +412,7 @@ int main(int argc, char *argv[]) {
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
     Stream info(mlog[INFO] <<"Disassembling and partitioning");
     Sawyer::Stopwatch partitionTime;
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
@@ -433,11 +425,14 @@ int main(int argc, char *argv[]) {
 
     // Insert debugging aids
     BOOST_FOREACH (const std::string &s, settings.triggers) {
-        if (boost::starts_with(s, "insn-list:")) {
-            P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
-            partitioner.cfgAdjustmentCallbacks().append(aid);
-        } else if (boost::starts_with(s, "cfg-dot:")) {
+        if (boost::starts_with(s, "cfg-dot:")) {
             P2::Modules::CfgGraphVizDumper::Ptr aid = P2::Modules::CfgGraphVizDumper::instance(s.substr(8));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "hexdump:")) {
+            P2::Modules::HexDumper::Ptr aid = P2::Modules::HexDumper::instance(s.substr(8));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "insn-list:")) {
+            P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
             partitioner.cfgAdjustmentCallbacks().append(aid);
         } else {
             throw std::runtime_error("invalid debugging aid for \"trigger\" switch: " + s);
@@ -529,6 +524,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.doListInstructionAddresses) {
+        std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(AddressInterval::whole());
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+            std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size() <<"\n";
+    }
+    
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         if (!globalBlock)

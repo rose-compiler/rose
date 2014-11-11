@@ -1,3 +1,4 @@
+// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h
 #ifndef Sawyer_Message_H
 #define Sawyer_Message_H
 
@@ -34,7 +35,7 @@ namespace Sawyer {
  *
  *  The @c mlog is a message Facility that holds a number of streams, each of which can be enabled or disabled. Inserting to a
  *  disabled message stream causes the message to be thrown away.  The @c INFO is a message Importance, of which the library
- *  defines seven levels ranging from debug through fatal.  The expression <code>mlog[INFO]</code> selects one of the message
+ *  defines eight levels ranging from debug through fatal.  The expression <code>mlog[INFO]</code> selects one of the message
  *  Stream objects from the facility. The linefeed marks the end of a message; messages are "partial" until the linefeed is
  *  inserted, but depending on the sink (final destination) even partial messages might be shown. Since a message stream is a
  *  subclass of std::ostream, all the usual output insertion operators just work.
@@ -272,15 +273,17 @@ SAWYER_EXPORT bool initializeLibrary();
 SAWYER_EXPORT extern bool isInitialized;
 
 // Any header that #defines words that are this common is just plain stupid!
-#if defined(DEBUG) || defined(TRACE) || defined(WHERE) || defined(INFO) || defined(WARN) || defined(ERROR) || defined(FATAL)
+#if defined(DEBUG) || defined(TRACE) || defined(WHERE) || defined(MARCH) || \
+    defined(INFO) || defined(WARN) || defined(ERROR) || defined(FATAL)
 # ifdef _MSC_VER
-#  pragma message("Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL")
+#  pragma message("Undefining common words from the global namespace: DEBUG, TRACE, WHERE, MARCH, INFO, WARN, ERROR, FATAL")
 # else
-#  warning "Undefining common words from the global namespace: DEBUG, TRACE, WHERE, INFO, WARN, ERROR, FATAL"
+#  warning "Undefining common words from the global namespace: DEBUG, TRACE, WHERE, MARCH, INFO, WARN, ERROR, FATAL"
 # endif
 # undef DEBUG
 # undef TRACE
 # undef WHERE
+# undef MARCH
 # undef INFO
 # undef WARN
 # undef ERROR
@@ -307,6 +310,7 @@ enum Importance {
     WHERE,             /**< Granular tracing information useful to end-users that are trying to understand program internals.
                          *   These can also be thought of as debug messages that are useful to end users.  Tracing occurs in
                          *   two levels, where @c WHERE provides a more granular overview of the trace. */
+    MARCH,              /**< Progress reports and other similar rapidly updating partial messages. */
     INFO,               /**< Informative messages. These messages confer information that might be important but do not
                          *   indicate situations that are abnormal. */
     WARN,               /**< Warning messages that indicate an unusual situation from which the program was able to fully
@@ -849,7 +853,14 @@ public:
 /** Information printed at the beginning of each free-format message. */
 class SAWYER_EXPORT Prefix: public SharedObject, public SharedFromThis<Prefix> {
 #include <sawyer/WarningsOff.h>
-    enum When { NEVER=0, SOMETIMES=1, ALWAYS=2 };
+public:
+    /** When to show something. */
+    enum When {
+        NEVER=0,                                        /**< Never show this item. */
+        SOMETIMES=1,                                    /**< Show this item only sometimes (depends on the item). */
+        ALWAYS=2                                        /**< Always show this item. */
+    };
+private:
     ColorSet colorSet_;                                 /**< Colors to use if <code>props.useColor</code> is true. */
     Optional<std::string> programName_;                 /**< Name of program as it will be displayed (e.g., "a.out[12345]"). */
     bool showProgramName_;
@@ -1377,6 +1388,12 @@ public:
     /** Return the name of the facility. This is a read-only field initialized at construction time. */
     const std::string name() const { return name_; }
 
+    /** Renames all the facility streams.
+     *
+     *  Invokes Stream::facilityName for each stream. If a name is given then that name is used, otherwise this facility's name
+     *  is used. */
+    Facility& renameStreams(const std::string &name = "");
+
     /** Cause all streams to use the specified destination.  This can be called for facilities that already have streams and
      *  destinations, but it can also be called to initialize the streams for a default-constructed facility. */
     Facility& initStreams(const DestinationPtr&);
@@ -1419,8 +1436,12 @@ public:
     const ImportanceSet& impset();
 
     /** Add or remove a default importance level. The specified level is inserted or removed from the set of default enabled
-     *  importance levels without affecting any member facility objects.  Calling this function also prevents the first @ref
-     *  insert from initializing the set of default importance levels. See Facilities class documentation for details. */
+     *  importance levels without affecting any member facility objects.  If this %Facilities doesn't have a default importance
+     *  set then it is initialized to {WARN, ERROR, FATAL} prior to adding or removing the specified level. Calling this
+     *  function also prevents the first @ref insert from initializing the set of default importance levels. See Facilities
+     *  class documentation for details.
+     *
+     * @sa insert, @ref insertAndAdjust, @ref reenable. */
     Facilities& impset(Importance, bool enabled);
 
     /** Register a facility so it can be controlled as part of a collection of facilities.  The optional @p name is the @e
@@ -1451,6 +1472,17 @@ public:
     /** Remove all occurrences of the facility. */
     Facilities& erase(Facility &facility);
 
+    /** Return an existing facility by name.
+     *
+     *  Returns a reference to the specified facility. Throws an <code>std::domain_error</code> if no facility exists with the
+     *  specified name. */
+    Facility& facility(const std::string &name) const {
+        return *facilities_[name];
+    }
+
+    /** Return names for all known facilities. */
+    std::vector<std::string> facilityNames() const;
+    
     /** Parse a single command-line switch and enable/disable the indicated streams.  Returns an empty string on success, or an
      *  error message on failure.  No configuration changes are made if a failure occurs.
      *
@@ -1588,6 +1620,7 @@ namespace Common {
 using Message::DEBUG;
 using Message::TRACE;
 using Message::WHERE;
+using Message::MARCH;
 using Message::INFO;
 using Message::WARN;
 using Message::ERROR;

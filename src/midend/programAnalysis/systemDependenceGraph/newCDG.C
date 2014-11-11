@@ -1,3 +1,5 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "newCDG.h"
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>

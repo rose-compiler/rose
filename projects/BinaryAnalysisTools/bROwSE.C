@@ -178,14 +178,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
              "@prop{programName} [@v{switches}] @v{specimen_names}")
         .doc("description",
              "This is a web server for viewing the contents of a binary specimen.")
-        .doc("Specimens",
-             "The binary specimen can be constructed from files in two ways."
-             "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
-             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
-             "string. " + MemoryMap::insertFileDocumentation() + "}"
-             "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
-             "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.");
+        .doc("Specimens", P2::Engine::specimenNameDocumentation());
     
     return parser.with(gen).with(dis).with(server).parse(argc, argv).apply();
 }
@@ -525,17 +518,17 @@ public:
         return idx<functions_.size() ? functions_[idx] : P2::Function::Ptr();
     }
 
-    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : functions_.size();
     }
 
-    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : C_NCOLS;
     }
 
     // Name for each column
     virtual boost::any headerData(int column, Wt::Orientation orientation=Wt::Horizontal,
-                                  int role=Wt::DisplayRole) const /*override*/ {
+                                  int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
                 case C_ENTRY:    return Wt::WString("Entry");
@@ -552,7 +545,7 @@ public:
     }
 
     // Data to show in each table cell
-    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const /*override*/ {
+    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         ASSERT_require(index.isValid());
         ASSERT_require(index.row()>=0 && (size_t)index.row() < functions_.size());
         P2::Function::Ptr function = functions_[index.row()];
@@ -986,16 +979,16 @@ public:
         layoutChanged().emit();
     }
     
-    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : insns_.size();
     }
 
-    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const /*override*/ {
+    virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
         return parent.isValid() ? 0 : C_NCOLS;
     }
 
     virtual boost::any headerData(int column, Wt::Orientation orientation=Wt::Horizontal,
-                                  int role=Wt::DisplayRole) const /*override*/ {
+                                  int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
                 case C_ADDR:    return Wt::WString("Address");
@@ -1010,7 +1003,7 @@ public:
         return boost::any();
     }
 
-    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const /*override*/ {
+    virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         ASSERT_require(index.isValid());
         ASSERT_require(index.row()>=0 && (size_t)index.row() < insns_.size());
         SgAsmInstruction *insn = insns_[index.row()];
@@ -1371,37 +1364,26 @@ int main(int argc, char *argv[]) {
     Diagnostics::initialize();
 
     // Parse the command-line
+    P2::Engine engine;
     Settings settings;
-    Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
-    Disassembler *disassembler = NULL;
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
     if (!settings.isaName.empty())
-        disassembler = Disassembler::lookup(settings.isaName);
+        engine.disassembler(Disassembler::lookup(settings.isaName));
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Load the specimen as raw data or an ELF or PE container
-    P2::Engine engine;
-    MemoryMap map = engine.loadSpecimen(specimenNames);
+    MemoryMap map = engine.load(specimenNames);
     P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
-    SgAsmInterpretation *interp = SageInterface::getProject() ?
-                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
-                                  NULL;
+    SgAsmInterpretation *interp = engine.interpretation();
 
     // Obtain a suitable disassembler if none was specified on the command-line
-    if (!disassembler) {
-        if (!interp)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        disassembler = Disassembler::lookup(interp);
-        if (!disassembler)
-            throw std::runtime_error("unable to find an appropriate disassembler");
-        disassembler = disassembler->clone();
-    }
-    disassembler->set_progress_reporting(-1.0);         // turn it off
-
+    Disassembler *disassembler = engine.obtainDisassembler();
+    if (NULL==disassembler)
+        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
 
     // Create the partitioner
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
@@ -1410,7 +1392,7 @@ int main(int argc, char *argv[]) {
     partitioner.memoryMap().dump(std::cout);            // show what we'll be working on
 
     // Disassemble and partition into functions
-    engine.partition(partitioner, interp);
+    engine.runPartitioner(partitioner, interp);
     std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
     std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBasicBlocks(), "basic blocks") <<"\n";
     std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nDataBlocks(), "data blocks") <<"\n";

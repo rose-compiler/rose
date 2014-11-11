@@ -97,7 +97,7 @@ public:
         } else if (newSize > size_) {
             size_t nwords = BitVectorSupport::numberOfWords<Word>(newSize);
             words_.resize(nwords, Word(0));
-            BitVectorSupport::set(data(), BitRange::hull(size_, newSize-1), newBits);
+            BitVectorSupport::setValue(data(), BitRange::hull(size_, newSize-1), newBits);
             size_ = newSize;
         } else {
             size_t nwords = BitVectorSupport::numberOfWords<Word>(newSize);
@@ -172,25 +172,42 @@ public:
         return *this;
     }
 
-    /** Assign true/false to some bits.
+    /** Assign true to some bits.
      *
      *  Sets bits by assigning true (or @p newBits) to each bit in the specified range.  The convention is that "set" means to
-     *  assign true to a bit, although this API allows the value to be explicitly specified. */
-    BitVector& set(const BitRange &range, bool newBits=true) {
+     *  assign true to a bit; to assign a specific value use @ref setValue. */
+    BitVector& set(const BitRange &range) {
         checkRange(range);
-        BitVectorSupport::set(data(), range, newBits);
+        BitVectorSupport::set(data(), range);
+        return *this;
+    }
+
+    /** Assign true to all bits.
+     *
+     *  Sets bits by assigning true (or @p newBits) to all bits in this vector.  The convention is that "set" means to
+     *  assign true to a bit; to assign a specific value use @ref setValue. */
+    BitVector& set() {
+        BitVectorSupport::set(data(), hull());
+        return *this;
+    }
+
+    /** Assign true/false to some bits.
+     *
+     *  Sets the bits in the specified range to the specified value. */
+    BitVector& setValue(const BitRange &range, bool value) {
+        checkRange(range);
+        BitVectorSupport::setValue(data(), range, value);
         return *this;
     }
 
     /** Assign true/false to all bits.
      *
-     *  Sets bits by assigning true (or @p newBits) to all bits in this vector.  The convention is that "set" means to
-     *  assign true to a bit, although this API allows the value to be explicitly specified. */
-    BitVector& set(bool newBits=true) {
-        BitVectorSupport::set(data(), hull());
+     *  Sets all bits to the specified value. */
+    BitVector& setValue(bool value) {
+        BitVectorSupport::setValue(data(), hull(), value);
         return *this;
     }
-
+    
     /** Copy some bits.
      *
      *  Copies bits from @p other specified by @p from into this vector specified by @p to.  The ranges must be the same size

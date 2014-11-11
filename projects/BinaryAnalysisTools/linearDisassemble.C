@@ -70,17 +70,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     Parser parser;
     parser
         .purpose("disassembles files one address at a time")
-        .doc("synopsis",
+        .doc("Synopsis",
              "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("description",
+        .doc("Description",
              "This program is a very simple disassembler that tries to disassemble an instruction at each executable "
-             "address of a binary specimen.  The specimen can be constructed from files in two ways."
-             "@bullet{If the specimen name is a simple file name then the specimen is passed to ROSE's \"frontend\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
-             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
-             "string. " + MemoryMap::insertFileDocumentation() + "}"
-             "Multiple memory map resources can be specified. If both types of files are specified, ROSE's \"frontend\" "
-             "and \"BinaryLoader\" run first on the regular files and then the map resources are applied.");
+             "address of a binary specimen.")
+        .doc("Specimens", P2::Engine::specimenNameDocumentation());
     
     return parser.with(generic).with(switches).parse(argc, argv).apply();
 }
@@ -103,10 +98,9 @@ int main(int argc, char *argv[])
 
     // Load the speciem as raw data or an ELF or PE container
     P2::Engine engine;
-    MemoryMap map = engine.loadSpecimen(specimenNames);
-    SgAsmInterpretation *interp = SageInterface::getProject() ?
-                                  SageInterface::querySubTree<SgAsmInterpretation>(SageInterface::getProject()).back() :
-                                  NULL;
+    engine.disassembler(disassembler);
+    MemoryMap map = engine.load(specimenNames);
+    SgAsmInterpretation *interp = engine.interpretation();
     
     // Obtain a suitable disassembler if none was specified on the command-line
     if (!disassembler) {
@@ -117,7 +111,6 @@ int main(int argc, char *argv[])
             throw std::runtime_error("unable to find an appropriate disassembler");
         disassembler = disassembler->clone();
     }
-    disassembler->set_progress_reporting(-1.0);         // turn it off
 
     map.dump(mlog[INFO]);
     map.dump(std::cout);

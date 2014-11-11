@@ -46,7 +46,7 @@ static int kind(Instruction *insn) {
 
 // When can AST nodes be substituted?
 static struct: EditDistance::TreeEditDistance::SubstitutionPredicate {
-    virtual bool operator()(SgNode *a, SgNode *b) /*override*/ {
+    virtual bool operator()(SgNode *a, SgNode *b) ROSE_OVERRIDE {
         if (a->variantT()==b->variantT()) {
             if (SgAsmInstruction *ai = isSgAsmInstruction(a)) {
                 SgAsmInstruction *bi = isSgAsmInstruction(b);
@@ -72,7 +72,7 @@ main(int argc, char *argv[]) {
     // Initialize
     rose::Diagnostics::initialize();                    // because librose doesn't initialize itself until frontend();
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insert(mlog);
+    Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line (see --help for usage)
     Settings settings;
@@ -92,11 +92,11 @@ main(int argc, char *argv[]) {
     ASSERT_not_null(interp2);
     mlog[INFO] <<"parsed and loaded in " <<loadTime <<" seconds\n";
 
-    // Disassemble and partition code into functions.  Engine::partition is the top-level, do-everything function.
+    // Disassemble and partition code into functions.
     mlog[INFO] <<"disassembling and partitioning specimens...\n";
     Sawyer::Stopwatch partitionTime;
-    SgAsmBlock *gblock1 = Partitioner2::Engine().partition(interp1);
-    SgAsmBlock *gblock2 = Partitioner2::Engine().partition(interp2);
+    SgAsmBlock *gblock1 = Partitioner2::Engine().partition(interp1).buildAst(interp1);
+    SgAsmBlock *gblock2 = Partitioner2::Engine().partition(interp2).buildAst(interp2);
     mlog[INFO] <<"disassembled and partitioned in " <<partitionTime <<" seconds\n";
 
     // Some stats before we start.

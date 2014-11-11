@@ -37,7 +37,13 @@ class visitorTraversal : public AstSimpleProcessing
           SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
           ROSE_ASSERT(decl!= NULL);
           bool result=false;
-          result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+          if (SageInterface::isStatic(decl))
+          {
+            if (debug)
+              cout<<"skipping a static variable declaration .."<<endl;
+          }
+          else
+            result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
         }
       } // end if
     } // end visit()

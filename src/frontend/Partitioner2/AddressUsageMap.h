@@ -146,9 +146,9 @@ public:
     /** Determines if a data block exists in the list.
      *
      *  If a data block with the specified starting address exists in the list then its ownership information is returned,
-     *  otherwise nothing is returned. */
+     *  otherwise nothing is returned. It is possible that multiple data blocks can exist at a particular address, in which
+     *  case an arbitrary one is returned. */
     Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t dbStart) const;
-
 
     /** Insert an instruction/basic block pair.
      *

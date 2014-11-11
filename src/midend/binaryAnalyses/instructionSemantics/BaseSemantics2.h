@@ -5,7 +5,6 @@
 #include "FormatRestorer.h"
 #include "SMTSolver.h"
 
-#include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
@@ -412,246 +411,23 @@ public:
 };
 
 /*******************************************************************************************************************************
- *                                      Reference-counting pointers
- *******************************************************************************************************************************/
-
-/** Referenc-counting pointer.  These pointers reference count the object to which they point and have an API similar to
- *  boost::shared_ptr<>.  However, this implementation is much faster (about 90% faster in tests) because it doesn't need to be
- *  as general-purpose as the Boost implementation.  This implementation doesn't support weak pointers or multi-threading, and
- *  it requires public access to an nrefs__ data member in the objects to which it points. */
-template<class T>
-class Pointer {
-private:
-    T *obj;     // object to which this pointer points; null for an empty pointer
-public:
-    typedef T element_type;
-
-    /** Constructs an empty shared pointer. */
-    Pointer(): obj(NULL) {}
-
-    /** Constructs a shared pointer for an object.  If @p obj is non-null then its reference count is incremented. It is
-     *  possible to create any number of shared pointers to the same object using this constructor. The expression "delete obj"
-     *  must be well formed and must not invoke undefined behavior. */
-    template<class Y>
-    explicit Pointer(Y *obj): obj(obj) {
-        if (obj!=NULL)
-            ++obj->nrefs__;
-    }
-
-    /** Constructs a new pointer that shares ownership of the pointed-to object with the @p other pointer. The pointed-to
-     *  object will only be deleted after both pointers are deleted.
-     * @{ */
-    Pointer(const Pointer &other): obj(other.obj) {
-        assert(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL)
-            ++obj->nrefs__;
-    }
-    template<class Y>
-    Pointer(const Pointer<Y> &other): obj(other.get()) {
-        if (obj!=NULL)
-            ++obj->nrefs__;
-    }
-    /** @} */
-    
-    /** Conditionally deletes the pointed-to object.  The object is deleted when its reference count reaches zero. */
-    ~Pointer() {
-        assert(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL && 0==--obj->nrefs__)
-            delete obj;
-    }
-
-    /** Assignment. This pointer is caused to point to the same object as @p other, decrementing the reference count for the
-     * object originally pointed to by this pointer and incrementing the reference count for the object pointed by @p other.
-     * @{ */
-    Pointer& operator=(const Pointer &other) {
-        assert(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL && 0==--obj->nrefs__)
-            delete obj;
-        obj = other.obj;
-        assert(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL)
-            ++obj->nrefs__;
-        return *this;
-    }
-    template<class Y>
-    Pointer& operator=(const Pointer<Y> &other) {
-        assert(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL && 0==--obj->nrefs__)
-            delete obj;
-        obj = other.get();
-        assert(obj==NULL || obj->nrefs__>0);
-        if (obj!=NULL)
-            ++obj->nrefs__;
-        return *this;
-    }
-    /** @} */
-
-    /** Reference to the pointed-to object.  An assertion will fail if assertions are enabled and this method is invoked on an
-     *  empty pointer. */
-    T& operator*() const {
-        assert(obj!=NULL && obj->nrefs__>0);
-        return *obj;
-    }
-
-    /** Dereference pointed-to object. The pointed-to object is returned. Returns null for empty pointers. */
-    T* operator->() const {
-        assert(!obj || obj->nrefs__>0);
-        return obj; // may be null
-    }
-
-    /** Obtain the pointed-to object.  The pointed-to object is returned. Returns null for empty pointers. */
-    T* get() const {
-        assert(obj==NULL || obj->nrefs__>0);
-        return obj; // may be null
-    }
-
-    /** Returns the pointed-to object's reference count. Returns zero for empty pointers. */
-    long use_count() const {
-        assert(obj==NULL || obj->nrefs__>0);
-        return obj==NULL ? 0 : obj->nrefs__;
-    }
-
-    bool operator==(T *ptr) const { return obj==ptr; }
-    bool operator!=(T *ptr) const { return obj!=ptr; }
-    bool operator<(T *ptr) const { return obj<ptr; }
-};
-
-/** Cast one pointer type to another. This behaves the same as dynamic_cast<> except it updates the pointed-to object's
- *  reference count. */
-template<class T, class U>
-Pointer<T> dynamic_pointer_cast(const Pointer<U> &other)
-{
-    T* obj = dynamic_cast<T*>(other.get());
-    return Pointer<T>(obj);
-}
-
-/*******************************************************************************************************************************
- *                                      Memory Allocators
- *******************************************************************************************************************************/
-
-/** Fast memory allocator for small objects.  This memory allocator is used for semantic values and works by requesting large
- *  blocks of objects from the global operator new and maintaining a free list thereof.  User requests for objects return
- *  objects from the free list, and user deallocations return them to the free list.  The allocator will also be used for
- *  subclasses (unless the user overrides the operator new and operator delete in the subclass) and can handle a variety
- *  of object sizes. */
-class Allocator {
-private:
-    struct Bucket {
-        enum { SIZE = 81920 };          // FIXME: tune this
-        char buffer[SIZE];
-    };
-
-    struct FreeItem {
-        FreeItem *next;
-    };
-
-    enum { SIZE_DIVISOR = 8 };          // must be >= sizeof(FreeItem)
-    enum { N_FREE_LISTS = 16 };         // number of lists. list[N] has objects of size <= (N+1)*SIZE_DIVISOR
-    FreeItem *freelist[N_FREE_LISTS];
-    typedef std::list<Bucket*> BucketList;
-    BucketList buckets_[N_FREE_LISTS];                  // lists containing all buckets allocated
-    size_t nallocated_[N_FREE_LISTS];                   // number of objects currently allocated
-    size_t highwater_[N_FREE_LISTS];                    // max number of objects allocated at once
-
-    typedef Sawyer::Container::Interval<uint64_t> BucketAddressInterval;
-    typedef Sawyer::Container::IntervalMap<BucketAddressInterval, Bucket*> BucketAddressMap;
-    typedef Sawyer::Container::Map<Bucket*, size_t> BucketUsageCounts;
-
-    // Returns a mapping from address (as uint64_t) to bucket pointer
-    void bucketAddresses(BucketAddressMap&/*out*/, size_t poolNumber) const;
-
-    // Returns a mapping from bucket pointer to number of used objects in the bucket.
-    void bucketUsage(BucketUsageCounts &result, size_t poolNumber) const;
-    void bucketUsage(BucketUsageCounts &result, size_t poolNumber, const BucketAddressMap&) const;
-
-    // Fills the specified freelist by adding another Bucket-worth of objects.
-    void fill_freelist(const int listn) { // hot
-        assert(listn>=0 && listn<N_FREE_LISTS);
-        const size_t object_size = (listn+1) * SIZE_DIVISOR;
-        Bucket *b = new Bucket;
-        buckets_[listn].push_back(b);
-        for (size_t offset=0; offset+object_size<=Bucket::SIZE; offset+=object_size) {
-            FreeItem *item = (FreeItem*)(b->buffer+offset);
-            item->next = freelist[listn];
-            freelist[listn] = item;
-        }
-        assert(freelist[listn]!=NULL);
-    }
-
-    // Used internally when debugging
-    void assertInvariants() const;
-
-public:
-    Allocator() {
-        ASSERT_require(sizeof(FreeItem) <= SIZE_DIVISOR);
-        memset(nallocated_, 0, sizeof nallocated_);
-        memset(highwater_, 0, sizeof highwater_);
-        memset(freelist, 0, sizeof freelist);
-    }
-
-    ~Allocator() {
-        destroyAllObjects();
-    }
-
-    /** Allocate one object of specified size. The size must be non-zero. If the size is greater than the largest objects this
-     *  class manages, then it will call the global operator new to satisfy the request (a warning is printed the first time
-     *  this happens). */
-    void *allocate(size_t size) { // hot
-        assert(size>0);
-        const int listn = (size-1) / SIZE_DIVISOR;
-        if (listn>=N_FREE_LISTS)
-            return ::operator new(size);
-        if (NULL==freelist[listn])
-            fill_freelist(listn);
-        void *retval = freelist[listn];
-        freelist[listn] = freelist[listn]->next;
-        highwater_[listn] = std::max(highwater_[listn], ++nallocated_[listn]);
-        return retval;
-    }
-
-    /** Free one object of specified size.  The @p size must be the same size that was used when the object was allocated. This
-     *  is a no-op if @p ptr is null. */
-    void deallocate(void *ptr, const size_t size) { // hot
-        if (ptr) {
-            assert(size>0);
-            const int listn = (size-1) / SIZE_DIVISOR;
-            if (listn>=N_FREE_LISTS)
-                return ::operator delete(ptr);
-            FreeItem *item = (FreeItem*)ptr;
-            item->next = freelist[listn];
-            freelist[listn] = item;
-            ASSERT_require(nallocated_[listn]>0);
-            --nallocated_[listn];
-        }
-    }
-
-    /** Deallocate unused buckets.
-     *
-     *  Does a linear traversal of the free lists to determine which buckets contain only free objects, then deletes those
-     *  buckets, removing their members from the free list. */
-    void vacuum();
-
-    /** Deallocate all buckets.
-     *
-     *  Frees all objects allocated by this allocator regardless of whether those objects are on a freelist. */
-    void destroyAllObjects();
-
-    /** Print some statistics.
-     *
-     *  Writes some information about this allocator to the specified stream. */
-    void printStatistics(std::ostream&) const;
-
-};
-
-/*******************************************************************************************************************************
  *                                      Semantic Values
  *******************************************************************************************************************************/
 
+// This is leftover for compatibility with an older API.  The old API had code like this:
+//    User::SValue user_svalue = BaseSemantics::dynamic_pointer_cast<User::SValue>(base_svalue);
+// Which can be replaced now with
+//    User::SValue user_svalue = base_svalue.dynamicCast<User::SValue>();
+template<class To, class From>
+Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From> &from) {
+    return from.template dynamicCast<To>();
+}
+
 /** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted.
  *
- *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses a custom Pointer class which is
+ *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses Sawyer::SharedPointer which is
  *  substantially faster. */
-typedef Pointer<class SValue> SValuePtr;
+typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Base class for semantic values.
  *
@@ -667,7 +443,7 @@ typedef Pointer<class SValue> SValuePtr;
  *  Semantics value objects are allocated on the heap and reference counted.  The BaseSemantics::SValue is an abstract class
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
-class SValue {
+class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
 public:
     long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
 protected:
@@ -680,7 +456,7 @@ protected:
     SValue(const SValue &other): nrefs__(0), width(other.width) {}
 
 public:
-    virtual ~SValue() { assert(0==nrefs__); } // hot
+    virtual ~SValue() { ASSERT_require(0==nrefs__); } // hot
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Allocating static constructor.  None are needed--this class is abstract.
@@ -718,16 +494,9 @@ public:
     // Dynamic pointer casts. No-ops since this is the base class
 public:
     static SValuePtr promote(const SValuePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Custom allocation.
-public:
-    static Allocator allocator;
-    static void *operator new(size_t size) { return allocator.allocate(size); } // hot
-    static void operator delete(void *ptr, size_t size) { allocator.deallocate(ptr, size); } // hot
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
@@ -812,7 +581,7 @@ protected:
 protected:
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : protoval(protoval), regdict(regdict) {
-        assert(protoval!=NULL);
+        ASSERT_not_null(protoval);
     }
 
 public:
@@ -838,7 +607,7 @@ public:
     // Dynamic pointer casts. No-op since this is the base class.
 public:
     static RegisterStatePtr promote(const RegisterStatePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
 
@@ -1001,11 +770,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/ {
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
         return instance(protoval, regdict);
     }
 
-    virtual RegisterStatePtr clone() const /*override*/ {
+    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStateGenericPtr(new RegisterStateGeneric(*this));
     }
 
@@ -1016,18 +785,18 @@ public:
      *  will fail if @p from does not point to a RegisterStateGeneric object. */
     static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
         RegisterStateGenericPtr retval = boost::dynamic_pointer_cast<RegisterStateGeneric>(from);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherit
 public:
-    virtual void clear() /*override*/;
-    virtual void zero() /*override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void clear() ROSE_OVERRIDE;
+    virtual void zero() ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -1201,6 +970,7 @@ public:
     static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
     static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
     static const size_t n_st = 8;               /**< Number of ST registers (not counting _st_top pseudo register). */
+    static const size_t n_xmm = 8;              /**< Number f XMM registers. */
 
     SValuePtr ip;                               /**< Instruction pointer. */
     SValuePtr gpr[n_gprs];                      /**< General-purpose registers */
@@ -1208,6 +978,7 @@ public:
     SValuePtr flag[n_flags];                    /**< Control/status flags (i.e., FLAG register). */
     SValuePtr st[n_st];                         /**< Floating point circular stack. */
     SValuePtr fpstatus;                         /**< Floating-point status word. */
+    SValuePtr xmm[n_xmm];                       /**< XMM registers. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1227,6 +998,8 @@ protected:
         for (size_t i=0; i<n_st; ++i)
             st[i] = other.st[i]->copy();
         fpstatus = other.fpstatus;
+        for (size_t i=0; i<n_xmm; ++i)
+            xmm[i] = other.xmm[i]->copy();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1247,11 +1020,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/ {
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
         return instance(protoval, regdict);
     }
 
-    virtual RegisterStatePtr clone() const /*override*/ {
+    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStatePtr(new RegisterStateX86(*this));
     }
 
@@ -1262,18 +1035,18 @@ public:
      *  will fail if @p from does not point to a RegisterStateX86 object. */
     static RegisterStateX86Ptr promote(const RegisterStatePtr &from) {
         RegisterStateX86Ptr retval = boost::dynamic_pointer_cast<RegisterStateX86>(from);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() /*override*/;
+    virtual void clear() ROSE_OVERRIDE;
     virtual void zero() /* override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1284,6 +1057,7 @@ protected:
     virtual SValuePtr readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops);
     virtual SValuePtr readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops);
     virtual SValuePtr readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *ops);
     virtual SValuePtr readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops);
 
     // helpers for writeRegister()
@@ -1292,6 +1066,7 @@ protected:
     virtual void writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterXmm(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
     virtual void writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
 
     // Generate a name for initial values.
@@ -1350,7 +1125,7 @@ public:
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
     static MemoryStatePtr promote(const MemoryStatePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -1461,14 +1236,15 @@ protected:
 protected:
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
         : address(address), value(value) {
-        assert(address!=NULL);
-        assert(value!=NULL);
+        ASSERT_not_null(address);
+        ASSERT_not_null(value);
     }
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
     MemoryCell(const MemoryCell &other) {
         address = other.address->copy();
-        value = other.address->copy();
+        value = other.value->copy();
+        latest_writer = other.latest_writer;
     }
 
 public:
@@ -1504,7 +1280,7 @@ public:
     // Dynamic pointer casts. No-op since this is the base class.
 public:
     static MemoryCellPtr promote(const MemoryCellPtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -1515,7 +1291,7 @@ public:
      * @{ */
     virtual SValuePtr get_address() const { return address; }
     virtual void set_address(const SValuePtr &addr) {
-        assert(addr!=NULL);
+        ASSERT_not_null(addr);
         address = addr;
     }
     /** @}*/
@@ -1524,7 +1300,7 @@ public:
      * @{ */
     virtual SValuePtr get_value() const { return value; }
     virtual void set_value(const SValuePtr &v) {
-        assert(v!=NULL);
+        ASSERT_not_null(v);
         value = v;
     }
     /** @}*/
@@ -1655,7 +1431,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const /*override*/ {
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const ROSE_OVERRIDE {
         return instance(addrProtoval, valProtoval);
     }
     
@@ -1664,7 +1440,7 @@ public:
         return instance(protocell);
     }
 
-    virtual MemoryStatePtr clone() const /*override*/ {
+    virtual MemoryStatePtr clone() const ROSE_OVERRIDE {
         return MemoryStatePtr(new MemoryCellList(*this));
     }
 
@@ -1675,14 +1451,14 @@ public:
      *  a BaseSemantics::MemoryCellList dynamic type. */
     static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m) {
         MemoryCellListPtr retval = boost::dynamic_pointer_cast<MemoryCellList>(m);
-        assert(retval!=NULL);
+        ASSERT_not_null(retval);
         return retval;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() /*override*/ {
+    virtual void clear() ROSE_OVERRIDE {
         cells.clear();
         latest_written_cell.reset();
     }
@@ -1698,7 +1474,7 @@ public:
      *  The width of the @p dflt value determines how much data is read. The base implementation assumes that all cells contain
      *  8-bit values. */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
+                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
     /** Write a value to memory.
      *
@@ -1707,9 +1483,9 @@ public:
      *
      *  The base implementation assumes that all cells contain 8-bit values. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) /*override*/;
+                             RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1784,10 +1560,10 @@ protected:
 protected:
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
         : registers(registers), memory(memory) {
-        assert(registers!=NULL);
-        assert(memory!=NULL);
+        ASSERT_not_null(registers);
+        ASSERT_not_null(memory);
         protoval = registers->get_protoval();
-        assert(protoval!=NULL);
+        ASSERT_not_null(protoval);
     }
 
     // deep-copy the registers and memory
@@ -1833,7 +1609,7 @@ public:
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
     static StatePtr promote(const StatePtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -1991,12 +1767,12 @@ protected:
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
         : protoval(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
-        assert(protoval!=NULL);
+        ASSERT_not_null(protoval);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
         : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
-        assert(state!=NULL);
+        ASSERT_not_null(state);
         protoval = state->get_protoval();
     }
 
@@ -2025,7 +1801,7 @@ public:
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
     static RiscOperatorsPtr promote(const RiscOperatorsPtr &x) {
-        assert(x!=NULL);
+        ASSERT_not_null(x);
         return x;
     }
     
@@ -2112,7 +1888,7 @@ public:
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
      *  processing an instruction.  Some policies use this to update a pointer to the current instruction. */
     virtual void startInstruction(SgAsmInstruction *insn) {
-        assert(insn!=NULL);
+        ASSERT_not_null(insn);
         cur_insn = insn;
         ++ninsns;
     };
@@ -2120,8 +1896,8 @@ public:
     /** Called at the end of every instruction.  This method is invoked whenever the translation object ends processing for an
      *  instruction.  This is not called if there's an exception during processing. */
     virtual void finishInstruction(SgAsmInstruction *insn) {
-        assert(insn);
-        assert(cur_insn==insn);
+        ASSERT_not_null(insn);
+        ASSERT_require(cur_insn==insn);
         cur_insn = NULL;
     };
 
@@ -2337,7 +2113,7 @@ public:
      *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
      */ 
     virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
-        assert(state!=NULL);
+        ASSERT_not_null(state);
         return state->readRegister(reg, this);
     }
 
@@ -2350,7 +2126,7 @@ public:
      *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
      *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
-        assert(state!=NULL);
+        ASSERT_not_null(state);
         state->writeRegister(reg, a, this);
     }
 
@@ -2436,7 +2212,7 @@ protected:
     Dispatcher(): regdict(NULL) {}
 
     explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
-        assert(operators!=NULL);
+        ASSERT_not_null(operators);
     }
 
 public:

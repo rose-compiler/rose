@@ -81,9 +81,10 @@ namespace rose {
  *  C++ symbol names, dots, and "::".  This name is used to enable/disable the facility from the command-line, and will show up
  *  as part of the output for any message emitted using this facility.
  *
- *  The call to Sawyer::Message::Facilities::insert adds this @c mlog facility to the global list of facilities so it can be
- *  controlled from the command line.  Facilities are still usable if they're not registered in the global list -- they just
- *  can't be controlled by the user in the typical way.
+ *  The call to Sawyer::Message::Facilities::insertAndAdjust adds this @c mlog facility to the global list of facilities so it
+ *  can be controlled from the command line. It also immediately enables/disables the Facility Stream objects according to the
+ *  settings in @c mfacilities.  Facilities are still usable if they're not registered in the global list -- they just can't be
+ *  controlled by the user in the typical way.
  *
  * @code
  *  // class method in BinaryLoader.C
@@ -92,7 +93,7 @@ namespace rose {
  *      if (!initialized) {
  *          initialized = true;
  *          mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BinaryLoader", Diagnostics::destination);
- *          Diagnostics::mfacilities.insert(mlog);
+ *          Diagnostics::mfacilities.insertAndAdjust(mlog);
  *      }
  *  }
  * @endcode
@@ -248,16 +249,17 @@ namespace Diagnostics {
 
 // Make Sawyer message importance levels available here. That way, we don't have to "use namespace Sawyer::Message", which
 // also sucks in a lot of other stuff.
-using Sawyer::Message::DEBUG;
-using Sawyer::Message::TRACE;
-using Sawyer::Message::WHERE;
-using Sawyer::Message::INFO;
-using Sawyer::Message::WARN;
-using Sawyer::Message::ERROR;
-using Sawyer::Message::FATAL;
+using Sawyer::Message::DEBUG;                           // very low-level debugging mostly for developers
+using Sawyer::Message::TRACE;                           // more low-level debugging but maybe more interesting to users
+using Sawyer::Message::WHERE;                           // higher-level debugging to help users understand ROSE flow
+using Sawyer::Message::MARCH;                           // progress bars and other high-frequency messages
+using Sawyer::Message::INFO;                            // useful information about normal behavior such as stats
+using Sawyer::Message::WARN;                            // warnings that users should almost certainly see at least once
+using Sawyer::Message::ERROR;                           // recoverable errors, possibly followed by throw
+using Sawyer::Message::FATAL;                           // errors which are immediately followed by exit, abort, or similar
 
-using Sawyer::Message::Stream;
-using Sawyer::Message::Facility;
+using Sawyer::Message::Stream;                          // one message stream, e.g., 'mlog[INFO]'
+using Sawyer::Message::Facility;                        // collection of related streams, e.g., 'mlog'
 
 /** Default destination for ROSE diagnostics.  The user may set this explicitly before rose::Diagnostics::initialize is called,
  *  otherwise that function will create a destination that points to standard error and uses the optional

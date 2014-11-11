@@ -58,7 +58,7 @@ SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePt
     std::vector<InsnSemanticsExpr::TreeNodePtr> exprs(exprs_.begin(), exprs_.end());
     for (size_t i=0; i<exprs.size(); ++i) {
         if (exprs[i]->is_known()) {
-            assert(1==exprs[i]->get_nbits());
+            ASSERT_require(1==exprs[i]->get_nbits());
             if (0==exprs[i]->get_value())
                 return SAT_NO;
             std::swap(exprs[i], exprs.back()); // order of exprs is not important
@@ -119,7 +119,7 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     tmpfile.file.close();
     struct stat sb;
     int status __attribute__((unused)) = stat(tmpfile.name, &sb);
-    assert(status>=0);
+    ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
     RTS_MUTEX(class_stats_mutex) {
         class_stats.input_size += sb.st_size;
@@ -142,7 +142,7 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     {
         std::string cmd = get_command(tmpfile.name);
         FILE *output = popen(cmd.c_str(), "r");
-        assert(output!=NULL);
+        ASSERT_not_null(output);
         char *line = NULL;
         size_t line_alloc = 0;
         ssize_t nread;

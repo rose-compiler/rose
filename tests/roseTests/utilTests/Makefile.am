@@ -11,6 +11,13 @@ EXTRA_DIST = tests.conf
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
+# Test that boost::regex works
+noinst_PROGRAMS += testBoostRegex
+testBoostRegex_SOURCES = testBoostRegex.C
+testBoostRegex_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testBoostRegex.passed
+testBoostRegex.passed: testBoostRegex
+	@$(RTH_RUN) CMD=./testBoostRegex $(top_srcdir)/scripts/test_exit_status $@
 
 # Tests the RangeMap class
 noinst_PROGRAMS += testRangeMap

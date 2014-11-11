@@ -149,12 +149,12 @@ public:
     // We can get control at the beginning of every instruction.  This allows us to do things like enabling/disabling
     // sub-domains based on the kind of instruction.  We could also examine the entire multi-domain state at this point and do
     // something based on that.
-    void startInstruction(SgAsmInstruction *insn) /*override*/;
+    void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     // We can get control at the end of most instructions by hooking into finishInstruction.  But be warned: any instruction
     // that throws an exception will skip over this.  The simulator's concrete semantics throw various exceptions for things
     // like signal handling, thread termination, specimen segmentation faults, etc.
-    void finishInstruction(SgAsmInstruction *insn) /*override*/;
+    void finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     // You can get control around individual RISC operations by augmenting the particular function.  For instance, here's how
     // you would intercept an XOR operation.

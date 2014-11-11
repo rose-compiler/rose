@@ -182,6 +182,11 @@ largestFunction_SOURCES = largestFunction.C
 largestFunction_CPPFLAGS = $(ROSE_INCLUDES)
 largestFunction_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += runRandom
+runRandom_SOURCES = runRandom.C
+runRandom_CPPFLAGS = $(ROSE_INCLUDES)
+runRandom_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 #-----------------------------------------------------------------------------------------------------------------------------
 # Built-in functions (used when not linking specimens with the C library)
 builtins.so: builtins-string.c builtins-stdio.c

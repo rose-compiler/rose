@@ -162,7 +162,7 @@ public:
 
     /** Construct a ValueType from a TreeNode. */
     explicit ValueType(const TreeNodePtr &node) {
-        assert(node->get_nbits()==nBits);
+        ASSERT_require(node->get_nbits()==nBits);
         expr = node;
     }
 
@@ -226,7 +226,7 @@ public:
     /** Returns the value of a known constant. Assumes this value is a known constant. */
     virtual uint64_t known_value() const {
         LeafNodePtr leaf = expr->isLeafNode();
-        assert(leaf!=NULL);
+        ASSERT_not_null(leaf);
         return leaf->get_value();
     }
 
@@ -433,7 +433,7 @@ public:
      *  as the number of bytes in the value being written. */
     template<size_t nBits>
     CellList write(const ValueType<32> &addr, const ValueType<nBits> &value, SMTSolver *solver) {
-        assert(8==nBits || 16==nBits || 32==nBits);
+        ASSERT_require(8==nBits || 16==nBits || 32==nBits);
         CellList retval;
         for (size_t bytenum=0; bytenum<nBits/8; ++bytenum) {
             MemoryCell<ValueType> cell = write_byte(add(addr, bytenum), extract_byte(value, bytenum), solver);
@@ -469,7 +469,7 @@ public:
 
     /** Build a value from a list of memory cells. */
     ValueType<8> value_from_cells(const ValueType<32> &addr, const CellList &cells) {
-        assert(!cells.empty());
+        ASSERT_require(!cells.empty());
         if (1==cells.size())
             return cells.front().value();
         // FIXME: This makes no attempt to remove duplicate values
@@ -922,7 +922,7 @@ public:
     template <size_t nBits>
     ValueType<nBits> mem_read(State<ValueType> &state, const ValueType<32> &addr,
                               const ValueType<nBits> *dflt_ptr=NULL) const {
-        assert(8==nBits || 16==nBits || 32==nBits);
+        ASSERT_require(8==nBits || 16==nBits || 32==nBits);
         typedef typename State<ValueType>::Memory::CellList CellList;
         ValueType<nBits> dflt = dflt_ptr ? *dflt_ptr : ValueType<nBits>();
 
@@ -972,7 +972,7 @@ public:
             if (e0->get_nbits()==nBits) {
                 retval = ValueType<nBits>(e0);
             } else {
-                assert(e0->get_nbits()>nBits);
+                ASSERT_require(e0->get_nbits()>nBits);
                 retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_EXTRACT,
                                                                LeafNode::create_integer(32, 0),
                                                                LeafNode::create_integer(32, nBits),
@@ -1024,7 +1024,7 @@ public:
     /** Writes a value to memory. */
     template <size_t Len>
     void mem_write(State<ValueType> &state, const ValueType<32> &addr, const ValueType<Len> &data) {
-        ROSE_ASSERT(&state!=&orig_state);
+        ASSERT_require(&state!=&orig_state);
         typedef typename State<ValueType>::Memory::CellList CellList;
         ValueType<Len> data_with_def(data);
         data_with_def.defined_by(cur_insn);
@@ -1056,7 +1056,7 @@ instruction.  x86 \"REP\" instructions might be the culprit: ROSE\n\
 instruction semantics treat them as a tiny loop, updating the policy's EIP\n\
 depending on whether the loop is to be taken again, or not.\n");
             std::cerr <<"ip = " <<cur_state.registers.ip <<"\n";
-            assert(cur_state.registers.ip.known_value()==insn->get_address()); // redundant, used for error mesg
+            ASSERT_require(cur_state.registers.ip.known_value()==insn->get_address()); // redundant, used for error mesg
             abort(); // we must fail even when optimized
         }
         if (0==ninsns++)
@@ -1572,7 +1572,7 @@ depending on whether the loop is to be taken again, or not.\n");
                     throw Exception("byte access only valid for general purpose registers");
                 if (reg.get_minor()>=cur_state.registers.n_gprs)
                     throw Exception("register not implemented in semantic policy");
-                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                ASSERT_require(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                 switch (reg.get_offset()) {
                     case 0:
                         return extract<0, Len>(cur_state.registers.gpr[reg.get_minor()]);
@@ -1691,7 +1691,7 @@ depending on whether the loop is to be taken again, or not.\n");
                     throw Exception("byte access only valid for general purpose registers.");
                 if (reg.get_minor()>=cur_state.registers.n_gprs)
                     throw Exception("register not implemented in semantic policy");
-                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                ASSERT_require(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                 switch (reg.get_offset()) {
                     case 0:
                         cur_state.registers.gpr[reg.get_minor()] =                                    // no-op extend

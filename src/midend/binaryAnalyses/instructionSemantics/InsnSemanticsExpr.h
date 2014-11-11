@@ -140,7 +140,7 @@ protected:
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
     mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
+    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { ASSERT_require(nbits>0); }
 
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
@@ -288,99 +288,99 @@ public:
 };
 
 struct AddSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct AndSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct OrSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct XorSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SmulSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
 };
 struct UmulSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
 };
 struct ConcatSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ExtractSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct AsrSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct InvertSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct NegateSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct IteSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct NoopSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct RolSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct RorSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UextendSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SextendSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SgeSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SgtSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SleSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SltSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UgeSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UgtSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UleSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UltSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ZeropSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SdivSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SmodSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UdivSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UmodSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ShiftSimplifier: Simplifier {
     bool newbits;
@@ -389,17 +389,17 @@ struct ShiftSimplifier: Simplifier {
 };
 struct ShlSimplifier: ShiftSimplifier {
     ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ShrSimplifier: ShiftSimplifier {
     ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct LssbSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct MssbSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 
 /** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the life of
@@ -476,7 +476,7 @@ public:
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t get_value() const { assert(!"not a constant value"); return 0;}
+    virtual uint64_t get_value() const { ASSERT_forbid2(true, "not a constant value"); return 0;}
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return nnodes_; }
 
@@ -484,7 +484,7 @@ public:
     size_t nchildren() const { return children.size(); }
 
     /** Returns the specified child. */
-    TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
+    TreeNodePtr child(size_t idx) const { ASSERT_require(idx<children.size()); return children[idx]; }
 
     /** Returns all children. */
     TreeNodes get_children() const { return children; }
@@ -530,7 +530,7 @@ public:
     TreeNodePtr rewrite(const Simplifier &simplifier) const;
 
     // documented in super class
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
@@ -596,7 +596,7 @@ public:
     uint64_t get_name() const;
 
     // documented in super class
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     /** Prints an integer interpreted as a signed value. */
     void print_as_signed(std::ostream&, Formatter&, bool as_signed=true) const;

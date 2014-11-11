@@ -416,8 +416,6 @@ public:
      *  then that same instruction will be returned this time. */
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const;
 
-    
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner basic block placeholder operations
@@ -503,6 +501,13 @@ public:
      *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead. */
     size_t nBasicBlocks() const;
 
+    /** Returns all basic blocks attached to the CFG.
+     *
+     *  The returned list contains distinct basic blocks sorted by their starting address.
+     *
+     * @sa basicBlocksOverlapping, @ref basicBlocksSpanning, @ref basicBlocksContainedIn */
+    std::vector<BasicBlock::Ptr> basicBlocks() const;
+
     /** Determines whether a discovered basic block exists in the CFG/AUM.
      *
      *  If the CFG/AUM contains a basic block that starts at the specified address then a pointer to that basic block is
@@ -553,6 +558,12 @@ public:
      *
      *  The returned list of basic blocks are sorted by their starting address. */
     std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const;
+
+    /** Returns the basic block that contains a specific instruction address.
+     *
+     *  Returns the basic block that contains an instruction that starts at the specified address, or null if no such
+     *  instruction or basic block exists in the CFG/AUM. */
+    BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const;
 
     /** Returns the addresses used by basic block instructions.
      *

@@ -29,17 +29,17 @@ public:
 
     virtual ~DisassemblerX86() {}
 
-    virtual DisassemblerX86 *clone() const /*override*/ { return new DisassemblerX86(*this); }
+    virtual DisassemblerX86 *clone() const ROSE_OVERRIDE { return new DisassemblerX86(*this); }
 
     /** See Disassembler::can_disassemble */
-    virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
+    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
     /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) /*override*/;
+                                             AddressSet *successors=NULL) ROSE_OVERRIDE;
 
     /** Make an unknown instruction from an exception. */
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) /*override*/;
+    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) ROSE_OVERRIDE;
 
 
     /*========================================================================================================================

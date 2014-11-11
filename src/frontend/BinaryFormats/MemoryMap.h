@@ -96,11 +96,18 @@ public:
 #   endif
 
     // Accessibility flags
+    static const unsigned NO_ACCESS = 0;
     static const unsigned READABLE = Sawyer::Access::READABLE;
     static const unsigned WRITABLE = Sawyer::Access::WRITABLE;
     static const unsigned EXECUTABLE = Sawyer::Access::EXECUTABLE;
     static const unsigned IMMUTABLE = Sawyer::Access::IMMUTABLE;
     static const unsigned PRIVATE = 0x00000100;
+
+    // Aggregate accessibility flags
+    static const unsigned READ_WRITE = READABLE | WRITABLE;
+    static const unsigned READ_EXECUTE = READABLE | EXECUTABLE;
+    static const unsigned READ_WRITE_EXECUTE = READABLE | WRITABLE | EXECUTABLE;
+    
 
 public:
     /** Exception for MemoryMap operations. */
@@ -266,6 +273,12 @@ public:
 
     /** Documentation string for @ref insertFile. */
     static std::string insertFileDocumentation();
+
+    /** Insert the memory of some other process into this memory map. */
+    void insertProcess(const std::string &locatorString);
+
+    /** Documentation string for @ref insertProcess. */
+    static std::string insertProcessDocumentation();
 
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void eraseZeros(size_t minsize);

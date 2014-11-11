@@ -23,7 +23,7 @@ to_str(Operator o)
 {
     static char buf[64];
     std::string s = stringifyBinaryAnalysisInsnSemanticsExprOperator(o, "OP_");
-    assert(s.size()<sizeof buf);
+    ASSERT_require(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
     for (char *s=buf; *s; s++) {
         if ('_'==*s) {
@@ -80,12 +80,12 @@ TreeNode::assert_acyclic() const
     struct T1: Visitor {
         std::vector<const TreeNode*> ancestors;
         VisitAction preVisit(const TreeNodePtr &node) {
-            assert(std::find(ancestors.begin(), ancestors.end(), getRawPointer(node))==ancestors.end());
+            ASSERT_require(std::find(ancestors.begin(), ancestors.end(), getRawPointer(node))==ancestors.end());
             ancestors.push_back(getRawPointer(node));
             return CONTINUE;
         }
         VisitAction postVisit(const TreeNodePtr &node) {
-            assert(!ancestors.empty() && ancestors.back()==getRawPointer(node));
+            ASSERT_require(!ancestors.empty() && ancestors.back()==getRawPointer(node));
             ancestors.pop_back();
             return CONTINUE;
         }
@@ -102,7 +102,7 @@ TreeNode::assert_acyclic() const
 void
 InternalNode::add_child(const TreeNodePtr &child)
 {
-    assert(child!=0);
+    ASSERT_not_null(child);
     children.push_back(child);
     nnodes_ += child->nnodes();
 }
@@ -264,7 +264,7 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
             } else if (hashval==0 && other->hashval!=0) {
                 hashval = other->hashval;
             } else {
-                assert(hashval==other->hashval);
+                ASSERT_require(hashval==other->hashval);
             }
         } else {
 #ifdef InsnInstructionExpr_USE_HASHES
@@ -279,7 +279,7 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
 TreeNodePtr
 InternalNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
 {
-    assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
+    ASSERT_require(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
     if (equivalent_to(from))
         return to;
     bool substituted = false;
@@ -343,40 +343,42 @@ InternalNode::nonassociative() const
 static int
 expr_cmp(const TreeNodePtr &a, const TreeNodePtr &b)
 {
-    assert(a!=NULL && b!=NULL);
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
     InternalNodePtr ai = a->isInternalNode();
     InternalNodePtr bi = b->isInternalNode();
     LeafNodePtr al = a->isLeafNode();
     LeafNodePtr bl = b->isLeafNode();
-    assert((ai!=NULL) xor (al!=NULL));
-    assert((bi!=NULL) xor (bl!=NULL));
+    ASSERT_require((ai!=NULL) xor (al!=NULL));
+    ASSERT_require((bi!=NULL) xor (bl!=NULL));
 
     if ((ai==NULL) != (bi==NULL)) {
         // internal nodes are less than leaf nodes
         return ai!=NULL ? -1 : 1;
     } else if (al!=NULL) {
         // both are leaf nodes
-        assert(bl!=NULL);
+        ASSERT_not_null(bl);
         if (al->is_known() != bl->is_known()) {
             // constants are greater than variables
             return al->is_known() ? 1 : -1;
         } else if (al->is_known()) {
             // both are constants, sort by unsigned value
-            assert(bl->is_known());
+            ASSERT_require(bl->is_known());
             return al->get_bits().compare(bl->get_bits());
         } else if (al->is_variable() != bl->is_variable()) {
             // variables are less than memory
             return al->is_variable() ? -1 : 1;
         } else {
             // both are variables or both are memory; sort by variable name
-            assert((al->is_variable() && bl->is_variable()) || (al->is_memory() && bl->is_memory()));
+            ASSERT_require((al->is_variable() && bl->is_variable()) || (al->is_memory() && bl->is_memory()));
             if (al->get_name() != bl->get_name())
                 return al->get_name() < bl->get_name() ? -1 : 1;
             return 0;
         }
     } else {
         // both are internal nodes
-        assert(ai!=NULL && bi!=NULL);
+        ASSERT_not_null(ai);
+        ASSERT_not_null(bi);
         if (ai->get_operator() != bi->get_operator())
             return ai->get_operator() < bi->get_operator() ? -1 : 1;
         for (size_t i=0; i<std::min(ai->nchildren(), bi->nchildren()); ++i) {
@@ -434,8 +436,8 @@ InternalNode::additive_nesting() const
 {
     InternalNodePtr nested = child(1)->isInternalNode();
     if (nested!=NULL && nested->get_operator()==get_operator()) {
-        assert(nested->nchildren()==nchildren());
-        assert(nested->get_nbits()==get_nbits());
+        ASSERT_require(nested->nchildren()==nchildren());
+        ASSERT_require(nested->get_nbits()==get_nbits());
         size_t additive_nbits = std::max(child(0)->get_nbits(), nested->child(0)->get_nbits());
 
         // The two addends must be the same width, so zero-extend them if necessary (or should we sign extend?)
@@ -570,8 +572,9 @@ AddSimplifier::rewrite(const InternalNode *inode) const
     //   (add 0 3 1 2 2 1) == 1 mod 4
     struct are_duals {
         bool operator()(TreeNodePtr a, TreeNodePtr b, Sawyer::Container::BitVector &adjustment/*in,out*/) {
-            assert(a!=NULL && b!=NULL);
-            assert(a->get_nbits()==b->get_nbits());
+            ASSERT_not_null(a);
+            ASSERT_not_null(b);
+            ASSERT_require(a->get_nbits()==b->get_nbits());
 
             // swap A and B if necessary so we have form (1) or (2).
             if (b->isInternalNode()==NULL)
@@ -582,7 +585,7 @@ AddSimplifier::rewrite(const InternalNode *inode) const
             InternalNodePtr bi = b->isInternalNode();
             if (bi->get_operator()==OP_NEGATE) {
                 // form (3)
-                assert(1==bi->nchildren());
+                ASSERT_require(1==bi->nchildren());
                 return a->equivalent_to(bi->child(0));
             } else if (bi->get_operator()==OP_INVERT) {
                 // form (4) and ninverts is small enough
@@ -717,7 +720,7 @@ SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator 
             result *= (int64_t)leaf->get_value();
             nbits += leaf->get_nbits();
         }
-        assert(nbits<=8*sizeof result);
+        ASSERT_require(nbits<=8*sizeof result);
         return LeafNode::create_integer(nbits, result);
     } else {
         // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than
@@ -737,7 +740,7 @@ UmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator 
             result *= leaf->get_value();
             nbits += leaf->get_nbits();
         }
-        assert(nbits>0 && nbits<=8*sizeof result);
+        ASSERT_require(nbits>0 && nbits<=8*sizeof result);
         return LeafNode::create_integer(nbits, result);
     } else {
         // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than
@@ -874,7 +877,7 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 AsrSimplifier::rewrite(const InternalNode *inode) const
 {
-    assert(2==inode->nchildren());
+    ASSERT_require(2==inode->nchildren());
 
     // Constant folding
     LeafNodePtr shift_leaf   = inode->child(0)->isLeafNode();
@@ -918,7 +921,7 @@ IteSimplifier::rewrite(const InternalNode *inode) const
     // Is the condition known?
     LeafNodePtr cond_node = inode->child(0)->isLeafNode();
     if (cond_node!=NULL && cond_node->is_known()) {
-        assert(1==cond_node->get_nbits());
+        ASSERT_require(1==cond_node->get_nbits());
         return cond_node->get_value() ? inode->child(1) : inode->child(2);
     }
 
@@ -1602,7 +1605,7 @@ LeafNode::get_value() const
 const Sawyer::Container::BitVector&
 LeafNode::get_bits() const
 {
-    assert(is_known());
+    ASSERT_require(is_known());
     return bits;
 }
 
@@ -1621,7 +1624,7 @@ LeafNode::is_memory() const
 uint64_t
 LeafNode::get_name() const
 {
-    assert(is_variable() || is_memory());
+    ASSERT_require(is_variable() || is_memory());
     return name;
 }
 
@@ -1688,8 +1691,7 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
                 o <<"v";
                 break;
             case CONSTANT:
-                assert(!"handled above");
-                abort();
+                ASSERT_not_reachable("handled above");
         }
         o <<renamed;
     }
@@ -1777,7 +1779,7 @@ LeafNode::equivalent_to(const TreeNodePtr &other_) const
 TreeNodePtr
 LeafNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
 {
-    assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
+    ASSERT_require(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
     if (equivalent_to(from))
         return to;
     return sharedFromThis();

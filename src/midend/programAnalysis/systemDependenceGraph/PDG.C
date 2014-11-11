@@ -3,6 +3,8 @@
  * Author: Cong Hou [hou_cong@gatech.edu]
  */
 
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "PDG.h"
 #include "util.h"
 #include <VariableRenaming.h>
