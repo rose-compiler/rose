@@ -29,7 +29,7 @@ add_library(poet
   poet_yacc.c)
 
 add_executable(pcg main.cpp)
-target_link_libraries(pcg ROSE_DLL)
+target_link_libraries(pcg ROSE_DLL ${Boost_LIBRARIES})
 
 
 ########### install files ###############
