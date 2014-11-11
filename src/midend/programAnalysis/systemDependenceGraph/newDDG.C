@@ -1,3 +1,5 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "newDDG.h"
 #include <VariableRenaming.h>
 #include <boost/bind.hpp>

@@ -1,3 +1,4 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
 #include "uniqueNameTraversal.h"
 #include "staticSingleAssignment.h"
 #include <boost/foreach.hpp>

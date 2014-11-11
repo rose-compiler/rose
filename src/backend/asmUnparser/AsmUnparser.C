@@ -73,7 +73,7 @@ void AsmUnparser::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
