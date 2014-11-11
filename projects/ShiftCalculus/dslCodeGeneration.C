@@ -16,6 +16,10 @@ using namespace std;
 
 using namespace DSL_Support;
 
+//We don't generate cuda code by default
+bool b_gen_cuda = false;
+// an internal variable to store the generated serial loop nests.
+static SgForStatement* temp_for_loop_nest = NULL; 
 
 // SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody, SgVariableSymbol* sourceVariableSymbol,
 //    SgVariableSymbol* & indexVariableSymbol_X, SgVariableSymbol* & indexVariableSymbol_Y, SgVariableSymbol* & indexVariableSymbol_Z, 
@@ -554,6 +558,30 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
        // Assemble the stencilSubTreeArray into a single expression.
           SgExprStatement* stencilStatement = assembleStencilSubTreeArray(stencil_lhs,stencilSubTreeArray,stencilDimension,destinationVariableSymbol);
           SageInterface::appendStatement(stencilStatement,innerLoopBody);
+
+          // Liao, 11/10/2014, further CUDA code generation if requested 
+          if (b_gen_cuda)
+          {
+            if (stencilFSM->stencilDimension()==2)
+            {
+              // currently arraySize_X is generated inside the loop nest. No need to specify its sharing attribute.
+              //string parallel_pragma_string= "#pragma omp parallel for shared (destinationDataPointer, sourceDataPointer, arraySize_X)"
+              string parallel_pragma_string= "#pragma omp parallel for shared (destinationDataPointer, sourceDataPointer)";
+              SgPragmaDeclaration* pragma1 = SageBuilder::buildPragmaDeclaration (parallel_pragma_string, NULL);
+              SageInterface::insertStatementBefore(loopNest,  pragma1);
+              // TODO: once total arraySize is calculated , we use a variable arraySize_Total instead of 1764 ( 42*42 )
+              string target_pragma_string = "#pragma omp target device(0) map (out:destinationDataPointer[0:1764]) map(in:sourceDataPointer[0:1764])";
+              SgPragmaDeclaration* pragma2 = SageBuilder::buildPragmaDeclaration (target_pragma_string, NULL);
+              SageInterface::insertStatementBefore(pragma1,  pragma2);
+            }
+            else
+            {
+              std::cerr<<"Error, only 2-D CUDA generation is considered for now."<<std::endl;
+              ROSE_ASSERT (false);
+            }
+          } 
+
+
         }
    }
 

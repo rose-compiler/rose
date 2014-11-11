@@ -28,10 +28,22 @@ int main( int argc, char * argv[] )
   // bool frontendConstantFolding = true;
      bool frontendConstantFolding = false;
 
-  // Generate the ROSE AST.
-     SgProject* project = frontend(argc,argv,frontendConstantFolding);
-     ROSE_ASSERT(project != NULL);
+// Liao, support a flag to control if CUDA code should be generated
+// ./shiftCalculusCompiler -rose:dslcompiler:cuda  -c input_file
+    std::vector <std::string> argvList (argv, argv + argc);
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","cuda",true))
+    {
+      std::cout<<"Turning on CUDA code generation ..."<<std::endl;
+      b_gen_cuda = true;
+    }
+    else
+      b_gen_cuda = false;
 
+
+  // Generate the ROSE AST.
+     //SgProject* project = frontend(argc,argv,frontendConstantFolding);
+     SgProject* project = frontend(argvList,frontendConstantFolding);
+     ROSE_ASSERT(project != NULL);
 #if DEBUG_USING_DOT_GRAPHS
   // generateDOTforMultipleFile(*project);
      generateDOT(*project,"_before_transformation");
