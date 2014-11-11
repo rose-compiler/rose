@@ -1357,7 +1357,10 @@ int main( int argc, char * argv[] ) {
     ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
-    ("with-counterexamples", po::value< string >(), "adds an input sequence to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
+    ("with-counterexamples", po::value< string >(), "adds counterexample traces to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
+    ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
+    ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
+    ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
@@ -1438,6 +1441,9 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("std-out-only",false);
 
   boolOptions.registerOption("with-counterexamples",false);
+  boolOptions.registerOption("with-assert-counterexamples",false);
+  boolOptions.registerOption("with-ltl-counterexamples",false);
+  boolOptions.registerOption("counterexamples-with-output",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
 
@@ -1766,7 +1772,7 @@ int main( int argc, char * argv[] ) {
 
   double extractAssertionTracesTime= 0;
   int maxOfShortestAssertInput = -1;
-  if ( boolOptions["with-counterexamples"]) {
+  if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
     timer.start();
     maxOfShortestAssertInput = analyzer.extractAssertionTraces();
     extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
@@ -1792,7 +1798,7 @@ int main( int argc, char * argv[] ) {
 #endif
 
   cout << "=============================================================="<<endl;
-  bool withCe = boolOptions["with-counterexamples"];
+  bool withCe = boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"];
   analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
 #if 0
   // TODO: reachability in presence of semantic folding
@@ -1994,7 +2000,7 @@ int main( int argc, char * argv[] ) {
       }
     }
     bool withCounterexample = false;
-    if(boolOptions["with-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
+    if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
       withCounterexample = true;
     }
     timer.start();

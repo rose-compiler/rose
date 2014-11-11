@@ -188,12 +188,12 @@ namespace CodeThorn {
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
     // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
-    list<const EState*>reverseInputSequenceBreadthFirst(const EState* source, const EState* target);
+    list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
     // returns a list of EStates from source to target (shortest input path). 
     // please note: target has to be a predecessor of source (reversed trace)
-    list<const EState*> reverseInputSequenceDijkstra(const EState* source, const EState* target);
-    list<const EState*> filterStdInOnly(list<const EState*>& states) const;
-    string reversedInputRunToString(list<const EState*>& run);
+    list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    list<const EState*> filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput = false) const;
+    string reversedInOutRunToString(list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
     

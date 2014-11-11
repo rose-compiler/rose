@@ -190,7 +190,7 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
       //assign a string representation of the counter example if the corresponding out parameter is set
       if (ce_ptr) {
         std::string r = runResult.str();
-        r = filterRunInputOnly(r);
+        r = filterCounterexample(r, boolOptions["counterexamples-with-output"]);
         *ce_ptr = new string(r);//formatRun(r);	
       }
       delete run;
@@ -352,7 +352,7 @@ std::string* SpotConnection::formatRun(string& run) {
   return result;
 }
 
-std::string SpotConnection::filterRunInputOnly(std::string spotRun) {
+std::string SpotConnection::filterCounterexample(std::string spotRun, bool includeOutputStates) {
   // 1.) read in list of prefix props and cycle props
   std::list<std::string> prefix, cycle;
   std::istringstream run(spotRun);
@@ -372,6 +372,9 @@ std::string SpotConnection::filterRunInputOnly(std::string spotRun) {
     } else if (line.at(0) == '|') {  //indicates a transition
       line = line.substr(1, (line.size()-1));	//cut off the '|' prefix
       boost::trim(line);
+      vector<std::string> transitionAndAccSet; 
+      boost::split(transitionAndAccSet, line, boost::is_any_of("{")); 
+      line = *transitionAndAccSet.begin();       //cut off "{<acceptance-sets>}" suffix
       // iterate over all propositions in the transition and only add the non-negated one
       vector<std::string> props; 		
       boost::split_regex(props, line, boost::regex("( & )|(\\{)"));
@@ -379,7 +382,7 @@ std::string SpotConnection::filterRunInputOnly(std::string spotRun) {
       vector<string>::iterator i;
       for(vector<string>::iterator i = props.begin(); i < props.end(); i++) {
         boost::trim(*i);
-        if (i->at(0) != '!' && i->at(0) != 'A') {  //'A' indicates "{Acc[<num>]}" (acceptance set)
+        if (i->at(0) != '!' && i->at(0) != 'A' && i->at(0) != ' ') {  //'A' indicates "{Acc[<num>]}" (acceptance set)
           if (currentPart == RUN_PREFIX) {
             prefix.push_back(*i);
           } else if (currentPart == RUN_CYCLE) {
@@ -391,34 +394,35 @@ std::string SpotConnection::filterRunInputOnly(std::string spotRun) {
         }
       }			
     }
-  }		
-  // 2.) remove all output elements
-  std::list<std::string> inputPrefix;
-  for (std::list<std::string>::iterator i = prefix.begin(); i != prefix.end() ; ++i) {
-    if (i->at(0) == 'i') {  //only select input propositions
-      inputPrefix.push_back(*i);
-      //cout << "DEBUG: added " << (*i) << " to inputPrefix. " << endl;
-    }
   }
-  std::list<std::string> inputCycle;
-  for (std::list<std::string>::iterator i = cycle.begin(); i != cycle.end() ; ++i) {
-    if (i->at(0) == 'i') {  //only select input propositions
-      inputCycle.push_back(*i);
-      //cout << "DEBUG: added " << (*i) << " to inputCycle. " << endl;
+  // 2.) remove output states from the returned counterexample if parameter "includeOutputStates" is false   
+  std::list<std::string> returnedPrefix;
+  std::list<std::string> returnedCycle;
+    for (std::list<std::string>::iterator i = prefix.begin(); i != prefix.end() ; ++i) {
+      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) {  //only select input propositions
+        returnedPrefix.push_back(*i);
+        //cout << "DEBUG: added " << (*i) << " to returnedPrefix. " << endl;
+      }
     }
-  }
+    for (std::list<std::string>::iterator i = cycle.begin(); i != cycle.end() ; ++i) {
+      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) {  //only select input propositions
+        returnedCycle.push_back(*i);
+        //cout << "DEBUG: added " << (*i) << " to returnedCycle. " << endl;
+      }
+    }
+  
   // 3.) concatenate and return both prefix and cycle as a formatted string
   result += "[";
-  for (std::list<std::string>::iterator i = inputPrefix.begin(); i != inputPrefix.end() ; ++i) {
-    if (i != inputPrefix.begin()) {
+  for (std::list<std::string>::iterator i = returnedPrefix.begin(); i != returnedPrefix.end() ; ++i) {
+    if (i != returnedPrefix.begin()) {
       result += ";";
     }
     result += (*i);
   }
   result += "]";
   result += "([";
-  for (std::list<std::string>::iterator i = inputCycle.begin(); i != inputCycle.end() ; ++i) {
-    if (i != inputCycle.begin()) {
+  for (std::list<std::string>::iterator i = returnedCycle.begin(); i != returnedCycle.end() ; ++i) {
+    if (i != returnedCycle.begin()) {
       result += ";";
     }
     result += (*i);

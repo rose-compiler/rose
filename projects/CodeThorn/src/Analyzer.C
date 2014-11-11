@@ -2799,7 +2799,7 @@ void Analyzer::runSolver5() {
               if(assertCode>=0) {
 #pragma omp critical
                 {
-                  if(boolOptions["with-counterexamples"] ) { 
+                  if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
 		    //if this particular assertion was never reached before, compute and update counterexample
 		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                       _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
@@ -3152,14 +3152,14 @@ int Analyzer::extractAssertionTraces() {
   return -1;
 }
 
-list<const EState*> Analyzer::reverseInputSequenceBreadthFirst(const EState* source, const EState* target) {
-  // 1.) init: list wl , hashset predecessor, hasset visited
+list<const EState*> Analyzer::reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput) {
+  // 1.) init: list wl , hashset predecessor, hashset visited
   list<const EState*> worklist;
   worklist.push_back(source);
   boost::unordered_map <const EState*, const EState*> predecessor;
   boost::unordered_set<const EState*> visited;
   // 2.) while (elem in worklist) {s <-- pop wl; if (s not yet visited) {update predecessor map; 
-  //                                check if s==target; yes --> break, no --> add all pred to wl }}
+  //                                check if s==target: yes --> break, no --> add all pred to wl }}
   bool targetFound = false;
   while (worklist.size() > 0 && !targetFound) {
     const EState* vertex = worklist.front();
@@ -3182,7 +3182,7 @@ list<const EState*> Analyzer::reverseInputSequenceBreadthFirst(const EState* sou
     cout << "ERROR: target state not connected to source while generating reversed trace source --> target." << endl;
     assert(0);
   }
-  // 3.) reconstruct trace. filter list of only input states and return it
+  // 3.) reconstruct trace. filter list of only input ( & output) states and return it
   list<const EState*> run;
   run.push_front(target);
   boost::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
@@ -3190,11 +3190,11 @@ list<const EState*> Analyzer::reverseInputSequenceBreadthFirst(const EState* sou
     run.push_front(nextPred->second);
     nextPred = predecessor.find(nextPred->second);
   }
-  list<const EState*> result = filterStdInOnly(run);
+  list<const EState*> result = filterStdInOutOnly(run, counterexampleWithOutput);
   return result;
 }
 
-list<const EState*> Analyzer::reverseInputSequenceDijkstra(const EState* source, const EState* target) {
+list<const EState*> Analyzer::reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput) {
   EStatePtrSet states = transitionGraph.estateSet();
   boost::unordered_set<const EState*> worklist;
   map <const EState*, int> distance;
@@ -3258,33 +3258,42 @@ list<const EState*> Analyzer::reverseInputSequenceDijkstra(const EState* source,
     nextPred = predecessor.find(nextPred->second);
   }
   assert ((*run.begin()) == source);
-  list<const EState*> result = filterStdInOnly(run);
+  list<const EState*> result = filterStdInOutOnly(run, counterexampleWithOutput);
   return result;
 }
 
-list<const EState*> Analyzer::filterStdInOnly(list<const EState*>& states) const {
+list<const EState*> Analyzer::filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput) const {
   list<const EState*> result;
   for (list<const EState*>::iterator i = states.begin(); i != states.end(); i++ ) {
-    if( (*i)->io.isStdInIO() ) { 
+    if( (*i)->io.isStdInIO() || (counterexampleWithOutput && (*i)->io.isStdOutIO())) { 
       result.push_back(*i);
     }
   }
   return result;
 } 
 
-string Analyzer::reversedInputRunToString(list<const EState*>& run) {
+string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
   string result = "[";
   for (list<const EState*>::reverse_iterator i = run.rbegin(); i != run.rend(); i++ ) {
     if (i != run.rbegin()) {
       result += ";";
     }
-    //get input value
+    //get input or output value
     PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
-    int iVal = (*pstate)[globalVarIdByName("input")].getValue().getIntValue();
+    int inOutVal;
+    if ((*i)->io.isStdInIO()) {
+      inOutVal = (*pstate)[globalVarIdByName("input")].getValue().getIntValue();
+      result += "i";
+    } else if ((*i)->io.isStdOutIO()) {
+      inOutVal = (*pstate)[globalVarIdByName("output")].getValue().getIntValue();
+      result += "o";
+    } else {
+      assert(0);  //function is supposed to handle list of stdIn and stdOut states only
+    }
     //transform into string representation and add to result
-    char iValChar = (char) (iVal + ((int) 'A') - 1);
-    string ltlInputVar = "i" + boost::lexical_cast<string>(iValChar);
-    result += ltlInputVar; 
+    char inOutValChar = (char) (inOutVal + ((int) 'A') - 1);
+    string ltlInOutVar = boost::lexical_cast<string>(inOutValChar);
+    result += ltlInOutVar; 
   }
   result += "]";
   return result;
@@ -3293,12 +3302,14 @@ string Analyzer::reversedInputRunToString(list<const EState*>& run) {
 int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   list<const EState*> counterexampleRun;
   if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
-    counterexampleRun = reverseInputSequenceBreadthFirst(assertEState, transitionGraph.getStartEState());
+    counterexampleRun = reverseInOutSequenceBreadthFirst(assertEState, transitionGraph.getStartEState(), 
+                                                         boolOptions["counterexamples-with-output"]);
   } else {
-    counterexampleRun = reverseInputSequenceDijkstra(assertEState, transitionGraph.getStartEState());
+    counterexampleRun = reverseInOutSequenceDijkstra(assertEState, transitionGraph.getStartEState(), 
+                                                     boolOptions["counterexamples-with-output"]);
   }
   int ceRunLength = counterexampleRun.size();
-  string counterexample = reversedInputRunToString(counterexampleRun);
+  string counterexample = reversedInOutRunToString(counterexampleRun);
   //cout << "DEBUG: adding assert counterexample " << counterexample << endl;
   reachabilityResults.strictUpdateCounterexample(assertCode, counterexample);
   return ceRunLength;
@@ -3307,9 +3318,9 @@ int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
 int Analyzer::inputSequenceLength(const EState* target) {
   list<const EState*> run;
   if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
-    run = reverseInputSequenceBreadthFirst(target, transitionGraph.getStartEState());
+    run = reverseInOutSequenceBreadthFirst(target, transitionGraph.getStartEState());
   } else {
-    run = reverseInputSequenceDijkstra(target, transitionGraph.getStartEState());
+    run = reverseInOutSequenceDijkstra(target, transitionGraph.getStartEState());
   }
   return run.size();
 }
