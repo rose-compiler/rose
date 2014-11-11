@@ -143,7 +143,7 @@ public:
             // Simulate some instructions
             for (/*void*/; ninsns<limit && policy.readRegister<32>(semantics.REG_EIP).is_known(); ++ninsns) {
                 rose_addr_t va = policy.readRegister<32>(semantics.REG_EIP).known_value();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(thread->get_process()->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(thread->get_process()->get_instruction(va));
                 semantics.processInstruction(insn);
             }
         } catch (const Disassembler::Exception &e) {
@@ -177,13 +177,13 @@ public:
     virtual AnalysisTrigger *clone() { return this; }
 
     // Given a function, figure out what part of the address space its instructions occupy.
-    ExtentMap function_extent(SgAsmFunction *func) {
+    AddressIntervalSet function_extent(SgAsmFunction *func) {
         struct: public AstSimpleProcessing {
-            ExtentMap extents;
+            AddressIntervalSet extents;
             void visit(SgNode *node) {
                 SgAsmInstruction *insn = isSgAsmInstruction(node);
                 if (insn)
-                    extents.insert(Extent(insn->get_address(), insn->get_size()));
+                    extents.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
             }
         } t;
         t.traverse(func, preorder);
@@ -251,7 +251,7 @@ public:
                 }
 
                 // Limit the range of addresses that will be considered during the analysis
-                ExtentMap addrspc;
+                AddressIntervalSet addrspc;
                 if (limit_to_function) {
                     SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
                     if (func) {
@@ -260,7 +260,7 @@ public:
                         m->mesg("%s: cannot limit analysis to a single function at insn at 0x%08"PRIx64, name, analysis_addr);
                     }
                 } else if (!limits.empty()) {
-                    addrspc = limits;
+                    addrspc = toAddressIntervalSet(limits);
                 }
 
                 // Do one pointer analysis

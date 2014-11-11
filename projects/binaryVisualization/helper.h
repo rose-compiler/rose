@@ -131,7 +131,7 @@ public:
       unsigned int call=0;
       std::vector<SgAsmStatement*>::iterator it= instructions.begin();
       for (;it!=instructions.end();it++) {
-	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
+	SgAsmX86Instruction* inst = isSgAsmX86Instruction(*it);
 	if (inst) {
 	  nrInst++;
 	  if (x86InstructionIsControlTransfer(inst) ||

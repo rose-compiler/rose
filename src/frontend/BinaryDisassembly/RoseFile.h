@@ -11,6 +11,7 @@
 #include "RoseBin_abstract.h"
 #include <stdio.h>
 #include <iostream>
+// rose.h and sage3basic.h should not be included in librose header files. [Robb P. Matzke 2014-10-15]
 // #include "rose.h"
 #include "RoseBin_file.h"
 

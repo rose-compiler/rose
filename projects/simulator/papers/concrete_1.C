@@ -62,11 +62,11 @@ public:
             // manipulation if this example were multi-threaded.  The buffer should be at or above 0x40000000, at least one
             // page in length, and aligned on a page boundary.
             RTS_WRITE(process->rwlock()) {
-                buf_va = process->get_memory().find_free(0x40000000, sizeof buf, 0x1000);
-                if (buf_va) {
-                    MemoryMap::BufferPtr sgmt_buffer = MemoryMap::ExternBuffer::create(buf, sizeof buf);
-                    MemoryMap::Segment sgmt(sgmt_buffer, 0, MemoryMap::MM_PROT_RWX, "Debugging page");
-                    process->get_memory().insert(AddressInterval::baseSize(buf_va, sizeof buf), sgmt);
+                unsigned rwx = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;
+                AddressInterval restriction = AddressInterval::hull(0x40000000, AddressInterval::whole().greatest());
+                if (process->get_memory().findFreeSpace(sizeof buf, 0x1000, restriction).assignTo(buf_va)) {
+                    process->get_memory().insert(AddressInterval::baseSize(buf_va, sizeof buf),
+                                                 MemoryMap::Segment::staticInstance(buf, sizeof buf, rwx, "Debugging page"));
                 }
             } RTS_WRITE_END;
             if (!buf_va) {

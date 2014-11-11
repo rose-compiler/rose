@@ -1,5 +1,5 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "AST_BIN_Traversal.h"
 
 
@@ -26,7 +26,7 @@ void AST_BIN_Traversal::visit(SgNode* n) {
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
         name = isSgAsmFunction(n)->get_name();
       }
-      if (isSgAsmx86Instruction(n) && isSgAsmx86Instruction(n)->get_kind() == x86_call)
+      if (isSgAsmX86Instruction(n) && isSgAsmX86Instruction(n)->get_kind() == x86_call)
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       if (isSgAsmValueExpression(n))
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";

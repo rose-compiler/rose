@@ -917,7 +917,7 @@ int
 main(int argc, char* argv[])
    {
   // This program is only building the aterm DOT file, and using the ROSE AST as input.
-  // It demonstrate the use of the ATerm API to operate on the ROSE AST API.
+  // It demonstrates the use of the ATerm API to operate on the ROSE AST API.
   // The program demonstrates that a few ATerm API details had to made ROSE specific
   // and that one ATerm API function (generating an AFun type) is problematic since
   // in this low level representation it maps to an integer, and that integer cannot be
@@ -994,6 +994,13 @@ main(int argc, char* argv[])
      string file_basename = basename(s);
 
      ATerm_Graph::graph_aterm_ast(term,file_basename);
+
+#if 0
+  // DQ (9/17/2014): Adding test for conversion of Aterm back to AST.
+     printf ("Testing the reverse process to generate the ROSE AST from the Aterm \n");
+     SgNode* rootOfAST = convertAtermToNode(term);
+     printf ("rootOfAST = %p = %s \n",rootOfAST,rootOfAST->class_name().c_str());
+#endif
 
 #if 0
      printf ("Program Terminated Normally \n");

@@ -524,7 +524,7 @@
 #undef RETSIGTYPE
 
 /* Location (unquoted) of Boost specified on configure line. */
-#define ROSE_BOOST_PATH ${BOOST_ROOT}
+#define ROSE_BOOST_PATH "${BOOST_ROOT}"
 
 /* Location of ROSE Compile Tree. */
 #define ROSE_COMPILE_TREE_PATH ${ROSE_TOP_BINARY_DIR}
@@ -797,3 +797,7 @@
 #cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #cmakedefine ROSE_SUPPORT_MICROSOFT_EXTENSIONS
 
+/* Detect whether our compilers are GNU or not */
+#cmakedefine CMAKE_COMPILER_IS_GNUCC
+#cmakedefine CMAKE_COMPILER_IS_GNUCXX
+#cmakedefine CMAKE_COMPILER_IS_GNUG77

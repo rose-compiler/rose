@@ -18,9 +18,9 @@ std::string btorTranslate(BtorTranslationPolicy& policy, SgProject* proj, FILE* 
   SgAsmGenericHeader* header = isSgAsmGenericHeader(headers[0]);
   rose_addr_t entryPoint = header->get_entry_rva() + header->get_base_va();
   X86InstructionSemantics<BtorTranslationPolicy, BtorWordType> t(policy);
-  std::vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+  std::vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmX86Instruction);
   for (size_t i = 0; i < instructions.size(); ++i) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    SgAsmX86Instruction* insn = isSgAsmX86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
     try {
         t.processInstruction(insn);
@@ -178,25 +178,25 @@ BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32
     vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
     for (size_t i = 0; i < blocks.size(); ++i) {
       SgAsmBlock* b = isSgAsmBlock(blocks[i]);
-      if (!b->get_statementList().empty() && isSgAsmx86Instruction(b->get_statementList().front())) {
+      if (!b->get_statementList().empty() && isSgAsmX86Instruction(b->get_statementList().front())) {
         blockStarts.push_back(b->get_address());
         // fprintf(stderr, "blockStarts 0x%"PRIx64"\n", b->get_address());
       }
     }
   }
   {
-    vector<SgNode*> calls = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+    vector<SgNode*> calls = NodeQuery::querySubTree(proj, V_SgAsmX86Instruction);
     for (size_t i = 0; i < calls.size(); ++i) {
-      SgAsmx86Instruction* b = isSgAsmx86Instruction(calls[i]);
+      SgAsmX86Instruction* b = isSgAsmX86Instruction(calls[i]);
       if (b->get_kind() != x86_call) continue;
       returnPoints.push_back(b->get_address() + b->get_raw_bytes().size());
       // fprintf(stderr, "returnPoints 0x%"PRIx64"\n", b->get_address() + b->get_raw_bytes().size());
     }
   }
   {
-    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmX86Instruction);
     for (size_t i = 0; i < instructions.size(); ++i) {
-      SgAsmx86Instruction* b = isSgAsmx86Instruction(instructions[i]);
+      SgAsmX86Instruction* b = isSgAsmX86Instruction(instructions[i]);
       validIPs.push_back(b->get_address());
     }
   }
@@ -341,14 +341,14 @@ void BtorTranslationPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   void BtorTranslationPolicy::finishBlock(uint64_t addr) {
   }
 
-  void BtorTranslationPolicy::startInstruction(SgAsmx86Instruction* insn) {
+  void BtorTranslationPolicy::startInstruction(SgAsmX86Instruction* insn) {
     // fprintf(stderr, "startInstruction(0x%"PRIx64")\n", insn->get_address());
     registerMap = origRegisterMap;
     hooks->startInstruction(this, insn); // Allow hook to modify initial conditions
     registerMap.ip = number<32>(0xDEADBEEF); // For debugging
   }
 
-  void BtorTranslationPolicy::finishInstruction(SgAsmx86Instruction* insn) {
+  void BtorTranslationPolicy::finishInstruction(SgAsmX86Instruction* insn) {
     // fprintf(stderr, "finishInstruction(0x%"PRIx64")\n", insn->get_address());
     hooks->finishInstruction(this, insn); // Allow hook to modify result
     writeBack(insn->get_address());

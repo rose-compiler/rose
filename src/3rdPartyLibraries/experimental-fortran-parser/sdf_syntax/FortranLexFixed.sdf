@@ -1,0 +1,62 @@
+
+module FortranLexFixed
+
+%%
+%% F77 fixed format text can also be parsed if some pre-processing is done first,
+%% Minimal changes needed for fixed form source handling:
+%% a. change continuation symbols in 6th column by a & on the previous line (but not in a comment of course)
+%%    in VIM regexp: :g/^     [^ ]/-1s/$/ \&/ followed by :%/^     [^ ]/      / (5 spaces+nonspace -> 6 spaces) 
+%% b. change every comment-symbol (* or C) in the first column into a !.
+%%    in VIM regexp: %s/^[C\*]/!/
+
+
+imports
+
+  FortranLex
+
+exports
+ 
+sorts
+
+  Continuation
+  EOS BeginComment
+
+lexical syntax
+
+  "!" ~[\n\r]*                              -> Comment
+  "#" ~[\n\r]*                              -> Comment
+
+%% Layout does NOT have a \n since that's part of EOS
+  [\ \t]                                    -> LAYOUT
+
+  [Cc\*]      ~[\n\r]* EOL                  -> BeginComment
+  [\ \t]* "!" ~[\n\r]* EOL                  -> BeginComment
+
+%% comment lines at the start of a file/program are handled separately
+  BeginComment*                             -> StartCommentBlock
+
+%%  (EOL [Cc\*] ~[\n\r]*)+                  -> FixedComment
+%%  FixedComment                            -> Comment
+
+%%  (EOL [Cc\*] ~[\n\r]*)+                  -> FixedComment
+
+%%  (FixedComment? EOLOrSemicolon [\ \t]* )+     -> EOS
+
+  "!" ~[\n\r]*                            -> Comment
+  (Comment? EOLOrSemicolon [\ \t]* )+     -> EOS
+
+
+%%TODO-F08  (EOL [Cc\*] ~[\n\r]*)+             -> FixedComment
+%%TODO-F08   FixedComment EOL [\ \t]*          -> EOS
+%%  (FixedComment? EOLOrSemicolon [\ \t]* )+   -> EOS
+
+%%
+   EOL "     " ~[ \t\n\r]                      -> Continuation
+   Continuation                                -> LAYOUT    
+
+context-free restrictions
+
+   Continuation? -/- ~[\n\r]
+
+%% Continuation-char & should be part of continuation, so not layout.
+   LAYOUT? -/- [\&]

@@ -149,12 +149,12 @@ protected:
         BasicBlock *bblock;                     /**< Block to which this instruction belongs, if any. */
 
         /* These methods are forwarded to the underlying instruction node for convenience. */
-        Disassembler::AddressSet get_successors(bool *complete) const {
-            return node->get_successors(complete);
+        Disassembler::AddressSet getSuccessors(bool *complete) const {
+            return node->getSuccessors(complete);
         }
         rose_addr_t get_address() const { return node->get_address(); }
         size_t get_size() const { return node->get_size(); }
-        bool terminates_basic_block() const { return node->terminates_basic_block(); }
+        bool terminates_basic_block() const { return node->terminatesBasicBlock(); }
         SgUnsignedCharList get_raw_bytes() const { return node->get_raw_bytes(); } // FIXME: should return const ref?
     };
 
@@ -170,8 +170,8 @@ protected:
      *  @{ */
     static SgAsmInstruction *isSgAsmInstruction(const Instruction *);
     static SgAsmInstruction *isSgAsmInstruction(SgNode*);
-    static SgAsmx86Instruction *isSgAsmx86Instruction(const Instruction*);
-    static SgAsmx86Instruction *isSgAsmx86Instruction(SgNode*);
+    static SgAsmX86Instruction *isSgAsmX86Instruction(const Instruction*);
+    static SgAsmX86Instruction *isSgAsmX86Instruction(SgNode*);
     static SgAsmM68kInstruction *isSgAsmM68kInstruction(const Instruction*);
     static SgAsmM68kInstruction *isSgAsmM68kInstruction(SgNode*);
     /** @} */
@@ -835,10 +835,10 @@ public:
      *  The Partitioner never instantiates a CodeCriteria object directly, but rather always uses the new_code_criteria()
      *  virtual method.  This allows the user to easily augment this class to do something more interesting.
      *
-     *  Here's an example of using this class to determine if some uncategorized region of memory contains code.  First we compute
-     *  aggregate statistics across all the known functions.  Then we use the mean and variance in those statistics to create a
-     *  code criteria specification.  Then we run the same analyses over the uncategorized region of memory and ask whether the
-     *  results satisfy the criteria.  This example is essentially the implementation of Partitioner::is_code().
+     *  Here's an example of using this class to determine if some uncategorized region of memory contains code.  First we
+     *  compute aggregate statistics across all the known functions.  Then we use the mean and variance in those statistics to
+     *  create a code criteria specification.  Then we run the same analyses over the uncategorized region of memory and ask
+     *  whether the results satisfy the criteria.  This example is essentially the implementation of Partitioner::is_code().
      *
      *  @code
      *  partitioner->aggregate_statistics(); // compute stats if not already cached

@@ -1,7 +1,7 @@
 
 // Support for writing a FLIRT data base from an existing AST.
 
-#include <rose.h>
+#include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include <libraryIdentification.h>
 
@@ -464,12 +464,12 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
 #else
           MemoryMap *map = asmInterpretation->get_map(); /*map that was used durring disassembly*/
           ROSE_ASSERT(map!=NULL);
-          ROSE_ASSERT(map->exists(startAddress));
-          const MemoryMap::Segments::Node &me1 = map->at(startAddress);
-          startOffset = me1.value().get_buffer_offset(me1.key(), startAddress);
-          ROSE_ASSERT(map->exists(endAddress));
-          const MemoryMap::Segments::Node &me2 = map->at(endAddress);
-          endOffset = me2.value().get_buffer_offset(me2.key(), endAddress);
+          ROSE_ASSERT(map->at(startAddress).exists());
+          const MemoryMap::Node &me1 = *(map->at(startAddress).findNode());
+          startOffset = me1.value().offset() + startAddress - me1.key().least();
+          ROSE_ASSERT(map->at(endAddress).exists());
+          const MemoryMap::Node &me2 = *(map->at(endAddress).findNode());
+          endOffset = me2.value().offset() + endAddress - me2.key().least();
 #endif
 
           printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);

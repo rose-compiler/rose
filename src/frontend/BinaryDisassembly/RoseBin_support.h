@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
+// rose.h and sage3basic.h should not be included in librose header files. [Robb P. Matzke 2014-10-15]
 // #include "rose.h"
 #include "stdint.h"
 
@@ -263,14 +264,14 @@ class RoseBin_support {
      db = db_p;
   }
 
-  static bool isConditionalInstruction(SgAsmx86Instruction*inst) {
+  static bool isConditionalInstruction(SgAsmX86Instruction*inst) {
     if (x86InstructionIsConditionalControlTransfer(inst) ||
         x86InstructionIsConditionalDataTransfer(inst))
       return true;
     return false;
   }
 
-  static bool isConditionalFlagInstruction(SgAsmx86Instruction*inst) {
+  static bool isConditionalFlagInstruction(SgAsmX86Instruction*inst) {
     if (x86InstructionIsConditionalFlagControlTransfer(inst) ||
         x86InstructionIsConditionalFlagDataTransfer(inst) ||
         x86InstructionIsConditionalFlagBitAndByte(inst))
@@ -356,7 +357,7 @@ class RoseBin_support {
 SgAsmArmInstruction* createArmInstruction(uint64_t address,
                                           const std::string& mnemonic);
 
-SgAsmx86Instruction* createx86Instruction(uint64_t address,
+SgAsmX86Instruction* createx86Instruction(uint64_t address,
                                           const std::string& mnemonic);
 
 void normalizex86Mnemonic(std::string& mnemonic);

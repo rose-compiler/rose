@@ -1,6 +1,5 @@
 // Support for running tests
 
-#include "sage3basic.h"
 #include "RunTests.h"
 
 #include <cerrno>
@@ -897,7 +896,7 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
         void visit(SgNode *node) {
             if (SgAsmFunction *f = isSgAsmFunction(node)) {
                 func = f;
-            } else if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+            } else if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(node)) {
                 SgAsmFunction *f = func; func = NULL;
                 const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
                 if (!f || x86_jmp!=insn->get_kind() || 1!=args.size())
@@ -943,11 +942,13 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
     Disassembler::AddressSet retval;
     for (std::map<SgAsmFunction*, rose_addr_t>::iterator i=t1.gotplt_addr.begin(); i!=t1.gotplt_addr.end(); ++i) {
         std::string name = i->first->get_name();
-        name = StringUtility::split("@", name, 2)[0];
-        if (whitelist_names.find(name)!=whitelist_names.end()) {
-            if (opt.verbosity>=EFFUSIVE)
-                std::cerr <<argv0 <<":   " <<StringUtility::addrToString(i->second) <<" for " <<name <<"\n";
-            retval.insert(i->second);
+        if (name != "") {
+            name = StringUtility::split("@", name, 2)[0];
+            if (whitelist_names.find(name)!=whitelist_names.end()) {
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<argv0 <<":   " <<StringUtility::addrToString(i->second) <<" for " <<name <<"\n";
+                retval.insert(i->second);
+            }
         }
     }
     return retval;
@@ -1026,11 +1027,10 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                             std::cerr <<argv0 <<":     writing " <<StringUtility::plural(nbytes, "bytes")
                                       <<" at " <<StringUtility::addrToString(base_va) <<"\n";
                         }
-                        MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->erase(AddressInterval::baseSize(base_va, nbytes));
+                        MemoryMap::Buffer::Ptr mmbuf = MemoryMap::AllocatingBuffer::instance(nbytes);
+                        mmbuf->write((uint8_t*)buf, 0, nbytes);
                         ro_map->insert(AddressInterval::baseSize(base_va, nbytes),
-                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
-                                                          "analysis-mapped dynlink addresses"));
+                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::READABLE, "analysis-mapped dynlink addresses"));
                     } else {
                         delete[] buf;
                     }
@@ -1075,7 +1075,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
                 break;
             }
 
-            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns.get_instruction(insn_va))) {
+            if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(insns.get_instruction(insn_va))) {
                 semantics.processInstruction(insn);
             } else {
                 if (opt.verbosity>=EFFUSIVE)

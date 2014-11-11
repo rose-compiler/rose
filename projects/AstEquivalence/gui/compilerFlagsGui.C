@@ -715,7 +715,7 @@ std::pair<std::string,std::string> BinaryCloneGui::getAddressFromVectorsTable(ui
 enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
 
 static const size_t numberOfInstructionKinds = x86_last_instruction;
-inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->get_kind();}
+inline size_t getInstructionKind(SgAsmX86Instruction* insn) {return insn->get_kind();}
 
 
 
@@ -761,11 +761,11 @@ inline void* unparseAndIntern(SgAsmExpression* e) {
   }
 }
  
-void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
-        std::vector<SgAsmx86Instruction*>::iterator end, map<SgAsmExpression*, size_t> numbers[3]) {
+void numberOperands(std::vector<SgAsmX86Instruction*>::iterator beg,
+        std::vector<SgAsmX86Instruction*>::iterator end, map<SgAsmExpression*, size_t> numbers[3]) {
   map<void*, size_t> stringNumbers[3];
   for (; beg != end; ++beg) {
-    SgAsmx86Instruction* insn = *beg;
+    SgAsmX86Instruction* insn = *beg;
     const SgAsmExpressionPtrList& operands = getOperands(insn);
     //size_t operandCount = operands.size();
     for (size_t j = 0; j < operands.size(); ++j) {
@@ -780,8 +780,8 @@ void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
     }
   }
 }
-std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
-    std::vector<SgAsmx86Instruction*>::iterator end)
+std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmX86Instruction*>::iterator beg, 
+    std::vector<SgAsmX86Instruction*>::iterator end)
 {
     string normalizedUnparsedInstructions;
     map<SgAsmExpression*, size_t> valueNumbers[3];
@@ -789,7 +789,7 @@ std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmx86Inst
 
     // Unparse the normalized forms of the instructions
     for (; beg != end; ++beg ) {
-      SgAsmx86Instruction* insn = *beg;
+      SgAsmX86Instruction* insn = *beg;
       string mne = insn->get_mnemonic();
       boost::to_lower(mne);
       mne = "<font color=\"red\">" + htmlEscape(mne)+"</font>";
@@ -819,7 +819,7 @@ std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmx86Inst
 
 
 
-string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
+string unparseX86InstructionToHTMLWithAddress(SgAsmX86Instruction* insn) {
   if (insn == NULL) return "BOGUS:NULL";
   string result = "<font color=\"green\">" + htmlEscape(StringUtility::intToHex(insn->get_address())) + "</font>:";
   result += "<font color=\"red\">" + htmlEscape(insn->get_mnemonic());
@@ -903,7 +903,7 @@ void BinaryCloneGui::showClone(int rowId)
   {
     SgNode* currentRoot = first ? fileA : fileB;
    
-    vector<SgAsmx86Instruction*> insns;
+    vector<SgAsmX86Instruction*> insns;
     FindInstructionsVisitor vis;
 
     if( (first & noFunctionsFileA ) | (!first & noFunctionsFileB)  )
@@ -934,7 +934,7 @@ void BinaryCloneGui::showClone(int rowId)
     
     for(size_t i=0; i < insns.size(); i++ )
     {
-      allInsnsUnparsed += "<code>" + unparseX86InstructionToHTMLWithAddress(isSgAsmx86Instruction(insns[i])) + "</code>";
+      allInsnsUnparsed += "<code>" + unparseX86InstructionToHTMLWithAddress(isSgAsmX86Instruction(insns[i])) + "</code>";
       allInsnsUnparsed += "<br> \n";
 
       //std::cout << insns[i]->get_address() << " " << beginAddressFileA << " " << (boost::lexical_cast<uint64_t>(beginAddressFileA)-insns[i]->get_address()) << std::endl; 
@@ -959,7 +959,7 @@ void BinaryCloneGui::showClone(int rowId)
     {
       //      unparsed += unparseInstructionWithAddress(insns[i]);
       
-      unparsed += "<code>" + unparseX86InstructionToHTMLWithAddress(isSgAsmx86Instruction(insns[i])) + "</code>";
+      unparsed += "<code>" + unparseX86InstructionToHTMLWithAddress(isSgAsmX86Instruction(insns[i])) + "</code>";
       unparsed += "<br> \n";
 //      std::cout << "unparsed " << unparseInstructionWithAddress(insns[i]) << std::endl;
     }

@@ -2,9 +2,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-noinst_PROGRAMS = testSDG
-testSDG_SOURCES = sdgTest.C
-testSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# The src/midend/programAnalysis/systemDependenceGraph/Makefile.am has a note from Dan on 2/9/2014 and the source files are
+# not compiled for GCC > 4.6. Therefore we cannot compile the testSDG program either for GCC > 4.6. [Robb Matzke, 2014-10-15]
+if ROSE_USING_GCC_VERSION_LATER_4_6
+    noinst_PROGRAMS =
+else
+    noinst_PROGRAMS = testSDG
+    testSDG_SOURCES = sdgTest.C
+    testSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+endif
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
 EXTRA_DIST = 

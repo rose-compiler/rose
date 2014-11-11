@@ -29,7 +29,7 @@ RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
     if (RoseBin_support::DEBUG_MODE() && defNode)
       cout << "    investigating ... " << defNode->get_name() <<endl;
     ROSE_ASSERT(defNode);
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(defNode->get_SgNode());
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(defNode->get_SgNode());
     ROSE_ASSERT(inst);
     positions.push_back(inst->get_address());
     // the right hand side of the instruction is either a use or a value
@@ -441,7 +441,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
   std::vector<uint64_t> pos_rax, pos_rbx, pos_rcx, pos_rdx;
   uint64_t fpos_rax, fpos_rbx, fpos_rcx, fpos_rdx=0xffffffff;
 
-  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* asmNode = isSgAsmX86Instruction(node->get_SgNode());
   if (asmNode) {
     // ANALYSIS 1 : INTERRUPT DETECTION -------------------------------------------
 
@@ -529,7 +529,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
           uint64_t value=0;
           while (foundMov!=true && sameParents(node, pre)) {
             pre = getPredecessor(pre);
-            SgAsmx86Instruction* asmPre = isSgAsmx86Instruction(pre->get_SgNode());
+            SgAsmX86Instruction* asmPre = isSgAsmX86Instruction(pre->get_SgNode());
             if (asmPre->get_kind() == x86_mov || asmPre->get_kind() == x86_push) {
               foundMov = true;
               if (asmPre->get_kind() == x86_mov) {
@@ -559,7 +559,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
           SgGraphNode* aft = node;
           while (foundMov!=true && sameParents(node, aft)) {
             aft = getSuccessor(aft);
-            SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+            SgAsmX86Instruction* asmAft = isSgAsmX86Instruction(aft->get_SgNode());
             if (asmAft->get_kind() == x86_mov) {
               foundMov = true;
               uint64_t address_of_var=0;
@@ -640,7 +640,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
                 SgGraphNode* aft = node;
                 while (foundMov!=true && sameParents(node, aft)) {
                   aft = getSuccessor(aft);
-                  SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+                  SgAsmX86Instruction* asmAft = isSgAsmX86Instruction(aft->get_SgNode());
                   if (asmAft->get_kind() == x86_add) {
                     bool memRef = false, regRef = false;
                     std::pair<X86RegisterClass, int>  code;

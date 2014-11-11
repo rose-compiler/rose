@@ -357,7 +357,7 @@ public:
         : X86InstructionSemantics<Policy, ValueType>(policy) {
     }
 
-    virtual void translate(SgAsmx86Instruction *insn) {
+    virtual void translate(SgAsmX86Instruction *insn) {
         switch (insn->get_kind()) {
             case x86_mov: {
                 if (operands.size()!=2)
@@ -382,7 +382,7 @@ The new API allows you to implement a new instruction like this:
  struct IP_mov: BaseSemantics::InsnProcessor {
      void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) override {
           DispatcherX86 d = DispatcherX86::promote(dispatcher_);
-          SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+          SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
           SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
           if (insn->args.size()!=2)
               throw BaseSemantics::Exception("wrong number of args for MOV", insn);

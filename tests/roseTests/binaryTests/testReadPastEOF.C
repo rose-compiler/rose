@@ -31,7 +31,7 @@ main(int argc, char *argv[])
             printf("\n%zu bytes\n\n", nread);
 
             memset(buf, 0xaa, sizeof buf);
-            nread = mm->read(buf, va, sizeof buf);
+            nread = mm->readQuick(buf, va, sizeof buf);
             SgAsmExecutableFileFormat::hexdump(stdout, va, buf, sizeof buf, HexdumpFormat());
             printf("\n%zu bytes\n\n", nread);
 

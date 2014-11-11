@@ -29,10 +29,10 @@ InitPointerToNull::visit(SgNode* node) {
     memoryRead.clear();
   } else
 
-  if (isSgAsmx86Instruction(node) && isSgAsmx86Instruction(node)->get_kind() == x86_mov) {
+  if (isSgAsmX86Instruction(node) && isSgAsmX86Instruction(node)->get_kind() == x86_mov) {
     // this is the address of the mov instruction prior to the call
     //rose_addr_t resolveAddr=0;
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(node);
     SgNode* instBlock = NULL;
     if (project) 
       instBlock= isSgAsmBlock(inst->get_parent());

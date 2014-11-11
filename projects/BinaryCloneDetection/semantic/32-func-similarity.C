@@ -3,11 +3,13 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 #include "rose_getline.h"
-#include "Combinatorics.h"
+#include <EditDistance/DamerauLevenshtein.h>
 
 #include <cerrno>
 
 #include "lsh.h"
+
+using namespace rose;
 
 std::string argv0;
 
@@ -220,11 +222,11 @@ public:
                                   const std::string& array_from_db, int tmp_syntactic_ninsns) {
         return FullEqualityPtr(new FullEquality(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
-    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const ROSE_OVERRIDE {
         const FullEquality *other = dynamic_cast<const FullEquality*>(other_);
         return *ogroup == *other->ogroup ? 1.0 : 0.0;
     }
-    virtual void print(std::ostream &o, const std::string &prefix="") const /*override*/ {
+    virtual void print(std::ostream &o, const std::string &prefix="") const ROSE_OVERRIDE {
         ogroup->print(o, prefix);
     }
 };
@@ -259,7 +261,7 @@ public:
         return ValuesetEqualityPtr(new ValuesetEquality(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
 
-    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const ROSE_OVERRIDE {
         const ValuesetEquality *other = dynamic_cast<const ValuesetEquality*>(other_);
         bool has_retval1 = finfo1.returns_value && retval.first;
         bool has_retval2 = finfo2.returns_value && other->retval.first;
@@ -272,7 +274,7 @@ public:
         return 0.0;
     }
 
-    virtual void print(std::ostream &o, const std::string &prefix="") const /*override*/ {
+    virtual void print(std::ostream &o, const std::string &prefix="") const ROSE_OVERRIDE {
         o <<prefix <<"values:";
         for (VSet::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
             o <<" " <<*vi;
@@ -308,7 +310,7 @@ public:
         return ValuesDamerauLevenshteinPtr(new ValuesDamerauLevenshtein(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
 
-    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const ROSE_OVERRIDE {
         const ValuesDamerauLevenshtein *other = dynamic_cast<const ValuesDamerauLevenshtein*>(other_);
         ValVector vv1, vv2;
         if (finfo1.returns_value && retval.first)
@@ -318,7 +320,7 @@ public:
         vv1.insert(vv1.end(), values.begin(), values.end());
         vv2.insert(vv2.end(), other->values.begin(), other->values.end());
 
-        size_t dl = Combinatorics::damerau_levenshtein_distance(vv1, vv2);
+        size_t dl = EditDistance::damerauLevenshteinDistance(vv1, vv2);
         size_t dl_max = std::max(vv1.size(), vv2.size());
         if (0==dl && 0==dl_max) {
             assert(vv1.empty() && vv2.empty());
@@ -327,7 +329,7 @@ public:
         return 1.0 - (double)dl / dl_max;
     }
 
-    virtual void print(std::ostream &o, const std::string &prefix="") const /*override*/ {
+    virtual void print(std::ostream &o, const std::string &prefix="") const ROSE_OVERRIDE {
         o <<prefix <<"values:";
         for (ValVector::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
             o <<" " <<*vi;
@@ -352,7 +354,7 @@ public:
         return ValuesetJaccardPtr(new ValuesetJaccard(ogroup_id, ogroup, array_from_db, tmp_syntactic_ninsns));
     }
 
-    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const ROSE_OVERRIDE {
         const ValuesetJaccard *other = dynamic_cast<const ValuesetJaccard*>(other_);
         VSet vs1, vs2;
         if (finfo1.returns_value && retval.first)

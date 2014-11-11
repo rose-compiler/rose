@@ -66,7 +66,11 @@ endif
 
 
 # DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
-SUBDIRS += symbolicAnalysisFramework
+# Matzke (10/31/2014): Removed symbolicAnalysisFramework from being compiled. It depends on boost having been installed with
+# -DBOOST_REGEX_MATCH_EXTRA, but we decided in Sep 2014 that we would not require users to compile and install boost with
+# this non-default configuration.  If a program is compiled with this switch but boost is not compiled with this switch then
+# all sorts of nastiness occurs without any compiler or runtime warning (segfaults, std::bad_alloc, etc)
+#SUBDIRS += symbolicAnalysisFramework
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.

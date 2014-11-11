@@ -5,10 +5,21 @@
 #include <sawyer/Map.h>
 
 #include <cstring>
+#include <ostream>
 #include <sawyer/Sawyer.h>
 #include <sawyer/SharedPointer.h>
 #include <string>
 #include <vector>
+
+// Any header that #defines words that are this common is just plain stupid!
+#if defined(emit)
+# ifdef _MSC_VER
+#  pragma message("Undefining common words from the global namespace: emit")
+# else
+#  warning "Undefining common words from the global namespace: emit"
+# endif
+# undef emit
+#endif
 
 namespace Sawyer {
 

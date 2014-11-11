@@ -1,0 +1,29 @@
+
+module FortranLexFree
+
+imports
+
+  FortranLex
+
+exports
+ 
+sorts
+
+  Continuation
+
+lexical syntax
+
+%% Continuation can optionally be separated by comment.
+%% The & on the next line is also optional.
+%%
+  "&" [\ \t]* ("!" ~[\n\r]*)? EOL ( [\ \t]+ "&" )?  -> Continuation
+  Continuation                                      -> LAYOUT    
+  Continuation [\ \t]* "!" ~[\n\r]* EOL             -> LAYOUT    
+
+context-free restrictions
+
+  Continuation? -/- ~[\n\r]
+
+%% Continuation char & should be part of continuation, so not layout.
+%%
+  LAYOUT? -/- [\&]

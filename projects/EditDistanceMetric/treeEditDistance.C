@@ -1,3 +1,9 @@
+// This functionality has been moved into librose. See rose::EditDistance::TreeEditDistance. [Robb P. Matzke 2014-09-22]
+
+
+
+
+
 #include "rose.h"
 
 using namespace std;
@@ -437,10 +443,12 @@ tree_edit_distance( SgNode* T1, SgNode* T2 )
   // Output the information in the boostGraph and the shortest_path algorithm
   // outputBoostShortestPath( boostGraph , n2, parentNodes, distance );
 
-     FILE* output1 = fopen("output.dot", "w");
+     FILE* output1 = fopen("output-local.dot", "w");
      assert (output1);
      fprintf(output1,"%s\n", dotGraph.c_str());
      fclose(output1);
+
+     std::cout <<"total cost = " <<distance[num_vertices(boostGraph)-1] <<"\n";
 
      printf ("Leaving tree_edit_graph() \n");
    }

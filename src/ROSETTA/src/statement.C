@@ -295,6 +295,7 @@ Grammar::setUpStatements ()
 #endif
 
 #include "java/terminals.cpp"
+#include "x10/terminals.cpp"
 
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
@@ -505,7 +506,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement /* | JavaPackageDeclaration */,
+             JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -893,8 +894,15 @@ Grammar::setUpStatements ()
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#if 1
+  // Original code.
      FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+#else
+  // DQ (10/11/2014): Make this a constructor parameter list so that we can support the generation from ATerms.
+     FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+#endif
 
   // DQ (4/25/2004): Add modifier FunctionModifier and SpecialFunctionModifier
      FunctionDeclaration.setDataPrototype ( "SgFunctionModifier", "functionModifier", "",
