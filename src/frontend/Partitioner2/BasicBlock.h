@@ -265,7 +265,9 @@ public:
     /** Insert a new successor.
      *
      *  Inserts a new successor into the cached successor list.  If the successor is already present then it is not added
-     *  again (the comparison uses structural equivalance).
+     *  again (the comparison uses structural equivalance).  Both the expression and the edge type are significant when
+     *  comparing. For instance, it is permissible to have a function call edge and a call-return edge that both point to the
+     *  fall-through address.
      *
      *  @{ */
     void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL);

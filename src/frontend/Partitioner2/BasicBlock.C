@@ -40,24 +40,17 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType
             successors.push_back(Successor(successor, type));
             successors_ = successors;
         } else {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-16]
             Successors successors = successors_.get();
-#else
-            Successors &successors = successors_.get();
-#endif
             bool found = false;
             BOOST_FOREACH (const Successor &exists, successors) {
-                if (exists.expr()->get_expression()->equivalent_to(successor->get_expression())) {
-                    ASSERT_require2(exists.type()==type, "changing successor types is not implemented yet");
+                if (exists.type()==type && exists.expr()->get_expression()->equivalent_to(successor->get_expression())) {
                     found = true;
                     break;
                 }
             }
             if (!found) {
                 successors.push_back(Successor(successor, type));
-#if 1 // DEBUGGING [Robb P. Matzke 2014-08-16]
                 successors_ = successors;
-#endif
             }
         }
     }
