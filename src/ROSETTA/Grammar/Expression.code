@@ -5855,10 +5855,31 @@ SgConstructorInitializer::get_class_decl () const
 
     if (SgMemberFunctionDeclaration *fdecl = get_declaration()) {
         // The constructor is declared (and is a member of a class type)
+#if 1
+     // DQ (11/11/2014): Modified version of code to address the fact that Fortran is organized a bit differently.
+     // That it is different from C++ might be something to revisit later in the Fortran support.
+        ROSE_ASSERT(get_declaration() != NULL);
+     // printf ("In SgConstructorInitializer::get_class_decl(): get_declaration() = %p = %s \n",get_declaration(),get_declaration()->class_name().c_str());
+        ROSE_ASSERT(fdecl->get_scope() != NULL);
+     // printf ("In SgConstructorInitializer::get_class_decl(): fdecl->get_scope() = %p = %s \n",fdecl->get_scope(),fdecl->get_scope()->class_name().c_str());
+
+        SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
+        if (cdef != NULL)
+           {
+             assert(cdef!=NULL);
+             class_decl = isSgClassDeclaration(cdef->get_parent());
+             assert(class_decl!=NULL);
+           }
+#else
+     // DQ (11/11/2014): Original code which does not work for Fortran (the fortran_constructor_function for a data type is not in the same scope as the data type).
+     // This might be something that we want to visit at some point.  But this is caught as an error because the C++11 support caused more
+     // debug information to be placed into the generated AST graphs and so this function is now called for Fortran code where it had not 
+     // previously been called for Fortran code.
         SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
         assert(cdef!=NULL);
         class_decl = isSgClassDeclaration(cdef->get_parent());
         assert(class_decl!=NULL);
+#endif
     } else if (SgClassType *expr_type = isSgClassType(get_expression_type())) {
         // Constructor initializer is for a class type with a non-declared default constructor.  We can follow the
         // p_expression_type's declaration.
