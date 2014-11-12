@@ -52,6 +52,9 @@
 // DQ (4/12/2011): Added Java specific IR nodes.
 #define USE_JAVA_IR_NODES 1
 
+// MH (6/11/2014): Added X10 specific IR nodes.
+#define USE_X10_IR_NODES 1
+
 #include <vector>
 
 // DQ (12/29/2011): These are now defined automatically in the configuration when EDG 4.3 is used.
