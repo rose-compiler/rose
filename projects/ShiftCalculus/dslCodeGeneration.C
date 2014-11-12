@@ -565,12 +565,12 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
             if (stencilFSM->stencilDimension()==2)
             {
               // currently arraySize_X is generated inside the loop nest. No need to specify its sharing attribute.
-              //string parallel_pragma_string= "#pragma omp parallel for shared (destinationDataPointer, sourceDataPointer, arraySize_X)"
-              string parallel_pragma_string= "#pragma omp parallel for shared (destinationDataPointer, sourceDataPointer)";
+              //string parallel_pragma_string= "omp parallel for shared (destinationDataPointer, sourceDataPointer, arraySize_X)"
+              string parallel_pragma_string= "omp parallel for shared (destinationDataPointer, sourceDataPointer)";
               SgPragmaDeclaration* pragma1 = SageBuilder::buildPragmaDeclaration (parallel_pragma_string, NULL);
               SageInterface::insertStatementBefore(loopNest,  pragma1);
               // TODO: once total arraySize is calculated , we use a variable arraySize_Total instead of 1764 ( 42*42 )
-              string target_pragma_string = "#pragma omp target device(0) map (out:destinationDataPointer[0:1764]) map(in:sourceDataPointer[0:1764])";
+              string target_pragma_string = "omp target device(0) map (out:destinationDataPointer[0:1764]) map(in:sourceDataPointer[0:1764])";
               SgPragmaDeclaration* pragma2 = SageBuilder::buildPragmaDeclaration (target_pragma_string, NULL);
               SageInterface::insertStatementBefore(pragma1,  pragma2);
             }
