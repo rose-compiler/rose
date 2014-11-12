@@ -18,7 +18,7 @@ bool createVectorsForAllInstructions(SgNode* top, const std::string& filename, c
 void createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3x::sqlite3_connection& con);
 void createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3x::sqlite3_connection& con);
 
-void createSourceVectorsRespectingFunctionBoundaries(SgNode* top, size_t minTokens, size_t stride,
+void createSourceVectorsRespectingFunctionBoundaries(SgNode* top, size_t minTokens, size_t stride, size_t windowSize,
                                           std::vector<int> variantNumVec, std::vector<int> variantToWriteToFile, const SqlDatabase::TransactionPtr &tx);
 
 void dropDatabases(const SqlDatabase::TransactionPtr&);
