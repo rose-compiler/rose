@@ -4446,6 +4446,13 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
         Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
     ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
+/* REMOVE this! MH-2014
+    cout << "Filename from GFP=" << Rose::Frontend::X10::X10c::X10c_globalFilePointer->getFileName()  << endl;
+    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
+        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+                cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
+    }
+*/
 #endif
         int status = x10_main(argc, argv);
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
