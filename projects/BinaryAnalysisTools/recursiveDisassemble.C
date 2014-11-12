@@ -57,12 +57,14 @@ struct Settings {
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
+    bool assumeFunctionsReturn;                         // do functions usually return to their caller?
     std::vector<std::string> triggers;                  // debugging aids
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true), doListCfg(false),
           doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
-          doListInstructionAddresses(false), doShowMap(false), doShowStats(false), doListUnused(false) {}
+          doListInstructionAddresses(false), doShowMap(false), doShowStats(false), doListUnused(false),
+          assumeFunctionsReturn(true) {}
 };
 
 // Describe and parse the command-line
@@ -71,6 +73,19 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 {
     using namespace Sawyer::CommandLine;
 
+    Parser parser;
+    parser
+        .purpose("disassembles and partitions binary specimens")
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("synopsis",
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
+        .doc("description",
+             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
+        .doc("Specimens", P2::Engine::specimenNameDocumentation())
+        .doc("Bugs", "[999]-bugs",
+             "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
+    
     // Generic switches
     SwitchGroup gen = CommandlineProcessing::genericSwitches();
     gen.insert(Switch("use-semantics")
@@ -169,6 +184,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "switch argument is the minimum number of consecutive zeros that will trigger the removal, and "
                     "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
                     "all, this tool assumes a value of " + StringUtility::plural(settings.deExecuteZeros, "bytes") + "."));
+
+    dis.insert(Switch("functions-return")
+               .argument("boolean", booleanParser(settings.assumeFunctionsReturn))
+               .doc("If the disassembler's may-return analysis is inconclusive then either assume that such functions may "
+                    "return to their caller or never return.  The default is that they " +
+                    std::string(settings.assumeFunctionsReturn?"may":"never") + " return."));
 
     // Switches for output
     SwitchGroup out("Output switches");
@@ -292,19 +313,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     ));
     
 
-    Parser parser;
-    parser
-        .purpose("disassembles and partitions binary specimens")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("description",
-             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation())
-        .doc("Bugs", "[999]-bugs",
-             "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
-    
     return parser.with(gen).with(dis).with(out).with(dbg).parse(argc, argv).apply();
 }
 
@@ -439,6 +447,7 @@ int main(int argc, char *argv[]) {
     Sawyer::Stopwatch partitionTime;
     P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
+    partitioner.assumeFunctionsReturn(settings.assumeFunctionsReturn);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
