@@ -238,6 +238,8 @@ private:
     Functions functions_;                               // List of all attached functions by entry address
     bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
     MayReturnList mayReturnList_;                       // White/black list by name for whether functions may return to caller
+    bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
+    bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -256,7 +258,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false) {
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
         init(disassembler, map);
     }
 
@@ -268,7 +271,8 @@ public:
         : instructionProvider_(other.instructionProvider_), memoryMap_(other.memoryMap_), cfg_(other.cfg_),
           aum_(other.aum_), solver_(other.solver_), progressTotal_(other.progressTotal_),
           isReportingProgress_(other.isReportingProgress_), functions_(other.functions_), useSemantics_(other.useSemantics_),
-          mayReturnList_(other.mayReturnList_), cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_),
+          mayReturnList_(other.mayReturnList_), autoAddCallReturnEdges_(other.autoAddCallReturnEdges_),
+          assumeFunctionsReturn_(other.assumeFunctionsReturn_), cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_),
           basicBlockCallbacks_(other.basicBlockCallbacks_), functionPrologueMatchers_(other.functionPrologueMatchers_),
           functionPaddingMatchers_(other.functionPaddingMatchers_) {
         init(other);                                    // copies graph iterators, etc.
@@ -299,6 +303,9 @@ public:
     const MemoryMap& memoryMap() const { return memoryMap_; }
     MemoryMap& memoryMap() { return memoryMap_; }
     /** @} */
+
+    /** Returns true if address is executable. */
+    bool addressIsExecutable(rose_addr_t va) const { return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists(); }
 
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const { return aum_.size(); }
@@ -653,9 +660,10 @@ public:
      *  @li If the basic block is a function call and none of the successors are labeled as function calls (@ref
      *      E_FUNCTION_CALL) then all normal successors (@ref E_NORMAL) create function call edges in the CFG.
      *
-     *  @li If the basic block is a function call and it has no call-return successor (@ref E_CALL_RETURN) and at least one
-     *      called block returns a positive value for its may-return analysis, then a call-return edge is added to the CFG and
-     *      points to the basic block's fall-through address.
+     *  @li If the basic block is a function call and it has no call-return successor (@ref E_CALL_RETURN) and this
+     *      partitioner's autoAddCallReturnEdges property is true then a may-return analysis is performed on each callee and a
+     *      call-return edge is added if any callee could return.  If the analysis is indeterminate then an edge is added if
+     *      this partitioner's assumeCallsReturn property is true.
      *
      *  @li If the basic block is a function return and has no function return successor (@ref E_FUNCTION_RETURN, which
      *      normally is a symbolic address) then all normal successors (@ref E_NORMAL) create function return edges in the
@@ -815,6 +823,10 @@ public:
      *  @li If the block is owned by a function and the function's name is present on a whitelist or blacklist
      *      then the block's may-return is positive if whitelisted or negative if blacklisted.
      *
+     *  @li If the block is a non-existing placeholder (i.e. it's address is not mapped with execute permission) then
+     *      its may-return is positive or negative depending on the value of this partitioner's @ref assumeFunctionsReturn
+     *      property.
+     *
      *  @li If the block is a function return then the block's may-return is positive.
      *
      *  @li If any significant successor (defined below) of the block has a positive may-return value then the block's
@@ -822,9 +834,6 @@ public:
      *
      *  @li If any significant succesor has an indeterminate may-return value, then the block's may-return is also
      *      indeterminate.
-     *
-     *  @li If the block's only successor is the non-existing vertex (@ref V_NONEXISTING) then @p dflt is used as the
-     *      block's may-return value. The blacklist and whitelist situation was handled above.
      *
      *  @li The block's may-return is negative.
      *
@@ -849,13 +858,10 @@ public:
      *
      * @{ */
     Sawyer::Optional<bool>
-    basicBlockOptionalMayReturn(const BasicBlock::Ptr&, boost::logic::tribool dflt=boost::logic::indeterminate,
-                                bool recompute=false) const;
+    basicBlockOptionalMayReturn(const BasicBlock::Ptr&, bool recompute=false) const;
 
     Sawyer::Optional<bool>
-    basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&,
-                                boost::logic::tribool dflt=boost::logic::indeterminate,
-                                bool recompute=false) const;
+    basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&, bool recompute=false) const;
     /** @} */
 
     /** Clear all may-return properties.
@@ -890,12 +896,13 @@ public:
      *
      *  The @ref isMayReturnListed consults either the whitelist or blacklist depending on the value of @p dflt.  If @p dflt is
      *  true then this method returns false if @p functionName is blacklisted and true otherwise. If @p dflt is false then this
-     *  method returns true if @p functionName is whitelisted and false otherwise.
+     *  method returns true if @p functionName is whitelisted and false otherwise.  If @p dflt is indeterminate then returns
+     *  true if whitelisted, false if blacklisted, or indeterminate if not listed at all.
      *
      * @{ */
     bool isMayReturnWhitelisted(const std::string &functionName) const;
     bool isMayReturnBlacklisted(const std::string &functionName) const;
-    bool isMayReturnListed(const std::string &functionName, bool dflt=true) const;
+    boost::logic::tribool isMayReturnListed(const std::string &functionName, boost::logic::tribool dflt=true) const;
     /** @} */
 
     /** The may-return listed names.
@@ -916,23 +923,19 @@ private:
     };
 
     // Is edge significant for analysis? See .C file for full documentation.
-    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge,
-                                    boost::logic::tribool dflt, bool recompute,
+    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge, bool recompute,
                                     std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // Determine (and cache in vertexInfo) whether any callees return.
-    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
-                                                    boost::logic::tribool dflt, bool recompute,
+    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
                                                     std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // Maximum may-return result from significant successors including phantom call-return edge.
-    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
-                                                       boost::logic::tribool dflt, bool recompute,
+    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
                                                        std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // The guts of the may-return analysis
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start,
-                                                       boost::logic::tribool dflt, bool recompute,
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start, bool recompute,
                                                        std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1485,6 +1488,46 @@ public:
     void disableSymbolicSemantics() { useSemantics_ = false; }
     bool usingSymbolicSemantics() const { return useSemantics_; }
     /** @} */
+
+    /** Property: Insert (or not) function call return edges.
+     *
+     *  When true, attaching a function call basic block to the CFG will create a call-return edge (@ref E_CALL_RETURN) in the
+     *  CFG even if the basic block has no explicit call-return edge and an analysis indicates that the callee (or at least one
+     *  callee if there are more than one) may return. Call-return edges are typically the edge from a @c CALL instruction to
+     *  the instruction immediately following in the address space.
+     *
+     *  If true, then the decision to add a call-return edge is made at the time the function call site is attached to the
+     *  basic block, but the may-return analysis for the callees might be indeterminate at that time (such as if the callee
+     *  instructions have not been discovered).  The assumeCallsReturn partitioner property can be used to guess whether
+     *  indeterminate may-return analysis should be assumed as a positive or negative result.
+     *
+     *  Deciding whether to add a call-return edge at the time of the call-site insertion can result in two kinds of errors: an
+     *  extra CFG edge where there shouldn't be one, or a missing CFG edge where there should be one.  An alternative is to
+     *  turn off the autoAddCallReturnEdges property and delay the decision to a time when more information is available.  This
+     *  is the approach taken by the default @ref Engine -- it maintains a list of basic blocks that need to be investigated at
+     *  a later time to determine if a call-return edge should be inserted, and it delays the decision as long as possible.
+     *
+     * @{ */
+    void autoAddCallReturnEdges(bool b) { autoAddCallReturnEdges_ = b; }
+    bool autoAddCallReturnEdges() const { return autoAddCallReturnEdges_; }
+    /** @} */
+
+    /** Property: Assume (or not) that function calls return.
+     *
+     *  If the may-return analysis is indeterminate and the partitioner needs to make an immediate decision about whether a
+     *  function might return to its caller then this property is used.  This property also determines whether the may-return
+     *  analysis uses a whitelist or blacklist.
+     *
+     *  If this property is true, then functions are assumed to return unless it can be proven that they cannot. A blacklist is
+     *  one way to prove that a function does not return.  On the other hand, if this property is false then functions are
+     *  assumed to not return unless it can be proven that they can.  A whitelist is one way to prove that a function can
+     *  return.
+     *
+     * @{ */
+    void assumeFunctionsReturn(bool b) { assumeFunctionsReturn_ = b; }
+    bool assumeFunctionsReturn() const { return assumeFunctionsReturn_; }
+    /** @} */
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities

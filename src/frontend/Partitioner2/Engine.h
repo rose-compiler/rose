@@ -6,6 +6,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <sawyer/DistinctList.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -44,15 +45,15 @@ class Engine {
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
     private:
-        DistinctStack<rose_addr_t> pendingCallReturn_;  // blocks that might need an E_CALL_RETURN edge created
-        DistinctStack<rose_addr_t> pendingCallReturnProcessed_; // processed but still indeterminate
+        Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
+        Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
         static Ptr instance() { return Ptr(new BasicBlockWorkList); }
         virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
-        DistinctStack<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
-        DistinctStack<rose_addr_t>& pendingCallReturnProcessed() { return pendingCallReturnProcessed_; }
+        Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
+        Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
     };
 
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
@@ -280,16 +281,38 @@ public:
 public:
     /** Discover a basic block.
      *
-     *  Obtains an arbitrary basic block address from the list of undiscovered basic blocks (i.e., placeholders that have no
-     *  basic block assigned to them yet) and attempts to discover the instructions that belong to that block.  The basic block
-     *  is then added to the specified partitioner's CFG/AUM.
+     *  Discovers another basic block if possible.  A variety of methods will be used to determine where to discover the next
+     *  basic block:
+     *
+     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockAtPlaceholder
+     *
+     *  @li Insert a new call-return (@ref E_CALL_RETURN) edge for a function call that may return.  Insertion of such an
+     *      edge may result in a new placeholder for which this method then discovers a basic block.  The call-return insertion
+     *      happens in two passes: the first pass only adds an edge for a callee whose may-return analysis is positive; the
+     *      second pass relaxes that requirement and inserts an edge for any callee whose may-return is indeterminate (i.e., if
+     *      ROSE can't prove that a callee never returns then assume it may return).
      *
      *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
     virtual BasicBlock::Ptr makeNextBasicBlock(Partitioner&);
 
-private:
-    // See if a new E_CALL_RETURN edge can be inserted into the CFG and do so.
-    bool makeNewCallReturnEdge(Partitioner&, bool assumeCallReturns);
+    /** Discover basic block at next placeholder.
+     *
+     *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
+     *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
+     *  into the "undiscovered" vertex. */
+    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(Partitioner&);
+
+    /** Insert a call-return edge and discover its basic block.
+     *
+     *  Inserts a call-return (@ref E_CALL_RETURN) edge for some function call that lacks such an edge and for which the callee
+     *  may return.  The @p assumeCallReturns parameter determines whether a call-return edge should be added or not for
+     *  callees whose may-return analysis is indeterminate.  If @p assumeCallReturns is true then an indeterminate callee will
+     *  have a call-return edge added; if false then no call-return edge is added; if indeterminate then no call-return edge is
+     *  added at this time but the vertex is saved so it can be reprocessed later.
+     *
+     *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
+     *  condition for a false return is that the pendingCallReturn list is empty. */
+    bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Methods to make functions.

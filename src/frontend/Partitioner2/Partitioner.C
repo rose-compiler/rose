@@ -439,15 +439,13 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
         }
     }
 
-    // If this is a function call and the user hasn't already specified a call-return edge then we might need to add one.
     // Call-return edges indicate where a function call eventually returns since the CFG doesn't have such edges from function
     // return statements (return statements usually have an indeterminate successor).  We'll only add the call-return edge if
     // the user didn't already specify one and if the may-return analysis is positive.
-    if (!hasCallReturnEdges && basicBlockIsFunctionCall(bblock)) {
+    if (autoAddCallReturnEdges_ && !hasCallReturnEdges && basicBlockIsFunctionCall(bblock)) {
         BOOST_FOREACH (const VertexEdgePair &successor, successors) {
             if (successor.second.type() == E_FUNCTION_CALL) {
-                static const boost::logic::tribool ASSUME_MOST_FUNCTIONS_RETURN = true;
-                if (basicBlockOptionalMayReturn(bblock, ASSUME_MOST_FUNCTIONS_RETURN).orElse(false)) {
+                if (basicBlockOptionalMayReturn(bblock).orElse(assumeFunctionsReturn_)) {
                     successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), CfgEdge(E_CALL_RETURN)));
                     break;
                 }
@@ -2086,12 +2084,22 @@ Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const
             }
         }
     }
+
+    // Can this function return to its caller?
+    SgAsmFunction::MayReturn mayReturn = SgAsmFunction::RET_UNKNOWN;
+    if (entryVertex != cfg_.vertices().end()) {
+        if (BasicBlock::Ptr bb = entryVertex->value().bblock()) {
+            bool b = false;
+            if (bb->mayReturn().getOptional().assignTo(b))
+                mayReturn = b ? SgAsmFunction::RET_SOMETIMES : SgAsmFunction::RET_NEVER;
+        }
+    }
     
     // Build the AST
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
     ast->set_reason(reasons);
     ast->set_name(function->name());
-    ast->set_may_return(SgAsmFunction::RET_UNKNOWN);    // FIXME[Robb P. Matzke 2014-08-07]
+    ast->set_may_return(mayReturn);
     return ast;
 }
 
