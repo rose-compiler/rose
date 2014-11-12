@@ -9,23 +9,23 @@ using namespace CodeThorn;
 
 template<LatticeType>
 LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType element) {
-      if(element.isBot())
-      element.setEmptySet();
-    SgNode* node=_labeler->getNode(lab);
-    //cout<<"Analyzing:"<<node->class_name()<<endl;
-    
-    if(_labeler->isFunctionCallLabel(lab)) {
-      if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
-        SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-        transferFunctionCall(lab, funCall, arguments, element);
-        return element;
-      }
+  if(element.isBot())
+    element.setEmptySet();
+  SgNode* node=_labeler->getNode(lab);
+  //cout<<"Analyzing:"<<node->class_name()<<endl;
+  
+  if(_labeler->isFunctionCallLabel(lab)) {
+    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
+      SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+      transferFunctionCall(lab, funCall, arguments, element);
+      return element;
     }
-    if(_labeler->isFunctionCallReturnLabel(lab)) {
-      if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
-        transferFunctionCallReturn(lab, funCall, element);
-        return element;
-      }
+  }
+  if(_labeler->isFunctionCallReturnLabel(lab)) {
+    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
+      transferFunctionCallReturn(lab, funCall, element);
+      return element;
+    }
   }
   if(_labeler->isFunctionEntryLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
@@ -38,7 +38,7 @@ LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType el
       ROSE_ASSERT(0);
     }
   }
-
+  
   if(_labeler->isFunctionExitLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(_labeler->getNode(lab))) {
       // 1) determine all local variables (including formal parameters) of function
