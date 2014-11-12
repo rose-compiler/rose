@@ -56,7 +56,7 @@ enum TraversalEvent {
                                *   become quite deep.  A traversal stopped at this event returns the vertex which is being left
                                *   and the edge by which the vertex was originally entered.  If the vertex was set as an
                                *   explicit traversal position then the edge will be an end iterator. */
-    // reserved       0x0020, // used internally to indicate that an edge was followed to a neighbor
+    FOLLOW_EDGE     = 0x0020, // Internal: current edge was followed to find neighbor vertex
 };
 
 // Event sets (doxygen doesn't pick these up, so they're documented in the TraversalEvent enum
@@ -265,7 +265,6 @@ public:
     typedef typename GraphTraits<Graph>::EdgeNodeIterator EdgeNodeIterator;
 
 private:
-    static const unsigned FOLLOW_EDGE = 0x0020;         // cur edge was followed to find neighbor vertex
     Graph &graph_;
 
 protected:
@@ -384,6 +383,8 @@ public:
             case LEAVE_VERTEX:
             case LEAVE_EDGE:
                 return current().vertex;
+            default:
+                break;
         }
         ASSERT_not_reachable("invalid state");
     }
@@ -406,6 +407,8 @@ public:
                 return current().edge;
             case LEAVE_EDGE:
                 return current().edge;
+            default:
+                break;
         }
         ASSERT_not_reachable("invalid state");
     }
@@ -503,7 +506,7 @@ public:
             
             // Discover the neighbor vertex at the other end of this edge
             if (current().event == ENTER_EDGE) {
-                current().event = (TraversalEvent)FOLLOW_EDGE; // never escapes to the user
+                current().event = FOLLOW_EDGE; // never escapes to the user
                 if (current().followEdge) {
                     VertexNodeIterator neighbor = nextVertex(workList_.front().edge, Direction());
                     if (!isDiscovered(neighbor)) {
@@ -520,7 +523,7 @@ public:
             }
 
             // Leave the edge
-            if (current().event == (TraversalEvent)FOLLOW_EDGE) {
+            if (current().event == FOLLOW_EDGE) {
                 current().event = LEAVE_EDGE;
                 if (isSignificant(LEAVE_EDGE))
                     return LEAVE_EDGE;
@@ -546,6 +549,7 @@ public:
             case DISCOVER_VERTEX:
             case LEAVE_VERTEX:
             case LEAVE_EDGE:
+            case FOLLOW_EDGE:
                 throw std::runtime_error("GraphTraversal::skipChildren cannot be called from " +
                                          traversalEventName(event()) + " event");
         }

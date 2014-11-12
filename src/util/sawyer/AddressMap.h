@@ -1132,7 +1132,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=0; map.atOrAbove(a).require(READABLE).next().assignTo(a); ++a) {
+     *  for (Address a=0; map.atOrAfter(a).require(READABLE).next().assignTo(a); ++a) {
      *      ...
      *      if (a == map.hull().greatest())
      *          break;

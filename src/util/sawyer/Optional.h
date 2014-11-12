@@ -285,7 +285,13 @@ public:
 };
 
 
-// These functions intentionally do not compile. They are to prevent comparisons.
+// These functions intentionally do not compile. They are to prevent comparisons and thus save users from making
+// mistakes like this:
+//    Optional<int> x = 0;
+//    int y = 1;
+//    if (x == y)       // won't compile
+//    if (x && *x == y) // what they really meant
+//    if (x.isEqual(y)) // another valid way to write it
 template<typename T, typename U>
 bool operator==(const Optional<T> &lhs, const U &rhs) {
     lhs.this_type_does_not_support_comparisons();
