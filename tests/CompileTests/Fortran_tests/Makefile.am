@@ -201,6 +201,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_152.f90 \
      test2010_153.f90 \
      test2010_155.f90 \
+     test2010_154.f90 \
      test2010_156.f90 \
      test2010_158.f90 \
      test2010_159.f90 \
@@ -683,6 +684,7 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2010_86.f90 \
      test2010_90.f90 \
      test2010_100.f90 \
+     test2010_107.f90 \
      test2010_108.f90 \
      test2010_109.f90 \
      test2010_116.f90 \
@@ -782,6 +784,7 @@ F03_TESTCODES_REQUIRED_TO_PASS += \
      test2007_172.f03 \
      test2007_173.f03 \
      test2010_77.f03 \
+     test2010_106.f03 \
      test2010_171.f03 \
      test2011_74.f03
 
