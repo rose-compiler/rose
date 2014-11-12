@@ -48,6 +48,7 @@ namespace OmpSupport
 { 
   omp_rtl_enum rtl_type = e_gomp; /* default to  generate code targetting gcc's gomp */
   bool enable_accelerator = false; /* default is to not recognize and lowering OpenMP accelerator directives */
+  bool enable_debugging = false; /* default is not to debug the process */
 
   unsigned int nCounter = 0;
   //------------------------------------
@@ -1541,6 +1542,19 @@ void transOmpTargetLoop_RoundRobin(SgNode* node)
   SgExpression* func_call_exp = buildFunctionCallExp ("XOMP_static_sched_next", buildBoolType(), parameters, bb1);
 
   SgStatement* new_loop = deepCopy (for_loop);
+  // Liao, 11/11/2014, clean up copied OmpAttribute
+  new_loop->removeAttribute("OmpAttributeList");
+#if 0
+  AstAttributeMechanism* astAttributeContainer = new_loop ->get_attributeMechanism();
+  if (astAttributeContainer != NULL)
+  {
+    for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+    {
+      AstAttribute* attribute = i->second;
+      ROSE_ASSERT(attribute != NULL);
+    }
+  }
+#endif
   SgWhileStmt* w_stmt = buildWhileStmt (func_call_exp, new_loop);
   appendStatement (w_stmt, bb1);
 //  moveStatementsBetweenBlocks (loop_body, isSgBasicBlock(w_stmt->get_body()));

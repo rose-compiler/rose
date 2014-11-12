@@ -147,6 +147,8 @@ namespace OmpSupport
   // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
   void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
   {
+   if (enable_debugging)
+     cout<<"Entering attachOmpAttributeInfo() ... "<<endl;
     ROSE_ASSERT(sageFilePtr != NULL);
     if (sageFilePtr->get_openmp() == false)
       return;
@@ -161,6 +163,8 @@ namespace OmpSupport
       // For C/C++, search pragma declarations for OpenMP directives 
       std::vector <SgNode*> all_pragmas = NodeQuery::querySubTree (sageFilePtr, V_SgPragmaDeclaration);
       std::vector<SgNode*>::iterator iter;
+      if (enable_debugging)
+         cout<<"Number of pragma declarations found: "<< all_pragmas.size() <<endl;
       for(iter=all_pragmas.begin();iter!=all_pragmas.end();iter++)
       {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
@@ -204,12 +208,14 @@ namespace OmpSupport
             omp_parse();
 #endif
             OmpAttribute* attribute = getParsedDirective();
-            //cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
-            //attribute->print();//debug only for now
             addOmpAttribute(attribute,pragmaDeclaration);
-            //cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
-            //cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
-
+            if (enable_debugging)
+            {
+              cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
+              cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
+              cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
+              attribute->print();//debug only for now
+            }
 #if 1 // Liao, 2/12/2010, this could be a bad idea. It causes trouble in comparing 
             //user-defined and compiler-generated OmpAttribute.
             // We attach the attribute redundantly on affected loops also
@@ -226,6 +232,9 @@ namespace OmpSupport
         }
       }// end for
     }
+
+   if (enable_debugging)
+     cout<<"Existing attachOmpAttributeInfo() ... "<<endl;
   }
   // Clause node builders
   //----------------------------------------------------------
