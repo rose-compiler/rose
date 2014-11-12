@@ -41,68 +41,6 @@ enum EdgeType {
 
 class Partitioner;
 
-/** Stack of distinct items.
- *
- *  Last-in-first-out list, or stack, of items where each item is not equal to any other item in the stack.  The item type, @p
- *  T, must satisfy requirements for being a member of an STL @p set. */
-template<class T>
-class DistinctStack {
-public:
-    typedef T Value;                                    /**< Type of value stored by this container. */
-private:
-    typedef std::list<Value> Stack;
-    typedef typename Stack::iterator Position;
-    typedef std::map<Value, Position> Presence;
-    Stack stack_;
-    Presence presence_;
-public:
-    /** Determins if this container is empty. */
-    bool isEmpty() const {
-        return stack_.empty();
-    }
-
-    /** Returns number of items in list. */
-    size_t size() const {
-        return presence_.size();                        // map.size is O(1), but list.size is O(n)
-    }
-
-    /** Returns true if item is present. */
-    bool exists(const Value &item) const {
-        return presence_.find(item) != presence_.end();
-    }
-
-    /** Push item onto stack if it isn't present. */
-    void pushMaybe(const Value &item) {
-        typename Presence::iterator found = presence_.find(item);
-        if (found == presence_.end()) {
-            stack_.push_back(item);
-            presence_[item] = --stack_.end();
-        } else {
-            stack_.erase(found->second);
-            stack_.push_back(item);
-            found->second = --stack_.end();
-        }
-    }
-
-    /** Pop and return most recent item added. */
-    Value pop() {
-        ASSERT_forbid(isEmpty());
-        Value item = stack_.back();
-        stack_.pop_back();
-        presence_.erase(item);
-        return item;
-    }
-
-    /** Erase item if it exists. */
-    void erase(const Value &item) {
-        typename Presence::iterator found = presence_.find(item);
-        if (found != presence_.end()) {
-            stack_.erase(found->second);
-            presence_.erase(found);
-        }
-    }
-};
-
 } // namespace
 } // namespace
 } // namespace
