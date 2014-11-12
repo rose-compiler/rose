@@ -1816,10 +1816,6 @@ Partitioner::functionIsThunk(const Function::Ptr &function) const {
 
     // Make sure the successor is of type E_FUNCTION_XFER
     if (succs[0].type() != E_FUNCTION_XFER) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-11-07]
-        mlog[INFO] <<"ROBB: changing thunk edge " <<StringUtility::addrToString(function->address())
-                   <<" -> " <<StringUtility::addrToString(concreteSuccessors[0]) <<" to E_FUNCTION_XFER\n";
-#endif
         succs[0] = BasicBlock::Successor(succs[0].expr(), E_FUNCTION_XFER);
         bblock->successors_.set(succs);                 // okay even if bblock is locked since we only change edge type
     }
