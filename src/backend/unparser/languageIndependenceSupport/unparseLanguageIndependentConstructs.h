@@ -396,6 +396,9 @@ class UnparseLanguageIndependentConstructs
 
       // DQ (9/3/2014): Adding support to supress output of SgThisExp as part of support for C++11 lambda functions code generation.
          bool isImplicitArrowExpWithinLambdaFunction(SgExpression* expr, SgUnparse_Info& info);
+
+      // DQ (11/13/2014): Detect when to unparse the leading and trailing edge tokens for attached CPP directives and comments.
+         bool unparseAttachedPreprocessingInfoUsingTokenStream(SgLocatedNode* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
    };
 
 #endif

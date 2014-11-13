@@ -3252,7 +3252,8 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 #if 1
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
   // This generates files: token_leading_<filename>.c and token_trailing_<filename>.c.
-     if ( SgProject::get_verbose() > 0 )
+  // if ( SgProject::get_verbose() > 0 )
+     if ( sourceFile->get_unparse_using_leading_and_trailing_token_mappings() == true )
         {
        // Output a file generated from the token sequences of each declaration statement directly within the global scope.
           bool preferTrailingWhitespaceInOutput = true;

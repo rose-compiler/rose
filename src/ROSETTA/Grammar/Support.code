@@ -14524,11 +14524,17 @@ X aggressive
 
      p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
 
+  // DQ (11/12/2014): Previously uninitialized data members
+     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
+
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
   // DQ (1/30/2014): Support for testing of token unparsing.
      p_unparse_tokens_testing = 0;
+
+  // DQ (11/12/2014): Addded to support test modes for token unparsing.
+     p_unparse_using_leading_and_trailing_token_mappings = false;
 
   // DQ (9/26/2011): This was not initialized previosuly so I have added it.
      p_sourceFileTypeIsUnknown = false;
@@ -15130,6 +15136,9 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_unparse_tokens                       = %s \n",(p_unparse_tokens == true) ? "true" : "false");
      printf ("     p_unparse_tokens_testing               = %d \n",p_unparse_tokens_testing);
+
+  // DQ (11/12/2014): Addded to support test modes for token unparsing.
+     printf ("     p_unparse_using_leading_and_trailing_token_mappings = %s \n",(p_unparse_using_leading_and_trailing_token_mappings == true) ? "true" : "false");
 
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
