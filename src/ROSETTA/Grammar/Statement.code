@@ -14952,7 +14952,8 @@ SgTypedefDeclaration::get_mangled_name (void) const
                mangleQualifiersString = mangleQualifiers(get_scope());
              }
 
-          mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
+//CI 2014           mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
+          mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";

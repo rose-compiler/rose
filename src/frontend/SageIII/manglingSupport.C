@@ -909,8 +909,8 @@ declarationHasTranslationUnitScope (const SgDeclarationStatement* decl)
        // Likewise if the declaration is an inline function.
           if (const SgFunctionDeclaration *fnDecl = isSgFunctionDeclaration(decl))
              {
-               if (fnDecl->get_functionModifier().isInline())
-                    return true;
+//               if (fnDecl->get_functionModifier().isInline())
+  //                  return true;
              }
         }
 
@@ -942,22 +942,31 @@ mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
        // return "_file_id_" + StringUtility::numberToString(decl->get_file_info()->get_file_id()) + "_";
 
        // DQ (4/30/2012): Modified this code, but I would like to better understand why it is required.
-          string returnString = "";
-          int fileIdNumber = decl->get_file_info()->get_file_id();
-          if (fileIdNumber >= 0)
-             {
-               returnString = "_file_id_" + StringUtility::numberToString(fileIdNumber) + "_";
-             }
-            else
-             {
-            // Put "_minus" into the generated name.
-               returnString = "_file_id_minus_" + StringUtility::numberToString(abs(fileIdNumber)) + "_";
-             }
 
-          return returnString;
-        }
-       else
-        {
-          return "";
-        }
+       // CI: This is to generate "mangled names" for e.g. static functions. However, if in a single translation unite one encounteres includes of static functions, said functions will inherit the file id form the include file, instead of the SgFile the include is in...
+
+		string returnString = "";
+		SgNode * node=decl->get_parent();
+		int fileIdNumber;
+		while (isSgFile(node)==NULL && node->get_parent()!=NULL) 
+			node=node->get_parent();
+		if (node!=NULL)
+			fileIdNumber=node->get_file_info()->get_file_id();
+		else fileIdNumber = decl->get_file_info()->get_file_id();
+		if (fileIdNumber >= 0)
+		{
+			returnString = "_file_id_" + StringUtility::numberToString(fileIdNumber) + "_";
+		}
+		else
+		{
+			// Put "_minus" into the generated name.
+			returnString = "_file_id_minus_" + StringUtility::numberToString(abs(fileIdNumber)) + "_";
+		}
+
+		return returnString;
+	}
+     else
+     {
+	     return "";
+     }
    }

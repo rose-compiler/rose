@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
-
+#include "Partitioner.h"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmFloatValueExpression
 
@@ -41,8 +41,8 @@ bool SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>
 bool SgAsmInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 
-std::set<rose_addr_t>
-SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
+/*
+std::set<rose_addr_t> SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
     return std::set<rose_addr_t>();
 }
 
@@ -50,7 +50,7 @@ std::vector<std::pair<size_t,size_t> >
 SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
     return std::vector<std::pair<size_t,size_t> >();
 }
-
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
 
@@ -67,10 +67,12 @@ bool SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction
 bool SgAsmM68kInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmM68kInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmM68kInstruction::isUnknown() const { return false; }
+/*CI
 std::set<rose_addr_t> SgAsmM68kInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>(); }
 std::set<rose_addr_t> SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
     return std::set<rose_addr_t>();
 }
+*/
 bool SgAsmM68kInstruction::getBranchTarget(rose_addr_t*) { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,13 +106,14 @@ bool SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*
 bool SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmX86Instruction::getBranchTarget(rose_addr_t*) { return false; }
-std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
+// std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 
+/* Ci
 std::set<rose_addr_t>
 SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
     return std::set<rose_addr_t>();
 }
-
+*/
 std::vector<std::pair<size_t,size_t> >
 SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
     return std::vector<std::pair<size_t,size_t> >();
@@ -160,10 +163,16 @@ SgAsmType* SgAsmVectorType::get_elmtType() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Disassembler
-
+namespace rose {
+namespace BinaryAnalysis{
 void Disassembler::initDiagnostics() {}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Partitioner
 
+}}
+
+namespace rose {
+namespace BinaryAnalysis{
 void Partitioner::initDiagnostics() {}
+}
+}
