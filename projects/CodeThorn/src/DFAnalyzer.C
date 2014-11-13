@@ -168,11 +168,10 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
 
 template<typename LatticeType>
 void DFAnalyzer<LatticeType>::initializeTransferFunctions() {
-  // TODO
-#if 0
+  ROSE_ASSERT(_transferFunctions);
+  ROSE_ASSERT(_labeler);
   _transferFunctions->setLabeler(_labeler);
-  _transferFunctions->setVariableIdMapping(_variableIdMapping);
-#endif
+  _transferFunctions->setVariableIdMapping(&_variableIdMapping);
 }
 
 template<typename LatticeType>

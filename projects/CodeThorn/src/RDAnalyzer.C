@@ -90,7 +90,8 @@ size_t RDAnalyzer::size() {
  */
 #if 1
 RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
-  return _rdTransferFunctions->transfer(lab,element);
+  ROSE_ASSERT(_transferFunctions);
+  return _transferFunctions->transfer(lab,element);
 }
 #else 
 RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {

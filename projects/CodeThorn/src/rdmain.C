@@ -109,34 +109,33 @@ void substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root
 
 int main(int argc, char* argv[]) {
   try {
-  cout << "INIT: Parsing and creating AST."<<endl;
-  boolOptions.registerOption("semantic-fold",false); // temporary
-  boolOptions.registerOption("post-semantic-fold",false); // temporary
-  SgProject* root = frontend(argc,argv);
-
-  RDAnalyzer* rdAnalyzer=new RDAnalyzer();
-  rdAnalyzer->initialize(root);
-  rdAnalyzer->initializeGlobalVariables(root);
-  rdAnalyzer->initializeTransferFunctions();
-
-  std::string funtofind="main";
-  RoseAst completeast(root);
-  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-  rdAnalyzer->determineExtremalLabels(startFunRoot);
-  rdAnalyzer->run();
-
-  cout << "INFO: attaching RD-data to AST."<<endl;
-  rdAnalyzer->attachInInfoToAst("rd-analysis-in");
-  rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
-  //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
-  cout << "INFO: generating and attaching UD-data to AST."<<endl;
-  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
+    cout << "INIT: Parsing and creating AST."<<endl;
+    boolOptions.registerOption("semantic-fold",false); // temporary
+    boolOptions.registerOption("post-semantic-fold",false); // temporary
+    SgProject* root = frontend(argc,argv);
+    
+    RDAnalyzer* rdAnalyzer=new RDAnalyzer();
+    rdAnalyzer->initialize(root);
+    rdAnalyzer->initializeGlobalVariables(root);
+    rdAnalyzer->initializeTransferFunctions();
+    
+    std::string funtofind="main";
+    RoseAst completeast(root);
+    SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+    rdAnalyzer->determineExtremalLabels(startFunRoot);
+    rdAnalyzer->run();
+    
+    cout << "INFO: attaching RD-data to AST."<<endl;
+    rdAnalyzer->attachInInfoToAst("rd-analysis-in");
+    rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
+    //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
+    cout << "INFO: generating and attaching UD-data to AST."<<endl;
+    createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 #if 0
   cout << "INFO: substituting uses with rhs of defs."<<endl;
   substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalyzer->getLabeler(), rdAnalyzer->getVariableIdMapping());
 #endif
 
-#if 1
   Flow* flow=rdAnalyzer->getFlow();
   cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
   CFAnalyzer* cfAnalyzer0=rdAnalyzer->getCFAnalyzer();
@@ -193,16 +192,14 @@ int main(int argc, char* argv[]) {
                                  "ud-analysis");
   ddvis3.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfg_clustered.dot",false);
 
-#if 0
+#if 1
   cout << "INFO: annotating analysis results as comments."<<endl;
   AstAnnotator ara(rdAnalyzer->getLabeler());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;
-#endif
-#endif
-
   root->unparse(0,0);
+#endif
   return 0;
   } catch(char const* s) {
     cout<<s<<endl;

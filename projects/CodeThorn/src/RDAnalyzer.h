@@ -43,7 +43,7 @@ class RDAnalyzer : public DFAnalyzer<RDLattice> {
   void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element);
   void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, RDLattice& element);
 #else
-  RDTransferFunctions* _rdTransferFunctions;
+  //RDTransferFunctions* _rdTransferFunctions;
 #endif
 };
 
