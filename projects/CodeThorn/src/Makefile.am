@@ -184,7 +184,7 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C  DataDependenceVisualizer.h DataDependenceVisualizer.C \
+rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C DFTransferFunctions.h DFTransferFunctions.C RDTransferfunctions.hpp RDTransferFunctions.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   RDAstAttribute.h         \
@@ -208,11 +208,15 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyz
   addressTakenAnalysis.h
 
 woodpecker_LDADD = -lrose
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDTransferFunctions.hpp RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   AType.h                          \
   AType.C                          \
+  RDTransferFunctions.hpp \
+  RDTransferFunctions.C \
+  DFTransferFunctions.hpp \
+  DFTransferFunctions.C \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
   UDAstAttribute.h                 \
@@ -252,6 +256,10 @@ analyterix_SOURCES = \
   AnalysisAbstractionLayer.C       \
   CFAnalyzer.h \
   CFAnalyzer.C \
+  RDTransferFunctions.hpp \
+  RDTransferFunctions.C \
+  DFTransferFunctions.hpp \
+  DFTransferFunctions.C \
   RDLattice.h \
   RDLattice.C \
   RDAnalyzer.h \
@@ -310,6 +318,10 @@ reverser_SOURCES = \
   RDLattice.C \
   RDAnalyzer.h \
   RDAnalyzer.C \
+  RDTransferFunctions.hpp \
+  RDTransferFunctions.C \
+  DFTransferFunctions.hpp \
+  DFTransferFunctions.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   LanguageRestrictor.h \
   LanguageRestrictor.C \

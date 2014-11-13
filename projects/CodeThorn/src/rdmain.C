@@ -17,6 +17,8 @@
 #include "ProgramStats.h"
 #include "DFAstAttributeConversion.h"
 
+#include "DFTransferFunctions.hpp"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace DFAstAttributeConversion;
@@ -115,6 +117,7 @@ int main(int argc, char* argv[]) {
   RDAnalyzer* rdAnalyzer=new RDAnalyzer();
   rdAnalyzer->initialize(root);
   rdAnalyzer->initializeGlobalVariables(root);
+  rdAnalyzer->initializeTransferFunctions();
 
   std::string funtofind="main";
   RoseAst completeast(root);

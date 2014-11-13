@@ -19,6 +19,7 @@ DFAnalyzer<LatticeType>::DFAnalyzer():
   _cfanalyzer(0),
   _numberOfLabels(0),
   _preInfoIsValid(false),
+  _transferFunctions(0),
   _solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD)
 {}
 
@@ -161,6 +162,16 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   } else {
     cout << "INIT: no global scope.";
   }    
+#endif
+}
+
+
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::initializeTransferFunctions() {
+  // TODO
+#if 0
+  _transferFunctions->setLabeler(_labeler);
+  _transferFunctions->setVariableIdMapping(_variableIdMapping);
 #endif
 }
 

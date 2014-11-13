@@ -9,7 +9,14 @@ using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
+#include "RDTransferFunctions.hpp"
+
 RDAnalyzer::RDAnalyzer() {
+  _transferFunctions=new RDTransferFunctions();
+}
+
+RDAnalyzer::~RDAnalyzer() {
+  delete _transferFunctions;
 }
 
 /*! 
@@ -81,6 +88,11 @@ size_t RDAnalyzer::size() {
   * \author Markus Schordan
   * \date 2013.
  */
+#if 1
+RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
+  return _rdTransferFunctions->transfer(lab,element);
+}
+#else 
 RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   if(element.isBot())
     element.setEmptySet();
@@ -247,3 +259,5 @@ void RDAnalyzer::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, 
   }
   // TODO:: return variable $r
 }
+#endif
+

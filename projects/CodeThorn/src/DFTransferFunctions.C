@@ -1,3 +1,6 @@
+#ifndef DFTRANSFERFUNCTIONS_CPP
+#define DFTRANSFERFUNCTIONS_CPP
+
 #include "sage3basic.h"
 
 using namespace std;
@@ -5,9 +8,13 @@ using namespace std;
 #include "CollectionOperators.h"
 using namespace CodeThorn;
 
-#include "RDTransferFunctions.hh"
+#include "DFTransferFunctions.hpp"
 
-template<LatticeType>
+template<typename LatticeType>
+DFTransferFunctions<LatticeType>::DFTransferFunctions() {
+}
+
+template<typename LatticeType>
 LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType element) {
   if(element.isBot())
     element.setEmptySet();
@@ -48,9 +55,9 @@ LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType el
       // ad 1)
       set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       // ad 2)
-      VariableIdMapping::VariableIdSet localVars=_variableIdMapping.determineVariableIdsOfVariableDeclarations(varDecls);
+      VariableIdMapping::VariableIdSet localVars=_variableIdMapping->determineVariableIdsOfVariableDeclarations(varDecls);
       SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-      VariableIdMapping::VariableIdSet formalParams=_variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+      VariableIdMapping::VariableIdSet formalParams=_variableIdMapping->determineVariableIdsOfSgInitializedNames(formalParamInitNames);
       VariableIdMapping::VariableIdSet vars=localVars+formalParams;
       transferFunctionExit(lab,funDef,vars,element); // TEST ONLY
       return element;
@@ -68,40 +75,37 @@ LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType el
   if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
     transferDeclaration(lab,vardecl,element);
   }
-#if 0
-  cout << "RDAnalyzer: called transfer function. result: ";
-  element.toStream(cout,&_variableIdMapping);
-  cout<<endl;
-#endif
   return element;
 }
 
-template<LatticeType>
-LatticeType DFTransferFunctions<LatticeType>::transferExpression(Label lab, SgExpression* node, RDLattice& element) {
-  return element;
+template<typename LatticeType>
+void DFTransferFunctions<LatticeType>::transferExpression(Label lab, SgExpression* node, LatticeType& element) {
+  // identity function
 }
   
-template<LatticeType>
-LatticeType DFTransferFunctions<LatticeType>::transferDeclaration(Label label, SgVariableDeclaration* decl, RDLattice& element) {
-  return element;
+template<typename LatticeType>
+void DFTransferFunctions<LatticeType>::transferDeclaration(Label label, SgVariableDeclaration* decl, LatticeType& element) {
+  // identity function
 }
 
-template<LatticeType>
-LatticeType DFTransferFunctions<LatticeType>:: transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, RDLattice& element) {
-  return element;
+template<typename LatticeType>
+void DFTransferFunctions<LatticeType>::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, LatticeType& element) {
+  // identity function
 }
 
-template<LatticeType>
-LatticeType DFTransferFunctions<LatticeType>::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element) {
-  return element;
+template<typename LatticeType>
+void DFTransferFunctions<LatticeType>::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, LatticeType& element) {
+  // identity function
 }
 
-template<LatticeType>
-LatticeType DFTransferFunctions<LatticeType>::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element) {
-  return element;
+template<typename LatticeType>
+void DFTransferFunctions<LatticeType>::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, LatticeType& element) {
+  // identity function
 }
 
-template<LatticeType>
-LatticeType DFTransferFunctions<LatticeType>::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, RDLattice& element) {
-  return element;
+template<typename LatticeType>
+void DFTransferFunctions<LatticeType>::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, LatticeType& element) {
+  // identity function
 }
+
+#endif

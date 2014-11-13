@@ -11,6 +11,7 @@
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
+#include "DFTransferFunctions.hpp"
 #include <set>
 #include <string>
 
@@ -28,6 +29,7 @@ class DFAnalyzer {
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   virtual LatticeType initializeGlobalVariables(SgProject* root);
+  virtual void initializeTransferFunctions();
   void determineExtremalLabels(SgNode*);
   void run();
 
@@ -60,6 +62,7 @@ class DFAnalyzer {
  protected:
   bool _preInfoIsValid;
   void computeAllPreInfo();
+  DFTransferFunctions<LatticeType>* _transferFunctions;
  private:
   void solveAlgorithm1();
   void solveAlgorithm2();
