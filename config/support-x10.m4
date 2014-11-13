@@ -127,6 +127,7 @@ AC_DEFUN([ROSE_SUPPORT_X10],
       else
           AC_MSG_RESULT([$X10_VERSION])
       fi
+      rose_with_x10=yes
   fi
 
   #============================================================================
