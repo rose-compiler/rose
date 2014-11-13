@@ -667,7 +667,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
      string fileNameForTokenStream = file->getFileName();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
@@ -833,7 +833,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // DQ (10/27/2013): Use a different filename for the output of the raw token stream (not associated with individual statements).
      string outputFilename = "rose_raw_tokens_" + file->get_sourceFileNameWithoutPath();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFileUsingTokenStream(): Output tokens stream to file: %s \n",outputFilename.c_str());
 #endif
 
