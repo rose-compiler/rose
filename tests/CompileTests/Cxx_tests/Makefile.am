@@ -871,8 +871,8 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 # Include the path to A++ and the transformation specification
 # TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 # TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA -I$(top_srcdir)/tests/CompileTests/A++Code
-TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
+# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 TESTS_THAT_FAIL =

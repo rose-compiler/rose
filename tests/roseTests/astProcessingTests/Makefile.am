@@ -274,7 +274,12 @@ MOSTLYCLEANFILES += hotness0.dot
 noinst_PROGRAMS += strictGraphTest3
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-strictGraphTest3_LDFLAGS = -fopenmp -O3 
+
+# Not all targets have support for openmp, so it can't be unconditionally added to the compiler command line.  Also, why are
+# we turning on optimizations especially when the user may have requested a different level of optimizations?  Besides,
+# how do we even know that the compiler accepts "-fopenmp" and "-O3" as command-line switches?!
+# Therefore, disabling these switches. [Robb Matzke, 2014-10-15]
+#strictGraphTest3_LDFLAGS = -fopenmp -O3 
 
 strictGraphTest3.passed: strictGraphTest3 $(TEST_CONFIG)
 	@$(RTH_RUN) CMD="./strictGraphTest3" $(TEST_CONFIG) $@

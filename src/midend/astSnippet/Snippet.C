@@ -1,3 +1,5 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "Snippet.h"
 #include "AstTraversal.h"
 #include "LinearCongruentialGenerator.h"
@@ -37,7 +39,7 @@ void SnippetAstTraversal::traverse(SgNode *ast) {
     struct T1: AstPrePostProcessing {
         SnippetAstTraversal &self;
         T1(SnippetAstTraversal &self): self(self) {}
-        virtual void preOrderVisit(SgNode *node) /*override*/ {
+        virtual void preOrderVisit(SgNode *node) ROSE_OVERRIDE {
             self(node, preorder);
             if (SgExpression *expr = isSgExpression(node)) {
                 if (expr->attributeExists("body")) {
@@ -47,7 +49,7 @@ void SnippetAstTraversal::traverse(SgNode *ast) {
                 }
             }
         }
-        virtual void postOrderVisit(SgNode *node) /*override*/ {
+        virtual void postOrderVisit(SgNode *node) ROSE_OVERRIDE {
             self(node, postorder);
         }
     };

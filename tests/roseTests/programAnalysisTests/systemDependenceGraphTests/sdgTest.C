@@ -1,3 +1,5 @@
+#include <rose.h>
+
 #include <cong_staticCFG.h>
 #include <PDG.h>
 #include <SDG.h>

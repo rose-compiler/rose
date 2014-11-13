@@ -32,11 +32,11 @@ public:
     typedef const SgAsmExpressionPtrList &A;
     virtual void p(D, Ops, I, A) = 0;
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) /*override*/ {
+    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
         DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-        assert(insn!=NULL && insn==operators->get_insn());
+        ASSERT_require(insn!=NULL && insn==operators->get_insn());
         operators->writeRegister(dispatcher->REG_EIP, operators->add(operators->number_(32, insn->get_address()),
                                                                      operators->number_(32, insn->get_size())));
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
@@ -196,7 +196,7 @@ struct IP_and: P {
 struct IP_bitscan: P {
     const X86InstructionKind kind;
     IP_bitscan(X86InstructionKind k): kind(k) {
-        assert(x86_bsf==k || x86_bsr==k);
+        ASSERT_require(x86_bsf==k || x86_bsr==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -210,11 +210,11 @@ struct IP_bitscan: P {
         BaseSemantics::SValuePtr isZero = ops->equalToZero(op);
         ops->writeRegister(d->REG_ZF, isZero);
         BaseSemantics::SValuePtr bitno;
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         switch (kind) {
             case x86_bsf: bitno = ops->leastSignificantSetBit(op); break;
             case x86_bsr: bitno = ops->mostSignificantSetBit(op); break;
-            default: assert(!"instruction kind not handled"); abort();
+            default: ASSERT_not_reachable("instruction kind not handled");
         }
         BaseSemantics::SValuePtr result = ops->ite(isZero, d->read(args[0], nbits), bitno);
         d->write(args[0], result);
@@ -225,11 +225,11 @@ struct IP_bitscan: P {
 struct IP_bittest: P {
     const X86InstructionKind kind;
     IP_bittest(X86InstructionKind k): kind(k) {
-        assert(x86_bt==k || x86_btr==k || x86_bts==k);
+        ASSERT_require(x86_bt==k || x86_btr==k || x86_bts==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         // All flags except CF are undefined
         ops->writeRegister(d->REG_OF, ops->undefined_(1));
         ops->writeRegister(d->REG_SF, ops->undefined_(1));
@@ -261,8 +261,7 @@ struct IP_bittest: P {
                     ops->writeMemory(d->segmentRegister(mre), adjustedAddr, result, ops->boolean_(true));
                     break;
                 default:
-                    assert(!"instruction kind not handled");
-                    abort();
+                    ASSERT_not_reachable("instruction kind not handled");
             }
         } else {
             // Simple case
@@ -284,8 +283,7 @@ struct IP_bittest: P {
                     d->write(args[0], result);
                     break;
                 default:
-                    assert(!"instruction kind not handled");
-                    abort();
+                    ASSERT_not_reachable("instruction kind not handled");
             }
         }
     }
@@ -362,15 +360,15 @@ struct IP_cmc: P {
 struct IP_cmovcc: P {
     const X86InstructionKind kind;
     IP_cmovcc(X86InstructionKind k): kind(k) {
-        assert(x86_cmovne==k || x86_cmove==k || x86_cmovno==k || x86_cmovo==k || x86_cmovpo==k || x86_cmovpe==k ||
-               x86_cmovns==k || x86_cmovs==k || x86_cmovae==k || x86_cmovb==k || x86_cmovbe==k || x86_cmova==k ||
-               x86_cmovle==k || x86_cmovg==k || x86_cmovge==k || x86_cmovl==k);
+        ASSERT_require(x86_cmovne==k || x86_cmove==k || x86_cmovno==k || x86_cmovo==k || x86_cmovpo==k || x86_cmovpe==k ||
+                       x86_cmovns==k || x86_cmovs==k || x86_cmovae==k || x86_cmovb==k || x86_cmovbe==k || x86_cmova==k ||
+                       x86_cmovle==k || x86_cmovg==k || x86_cmovge==k || x86_cmovl==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         size_t nbits = asm_type_width(args[0]->get_type());
-        assert(16==nbits || 32==nbits);
+        ASSERT_require(16==nbits || 32==nbits);
         BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
         d->write(args[0], ops->ite(cond, d->read(args[1], nbits), d->read(args[0], nbits)));
     }                                                                                                                          \
@@ -391,7 +389,7 @@ struct IP_cmpstrings: P {
     const size_t nbits;
     const size_t nbytes;
     IP_cmpstrings(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        assert(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
@@ -484,7 +482,7 @@ struct IP_hlt: P {
 struct IP_divide: P {
     const X86InstructionKind kind;
     IP_divide(X86InstructionKind k): kind(k) {
-        assert(x86_div==k || x86_idiv==k);
+        ASSERT_require(x86_div==k || x86_idiv==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
@@ -499,7 +497,7 @@ struct IP_divide: P {
         }
         BaseSemantics::SValuePtr op1 = d->read(args[0], nbits);
         BaseSemantics::SValuePtr divResult, modResult;
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         switch (kind) {
             case x86_idiv:
                 divResult = ops->signedDivide(op0, op1);
@@ -510,8 +508,7 @@ struct IP_divide: P {
                 modResult = ops->unsignedModulo(op0, op1);
                 break;
             default:
-                assert(!"instruction kind not handled");
-                abort();
+                ASSERT_not_reachable("instruction kind not handled");
         }
         if (8==nbits) {
             ops->writeRegister(regA, ops->concat(ops->extract(divResult, 0, 8), modResult));
@@ -616,7 +613,7 @@ struct IP_imul: P {
                 d->write(args[0], ops->extract(result, 0, nbits));
             }
         }
-        assert(result->get_width() == 2*nbits);
+        ASSERT_require(result->get_width() == 2*nbits);
 
         // For the one-operand form of the instruction, the CF and OF flags are set only when bits are carried into the upper
         // half of the result; for the two- and three-operand forms, the CF and OF flags are set only when the signed result
@@ -678,13 +675,13 @@ struct IP_jmp: P {
 struct IP_jcc: P {
     const X86InstructionKind kind;
     IP_jcc(X86InstructionKind k): kind(k) {
-        assert(x86_jne==k || x86_je==k || x86_jno==k || x86_jo==k || x86_jns==k || x86_js==k ||
-               x86_jpo==k || x86_jpe==k || x86_jae==k || x86_jb==k || x86_jbe==k || x86_ja==k ||
-               x86_jl==k || x86_jge==k || x86_jle==k || x86_jg==k || x86_jcxz==k || x86_jecxz==k);
+        ASSERT_require(x86_jne==k || x86_je==k || x86_jno==k || x86_jo==k || x86_jns==k || x86_js==k ||
+                       x86_jpo==k || x86_jpe==k || x86_jae==k || x86_jb==k || x86_jbe==k || x86_ja==k ||
+                       x86_jl==k || x86_jge==k || x86_jle==k || x86_jg==k || x86_jcxz==k || x86_jecxz==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
         ops->writeRegister(d->REG_EIP,
                            ops->ite(cond, d->read(args[0], 32), d->readRegister(d->REG_EIP)));
@@ -729,7 +726,7 @@ struct IP_loadstring: P {
     const size_t nbits;
     const size_t nbytes;
     IP_loadstring(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        assert(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
@@ -752,7 +749,7 @@ struct IP_loadstring: P {
 struct IP_loop: P {
     const X86InstructionKind kind;
     IP_loop(X86InstructionKind k): kind(k) {
-        assert(x86_loop==k || x86_loopnz==k || x86_loopz==k);
+        ASSERT_require(x86_loop==k || x86_loopnz==k || x86_loopz==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
@@ -762,7 +759,7 @@ struct IP_loop: P {
         BaseSemantics::SValuePtr newCx = ops->add(ops->number_(32, -1), oldCx);
         ops->writeRegister(d->REG_ECX, newCx);
         BaseSemantics::SValuePtr doLoop;
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         switch (kind) {
             case x86_loop:
                 doLoop = ops->invert(ops->equalToZero(newCx));
@@ -774,8 +771,7 @@ struct IP_loop: P {
                 doLoop = ops->and_(ops->invert(ops->equalToZero(newCx)), d->readRegister(d->REG_ZF));
                 break;
             default:
-                assert(!"instruction type not handled");
-                abort();
+                ASSERT_not_reachable("instruction type not handled");
         }
         ops->writeRegister(d->REG_EIP, ops->ite(doLoop, d->read(args[0], 32), d->readRegister(d->REG_EIP)));
     }
@@ -815,8 +811,8 @@ struct IP_movestring: P {
     const size_t nbits;
     const size_t nbytes;
     IP_movestring(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        assert(8==nbits || 16==nbits || 32==nbits);
-        assert(x86_repeat_none==repeat || x86_repeat_repe==repeat);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(x86_repeat_none==repeat || x86_repeat_repe==repeat);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
@@ -882,7 +878,7 @@ struct IP_movzx: P {
         if (dst_nbits==src_nbits) {
             d->write(args[0], d->read(args[1], src_nbits));
         } else {
-            assert(dst_nbits>src_nbits);
+            ASSERT_require(dst_nbits>src_nbits);
             d->write(args[0], ops->concat(d->read(args[1], src_nbits), ops->number_(dst_nbits-src_nbits, 0)));
         }
     }
@@ -1148,11 +1144,11 @@ struct IP_rotate: P {
     const X86InstructionKind kind;
     const bool with_cf;
     IP_rotate(X86InstructionKind k): kind(k), with_cf(x86_rcl==kind || x86_rcr==kind) {
-        assert(x86_rcl==k || x86_rcr==k || x86_rol==k || x86_ror==k);
+        ASSERT_require(x86_rcl==k || x86_rcr==k || x86_rol==k || x86_ror==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         size_t nbits = asm_type_width(args[0]->get_type());
         // FIXME: Intel documentation contains conflicting statements about the number of significant bits in the rotate count.
         // We're doing what seems most reasonable: 6-bit counts for any operand (inc. CF) that's wider than 32 bits.
@@ -1186,7 +1182,7 @@ struct IP_scanstring: P {
     const size_t nbits;
     const size_t nbytes;
     IP_scanstring(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        assert(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
@@ -1212,13 +1208,13 @@ struct IP_scanstring: P {
 struct IP_setcc: P {
     const X86InstructionKind kind;
     IP_setcc(X86InstructionKind k): kind(k) {
-        assert(x86_setne==k || x86_sete==k || x86_setno==k || x86_seto==k || x86_setpo==k || x86_setpe==k ||
-               x86_setns==k || x86_sets==k || x86_setae==k || x86_setb==k || x86_setbe==k || x86_seta==k ||
-               x86_setle==k || x86_setg==k || x86_setge==k || x86_setl==k);
+        ASSERT_require(x86_setne==k || x86_sete==k || x86_setno==k || x86_seto==k || x86_setpo==k || x86_setpe==k ||
+                       x86_setns==k || x86_sets==k || x86_setae==k || x86_setb==k || x86_setbe==k || x86_seta==k ||
+                       x86_setle==k || x86_setg==k || x86_setge==k || x86_setl==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
         d->write(args[0], ops->concat(cond, ops->number_(7, 0)));
     }
@@ -1228,11 +1224,11 @@ struct IP_setcc: P {
 struct IP_shift: P {
     const X86InstructionKind kind;
     IP_shift(X86InstructionKind k): kind(k) {
-        assert(x86_shr==k || x86_sar==k || x86_shl==k || x86_shld==k || x86_shrd==k);
+        ASSERT_require(x86_shr==k || x86_sar==k || x86_shl==k || x86_shld==k || x86_shrd==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        assert(insn->get_kind()==kind);
+        ASSERT_require(insn->get_kind()==kind);
         size_t nbits = asm_type_width(args[0]->get_type());
         size_t shiftSignificantBits = nbits <= 32 ? 5 : 7;
         BaseSemantics::SValuePtr result = d->doShiftOperation(insn->get_kind(), d->read(args[0], nbits),
@@ -1264,7 +1260,7 @@ struct IP_storestring: P {
     const size_t nbits;
     const size_t nbytes;
     IP_storestring(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        assert(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
@@ -1646,7 +1642,7 @@ DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result)
 void
 DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &cond)
 {
-    assert(cond->get_width()==1);
+    ASSERT_require(cond->get_width()==1);
     BaseSemantics::SValuePtr lo_byte = operators->extract(result, 0, 8);
     BaseSemantics::SValuePtr signbit = operators->extract(result, result->get_width()-1, result->get_width());
     operators->writeRegister(REG_PF, operators->ite(cond, parity(lo_byte), operators->readRegister(REG_PF)));
@@ -1657,7 +1653,7 @@ DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result, const B
 BaseSemantics::SValuePtr
 DispatcherX86::parity(const BaseSemantics::SValuePtr &v)
 {
-    assert(v->get_width()==8);
+    ASSERT_require(v->get_width()==8);
     BaseSemantics::SValuePtr p01 = operators->xor_(operators->extract(v, 0, 1), operators->extract(v, 1, 2));
     BaseSemantics::SValuePtr p23 = operators->xor_(operators->extract(v, 2, 3), operators->extract(v, 3, 4));
     BaseSemantics::SValuePtr p45 = operators->xor_(operators->extract(v, 4, 5), operators->extract(v, 5, 6));
@@ -1764,8 +1760,7 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jecxz:
             return operators->equalToZero(operators->readRegister(REG_ECX));
         default:
-            assert(!"instruction kind not handled");
-            abort();
+            ASSERT_not_reachable("instruction kind not handled");
         }
 }
 
@@ -1782,7 +1777,7 @@ DispatcherX86::repEnter(X86RepeatPrefix repeat)
 void
 DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va)
 {
-    assert(in_loop!=NULL && in_loop->get_width()==1);
+    ASSERT_require(in_loop!=NULL && in_loop->get_width()==1);
 
     // conditionally decrement the ECX register
     BaseSemantics::SValuePtr new_ecx = operators->add(operators->readRegister(REG_ECX),
@@ -1818,8 +1813,8 @@ BaseSemantics::SValuePtr
 DispatcherX86::doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                               bool invertCarries, const BaseSemantics::SValuePtr &carryIn)
 {
-    assert(a->get_width()==b->get_width());
-    assert(1==carryIn->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(1==carryIn->get_width());
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
     BaseSemantics::SValuePtr result = operators->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
@@ -1837,9 +1832,9 @@ DispatcherX86::doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSeman
                               bool invertCarries, const BaseSemantics::SValuePtr &carryIn,
                               const BaseSemantics::SValuePtr &cond)
 {
-    assert(a->get_width()==b->get_width());
-    assert(1==carryIn->get_width());
-    assert(cond!=NULL && cond->get_width()==1);
+    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(1==carryIn->get_width());
+    ASSERT_require(cond!=NULL && cond->get_width()==1);
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
     BaseSemantics::SValuePtr result = operators->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
@@ -1885,8 +1880,8 @@ BaseSemantics::SValuePtr
 DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::SValuePtr &operand,
                                  const BaseSemantics::SValuePtr &total_rotate, size_t rotateSignificantBits)
 {
-    assert(x86_rcl==kind || x86_rcr==kind || x86_rol==kind || x86_ror==kind);
-    assert(total_rotate->get_width()==8 && rotateSignificantBits<8);
+    ASSERT_require(x86_rcl==kind || x86_rcr==kind || x86_rol==kind || x86_ror==kind);
+    ASSERT_require(total_rotate->get_width()==8 && rotateSignificantBits<8);
 
     // The 8086 does not mask the rotate count; processors starting with the 80286 (including virtual-8086 mode) do mask. We
     // will always mask. The effect (other than timing) is the same either way.
@@ -1914,10 +1909,9 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
             result = operators->rotateRight(operand, maskedRotateCount);
             break;
         default:
-            assert(!"instruction not handled");
-            abort();
+            ASSERT_not_reachable("instruction not handled");
     }
-    assert(result->get_width()==operand->get_width());
+    ASSERT_require(result->get_width()==operand->get_width());
 
     // Compute the new CF value.
     BaseSemantics::SValuePtr new_cf;
@@ -1931,8 +1925,7 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
             new_cf = operators->extract(result, 0, 1);
             break;
         default:
-            assert(!"instruction not handled");
-            abort();
+            ASSERT_not_reachable("instruction not handled");
     }
 
     // Compute the new OF value.  The new OF value is only used for 1-bit rotates.
@@ -1952,8 +1945,7 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
                                      operators->extract(result, result->get_width()-1, result->get_width()));
             break;
         default:
-            assert(!"instruction not handled");
-            abort();
+            ASSERT_not_reachable("instruction not handled");
     }
 
     // Update CF and OF flags. SF, ZF, AF, and PF are not affected.
@@ -1970,9 +1962,9 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
                                 const BaseSemantics::SValuePtr &source_bits, const BaseSemantics::SValuePtr &total_shift,
                                 size_t shiftSignificantBits)
 {
-    assert(x86_shr==kind || x86_sar==kind || x86_shl==kind || x86_shld==kind || x86_shrd==kind);
-    assert(operand->get_width()==source_bits->get_width());
-    assert(total_shift->get_width()==8 && shiftSignificantBits<8);
+    ASSERT_require(x86_shr==kind || x86_sar==kind || x86_shl==kind || x86_shld==kind || x86_shrd==kind);
+    ASSERT_require(operand->get_width()==source_bits->get_width());
+    ASSERT_require(total_shift->get_width()==8 && shiftSignificantBits<8);
 
     // The 8086 does not mask the shift count; processors starting with the 80286 (including virtual-8086 mode) do
     // mask.  The effect (other than timing) is the same either way.
@@ -2020,10 +2012,9 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
                                                                                         operators->negate(maskedShiftCount)))));
             break;
         default:
-            assert(!"instruction not handled");
-            abort();
+            ASSERT_not_reachable("instruction not handled");
     }
-    assert(operand->get_width()==result->get_width());
+    ASSERT_require(operand->get_width()==result->get_width());
     BaseSemantics::SValuePtr originalSign = operators->extract(operand, operand->get_width()-1, operand->get_width());
     BaseSemantics::SValuePtr resultSign = operators->extract(result, result->get_width()-1, result->get_width());
 

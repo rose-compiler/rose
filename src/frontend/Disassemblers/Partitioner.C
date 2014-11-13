@@ -43,7 +43,7 @@ void Partitioner::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Partitioner", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -139,7 +139,7 @@ Partitioner::update_progress() const
 {
     static Sawyer::ProgressBar<size_t, ProgressSuffix> *progressBar = NULL;
     if (!progressBar)
-        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[INFO], "");
+        progressBar = new Sawyer::ProgressBar<size_t, ProgressSuffix>(mlog[MARCH], "");
     progressBar->suffix(ProgressSuffix(this));
     progressBar->value(basic_blocks.size());
 }
@@ -1715,7 +1715,7 @@ Partitioner::mark_func_patterns()
     struct T1: ByteRangeCallback {
         Partitioner *p;
         T1(Partitioner *p): p(p) {}
-        virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+        virtual bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
             ASSERT_not_null(args.restrict_map);
             uint8_t buf[4096];
             if (enabled) {

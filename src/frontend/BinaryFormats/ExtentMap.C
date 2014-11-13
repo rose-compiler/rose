@@ -39,6 +39,14 @@ std::ostream& operator<<(std::ostream &out, const AddressInterval &x) {
     return out;
 }
 
+std::ostream& operator<<(std::ostream &out, const AddressIntervalSet &x) {
+    out <<"{";
+    BOOST_FOREACH (const AddressInterval &interval, x.intervals())
+        out <<" " <<interval;
+    out <<" }";
+    return out;
+}
+
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:
  *     C (congruent):  A and B are congruent

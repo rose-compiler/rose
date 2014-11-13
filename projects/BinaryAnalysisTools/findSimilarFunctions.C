@@ -128,12 +128,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "distance from each other.  The specimens need not have the same number of functions, in which case one of "
              "the specimens will have null functions inserted to make them the same size.  The distance between a null "
              "function and some other function is always zero regardless of metric.")
-        .doc("Specimens",
-             "The binary specimens can be constructed from files in two ways."
-             "@bullet{If the specimen name is a simple file name then the specimen is passed to the \"buildBinaryComposite\" "
-             "so its container format (ELF, PE, etc) can be parsed and its segments loaded into virtual memory.}"
-             "@bullet{If the specimen name begins with the string \"map:\" then it is treated as a memory map resource "
-             "string. " + MemoryMap::insertFileDocumentation() + "}");
+        .doc("Specimens", P2::Engine::specimenNameDocumentation() + "\n\n"
+             "Note: only two names can be supplied: one for the first specimen and one for the second.");
 
     return parser.with(generic).with(tool).parse(argc, argv).apply();
 }
@@ -249,7 +245,7 @@ private:
 
 class SubstitutionPredicate: public EditDistance::TreeEditDistance::SubstitutionPredicate {
 public:
-    virtual bool operator()(SgNode *source, SgNode *target) /*override*/ {
+    virtual bool operator()(SgNode *source, SgNode *target) ROSE_OVERRIDE {
         if (source->variantT() != target->variantT())
             return false;
         if (SgAsmInstruction *si = isSgAsmInstruction(source)) {
@@ -278,7 +274,7 @@ class MyWorkList {
     Sawyer::ProgressBar<size_t> progress_;
     size_t next_;
 public:
-    MyWorkList(size_t matrixSize, size_t nItems): progress_(mlog[INFO]) {
+    MyWorkList(size_t matrixSize, size_t nItems): progress_(mlog[MARCH]) {
         size_t itemSize = (size_t)ceil(sqrt((double)matrixSize*matrixSize/nItems));
         ASSERT_require(itemSize>0);
         for (size_t i=0; i<matrixSize; i+=itemSize) {
@@ -425,11 +421,11 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
         ASSERT_not_null(file);
         interp = file->get_interpretations()->get_interpretations().back();
         ASSERT_not_null(interp);
-        engine.loadSpecimen(interp);
-        ASSERT_not_null(interp->get_map());
-        map = *interp->get_map();
+        engine.interpretation(interp);
+        engine.load();
+        map = engine.memoryMap();
         if (!disassembler) {
-            disassembler = engine.allocateDisassembler(interp);
+            disassembler = engine.disassembler();
             ASSERT_not_null(disassembler);
         }
         info <<"; completed in " <<parseTime <<" seconds\n";
@@ -443,8 +439,8 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
     info <<"disassembling and partitioning";
     P2::Modules::deExecuteZeros(map, 256);
     Sawyer::Stopwatch partitionTime;
-    P2::Partitioner partitioner = engine.createTunedPartitioner(disassembler, map);
-    engine.partition(partitioner, interp);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
+    engine.runPartitioner(partitioner, interp);
     SgAsmBlock *gblock = partitioner.buildGlobalBlockAst();
     info <<"; completed in " <<partitionTime <<" seconds\n";
 
@@ -452,7 +448,7 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
 }
 
 struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
-    std::string operator()(const rose_addr_t &value, size_t width) const /*override*/ {
+    std::string operator()(const rose_addr_t &value, size_t width) const ROSE_OVERRIDE {
         return addrToString(value);
     }
 };

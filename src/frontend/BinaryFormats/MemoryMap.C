@@ -1,6 +1,8 @@
 #define BOOST_FILESYSTEM_VERSION 3
 
 #include "sage3basic.h"
+
+#include "Diagnostics.h"
 #include "MemoryMap.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
@@ -10,11 +12,16 @@
 
 #include <boost/config.hpp>
 #ifndef BOOST_WINDOWS
+# include <fcntl.h>                                     // for open()
+# include <sys/ptrace.h>                                // for ptrace()
+# include <sys/wait.h>                                  // for waitpid()
 # include <unistd.h>                                    // for access()
 #endif
 
+using namespace rose::Diagnostics;
 
-std::ostream& operator<<(std::ostream &o, const MemoryMap               &x) { x.print(o); return o; }
+
+std::ostream& operator<<(std::ostream &o, const MemoryMap &x) { x.print(o); return o; }
 
 /******************************************************************************************************************************
  *                                      Exceptions
@@ -98,7 +105,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
     s += " + " + StringUtility::addrToString(segment.offset());
 
     if (!segment.name().empty()) {
-        static const size_t limit = 55;
+        static const size_t limit = 100;
         std::string name = escapeString(segment.name());
         if (name.size()>limit)
             name = name.substr(0, limit-3) + "...";
@@ -338,6 +345,200 @@ MemoryMap::insertFile(const std::string &locatorString) {
     size_t nCopied = at(interval.least()).limit(nRead).write(data).size();
     ASSERT_always_require(nRead==nCopied);              // better work since we just created the segment!
     return interval;
+}
+
+std::string
+MemoryMap::insertProcessDocumentation() {
+    return ("Beginning with the first colon, a process resource string has the form "
+            "\":@v{options}:@v{pid}\" where @v{options} controls how the process memory is read and @v{pid} is the process ID. "
+            "The @v{options} are a comma-separated list of words where the following are recognized:"
+
+            "@bullet{\"noattach\" means do not attempt to attach or detach from the process. This is useful when the process "
+            "is already running under some debugger (it has the \"T\" state in @man(ps)(1) output).}"
+
+            "The process will be momentarily stopped (unless the \"noattach\" option was specified, in which case it is assumed "
+            "to already be stopped) while its readable memory is copied into ROSE and mapped at the same addresses and with "
+            "the same permissions as in the process. Then the process is resumed (unless \"noattach\").  If a read fails when "
+            "copying a memory segment from the process into ROSE then"
+            "the memory map will contain only that data which was successfully read and all subsequent addresses for that "
+            "segment are not mapped in ROSE.  The segments will have names like \"proc:@v{pid}@v{error}(@v{name})\" where "
+            "@v{error} is an optional error message in square brackets and @v{name} is the name of the memory segment "
+            "according to the kernel (not all segments have names in the kernel).  For example, a segment named "
+            "\"proc:24112[input/output error](/lib/ld-2.11.3.so)\" means it came from the \"/lib/ld-2.11.3.so\" library "
+            "that was loaded for process 24112 but ROSE was unable to read the entire segment due to an error.  If an error "
+            "occurs when reading the very first byte of a segment then no entry will appear in the final memory map since "
+            "maps never have zero-length segments.");
+}
+
+static std::runtime_error
+insertProcessError(const std::string &locatorString, const std::string &mesg) {
+    throw std::runtime_error("MemoryMap::insertProcess: " + mesg + " in resource string \"" +
+                             StringUtility::cEscape(locatorString) + "\"");
+}
+
+// FIXME[Robb P. Matzke 2014-10-09]: No idea how to do this in Microsoft Windows!
+void
+MemoryMap::insertProcess(const std::string &locatorString) {
+#ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-10]
+    throw std::runtime_error("MemoryMap::insertProcess is not available on Microsoft Windows");
+#else
+
+    // Resources that need to be cleaned up on return or exception
+    struct T {
+        FILE *mapsFile;                                 // file for /proc/xxx/maps
+        char *buf;                                      // line read from /proc/xxx/maps
+        size_t bufsz;                                   // bytes allocated for "buf"
+        int memFile;                                    // file for /proc/xxx/mem
+        pid_t resumeProcess;                            // subordinate process to resume
+        T(): mapsFile(NULL), buf(NULL), bufsz(0), memFile(-1), resumeProcess(-1) {}
+        ~T() {
+            if (mapsFile)
+                fclose(mapsFile);
+            if (buf)
+                free(buf);
+            if (memFile>=0)
+                close(memFile);
+            if (resumeProcess != -1)
+                ptrace(PTRACE_DETACH, resumeProcess, 0, 0);
+        }
+    } local;
+
+    // Parse the locator string.
+    bool doAttach = true;
+    const char *s = locatorString.c_str();
+    if (':'!=*s++)
+        throw insertProcessError(locatorString, "initial colon expected");
+    while (':'!=*s) {
+        if (boost::starts_with(s, "noattach")) {
+            doAttach = false;
+            s += strlen("noattach");
+        } else {
+            throw insertProcessError(locatorString, "unknown option beginning at ...\"" + std::string(s) + "\"");
+        }
+        if (','==*s)
+            ++s;
+    }
+    if (':'!=*s++)
+        throw insertProcessError(locatorString, "second colon expected");
+    
+    int pid = parseInteger(locatorString, s /*in,out*/, "process ID expected");
+
+    // We need to attach to the process with ptrace before we can read from its /proc/xxx/mem file.  We'll have
+    // to detach if anything goes wrong or when we finish.
+    if (doAttach) {
+        if (-1 == ptrace(PTRACE_ATTACH, pid, 0, 0))
+            throw insertProcessError(locatorString, "cannot attach: " + std::string(strerror(errno)));
+        int wstat = 0;
+        if (-1 == waitpid(pid, &wstat, 0))
+            throw insertProcessError(locatorString, "cannot wait: " + std::string(strerror(errno)));
+        if (WIFEXITED(wstat))
+            throw insertProcessError(locatorString, "process exited before it could be read");
+        if (WIFSIGNALED(wstat))
+            throw insertProcessError(locatorString, "process died with " +
+                                     boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat)))) +
+                                     " before it could be read");
+        local.resumeProcess = pid;
+        ASSERT_require2(WIFSTOPPED(wstat) && WSTOPSIG(wstat)==SIGSTOP, "subordinate process did not stop");
+    }
+
+    // Prepare to read subordinate's memory
+    std::string mapsName = "/proc/" + StringUtility::numberToString(pid) + "/maps";
+    if (NULL==(local.mapsFile = fopen(mapsName.c_str(), "r")))
+        throw insertProcessError(locatorString, "cannot open " + mapsName + ": " + strerror(errno));
+    std::string memName = "/proc/" + StringUtility::numberToString(pid) + "/mem";
+    if (-1 == (local.memFile = open(memName.c_str(), O_RDONLY)))
+        throw insertProcessError(locatorString, "cannot open " + memName + ": " + strerror(errno));
+
+    // Read each line from the /proc/xxx/maps to figure out what memory is mapped in the subordinate process. The format for
+    // the part we're interested in is /^([0-9a-f]+)-([0-9a-f]+) ([-r][-w][-x])/ where $1 is the inclusive starting address, $2
+    // is the exclusive ending address, and $3 are the permissions.
+    int mapsFileLineNumber = 0;
+    while (rose_getline(&local.buf, &local.bufsz, local.mapsFile)>0) {
+        ++mapsFileLineNumber;
+
+        // Begin address
+        char *s=local.buf, *rest=s;
+        errno = 0;
+        rose_addr_t begin = rose_strtoull(s, &rest, 16);
+        if (errno!=0 || rest==s || '-'!=*rest) {
+            throw insertProcessError(locatorString, mapsName + " syntax error for beginning address at line " +
+                                     StringUtility::numberToString(mapsFileLineNumber) + ": " + local.buf);
+        }
+
+        // End address
+        s = rest+1;
+        rose_addr_t end = rose_strtoull(s, &rest, 16);
+        if (errno!=0 || rest==s || ' '!=*rest) {
+            throw insertProcessError(locatorString, mapsName + " syntax error for ending address at line " +
+                                     StringUtility::numberToString(mapsFileLineNumber) + ": " + local.buf);
+        }
+        if (begin >= end) {
+            throw insertProcessError(locatorString, mapsName + " invalid address range at line " +
+                                     StringUtility::numberToString(mapsFileLineNumber) + ": " + local.buf);
+        }
+
+        // Access permissions
+        s = ++rest;
+        if ((s[0]!='r' && s[0]!='-') || (s[1]!='w' && s[1]!='-') || (s[2]!='x' && s[2]!='-')) {
+            throw insertProcessError(locatorString, mapsName + " invalid access permissions at line " +
+                                     StringUtility::numberToString(mapsFileLineNumber) + ": " + local.buf);
+        }
+        unsigned accessibility = ('r'==s[0] ? READABLE : 0) | ('w'==s[1] ? WRITABLE : 0) | ('x'==s[2] ? EXECUTABLE : 0);
+
+        // Skip over unused fields
+        for (size_t nSpaces=0; nSpaces<4 && *s; ++s) {
+            if (isspace(*s))
+                ++nSpaces;
+        }
+        while (isspace(*s)) ++s;
+
+        // Segment name according to the kernel
+        std::string kernelSegmentName;
+        while (*s && !isspace(*s))
+            kernelSegmentName += *s++;
+
+        // Create memory segment, but don't insert it until after we read all the data
+        std::string segmentName = "proc:" + StringUtility::numberToString(pid);
+        AddressInterval segmentInterval = AddressInterval::baseSize(begin, end-begin);
+        Segment segment = Segment::anonymousInstance(segmentInterval.size(), accessibility,
+                                                     segmentName + "(" + kernelSegmentName + ")");
+
+        // Copy data from the subordinate process into our memory segment
+        if (-1 == lseek(local.memFile, begin, SEEK_SET))
+            throw insertProcessError(locatorString, memName + " seek failed: " + strerror(errno));
+        size_t nRemain = segmentInterval.size();
+        rose_addr_t segmentBufferOffset = 0;
+        while (nRemain > 0) {
+            uint8_t chunkBuf[8192];
+            size_t chunkSize = std::min(nRemain, sizeof chunkBuf);
+            ssize_t nRead = ::read(local.memFile, chunkBuf, chunkSize);
+            if (-1==nRead) {
+                if (EINTR==errno)
+                    continue;
+                mlog[WARN] <<strerror(errno) <<" during read from " <<memName <<" for segment " <<kernelSegmentName
+                           <<" at " <<segmentInterval <<"\n";
+                segmentName += "[" + boost::to_lower_copy(std::string(strerror(errno))) + "]";
+                break;
+            } else if (0==nRead) {
+                mlog[WARN] <<"short read from " <<memName <<" for segment " <<kernelSegmentName <<" at " <<segmentInterval <<"\n";
+                segmentName += "[short read]";
+                break;
+            }
+            rose_addr_t nWrite = segment.buffer()->write(chunkBuf, segmentBufferOffset, nRead);
+            ASSERT_always_require(nWrite == (rose_addr_t)nRead);
+            nRemain -= chunkSize;
+            segmentBufferOffset += chunkSize;
+        }
+        if (nRemain > 0) {
+            // If a read failed, map only what we could read
+            segmentInterval = AddressInterval::baseSize(segmentInterval.least(), segmentInterval.size()-nRemain);
+        }
+
+        // Insert segment into memory map
+        if (!segmentInterval.isEmpty())
+            insert(segmentInterval, segment);
+    }
+#endif
 }
 
 SgUnsignedCharList

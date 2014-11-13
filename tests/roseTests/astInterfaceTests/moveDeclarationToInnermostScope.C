@@ -16,8 +16,19 @@ class visitorTraversal : public AstSimpleProcessing
         SgFunctionDeclaration* func = isSgFunctionDeclaration(n);  
         ROSE_ASSERT(func != NULL);
         if (func->get_definition() == NULL) return;
+
+        // TODO: skip things from headers. 
+        // skip compiler generated codes, mostly from template headers
+        if (func->get_file_info()->isCompilerGenerated())
+        {
+          return;
+        }
+
         SgBasicBlock* body = func->get_definition()->get_body();
         if (body == NULL) return; 
+        // Prepare the function body: ensure body basic block for while, for, if, etc.
+         SageInterface::changeAllBodiesToBlocks (body, false);
+
         Rose_STL_Container<SgNode*> var_decls= NodeQuery::querySubTree(body,V_SgVariableDeclaration);
         if (debug )
           cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
@@ -26,7 +37,13 @@ class visitorTraversal : public AstSimpleProcessing
           SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
           ROSE_ASSERT(decl!= NULL);
           bool result=false;
-          result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+          if (SageInterface::isStatic(decl))
+          {
+            if (debug)
+              cout<<"skipping a static variable declaration .."<<endl;
+          }
+          else
+            result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
         }
       } // end if
     } // end visit()
@@ -43,24 +60,20 @@ int main(int argc, char * argv[])
     cout<<"Turing on debugging model..."<<endl;
   }
   SgProject *project = frontend (argvList);
+
+  SgFilePtrList file_ptr_list = project->get_fileList();
   visitorTraversal exampleTraversal;
-  exampleTraversal.traverseInputFiles(project,preorder);
-#if 0
-  SgFunctionDeclaration* func = SageInterface::findMain(project);
-  ROSE_ASSERT(func != NULL);
-  SgBasicBlock* body = func->get_definition()->get_body();
-  ROSE_ASSERT(body!= NULL);
-  Rose_STL_Container<SgNode*> var_decls= NodeQuery::querySubTree(body,V_SgVariableDeclaration);
-  cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
-  for (size_t i=0; i< var_decls.size(); i++)
+  for (size_t i = 0; i<file_ptr_list.size(); i++)
   {
-    SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
-    ROSE_ASSERT(decl!= NULL);
-    bool result=false;
-    result = SageInterface::moveDeclarationToInnermostScope(decl);
+    SgFile* cur_file = file_ptr_list[i];
+    SgSourceFile* s_file = isSgSourceFile(cur_file);
+    if (s_file != NULL)
+    {
+      //exampleTraversal.traverseInputFiles(project,preorder);
+       exampleTraversal.traverseWithinFile(s_file, preorder);
+    }
   }
-#endif
-  // run all tests
+ // run all tests
   AstTests::runAllTests(project);
   return backend(project);
 }

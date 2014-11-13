@@ -15,10 +15,6 @@
 #include <sawyer/ProgressBar.h>
 #include <sawyer/Stack.h>
 
-// Defining this will cause the partitioner to continuously very that the CFG and AUM are consistent.  Doing so will impose a
-// substantial slow-down.  Defining this has little effect if NDEBUG or SAWYER_NDEBUG is also defined.
-#undef ROSE_PARTITIONER_EXPENSIVE_CHECKS
-
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
 
@@ -105,7 +101,7 @@ Partitioner::reportProgress() const {
     }
     
     if (!bar)
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[INFO], "cfg");
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[MARCH], "cfg");
 
     if (progressTotal_) {
         // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
@@ -641,7 +637,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
         return true;
     }
 
-    // We don't have semantics, so delegate to the SgAsmInstruction subclass (which might try some other semantics).
+    // We don't have semantics, so delegate to the SgAsmInstruction subclass.
     retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
     return retval;
@@ -657,16 +653,13 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
-#if 1 // DEBUGGING [Robb P. Matzke 2014-09-15]
-    Stream debug(mlog[DEBUG]);
-    debug.enable(isSgAsmX86Instruction(lastInsn) && isSgAsmX86Instruction(lastInsn)->get_kind()==x86_ret);
-#endif
-
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
         // This is a function return if the instruction pointer has the same value as the memory for one past the end of the
         // stack pointer.  The assumption is that a function return pops the return-to address off the top of the stack and
-        // unconditionally branches to it.  It may pop other things from the stack as well.  Assuming stacks grow down.
+        // unconditionally branches to it.  It may pop other things from the stack as well.  Assuming stacks grow down. This
+        // will not work for callee-cleans-up returns where the callee also pops off some arguments that were pushed before
+        // the call.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
         const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
@@ -679,15 +672,6 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
         BaseSemantics::SValuePtr isEqual = ops->equalToZero(ops->add(retAddr, ops->negate(ops->readRegister(REG_IP))));
         retval = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
         bb->isFunctionReturn() = retval;
-#if 1 // DEBUGGING [Robb P. Matzke 2014-09-15]
-        if (debug) {
-            debug <<"retAddrPtr  = " <<*retAddrPtr <<"\n";
-            debug <<"retAddr     = " <<*retAddr <<"\n";
-            debug <<"ip          = " <<*ops->readRegister(REG_IP) <<"\n";
-            debug <<"retAddr==ip = " <<*isEqual <<"\n";
-            debug <<"result      = " <<(retval?"true":"false") <<"\n";
-        }
-#endif
         return retval;
     }
 
@@ -724,8 +708,33 @@ Partitioner::instructionsOverlapping(const AddressInterval &interval) const {
 }
 
 std::vector<BasicBlock::Ptr>
+Partitioner::basicBlocks() const {
+    std::vector<BasicBlock::Ptr> bblocks;
+    BOOST_FOREACH (const ControlFlowGraph::VertexValue &vertex, cfg_.vertexValues()) {
+        if (vertex.type() == V_BASIC_BLOCK) {
+            if (BasicBlock::Ptr bblock = vertex.bblock())
+                bblocks.push_back(bblock);
+        }
+    }
+    std::sort(bblocks.begin(), bblocks.end(), sortBasicBlocksByAddress);
+    return bblocks;
+}
+
+std::vector<BasicBlock::Ptr>
 Partitioner::basicBlocksOverlapping(const AddressInterval &interval) const {
     return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).basicBlocks();
+}
+
+BasicBlock::Ptr
+Partitioner::basicBlockContainingInstruction(rose_addr_t insnVa) const {
+    std::vector<BasicBlock::Ptr> bblocks = basicBlocksOverlapping(insnVa);
+    BOOST_FOREACH (const BasicBlock::Ptr &bblock, bblocks) {
+        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+            if (insn->get_address() == insnVa)
+                return bblock;
+        }
+    }
+    return BasicBlock::Ptr();
 }
 
 SgAsmInstruction *

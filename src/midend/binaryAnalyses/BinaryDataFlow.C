@@ -16,7 +16,7 @@ DataFlow::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::DataFlow", Diagnostics::destination);
-        rose::Diagnostics::mfacilities.insert(mlog);
+        rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 

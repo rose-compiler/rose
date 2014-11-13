@@ -7,6 +7,8 @@ extern SgProject *project;
 extern SgGlobal *globalScope;
 extern SgSourceFile *currentSourceFile;
 extern SgClassDefinition *ObjectClassDefinition;
+extern jstring currentFilePath;
+extern std::string currentTypeName;
 
 // Control output from Fortran parser
 #define DEBUG_X10_SUPPORT true
@@ -28,6 +30,8 @@ bool mustBeFullyQualified(SgClassType *class_type);
 std::string markAndGetQualifiedTypeName(SgClassType *class_type);
 
 bool hasConflicts(SgClassDeclaration *class_declaration);
+
+void replaceString (std::string&, const std::string&, const std::string&);
 
 std::string getPrimitiveTypeName(SgType *);
 std::string getWildcardTypeName(SgJavaWildcardType *);
@@ -393,7 +397,11 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
 //SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
 //SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
 //SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
-SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, std::list<SgType *> &);
+#if 1
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, std::list<SgType *> &, JNIEnv *env);
+#else
+SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, std::list<SgType *> &, JNIEnv *env, jobject x10Visitor);
+#endif
 
 std::list<SgName> generateQualifierList (const SgName &classNameWithQualification);
 
@@ -424,7 +432,7 @@ void lookupAllSimpleNameTypesInClass(std::list<SgClassSymbol *>&, const SgName &
 SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition);
 
 //! Support for identification of variable symbols using simple names.
-SgVariableSymbol *lookupVariableByName(const SgName &name);
+SgVariableSymbol *lookupVariableByName(JNIEnv *env, const SgName &name);
 
 //! Support for identification of label symbols using simple names.
 SgJavaLabelSymbol *lookupLabelByName(const SgName &name);
@@ -463,6 +471,10 @@ void binaryExpressionSupport() {
 
     astX10ComponentStack.push(resultExpression);
 }
+
+#include <map>
+extern std::map <std::string, ScopeStack> scopeMap;
+extern std::map <std::string, ComponentStack> componentMap;
 
 // endif for ROSE_X10_SUPPORT
 #endif

@@ -24,10 +24,10 @@ public:
         : family(family), map(NULL), insn_va(0), niwords(0), niwords_used(0) {
         init();
     }
-    virtual DisassemblerM68k *clone() const /*override*/ { return new DisassemblerM68k(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) /*override*/;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) /*override*/;
+    virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
+    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
 

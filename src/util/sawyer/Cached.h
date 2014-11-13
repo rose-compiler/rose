@@ -75,7 +75,8 @@ public:
     /** Assign a new value.
      *
      *  The specified value is cached.  Note that if the cache is holding a pointer to a value then caching a null pointer is
-     *  different than caching nothing.
+     *  different than caching nothing.  Setting the value to an instance of @ref Nothing has the same effect as calling @ref
+     *  clear.
      *
      *  @{ */
     void set(const Value &x) const {                    // const is intentional
