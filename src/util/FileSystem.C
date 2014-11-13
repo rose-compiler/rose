@@ -1,3 +1,4 @@
+#define BOOST_FILESYSTEM_VERSION 3
 #include "FileSystem.h"
 
 #include <boost/foreach.hpp>
@@ -8,9 +9,18 @@ namespace FileSystem {
 
 const char *tempNamePattern = "rose-%%%%%%%-%%%%%%%";
 
+bool
+baseNameMatches::operator()(const Path &path) {
+    return boost::regex_match(path.filename().string(), re_);
+}
+
 Path
 createTemporaryDirectory() {
+#if BOOST_VERSION >= 104600
     Path dirName = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path(tempNamePattern);
+#else
+    Path dirName = Path("/tmp") / boost::filesystem::unique_path(tempNamePattern);
+#endif
     boost::filesystem::create_directory(dirName);
     return dirName;
 }

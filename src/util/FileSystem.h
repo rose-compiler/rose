@@ -59,7 +59,7 @@ class baseNameMatches {
     const boost::regex &re_;
 public:
     baseNameMatches(const boost::regex &re): re_(re) {}
-    bool operator()(const Path &path) { return boost::regex_match(path.filename().string(), re_); }
+    bool operator()(const Path &path);
 };
 
 /** Recursive list of names satisfying predicate.
@@ -80,7 +80,8 @@ std::vector<Path> findAllNames(const Path &root, Select select, Descend descend)
     for (boost::filesystem::recursive_directory_iterator dentry(root); dentry!=end; ++dentry) {
         if (select(dentry->path()))
             matching.push_back(dentry->path());
-        dentry.no_push(!descend(dentry->path()));
+        if (!descend(dentry->path()))
+            dentry.no_push();
     }
     return matching;
 }
