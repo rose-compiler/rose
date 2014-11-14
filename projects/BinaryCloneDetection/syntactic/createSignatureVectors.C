@@ -423,6 +423,9 @@ class GenerateMergedVector{
     getSignatureVectorPair();
 
     void
+    setCurrentNode(SgLocatedNode* locNode);
+
+    void
     stepAndGenerate();
   
 };
@@ -447,6 +450,12 @@ GenerateMergedVector::GenerateMergedVector(const SqlDatabase::TransactionPtr &tm
 std::pair<SignatureVector*, SgLocatedNode*>&
 GenerateMergedVector::getSignatureVectorPair(){
 	return  mergedVectorArray[currentVectorId];
+};
+
+
+void
+GenerateMergedVector::setCurrentNode(SgLocatedNode* locNode){
+	mergedVectorArray[currentVectorId].second = locNode;
 };
 
 
@@ -511,7 +520,7 @@ GenerateMergedVector::stepAndGenerate()
 
 	}else{
 		currentVectorId++;
-                std::cerr << currentVectorId << std::endl;
+                //std::cerr << currentVectorId << std::endl;
 
 	}
 
@@ -640,7 +649,7 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 
 	//std::cout << "\n\nVector of names" << std::endl;
 
-#if 1	 
+#if 0	 
 	//Print out the number of elements found for each variant in the subtree
 	for(int i = 0;  i < V_SgNumVariants; i++  ){
 		if(returnAttribute.nodesInSubtree[i] > 0)
@@ -674,7 +683,7 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 			//should have a smaller
                         std::pair<SignatureVector*,SgLocatedNode*> mergedVectorPair = vecGen->getSignatureVectorPair();
                         SignatureVector* mergedVector = mergedVectorPair.first;
-                        mergedVectorPair.second = isSgLocatedNode(astNode);
+                        vecGen->setCurrentNode(isSgLocatedNode(astNode));
 
 			if(variantNumVec.size() > 0){
 				for(unsigned int i = 0;  i < variantNumVec.size(); i++  )
