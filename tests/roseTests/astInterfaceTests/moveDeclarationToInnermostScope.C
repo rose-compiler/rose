@@ -59,6 +59,13 @@ int main(int argc, char * argv[])
     debug = true;
     cout<<"Turing on debugging model..."<<endl;
   }
+  // We don't remove this option since it is used later by other logic
+  if (CommandlineProcessing::isOption (argvList,"-rose:keep_going","",false))
+  {
+    SageInterface::tool_keep_going = true;
+    cout<<"Turing on the keep going model, ignore assertions as much as possible..."<<endl;
+  }
+
   SgProject *project = frontend (argvList);
 
   SgFilePtrList file_ptr_list = project->get_fileList();
