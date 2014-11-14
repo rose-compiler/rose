@@ -114,6 +114,11 @@ namespace SageInterface
   // to support analysis information without constantly modifing the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
+//! An internal flag to control SageInterface::moveDeclarationToInnermostScope
+// Users want to see the tool working by default
+ROSE_DLL_API extern bool tool_keep_going; 
+// Users want to see conservative and aggressive moving
+ROSE_DLL_API extern bool decl_mover_conservative; 
 
 
 //! An internal counter for generating unique SgName
@@ -1026,6 +1031,13 @@ ROSE_DLL_API SgInitializedName* getLoopIndexVariable(SgNode* loop);
 //! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them.
 ROSE_DLL_API bool isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root);
 
+//! Check if a for loop uses C99 style initialization statement with multiple expressions like for (int i=0, j=0; ..) or for (i=0,j=0;...)
+/*!
+   for (int i=0, j=0; ..) is stored as two variable declarations under SgForInitStatement's init_stmt member
+   for (i=0,j=0;...) is stored as a single expression statement, with comma expression (i=0,j=0).
+*/
+ROSE_DLL_API bool hasMultipleInitStatmentsOrExpressions (SgForStatement* for_loop);
+
 //! Routines to get and set the body of a loop
 ROSE_DLL_API SgStatement* getLoopBody(SgScopeStatement* loop);
 
@@ -1888,6 +1900,13 @@ ROSE_DLL_API void removeUnusedLabels(SgNode* top);
 
 //! Remove consecutive labels
 ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
+
+//! Merge a variable assignment statement into a matching variable declaration statement
+/*!
+ *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
+ *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
+ */
+ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt);
 
 //! Replace an expression with a temporary variable and an assignment statement
 /*!

@@ -447,6 +447,10 @@ SageInterface::buildDeclarationSets(SgNode* n)
      return declarationSet;
    }
 
+//By default ASSERT should block the execution to find issues.
+//But some users want to keep the tool going even when some assertion fails. 
+//This is only supported by SageInterface::moveDeclarationToInnermostScope() and associated functions for now
+bool SageInterface::tool_keep_going = false;
 
 int SageInterface::gensym_counter = 0;
 // DQ: 09/23/03
@@ -9012,6 +9016,28 @@ bool SageInterface::isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree
   return result;
 }
 
+//! Check if a for loop uses C99 style initialization statement with multiple expressions like for (int i=0, j=0; ..) or for (i=0,j=0;...)
+/*!
+   for (int i=0, j=0; ..) is stored as two variable declarations under SgForInitStatement's init_stmt member
+   for (i=0,j=0;...) is stored as a single expression statement, with comma expression (i=0,j=0).
+*/
+bool SageInterface::hasMultipleInitStatmentsOrExpressions (SgForStatement* loop)
+{
+  ROSE_ASSERT (loop !=NULL);
+  SgStatementPtrList& stmt_list = loop->get_init_stmt();
+  if (stmt_list.size() >1) return true; // two var decl statements
+  if (stmt_list.size() == 0) return false;
+
+  // single statement, but with comma expression (i=0, j=0)
+  SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
+  ROSE_ASSERT (exp_stmt != NULL);
+  if (isSgCommaOpExp (exp_stmt->get_expression()) ) 
+  {
+     return true;
+  }
+
+    return false;
+}
 //! Get Fortran Do loop's key features
 bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/)
 {
@@ -9535,6 +9561,52 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
      gs->set_label(isSgLabelStatement(bbStatements[j]));
    }
   }
+
+//! Merge a variable assignment statement into a matching variable declaration statement
+/*!
+ *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
+ *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
+ */
+bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt= true;
+  ROSE_ASSERT(decl != NULL);   
+  ROSE_ASSERT(assign_stmt != NULL);   
+
+  // Sanity check of assign statement: must be a form of var = xxx; 
+  SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
+  if (assign_op == NULL) 
+    return false;
+  SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
+  if (assign_op_var == NULL) return false;
+
+  // Sanity check of the variable declaration: it should not have an existing initializer
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
+  if (decl_var->get_initptr()!= NULL ) return false;
+
+  // check if two variables match
+  // In translation, it is possible the declaration has not yet been inserted into its scope.
+  // finding its symbol can return NULL.
+  // But we still want to do the merge.
+  SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
+  if (decl_var_symbol!=NULL)
+  {
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+  }
+  else
+  { // fallback to comparing variable names instead
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+  }
+
+  // Everything looks fine now. Do the merge.
+  SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+  SageInterface::deepDelete (assign_stmt);
+  SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
+  decl_var->set_initptr(initor);
+  initor->set_parent(decl_var);  
+
+  return rt;
+}
 
 namespace SageInterface { // A few internal helper classes
 
@@ -18890,7 +18962,7 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
           {
             if (i_name == NULL)
             {
-              cerr<<"Warning: in moveVariableDeclaration(): targe_scope is a for loop with unrecognized index variable. Skipping it ..."<<endl;
+              cerr<<"Warning: in moveVariableDeclaration(): target_scope is a for loop with unrecognized index variable. Skipping it ..."<<endl;
               break;
             }
             // we move int i; to be for (int i=0; ...);
@@ -18900,37 +18972,35 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
             // We don't yet handle more complex cases
             if (stmt_list.size() !=1)
             {
+              // TODO, how to handle two variable declaration?  I think this cannot happen in this context
+              // find the inner most used scope of variable a.  It cannot be declaration of a. 
               cerr<<"Error in moveVariableDeclaration(): only single init statement is handled for SgForStatement now."<<endl;
               ROSE_ASSERT (stmt_list.size() ==1);
             }
             SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
             ROSE_ASSERT (exp_stmt != NULL);
             SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+            if (assign_op != NULL)
+            {
+              ROSE_ASSERT (assign_op != NULL);
+              stmt_list.clear();
+
+              SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
+              // insert the merged decl into the list, TODO preserve the order in the list
+              stmt_list.insert (stmt_list.begin(),  decl_copy);
+              decl_copy->set_parent(stmt->get_for_init_stmt());
+              ROSE_ASSERT (decl_copy->get_parent() != NULL); 
+            }
             // TODO: it can be SgCommanOpExp
             if (isSgCommaOpExp (exp_stmt->get_expression()) )
             {
                cerr<<"Error in moveVariableDeclaration(), multiple expressions in for-condition is not supported now. "<<endl;
-               ROSE_ASSERT (assign_op != NULL);
+               if (SageInterface::tool_keep_going) 
+                 break;
+               else  
+                 ROSE_ASSERT (assign_op != NULL);
             } 
-            ROSE_ASSERT (assign_op != NULL);
-
-            // remove the existing i=0; preserve its right hand operand
-            SgExpression * rhs = SageInterface::copyExpression(assign_op->get_rhs_operand());
-            stmt_list.clear();
-            SageInterface::deepDelete (exp_stmt);
-
-            // modify the decl's rhs to be the new one
-            SgInitializedName * copy_name = SageInterface::getFirstInitializedName (decl_copy);
-            SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs);
-            if (copy_name->get_initptr() != NULL)
-              SageInterface::deepDelete (copy_name->get_initptr());
-            copy_name->set_initptr(initor);
-            initor->set_parent(copy_name);
-            // insert the merged decl into the list, TODO preserve the order in the list
-            stmt_list.insert (stmt_list.begin(),  decl_copy);
-            decl_copy->set_parent(stmt->get_for_init_stmt());
-            ROSE_ASSERT (decl_copy->get_parent() != NULL); 
-          } //
+         } //
           else 
           {
             SgBasicBlock* loop_body = SageInterface::ensureBasicBlockAsBodyOfFor (stmt);
@@ -19062,6 +19132,21 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
   return true; 
 }
 
+//! A helper function to check if there is a target scope which is a for loop with complex init_stmt list
+static SgForStatement* hasALoopWithComplexInitStmt( std::vector <SgScopeStatement *> &target_scopes)
+{
+
+   for (size_t i= 0; i< target_scopes.size(); i++)
+   {
+     SgScopeStatement* current_scope = target_scopes[i];
+     if (SgForStatement* for_loop = isSgForStatement (current_scope))
+       if (SageInterface::hasMultipleInitStatmentsOrExpressions (for_loop))
+         return for_loop;
+    }
+  return NULL;
+}
+
+
 bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, bool debug = false)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
@@ -19150,7 +19235,20 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
 
   if (target_scopes.size()>0)
   {
-    moveVariableDeclaration (decl, target_scopes);
+    // ignore complex for init stmt for now 
+    SgForStatement* bad_loop = hasALoopWithComplexInitStmt (target_scopes);
+    if (bad_loop != NULL)
+    {
+      cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
+      cerr<<"Variable declaration in question is:"<<endl;
+      decl->get_file_info()->display();
+      cerr<<"Loop scope with complex init stmt is:"<<endl;
+      bad_loop->get_file_info()->display();
+      if (!tool_keep_going )
+        ROSE_ASSERT (false);
+    }
+    else
+      moveVariableDeclaration (decl, target_scopes);
     scope_tree->deep_delete_children ();
     delete scope_tree;
     return true;
