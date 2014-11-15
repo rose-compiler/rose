@@ -18943,6 +18943,37 @@ void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVaria
   }
 }
 
+static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bottom_scope)
+{
+  bool rt = false;
+  ROSE_ASSERT (top_scope && bottom_scope);
+  if (SageInterface::isAncestor (top_scope, bottom_scope))
+  {
+    do {
+      bottom_scope = bottom_scope->get_scope(); // current bottom does not cout, we may move to the loop header
+      if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
+      {
+        rt = true;
+        if (debug)
+        {
+          cout<<"Found a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+//          cout<<"The declaration in question has the following file info:"<<endl;
+        }
+//        decl->get_file_info()->display();
+      }
+    } while (top_scope!=bottom_scope);
+  }
+  else
+  {
+    if (!SageInterface::tool_keep_going)
+    {
+      cerr<<"Error. declaration scope is not an ancestor scope of the target scope"<<endl;
+      ROSE_ASSERT (false);
+    }
+  }
+  return rt;
+}
+
 // Move a single declaration into multiple scopes. 
 // For each target scope:
 // 1. Copy the decl to be local decl , 
@@ -18967,6 +18998,15 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
   {
      return;
   }
+
+#if 0 //TODO: this is tricky, we have to modify the scope tree to backtrack this. 
+  // For aggressive mode, skip moving if the move will cross some boundaries
+  for (size_t i = 0; i< scopes.size(); i++)
+  {
+    SgScopeStatement* target_scope = scopes[i]; 
+    ROSE_ASSERT (target_scope != decl->get_scope());
+  } 
+#endif
 
   for (size_t i = 0; i< scopes.size(); i++)
   {

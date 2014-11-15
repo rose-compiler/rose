@@ -7,6 +7,7 @@ by Liao, 9/3/2014
 #include <iostream>
 using namespace std;
 bool debug = false;
+
 class visitorTraversal : public AstSimpleProcessing
 {
   protected:
