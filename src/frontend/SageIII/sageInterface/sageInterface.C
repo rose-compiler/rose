@@ -452,6 +452,12 @@ SageInterface::buildDeclarationSets(SgNode* n)
 //This is only supported by SageInterface::moveDeclarationToInnermostScope() and associated functions for now
 bool SageInterface::tool_keep_going = false;
 
+// Like any other compiler-based tools. We do things conservatively by default.
+// Declarations with initializers will not be moved
+// if it is set to false.  Declaration with initializers will be moved, 
+// sends out warning if it crosses a loop boundaries in between. 
+bool SageInterface::decl_mover_conservative = true;
+
 int SageInterface::gensym_counter = 0;
 // DQ: 09/23/03
 // We require a global function for getting the string associated
@@ -472,7 +478,7 @@ string getVariantName ( VariantT v )
 bool
 SageInterface::hasTemplateSyntax( const SgName & name )
    {
-  // DQ (6/7/2012): This refactors the test for template instantation syntax in names used for classes, member functions, and functions
+  // DQ (6/7/2012): This refactors the test for template instantiation syntax in names used for classes, member functions, and functions
      bool usingTemplateSyntax = false;
      string nameString = name.getString();
 
@@ -18790,7 +18796,7 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)/
   }
   return scope_tree; 
 }  
-
+//Note: this function is no longer used by decl move tool: we use copy and insert instead to support moving to multiple scopes
 //! Move a variable declaration from its original scope to a new scope, assuming original scope != target_scope
 void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope)
 {
@@ -18887,7 +18893,35 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   // This is difficult since C++ variables have namespaces
   // Details are in SageInterface::fixVariableDeclaration()
   ROSE_ASSERT (target_scope->symbol_exists(sym));
-#endif     
+#endif   
+
+#if 0
+// send out warning info if there is a for loop between declaration's scope and the target scope
+// a declaration is moved across the loop boundary.
+   SgScopeStatement* top_scope = decl->get_scope();
+   SgScopeStatement* bottom_scope = target_scope; 
+   if (SageInterface::isAncestor (top_scope, bottom_scope))
+   {
+     do {
+       bottom_scope = bottom_scope->get_scope();
+       if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
+       {
+         cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+         cout<<"The declaration in question has the following file info:"<<endl;
+         decl->get_file_info()->display();
+       }
+
+     } while (top_scope!=bottom_scope);
+   }
+   else
+   {
+     if (!SageInterface::tool_keep_going)
+     {
+       cerr<<"Error. declaration scope is not an ancestor scope of the target scope"<<endl;
+       ROSE_ASSERT (false);
+     }
+   }  
+#endif
 
 }
 
@@ -19062,6 +19096,35 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
     // replace variable references
     SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
 #endif 
+
+#if 1
+// send out warning info if there is a for loop between declaration's scope and the target scope
+// a declaration is moved across the loop boundary.
+   SgScopeStatement* top_scope = orig_scope;
+   SgScopeStatement* bottom_scope = target_scope;
+   if (SageInterface::isAncestor (top_scope, bottom_scope))
+   {
+     do {
+       bottom_scope = bottom_scope->get_scope();
+       if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
+       {
+         cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+         cout<<"The declaration in question has the following file info:"<<endl;
+         decl->get_file_info()->display();
+       }
+
+     } while (top_scope!=bottom_scope);
+   }
+   else
+   {
+     if (!SageInterface::tool_keep_going)
+     {
+       cerr<<"Error. declaration scope is not an ancestor scope of the target scope"<<endl;
+       ROSE_ASSERT (false);
+     }
+   }
+#endif
+
   } //end for all scopes
 
   // remove the original declaration , must use false to turn of auto-relocate comments

@@ -506,7 +506,7 @@ rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostSc
 rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:aggressive" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 

@@ -43,7 +43,44 @@ class visitorTraversal : public AstSimpleProcessing
               cout<<"skipping a static variable declaration .."<<endl;
           }
           else
-            result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+          {
+            bool null_or_literal_initializer = false;
+            SgInitializedName* init_name = SageInterface::getFirstInitializedName (decl);
+            ROSE_ASSERT (init_name!= NULL);
+            SgInitializer * initor =  init_name->get_initptr();
+            if (initor == NULL) 
+              null_or_literal_initializer = true;
+            else
+             {
+               SgAssignInitializer* assign_initor = isSgAssignInitializer (initor);
+               if (assign_initor != NULL)
+               {
+                 if (isSgValueExp(assign_initor->get_operand()))
+                   null_or_literal_initializer = true;
+               }
+             } 
+
+            // conservative mode:  Only move declarations with no or value(literal) initializer
+            if (SageInterface::decl_mover_conservative)
+            {
+              if (debug)
+                 cout<<"Using conservative moving for decl .."<<endl;
+              if (null_or_literal_initializer)   
+                result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+              else
+              {
+                if (debug)
+                  cout<<"Skipping a declaration since it has complex initializer .."<<endl;
+              }
+            }
+            else // aggressive move
+            {
+
+              if (debug)
+                 cout<<"Using aggressive moving for decl .."<<endl;
+              result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+            }
+          }
         }
       } // end if
     } // end visit()
@@ -65,6 +102,14 @@ int main(int argc, char * argv[])
     SageInterface::tool_keep_going = true;
     cout<<"Turing on the keep going model, ignore assertions as much as possible..."<<endl;
   }
+
+  // ROSE base does not use this option. remove it after use.
+  if (CommandlineProcessing::isOption (argvList,"-rose:aggressive","",true)) 
+  {
+    SageInterface::decl_mover_conservative = false;
+    cout<<"Turing on the aggressive model, allowing moving declarations with initializers and cross loop boundaries, but will send out warnings..."<<endl;
+  }
+
 
   SgProject *project = frontend (argvList);
 
