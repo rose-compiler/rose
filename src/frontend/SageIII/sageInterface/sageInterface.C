@@ -6486,8 +6486,15 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
 
 SgNode * SageInterface::deepCopyNode (const SgNode* n)
 {
+  SgNode* rt = NULL;
   SgTreeCopy g_treeCopy; // should use a copy object each time of usage!
-  return n ? n->copy (g_treeCopy) : 0;
+  if (n!= NULL)
+  {
+     rt = n->copy (g_treeCopy);
+     SageInterface::setSourcePositionForTransformation (rt);
+  }
+  //  return n ? n->copy (g_treeCopy) : 0;
+  return rt;
 }
 
 // by Jeremiah
@@ -18954,7 +18961,7 @@ static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bot
       if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
       {
         rt = true;
-        if (debug)
+//        if (debug)
         {
           cout<<"Found a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
 //          cout<<"The declaration in question has the following file info:"<<endl;
@@ -19131,12 +19138,14 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
     // Details are in SageInterface::fixVariableDeclaration()
     ROSE_ASSERT (adjusted_scope->symbol_exists(new_sym));
 #endif     
+   
 
 #if 1 
     // replace variable references
     SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
 #endif 
 
+   //SageInterface::setSourcePositionForTransformation (decl_copy);
 #if 1
 // send out warning info if there is a for loop between declaration's scope and the target scope
 // a declaration is moved across the loop boundary.
