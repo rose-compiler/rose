@@ -15,33 +15,26 @@ extern const char *tempNamePattern;
 /** Name of entities in a filesystem. */
 typedef boost::filesystem::path Path;
 
-/** Create a temporary directory.
- *
- *  The temporary directory is created as a subdirectory of the directory which is suitable for temporary files under the
- *  conventions of the operating system.  The specifics of how this path is determined are implementation defined (see
- *  <code>boost::filesystem::temp_directory_path</code>).  The created subdirectory has a name of the form
- *  "rose-%%%%%%%%-%%%%%%%%" where each "%" is a random hexadecimal digit.  Returns the path to this directory. */
-Path createTemporaryDirectory();
+/** Iterate over directory contents non-recursively. */
+typedef boost::filesystem::directory_iterator DirectoryIterator;
 
-/** Make path relative.
- *
- *  Makes the specified path(s) relative to another path or the current working directory. */
-Path makeRelative(const Path &path, const Path &root = boost::filesystem::current_path());
+/** Iterate recursively into subdirectories. */
+typedef boost::filesystem::recursive_directory_iterator RecursiveDirectoryIterator;
 
 /** Predicate returning true if path exists. */
-bool isExisting(const Path &path) { return boost::filesystem::exists(path); }
+bool isExisting(const Path &path);
 
 /** Predicate returning true for existing regular files. */
-bool isFile(const Path &path) { return boost::filesystem::is_regular_file(path); }
+bool isFile(const Path &path);
 
 /** Predicate returning true for existing directories. */
-bool isDirectory(const Path &path) { return boost::filesystem::is_directory(path); }
+bool isDirectory(const Path &path);
 
 /** Predicate returning true for existing symbolic links. */
-bool isSymbolicLink(const Path &path) { return boost::filesystem::is_symlink(path); }
+bool isSymbolicLink(const Path &path);
 
 /** Predicate returning inverse of @ref isSymbolicLink. */
-bool isNotSymbolicLink(const Path &path) { return !boost::filesystem::is_symlink(path); }
+bool isNotSymbolicLink(const Path &path);
 
 /** Predicate returning true for matching names.
  *
@@ -59,47 +52,105 @@ class baseNameMatches {
     const boost::regex &re_;
 public:
     baseNameMatches(const boost::regex &re): re_(re) {}
+#if BOOST_FILESYSTEM_VERSION == 2
+    bool operator()(const Path &path) { return boost::regex_match(path.filename(), re_); }
+#else
     bool operator()(const Path &path) { return boost::regex_match(path.filename().string(), re_); }
+#endif
 };
+
+/** Create a temporary directory.
+ *
+ *  The temporary directory is created as a subdirectory of the directory which is suitable for temporary files under the
+ *  conventions of the operating system.  The specifics of how this path is determined are implementation defined (see
+ *  <code>boost::filesystem::temp_directory_path</code>).  The created subdirectory has a name of the form
+ *  "rose-%%%%%%%%-%%%%%%%%" where each "%" is a random hexadecimal digit.  Returns the path to this directory. */
+Path createTemporaryDirectory();
+
+/** Normalize a path name.
+ *
+ *  Normalizes a path by removing "." and ".." components to the extent which is possible.
+ *
+ *  For instance, a name like "/foo/bar/../baz" will become "/foo/baz" and the name "/foo/./baz" will become
+ *  "/foo/baz". However, the names "/../foo" and "./foo" cannot be changed because removing the ".." in the first case would
+ *  place it in a different directory if the name were appended to another name, and in the second case it would convert a
+ *  relative name to an absolute name. */
+Path makeNormal(const Path&);
+
+/** Make path relative.
+ *
+ *  Makes the specified path relative to another path or the current working directory. */
+Path makeRelative(const Path &path, const Path &root = boost::filesystem::current_path());
+
+/** Make path absolute.
+ *
+ *  Makes the specified path an absolute path if it is a relative path.  If relative, then assume @p root is what the path is
+ *  relative to. */
+Path makeAbsolute(const Path &path, const Path &root = boost::filesystem::current_path());
+
+/** Entries within a directory.
+ *
+ *  Returns a list of entries in a directory--the contents of a directory--without recursing into subdirectories. The return
+ *  value is a sorted list of paths, each of which contains @p root as a prefix.  If a @p select predicate is supplied then
+ *  only paths for which the predicate returns true become part of the return value. The predicate is called with the path that
+ *  would become part of the return value. The @p root itself is never returned and never tested by the predicate.
+ *
+ *  If @p select is not specified then all entries are returned.
+ *
+ * @{ */
+template<class Select>
+std::vector<Path> findNames(const Path &root, Select select) {
+    std::vector<Path> matching;
+    if (isDirectory(root)) {
+        for (DirectoryIterator iter(root); iter!=DirectoryIterator(); ++iter) {
+            if (select(iter->path()))
+                matching.push_back(iter->path());
+        }
+    }
+    std::sort(matching.begin(), matching.end());
+    return matching;
+}
+
+std::vector<Path> findNames(const Path &root);
+/** @} */
 
 /** Recursive list of names satisfying predicate.
  *
- *  Returns a list of names by recursively descending into the specified name and returning all names for which the
- *  @p select predicate returns true.  The @p descend predicate should return true for those directories into which the
- *  recursion should descend.  Both predicates are invoked a single argument: the path being tested, which includes @p root
- *  as a prefix.
+ *  Returns a list of entries in a directory and all subdirectories recursively.  The return value is a sorted list of
+ *  paths, each of which contains @p root as a prefix.  If a @p select predicate is supplied then only paths for which the
+ *  predicate returns true become part of the return value.  If a @p descend predicate is supplied then this algorithm only
+ *  recurses into subdirectories for which @p descend returns true.  The predicates are called with the path that would become
+ *  part of the return value.  The @p root itself is never returned and never tested by the @p select or @p descend predicates.
  *
- *  The predicates are optional (@p select can be omitted only when @p descend is also omitted).  The default is to select
- *  every existing name (files, directories, symbolic links, etc) and descend into every directory (not symbolic links).
+ *  If @p select is not specified then all entries are returned. If @p descend is not specified then the algorithm traverses
+ *  into all subdirectories.  Symbolic links to directories are never followed, but are returned if the @p select predicate
+ *  allows them.
  *
  * @{ */
 template<class Select, class Descend>
-std::vector<Path> findAllNames(const Path &root, Select select, Descend descend) {
+std::vector<Path> findNamesRecursively(const Path &root, Select select, Descend descend) {
+#if BOOST_FILESYSTEM_VERSION == 2                       // FIXME[Robb P. Matzke 2014-11-18]: Remove version 2 support
+    throw std::runtime_error("findNamesRecursively is not supported for boost::filesystem version 2");
+#else
     std::vector<Path> matching;
-    boost::filesystem::recursive_directory_iterator end;
-    for (boost::filesystem::recursive_directory_iterator dentry(root); dentry!=end; ++dentry) {
+    RecursiveDirectoryIterator end;
+    for (RecursiveDirectoryIterator dentry(root); dentry!=end; ++dentry) {
         if (select(dentry->path()))
             matching.push_back(dentry->path());
         dentry.no_push(!descend(dentry->path()));
     }
+    std::sort(matching.begin(), matching.end());
     return matching;
+#endif
 }
 
 template<class Select>
-std::vector<Path> findAllNames(const Path &root, Select select) {
-    return findAllNames(root, select, isDirectory);
+std::vector<Path> findNamesRecursively(const Path &root, Select select) {
+    return findNamesRecursively(root, select, isDirectory);
 }
 
-std::vector<Path> findAllNames(const Path &root) {
-    return findAllNames(root, isExisting, isDirectory);
-}
+std::vector<Path> findNamesRecursively(const Path &root);
 /** @} */
-
-
-/** Return a list of all rose_* files */
-std::vector<Path> findRoseFiles(const Path &root) {
-    return findAllNames(root, baseNameMatches(boost::regex("rose_.*")), isDirectory);
-}
 
 /** Copy files from one directory to another.
  *
@@ -120,10 +171,19 @@ void copyFiles(const std::vector<Path> &files, const Path &root, const Path &des
  *  for the @ref findAllNames method. */
 template<class Select, class Descend>
 void copyFilesRecursively(const Path &root, const Path &destination, Select select, Descend descend) {
-    std::vector<Path> files = findAllNames(root, select, descend);
+    std::vector<Path> files = findNamesRecursively(root, select, descend);
     files.erase(files.begin(), std::remove_if(files.begin(), files.end(), isFile)); // keep only isFile names
     copyFiles(files, root, destination);
 }
+
+/** Return a list of all rose_* files */
+std::vector<Path> findRoseFilesRecursively(const Path &root);
+
+/** Convert a path to a string.
+ *
+ *  Try not to use this.  Paths contain more information than std::string and the conversion may loose that info. */
+std::string toString(const Path&);
+
 
 } // namespace
 } // namespace
