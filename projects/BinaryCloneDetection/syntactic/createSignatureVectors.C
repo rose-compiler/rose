@@ -347,8 +347,10 @@ addSourceVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const Signature
 
     vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
     size_t vectorSum = 0;
-    for (size_t i=0; i<SignatureVector::Size; ++i)
+
+   for (size_t i=0; i<SignatureVector::Size; ++i){
         vectorSum += vec[i];
+    }
 
     SqlDatabase::StatementPtr cmd = tx->statement("insert into vectors"
                                                   // 0   1            2                      3     4             5
@@ -488,11 +490,9 @@ GenerateMergedVector::stepAndGenerate()
 
 			if( mergedVectorArray[i].second  == NULL ) 
 				lastNode  =  mergedVectorArray[i].second;
-
 			for( unsigned int j = 0; j < V_SgNumVariants; j++ ){
-				mergedVector.totalForVariant(j) += (*tmp_vec)[j]; 
+				mergedVector.totalForVariant(j) += (*tmp_vec)[j*4]; 
 			}  
-
 		}
 		addSourceVectorToDatabase(tx, mergedVector, functionId, firstNode, lastNode);         
 
@@ -686,11 +686,13 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
                         vecGen->setCurrentNode(isSgLocatedNode(astNode));
 
 			if(variantNumVec.size() > 0){
-				for(unsigned int i = 0;  i < variantNumVec.size(); i++  )
+				for(unsigned int i = 0;  i < variantNumVec.size(); i++  ){
 					mergedVector->totalForVariant(i)+= returnAttribute.nodesInSubtree[i];
+                                }
 			}else{
-				for(unsigned int i = 0;  i < V_SgNumVariants; i++  )
+				for(unsigned int i = 0;  i < V_SgNumVariants; i++  ){
 					mergedVector->totalForVariant(i)+= returnAttribute.nodesInSubtree[i];
+                                }
 			}
  
                         vecGen->stepAndGenerate();
