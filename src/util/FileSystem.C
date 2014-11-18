@@ -1,5 +1,4 @@
 #include "FileSystem.h"
-#include <boost/regex.hpp>
 #include <boost/foreach.hpp>
 #include <set>
 
