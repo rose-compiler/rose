@@ -31,3 +31,8 @@ void func() {
   (*a)=z;
   delete a;
 }
+
+int main() {
+  func();
+  return 0;
+}

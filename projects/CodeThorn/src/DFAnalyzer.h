@@ -14,6 +14,7 @@
 #include "DFTransferFunctions.hpp"
 #include <set>
 #include <string>
+#include "DFSolver1.h"
 
 namespace CodeThorn {
 

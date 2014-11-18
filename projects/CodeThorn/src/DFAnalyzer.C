@@ -221,12 +221,17 @@ DFAnalyzer<LatticeType>::solveAlgorithm1() {
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
+#if 1
+  DFSolver1<LatticeType> dfSolver1(_workList,_analyzerDataPreInfo,_analyzerData,_initialElement,_flow,*_transferFunctions) ;
+  dfSolver1.runSolver();
+#else
   switch(_solverMode) {
   case SOLVERMODE_STANDARD: solveAlgorithm1();break;
   case SOLVERMODE_DYNAMICLOOPFIXPOINTS: solveAlgorithm2();break;
   default: cerr<<"Error: improper solver mode."<<endl; 
     exit(1);
   }
+#endif
   _preInfoIsValid=false;
 }
 template<typename LatticeType>
