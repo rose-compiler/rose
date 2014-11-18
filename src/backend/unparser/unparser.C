@@ -2481,6 +2481,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // And finally we need to close the file (to flush everything out!)
           ROSE_OutputFile.close();
 
+       // Invoke post-output user-defined callbacks if any.  We must pass the absolute output name because the build system may
+       // have changed directories by now and the callback might need to know how this name compares to the top of the build
+       // tree.
+          if (unparseHelp != NULL) {
+              rose::FileSystem::Path fullOutputName = rose::FileSystem::makeAbsolute(outputFilename);
+              UnparseFormatHelp::PostOutputCallback::Args args(file, fullOutputName);
+              unparseHelp->postOutputCallbacks.apply(true, args);
+          }
+
        // DQ (3/19/2014): If -rose:noclobber_if_different_output, then test the generated file against the original file.
           if (trigger_file_comparision == true)
              {
