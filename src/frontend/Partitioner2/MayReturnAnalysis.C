@@ -158,6 +158,10 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb, bool recompu
         }
     }
 
+    // If there is no call-return edge and a callee is positive or indeterminate then this block is also indeterminate.
+    if (callReturnSuccessors.empty() && (calleeMayReturn || calleeIsIndeterminate))
+        return Sawyer::Nothing();
+
     // None of the significant successors has a positive may-return property.  If they were all negative (no indeterminates)
     // then we can say that this block does not return.
     if (!successorIsIndeterminate) {
