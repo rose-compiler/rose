@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
   int stride=0;
   
   try {
-    similarity = tx->statement("select similarity_threshold from detection_parameters limit 1")->execute_double();
+    similarity = tx->statement("select similarity_threshold from run_parameters limit 1")->execute_double();
   } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
   try {
     windowSize = tx->statement("select window_size from run_parameters limit 1")->execute_int();
