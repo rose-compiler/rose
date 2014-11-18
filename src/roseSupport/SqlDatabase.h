@@ -397,6 +397,14 @@ public:
     /** Execute a statement that returns a single integer. */
     int execute_int();
 
+    /** Execute a statement that returns a single double. */
+    double execute_double();
+
+    /** Execute a statement that returns a single std::string. */
+    std::string execute_string();
+
+
+
     /** Returns the low-level driver name for this statement. */
     Driver driver() const;
 
