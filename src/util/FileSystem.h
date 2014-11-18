@@ -2,6 +2,7 @@
 #define ROSE_FileSystem_H
 
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 #include <vector>
 
 namespace rose {
