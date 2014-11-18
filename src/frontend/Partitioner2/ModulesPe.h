@@ -57,6 +57,9 @@ void rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &inde
  *  to disassembly. */
 void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
 
+/** Build may-return white and black lists. */
+void buildMayReturnLists(Partitioner&);
+
 } // namespace
 } // namespace
 } // namespace

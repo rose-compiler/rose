@@ -71,6 +71,7 @@ private:
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
     Sawyer::Cached<BaseSemantics::SValuePtr> stackDelta_;// change in stack pointer from beginning to end of block
+    Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
 
     void clearCache() const {
         successors_.clear();
@@ -78,6 +79,7 @@ private:
         isFunctionCall_.clear();
         isFunctionReturn_.clear();
         stackDelta_.clear();
+        mayReturn_.clear();
     }
 
 
@@ -263,7 +265,9 @@ public:
     /** Insert a new successor.
      *
      *  Inserts a new successor into the cached successor list.  If the successor is already present then it is not added
-     *  again (the comparison uses structural equivalance).
+     *  again (the comparison uses structural equivalance).  Both the expression and the edge type are significant when
+     *  comparing. For instance, it is permissible to have a function call edge and a call-return edge that both point to the
+     *  fall-through address.
      *
      *  @{ */
     void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL);
@@ -295,6 +299,12 @@ public:
      *  The stack delta is a symbolic expression created by subtracting the initial stack pointer register from the final
      *  stack pointer register.  This value is typically computed in the partitioner and cached in the basic block. */
     const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
+
+    /** May-return property.
+     *
+     *  This property holds a Boolean that indicates whether a function-return basic block is reachable from this basic
+     *  block.  In other words, if control enters this basic block, might the top stack frame eventually be popped? */
+    const Sawyer::Cached<bool>& mayReturn() const { return mayReturn_; }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

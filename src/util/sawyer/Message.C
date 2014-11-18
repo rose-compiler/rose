@@ -1208,7 +1208,7 @@ Facilities::parseImportanceName(const char *&str) {
     while (isspace(*s)) ++s;
     for (size_t i=0; i<nwords; ++i) {
         size_t n = strlen(words[i]);
-        if (0==strncasecmp(s, words[i], n) && !isalnum(s[n]) && '_'!=s[n]) {
+        if (boost::iequals(std::string(s).substr(0, n), std::string(words[i]).substr(0, n)) && '_'!=s[n]) {
             str += (s-str) + n;
             return words[i];
         }

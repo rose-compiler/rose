@@ -14,6 +14,7 @@
 
 #include <sawyer/Callbacks.h>
 #include <sawyer/IntervalSet.h>
+#include <sawyer/Map.h>
 #include <sawyer/Message.h>
 #include <sawyer/Optional.h>
 #include <sawyer/SharedPointer.h>
@@ -211,6 +212,20 @@ public:
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
     typedef std::vector<FunctionPrologueMatcher::Ptr> FunctionPrologueMatchers; /**< See @ref functionPrologueMatchers. */
     typedef std::vector<FunctionPaddingMatcher::Ptr> FunctionPaddingMatchers; /**< See @ref functionPaddingMatchers. */
+
+    /** Represents information about a thunk. */
+    struct Thunk {
+        BasicBlock::Ptr bblock;                         /**< The one and only basic block for the thunk. */
+        rose_addr_t target;                             /**< The one and only successor for the basic block. */
+        Thunk(const BasicBlock::Ptr &bblock, rose_addr_t target): bblock(bblock), target(target) {}
+    };
+
+    /** Information about may-return whitelist and blacklist.
+     *
+     *  The map keys are the function names that are present in the lists. The values are true if the function is whitelisted
+     *  and false if blacklisted. */
+    typedef Sawyer::Container::Map<std::string, bool> MayReturnList;
+    
 private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
@@ -222,6 +237,9 @@ private:
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
     bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
+    MayReturnList mayReturnList_;                       // White/black list by name for whether functions may return to caller
+    bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
+    bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -240,16 +258,23 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
-        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false) {
+        : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
         init(disassembler, map);
     }
 
+    // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
+    // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
+    // things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
+    // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
     Partitioner(const Partitioner &other)
         : instructionProvider_(other.instructionProvider_), memoryMap_(other.memoryMap_), cfg_(other.cfg_),
           aum_(other.aum_), solver_(other.solver_), progressTotal_(other.progressTotal_),
           isReportingProgress_(other.isReportingProgress_), functions_(other.functions_), useSemantics_(other.useSemantics_),
-          cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_), basicBlockCallbacks_(other.basicBlockCallbacks_),
-          functionPrologueMatchers_(other.functionPrologueMatchers_), functionPaddingMatchers_(other.functionPaddingMatchers_) {
+          mayReturnList_(other.mayReturnList_), autoAddCallReturnEdges_(other.autoAddCallReturnEdges_),
+          assumeFunctionsReturn_(other.assumeFunctionsReturn_), cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_),
+          basicBlockCallbacks_(other.basicBlockCallbacks_), functionPrologueMatchers_(other.functionPrologueMatchers_),
+          functionPaddingMatchers_(other.functionPaddingMatchers_) {
         init(other);                                    // copies graph iterators, etc.
     }
 
@@ -278,6 +303,9 @@ public:
     const MemoryMap& memoryMap() const { return memoryMap_; }
     MemoryMap& memoryMap() { return memoryMap_; }
     /** @} */
+
+    /** Returns true if address is executable. */
+    bool addressIsExecutable(rose_addr_t va) const { return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists(); }
 
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
     size_t nBytes() const { return aum_.size(); }
@@ -622,13 +650,26 @@ public:
     /** Attach a basic block to the CFG/AUM.
      *
      *  The specified basic block is inserted into the CFG/AUM.  If the CFG already has a placeholder for the block then the
-     *  specified block is stored at that placeholder, otherwise a new placeholder is created first.  Once the block is added
-     *  to the CFG its outgoing edges are adjusted, which may introduce new placeholders.  The basic block enters a frozen
-     *  state in which its instruction ownership cannot be adjusted directly via the BasicBlock API.
+     *  specified block is stored at that placeholder, otherwise a new placeholder is created first.  A basic block cannot be
+     *  attached if the CFG/AUM already knows about a different basic block at the same address.  Attempting to attach a block
+     *  which is already attached is allowed, and is a no-op. It is an error to specify a null pointer for the basic block.
      *
-     *  A basic block cannot be attached if the CFG/AUM already knows about a different basic block at the same address.
-     *  Attempting to attach a block which is already attached is allowed, and is a no-op. It is an error to specify a null
-     *  pointer for the basic block.
+     *  The basic block's cached successors are consulted when creating the new edges in the CFG.  The block's successor types
+     *  are used as-is except for the following modifications:
+     *
+     *  @li If the basic block is a function call and none of the successors are labeled as function calls (@ref
+     *      E_FUNCTION_CALL) then all normal successors (@ref E_NORMAL) create function call edges in the CFG.
+     *
+     *  @li If the basic block is a function call and it has no call-return successor (@ref E_CALL_RETURN) and this
+     *      partitioner's autoAddCallReturnEdges property is true then a may-return analysis is performed on each callee and a
+     *      call-return edge is added if any callee could return.  If the analysis is indeterminate then an edge is added if
+     *      this partitioner's assumeCallsReturn property is true.
+     *
+     *  @li If the basic block is a function return and has no function return successor (@ref E_FUNCTION_RETURN, which
+     *      normally is a symbolic address) then all normal successors (@ref E_NORMAL) create function return edges in the
+     *      CFG.
+     *
+     *  New placeholder vertices will be created automatically for new CFG edges that don't target an existing vertex.
      *
      *  A placeholder can be specified for better efficiency, in which case the placeholder must have the same address as the
      *  basic block.
@@ -765,6 +806,137 @@ public:
      *  The stack delta is the difference between the stack pointer register at the end of the block and the stack pointer
      *  register at the beginning of the block.  Returns a null pointer if the information is not available. */
     BaseSemantics::SValuePtr basicBlockStackDelta(const BasicBlock::Ptr&) const;
+
+    /** Determine if part of the CFG can pop the top stack frame.
+     *
+     *  This analysis enters the CFG at the specified basic block and follows certain edges looking for a basic block where
+     *  @ref basicBlockIsFunctionReturn returns true.  The analysis caches results in the @ref BasicBlock::mayReturn
+     *  "mayReturn" property of the reachable basic blocks.
+     *
+     *  Since the analysis results might change if edges are inserted or erased even on distant basic blocks, the @p recompute
+     *  argument can be used to force recomputation of the value. If @p recompute is true then the cached value at reachable
+     *  nodes is recomputed.  The @ref basicBlockMayReturnReset method can be used to "forget" the property for all basic
+     *  blocks in the CFG/AUM.
+     *
+     *  A basic block's may-return property is computed as follows (the first applicable rule wins):
+     *
+     *  @li If the block is owned by a function and the function's name is present on a whitelist or blacklist
+     *      then the block's may-return is positive if whitelisted or negative if blacklisted.
+     *
+     *  @li If the block is a non-existing placeholder (i.e. it's address is not mapped with execute permission) then
+     *      its may-return is positive or negative depending on the value of this partitioner's @ref assumeFunctionsReturn
+     *      property.
+     *
+     *  @li If the block is a function return then the block's may-return is positive.
+     *
+     *  @li If any significant successor (defined below) of the block has a positive may-return value then the block's
+     *      may-return is also positive.
+     *
+     *  @li If any significant succesor has an indeterminate may-return value, then the block's may-return is also
+     *      indeterminate.
+     *
+     *  @li The block's may-return is negative.
+     *
+     *  A successor vertex is significant if there exists a significant edge to that vertex using these rules (first rule that
+     *  applies wins):
+     *
+     *  @li A self-edge is never signiciant.  A self edge does not affect the outcome of the analysis, so they're excluded.
+     *
+     *  @li A function-call edge (@ref E_FUNCTION_CALL) is never significant. Even if the called function may return, it
+     *      doesn't affect whether the block in question may return.
+     *
+     *  @li A call-return edge (@ref E_CALL_RETURN) is significant if at least one of its sibling function call edges (@ref
+     *      E_FUNCTION_CALL) points to a vertex with a positive may-return, or if any sibling function call edge points to a
+     *      vertex with an indeterminate may-return.
+     *
+     *  @li The edge is significant. This includes edges to the indeterminate and undiscovered vertices, whose may-return
+     *      is always indeterminate.
+     *
+     *  The algorithm uses a combination of depth-first traversal and recursive calls.  If any vertex's may-return is requested
+     *  recursively while it is being computed, the recursive call returns an indeterminate may-return.  Indeterminate results
+     *  are indicated by returning nothing.
+     *
+     * @{ */
+    Sawyer::Optional<bool>
+    basicBlockOptionalMayReturn(const BasicBlock::Ptr&, bool recompute=false) const;
+
+    Sawyer::Optional<bool>
+    basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&, bool recompute=false) const;
+    /** @} */
+
+    /** Clear all may-return properties.
+     *
+     *  This function is const because it doesn't modify the CFG/AUM; it only removes the may-return property from all the
+     *  CFG/AUM basic blocks. */
+    void basicBlockMayReturnReset() const;
+
+    /** Adjust may-return blacklist and whitelist.
+     *
+     *  The @ref setMayReturnWhitelisted will add (or remove if @p state is false) the function name from the whitelist. It
+     *  will erase the name from the blacklist if added to the whitelist, but will never add the name to the blacklist.
+     *
+     *  The @ref setMayReturnBlacklisted will add (or remove if @p state if false) the function name from the blacklist. It
+     *  will erase the name from the whitelist if added to the blacklist, but will never add the name to the whitelist.
+     *
+     *  The @ref adjustMayReturnList will add the name to the whitelist when @p state is true, or to the blacklist when @p
+     *  state if false, or to neither list when @p state is <code>boost::indeterminate</code>. It erases the name from those
+     *  lists to which it wasn't added.
+     *
+     * @{ */
+    void setMayReturnWhitelisted(const std::string &functionName, bool state=true);
+    void setMayReturnBlacklisted(const std::string &functionName, bool state=true);
+    void adjustMayReturnList(const std::string &functionName, boost::tribool state);
+    /** @} */
+
+    /** Query may-return blacklist and whitelist.
+     *
+     *  The @ref isMayReturnWhitelisted returns true if and only if @p functionName is present in the whitelist.
+     *
+     *  The @ref isMayReturnBlacklisted returns true if and only if @p functionName is present in the blacklist.
+     *
+     *  The @ref isMayReturnListed consults either the whitelist or blacklist depending on the value of @p dflt.  If @p dflt is
+     *  true then this method returns false if @p functionName is blacklisted and true otherwise. If @p dflt is false then this
+     *  method returns true if @p functionName is whitelisted and false otherwise.  If @p dflt is indeterminate then returns
+     *  true if whitelisted, false if blacklisted, or indeterminate if not listed at all.
+     *
+     * @{ */
+    bool isMayReturnWhitelisted(const std::string &functionName) const;
+    bool isMayReturnBlacklisted(const std::string &functionName) const;
+    boost::logic::tribool isMayReturnListed(const std::string &functionName, boost::logic::tribool dflt=true) const;
+    /** @} */
+
+    /** The may-return listed names.
+     *
+     *  Returns a map indicating whether names are whitelisted or blacklisted.  The map keys are the registered function names
+     *  and the map values are true for whitelisted and false for blacklisted. */
+    const MayReturnList& mayReturnList() const { return mayReturnList_; }
+
+private:
+    // Per-vertex data used during may-return analysis
+    struct MayReturnVertexInfo {
+        enum State {INIT, CALCULATING, FINISHED};
+        State state;                                        // current state of vertex
+        bool processedCallees;                              // have we processed BBs this vertex calls?
+        boost::logic::tribool anyCalleesReturn;             // do any of those called BBs have a true may-return value?
+        boost::logic::tribool result;                       // final result (eventually cached in BB)
+        MayReturnVertexInfo(): state(INIT), processedCallees(false), anyCalleesReturn(false), result(boost::indeterminate) {}
+    };
+
+    // Is edge significant for analysis? See .C file for full documentation.
+    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge, bool recompute,
+                                    std::vector<MayReturnVertexInfo> &vertexInfo) const;
+
+    // Determine (and cache in vertexInfo) whether any callees return.
+    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
+                                                    std::vector<MayReturnVertexInfo> &vertexInfo) const;
+
+    // Maximum may-return result from significant successors including phantom call-return edge.
+    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
+                                                       std::vector<MayReturnVertexInfo> &vertexInfo) const;
+
+    // The guts of the may-return analysis
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start, bool recompute,
+                                                       std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner data block operations
@@ -1039,6 +1211,15 @@ public:
      *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method. */
     std::vector<Function::Ptr> discoverFunctionEntryVertices() const;
 
+    /** True if function is a thunk.
+     *
+     *  If the function is non-null and a thunk then some information about the thunk is returned, otherwise nothing is
+     *  returned.  A function is a thunk if it has the @ref SgAsmFunction::FUNC_THUNK bit set in its reason mask, and it has
+     *  exactly one basic block, and the basic block has exactly one successor, and the successor is concrete.
+     *
+     *  As a side effect, the basic block's outgoing edge type is changed to E_FUNCTION_XFER. */
+    Sawyer::Optional<Thunk> functionIsThunk(const Function::Ptr&) const;
+
     /** Adds basic blocks to a function.
      *
      *  Attempts to discover the basic blocks that should belong to the specified function.  This is done as follows:
@@ -1130,7 +1311,7 @@ public:
     const FunctionPrologueMatchers& functionPrologueMatchers() const { return functionPrologueMatchers_; }
     /** @} */
 
-    /** Finds the next function by search for a function prologue.
+    /** Finds the next function by searching for a function prologue.
      *
      *  Scans executable memory starting at @p startVa and tries to match a function prologue pattern.  The patterns are
      *  represented by matchers that have been inserted into the vector reference returned by @ref functionPrologueMatchers.
@@ -1143,8 +1324,11 @@ public:
      *  instructions followed by the function prologue, in which case the address after the no-ops is the one used as the
      *  entry point of the returned function.
      *
-     *  If no match is found then a null pointer is returned. */
-    Function::Ptr nextFunctionPrologue(rose_addr_t startVa);
+     *  Some function prologue matchers can return multiple functions. For instance, a matcher for a thunk might return the
+     *  thunk and the function to which it points.  In any case, the first function is the primary one.
+     *
+     *  If no match is found then an empty vector is returned. */
+    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa);
 
 public:
     /** Ordered list of function padding matchers.
@@ -1243,20 +1427,36 @@ public:
     void cfgGraphViz(std::ostream&, const AddressInterval &restrict = AddressInterval::whole(),
                      bool showNeighbors=true) const;
 
-    /** Name of a vertex. */
+    /** Name of a vertex.
+     *
+     *  @{ */
     static std::string vertexName(const ControlFlowGraph::VertexNode&);
+    std::string vertexName(const ControlFlowGraph::ConstVertexNodeIterator&) const;
+    /** @} */
 
     /** Name of last instruction in vertex. */
     static std::string vertexNameEnd(const ControlFlowGraph::VertexNode&);
 
-    /** Name of an incoming edge. */
+    /** Name of an incoming edge.
+     *
+     * @{ */
     static std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&);
+    std::string edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+    /** @} */
 
-    /** Name of an outgoing edge. */
+    /** Name of an outgoing edge.
+     *
+     * @{ */
     static std::string edgeNameDst(const ControlFlowGraph::EdgeNode&);
+    std::string edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+    /** @} */
 
-    /** Name of an edge. */
+    /** Name of an edge.
+     *
+     * @{ */
     static std::string edgeName(const ControlFlowGraph::EdgeNode&);
+    std::string edgeName(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+    /** @} */
 
     /** Name of a basic block. */
     static std::string basicBlockName(const BasicBlock::Ptr&);
@@ -1288,6 +1488,46 @@ public:
     void disableSymbolicSemantics() { useSemantics_ = false; }
     bool usingSymbolicSemantics() const { return useSemantics_; }
     /** @} */
+
+    /** Property: Insert (or not) function call return edges.
+     *
+     *  When true, attaching a function call basic block to the CFG will create a call-return edge (@ref E_CALL_RETURN) in the
+     *  CFG even if the basic block has no explicit call-return edge and an analysis indicates that the callee (or at least one
+     *  callee if there are more than one) may return. Call-return edges are typically the edge from a @c CALL instruction to
+     *  the instruction immediately following in the address space.
+     *
+     *  If true, then the decision to add a call-return edge is made at the time the function call site is attached to the
+     *  basic block, but the may-return analysis for the callees might be indeterminate at that time (such as if the callee
+     *  instructions have not been discovered).  The assumeCallsReturn partitioner property can be used to guess whether
+     *  indeterminate may-return analysis should be assumed as a positive or negative result.
+     *
+     *  Deciding whether to add a call-return edge at the time of the call-site insertion can result in two kinds of errors: an
+     *  extra CFG edge where there shouldn't be one, or a missing CFG edge where there should be one.  An alternative is to
+     *  turn off the autoAddCallReturnEdges property and delay the decision to a time when more information is available.  This
+     *  is the approach taken by the default @ref Engine -- it maintains a list of basic blocks that need to be investigated at
+     *  a later time to determine if a call-return edge should be inserted, and it delays the decision as long as possible.
+     *
+     * @{ */
+    void autoAddCallReturnEdges(bool b) { autoAddCallReturnEdges_ = b; }
+    bool autoAddCallReturnEdges() const { return autoAddCallReturnEdges_; }
+    /** @} */
+
+    /** Property: Assume (or not) that function calls return.
+     *
+     *  If the may-return analysis is indeterminate and the partitioner needs to make an immediate decision about whether a
+     *  function might return to its caller then this property is used.  This property also determines whether the may-return
+     *  analysis uses a whitelist or blacklist.
+     *
+     *  If this property is true, then functions are assumed to return unless it can be proven that they cannot. A blacklist is
+     *  one way to prove that a function does not return.  On the other hand, if this property is false then functions are
+     *  assumed to not return unless it can be proven that they can.  A whitelist is one way to prove that a function can
+     *  return.
+     *
+     * @{ */
+    void assumeFunctionsReturn(bool b) { assumeFunctionsReturn_ = b; }
+    bool assumeFunctionsReturn() const { return assumeFunctionsReturn_; }
+    /** @} */
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities

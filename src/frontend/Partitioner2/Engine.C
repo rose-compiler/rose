@@ -158,6 +158,15 @@ Partitioner
 Engine::createBarePartitioner() {
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+
+    // Build the may-return blacklist and/or whitelist.  This could be made specific to the type of interpretation being
+    // processed, but there's so few functions that we'll just plop them all into the lists.
+    ModulesPe::buildMayReturnLists(p);
+    ModulesElf::buildMayReturnLists(p);
+
+    // Make sure the basicBlockWorkList_ gets updated when the partitioner's CFG is adjusted.
+    ASSERT_not_null(basicBlockWorkList_);
+    p.cfgAdjustmentCallbacks().prepend(basicBlockWorkList_);
     return p;
 }
 
@@ -169,6 +178,8 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+    p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
+    p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
@@ -192,6 +203,8 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         return p;
@@ -308,8 +321,9 @@ Engine::discoverFunctions(Partitioner &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
         // entry block, so go back and look for more basic blocks again.
-        if (Function::Ptr function = makeNextPrologueFunction(partitioner, nextPrologueVa)) {
-            nextPrologueVa = function->address();       // avoid "+1" because it may overflow
+        std::vector<Function::Ptr> newFunctions = makeNextPrologueFunction(partitioner, nextPrologueVa);
+        if (!newFunctions.empty()) {
+            nextPrologueVa = newFunctions[0]->address();   // avoid "+1" because it may overflow
             continue;
         }
 
@@ -426,29 +440,188 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
 }
 
 // Looks for a function prologue at or above the specified starting address and makes a function there.
-Function::Ptr
+std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
-    if (Function::Ptr function = partitioner.nextFunctionPrologue(startVa)) {
+    std::vector<Function::Ptr> functions = partitioner.nextFunctionPrologue(startVa);
+    BOOST_FOREACH (const Function::Ptr &function, functions) {
         partitioner.attachFunction(function);
-        return function;
     }
-    return Function::Ptr();
+    return functions;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Basic-blocks
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// make a new basic block for an arbitrary placeholder
+// Returns true if the specified vertex has at least one E_CALL_RETURN edge
+static bool
+hasCallReturnEdges(const ControlFlowGraph::ConstVertexNodeIterator &vertex) {
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex->outEdges()) {
+        if (edge.value().type() == E_CALL_RETURN)
+            return true;
+    }
+    return false;
+}
+
+// True if any callee may-return is positive; false if all callees are negative; indeterminate if any are indeterminate
+static boost::logic::tribool
+hasAnyCalleeReturn(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexNodeIterator &caller) {
+    bool hasIndeterminateCallee = false;
+    for (ControlFlowGraph::ConstEdgeNodeIterator edge=caller->outEdges().begin(); edge != caller->outEdges().end(); ++edge) {
+        if (edge->value().type() == E_FUNCTION_CALL) {
+            bool mayReturn = false;
+            if (!partitioner.basicBlockOptionalMayReturn(edge->target()).assignTo(mayReturn)) {
+                hasIndeterminateCallee = true;
+            } else if (mayReturn) {
+                return true;
+            }
+        }
+    }
+    if (hasIndeterminateCallee)
+        return boost::logic::indeterminate;
+    return false;
+}
+    
+// Add basic block to worklist(s)
+bool
+Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &args) {
+    if (chain) {
+        ASSERT_not_null(args.partitioner);
+        const Partitioner *p = args.partitioner;
+
+        // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
+        // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need to
+        // later add a call-return edge.
+        if (args.bblock && p->basicBlockIsFunctionCall(args.bblock)) {
+            ControlFlowGraph::ConstVertexNodeIterator placeholder = p->findPlaceholder(args.startVa);
+            ASSERT_require(placeholder != p->cfg().vertices().end());
+            boost::logic::tribool mayReturn = hasAnyCalleeReturn(*p, placeholder);
+            if (!hasCallReturnEdges(placeholder) && (mayReturn || boost::logic::indeterminate(mayReturn)))
+                pendingCallReturn_.pushBack(args.startVa);
+        }
+    }
+    return chain;
+}
+
+// Remove basic block from worklist(s)
+bool
+Engine::BasicBlockWorkList::operator()(bool chain, const DetachedBasicBlock &args) {
+    if (chain) {
+        pendingCallReturn_.erase(args.startVa);
+        processedCallReturn_.erase(args.startVa);
+    }
+    return chain;
+}
+
+// Return true if a new CFG edge was added.
+bool
+Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool assumeReturns) {
+    Sawyer::Container::DistinctList<rose_addr_t> &workList = basicBlockWorkList_->pendingCallReturn();
+    while (!workList.isEmpty()) {
+        rose_addr_t va = workList.popBack();
+        ControlFlowGraph::VertexNodeIterator caller = partitioner.findPlaceholder(va);
+
+        // Some sanity checks because it could be possible for this list to be out-of-date if the user monkeyed with the
+        // partitioner's CFG adjuster.
+        if (caller == partitioner.cfg().vertices().end()) {
+            SAWYER_MESG(mlog[WARN]) <<StringUtility::addrToString(va) <<" was present on the basic block worklist "
+                                    <<"but not in the CFG\n";
+            continue;
+        }
+        BasicBlock::Ptr bb = caller->value().bblock();
+        if (!bb)
+            continue;
+        if (!partitioner.basicBlockIsFunctionCall(bb))
+            continue;
+        if (hasCallReturnEdges(caller))
+            continue;
+
+        // If the new vertex lacks a call-return edge (tested above) and its callee has positive or indeterminate may-return
+        // then we may need to add a call-return edge depending on whether assumeCallReturns is true.
+        boost::logic::tribool mayReturn = hasAnyCalleeReturn(partitioner, caller);
+        if (boost::logic::indeterminate(mayReturn))
+            mayReturn = assumeReturns;
+        if (mayReturn) {
+            size_t nBits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            partitioner.detachBasicBlock(bb);
+            bb->insertSuccessor(bb->fallthroughVa(), nBits, E_CALL_RETURN);
+            partitioner.attachBasicBlock(caller, bb);
+            return true;
+        } else if (!mayReturn) {
+            return false;
+        } else {
+            // We're not sure yet whether a call-return edge should be inserted, so save vertex for later.
+            ASSERT_require(boost::logic::indeterminate(mayReturn));
+            basicBlockWorkList_->processedCallReturn().pushBack(va);
+        }
+    }
+    return false;
+}
+
+// Discover a basic block's instructions for some placeholder that has no basic block yet.
 BasicBlock::Ptr
-Engine::makeNextBasicBlock(Partitioner &partitioner) {
+Engine::makeNextBasicBlockFromPlaceholder(Partitioner &partitioner) {
     ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
     if (worklist->nInEdges() > 0) {
         ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
+        ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
         BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
         partitioner.attachBasicBlock(placeholder, bb);
         return bb;
+    } else {
+        return BasicBlock::Ptr();
     }
+}
+
+// make a new basic block for an arbitrary placeholder
+BasicBlock::Ptr
+Engine::makeNextBasicBlock(Partitioner &partitioner) {
+    ASSERT_not_null(basicBlockWorkList_);
+
+    // If there's an undiscovered basic block then discover it.
+    if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
+        return bb;
+
+    // Possibly move the old processedCallReturn items back onto the pendingCallReturn list.  The CFG possibly changed from the
+    // prior call and we may be able to determine a callee's may-return analysis with certainty now.
+    if (basicBlockWorkList_->pendingCallReturn().isEmpty()) {
+        while (!basicBlockWorkList_->processedCallReturn().isEmpty()) {
+            rose_addr_t va = basicBlockWorkList_->processedCallReturn().popBack();
+            basicBlockWorkList_->pendingCallReturn().pushBack(va);
+        }
+    }
+
+    // If there's a function call that needs a new call-return edge then add such an edge, but only if we know the callee has a
+    // positive may-return analysis. If we don't yet know with certainty whether the call may return or will never return then
+    // move the vertex to the processedCallReturn list to save it for later (this happens as part of makeNextCallReturnEdge().
+    while (!basicBlockWorkList_->pendingCallReturn().isEmpty()) {
+        if (makeNextCallReturnEdge(partitioner, boost::logic::indeterminate)) {
+            if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
+                return bb;
+        }
+    }
+
+    // If there's a function call that might need a new call-return edge but we're not sure (i.e., the callee's may-return
+    // analysis is indeterminate) then assume such an edge is either needed or not needed based on the partitioner's @c
+    // assumeFunctionsReturn property.
+    while (!basicBlockWorkList_->processedCallReturn().isEmpty()) {
+        // Move one processed item to the pending list
+        ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
+        rose_addr_t va = basicBlockWorkList_->processedCallReturn().popFront();
+        basicBlockWorkList_->pendingCallReturn().pushBack(va);
+
+        // Process that one pending item by assuming it returns. This will return false only some sanity check prevented
+        // the new call-return edge from being inserted.
+        if (makeNextCallReturnEdge(partitioner, partitioner.assumeFunctionsReturn())) {
+            if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
+                return bb;
+        }
+    }
+
+    // Nothing to do!
+    ASSERT_require(partitioner.undiscoveredVertex()->nInEdges()==0);
+    ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
+    ASSERT_require(basicBlockWorkList_->processedCallReturn().isEmpty());
     return BasicBlock::Ptr();
 }
 
@@ -462,7 +635,7 @@ Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
         size_t nFailures = partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges);
         if (nFailures > 0) {
             insertUnique(retval, function, sortFunctionsByAddress);
-            if (mlog[WARN]) {
+            if (mlog[WARN] && emitWarnings) {
                 mlog[WARN] <<"discovery for " <<partitioner.functionName(function)
                                <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                                <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
@@ -527,6 +700,52 @@ Engine::attachDeadCodeToFunctions(Partitioner &partitioner, size_t maxIterations
     }
     return retval;
 }
+
+// Assumes that each unused address interaval that's surrounded by a single function begins coincident with the beginning of an
+// as yet undiscovered basic block and adds a basic block placeholder to the surrounding function.  This could be further
+// improved by testing to see if the candidate address looks like a valid basic block.
+size_t
+Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
+    size_t nNewBlocks = 0;
+    if (partitioner.aum().isEmpty())
+        return 0;
+    rose_addr_t va = partitioner.aum().hull().least() + 1;
+    while (va < partitioner.aum().hull().greatest()) {
+        // Find an address interval that's unused and also executable.
+        AddressInterval unusedAum = partitioner.aum().nextUnused(va);
+        if (!unusedAum || unusedAum.greatest() > partitioner.aum().hull().greatest())
+            break;
+        AddressInterval interval = partitioner.memoryMap().within(unusedAum).require(MemoryMap::EXECUTABLE).available();
+        if (interval == unusedAum) {
+            // Is this interval immediately surrounded by a single function?
+            typedef std::vector<Function::Ptr> Functions;
+            Functions beforeFuncs = partitioner.functionsOverlapping(interval.least()-1);
+            Functions afterFuncs = partitioner.functionsOverlapping(interval.greatest()+1);
+            Functions enclosingFuncs(beforeFuncs.size());
+            Functions::iterator final = std::set_intersection(beforeFuncs.begin(), beforeFuncs.end(),
+                                                              afterFuncs.begin(), afterFuncs.end(), enclosingFuncs.begin());
+            enclosingFuncs.resize(final-enclosingFuncs.begin());
+            if (1 == enclosingFuncs.size()) {
+                Function::Ptr function = enclosingFuncs[0];
+
+                // Add the address to the function
+                mlog[DEBUG] <<"attachSurroundedCodeToFunctions: basic block " <<StringUtility::addrToString(interval.least())
+                            <<" is attached now to function " <<function->printableName() <<"\n";
+                partitioner.detachFunction(function);
+                function->insertBasicBlock(interval.least());
+                partitioner.attachFunction(function);
+                ++nNewBlocks;
+            }
+        }
+
+        // Advance to next unused interval
+        if (unusedAum.greatest() > partitioner.aum().hull().greatest())
+            break;                                      // prevent possible overflow
+        va = unusedAum.greatest() + 1;
+    }
+    return nNewBlocks;
+}
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Data block functions

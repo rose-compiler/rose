@@ -34,6 +34,15 @@ Function::printableName() const {
     return s;
 }
 
+bool
+Function::isThunk() const {
+    if (0 == (reasons_ & SgAsmFunction::FUNC_THUNK))
+        return false;
+    if (bblockVas_.size() != 1)
+        return false;
+    return true;
+}
+
 
 } // namespace
 } // namespace

@@ -46,6 +46,7 @@ struct Settings {
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findFunctionPadding;                           // look for pre-entry-point padding?
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
+    bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
@@ -56,12 +57,14 @@ struct Settings {
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
+    bool assumeFunctionsReturn;                         // do functions usually return to their caller?
     std::vector<std::string> triggers;                  // debugging aids
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), intraFunctionData(true), doListCfg(false), doListAum(false),
-          doListAsm(true), doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false),
-          doShowMap(false), doShowStats(false), doListUnused(false) {}
+          findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true), doListCfg(false),
+          doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
+          doListInstructionAddresses(false), doShowMap(false), doShowStats(false), doListUnused(false),
+          assumeFunctionsReturn(true) {}
 };
 
 // Describe and parse the command-line
@@ -70,6 +73,19 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 {
     using namespace Sawyer::CommandLine;
 
+    Parser parser;
+    parser
+        .purpose("disassembles and partitions binary specimens")
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("synopsis",
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
+        .doc("description",
+             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
+        .doc("Specimens", P2::Engine::specimenNameDocumentation())
+        .doc("Bugs", "[999]-bugs",
+             "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
+    
     // Generic switches
     SwitchGroup gen = CommandlineProcessing::genericSwitches();
     gen.insert(Switch("use-semantics")
@@ -88,6 +104,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
+
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
                .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
@@ -102,6 +119,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("allow-discontiguous-blocks")
                .intrinsicValue(false, settings.allowDiscontiguousBlocks)
                .hidden(true));
+
     dis.insert(Switch("find-function-padding")
                .intrinsicValue(true, settings.findFunctionPadding)
                .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
@@ -112,6 +130,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-function-padding")
                .intrinsicValue(false, settings.findFunctionPadding)
                .hidden(true));
+
     dis.insert(Switch("follow-ghost-edges")
                .intrinsicValue(true, settings.followGhostEdges)
                .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -121,6 +140,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("follow-ghost-edges")
                .intrinsicValue(false, settings.followGhostEdges)
                .hidden(true));
+
     dis.insert(Switch("find-dead-code")
                .intrinsicValue(true, settings.findDeadCode)
                .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
@@ -131,6 +151,22 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
                .hidden(true));
+
+    dis.insert(Switch("intra-function-code")
+               .intrinsicValue(true, settings.intraFunctionCode)
+               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
+                    "followed by the same single function then a basic block is create at the beginning of that region and "
+                    "added as a member of the surrounding function.  A function block discover phase follows in order to "
+                    "find the instructions for the new basic blocks and to follow their control flow to add additional "
+                    "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
+                    "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
+                    "switch turns this off. The default is to " + std::string(settings.intraFunctionCode?"":"not ") +
+                    "perform this analysis."));
+    dis.insert(Switch("no-intra-function-code")
+               .key("intra-function-code")
+               .intrinsicValue(false, settings.intraFunctionCode)
+               .hidden(true));
+
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
                .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
@@ -141,12 +177,19 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("intra-function-data")
                .intrinsicValue(false, settings.intraFunctionData)
                .hidden(true));
+
     dis.insert(Switch("remove-zeros")
                .argument("size", nonNegativeIntegerParser(settings.deExecuteZeros), "128")
                .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
                     "switch argument is the minimum number of consecutive zeros that will trigger the removal, and "
                     "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
                     "all, this tool assumes a value of " + StringUtility::plural(settings.deExecuteZeros, "bytes") + "."));
+
+    dis.insert(Switch("functions-return")
+               .argument("boolean", booleanParser(settings.assumeFunctionsReturn))
+               .doc("If the disassembler's may-return analysis is inconclusive then either assume that such functions may "
+                    "return to their caller or never return.  The default is that they " +
+                    std::string(settings.assumeFunctionsReturn?"may":"never") + " return."));
 
     // Switches for output
     SwitchGroup out("Output switches");
@@ -197,9 +240,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 
     out.insert(Switch("list-instruction-addresses")
                .intrinsicValue(true, settings.doListInstructionAddresses)
-               .doc("Produce a listing of instruction addresses.  Each line of output will contain one address interval "
-                    "represented in the standard format: a hexadecimal address with leading \"0x\" followed by a plus sign (\"+\") "
-                    "followed by the decimal size of the instruction in bytes.  This listing is disabled with the "
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain three space-separated "
+                    "items: the address interval for the instruction (address followed by \"+\" followed by size), the "
+                    "address of the basic block to which the instruction belongs, and the address of the function to which "
+                    "the basic block belongs.  If the basic block doesn't belong to a function then the string \"nil\" is "
+                    "printed for the function address field.  This listing is disabled with the "
                     "@s{no-list-instruction-addresses} switch.  The default is to " +
                     std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
     out.insert(Switch("no-list-instruction-addresses")
@@ -264,22 +309,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "@named{cfg-dot}{" + P2::Modules::CfgGraphVizDumper::docString() + "}"
                     "@named{hexdump}{" + P2::Modules::HexDumper::docString() + "}"
                     "@named{insn-list}{" + P2::Modules::InstructionLister::docString() + "}"
+                    "@named{debugger}{" + P2::Modules::Debugger::docString() + "}"
                     ));
     
 
-    Parser parser;
-    parser
-        .purpose("disassembles and partitions binary specimens")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("description",
-             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation())
-        .doc("Bugs", "[999]-bugs",
-             "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
-    
     return parser.with(gen).with(dis).with(out).with(dbg).parse(argc, argv).apply();
 }
 
@@ -414,6 +447,7 @@ int main(int argc, char *argv[]) {
     Sawyer::Stopwatch partitionTime;
     P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
+    partitioner.assumeFunctionsReturn(settings.assumeFunctionsReturn);
     if (settings.followGhostEdges)
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
@@ -433,6 +467,9 @@ int main(int argc, char *argv[]) {
             partitioner.cfgAdjustmentCallbacks().append(aid);
         } else if (boost::starts_with(s, "insn-list:")) {
             P2::Modules::InstructionLister::Ptr aid = P2::Modules::InstructionLister::instance(s.substr(10));
+            partitioner.cfgAdjustmentCallbacks().append(aid);
+        } else if (boost::starts_with(s, "debugger:")) {
+            P2::Modules::Debugger::Ptr aid = P2::Modules::Debugger::instance(s.substr(9));
             partitioner.cfgAdjustmentCallbacks().append(aid);
         } else {
             throw std::runtime_error("invalid debugging aid for \"trigger\" switch: " + s);
@@ -457,6 +494,16 @@ int main(int argc, char *argv[]) {
         engine.attachDeadCodeToFunctions(partitioner);  // find unreachable code and add it to functions
     if (settings.findFunctionPadding)
         engine.attachPaddingToFunctions(partitioner);   // find function alignment padding before entry points
+    if (settings.intraFunctionCode) {
+        while (engine.attachSurroundedCodeToFunctions(partitioner)) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-11-06]
+            mlog[INFO] <<"ROBB: attached surrounded code to functions\n";
+#endif
+            engine.discoverBasicBlocks(partitioner);    // discover instructions and more basic blocks by following control
+            engine.makeCalledFunctions(partitioner);    // we might have found more function calls from the new blocks
+            engine.attachBlocksToFunctions(partitioner);// attach new blocks to functions wherever possible
+        }
+    }
     if (settings.intraFunctionData)
         engine.attachSurroundedDataToFunctions(partitioner); // find data areas that are enclosed by functions
 
@@ -525,11 +572,17 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.doListInstructionAddresses) {
-        std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(AddressInterval::whole());
-        BOOST_FOREACH (SgAsmInstruction *insn, insns)
-            std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size() <<"\n";
+        std::vector<P2::BasicBlock::Ptr> bblocks = partitioner.basicBlocks();
+        BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
+            P2::Function::Ptr function = partitioner.findFunctionOwningBasicBlock(bblock);
+            BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+                std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size();
+                std::cout <<"\t" <<StringUtility::addrToString(bblock->address());
+                std::cout <<"\t" <<(function ? StringUtility::addrToString(function->address()) : std::string("nil")) <<"\n";
+            }
+        }
     }
-    
+
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         if (!globalBlock)

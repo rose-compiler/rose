@@ -499,6 +499,11 @@ AddressUsageMap::unusedExtent(const AddressIntervalSet &space) const {
     return space - extent();
 }
 
+AddressInterval
+AddressUsageMap::nextUnused(rose_addr_t minVa) const {
+    return map_.firstUnmapped(minVa);
+}
+
 void
 AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
     using namespace StringUtility;

@@ -6,6 +6,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <sawyer/DistinctList.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -36,14 +37,32 @@ namespace Partitioner2 {
  *      and @ref partition.
  *
  *  @li The engine's partitioning API always takes a partitioner as an argument. The user can modify the partitioner's behavior
- *      by subclassing, registering partitioner callbacks, or modifying the partitioner state between calls to the engine. */
+ *      by subclassing, registering partitioner callbacks, or modifying the partitioner state between calls to the
+ *      engine. However, the partitioner that's provided to these functions should be one that was created with one of the
+ *      partitioner-creating functions in this library if you want all features to work. */
 class Engine {
+    // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
+    // inserted or erased from the CFG.
+    class BasicBlockWorkList: public CfgAdjustmentCallback {
+    private:
+        Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
+        Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
+    public:
+        typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
+        static Ptr instance() { return Ptr(new BasicBlockWorkList); }
+        virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+        virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
+        Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
+        Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
+    };
+
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
     BinaryLoader *loader_;                              // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap map_;                                     // memory map initialized by load()
+    BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
 public:
-    Engine(): interp_(NULL), loader_(NULL), disassembler_() {}
+    Engine(): interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()) {}
 
     virtual ~Engine() {}
 
@@ -262,13 +281,38 @@ public:
 public:
     /** Discover a basic block.
      *
-     *  Obtains an arbitrary basic block address from the list of undiscovered basic blocks (i.e., placeholders that have no
-     *  basic block assigned to them yet) and attempts to discover the instructions that belong to that block.  The basic block
-     *  is then added to the specified partitioner's CFG/AUM.
+     *  Discovers another basic block if possible.  A variety of methods will be used to determine where to discover the next
+     *  basic block:
+     *
+     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockAtPlaceholder
+     *
+     *  @li Insert a new call-return (@ref E_CALL_RETURN) edge for a function call that may return.  Insertion of such an
+     *      edge may result in a new placeholder for which this method then discovers a basic block.  The call-return insertion
+     *      happens in two passes: the first pass only adds an edge for a callee whose may-return analysis is positive; the
+     *      second pass relaxes that requirement and inserts an edge for any callee whose may-return is indeterminate (i.e., if
+     *      ROSE can't prove that a callee never returns then assume it may return).
      *
      *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
     virtual BasicBlock::Ptr makeNextBasicBlock(Partitioner&);
 
+    /** Discover basic block at next placeholder.
+     *
+     *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
+     *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
+     *  into the "undiscovered" vertex. */
+    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(Partitioner&);
+
+    /** Insert a call-return edge and discover its basic block.
+     *
+     *  Inserts a call-return (@ref E_CALL_RETURN) edge for some function call that lacks such an edge and for which the callee
+     *  may return.  The @p assumeCallReturns parameter determines whether a call-return edge should be added or not for
+     *  callees whose may-return analysis is indeterminate.  If @p assumeCallReturns is true then an indeterminate callee will
+     *  have a call-return edge added; if false then no call-return edge is added; if indeterminate then no call-return edge is
+     *  added at this time but the vertex is saved so it can be reprocessed later.
+     *
+     *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
+     *  condition for a false return is that the pendingCallReturn list is empty. */
+    bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Methods to make functions.
@@ -337,14 +381,16 @@ public:
     /** Make function at prologue pattern.
      *
      *  Scans executable memory starting at the specified address and which is not represented in the CFG/AUM and looks for
-     *  byte patterns and/or instruction patterns that indicate the start of a function.  When a pattern is found a function is
-     *  created and inserted into the specified partitioner's CFG/AUM.
+     *  byte patterns and/or instruction patterns that indicate the start of a function.  When a pattern is found a function
+     *  (or multiple functions, depending on the type of matcher) is created and inserted into the specified partitioner's
+     *  CFG/AUM.
      *
      *  Patterns are found by calling the @ref Partitioner::nextFunctionPrologue method, which most likely invokes a variety of
      *  predefined and user-defined callbacks to search for the next pattern.
      *
-     *  Returns a pointer to the newly inserted function if one was found, otherwise returns the null pointer. */
-    virtual Function::Ptr makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
+     *  Returns a vector of non-null function pointers pointer for the newly inserted functions, otherwise returns an empty
+     *  vector. */
+    virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -400,6 +446,15 @@ public:
      *  the individual calls. */
     virtual std::vector<DataBlock::Ptr> attachPaddingToFunctions(Partitioner&);
 
+    /** Attach intra-function basic blocks to functions.
+     *
+     *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
+     *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
+     *  created at the beginning of the interval and added to the function.
+     *
+     *  Returns the number of new placeholders created. */
+    size_t attachSurroundedCodeToFunctions(Partitioner&);
+    
     /** Attach intra-function data to functions.
      *
      *  Looks for addresses that are not part of the partitioner's CFG/AUM and which are surrounded immediately below and above

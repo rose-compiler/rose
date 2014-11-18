@@ -295,6 +295,7 @@ Grammar::setUpStatements ()
 #endif
 
 #include "java/terminals.cpp"
+#include "x10/terminals.cpp"
 
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
@@ -505,7 +506,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement /* | JavaPackageDeclaration */,
+             JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed

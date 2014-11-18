@@ -1,4 +1,5 @@
 #include "FileSystem.h"
+#include <boost/regex.hpp>
 #include <boost/foreach.hpp>
 #include <set>
 
@@ -10,6 +11,15 @@ namespace rose {
 namespace FileSystem {
 
 const char *tempNamePattern = "rose-%%%%%%%-%%%%%%%";
+
+bool
+baseNameMatches::operator()(const Path &path) {
+#if BOOST_FILESYSTEM_VERSION == 2
+    return boost::regex_match(path.filename(), re_);
+#else
+    return boost::regex_match(path.filename().string(), re_);
+#endif
+}
 
 bool
 isExisting(const Path &path) {

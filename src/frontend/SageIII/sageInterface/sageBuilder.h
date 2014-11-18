@@ -1201,6 +1201,17 @@ ROSE_DLL_API SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NU
 // ! Build a catch statement.
 ROSE_DLL_API SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition=NULL, SgStatement* body=NULL);
 
+// MH (6/10/2014): Added async support
+ROSE_DLL_API SgAsyncStmt* buildAsyncStmt(SgBasicBlock *body);
+
+// MH (6/11/2014): Added finish support
+ROSE_DLL_API SgFinishStmt* buildFinishStmt(SgBasicBlock *body);
+
+// MH (6/11/2014): Added at support
+ROSE_DLL_API SgAtStmt* buildAtStmt(SgExpression *expression, SgBasicBlock *body);
+
+ROSE_DLL_API SgHereExp* buildHereExpression();
+
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.
 ROSE_DLL_API SgTryStmt* buildTryStmt(SgStatement* body,

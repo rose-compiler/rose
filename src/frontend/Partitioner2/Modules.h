@@ -97,25 +97,31 @@ public:
  *  A function prologue is a pattern of bytes or instructions that typically mark the beginning of a function.  For
  *  instance, many x86-based functions start with "PUSH EBX; MOV EBX, ESP" while many M68k functions begin with a single
  *  LINK instruction affecting the A6 register.  A subclass must implement the @ref match method that does the actual
- *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref function method to
- *  obtain a function object.
+ *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref functions method to
+ *  obtain the new function objects.
  *
  *  The matcher will be called only with anchor addresses that are mapped with execute permission and which are not a
  *  starting address of any instruction in the CFG.  The matcher should ensure similar conditions are met for any
- *  additional addresses, especially the address returned by @ref functionVa. */
+ *  additional addresses. */
 class FunctionPrologueMatcher: public InstructionMatcher {
 public:
     /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
      *  partitioners are copied. */
     typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
 
-    /** Returns the function for the previous successful match.  If the previous call to @ref match returned true then this
-     *  method should return a function for the matched function prologue.  Although the function returned by this method
-     *  is often at the same address as the anchor for the match, it need not be.  For instance, a matcher could match
-     *  against some amount of padding followed the instructions for setting up the stack frame, in which case it might
-     *  choose to return a function that starts at the stack frame setup instructions and includes the padding as static
-     *  data. The partitioner will never call @ref function without first having called @ref match. */
-    virtual Function::Ptr function() const = 0;
+    /** Returns the function(s) for the previous successful match.
+     *
+     *  If the previous call to @ref match returned true then this method should return at least one function for the matched
+     *  function prologue.  Although the function returned by this method is often at the same address as the anchor for the
+     *  match, it need not be.  For instance, a matcher could match against some amount of padding followed the instructions
+     *  for setting up the stack frame, in which case it might choose to return a function that starts at the stack frame setup
+     *  instructions and includes the padding as static data.
+     *
+     *  Multiple functions can be created. For instance, if the matcher matches a thunk then two functions will likely be
+     *  created: the thunk itself, and the function to which it points.
+     *
+     *  The partitioner will never call @ref function without first having called @ref match. */
+    virtual std::vector<Function::Ptr> functions() const = 0;
 };
 
 
@@ -252,6 +258,31 @@ public:
     static std::string docString();
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+};
+
+/** Convenient place to attach a debugger.
+ *
+ *  See @ref docString for full documentation. */
+class Debugger: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) should we monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    Debugger(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new Debugger(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    void debug(rose_addr_t, const BasicBlock::Ptr&);
 };
 
 /** Remove execute permissions for zeros.

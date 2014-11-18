@@ -2,7 +2,6 @@
 #define ROSE_FileSystem_H
 
 #include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
 #include <vector>
 
 namespace rose {
@@ -52,11 +51,7 @@ class baseNameMatches {
     const boost::regex &re_;
 public:
     baseNameMatches(const boost::regex &re): re_(re) {}
-#if BOOST_FILESYSTEM_VERSION == 2
-    bool operator()(const Path &path) { return boost::regex_match(path.filename(), re_); }
-#else
-    bool operator()(const Path &path) { return boost::regex_match(path.filename().string(), re_); }
-#endif
+    bool operator()(const Path &path);
 };
 
 /** Create a temporary directory.
@@ -129,19 +124,16 @@ std::vector<Path> findNames(const Path &root);
  * @{ */
 template<class Select, class Descend>
 std::vector<Path> findNamesRecursively(const Path &root, Select select, Descend descend) {
-#if BOOST_FILESYSTEM_VERSION == 2                       // FIXME[Robb P. Matzke 2014-11-18]: Remove version 2 support
-    throw std::runtime_error("findNamesRecursively is not supported for boost::filesystem version 2");
-#else
     std::vector<Path> matching;
     RecursiveDirectoryIterator end;
     for (RecursiveDirectoryIterator dentry(root); dentry!=end; ++dentry) {
         if (select(dentry->path()))
             matching.push_back(dentry->path());
-        dentry.no_push(!descend(dentry->path()));
+        if (!descend(dentry->path()))
+            dentry.no_push();
     }
     std::sort(matching.begin(), matching.end());
     return matching;
-#endif
 }
 
 template<class Select>
