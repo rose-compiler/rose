@@ -15,6 +15,7 @@
 #include <set>
 #include <string>
 #include "DFSolver1.h"
+#include "DFAstAttribute.h"
 
 namespace CodeThorn {
 
@@ -37,13 +38,19 @@ class DFAnalyzer {
   typedef vector<LatticeType> AnalyzerData;
   typedef vector<LatticeType> ResultAccess;
   ResultAccess& getResultAccess();
+#if 0
   void attachResultsToAst(string);
+#endif
   Labeler* getLabeler();
   CFAnalyzer* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
   LatticeType getPreInfo(Label lab);
   LatticeType getPostInfo(Label lab);
+  void attachInInfoToAst(string attributeName);
+  void attachOutInfoToAst(string attributeName);
+
+  void attachInfoToAst(string attributeName,bool inInfo);
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();
@@ -58,7 +65,18 @@ class DFAnalyzer {
   vector<LatticeType> _analyzerData;
   WorkListSeq<Label> _workList;
   LatticeType _initialElement;
+
+
+  //typedef AnalyzerData::iterator iterator;
+  typedef typename AnalyzerData::iterator iterator;
+#if 0
+  iterator begin();
+  iterator end();
+  size_t size();
+#endif
+
  protected:
+  virtual DFAstAttribute* createDFAstAttribute(LatticeType*);
   bool _preInfoIsValid;
   void computeAllPreInfo();
   DFTransferFunctions<LatticeType>* _transferFunctions;

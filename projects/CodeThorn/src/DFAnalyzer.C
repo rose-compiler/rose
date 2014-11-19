@@ -190,6 +190,7 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
 }
 
 
+
 // runs until worklist is empty
 template<typename LatticeType>
 void
@@ -206,6 +207,12 @@ DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
     inInfo.combine(_analyzerData[*i]);
   }
+}
+
+template<typename LatticeType>
+DFAstAttribute* DFAnalyzer<LatticeType>::createDFAstAttribute(LatticeType* elem) {
+  // elem ignored in default function
+  return new DFAstAttribute();
 }
 
 // runs until worklist is empty
@@ -230,7 +237,8 @@ DFAnalyzer<LatticeType>::run() {
 template<typename LatticeType>
 LatticeType
 DFAnalyzer<LatticeType>::transfer(Label lab, LatticeType element) {
-  return element;
+  ROSE_ASSERT(_transferFunctions);
+  return _transferFunctions->transfer(lab,element);
 }
 
 template<typename LatticeType>
@@ -247,7 +255,7 @@ DFAnalyzer<LatticeType>::getResultAccess() {
 using std::string;
 
 #include <sstream>
-
+#if 0
 template<typename LatticeType>
 void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
   size_t lab=0;
@@ -263,7 +271,7 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
   }
 
 }
-
+#endif
 template<typename LatticeType>
 CFAnalyzer* DFAnalyzer<LatticeType>::getCFAnalyzer() {
   return _cfanalyzer;
@@ -278,5 +286,69 @@ template<typename LatticeType>
 VariableIdMapping* DFAnalyzer<LatticeType>::getVariableIdMapping() {
   return &_variableIdMapping;
 }
+
+#if 0
+template<typename LatticeType>
+CodeThorn::DFAnalyzer::iterator CodeThorn::DFAnalyzer<LatticeType>::begin() {
+  return _analyzerData.begin();
+}
+  
+template<typename LatticeType>
+DFAnalyzer::iterator CodeThorn::DFAnalyzer<LatticeType>::end() {
+  return _analyzerData.end();
+}
+
+template<typename LatticeType>
+size_t DFAnalyzer<LatticeType>::size() {
+  return _analyzerData.size();
+}
+#endif // begin/end
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachInfoToAst(string attributeName,bool inInfo) {
+  if(inInfo && !_preInfoIsValid)
+    computeAllPreInfo();
+  LabelSet labelSet=_flow.nodeLabels();
+  for(LabelSet::iterator i=labelSet.begin();
+      i!=labelSet.end();
+      ++i) {
+    ROSE_ASSERT(*i<_analyzerData.size());
+    // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
+    if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
+      if(*i >=0 ) {
+        if(inInfo)
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPreInfo[*i]));
+        else
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerData[*i]));
+      }
+  }
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachInInfoToAst(string attributeName) {
+  if(!_preInfoIsValid)
+    computeAllPreInfo();
+  attachInfoToAst(attributeName,true);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachOutInfoToAst(string attributeName) {
+  attachInfoToAst(attributeName,false);
+}
+
+
+
 
 #endif

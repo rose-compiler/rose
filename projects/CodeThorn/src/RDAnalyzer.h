@@ -11,6 +11,7 @@
 #include "DFAnalyzer.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
+#include "DFAstAttribute.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -24,17 +25,8 @@ class RDAnalyzer : public DFAnalyzer<RDLattice> {
  public:
   RDAnalyzer();
   ~RDAnalyzer();
-  void attachInInfoToAst(string attributeName);
-  void attachOutInfoToAst(string attributeName);
-  RDLattice transfer(Label lab, RDLattice element);
-
-  typedef AnalyzerData::iterator iterator;
-  iterator begin();
-  iterator end();
-  size_t size();
-
  protected:
-  void attachInfoToAst(string attributeName,bool isInInfo);
+  virtual DFAstAttribute* createDFAstAttribute(RDLattice* elem);
 };
 
 #endif
