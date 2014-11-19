@@ -3,6 +3,7 @@
 
 // default behavior
 string DFAstAttribute::toString() { return "undefined";}
+void DFAstAttribute::toStream(std::ostream& os,VariableIdMapping*) { os<<"undefined";}
 
 DFAstAttribute::DFAstAttribute() {
 }
