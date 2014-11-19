@@ -1857,15 +1857,34 @@ This is no perfect solution until we handle preprocessing information as structu
     // transformation (e.g. declaration of private variables will add variables
     // to the local scope).  So this function has side-effects for all languages.
 
-    if (SgProject::get_verbose() > 1)
+    if (SgProject::get_verbose() > 1 || OmpSupport::enable_debugging)
     {
       printf ("Processing OpenMP directives \n");
+    }
+
+    // Handle the side effects of OpenMP flags
+    // if lowering is request, it trumps other flags.
+    if (sageFilePtr->get_openmp_lowering())
+    {
+      sageFilePtr->set_openmp(true) ;
+      sageFilePtr->set_openmp_parse_only(false);
+      sageFilePtr->set_openmp_ast_only(false);
+
+    }    // if ast only is requested, set other two flags
+    else if (sageFilePtr->get_openmp_ast_only())
+    {
+      sageFilePtr->set_openmp(true) ;
+      sageFilePtr->set_openmp_parse_only(false);
+    } 
+    else if (sageFilePtr->get_openmp_parse_only())
+    {
+      sageFilePtr->set_openmp(true) ;
     }
 
     ROSE_ASSERT(sageFilePtr != NULL);
     if (sageFilePtr->get_openmp() == false)
     {
-      if (SgProject::get_verbose() > 1)
+      if (SgProject::get_verbose() > 1 || OmpSupport::enable_debugging )
       {
         printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp() = %s \n",sageFilePtr->get_openmp() ? "true" : "false");
       }
@@ -1878,7 +1897,7 @@ This is no perfect solution until we handle preprocessing information as structu
     // stop here if only OpenMP parsing is requested
     if (sageFilePtr->get_openmp_parse_only())
     {
-      if (SgProject::get_verbose() > 1)
+      if (SgProject::get_verbose() > 1|| OmpSupport::enable_debugging )
       {
         printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_parse_only() = %s \n",sageFilePtr->get_openmp_parse_only() ? "true" : "false");
       }

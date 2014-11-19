@@ -61,18 +61,20 @@ test7: shiftCalculusCompiler
 test8: shiftCalculusCompiler
 	./shiftCalculusCompiler -c $(srcdir)/test2014_05.C
 
+rose_laplacian_lite.cu: shiftCalculusCompiler
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
 # Note that test1 and test3 are zero dimensional stencils that are not supported for code generation yet.
 # test2 is including STL and other library code
 # test4 is a version of test2 which excludes STL and library code (and it thus smaller to work with but the same API).
 # test5 - test8 test subsets of the stencil specification.
-localTests: test4 test2 test5 test6 test7 test8
+localTests: test4 test2 test5 test6 test7 test8 
 
 
 check-local:
 	@echo "Tests for Shift Calculus examples."
 #	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
-	@$(MAKE) localTests
+	@$(MAKE) localTests rose_laplacian_lite.cu
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: make check rule complete (terminated normally) ********"
 	@echo "********************************************************************************************"
@@ -82,6 +84,6 @@ EXTRA_DIST =
 CLEANFILES = 
 
 clean-local:
-	rm -rf rose_*.C *.pdf
+	rm -rf rose_*.C *.pdf *.cu rose_*.cpp
 	rm -f a.out *.dot 
 

@@ -36,9 +36,7 @@ int main( int argc, char * argv[] )
     {
       std::cout<<"Turning on CUDA code generation ..."<<std::endl;
       b_gen_cuda = true;
-      argvList.push_back("-rose:openmp:lowering");
-      OmpSupport::enable_accelerator = true;
-      OmpSupport::enable_debugging = true;
+//      argvList.push_back("-rose:openmp:lowering");
     }
     else
       b_gen_cuda = false;
@@ -123,9 +121,16 @@ int main( int argc, char * argv[] )
      ROSE_ASSERT (project->get_fileList().size() ==1);
      SgFile * cur_file = project->get_fileList()[0];
 
+     OmpSupport::enable_accelerator = true;
+     OmpSupport::enable_debugging = true;
+     cur_file->set_openmp_lowering(true);
+//     cur_file->set_openmp(true);
+//     cur_file->set_openmp_parse_only(false);
+
      // process OpenMP directives, including omp target
      OmpSupport::processOpenMP(isSgSourceFile(cur_file));
 
+#if 0 // use rose:output instead to control this
      // rename output file to have .cu suffice
      // change .c suffix to .cu suffix
      std::string orig_name = cur_file->get_file_info()->get_filenameString();
@@ -135,6 +140,7 @@ int main( int argc, char * argv[] )
      orig_name = StringUtility::stripPathFromFileName(orig_name);
      std::string naked_name = StringUtility::stripFileSuffixFromFileName(orig_name);
      cur_file->set_unparse_output_filename("rose_"+naked_name+".cu");
+#endif
    }
 
      // AST consistency tests (optional for users, but this enforces more of our tests)
