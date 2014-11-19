@@ -1,7 +1,7 @@
 // Author: Markus Schordan, 2013.
 
-#ifndef RDANALYSISASTATTRIBUTE_H
-#define RDANALYSISASTATTRIBUTE_H
+#ifndef INTERVALANALYSISASTATTRIBUTE_H
+#define INTERVALANALYSISASTATTRIBUTE_H
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
