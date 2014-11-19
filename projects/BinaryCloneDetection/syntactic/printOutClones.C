@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
   
   try {
     if( similarity == 1.0)
-    eltCount = boost::lexical_cast<size_t>(tx->statement("select count(distinct cluster) from postprocessed_clusters")->execute_string());
+    eltCount = boost::lexical_cast<size_t>(tx->statement("select count(distinct cluster) from clusters")->execute_string());
 
     else
     eltCount = boost::lexical_cast<size_t>(tx->statement("select count(distinct cluster) from clusters")->execute_int());

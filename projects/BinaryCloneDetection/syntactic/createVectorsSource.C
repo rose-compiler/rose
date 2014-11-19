@@ -253,7 +253,7 @@ int main( int argc, char * argv[] ) {
 
         SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
  
-        int windowSize = 10;
+        int windowSize = 5;
 	// Save parameters in the database; or check against existing parameters
 	if (0 == tx->statement("select count(*) from run_parameters")->execute_int()) {
 		if ((size_t)-1 == stride || (size_t)-1 == windowSize) {
