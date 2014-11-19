@@ -33,7 +33,7 @@ class RDAnalyzer : public DFAnalyzer<RDLattice> {
   iterator end();
   size_t size();
 
- private:
+ protected:
   void attachInfoToAst(string attributeName,bool isInInfo);
 };
 

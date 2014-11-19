@@ -19,8 +19,7 @@ DFAnalyzer<LatticeType>::DFAnalyzer():
   _cfanalyzer(0),
   _numberOfLabels(0),
   _preInfoIsValid(false),
-  _transferFunctions(0),
-  _solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD)
+  _transferFunctions(0)
 {}
 
 template<typename LatticeType>
@@ -190,48 +189,13 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
 }
 
-// runs until worklist is empty
-template<typename LatticeType>
-void
-DFAnalyzer<LatticeType>::solveAlgorithm1() {
-  cout<<"INFO: solver (label-out-algorithm1) started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
-  while(!_workList.isEmpty()) {
-    Label lab=_workList.take();
-    //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
-    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    LatticeType inInfo;
-    computePreInfo(lab,inInfo);
-    
-    LatticeType newInfo=transfer(lab,inInfo);
-    //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    if(!newInfo.approximatedBy(_analyzerData[lab])) {
-      _analyzerData[lab].combine(newInfo);
-      LabelSet succ;
-      succ=_flow.succ(lab);
-      _workList.add(succ);
-    } else {
-      // no new information was computed. Nothing to do.
-    }
-  }
-  cout<<"INFO: solver (label-out-algorithm1) finished."<<endl;
-}
 
 // runs until worklist is empty
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
-#if 1
   DFSolver1<LatticeType> dfSolver1(_workList,_analyzerDataPreInfo,_analyzerData,_initialElement,_flow,*_transferFunctions) ;
   dfSolver1.runSolver();
-#else
-  switch(_solverMode) {
-  case SOLVERMODE_STANDARD: solveAlgorithm1();break;
-  case SOLVERMODE_DYNAMICLOOPFIXPOINTS: solveAlgorithm2();break;
-  default: cerr<<"Error: improper solver mode."<<endl; 
-    exit(1);
-  }
-#endif
   _preInfoIsValid=false;
 }
 template<typename LatticeType>
@@ -244,46 +208,6 @@ DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
   }
 }
 
-// runs until worklist is empty
-template<typename LatticeType>
-void
-DFAnalyzer<LatticeType>::solveAlgorithm2() {
-  cout<<"INFO: solver started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
-  while(!_workList.isEmpty()) {
-    Label lab=_workList.take();
-    //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
-    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-
-    LatticeType inInfo;
-    computePreInfo(lab,inInfo);
-    LatticeType newInfo=transfer(lab,inInfo);
-    //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));
-    if(!newInfo.approximatedBy(_analyzerData[lab])) {
-      _analyzerData[lab].combine(newInfo);
-      // semantic propagation: if node[l] is a condition of a loop only propagate on the true branch
-      LabelSet succ;
-      {
-        if(isLoopCondition) {
-          succ=_flow.outEdgesOfType(lab,EDGE_TRUE).targetLabels();
-        } else {
-          succ=_flow.succ(lab);
-        }
-      }
-      _workList.add(succ);
-    } else {
-      // no new information was computed. Nothing to do (except for the case it is a loop-condition of a loop for which we may have found a fix-point)
-      if(isLoopCondition) {
-        LabelSet succ=_flow.outEdgesOfType(lab,EDGE_FALSE).targetLabels();
-        _workList.add(succ);
-      } else {
-        // nothing to add
-      }
-    }
-  }
-  cout<<"INFO: solver finished."<<endl;
-}
 // runs until worklist is empty
 template<typename LatticeType>
 void

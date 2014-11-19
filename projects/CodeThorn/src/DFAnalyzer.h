@@ -26,7 +26,6 @@ template<typename LatticeType>
 class DFAnalyzer {
  public:
   DFAnalyzer();
-  enum SolverMode { SOLVERMODE_STANDARD, SOLVERMODE_DYNAMICLOOPFIXPOINTS };
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   virtual LatticeType initializeGlobalVariables(SgProject* root);
@@ -43,7 +42,6 @@ class DFAnalyzer {
   CFAnalyzer* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
-  void setSolverMode(SolverMode);
   LatticeType getPreInfo(Label lab);
   LatticeType getPostInfo(Label lab);
  protected:
@@ -65,10 +63,7 @@ class DFAnalyzer {
   void computeAllPreInfo();
   DFTransferFunctions<LatticeType>* _transferFunctions;
  private:
-  void solveAlgorithm1();
-  void solveAlgorithm2();
   void computePreInfo(Label lab,LatticeType& info);
-  SolverMode _solverMode;
 };
 
 } // end of namespace
