@@ -194,7 +194,8 @@ int main(int argc, char* argv[]) {
 
 #if 1
   cout << "INFO: annotating analysis results as comments."<<endl;
-  AstAnnotator ara(rdAnalyzer->getLabeler());
+  ROSE_ASSERT(rdAnalyzer->getVariableIdMapping());
+  AstAnnotator ara(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;

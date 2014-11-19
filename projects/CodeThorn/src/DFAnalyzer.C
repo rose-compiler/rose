@@ -331,7 +331,7 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
       i!=_analyzerData.end();
       ++i) {
     std::stringstream ss;
-    (&(*i))->toStream(ss);
+    (&(*i))->toStream(ss,&_variableIdMapping);
     //std::cout<<ss.str();
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
     _labeler->getNode(lab)->setAttribute(attributeName,new GeneralResultAttribute(ss.str()));
