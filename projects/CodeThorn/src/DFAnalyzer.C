@@ -50,6 +50,7 @@ template<typename LatticeType>
 void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
+
 template<typename LatticeType>
 LatticeType DFAnalyzer<LatticeType>::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
