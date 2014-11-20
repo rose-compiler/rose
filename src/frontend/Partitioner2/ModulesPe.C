@@ -225,6 +225,8 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 void
 buildMayReturnLists(Partitioner &partitioner) {
     // The following functions never return to their caller
+    // FIXME[Robb P. Matzke 2014-11-20]: This list needs to be expanded; I'm only listing those I've actually seen in the wild
+    //      because I haven't been able to find a good list anywhere.
     partitioner.setMayReturnBlacklisted("TerminateThread@KERNEL32.dll");
     partitioner.setMayReturnBlacklisted("RaiseException@KERNEL32.dll");
     partitioner.setMayReturnBlacklisted("TerminateProcess@KERNEL32.dll");

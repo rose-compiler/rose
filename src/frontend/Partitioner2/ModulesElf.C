@@ -181,8 +181,41 @@ findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 
 void
 buildMayReturnLists(Partitioner &p) {
+    // Most of these were obtained by searching for "noreturn" in all the header files on Debian Squeeze.
+    // Please keep this list alphabetical (ignoring leading underscores).
     p.setMayReturnBlacklisted("abort@plt");
+    p.setMayReturnBlacklisted("__assert@plt");
+    p.setMayReturnBlacklisted("__assert_fail@plt");
+    p.setMayReturnBlacklisted("__assert_perror_fail@plt");
+    p.setMayReturnBlacklisted("err@plt");
+    p.setMayReturnBlacklisted("errx@plt");
     p.setMayReturnBlacklisted("_exit@plt");
+    p.setMayReturnBlacklisted("_Exit@plt");
+    p.setMayReturnBlacklisted("exit@plt");
+    p.setMayReturnBlacklisted("__longjmp_chk@plt");
+    p.setMayReturnBlacklisted("longjmp@plt");
+    p.setMayReturnBlacklisted("pthread_exit@plt");
+    p.setMayReturnBlacklisted("quick_exit@plt");
+    p.setMayReturnBlacklisted("__pthread_unwind_next@plt");
+    p.setMayReturnBlacklisted("rethrow_exception@plt");
+    p.setMayReturnBlacklisted("siglongjmp@plt");
+    p.setMayReturnBlacklisted("__throw_bad_alloc@plt");
+    p.setMayReturnBlacklisted("__throw_bad_cast@plt");
+    p.setMayReturnBlacklisted("__throw_bad_exception@plt");
+    p.setMayReturnBlacklisted("__throw_bad_typeid@plt");
+    p.setMayReturnBlacklisted("__throw_domain_error@plt");
+    p.setMayReturnBlacklisted("__throw_invalid_argument@plt");
+    p.setMayReturnBlacklisted("__throw_ios_failure@plt");
+    p.setMayReturnBlacklisted("__throw_length_error@plt");
+    p.setMayReturnBlacklisted("__throw_logic_error@plt");
+    p.setMayReturnBlacklisted("__throw_out_of_range@plt");
+    p.setMayReturnBlacklisted("__throw_overflow_error@plt");
+    p.setMayReturnBlacklisted("__throw_range_error@plt");
+    p.setMayReturnBlacklisted("__throw_runtime_error@plt");
+    p.setMayReturnBlacklisted("__throw_system_error@plt");
+    p.setMayReturnBlacklisted("__throw_underflow_error@plt");
+    p.setMayReturnBlacklisted("verr@plt");
+    p.setMayReturnBlacklisted("verrx@plt");
 }
 
 } // namespace
