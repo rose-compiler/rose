@@ -45,8 +45,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
 
              "Notice that the ROSE and compiler command-line arguments must be separated from this tool's arguments by "
              "a \"--\" switch. This is due to librose using a different argument parsing mechanism. If the double hyphen "
-             "separator is missing then this tool will attempt to parse arguments intended for ROSE and the backend "
-             "compiler and will probably complain about unrecognized siwtches.\n\n")
+             "separator is missing then this tool will attempt to parse arguments intended for ROSE and will probably "
+             "complain about unrecognized switches.\n\n")
         .doc("Example",
              "For instance, let us assume that we have a build directory, \"_build-translated\", that we configured to "
              "use a ROSE translator that adds instrumentation that performs run-time taint tracking on the shadow-4.1.4 "
@@ -87,7 +87,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
     tool.insert(Switch("top")
                 .argument("directory", anyParser(settings.topBuildDirName))
                 .doc("Name of the root of the current build tree.  This is the top of the directory structure in which "
-                     "@prop{programName} is generating build artifacts.  It's structure will be similar to the @v{identity} "
+                     "@prop{programName} is generating build artifacts.  Its structure will be similar to the @v{identity} "
                      "and @v{translated} directories as far as the relative locations of build artifacts are concerned."));
     
     return parser.with(tool).parse(argc, argv).apply();
