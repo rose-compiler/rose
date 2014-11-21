@@ -6,6 +6,7 @@ add_library( astTokenStream OBJECT
   tokenStreamMapping.C
   frontierDetection.C
   previousAndNextNode.C)
+add_dependencies(astTokenStream rosetta_generated)
 
 
 

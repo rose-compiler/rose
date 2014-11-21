@@ -11,6 +11,7 @@ if(enable-binary-analysis)
 endif()
 
 add_library(virtualCFG OBJECT ${virtualCFG_SRC})
+add_dependencies(virtualCFG rosetta_generated)
 
 
 ########### install files ###############

@@ -58,3 +58,4 @@ add_library(midend_pt OBJECT
   functionCallNormalization/FunctionNormalization.C
   finiteDifferencing/finiteDifferencing.C
   finiteDifferencing/patternRewrite.C)
+add_dependencies(midend_pt rosetta_generated)

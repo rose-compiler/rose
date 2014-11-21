@@ -39,3 +39,4 @@ add_library(midend OBJECT
   binaryAnalyses/DwarfLineMapper.C
   binaryAnalyses/GraphAlgorithms.C
   binaryAnalyses/binary_analysis.C)
+add_dependencies(midend rosetta_generated)

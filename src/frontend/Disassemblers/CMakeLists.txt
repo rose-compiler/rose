@@ -12,6 +12,7 @@ add_library(roseDisassemblers OBJECT
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmPowerpcInstruction.C
   SgAsmX86Instruction.C)
+add_dependencies(roseDisassemblers rosetta_generated)
 
 
 ########### install files ###############

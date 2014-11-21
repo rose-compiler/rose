@@ -47,5 +47,6 @@ if (NOT enable-internalFrontendDevelopment)
     depInfo/DepEDD.C
     depInfo/ReuseAnalysis.C
     depInfo/DepInfoAnal.C)
+  add_dependencies(midend_loopproc rosetta_generated)
 endif()
 

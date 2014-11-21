@@ -24,4 +24,4 @@ add_library( roseExtensions OBJECT
   src/xml/elem.cc
   src/xml/parser.cc
   )
-
+add_dependencies(roseExtensions rosetta_generated)

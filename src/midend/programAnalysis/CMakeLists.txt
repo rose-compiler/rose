@@ -82,4 +82,6 @@ if (NOT enable-internalFrontendDevelopment)
     EditDistance/EditDistance.C
     EditDistance/TreeEditDistance.C
   )
+  add_dependencies(midend_pa rosetta_generated)
+
 endif()

@@ -39,7 +39,7 @@ add_library(roseSupport OBJECT
   utility_functions.C memoryUsage.C threadSupport.C IncludeDirective.C
   SqlDatabase.C LinearCongruentialGenerator.C Combinatorics.C Diagnostics.C
   ${CMAKE_CURRENT_BINARY_DIR}/stringify.C)
-
+add_dependencies(roseSupport rosetta_generated generate_stringify)
 
 ########### install files ###############
 

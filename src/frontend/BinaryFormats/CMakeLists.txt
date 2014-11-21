@@ -47,6 +47,7 @@ add_library(roseBinaryFormats OBJECT
   ExecNE.C
   ExecLE.C
 )
+add_dependencies(roseBinaryFormats rosetta_generated)
 
 
 ########### install files ###############

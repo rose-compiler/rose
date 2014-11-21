@@ -8,6 +8,7 @@ add_library(sageInterface OBJECT
   sageBuilder_untypedNodes.C
   sageBuilderAsm.C
   abiStuff.C)
+add_dependencies(sageInterface rosetta_generated)
 
 ########### install files ###############
 install(
