@@ -2,6 +2,7 @@ add_library( includeDirectivesProcessing OBJECT
   CompilerOutputReader.C
   CompilerOutputParser.C
   IncludingPreprocessingInfosCollector.C)
+add_dependencies(includeDirectivesProcessing rosetta_generated)
 
 
 ########### install files ###############

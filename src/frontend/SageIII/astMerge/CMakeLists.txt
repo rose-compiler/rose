@@ -3,6 +3,7 @@ add_library(astMerge OBJECT
   buildSetOfFrontendSpecificNodes.C deleteNodes.C fixupTraversal.C nullifyAST.C
   buildReplacementMap.C collectAssociateNodes.C deleteOrphanNodes.C
   normalizeTypes.C requiredNodes.C merge.C AstFixParentTraversal.C)
+add_dependencies(astMerge rosetta_generated)
 
 
 ########### install files ###############

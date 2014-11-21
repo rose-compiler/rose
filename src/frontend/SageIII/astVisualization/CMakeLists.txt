@@ -4,6 +4,7 @@ add_library( astVisualization OBJECT
   wholeAST.C
   copyGraph.C
   walrus.C)
+add_dependencies(astVisualization rosetta_generated)
 
 
 ########### install files ###############

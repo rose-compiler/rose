@@ -21,6 +21,7 @@ if (NOT WIN32)
 endif ()
 
 add_library(astProcessing OBJECT ${astProcessing_SRC})
+add_dependencies(astProcessing rosetta_generated)
 
 
 ########### install files ###############

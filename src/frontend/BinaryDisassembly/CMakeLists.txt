@@ -97,6 +97,7 @@ add_library(binaryFrontend OBJECT
   ${CMAKE_CURRENT_BINARY_DIR}/armInstructionEnumPrinter.C
   ${CMAKE_CURRENT_BINARY_DIR}/powerpcInstructionEnumPrinter.C
 )
+add_dependencies(binaryFrontend rosetta_generated)
 
 
 ########### install files ###############

@@ -3,7 +3,7 @@ add_library( astHiddenTypeAndDeclarationLists OBJECT
   HiddenList_Intersection.C
   HiddenList_Output.C
   NamespacesAndClassTraversal.C)
-
+add_dependencies(astHiddenTypeAndDeclarationLists rosetta_generated)
 
 ########### install files ###############
 

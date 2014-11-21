@@ -17,7 +17,7 @@ add_library(midend_util OBJECT
   annotation/TypeAnnotation.C
   astSupport/ProcessAstTree.C
   astSupport/StmtInfoCollect.C)
-
+add_dependencies(midend_util rosetta_generated)
 
 add_subdirectory(astInterface)
 add_subdirectory(astSupport)

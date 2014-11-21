@@ -30,7 +30,7 @@ add_library(midend_binary OBJECT
   instructionSemantics/SymbolicSemantics2.C
   instructionSemantics/TraceSemantics2.C
   instructionSemantics/YicesSolver.C)
-
+add_dependencies(midend_binary rosetta_generated)
 
 ########### install files ###############
 

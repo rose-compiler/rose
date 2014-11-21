@@ -4,7 +4,7 @@ add_library(astRewriteMechanism OBJECT
   rewriteMidLevelInterface.C rewriteTypeDeclaration.C
   rewriteAccumulatedAttribute.C rewriteHighLevelInterface.C
   rewriteSynthesizedAttribute.C)
-
+add_dependencies(astRewriteMechanism rosetta_generated)
 
 ########### install files ###############
 set(TemplateFiles

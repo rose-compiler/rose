@@ -5,6 +5,7 @@ add_library(astFixup OBJECT
   fixupSourcePositionInformation.C fixupEnumValues.C
   fixupFriendTemplateDeclarations.C fixupPrettyFunction.C
 )
+add_dependencies(astFixup rosetta_generated)
 
 ########### install files ###############
 

@@ -54,7 +54,7 @@ add_library (unparser OBJECT
   X10CodeGeneration/unparseX10_expressions.C
   X10CodeGeneration/unparseX10_statements.C
   X10CodeGeneration/unparseX10_types.C)
-
+add_dependencies(unparser rosetta_generated)
 
 ########### install files ###############
 
