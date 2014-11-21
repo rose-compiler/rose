@@ -82,7 +82,7 @@ AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
           ROSE_MSG_ERROR([The ROSE X10 Frontend requires the X10 compiler libraries, see --help for --with-x10.])
       fi
 
-      AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [true])
+      AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [test "x" = "x"])
       AC_DEFINE_UNQUOTED(
           [ROSE_BUILD_X10_LANGUAGE_SUPPORT],
           [],
