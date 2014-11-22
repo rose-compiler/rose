@@ -47,6 +47,14 @@ bROwSE_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 endif
 
 #------------------------------------------------------------------------------------------------------------------------
+# Find paths in the CFG
+
+bin_PROGRAMS += findPath
+findPath_SOURCES = findPath.C
+findPath_CPPFLAGS = $(ROSE_INCLUDES)
+findPath_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # find similar functions in two specimens
 
 if ROSE_USE_DLIB

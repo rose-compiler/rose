@@ -70,7 +70,8 @@ private:
     Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
-    Sawyer::Cached<BaseSemantics::SValuePtr> stackDelta_;// change in stack pointer from beginning to end of block
+    Sawyer::Cached<BaseSemantics::SValuePtr> stackDeltaIn_;// intra-function stack delta at entrance to basic block
+    Sawyer::Cached<BaseSemantics::SValuePtr> stackDeltaOut_;// intra-function stack delta at exit from basic block
     Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
 
     void clearCache() const {
@@ -78,7 +79,8 @@ private:
         ghostSuccessors_.clear();
         isFunctionCall_.clear();
         isFunctionReturn_.clear();
-        stackDelta_.clear();
+        stackDeltaIn_.clear();
+        stackDeltaOut_.clear();
         mayReturn_.clear();
     }
 
@@ -296,9 +298,13 @@ public:
 
     /** Stack delta.
      *
-     *  The stack delta is a symbolic expression created by subtracting the initial stack pointer register from the final
-     *  stack pointer register.  This value is typically computed in the partitioner and cached in the basic block. */
-    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
+     *  The stack delta is the value of the stack pointer at this basic block minus the value at the entrance to the
+     *  function. See @ref Partitioner::basicBlockStackDelta for details about how it is computed and what it means.
+     *
+     * @{ */
+    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDeltaIn() const { return stackDeltaIn_; }
+    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDeltaOut() const { return stackDeltaOut_; }
+    /** @} */
 
     /** May-return property.
      *

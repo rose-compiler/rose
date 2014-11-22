@@ -704,23 +704,42 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 }
 
 BaseSemantics::SValuePtr
-Partitioner::basicBlockStackDelta(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
 
     BaseSemantics::SValuePtr delta;
-    if (bb->stackDelta().getOptional().assignTo(delta))
+    if (bb->stackDeltaIn().getOptional().assignTo(delta))
         return delta;                                   // already cached
 
-    if (bb->finalState() != NULL) {
-        ASSERT_not_null(bb->initialState());
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        ASSERT_not_null(ops);
-        RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        BaseSemantics::SValuePtr sp0 = bb->initialState()->readRegister(REG_SP, ops.get());
-        BaseSemantics::SValuePtr spN = bb->finalState()->readRegister(REG_SP, ops.get());
-        delta = ops->add(spN, ops->negate(sp0));
+    // The basic block must be owned by a function, and we use that function's entry point to generate a CFG, which is then
+    // used as the basis of a dataflow analysis to compute the final stack offset.
+    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bb->address());
+    if (!bb->isFrozen() || placeholder == cfg_.vertices().end()) {
+        mlog[ERROR] <<"cannot compute stack delta for detached " <<bb->printableName() <<"\n";
+        return BaseSemantics::SValuePtr();
     }
-    bb->stackDelta() = delta;
+    ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
+    ASSERT_require(placeholder->value().bblock() == bb);
+    Function::Ptr function = placeholder->value().function();
+    if (!function) {
+        mlog[ERROR] <<"cannot compute stack delta for " <<bb->printableName() <<" not belonging to any function\n";
+        return BaseSemantics::SValuePtr();
+    }
+
+    functionStackDelta(function);                       // assigns block deltas by side effect
+    bb->stackDeltaIn().getOptional().assignTo(delta);
+    return delta;
+}
+
+BaseSemantics::SValuePtr
+Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
+    ASSERT_not_null(bb);
+
+    BaseSemantics::SValuePtr delta;
+    if (bb->stackDeltaOut().getOptional().assignTo(delta))
+        return delta;                                   // already cached
+    basicBlockStackDeltaIn(bb);                         // caches stackDeltaOut by side effect
+    bb->stackDeltaOut().getOptional().assignTo(delta);
     return delta;
 }
 
@@ -1324,6 +1343,24 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             out <<"\n";
         }
 
+        // Pre-block properties
+        if (BasicBlock::Ptr bb = vertex->value().bblock()) {
+            out <<prefix <<"  incoming stack delta: ";
+            if (computeProperties)
+                basicBlockStackDeltaIn(bb);
+            BaseSemantics::SValuePtr delta;
+            if (bb->stackDeltaIn().getOptional().assignTo(delta) && delta!=NULL) {
+                if (delta->is_number() && delta->get_width()<=64) {
+                    int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+                    out <<n <<"\n";
+                } else {
+                    out <<*delta <<"\n";
+                }
+            } else {
+                out <<"not computed\n";
+            }
+        }
+        
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -1360,13 +1397,17 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 out <<"not computed\n";
             }
             
-            // stack delta
-            out <<prefix <<"  stack delta: ";
+            out <<prefix <<"  outgoing stack delta: ";
             if (computeProperties)
-                basicBlockStackDelta(bb);
+                basicBlockStackDeltaOut(bb);
             BaseSemantics::SValuePtr delta;
-            if (bb->stackDelta().getOptional().assignTo(delta) && delta!=NULL) {
-                out <<*delta <<"\n";
+            if (bb->stackDeltaOut().getOptional().assignTo(delta) && delta!=NULL) {
+                if (delta->is_number() && delta->get_width()<=64) {
+                    int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+                    out <<n <<"\n";
+                } else {
+                    out <<*delta <<"\n";
+                }
             } else {
                 out <<"not computed\n";
             }
