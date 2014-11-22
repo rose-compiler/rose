@@ -444,19 +444,17 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
 class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
-public:
-    long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
 protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
 protected:
-    explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}  // hot
-    SValue(const SValue &other): nrefs__(0), width(other.width) {}
+    explicit SValue(size_t nbits): width(nbits) {}  // hot
+    SValue(const SValue &other): width(other.width) {}
 
 public:
-    virtual ~SValue() { ASSERT_require(0==nrefs__); } // hot
+    virtual ~SValue() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Allocating static constructor.  None are needed--this class is abstract.
@@ -520,6 +518,18 @@ public:
 
     /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
     virtual bool must_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
+
+    /** Returns true if concrete non-zero. This is not virtual since it can be implemented in terms of @ref is_number and @ref
+     *  get_number. */
+    bool isTrue() const {
+        return is_number() && get_number()!=0;
+    }
+
+    /** Returns true if concrete zero.  This is not virtual since it can be implemented in terms of @ref is_number and @ref
+     *  get_number. */
+    bool isFalse() const {
+        return is_number() && get_number()==0;
+    }
 
     /** Print a value to a stream using default format. The value will normally occupy a single line and not contain leading
      *  space or line termination.  See also, with_format().
@@ -2022,6 +2032,10 @@ public:
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
 
+    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of @ref
+     * subtract and @ref equalToZero. */
+    SValuePtr equal(const SValuePtr &a, const SValuePtr &b);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Integer Arithmetic Operations
@@ -2040,6 +2054,10 @@ public:
     /** Adds two integers of equal size.  The width of @p a and @p b must be equal; the return value will have the same width
      * as @p a and @p b. */
     virtual SValuePtr add(const SValuePtr &a, const SValuePtr &b) = 0;
+
+    /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
+     * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
+    SValuePtr subtract(const SValuePtr &subtrahand, const SValuePtr &minuend);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do
