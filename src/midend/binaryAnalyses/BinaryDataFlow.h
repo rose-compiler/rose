@@ -143,18 +143,26 @@ public:
 public:
     /** Compute data flow.
      *
-     *  Computes and returns a graph describing how data flow occurs for the specified unit (instructions or basic blocks). The
-     *  vertices of the graph contain the abstract locations that are referenced (read or written) and the edges indicate the
-     *  data flow.  The edge values are integers imparting an ordering to the data flow.
+     *  Computes and returns a graph describing how data flow occurs for the specified instructions (which must have linear
+     *  control flow, e.g., from a single basic block). The vertices of the returned graph contain the abstract locations that
+     *  are referenced (read or written) and the edges indicate the data flow.  The edge values are integers imparting an
+     *  ordering to the data flow.
      *
      *  @{ */
-    Graph buildGraph(SgAsmInstruction*);
-    Graph buildGraph(SgAsmBlock*);
+    Graph buildGraph(const std::vector<SgAsmInstruction*>&);
     /** @} */
 
-private:
-    // Helper for buildGraph
-    void buildGraphProcessInstruction(SgAsmInstruction*);
+    /** Functor to return instructions for a cfg vertex.
+     *
+     *  This is the default unpacker that understands how to unpack SgAsmInstruction and SgAsmBlock. If a CFG has other types
+     *  of vertices then the user will need to pass a different unpacker.  The unpacker function operates on one CFG vertex
+     *  value which it takes as an argument. It should return a vector of instructions in the order they would be executed. */
+    class DefaultVertexUnpacker {
+    public:
+        typedef std::vector<SgAsmInstruction*> Instructions;
+        Instructions operator()(SgAsmInstruction *insn) { return Instructions(1, insn); }
+        Instructions operator()(SgAsmBlock *blk);
+    };
 
 public:
     /** Compute data flow per CFG vertex.
@@ -165,16 +173,18 @@ public:
      *  The algorithm currently implemented here is to use an aggregate semantic domain consisting of a user-supplied semantic
      *  domain in conjunction with a data flow discovery domain, and to process each CFG vertex one time in some arbitrary
      *  depth-first order.  This isn't a rigorous analysis, but it is usually able to accurately identify local and global
-     *  variables, although typically not through pointers or array indexing. */
-    template<class CFG>
-    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
+     *  variables, although typically not through pointers or array indexing.
+     *
+     * @{ */
+    template<class CFG, class VertexUnpacker>
+    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex, VertexUnpacker vertexUnpacker) {
         using namespace Diagnostics;
         ASSERT_this();
         ASSERT_require(startVertex < cfg.nVertices());
         Stream mesg(mlog[WHERE] <<"buildGraphPerVertex startVertex=" <<startVertex);
 
         VertexFlowGraphs result;
-        result.insert(startVertex, buildGraph(cfg.findVertex(startVertex)->value()));
+        result.insert(startVertex, buildGraph(vertexUnpacker(cfg.findVertex(startVertex)->value())));
         std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState(cfg.nVertices()); // user-defined states
         postState[startVertex] = userOps_->get_state();
 
@@ -187,13 +197,20 @@ public:
                 ASSERT_not_null(postState[source->id()]);
                 state = postState[target->id()] = postState[source->id()]->clone();
                 userOps_->set_state(state);
-                result.insert(target->id(), buildGraph(target->value()));
+                std::vector<SgAsmInstruction*> insns = vertexUnpacker(target->value());
+                result.insert(target->id(), buildGraph(insns));
             }
         }
         
         mesg <<"; processed " <<StringUtility::plural(result.size(), "vertices", "vertex") <<"\n";
         return result;
     }
+
+    template<class CFG>
+    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
+        return buildGraphPerVertex(cfg, startVertex, DefaultVertexUnpacker());
+    }
+    /** @} */
 
     /** Get list of unique variables.
      *
@@ -262,15 +279,18 @@ public:
          *  Runs one iteration of data flow analysis by consuming the first item on the work list.  Returns false if the
          *  work list is empty (before of after the iteration). */
         bool runOneIteration() {
+            using namespace Diagnostics;
             if (!workList_.empty()) {
                 size_t cfgVertexId = workList_.shift();
                 ASSERT_require2(cfgVertexId < cfg_.nVertices(),
                                 "vertex " + boost::lexical_cast<std::string>(cfgVertexId) + " must be valid within CFG");
                 typename CFG::ConstVertexNodeIterator vertex = cfg_.findVertex(cfgVertexId);
                 StatePtr state = incomingState_[cfgVertexId];
+                SAWYER_MESG(mlog[DEBUG]) <<"runOneIteration: vertex #" <<cfgVertexId <<" incoming state:\n" <<*state;
                 ASSERT_not_null2(state,
                                  "initial state must exist for CFG vertex " + boost::lexical_cast<std::string>(cfgVertexId));
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
+                SAWYER_MESG(mlog[DEBUG]) <<"runOneIteration: vertex #" <<cfgVertexId <<" outgoing state:\n" <<*state;
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that
                 // is modified as a result will have its CFG vertex added to the work list.
@@ -297,7 +317,12 @@ public:
             while (runOneIteration()) /*void*/;
         }
 
-        // Return the final state for the specified CFG vertex.  Users call this to get the results.
+        /** Return the initial state for the specified CFG vertex. */
+        StatePtr getInitialState(size_t cfgVertexId) const {
+            return incomingState_[cfgVertexId];
+        }
+
+        /** Return the final state for the specified CFG vertex.  Users call this to get the results. */
         StatePtr getFinalState(size_t cfgVertexId) const {
             return outgoingState_[cfgVertexId];
         }
