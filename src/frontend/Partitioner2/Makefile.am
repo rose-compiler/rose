@@ -28,4 +28,5 @@ libPartitioner_la_SOURCES =			\
 	OwnedDataBlock.C			\
 	Partitioner.C				\
 	Semantics.C				\
+	StackDeltaAnalysis.C			\
 	Utility.C

@@ -803,9 +803,33 @@ public:
 
     /** Return the stack delta expression.
      *
-     *  The stack delta is the difference between the stack pointer register at the end of the block and the stack pointer
-     *  register at the beginning of the block.  Returns a null pointer if the information is not available. */
-    BaseSemantics::SValuePtr basicBlockStackDelta(const BasicBlock::Ptr&) const;
+     *  The stack delta is the value of the stack pointer register at the entrance to the specified block minus the stack delta
+     *  at the entry point of the function.  The function entry point stack delta is usually -4 or -8 to represent the return
+     *  address pushed onto the stack by the function call on a 32- or 64-bit machine with a downward-growing stack.  The stack
+     *  delta can be four different kinds of values:
+     *
+     *  @li Never-computed is indicated by the basic block not caching any value for the stack delta.  This method will always
+     *      attempt to compute a stack delta if none is cached in the basic block.
+     *
+     *  @li Error is indicated by a cached null expression. Errors are usually due to a reachable basic block that contains an
+     *      instruction for which semantics are not known.
+     *
+     *  @li Constant offset, for which the is_number predicate applied to the return value is true.
+     *
+     *  @li Top, indicated by a non-null return value for which is_number is false.  This results when two or more paths
+     *      through the control flow graph result in different constant offsets. It can also occur when the algebraic
+     *      simplifications that are built into ROSE fail to simplify a constant expression.
+     *
+     *  Two stack deltas are computed for each basic block: the stack delta at the start of the block and the start delta at
+     *  the end of the block, returned by the "in" and "out" variants of this method, respectively.
+     *
+     *  Since stack deltas use the control flow graph during the analysis, the specified basic block must be attached to the
+     *  CFG/AUM before calling this method.
+     *
+     * @{ */
+    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&) const;
+    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&) const;
+    /** @} */
 
     /** Determine if part of the CFG can pop the top stack frame.
      *
@@ -1266,6 +1290,21 @@ public:
 
     /** Returns a function call graph. */
     FunctionCallGraph functionCallGraph() const;
+
+    /** Stack delta analysis.
+     *
+     *  Computes stack deltas if possible at each basic block within the specified function.  The entry block of the function
+     *  is assumed to have a delta which is the negative return address size (representing a return address pushed onto the
+     *  downward-growing stack by the caller), and each basic block reachable from the entry block is given an incoming stack
+     *  delta according to a simple data flow analysis.
+     *
+     *  If the function appears to make reasonable use of the stack then an overall stack delta is returned. This is the delta
+     *  resulting from the final function return blocks.  Otherwise a null expression is returned.
+     *
+     *  Since this analysis is based on data flow, which is based on a control flow graph, the function must be attached to the
+     *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.  Also, the @ref basicBlockStackDelta method must be
+     *  non-null for each reachable block in the function. */
+    BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

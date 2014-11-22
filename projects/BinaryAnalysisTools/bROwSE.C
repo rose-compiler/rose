@@ -1111,7 +1111,7 @@ class WBasicBlockSummary: public Wt::WContainerWidget {
     Wt::WText *wDataBlocks_;                            // FIXME[Robb P. Matzke 2014-09-15]: should be a db list
     Wt::WText *wIsFunctionCall_;                        // does this block look like a function call?
     Wt::WText *wIsFunctionReturn_;                      // does this block appear to return from a function call?
-    Wt::WText *wStackDelta_;                            // symbolic expression for the block's stack delta
+    Wt::WText *wStackDeltaIn_;                          // symbolic expression for the block's stack delta
 public:
     static Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
         Wt::WText *wValue = new Wt::WText();
@@ -1124,13 +1124,13 @@ public:
     WBasicBlockSummary(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), table_(NULL),
           wHasOpaquePredicates_(NULL), wDataBlocks_(NULL), wIsFunctionCall_(NULL), wIsFunctionReturn_(NULL),
-          wStackDelta_(NULL) {
+          wStackDeltaIn_(NULL) {
         std::vector<Wt::WText*> fields;
         wHasOpaquePredicates_   = field(fields, "Block has conditional branches that are never taken?");
         wDataBlocks_            = field(fields, "Number of data blocks owned by this basic block.");
         wIsFunctionCall_        = field(fields, "Does this block appear to call a function?");
         wIsFunctionReturn_      = field(fields, "Does this block appear to return from a function call?");
-        wStackDelta_            = field(fields, "Stack pointer delta within this one basic block.");
+        wStackDeltaIn_          = field(fields, "Stack pointer delta at block entrance w.r.t. function.");
 
         table_ = new Wt::WTable(this);
         table_->setWidth("100%");
@@ -1158,19 +1158,19 @@ public:
             wIsFunctionReturn_->setText(ctx_.partitioner.basicBlockIsFunctionReturn(bblock) ?
                                         "appears to be a function return" : "lacks function return semantics");
 
-            InstructionSemantics2::BaseSemantics::SValuePtr stackDelta = ctx_.partitioner.basicBlockStackDelta(bblock);
-            if (stackDelta!=NULL) {
+            InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaIn = ctx_.partitioner.basicBlockStackDeltaIn(bblock);
+            if (stackDeltaIn!=NULL) {
                 std::ostringstream stackDeltaStream;
-                stackDeltaStream <<*stackDelta;
-                wStackDelta_->setText("stack delta: " + stackDeltaStream.str());
+                stackDeltaStream <<*stackDeltaIn;
+                wStackDeltaIn_->setText("stack delta: " + stackDeltaStream.str());
             } else {
-                wStackDelta_->setText("stack delta not computed");
+                wStackDeltaIn_->setText("stack delta not computed");
             }
             
             table_->show();
         } else {
             wHasOpaquePredicates_->setText("");
-            wStackDelta_->setText("");
+            wStackDeltaIn_->setText("");
             table_->hide();
         }
     }

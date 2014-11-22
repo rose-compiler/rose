@@ -522,8 +522,8 @@ int main(int argc, char *argv[]) {
 
     //-------------------------------------------------------------- 
     // The rest of main() is just about showing the results...
-    //-------------------------------------------------------------- 
-    
+    //--------------------------------------------------------------
+
     if (settings.doShowStats) {
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
         std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBasicBlocks(), "basic blocks") <<"\n";
