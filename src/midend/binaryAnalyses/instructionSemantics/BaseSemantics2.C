@@ -1104,6 +1104,15 @@ State::print(std::ostream &stream, Formatter &fmt) const
  *                                      RiscOperators
  *******************************************************************************************************************************/
 
+SValuePtr
+RiscOperators::subtract(const SValuePtr &subtrahand, const SValuePtr &minuend) {
+    return add(subtrahand, negate(minuend));
+}
+
+SValuePtr
+RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
+    return equalToZero(subtract(a, b));
+}
 
 /*******************************************************************************************************************************
  *                                      Dispatcher
