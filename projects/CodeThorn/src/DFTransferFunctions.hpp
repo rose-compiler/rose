@@ -3,12 +3,16 @@
 
 #include "Labeler.h"
 
+class Domain;
+
 template<typename LatticeType>
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
   void setLabeler(Labeler* labeler) { _labeler=labeler; }
   Labeler* getLabeler() { return _labeler; }
+  void setDomain(Domain* domain) { _domain=domain; }
+  Domain* getDomain() { return _domain; }
   void setVariableIdMapping(VariableIdMapping* v) { _variableIdMapping=v; }
   VariableIdMapping* getVariableIdMapping() { return _variableIdMapping; }
   virtual LatticeType transfer(Label lab, LatticeType element);
@@ -21,6 +25,7 @@ public:
 protected:
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
+  Domain* _domain;
 };
 
 #include "DFTransferFunctions.C"

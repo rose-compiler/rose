@@ -10,13 +10,13 @@ using namespace std;
 using namespace CodeThorn;
 
 IntervalAnalyzer::IntervalAnalyzer() {
-  _transferFunctions=new RDTransferFunctions();
+  _transferFunctions=new IntervalTransferFunctions();
 }
 
 IntervalAnalyzer::~IntervalAnalyzer() {
   delete _transferFunctions;
 }
 
-DFAstAttribute* IntervalAnalyzer::createDFAstAttribute(RDLattice* elem) {
+DFAstAttribute* IntervalAnalyzer::createDFAstAttribute(IntervalLattice* elem) {
   return new IntervalAstAttribute(elem);
 }

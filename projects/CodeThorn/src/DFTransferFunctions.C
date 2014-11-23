@@ -11,8 +11,8 @@ using namespace CodeThorn;
 #include "DFTransferFunctions.hpp"
 
 template<typename LatticeType>
-DFTransferFunctions<LatticeType>::DFTransferFunctions() {
-}
+DFTransferFunctions<LatticeType>::DFTransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
+
 
 template<typename LatticeType>
 LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType element) {
