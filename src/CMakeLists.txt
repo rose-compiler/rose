@@ -137,6 +137,7 @@ set( STORAGECLASSES_SRC
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/GraphTraversal.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupPod.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
@@ -191,6 +192,8 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompAstConstruction.cpp
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompFortranParser.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/dwarfSupport.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/atermSupport.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/nodeBuildFunctionsForAterms.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/rose_graph_support.C
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
@@ -318,6 +321,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init8.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init9.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/BinaryDebugger.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerMips.C 

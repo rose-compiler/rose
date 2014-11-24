@@ -10,7 +10,7 @@ using namespace Diagnostics;
 Sawyer::Message::Facility AsmUnparser::mlog;
 
 /** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
- *  SgAsmInstruction::find_noop_subsequences() can overlap, but we cannot assume that removing overlapping sequences will
+ *  SgAsmInstruction::findNoopSubsequences() can overlap, but we cannot assume that removing overlapping sequences will
  *  result in a meaningful basic block.  For instance, consider the following block:
  *
  *  \code
@@ -23,7 +23,7 @@ Sawyer::Message::Facility AsmUnparser::mlog;
  *  The subsequences <2,3> and <3,4> are both no-ops when considered independently.  However, we cannot remove all four
  *  instructions because the sequence <1,2,3,4> is not a no-op.
  *
- *  Therefore, this function takes the list returned by find_noop_subsequences and greedily selects the longest non-overlapping
+ *  Therefore, this function takes the list returned by findNoopSubsequences and greedily selects the longest non-overlapping
  *  sequences, and returns a vector indexed by instruction position and containing a boolean to indicate whether that
  *  instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
  *  no-op instructions. */
@@ -73,7 +73,7 @@ void AsmUnparser::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::AsmUnparser", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -651,7 +651,7 @@ AsmUnparser::BasicBlockNoopUpdater::operator()(bool enabled, const BasicBlockArg
     args.unparser->insn_is_noop.clear();
     if (enabled) {
         typedef std::vector<std::pair<size_t, size_t> > NoopSequences; /* array of index,size pairs */
-        NoopSequences noops = args.insns.front()->find_noop_subsequences(args.insns, true, true);
+        NoopSequences noops = args.insns.front()->findNoopSubsequences(args.insns, true, true);
         if (!noops.empty()) {
             args.unparser->insn_is_noop = build_noop_index(noops);
             if (debug) {

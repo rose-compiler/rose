@@ -112,19 +112,19 @@ void
 SgAsmGenericFile::mark_referenced_extent(rose_addr_t offset, rose_addr_t size)
 {
     if (get_tracking_references()) {
-        p_referenced_extents.insert(Extent(offset, size));
+        p_referenced_extents.insert(AddressInterval::baseSize(offset, size));
         delete p_unreferenced_cache;
         p_unreferenced_cache = NULL;
     }
 }
 
 /** Returns the parts of the file that have never been referenced. */
-const ExtentMap &
+const AddressIntervalSet &
 SgAsmGenericFile::get_unreferenced_extents() const
 {
     if (!p_unreferenced_cache) {
-        p_unreferenced_cache = new ExtentMap();
-        *p_unreferenced_cache = p_referenced_extents.subtract_from(Extent(0, get_current_size()));
+        p_unreferenced_cache = new AddressIntervalSet(p_referenced_extents);
+        p_unreferenced_cache->invert(AddressInterval::baseSize(0, get_current_size()));
     }
     return *p_unreferenced_cache;
 }
@@ -1247,10 +1247,15 @@ SgAsmGenericFile::dump(FILE *f) const
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 
     /* Show what part of the file has not been referenced */
-    ExtentMap holes = get_unreferenced_extents();
+    AddressIntervalSet holes = get_unreferenced_extents();
     if (holes.size()>0) {
         fprintf(f, "These parts of the file have not been referenced during parsing:\n");
-        holes.dump_extents(f, "    ", "", false);
+        BOOST_FOREACH (const AddressInterval &interval, holes.intervals()) {
+            std::ostringstream ss;
+            using namespace StringUtility;
+            ss <<"    " <<toHex(interval.least()) <<" + " <<toHex(interval.size()) <<" = " <<toHex(interval.greatest()+1) <<"\n";
+            fputs(ss.str().c_str(), f);
+        }
     }
 }
 

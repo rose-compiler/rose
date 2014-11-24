@@ -2,6 +2,7 @@
 #define __X10_JSERVER_H__
 
 #include "jni.h"
+#include <list>
 
 #define STATIC_METHOD 1
 #define REGULAR_METHOD 0
@@ -28,6 +29,7 @@ namespace Rose {
             namespace X10c {
 
                 extern SgSourceFile* X10c_globalFilePointer;
+                extern std::list<std::string> classNames;
                 jstring      jserver_getJavaString(const char*);
                 jobject      jserver_getNewObject(jclass,jmethodID, jobjectArray,jstring,jstring);
                 jclass       jserver_FindClass(const char *name);
