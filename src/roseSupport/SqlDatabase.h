@@ -3,6 +3,7 @@
 
 #include "FormatRestorer.h"
 #include "StringUtility.h"
+#include "rose_override.h"
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
@@ -166,7 +167,7 @@ public:
         : std::runtime_error(mesg), connection(conn), transaction(tx), statement(stmt) {}
 
     virtual ~Exception() throw() {}
-    virtual const char *what() const throw() /*override*/;
+    virtual const char *what() const throw() ROSE_OVERRIDE;
     void print(std::ostream&) const;
     ConnectionPtr connection;
     TransactionPtr transaction;
@@ -539,7 +540,7 @@ public:
 struct AddrRenderer: Renderer<uint64_t> {
     size_t nbits; // number of bits in addresses; higher addresses will result in more digits
     explicit AddrRenderer(size_t nbits=32): nbits(nbits) {}
-    virtual std::string operator()(const uint64_t &value, size_t width) const /*override*/ {
+    virtual std::string operator()(const uint64_t &value, size_t width) const ROSE_OVERRIDE {
         return StringUtility::addrToString(value, nbits);
     }
 };
@@ -554,7 +555,7 @@ struct TimeRenderer: Renderer<time_t> {
     std::string format;         /**< Format, as for strftime(). */
     TimeRenderer(): local_tz(true), format("%F %T %z") {}
     explicit TimeRenderer(const std::string &format, bool local_tz=true): local_tz(local_tz), format(format) {}
-    virtual std::string operator()(const time_t &value, size_t width) const /*override*/;
+    virtual std::string operator()(const time_t &value, size_t width) const ROSE_OVERRIDE;
 };
 extern TimeRenderer timeRenderer;               /**< Renders time_t as YYYY-MM-DD HH:MM:SS in the local timezone. */
 extern TimeRenderer dateRenderer;               /**< Renders only the date portion of a time as YYYY-MM-DD in local timezone. */
@@ -811,7 +812,7 @@ public:
                 const T04 &v04=T04(), const T05 &v05=T05(), const T06 &v06=T06(), const T07 &v07=T07(),
                 const T08 &v08=T08(), const T09 &v09=T09(), const T10 &v10=T10(), const T11 &v11=T11(),
                 const T12 &v12=T12(), const T13 &v13=T13(), const T14 &v14=T14(), const T15 &v15=T15()) {
-        rows_.push_back(Tuple(v00, v01, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15));
+        rows_.push_back(Tuple(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15));
     }
     /** @} */
 

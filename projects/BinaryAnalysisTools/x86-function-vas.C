@@ -41,7 +41,7 @@ main(int argc, char *argv[])
     for (rose_addr_t offset=0; offset<file_size; ++offset) {
         try {
             rose_addr_t insn_va = start_va + offset;
-            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, insn_va)))
+            if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(disassembler->disassembleOne(&map, insn_va)))
                 insns[insn_va] = insn;
         } catch (const Disassembler::Exception &e) {
             ++nerrors;

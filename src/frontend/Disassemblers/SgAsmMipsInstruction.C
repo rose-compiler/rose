@@ -10,7 +10,7 @@ SgAsmMipsInstruction::get_anyKind() const {
 
 // see base class
 bool
-SgAsmMipsInstruction::terminates_basic_block()
+SgAsmMipsInstruction::terminatesBasicBlock()
 {
     switch (get_kind()) {
         case mips_beq:
@@ -57,7 +57,7 @@ SgAsmMipsInstruction::terminates_basic_block()
 
 // see base class
 bool
-SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmMipsInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.size()==0)
         return false;
@@ -73,7 +73,7 @@ SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*> &ins
         case mips_jalr:
         case mips_jalr_hb:
         case mips_jalx: {
-            (void) last->get_branch_target(target); // target will not be changed if unknown
+            (void) last->getBranchTarget(target); // target will not be changed if unknown
             if (return_va)
                 *return_va = last->get_address() + last->get_size();
             return true;
@@ -85,7 +85,14 @@ SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*> &ins
 
 // see base class
 bool
-SgAsmMipsInstruction::is_function_return(const std::vector<SgAsmInstruction*> &insns)
+SgAsmMipsInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
+{
+    return isFunctionCallFast(insns, target, return_va);
+}
+
+// see base class
+bool
+SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns)
 {
     if (insns.empty())
         return false;
@@ -106,8 +113,15 @@ SgAsmMipsInstruction::is_function_return(const std::vector<SgAsmInstruction*> &i
 }
 
 // see base class
+bool
+SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns)
+{
+    return isFunctionReturnFast(insns);
+}
+
+// see base class
 std::set<rose_addr_t>
-SgAsmMipsInstruction::get_successors(bool *complete_)
+SgAsmMipsInstruction::getSuccessors(bool *complete_)
 {
     bool complete = false;
     rose_addr_t target_va = 0;
@@ -122,7 +136,7 @@ SgAsmMipsInstruction::get_successors(bool *complete_)
         case mips_jr_hb:
         case mips_syscall:
             // unconditional branch
-            if ((complete=get_branch_target(&target_va)))
+            if ((complete=getBranchTarget(&target_va)))
                 successors.insert(target_va);
             break;
 
@@ -155,7 +169,7 @@ SgAsmMipsInstruction::get_successors(bool *complete_)
         case mips_tne:
         case mips_tnei:
             // conditional branch
-            if ((complete=get_branch_target(&target_va)))
+            if ((complete=getBranchTarget(&target_va)))
                 successors.insert(target_va);
             successors.insert(get_address() + get_size()); // fall through address
             break;
@@ -172,13 +186,13 @@ SgAsmMipsInstruction::get_successors(bool *complete_)
 
 // see base class
 bool
-SgAsmMipsInstruction::is_unknown() const
+SgAsmMipsInstruction::isUnknown() const
 {
     return mips_unknown_instruction == get_kind();
 }
 
 bool
-SgAsmMipsInstruction::get_branch_target(rose_addr_t *target)
+SgAsmMipsInstruction::getBranchTarget(rose_addr_t *target)
 {
     SgAsmExpressionPtrList &args = get_operandList()->get_operands();
     switch (get_kind()) {

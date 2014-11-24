@@ -1,3 +1,6 @@
+// DQ (10/9/2014): Added include file for ROSE, not clear why this ever worked previously.
+#include <rose.h>
+
 #include <iostream>
 
 #include "sageGeneric.h"

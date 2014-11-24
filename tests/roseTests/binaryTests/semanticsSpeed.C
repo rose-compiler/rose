@@ -186,7 +186,7 @@ main(int argc, char *argv[])
         while (SgAsmInstruction *insn = insns.fetch(va)) {
             //std::cerr <<unparseInstructionWithAddress(insn) <<"\n";
 #if SEMANTIC_API == OLD_API
-            dispatcher.processInstruction(isSgAsmx86Instruction(insn));
+            dispatcher.processInstruction(isSgAsmX86Instruction(insn));
             ++ninsns;
 #if SEMANTIC_DOMAIN == MULTI_DOMAIN
             // multi-semantics ValueType has no is_known() or get_known(). We need to invoke it on a specific subpolicy.

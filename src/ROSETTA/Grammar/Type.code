@@ -730,10 +730,12 @@ HEADER_FUNCTION_TYPE_START
       //! Performs final initialization of data members (called by constructors)
           void post_construction_initialization ();
 
-      //! Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      //! This is a const convience access function to the STL container of types in the child IR node (SgFunctionParameterTypeList* p_argument_list).
           const SgTypePtrList & get_arguments() const;
 
-      //! Get the list of input types (types of the parameters list) to this function type
+      // Get the list of input types (types of the parameters list) to this function type
+      //! This is a non-const convience access function to the STL container of types in the child IR node (SgFunctionParameterTypeList* p_argument_list).
           SgTypePtrList & get_arguments();
 
        // WAS: void append_argument(const SgTypePtr& what);

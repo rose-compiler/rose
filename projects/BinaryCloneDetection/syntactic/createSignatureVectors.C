@@ -36,10 +36,10 @@ struct hash<void*> {
 
 #if 0
 static const size_t numberOfInstructionKinds = x86_last_instruction;
-inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->get_kind();}
+inline size_t getInstructionKind(SgAsmX86Instruction* insn) {return insn->get_kind();}
 #else
 static const size_t numberOfInstructionKinds = V_SgNumVariants;
-inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->variantT();}
+inline size_t getInstructionKind(SgAsmX86Instruction* insn) {return insn->variantT();}
 #endif
 
 size_t numVectorsGenerated = 0;
@@ -97,11 +97,11 @@ getOperands(SgAsmInstruction* insn)
 }
 
 void
-numberOperands(SgAsmx86Instruction* firstInsn[], size_t insnCount, hash_map<SgAsmExpression*, size_t> numbers[3])
+numberOperands(SgAsmX86Instruction* firstInsn[], size_t insnCount, hash_map<SgAsmExpression*, size_t> numbers[3])
 {
     hash_map<void*, size_t> stringNumbers[3];
     for (size_t i = 0; i < insnCount; ++i) {
-        SgAsmx86Instruction* insn = firstInsn[i];
+        SgAsmX86Instruction* insn = firstInsn[i];
         const SgAsmExpressionPtrList& operands = getOperands(insn);
         //size_t operandCount = operands.size();
         for (size_t j = 0; j < operands.size(); ++j) {
@@ -120,7 +120,7 @@ numberOperands(SgAsmx86Instruction* firstInsn[], size_t insnCount, hash_map<SgAs
 
 void addVectorToDatabase(const SqlDatabase::TransactionPtr&, const SignatureVector& vec, const std::string& functionName,
                          size_t functionId, size_t indexWithinFunction, const std::string& normalizedUnparsedInstructions,
-                         SgAsmx86Instruction* firstInsn[], const std::string& filename, size_t windowSize, size_t stride);
+                         SgAsmX86Instruction* firstInsn[], const std::string& filename, size_t windowSize, size_t stride);
 
 void addFunctionStatistics(const SqlDatabase::TransactionPtr&, const std::string& filename, const std::string& functionName,
                            size_t functionId, size_t numInstructions);
@@ -131,7 +131,7 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
                                 size_t windowSize, size_t stride, const SqlDatabase::TransactionPtr &tx)
 {
     bool retVal = false;
-    vector<SgAsmx86Instruction*> insns;
+    vector<SgAsmX86Instruction*> insns;
     FindInstructionsVisitor vis;
     AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &insns ));
     size_t insnCount = insns.size();
@@ -144,7 +144,7 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
         string normalizedUnparsedInstructions;
         // Unparse the normalized forms of the instructions
         for (size_t insnNumber = 0; insnNumber < windowSize; ++insnNumber) {
-            SgAsmx86Instruction* insn = insns[windowStart + insnNumber];
+            SgAsmX86Instruction* insn = insns[windowStart + insnNumber];
             size_t var = getInstructionKind(insn);
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
             string mne = insn->get_mnemonic();
@@ -285,7 +285,7 @@ addFunctionStatistics(const SqlDatabase::TransactionPtr &tx, const std::string& 
 void
 addVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const SignatureVector& vec, const std::string& functionName,
                     size_t functionId, size_t indexWithinFunction, const std::string& normalizedUnparsedInstructions,
-                    SgAsmx86Instruction* firstInsn[], const std::string& filename, size_t windowSize, size_t stride)
+                    SgAsmX86Instruction* firstInsn[], const std::string& filename, size_t windowSize, size_t stride)
 {
     ++numVectorsGenerated;
 

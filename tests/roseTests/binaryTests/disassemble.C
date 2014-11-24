@@ -25,7 +25,7 @@
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
 #include "BinaryDominance.h"
-#include "DisassemblerArm.h"
+#include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
@@ -33,7 +33,7 @@
 #include "Diagnostics.h"
 
 /*FIXME: Rose cannot parse this file.*/
-#ifndef CXX_IS_ROSE_ANALYSIS
+#ifndef CXX_I_ROSE_ANALYSIS
 
 using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics;
@@ -44,39 +44,6 @@ static Sawyer::Message::Facility mlog; // diagnostics at the tool level; initial
 
 enum DisassembleDriver { DDRIVE_PD, DDRIVE_DP, DDRIVE_D, DDRIVE_NONE };
 enum SyscallMethod { SYSCALL_NONE, SYSCALL_LINUX32 };
-
-/* Return a suitable disassembler by name. */
-static Disassembler *
-get_disassembler(const std::string &name)
-{
-    if (0==name.compare("list")) {
-        std::cout <<"recognized disassembler names are:\n"
-                  <<"  arm      - ARM\n"
-                  <<"  ppc      - PowerPC\n"
-                  <<"  mips     - MIPS\n"
-                  <<"  i386     - Intel x86 32-bit\n"
-                  <<"  amd64    - Intel x86 64-bit\n"
-                  <<"  m68k     - Motorola M68040\n"
-                  <<"  coldfire - Freescale ColdFire\n";
-        exit(0);
-    } else if (0==name.compare("arm")) {
-        return new DisassemblerArm();
-    } else if (0==name.compare("ppc")) {
-        return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
-    } else if (0==name.compare("i386")) {
-        return new DisassemblerX86(4);
-    } else if (0==name.compare("amd64")) {
-        return new DisassemblerX86(8);
-    } else if (0==name.compare("m68k")) {
-        return new DisassemblerM68k(m68k_68040);
-    } else if (0==name.compare("coldfire")) {
-        return new DisassemblerM68k(m68k_freescale_emac);
-    } else {
-        return NULL;
-    }
-}
 
 /* Convert a SHA1 digest to a string. */
 std::string
@@ -96,7 +63,7 @@ bool
 block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
 {
 
-    if (!blk || blk->get_statementList().empty() || !isSgAsmx86Instruction(blk->get_statementList().front())) {
+    if (!blk || blk->get_statementList().empty() || !isSgAsmX86Instruction(blk->get_statementList().front())) {
         memset(digest, 0, 20);
         return false;
     }
@@ -109,7 +76,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     Semantics semantics(policy);
     try {
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*si);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*si);
             ASSERT_not_null(insn);
             semantics.processInstruction(insn);
         }
@@ -125,7 +92,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
      * two identical blocks located at different memory addresses generate equal hashes (at least as far as the function call
      * is concerned. */
     bool ignore_final_ip = true;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
+    SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
         policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
@@ -246,7 +213,7 @@ private:
     class SyscallName: public UnparserCallback {
     public:
         bool operator()(bool enabled, const InsnArgs &args) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
             SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.insn);
             if (enabled && insn && block && insn->get_kind()==x86_int) {
                 const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
@@ -403,7 +370,7 @@ dump_function_node(std::ostream &sout, SgAsmFunction *func, rose::BinaryAnalysis
                     if (!args.block->get_successors_complete()) {
                         ASSERT_forbid2(args.block->get_statementList().empty(), "basic blocks should not be empty");
                         SgAsmInstruction *last_insn = isSgAsmInstruction(args.block->get_statementList().back());
-                        if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
+                        if (isSgAsmX86Instruction(last_insn) && isSgAsmX86Instruction(last_insn)->get_kind()==x86_ret) {
                             args.output <<", color=blue"; /*function return statement, not used as an unconditional branch*/
                         } else {
                             args.output <<", color=red"; /*red implies that we don't have complete information for successors*/
@@ -656,14 +623,14 @@ protected:
 public:
     SimplePartitioner(rose_addr_t entry_va): entry_va(entry_va), function(NULL) {}
 
-    virtual void pre_cfg(SgAsmInterpretation *interp) /*override*/ {
+    virtual void pre_cfg(SgAsmInterpretation *interp) ROSE_OVERRIDE {
         function = add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT);
     }
 
-    virtual void post_cfg(SgAsmInterpretation *interp) /*override*/ {}
+    virtual void post_cfg(SgAsmInterpretation *interp) ROSE_OVERRIDE {}
 
     // Organize instructions into basic blocks
-    virtual void analyze_cfg(SgAsmBlock::Reason reason) /*override*/ {
+    virtual void analyze_cfg(SgAsmBlock::Reason reason) ROSE_OVERRIDE {
         ASSERT_not_null(function);
         bool changed = true;
         for (size_t pass=0; changed; ++pass) {
@@ -694,11 +661,6 @@ simple_partitioner(SgAsmInterpretation *interp, const Disassembler::InstructionM
     rose_addr_t entry_va = insns.begin()->first;
     SimplePartitioner sp(entry_va);
     return sp.partition(interp, insns, mmap);
-}
-
-static void showHelpAndExit(const Sawyer::CommandLine::ParserResult &cmdline) {
-    cmdline.parser().emitDocumentationToPager();
-    exit(0);
 }
 
 int
@@ -1133,7 +1095,7 @@ main(int argc, char *argv[])
 
     Disassembler *disassembler = NULL;
     if (!isa.empty()) {
-        disassembler = get_disassembler(isa);
+        disassembler = Disassembler::lookup(isa);
         if (!disassembler) {
             mlog[ERROR] <<"invalid isa specified on command line: " <<isa <<"\n";
             exit(1);

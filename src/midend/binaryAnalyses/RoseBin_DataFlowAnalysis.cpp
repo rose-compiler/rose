@@ -122,11 +122,11 @@ RoseBin_DataFlowAnalysis::existsPath(SgGraphNode* start, SgGraphNode* end) {
   bool exists = false;
   ROSE_ASSERT(start);
   ROSE_ASSERT(end);
-  SgAsmx86Instruction* next = isSgAsmx86Instruction(start);
-  SgAsmx86Instruction* endAsm = isSgAsmx86Instruction(end);
+  SgAsmX86Instruction* next = isSgAsmX86Instruction(start);
+  SgAsmX86Instruction* endAsm = isSgAsmX86Instruction(end);
   if (next && endAsm) {
     while (next!=endAsm) {
-      next = isSgAsmx86Instruction(next->cfgBinFlowOutEdge(g_algo->info));
+      next = isSgAsmX86Instruction(next->cfgBinFlowOutEdge(g_algo->info));
       if (next==NULL)
         break;
       if ((next->get_kind() == x86_call || next->get_kind() == x86_ret) && next!=endAsm)
@@ -138,7 +138,7 @@ RoseBin_DataFlowAnalysis::existsPath(SgGraphNode* start, SgGraphNode* end) {
 }
 
 bool
-RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Instruction* call) {
+RoseBin_DataFlowAnalysis::exceptionCall(SgAsmX86Instruction* call) {
   // this function returns true, if the function that is being called is the _malloc function
   // this is good to know, so that the malloc analysis can be performed even if there is no ret
 
@@ -282,9 +282,9 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
       for (;succ!=successors.end();++succ) {
         // for each successor do...
         SgGraphNode* next = *succ;
-        SgAsmx86Instruction* nodeN = isSgAsmx86Instruction(node->get_SgNode());
+        SgAsmX86Instruction* nodeN = isSgAsmX86Instruction(node->get_SgNode());
         //if (!nodeN) continue;
-        SgAsmx86Instruction* nextN = isSgAsmx86Instruction(next->get_SgNode());
+        SgAsmX86Instruction* nextN = isSgAsmX86Instruction(next->get_SgNode());
         //if (!nextN) continue;
 
         string name_n = vizzGraph->getProperty(SgGraph::name, next);

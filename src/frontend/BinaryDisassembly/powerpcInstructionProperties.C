@@ -1,5 +1,4 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
 
 // DEPRECATED. Use stringifyPowerpcRegisterClass(n, "powerpc_regclass_").c_str() instead.
 const char* regclassToString(PowerpcRegisterClass n) {

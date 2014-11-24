@@ -15,7 +15,7 @@ SgType* asmTypeToCType(SgAsmType* ty);
 SgType* asmTypeToCSignedType(SgAsmType* ty);
 
 struct X86AssemblyToCWithVariables {
-  virtual SgStatement* convertInstruction(SgAsmx86Instruction* insn);
+  virtual SgStatement* convertInstruction(SgAsmX86Instruction* insn);
   SgExpression* makeRegisterRead(X86RegisterClass cl, int num, X86PositionInRegister pos);
   SgStatement* makeRegisterWrite(X86RegisterClass cl, int num, X86PositionInRegister pos, SgExpression* value);
   SgExpression* makeMemoryRead(X86SegmentRegister segreg, SgExpression* address, SgAsmType* ty);

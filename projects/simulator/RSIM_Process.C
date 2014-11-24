@@ -915,7 +915,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
      * object, so we'll protect the whole call with a write lock.  We need one anyway in order to update the icache.
      * [RPM 2011-02-09] */
     RTS_WRITE(rwlock()) {
-        insn = isSgAsmx86Instruction(disassembler->disassembleOne(&get_memory(), va)); /* might throw Disassembler::Exception */
+        insn = isSgAsmX86Instruction(disassembler->disassembleOne(&get_memory(), va)); /* might throw Disassembler::Exception */
         ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
         icache[va] = insn;
     } RTS_WRITE_END;

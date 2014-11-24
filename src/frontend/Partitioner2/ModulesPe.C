@@ -186,7 +186,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         ASSERT_not_null(bblock);
         if (bblock->nInstructions()!=1)
             continue;                                   // ...that contains only one instruction...
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(bblock->instructions().front());
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(bblock->instructions().front());
         if (!insn) {
             static bool warned;
             if (!warned) {

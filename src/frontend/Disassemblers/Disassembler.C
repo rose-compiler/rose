@@ -32,7 +32,7 @@ std::vector<Disassembler*> Disassembler::disassemblers;
 
 /* Diagnostics */
 Sawyer::Message::Facility Disassembler::mlog;
-double Disassembler::progress_interval = 10.0;
+double Disassembler::progress_interval = -1.0;          // negative turns it off
 double Disassembler::progress_time = 0.0;
 
 void Disassembler::initDiagnostics() {
@@ -40,7 +40,7 @@ void Disassembler::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Disassembler", Diagnostics::destination);
-        Diagnostics::mfacilities.insert(mlog);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
     
@@ -210,6 +210,39 @@ Disassembler::lookup(SgAsmGenericHeader *header)
     throw Exception("no disassembler for architecture");
 }
 
+// Class method
+Disassembler *
+Disassembler::lookup(const std::string &name)
+{
+    if (0==name.compare("list")) {
+        std::cout <<"The following ISAs are supported:\n"
+                  <<"  amd64\n"
+                  <<"  arm\n"
+                  <<"  coldfire\n"
+                  <<"  i386\n"
+                  <<"  m68040\n"
+                  <<"  mips\n"
+                  <<"  ppc\n";
+        exit(0);
+    } else if (0==name.compare("arm")) {
+        return new DisassemblerArm();
+    } else if (0==name.compare("ppc")) {
+        return new DisassemblerPowerpc();
+    } else if (0==name.compare("mips")) {
+        return new DisassemblerMips();
+    } else if (0==name.compare("i386")) {
+        return new DisassemblerX86(4);
+    } else if (0==name.compare("amd64")) {
+        return new DisassemblerX86(8);
+    } else if (0==name.compare("m68040")) {
+        return new DisassemblerM68k(m68k_68040);
+    } else if (0==name.compare("coldfire")) {
+        return new DisassemblerM68k(m68k_freescale_emacb);
+    } else {
+        throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
+    }
+}
+
 /* High-level function for disassembling a whole interpretation. */
 void
 Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, BadMap *bad)
@@ -377,7 +410,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
              * A more thorough analysis can be performed below in the get_block_successors() call. */          
-            if (insn->terminates_basic_block()) {
+            if (insn->terminatesBasicBlock()) {
                 trace <<"  block " <<addrToString(start_va) <<" naively terminated at " <<addrToString(va)
                       <<" by " <<unparseMnemonic(insn) <<"\n";
                 break;
@@ -861,14 +894,14 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     std::vector<SgAsmInstruction*> block;
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
         block.push_back(ii->second);
-    Disassembler::AddressSet successors = block.front()->get_successors(block, complete);
+    Disassembler::AddressSet successors = block.front()->getSuccessors(block, complete);
 
     /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
-     * make other assumptions, which is why this code is not in SgAsmx86Instruction::get_successors(). [RPM 2010-05-09] */
+     * make other assumptions, which is why this code is not in SgAsmX86Instruction::getSuccessors(). [RPM 2010-05-09] */
     rose_addr_t target, return_va;
     SgAsmInstruction *last_insn = block.back();
-    if (last_insn->is_function_call(block, &target, &return_va))
+    if (last_insn->isFunctionCallSlow(block, &target, &return_va))
         successors.insert(return_va);
 
     return successors;

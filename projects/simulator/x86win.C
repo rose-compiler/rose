@@ -29,7 +29,7 @@ public:
     }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
         if (insn && x86_rdtsc==insn->get_kind()) {
             uint32_t newip = insn->get_address() + insn->get_size();
             uint64_t value = next_value(args);

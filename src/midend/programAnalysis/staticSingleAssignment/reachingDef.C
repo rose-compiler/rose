@@ -1,3 +1,4 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
 #include "reachingDef.h"
 #include <algorithm>
 #include <boost/foreach.hpp>

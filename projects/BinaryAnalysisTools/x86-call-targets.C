@@ -41,11 +41,11 @@ main(int argc, char *argv[])
     for (rose_addr_t offset=0; offset<file_size; ++offset) {
         try {
             rose_addr_t insn_va = start_va + offset;
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(&map, insn_va));
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(disassembler->disassembleOne(&map, insn_va));
             if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
                 ++ninsns;
                 rose_addr_t target_va;
-                if (insn->get_branch_target(&target_va))
+                if (insn->getBranchTarget(&target_va))
                     std::cout <<StringUtility::addrToString(insn_va) <<": " <<StringUtility::addrToString(target_va) <<"\n";
             }
         } catch (const Disassembler::Exception &e) {

@@ -150,27 +150,6 @@ echo "JAVA=${JAVA}"
     AC_MSG_ERROR([java not found in $JAVA_PATH])
   fi
 
-  AM_CONDITIONAL(ROSE_WITH_JAVA_6, [test "x${JAVA_VERSION_MINOR}" != "x6"])
-  AM_CONDITIONAL(ROSE_WITH_JAVA_7, [test "x${JAVA_VERSION_MINOR}" != "x7"])
-  AM_CONDITIONAL(ROSE_WITH_JAVA_8, [test "x${JAVA_VERSION_MINOR}" != "x8"])
-
-  AC_DEFINE_UNQUOTED(
-    JAVA_VERSION_MAJOR,
-    ["${JAVA_VERSION_MAJOR}"],
-    [Major version number of the Java JDK])
-  AC_DEFINE_UNQUOTED(
-    JAVA_VERSION_MINOR,
-    ["${JAVA_VERSION_MINOR}"],
-    [Minor version number of the Java JDK])
-  AC_DEFINE_UNQUOTED(
-    JAVA_VERSION_PATCH,
-    ["${JAVA_VERSION_PATCH}"],
-    [Patch version number of the Java JDK])
-  AC_DEFINE_UNQUOTED(
-    JAVA_VERSION_RELEASE,
-    ["${JAVA_VERSION_RELEASE}"],
-    [Release version number of the Java JDK])
-
   AC_MSG_CHECKING(for Java JVM include and link options)
 # This is a hack, but it seems to work to find the JVM library
   if test -x /usr/bin/javaconfig; then # We are on a Mac
@@ -259,6 +238,28 @@ AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAVAH)
 AC_SUBST(JAR)
+
+# Java Version Information
+AM_CONDITIONAL(ROSE_WITH_JAVA_6, [test "x${JAVA_VERSION_MINOR}" != "x6"])
+AM_CONDITIONAL(ROSE_WITH_JAVA_7, [test "x${JAVA_VERSION_MINOR}" != "x7"])
+AM_CONDITIONAL(ROSE_WITH_JAVA_8, [test "x${JAVA_VERSION_MINOR}" != "x8"])
+
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_MAJOR,
+  ["${JAVA_VERSION_MAJOR}"],
+  [Major version number of the Java JDK])
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_MINOR,
+  ["${JAVA_VERSION_MINOR}"],
+  [Minor version number of the Java JDK])
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_PATCH,
+  ["${JAVA_VERSION_PATCH}"],
+  [Patch version number of the Java JDK])
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_RELEASE,
+  ["${JAVA_VERSION_RELEASE}"],
+  [Release version number of the Java JDK])
 
 
 # End macro ROSE_SUPPORT_JAVA.

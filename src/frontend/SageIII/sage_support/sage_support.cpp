@@ -3205,8 +3205,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
+               bool usingGfortran = false;
                string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-               if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+               #ifdef USE_CMAKE
+                 #ifdef CMAKE_COMPILER_IS_GNUG77
+                   usingGfortran = true;
+                 #endif
+               #else
+                 usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+               #endif
+
+               if (usingGfortran)
                   {
                  // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
                  // warnings += " -Wunused-labels";
@@ -4437,6 +4446,13 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
         Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
     ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
+/* REMOVE this! MH-2014
+    cout << "Filename from GFP=" << Rose::Frontend::X10::X10c::X10c_globalFilePointer->getFileName()  << endl;
+    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
+        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+                cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
+    }
+*/
 #endif
         int status = x10_main(argc, argv);
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
@@ -5610,6 +5626,17 @@ SgProject::compileOutput()
                   }
              }
 
+          // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+          #ifdef ROSE_BOOST_PATH
+          if (get_C_only() || get_Cxx_only())
+          {
+              // Search dir for header files, after all directories specified by -I but
+              // before the standard system directories.
+              originalCommandLine.push_back("-isystem");
+              originalCommandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+          }
+          #endif
+
        // DQ (8/13/2006): Add a space to avoid building "g++-E" as output.
        // compilerNameString += " ";
 
@@ -5626,6 +5653,15 @@ SgProject::compileOutput()
           printf ("Support for \"-E\" not implemented yet. \n");
           ROSE_ASSERT(false);
 #endif
+
+          // Debug: Output commandline arguments before actually executing
+          if (SgProject::get_verbose() > 0)
+          {
+              for (unsigned int i=0; i < originalCommandLine.size(); ++i)
+              {
+                   printf ("originalCommandLine[%u] = %s \n", i, originalCommandLine[i].c_str());
+              }
+          }
 
           errorCode = systemFromVector(originalCommandLine);
 

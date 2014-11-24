@@ -1,7 +1,6 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 #define ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 
-#include "sage3basic.h"
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 

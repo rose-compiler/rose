@@ -32,8 +32,8 @@ std::vector<SgGraphNode*> findGraphRoots(SgIncidenceDirectedGraph* graph)
  * Generate all static traces of length smaller than a limit.
  *******************************************************************/
 void
-findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node, std::vector<SgAsmx86Instruction*>& curTrace, size_t max_length,
-    std::set< std::vector<SgAsmx86Instruction*> >& returnSet)
+findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node, std::vector<SgAsmX86Instruction*>& curTrace, size_t max_length,
+    std::set< std::vector<SgAsmX86Instruction*> >& returnSet)
 {
 
 
@@ -53,11 +53,11 @@ findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node
    for(SgAsmStatementPtrList::iterator blockItr =  isSgAsmBlock(cur_node->get_SgNode() )->get_statementList ().begin();
        blockItr != isSgAsmBlock(cur_node->get_SgNode() )->get_statementList ().end() ; ++blockItr )
    {
-     ROSE_ASSERT(isSgAsmx86Instruction(*blockItr ) );
+     ROSE_ASSERT(isSgAsmX86Instruction(*blockItr ) );
 
      //Ignore nop's
-     if( isSgAsmx86Instruction(*blockItr)->get_kind() != x86_nop )
-       curTrace.push_back( isSgAsmx86Instruction(*blockItr ) );
+     if( isSgAsmX86Instruction(*blockItr)->get_kind() != x86_nop )
+       curTrace.push_back( isSgAsmX86Instruction(*blockItr ) );
    }
 
 
@@ -75,7 +75,7 @@ findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node
        ROSE_ASSERT(graphEdge!=NULL);
 
        //Branch and create new trace for branch
-       std::vector<SgAsmx86Instruction*> newTrace = curTrace;
+       std::vector<SgAsmX86Instruction*> newTrace = curTrace;
 
        findTraceForSubtree(graph, graphEdge->get_to(), newTrace, max_length, returnSet);
      }
@@ -92,12 +92,12 @@ findTraceForSubtree(const SgIncidenceDirectedGraph* graph, SgGraphNode* cur_node
  * Generate all static traces of length smaller than a limit.
  * We ignore nop's 
  *******************************************************************/
-std::set< std::vector<SgAsmx86Instruction*> > 
+std::set< std::vector<SgAsmX86Instruction*> > 
 generateStaticTraces(SgIncidenceDirectedGraph* graph, size_t max_length)
 {
   std::vector<SgGraphNode*> roots = findGraphRoots(graph);
 
-  std::set< std::vector<SgAsmx86Instruction*> > returnSet;
+  std::set< std::vector<SgAsmX86Instruction*> > returnSet;
 
   for( std::vector<SgGraphNode*>::iterator rootItr = roots.begin(); rootItr != roots.end(); ++rootItr )
   {
@@ -106,12 +106,12 @@ generateStaticTraces(SgIncidenceDirectedGraph* graph, size_t max_length)
     //  if branch create copy vector and crete new list for false condition 
 
 
-    std::vector<SgAsmx86Instruction*> curTrace;
-    std::set< std::vector<SgAsmx86Instruction*> > currentSet;
+    std::vector<SgAsmX86Instruction*> curTrace;
+    std::set< std::vector<SgAsmX86Instruction*> > currentSet;
     findTraceForSubtree(graph, *rootItr, curTrace, max_length, currentSet);
 
 
-    for( std::set< std::vector<SgAsmx86Instruction*> >::iterator curSetItr = currentSet.begin(); curSetItr != currentSet.end(); ++curSetItr  )
+    for( std::set< std::vector<SgAsmX86Instruction*> >::iterator curSetItr = currentSet.begin(); curSetItr != currentSet.end(); ++curSetItr  )
       returnSet.insert(*curSetItr);
 
 
@@ -154,12 +154,12 @@ void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose
 
     if(block->get_statementList().size()>0 )
     {
-      opCode = rose::stringifyX86InstructionKind(isSgAsmx86Instruction( block->get_statementList().back() )->get_kind());
+      opCode = rose::stringifyX86InstructionKind(isSgAsmX86Instruction( block->get_statementList().back() )->get_kind());
       std::cout <<"Statement opcode " << opCode << std::endl;
     }else
       std::cout <<"No statements " << block->class_name() << std::endl;
 
-    label=  boost::lexical_cast<std::string> ( block->get_address() ) +" "+  unparseInstruction( isSgAsmx86Instruction(block->get_statementList().back()));
+    label=  boost::lexical_cast<std::string> ( block->get_address() ) +" "+  unparseInstruction( isSgAsmX86Instruction(block->get_statementList().back()));
     SgGraphNode* node = new SgGraphNode( boost::lexical_cast<std::string> ( label ) );
 
     node->set_SgNode(block);
@@ -169,7 +169,7 @@ void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose
 
 #if 0
     if( prevBB != NULL )
-      if( prevBB->get_statementList().size()>0 && isSgAsmx86Instruction(prevBB->get_statementList().back())->get_kind() == x86_call )
+      if( prevBB->get_statementList().size()>0 && isSgAsmX86Instruction(prevBB->get_statementList().back())->get_kind() == x86_call )
       {
 
         //        returnGraph->addDirectedEdge( prevNode, node  , " ");

@@ -80,11 +80,11 @@ RSIM_Thread::tracing(TracingFacility tf)
     return trace_mesg[tf];
 }
 
-SgAsmx86Instruction *
+SgAsmX86Instruction *
 RSIM_Thread::current_insn()
 {
     rose_addr_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(get_process()->get_instruction(ip));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(get_process()->get_instruction(ip));
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     return insn;
 }
@@ -762,7 +762,7 @@ RSIM_Thread::main()
             /* Find the instruction.  Callbacks might change the value of the EIP register, in which case we should re-fetch
              * the instruction. The pre-instruction callbacks will be invoked for each re-fetched instruction, but the
              * post-instruction callback is only invoked for the final instruction. */
-            SgAsmx86Instruction *insn = NULL;
+            SgAsmX86Instruction *insn = NULL;
             bool cb_status;
             do {
                 insn = current_insn();
