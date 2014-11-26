@@ -1,7 +1,6 @@
 /* Tests how well a graph performs at various operations. */
 #include "rose.h"
 #include "Graph3.h"
-#include "Stopwatch.h"
 
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
@@ -9,6 +8,7 @@
 #include <sawyer/CommandLine.h>
 #include <sawyer/GraphBoost.h>
 #include <sawyer/PoolAllocator.h>
+#include <sawyer/Stopwatch.h>
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
@@ -210,7 +210,7 @@ report_head(const std::string &title)
 }
 
 static Totals
-report(const std::string &title, const GraphSize gsize, size_t count, const Stopwatch &t, const std::string &units)
+report(const std::string &title, const GraphSize gsize, size_t count, const Sawyer::Stopwatch &t, const std::string &units)
 {
     printf("  %-16s (%13s %13s) %13s / %6.3f  ",
            title.c_str(),
@@ -409,7 +409,7 @@ yagi_time_add_vertex()
 {
     GraphType g;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && g.num_vertices()<MAX_VERTICES)
         g.add_vertex();
     t.stop();
@@ -422,7 +422,7 @@ sgl_time_add_vertex()
 {
     GraphType g;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && g.nVertices()<MAX_VERTICES)
         g.insertVertex(0);
     t.stop();
@@ -435,7 +435,7 @@ bgl_time_add_vertex()
 {
     GraphType g;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && boost::num_vertices(g)<MAX_VERTICES)
         boost::add_vertex(g);
     t.stop();
@@ -448,7 +448,7 @@ sage_time_add_vertex()
 {
     GraphType *g = new GraphType;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && g->numberOfGraphNodes()<MAX_VERTICES)
         g->addNode(new SgGraphNode);
     t.stop();
@@ -469,7 +469,7 @@ yagi_time_add_edge()
         g.add_vertex();
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && g.num_edges()<MAX_EDGES) {
         typename GraphType::VertexDescriptor v1 = yagi_random_vertex(g);
         typename GraphType::VertexDescriptor v2 = yagi_random_vertex(g);
@@ -489,7 +489,7 @@ sgl_time_add_edge()
         g.insertVertex(0);
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && g.nEdges()<MAX_EDGES) {
         typename GraphType::VertexNodeIterator v1 = sgl_random_vertex(g);
         typename GraphType::VertexNodeIterator v2 = sgl_random_vertex(g);
@@ -515,7 +515,7 @@ bgl_time_add_edge()
 
     // The actual test
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && boost::num_edges(g)<MAX_EDGES) {
         typename boost::graph_traits<GraphType>::vertex_descriptor v1 = bgl_random_vertex(g, vertices);
         typename boost::graph_traits<GraphType>::vertex_descriptor v2 = bgl_random_vertex(g, vertices);
@@ -540,7 +540,7 @@ sage_time_add_edge()
 
     // The actual test
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && g->numberOfGraphEdges()<MAX_EDGES) {
         SgGraphNode *v1 = sage_random_vertex(g, vertices);
         SgGraphNode *v2 = sage_random_vertex(g, vertices);
@@ -559,7 +559,7 @@ yagi_time_vertex_traversal()
     yagi_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         std::pair<typename GraphType::VertexIterator, typename GraphType::VertexIterator> vi_pair = g.vertices();
         while (vi_pair.first!=vi_pair.second && !had_alarm) {
@@ -579,7 +579,7 @@ sgl_time_vertex_traversal()
     sgl_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         boost::iterator_range<typename GraphType::VertexNodeIterator> vi_pair = g.vertices();
         for (typename GraphType::VertexNodeIterator iter=vi_pair.begin(); iter!=vi_pair.end() && !had_alarm; ++iter)
@@ -597,7 +597,7 @@ bgl_time_vertex_traversal()
     bgl_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         typename boost::graph_traits<GraphType>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=boost::vertices(g); vi!=vi_end && !had_alarm; ++vi)
@@ -615,7 +615,7 @@ sage_time_vertex_traversal()
     sage_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         std::set<SgGraphNode*> vertex_set = g->computeNodeSet();
         for (std::set<SgGraphNode*>::iterator vi=vertex_set.begin(); vi!=vertex_set.end() && !had_alarm; ++vi)
@@ -634,7 +634,7 @@ yagi_time_edge_traversal()
     yagi_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         typename GraphType::EdgeIterator ei, ei_end;
         for (boost::tie(ei, ei_end) = g.edges(); ei!=ei_end && !had_alarm; ++ei)
@@ -652,7 +652,7 @@ sgl_time_edge_traversal()
     sgl_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         boost::iterator_range<typename GraphType::EdgeNodeIterator> edges = g.edges();
         for (typename GraphType::EdgeNodeIterator edge=edges.begin(); edge!=edges.end() && !had_alarm; ++edge)
@@ -670,7 +670,7 @@ bgl_time_edge_traversal()
     bgl_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         typename boost::graph_traits<GraphType>::edge_iterator ei, ei_end;
         for (boost::tie(ei, ei_end) = boost::edges(g); ei!=ei_end && !had_alarm; ++ei)
@@ -688,7 +688,7 @@ sage_time_edge_traversal()
     sage_random_graph(g, MAX_VERTICES, 2, 4.0);
     size_t niter=0;
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
         // SgGraph doesn't have a graph-wide edge iterator, so we have to iterator over the vertices and then each edge.
         std::set<SgGraphNode*> vertex_set = g->computeNodeSet();
@@ -715,7 +715,7 @@ yagi_time_remove_vertex()
     size_t nv_orig = gsize.first;
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     for (size_t i=0; i<nv_orig && !had_alarm; ++i)
         g.remove_vertex(yagi_random_vertex(g));
     t.stop();
@@ -735,7 +735,7 @@ sgl_time_remove_vertex()
     size_t nv_orig = gsize.first;
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     for (size_t i=0; i<nv_orig && !had_alarm; ++i)
         g.eraseVertex(sgl_random_vertex(g));
     t.stop();
@@ -759,7 +759,7 @@ bgl_time_remove_vertex()
     //     Other variations [than list-list] of adjacency list perform horribly on this operation because its
     //     implementation is not of constant time complexity.
     start_deadman(6);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     for (size_t i=0; i<nv_orig && !had_alarm; ++i) {
         // Note that this won't work generically.  It's only good for graphs where vertices are numbered sequentially across
         // the entire graph.
@@ -789,7 +789,7 @@ yagi_time_remove_edge()
     GraphSize gsize = yagi_size(g);
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     size_t ne_orig = g.num_edges();
     for (size_t i=0; i<ne_orig && !had_alarm; ++i)
         g.remove_edge(yagi_random_edge(g));
@@ -807,7 +807,7 @@ sgl_time_remove_edge()
     GraphSize gsize = sgl_size(g);
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     size_t ne_orig = g.nEdges();
     for (size_t i=0; i<ne_orig && !had_alarm; ++i)
         g.eraseEdge(sgl_random_edge(g));
@@ -848,7 +848,7 @@ yagi_time_clear_vertex()
     size_t ncleared;
 
     start_deadman(6);           // vertex clearing is SO SLOW that we need more time (see bgl_time_remove_vertex())
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     for (ncleared=0; ncleared<gsize.first && !had_alarm; ++ncleared)
         g.clear_vertex(vertices[ncleared]);
     t.stop();
@@ -872,7 +872,7 @@ sgl_time_clear_vertex()
     size_t ncleared;
 
     start_deadman(6);           // vertex clearing is SO SLOW that we need more time (see bgl_time_remove_vertex())
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     for (ncleared=0; ncleared<gsize.first && !had_alarm; ++ncleared)
         g.clearEdges(vertices[ncleared]);
     t.stop();
@@ -894,7 +894,7 @@ bgl_time_clear_vertex()
     size_t ncleared;
 
     start_deadman(2);
-    Stopwatch t;
+    Sawyer::Stopwatch t;
     for (ncleared=0; ncleared<gsize.first && !had_alarm; ++ncleared)
         boost::clear_vertex(vertices[ncleared], g);
     t.stop();

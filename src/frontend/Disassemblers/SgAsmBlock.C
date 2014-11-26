@@ -110,7 +110,7 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
  * call is known then it is stored in the @p return_va argument, otherwise @p return_va will contain the maximum 64-bit
  * address. The return address is usually the fall-through address of the basic block.
  *
- * Note: Use this function in preference to SgAsmInstruction::is_function_call() because the latter is intended to be used by
+ * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be used by
  * the Partitioner before an AST is created and might not be as accurate. */
 bool
 SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va) 
@@ -148,7 +148,7 @@ SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va)
 
     // Now for the architecture-dependent determination.  This will not update target_va or return_va if they cannot be
     // determined or are ambiguous; so we must reset them to INVALID_ADDR if we're about to return false.
-    bool retval = insns.front()->is_function_call(insns, &target_va, &return_va);
+    bool retval = insns.front()->isFunctionCallSlow(insns, &target_va, &return_va);
     if (!retval) {
         target_va = return_va = INVALID_ADDR;
     } else if (INVALID_ADDR==target_va && 1==callee_vas.size()) {

@@ -1,5 +1,5 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "RoseBin_support.h"
 
 using namespace std;
@@ -153,7 +153,7 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
 
 bool isAsmUnconditionalBranch(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
-    case V_SgAsmx86Instruction: return x86InstructionIsUnconditionalBranch(isSgAsmx86Instruction(insn));
+    case V_SgAsmX86Instruction: return x86InstructionIsUnconditionalBranch(isSgAsmX86Instruction(insn));
     // case V_SgAsmArmInstruction: return armInstructionIsUnconditionalBranch(isSgAsmArmInstruction(insn));
         default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
@@ -161,7 +161,7 @@ bool isAsmUnconditionalBranch(SgAsmInstruction* insn) {
 
 bool isAsmBranch(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
-    case V_SgAsmx86Instruction: return x86InstructionIsControlTransfer(isSgAsmx86Instruction(insn));
+    case V_SgAsmX86Instruction: return x86InstructionIsControlTransfer(isSgAsmX86Instruction(insn));
     // case V_SgAsmArmInstruction: return armInstructionIsBranch(isSgAsmArmInstruction(insn));
         default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }

@@ -6,6 +6,12 @@ dir0="${0%$argv0}"
 [ -n "$dir0" ] || dir0="."
 worklist="clone-analysis-$$"
 
+# Show an error message and exit
+die () {
+    echo "$argv0: $*" >&2
+    exit 1
+}
+
 # Parse command-line
 interactive=yes
 configfile=.run-analysis.conf
@@ -77,12 +83,6 @@ usage () {
     echo "            The --save switch (the default) saves configuration information into the" >&2
     echo "            configuration file specified with the --config switch (or a default)." >&2
     exit $exit_status
-}
-
-# Show an error message and exit
-die () {
-    echo "$argv0: $*" >&2
-    exit 1
 }
 
 # For affirmative answers, echo "yes" and return success; otherwise silently return failure

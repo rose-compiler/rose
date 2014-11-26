@@ -1,3 +1,5 @@
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "Snippet.h"
 #include "AstTraversal.h"
 #include "LinearCongruentialGenerator.h"
@@ -37,7 +39,7 @@ void SnippetAstTraversal::traverse(SgNode *ast) {
     struct T1: AstPrePostProcessing {
         SnippetAstTraversal &self;
         T1(SnippetAstTraversal &self): self(self) {}
-        virtual void preOrderVisit(SgNode *node) /*override*/ {
+        virtual void preOrderVisit(SgNode *node) ROSE_OVERRIDE {
             self(node, preorder);
             if (SgExpression *expr = isSgExpression(node)) {
                 if (expr->attributeExists("body")) {
@@ -47,7 +49,7 @@ void SnippetAstTraversal::traverse(SgNode *ast) {
                 }
             }
         }
-        virtual void postOrderVisit(SgNode *node) /*override*/ {
+        virtual void postOrderVisit(SgNode *node) ROSE_OVERRIDE {
             self(node, postorder);
         }
     };
@@ -189,9 +191,9 @@ static SgFile* parseJavaFile(const std::string &fileName)
     // Read in the file as a string.  Easiest way is to use the MemoryMap facilities.
     std::string sourceCode;
     {
-        MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create_from_file(fileName);
+        MemoryMap::Buffer::Ptr buffer = MemoryMap::MappedBuffer::instance(fileName);
         char *charBuf = new char[buffer->size()];
-        buffer->read(charBuf, 0, buffer->size());
+        buffer->read((uint8_t*)charBuf, 0, buffer->size());
         sourceCode = std::string(charBuf, buffer->size());
     }
 

@@ -69,7 +69,7 @@ add_syscall_edges(DirectedGraph* G, std::vector<SgAsmFunction*>& all_functions)
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
 
         for (std::vector<SgAsmInstruction*>::iterator inst_it = insns.begin(); inst_it != insns.end(); ++inst_it) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(*inst_it);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(*inst_it);
             if (insn == NULL)
                 continue;
 

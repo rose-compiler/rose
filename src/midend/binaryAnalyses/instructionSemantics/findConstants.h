@@ -29,7 +29,7 @@ template <size_t Len>                         // Sums are modulo 2^Len
 struct LatticeElement {
     bool isTop;
     uint64_t name;                            // 0 for constants, a nonzero ID number for everything else
-    SgAsmx86Instruction* definingInstruction; // Functionally dependent on name (mostly for debugging)
+    SgAsmX86Instruction* definingInstruction; // Functionally dependent on name (mostly for debugging)
     bool negate;                              // Switch between name+offset and -name+offset; should be false for constants
     uint64_t offset;                          // Offset from name
 
@@ -39,24 +39,24 @@ struct LatticeElement {
         {}
 
     /* Construct a named lattice element (no offset) */
-    static LatticeElement nonconstant(uint64_t name, SgAsmx86Instruction* definingInstruction) {
+    static LatticeElement nonconstant(uint64_t name, SgAsmX86Instruction* definingInstruction) {
         return LatticeElement(name, definingInstruction, false, 0);
     }
 
     /* Construct a non-top, named lattice element with optional offset. */
-    LatticeElement(uint64_t name, SgAsmx86Instruction* definingInstruction, bool negate, uint64_t offset)
+    LatticeElement(uint64_t name, SgAsmX86Instruction* definingInstruction, bool negate, uint64_t offset)
         : isTop(false), name(name), definingInstruction(definingInstruction), negate(negate),
           offset(offset & (IntegerOps::GenMask<uint64_t, Len>::value))
         {}
 
     /* Construct a named lattice element with optional offset. */
-    LatticeElement(bool isTop, uint64_t name, SgAsmx86Instruction* definingInstruction, bool negate, uint64_t offset)
+    LatticeElement(bool isTop, uint64_t name, SgAsmX86Instruction* definingInstruction, bool negate, uint64_t offset)
         : isTop(isTop), name(name), definingInstruction(definingInstruction), negate(negate),
           offset(offset & (IntegerOps::GenMask<uint64_t, Len>::value))
         {}
 
     /* Construct a constant lattice element */
-    static LatticeElement constant(uint64_t c, SgAsmx86Instruction* definingInstruction) {
+    static LatticeElement constant(uint64_t c, SgAsmX86Instruction* definingInstruction) {
         return LatticeElement(0, definingInstruction, false, c);
     }
 
@@ -74,7 +74,7 @@ struct LatticeElement {
         if (a.name != 0 && b.negate < a.negate) return false;
         return a.offset < b.offset;
     }
-    void merge(const LatticeElement& elt, uint64_t newName, SgAsmx86Instruction* def) {
+    void merge(const LatticeElement& elt, uint64_t newName, SgAsmX86Instruction* def) {
         if (elt.isTop) return;
         if (this->isTop) {
             *this = elt;
@@ -134,13 +134,13 @@ extern uint64_t xvarNameCounter;
 
 /** Instruction on which we are currently working. Set by FindConstantsPolicy::startInstruction, cleared by
  *  FindConstantsPolicy::finishInstruction, and accessed by the XVariable constructor. */
-extern SgAsmx86Instruction* currentInstruction;
+extern SgAsmX86Instruction* currentInstruction;
 
 template <size_t Len>
 struct XVariable: public Variable { /*Variable defined in flowEquations.h*/
     LatticeElement<Len> value;
     uint64_t myName;
-    SgAsmx86Instruction* def;
+    SgAsmX86Instruction* def;
     XVariable()
         : value(), myName(++xvarNameCounter), def(currentInstruction)
         {}
@@ -253,7 +253,7 @@ struct MemoryWriteSet {
     /** Obtains the value stored at the specified memory address, returning true if the address is defined or false otherwise. */
     template <size_t Len> // In bits
     bool getValueAtAddress(LatticeElement<32> address, LatticeElement<Len>& result, uint32_t resultName,
-                           SgAsmx86Instruction* resultDef) const {
+                           SgAsmX86Instruction* resultDef) const {
         /* Construct the MemoryWrite object for the address in question since it's needed by mustAlias() */
         MemoryWrite mw;
         mw.address = address;
@@ -561,7 +561,7 @@ struct MemoryMergeConstraint: public Constraint {
 };
 
 struct RegisterSet {
-    struct {
+    struct Registers {
         static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
         static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
         static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
@@ -1074,14 +1074,14 @@ struct FindConstantsPolicy {
             }
         }
         cur_state = rsets[addr];
-        currentInstruction = isSgAsmx86Instruction(insn);
+        currentInstruction = isSgAsmX86Instruction(insn);
     }
 
     /** Called at the end of X86InstructionSemantics::processInstruction() to merge the current register set (as modified by
      *  the instruction recently processed) into the successor instructions. */
     void finishInstruction(SgAsmInstruction* insn) {
         currentInstruction = NULL;
-        SgAsmx86Instruction* insnx = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction* insnx = isSgAsmX86Instruction(insn);
         ROSE_ASSERT (insnx);
         std::vector<uint64_t> succs;
         if (newIp->get().name == 0) {
@@ -1095,7 +1095,7 @@ struct FindConstantsPolicy {
             }
             if (isAsmBranch(insnx)) {
                 uint64_t addr = 0;
-                bool knownTarget = insnx->get_branch_target(&addr);
+                bool knownTarget = insnx->getBranchTarget(&addr);
                 if (knownTarget) {
                     succs.push_back(addr);
                 }
@@ -1182,7 +1182,7 @@ public:
                 XVariablePtr<Len> result = BinaryConstraint<Len, Len, Len>::result;
 
                 /* The instruction for which this policy method is being invoked. */
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(result->def);
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(result->def);
                 ROSE_ASSERT(insn);
                 SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
 
@@ -1256,7 +1256,7 @@ public:
      * jumps, in which case the instruction partitioner (Partitioner class) would have placed the call target in the same
      * function as the CALL instruction (note that recursive calls are to the entry address of the function). */
     bool is_abi_function_call(SgAsmInstruction* insn_) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction* insn = isSgAsmX86Instruction(insn_);
         ROSE_ASSERT(insn!=NULL);
         if (insn->get_kind()!=x86_call && insn->get_kind()!=x86_farcall)
             return false;
@@ -1273,7 +1273,7 @@ public:
      * just an intra-function branch) has a register set whose callee-preserved registers are actually reserved across the
      * CALL instruction. We also preserve the stack pointer, frame pointer, and all memory. */
     void finishInstruction(SgAsmInstruction* insn_) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(insn_);
+        SgAsmX86Instruction* insn = isSgAsmX86Instruction(insn_);
         ROSE_ASSERT(insn!=NULL);
         if (is_abi_function_call(insn)) {
             rose_addr_t call_va = insn->get_address();

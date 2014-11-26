@@ -8426,6 +8426,50 @@ SgExecStatement* SageBuilder::buildExecStatement_nfi(SgExpression* executable,
     return result;
 }
 
+// MH (6/10/2014): Added async support
+SgAsyncStmt* SageBuilder::buildAsyncStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgAsyncStmt *async_stmt = new SgAsyncStmt(body);
+       ROSE_ASSERT(async_stmt);
+       body->set_parent(async_stmt);
+       setOneSourcePositionForTransformation(async_stmt);
+
+       return async_stmt;
+}
+
+// MH (6/11/2014): Added finish support
+SgFinishStmt* SageBuilder::buildFinishStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgFinishStmt *finish_stmt = new SgFinishStmt(body);
+       ROSE_ASSERT(finish_stmt);
+       body->set_parent(finish_stmt);
+       setOneSourcePositionForTransformation(finish_stmt);
+
+       return finish_stmt;
+}
+
+// MH (6/11/2014): Added at support
+SgAtStmt* SageBuilder::buildAtStmt(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgAtStmt *at_stmt = new SgAtStmt(expression, body);
+       SageInterface::setSourcePosition(at_stmt);
+       expression->set_parent(at_stmt);
+       body->set_parent(at_stmt);
+
+       return at_stmt;
+}
+
+SgHereExp* SageBuilder::buildHereExpression()
+{
+       SgHereExp *here = new SgHereExp(NULL);
+       return here;
+}
+
+
 //! Build a try statement
 SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
                                      SgCatchOptionStmt* catch0,

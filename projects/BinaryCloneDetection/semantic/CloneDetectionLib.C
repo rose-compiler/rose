@@ -775,7 +775,7 @@ void
 InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top)
 {
     // Find the instructions
-    std::vector<SgAsmx86Instruction*> tmp_insns;
+    std::vector<SgAsmX86Instruction*> tmp_insns;
     InstructionMap instr_map = interp->get_instruction_map(interp);
     if (top != NULL) {
         FindInstructionsVisitor vis;
@@ -783,7 +783,7 @@ InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInter
 
         // Addresses and map of instructions in the subtree of top
         std::vector<rose_addr_t> query_insns_addr;
-        for (std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it)
+        for (std::vector<SgAsmX86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it)
             query_insns_addr.push_back((*it)->get_address());
         std::sort(query_insns_addr.begin(), query_insns_addr.end());
 
@@ -922,8 +922,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             if (!map)
                 interp->set_map(map = new MemoryMap);
             map->insert(exclusion_area,
-                        MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(exclusion_area.size()),
-                                           0, MemoryMap::MM_PROT_NONE, "temporary exclusion area"));
+                        MemoryMap::Segment::anonymousInstance(exclusion_area.size(), 0, "temporary exclusion area"));
             added_exclusion_area = true;
         }
     }
@@ -949,7 +948,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
                     loader->add_directories(paths);
                 }
                 loader->link(interp);
-            } else {
+            } else if (isSgAsmElfFileHeader(spec_header)) {
                 // If we didn't link with the standard C library, then link with our own library.  Our own library is much
                 // smaller and is intended to provide the same semantics as the C library for those few functions that GCC
                 // occassionally inlines because the function is built into GCC.  This allows us to compare non-optimized
@@ -1005,9 +1004,9 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             sections.insert(sections.end(), s3.begin(), s3.end());
             for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
                 if ((*si)->is_mapped()) {
-                    AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
-                                                                          (*si)->get_mapped_size());
-                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                    map.at((*si)->get_mapped_actual_va())
+                       .limit((*si)->get_mapped_size())
+                       .changeAccess(MemoryMap::READABLE, ~MemoryMap::READABLE);
                 }
             }
         }
@@ -1117,7 +1116,7 @@ link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_he
 
                     uint32_t export_va_le;
                     ByteOrder::host_to_le(export_va, &export_va_le);
-                    size_t nwrite = map->write(&export_va_le, write_va, 4);
+                    size_t nwrite = map->writeQuick(&export_va_le, write_va, 4);
                     if (nwrite!=4) {
                         std::cerr <<"        write failed into memory map:\n";
                         map->dump(std::cerr, "          ");

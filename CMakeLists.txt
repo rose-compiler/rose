@@ -232,7 +232,7 @@ endif (WIN32)
 #Ensure that Boost is found
 # environment variable BOOST_ROOT can help to find a user-specified path to Boost
 SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.36.0 COMPONENTS date_time filesystem program_options regex system wave thread REQUIRED)
+find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 
 

@@ -82,6 +82,7 @@ std::ostream& operator<<(std::ostream&, const AddressInterval&);
 
 /** A set of virtual addresses. This is optimized for cases when many addresses are contiguous. */
 typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
+std::ostream& operator<<(std::ostream&, const AddressIntervalSet&);
 
 // deprecated. Use AddressInterval instead for all new code.
 typedef Range<rose_addr_t> Extent;
@@ -481,8 +482,11 @@ typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
+// RPM (10/1/2014): Temporary to help people migrate from SgAsmx86Instruction to SgAsmX86Instruction
+typedef SgAsmX86Instruction SgAsmx86Instruction;
+
 // JJW (3/19/2008): Added support for containers of x86 instructions
-typedef Rose_STL_Container<SgAsmx86Instruction*> SgAsmx86InstructionPtrList;
+typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
 // JJW (3/21/2008): Added support for containers of Arm instructions
 typedef Rose_STL_Container<SgAsmArmInstruction*> SgAsmArmInstructionPtrList;
 

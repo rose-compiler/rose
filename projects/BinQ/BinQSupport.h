@@ -12,7 +12,7 @@ class BinQSupport
     ~BinQSupport();
     SgNode* disassembleFile(std::string tsv_directory, std::string& sourceFile);
 
-    static rose_addr_t evaluateMemoryExpression(SgAsmx86Instruction* destInst,
+    static rose_addr_t evaluateMemoryExpression(SgAsmX86Instruction* destInst,
                                                 SgAsmMemoryReferenceExpression* mem);
     static std::string resolveValue(SgAsmValueExpression* leftVal);
 
@@ -26,7 +26,7 @@ class BinQSupport
     // this one is not precise because it only gives you one edge
     // along the CFG up. Unfortunately, the get_predecessors algo from
     // Jeremiah doesnt work on IDA yet
-    static SgAsmx86Instruction* checkIfValidPredecessor(rose_addr_t next_addr, SgAsmInstruction* inst);
+    static SgAsmX86Instruction* checkIfValidPredecessor(rose_addr_t next_addr, SgAsmInstruction* inst);
 
   private:
     std::string relativePathPrefix;

@@ -15572,7 +15572,8 @@ SgProject::initialization()
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
-
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     p_appendPID = false;
   // ZG (5/27/2014): This was uninitialized on Windows, so adding it here.
      p_globalScopeAcrossFiles = NULL;
    }
@@ -16490,6 +16491,8 @@ SgProject::display ( const std::string & label ) const
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      printf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     printf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)

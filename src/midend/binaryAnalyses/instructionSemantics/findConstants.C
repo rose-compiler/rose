@@ -9,7 +9,7 @@ namespace BinaryAnalysis {
 namespace FindConstants {
 
 uint64_t xvarNameCounter = 0;
-SgAsmx86Instruction* currentInstruction = NULL;
+SgAsmX86Instruction* currentInstruction = NULL;
 
 /** Returns true if the contents of memory location @p a could possibly overlap with @p b. In other words, returns false only
  *  if memory location @p a cannot overlap with memory location @p b. */

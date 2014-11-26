@@ -1,7 +1,6 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
 
-bool x86InstructionIsConditionalFlagControlTransfer(SgAsmx86Instruction* inst) {
+bool x86InstructionIsConditionalFlagControlTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_ja:
     case x86_jae:
@@ -28,7 +27,7 @@ bool x86InstructionIsConditionalFlagControlTransfer(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsConditionalControlTransfer(SgAsmx86Instruction* inst) {
+bool x86InstructionIsConditionalControlTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_loop:
       return true;
@@ -36,7 +35,7 @@ bool x86InstructionIsConditionalControlTransfer(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsConditionalFlagBitAndByte(SgAsmx86Instruction* inst) {
+bool x86InstructionIsConditionalFlagBitAndByte(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_seta:
     case x86_setae:
@@ -60,7 +59,7 @@ bool x86InstructionIsConditionalFlagBitAndByte(SgAsmx86Instruction* inst) {
 }
 
 
-bool x86InstructionIsConditionalFlagDataTransfer(SgAsmx86Instruction* inst) {
+bool x86InstructionIsConditionalFlagDataTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_cbw:
     case x86_cmova:
@@ -102,7 +101,7 @@ bool x86InstructionIsConditionalFlagDataTransfer(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsConditionalDataTransfer(SgAsmx86Instruction* inst) {
+bool x86InstructionIsConditionalDataTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_cmpxchg:
     case x86_cmpxchg8b:
@@ -113,7 +112,7 @@ bool x86InstructionIsConditionalDataTransfer(SgAsmx86Instruction* inst) {
 }
 
 
-bool x86InstructionIsControlTransfer(SgAsmx86Instruction* inst) {
+bool x86InstructionIsControlTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_call:
     case x86_ret:
@@ -155,7 +154,7 @@ bool x86InstructionIsControlTransfer(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsConditionalBranch(SgAsmx86Instruction* inst) {
+bool x86InstructionIsConditionalBranch(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_ja:
     case x86_jae:
@@ -181,7 +180,7 @@ bool x86InstructionIsConditionalBranch(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
+bool x86InstructionIsDataTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_aaa:
     case x86_aad:
@@ -430,7 +429,7 @@ bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsUnconditionalBranch(SgAsmx86Instruction* inst) {
+bool x86InstructionIsUnconditionalBranch(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_call:
     case x86_ret:
@@ -446,7 +445,7 @@ bool x86InstructionIsUnconditionalBranch(SgAsmx86Instruction* inst) {
   }
 }
 
-bool x86InstructionIsPrivileged(SgAsmx86Instruction *insn)
+bool x86InstructionIsPrivileged(SgAsmX86Instruction *insn)
 {
     switch (insn->get_kind()) {
         case x86_cli:           // clear interrupt flag
@@ -490,7 +489,7 @@ bool x86InstructionIsPrivileged(SgAsmx86Instruction *insn)
     return false;               // outside of switch to shut up warnings
 }
 
-bool x86InstructionIsFloatingPoint(SgAsmx86Instruction *insn)
+bool x86InstructionIsFloatingPoint(SgAsmX86Instruction *insn)
 {
     switch (insn->get_kind()) {
         case x86_addpd:         // add packed double precision

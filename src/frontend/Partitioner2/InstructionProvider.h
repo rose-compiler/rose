@@ -1,12 +1,12 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 #define ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 
-#include "sage3basic.h"
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 
 #include <sawyer/Assert.h>
 #include <sawyer/Map.h>
+#include <sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -23,17 +23,25 @@ namespace BinaryAnalysis {
  *  required regardless of whether its used to obtain new instructions because the disassembler has the canonical information
  *  about the machine architecture: what registers are defined, which registers are the program counter and stack pointer,
  *  which instruction semantics dispatcher can be used with the instructions, etc. */
-class InstructionProvider {
+class InstructionProvider: public Sawyer::SharedObject {
 public:
+    typedef Sawyer::SharedPointer<InstructionProvider> Ptr;
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InsnMap;
+
 private:
     Disassembler *disassembler_;
     MemoryMap memMap_;
     mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
-public:
 
-    /** Constructor.
+protected:
+    InstructionProvider(Disassembler *disassembler, const MemoryMap &map)
+        : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
+        ASSERT_not_null(disassembler);
+    }
+
+public:
+    /** Static allocating Constructor.
      *
      *  The disassembler is required even if the user plans to turn off the ability to obtain instructions from the
      *  disassembler.  The memory map should be configured so that all segments that potentially contain instructions have
@@ -43,9 +51,8 @@ public:
      *
      *  The disassembler is owned by the caller and should not be freed until after the instruction provider is destroyed.  The
      *  memory map is copied into the instruction provider. */
-    InstructionProvider(Disassembler *disassembler, const MemoryMap &map)
-        : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
-        ASSERT_not_null(disassembler);
+    static Ptr instance(Disassembler *disassembler, const MemoryMap &map) {
+        return Ptr(new InstructionProvider(disassembler, map));
     }
 
     /** Enable or disable the disassembler.

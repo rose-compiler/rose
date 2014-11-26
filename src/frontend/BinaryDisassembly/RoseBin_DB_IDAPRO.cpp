@@ -4,7 +4,7 @@
  * Date : 3Apr07
  * Decription : Code that handles the IDAPRO DB
  ****************************************************/
-#include "rose.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
 #include "RoseBin_DB_IDAPRO.h"
 #include <errno.h>
 #include <mysql.h>

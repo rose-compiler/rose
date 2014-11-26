@@ -42,9 +42,9 @@ size_t findImportFunctions(const Partitioner&, SgAsmPEFileHeader*, const ImportI
 /** Scans PE import sections to build an index.
  *
  * @{ */
-ImportIndex getImportIndex(SgAsmPEFileHeader*);
-ImportIndex getImportIndex(SgAsmInterpretation*);
-size_t getImportIndex(SgAsmPEFileHeader*, ImportIndex&);
+ImportIndex getImportIndex(const Partitioner&, SgAsmPEFileHeader*);
+ImportIndex getImportIndex(const Partitioner&, SgAsmInterpretation*);
+size_t getImportIndex(const Partitioner&, SgAsmPEFileHeader*, ImportIndex&);
 /** @} */
 
 /** Update import address tables to reflect addresses of imported functions. */

@@ -12,15 +12,17 @@ namespace ModulesPe {
 
 using namespace rose::Diagnostics;
 
+// Scan PE import sections to build an index
 size_t
-getImportIndex(SgAsmPEFileHeader *peHeader, ImportIndex &index) {
+getImportIndex(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
     size_t nInserted = 0;
     if (peHeader!=NULL) {
         BOOST_FOREACH (SgAsmGenericSection *section, peHeader->get_sections()->get_sections()) {
             if (SgAsmPEImportSection *importSection = isSgAsmPEImportSection(section)) {
                 BOOST_FOREACH (SgAsmPEImportDirectory *importDir, importSection->get_import_directories()->get_vector()) {
                     BOOST_FOREACH (SgAsmPEImportItem *import, importDir->get_imports()->get_vector()) {
-                        if (index.insertMaybe(import->get_hintname_rva().get_va(), import))
+                        rose_addr_t va = import->get_hintname_rva().get_va();
+                        if (index.insertMaybe(va, import))
                             ++nInserted;
                     }
                 }
@@ -31,18 +33,18 @@ getImportIndex(SgAsmPEFileHeader *peHeader, ImportIndex &index) {
 }
 
 ImportIndex
-getImportIndex(SgAsmPEFileHeader *peHeader) {
+getImportIndex(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
     ImportIndex index;
-    getImportIndex(peHeader, index);
+    getImportIndex(partitioner, peHeader, index);
     return index;
 }
 
 ImportIndex
-getImportIndex(SgAsmInterpretation *interp) {
+getImportIndex(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     ImportIndex index;
     if (interp!=NULL) {
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
-            getImportIndex(isSgAsmPEFileHeader(fileHeader), index);
+            getImportIndex(partitioner, isSgAsmPEFileHeader(fileHeader), index);
     }
     return index;
 }
@@ -105,7 +107,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader,
 
 std::vector<Function::Ptr>
 findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
-    ImportIndex imports = getImportIndex(peHeader);
+    ImportIndex imports = getImportIndex(partitioner, peHeader);
     std::vector<Function::Ptr> functions;
     findImportFunctions(partitioner, peHeader, imports, functions);
     return functions;
@@ -115,7 +117,7 @@ std::vector<Function::Ptr>
 findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
-        ImportIndex imports = getImportIndex(interp);
+        ImportIndex imports = getImportIndex(partitioner, interp);
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
             findImportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), imports, functions);
     }
@@ -138,24 +140,26 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         iatAddresses.insert(AddressInterval::baseSize(import->get_iat_entry_va(), 4));
 
     // Add segments to the memory map.
-    BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.nodes()) {
-        MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(iatExtent.size());
+    BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.intervals()) {
         partitioner.memoryMap().insert(iatExtent,
-                                       MemoryMap::Segment(buffer, 0, MemoryMap::MM_PROT_READ, "partitioner-adjusted IAT"));
+                                       MemoryMap::Segment::anonymousInstance(iatExtent.size(), MemoryMap::READABLE,
+                                                                             "partitioner-adjusted IAT"));
     }
 
     // Write IAT entries into the newly mapped IATs
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
         uint32_t packed;
         ByteOrder::host_to_le(node.key(), &packed);
-        if (4!=partitioner.memoryMap().write(&packed, node.value()->get_iat_entry_va(), 4, MemoryMap::MM_PROT_NONE))
+        rose_addr_t iatVa = node.value()->get_iat_entry_va();
+        if (4!=partitioner.memoryMap().at(iatVa).limit(4).write((uint8_t*)&packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }
 
 void
 nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
-    ASSERT_not_null(interp);
+    if (interp==NULL)
+        return;
     std::vector<Function::Ptr> functions = partitioner.functions();
 
     // Get the addresses for the PE Import Address Tables
@@ -170,7 +174,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 
     // Build an index that maps addresses to entries in the import tables.  The addresses are the addresses where the imported
     // functions are expected to be mapped.
-    ImportIndex importIndex = getImportIndex(interp);
+    ImportIndex importIndex = getImportIndex(partitioner, interp);
 
     // Process each function that's attached to the CFG/AUM
     BOOST_FOREACH (const Function::Ptr &function, functions) {
@@ -182,7 +186,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         ASSERT_not_null(bblock);
         if (bblock->nInstructions()!=1)
             continue;                                   // ...that contains only one instruction...
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(bblock->instructions().front());
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(bblock->instructions().front());
         if (!insn) {
             static bool warned;
             if (!warned) {
