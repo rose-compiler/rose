@@ -124,7 +124,6 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
       ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_SOURCE_DIR}/src/util/rose_strtoull.C
-      ${CMAKE_SOURCE_DIR}/src/util/Stopwatch.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
@@ -138,12 +137,14 @@ set( STORAGECLASSES_SRC
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Assert.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/CommandLine.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/GraphTraversal.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Markup.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/MarkupPod.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Message.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/ProgressBar.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/Sawyer.C
       ${CMAKE_SOURCE_DIR}/src/util/sawyer/SmallObject.C
+      ${CMAKE_SOURCE_DIR}/src/util/sawyer/Stopwatch.C
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
@@ -284,11 +285,14 @@ set(rose_support_src
      )
 
 set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUsageMap.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Attribute.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/BasicBlock.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ControlFlowGraph.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Engine.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Exception.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Function.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/FunctionCallGraph.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/InstructionProvider.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Modules.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ModulesElf.C
@@ -317,6 +321,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init8.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init9.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/BinaryDebugger.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerMips.C 
@@ -724,6 +729,8 @@ if (NOT enable-internalFrontendDevelopment)
   #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/ControlFlowGraph.C
   #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominanceFrontier.C
   #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominatorTree.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/EditDistance/EditDistance.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/EditDistance/TreeEditDistance.C
   )
 endif()
 

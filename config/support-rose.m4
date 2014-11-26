@@ -145,14 +145,14 @@ fi
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
-AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.4.x verification check]),,[enableval=yes])
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.8.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.8.x verification check]),,[enableval=yes])
 if test "x$enableval" = "xyes" ; then
       AC_LANG_PUSH([C])
       # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
       AC_COMPILE_IFELSE([
         AC_LANG_SOURCE([[
-          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 4)
+          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 8)
             int rose_supported_gcc;
           #else
             not gcc, or gcc version is not supported by rose
@@ -161,7 +161,7 @@ if test "x$enableval" = "xyes" ; then
        ],
        [AC_MSG_RESULT([done])],
        gcc_version=`gcc -dumpversion`
-       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.4.x is supported now.])])
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.8.x is supported now.])])
       AC_LANG_POP([C])
 else
     AC_MSG_RESULT([skipping])
@@ -678,7 +678,7 @@ ROSE_SUPPORT_PYTHON
 
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
 
-AX_PYTHON_DEVEL([0.0.0], [3.0.0])
+AX_PYTHON_DEVEL([0.0.0], [3.1.4])
 PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
 PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
 PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
@@ -2126,6 +2126,8 @@ tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
 tests/roseTests/astInterfaceTests/Makefile
+tests/roseTests/astInterfaceTests/unitTests/Makefile
+tests/roseTests/astInterfaceTests/typeEquivalenceTests/Makefile
 tests/roseTests/astLValueTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
@@ -2175,6 +2177,9 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/fileLocation_tests/Makefile
 tests/roseTests/graph_tests/Makefile
 tests/roseTests/mergeTraversal_tests/Makefile
+tests/testSupport/Makefile
+tests/testSupport/gtest/Makefile
+tests/roseTests/ROSETTA/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
