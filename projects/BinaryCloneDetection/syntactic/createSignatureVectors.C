@@ -239,7 +239,7 @@ createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filena
     int functionId = tx->statement("select coalesce(max(id),-1)+1 from functions")->execute_int(); // zero origin
     
     for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi, ++functionId) {
-        ExtentMap e_insns, e_data, e_total;
+        AddressIntervalSet e_insns, e_data, e_total;
         (*fi)->get_extent(&e_insns, NULL, NULL, &iselector);
         (*fi)->get_extent(&e_data,  NULL, NULL, &dselector);
         (*fi)->get_extent(&e_total);
