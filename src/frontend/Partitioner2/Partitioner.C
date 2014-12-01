@@ -1981,7 +1981,7 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
 }
 
 FunctionCallGraph
-Partitioner::functionCallGraph() const {
+Partitioner::functionCallGraph(bool allowParallelEdges) const {
     FunctionCallGraph cg;
     BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, cfg_.edges()) {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
@@ -1989,7 +1989,7 @@ Partitioner::functionCallGraph() const {
             Function::Ptr target = edge.target()->value().function();
             if (source!=NULL && target!=NULL &&
                 (source!=target || edge.value().type()==E_FUNCTION_CALL || edge.value().type()==E_FUNCTION_XFER))
-                cg.insert(source, target);
+                cg.insertCall(source, target, edge.value().type(), allowParallelEdges);
         }
     }
     return cg;

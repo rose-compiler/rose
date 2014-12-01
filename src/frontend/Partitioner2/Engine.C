@@ -302,6 +302,7 @@ Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     attachPaddingToFunctions(partitioner);
     attachSurroundedDataToFunctions(partitioner);
     attachBlocksToFunctions(partitioner, true);         // to emit warnings about CFG problems
+    updateAnalysisResults(partitioner);
     postPartitionFixups(partitioner, interp);
     return *this;
 }
@@ -334,6 +335,12 @@ Engine::discoverFunctions(Partitioner &partitioner) {
     // Try to attach basic blocks to functions and return the list of failures.
     makeCalledFunctions(partitioner);
     return attachBlocksToFunctions(partitioner);
+}
+
+void
+Engine::updateAnalysisResults(Partitioner &partitioner) {
+    partitioner.allFunctionMayReturn();
+    partitioner.allFunctionStackDelta();
 }
 
 void

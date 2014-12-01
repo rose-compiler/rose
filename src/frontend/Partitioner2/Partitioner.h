@@ -1288,8 +1288,12 @@ public:
      *  which are not actual control flow successors due to the presence of opaque predicates. */
     std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const;
 
-    /** Returns a function call graph. */
-    FunctionCallGraph functionCallGraph() const;
+    /** Returns a function call graph.
+     *
+     *  If @p allowParallelEdges is true then the returned call graph will have one edge for each function call and each edge
+     *  will have a count of one.  Otherwise multiple calls between the same pair of functions are coalesced into single edges
+     *  with non-unit counts in the call graph. */
+    FunctionCallGraph functionCallGraph(bool allowParallelEdges = true) const;
 
     /** Stack delta analysis for one function.
      *
@@ -1309,6 +1313,15 @@ public:
 
     /** Stack delta analysis for all functions. */
     void allFunctionStackDelta() const;
+
+    /** May-return analysis for one function.
+     *
+     *  Determines if a function can possibly return to its caller. This is a simple wrapper around @ref
+     *  basicBlockOptionalMayReturn invoked on the function's entry block. See that method for details. */
+    Sawyer::Optional<bool> functionOptionalMayReturn(const Function::Ptr &function) const;
+
+    /** May-return analysis for all functions. */
+    void allFunctionMayReturn() const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

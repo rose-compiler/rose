@@ -24,9 +24,6 @@ struct DfCfgVertex {
 // Control flow graph used by dataflow analysis. See buildDfCfg for details.
 typedef Sawyer::Container::Graph<DfCfgVertex> DfCfg;
 
-// Function call graph.
-typedef Sawyer::Container::Graph<Function::Ptr, EdgeType> CallGraph;
-
 // Build the CFG that will be used for dataflow analysis.  The dfCfg will contain vertices and edges within a single function
 // and only those which are reachable from the starting vertex.  It does so by using a depth-first traversal of the whole CFG
 // and trimming away E_FUNCTION_CALL and E_FUNCTION_XFER edges.  Additionally, an E_CALL_RETURN edge in the CFG becomes an
@@ -81,39 +78,6 @@ buildDfCfg(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeI
         }
     }
     return dfCfg;
-}
-
-// Builds a function call graph, CG, from the partitioner's control flow graph.  Each function in the CFG will appear as a
-// vertex in the CG. Each function call edge or function transfer edge will become an edge in the CG. Therefore the CG will
-// have one edge per call, possibly parallel edges between two functions.
-static CallGraph
-buildCallGraph(const Partitioner &partitioner) {
-    CallGraph cg;
-    Sawyer::Container::Map<Function::Ptr, CallGraph::VertexNodeIterator> vmap;
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &cfgVertex, partitioner.cfg().vertices()) {
-        if (cfgVertex.value().type() == V_BASIC_BLOCK) {
-            if (Function::Ptr function = cfgVertex.value().function()) {
-                if (!vmap.exists(function)) {
-                    CallGraph::VertexNodeIterator cgVertex = cg.insertVertex(function);
-                    vmap.insert(function, cgVertex);
-                }
-            }
-        }
-    }
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &cfgEdge, partitioner.cfg().edges()) {
-        if ((cfgEdge.value().type() == E_FUNCTION_CALL || cfgEdge.value().type() == E_FUNCTION_XFER) &&
-            V_BASIC_BLOCK == cfgEdge.source()->value().type() &&
-            V_BASIC_BLOCK == cfgEdge.target()->value().type()) {
-            Function::Ptr sourceFunction = cfgEdge.source()->value().function();
-            Function::Ptr targetFunction = cfgEdge.target()->value().function();
-            if (sourceFunction && targetFunction) {
-                CallGraph::VertexNodeIterator sourceVertex = vmap.get(sourceFunction);
-                CallGraph::VertexNodeIterator targetVertex = vmap.get(targetFunction);
-                cg.insertEdge(sourceVertex, targetVertex, cfgEdge.value().type());
-            }
-        }
-    }
-    return cg;
 }
 
 // Association between dataflow variables and their values.  We're only interested in the register state because the stack
@@ -344,13 +308,13 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
 void
 Partitioner::allFunctionStackDelta() const {
     using namespace Sawyer::Container::Algorithm;
-
-    CallGraph cg = buildCallGraph(*this);
-    size_t nFunctions = cg.nVertices();
+    FunctionCallGraph cg = functionCallGraph();
+    size_t nFunctions = cg.graph().nVertices();
     std::vector<bool> visited(nFunctions, false);
     for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
         if (!visited[cgVertexId]) {
-            for (DepthFirstForwardGraphTraversal<CallGraph> t(cg, cg.findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
+            typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
+            for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
                 if (t.event() == ENTER_VERTEX) {
                     if (visited[t.vertex()->id()])
                         t.skipChildren();

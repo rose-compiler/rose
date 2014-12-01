@@ -517,6 +517,9 @@ int main(int argc, char *argv[]) {
     // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
     engine.postPartitionFixups(partitioner, interp);
 
+    // Analyze each basic block and function and cache results.  We do this before listing the CFG or building the AST.
+    engine.updateAnalysisResults(partitioner);
+
     info <<"; completed in " <<partitionTime <<" seconds.\n";
     SgAsmBlock *globalBlock = NULL;
 
