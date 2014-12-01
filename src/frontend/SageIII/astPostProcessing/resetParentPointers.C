@@ -596,9 +596,12 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                                      // ROSE_ASSERT(classDeclaration->get_definition()->get_parent() != NULL);
                                         if (classDeclaration->get_definition() == NULL)
                                            {
+// DQ (9/12/2014): Added more control over output of messages for release versions of ROSE.
+#if PRINT_DEVELOPER_WARNINGS
                                              printf ("WARNING: In resetParentPointersInTemplateArgumentList(): commented out to compile ROSE using ROSE: assertion failing for: classDeclaration->get_definition() != NULL \n");
                                              printf ("--- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
                                           // classDeclaration->get_file_info()->display("assertion failing for: classDeclaration->get_definition() != NULL: debug");
+#endif
                                            }
                                           else
                                            {
@@ -1196,9 +1199,12 @@ ResetParentPointers::evaluateInheritedAttribute (
                                 // DQ (1/30/2013): Commented out assertion that appears to be only an issue for ROSE compiling ROSE (part of testing).
                                    if (classDeclaration->get_definingDeclaration()->get_parent() == NULL)
                                       {
+// DQ (9/12/2014): Added more control over output of messages for release versions of ROSE.
+#if PRINT_DEVELOPER_WARNINGS
                                         printf ("WARNING: In resetParentPointersInTemplateArgumentList(): commented out to compile ROSE using ROSE: assertion failing for: classDeclaration->get_definingDeclaration()->get_parent() != NULL \n");
                                         printf ("--- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
                                      // classDeclaration->get_file_info()->display("assertion failing for: classDeclaration->get_definingDeclaration()->get_parent() != NULL: debug");
+#endif
                                       }
                                 // ROSE_ASSERT(classDeclaration->get_definingDeclaration()->get_parent() != NULL);
                                  }

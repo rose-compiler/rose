@@ -29,7 +29,10 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
   // DQ (5/28/2011): Initialize the local maps to the static maps in SgNode.  This is requires so the
   // types used in template arguments can call the unparser to support there generation of name qualified 
   // nested types.
-     NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
+
+  // DQ (9/7/2014): Modified to handle template header map (for template declarations).
+  // NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
+     NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalQualifiedNameMapForTemplateHeaders(),SgNode::get_globalTypeNameMap(),referencedNameSet);
 
      NameQualificationInheritedAttribute ih;
 
@@ -57,7 +60,9 @@ NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* no
    {
      ROSE_ASSERT(input_currentScope != NULL);
 
-     NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->typeNameMap,this->referencedNameSet);
+  // DQ (9/7/2014): Modified to handle template header map (for template declarations).
+  // NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->typeNameMap,this->referencedNameSet);
+     NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->qualifiedNameMapForTemplateHeaders,this->typeNameMap,this->referencedNameSet);
 
      t.explictlySpecifiedCurrentScope = input_currentScope;
 
@@ -141,10 +146,16 @@ NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute ( c
 // NameQualificationTraversal
 // *******************
 
-NameQualificationTraversal::NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet)
+NameQualificationTraversal::NameQualificationTraversal(
+     std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, 
+     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
+     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
+     std::map<SgNode*,std::string> & input_typeNameMap, 
+     std::set<SgNode*> & input_referencedNameSet)
    : referencedNameSet(input_referencedNameSet),
      qualifiedNameMapForNames(input_qualifiedNameMapForNames),
      qualifiedNameMapForTypes(input_qualifiedNameMapForTypes),
+     qualifiedNameMapForTemplateHeaders(input_qualifiedNameMapForTemplateHeaders),
      typeNameMap(input_typeNameMap)
    {
   // Nothing to do here.
@@ -167,6 +178,13 @@ const std::map<SgNode*,std::string> &
 NameQualificationTraversal::get_qualifiedNameMapForTypes() const
    {
      return qualifiedNameMapForTypes;
+   }
+
+// DQ (9/7/2014): Added support to set the template headers in template declarations.
+const std::map<SgNode*,std::string> &
+NameQualificationTraversal::get_qualifiedNameMapForTemplateHeaders() const
+   {
+     return qualifiedNameMapForTemplateHeaders;
    }
 
 
@@ -3766,12 +3784,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                ROSE_ASSERT(initializedName != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("================ Calling nameQualificationDepthForType to evaluate the type \n");
+               printf ("================ Calling nameQualificationDepthForType to evaluate the type for initializedName = %p \n",initializedName);
 #endif
             // Compute the depth of name qualification from the current statement:  variableDeclaration.
                int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,functionDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("SgVariableDeclaration's type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
+               printf ("SgFunctionParameterList's type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
+               printf ("   --- initializedName->get_type() = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
 #endif
             // Not all types have an associated declaration, but some do: examples include classes, typedefs, and enums.
                SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
@@ -3779,6 +3798,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("Putting the name qualification for the type into the SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                    printf ("   --- getDeclarationAssociatedWithType(): declaration                 = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
 
                  // **************************************************
@@ -4262,6 +4282,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         {
        // Could it be that we only want to do this for the defining declaration? No, since prototypes must also use name qualification!
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+        // DQ (9/7/2014): Added debugging to verify that this case is supporting name qualification of SgTemplateMemberFunctionDeclaration IR node.
+           if (isSgTemplateMemberFunctionDeclaration(memberFunctionDeclaration) != NULL)
+              {
+                printf ("Note: This case supports SgTemplateMemberFunctionDeclaration as well: memberFunctionDeclaration = %p = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->get_name().str());
+             // ROSE_ASSERT(false);
+              }
+#endif
+
        // We need the structural location in scope (not the semantic one).
           SgScopeStatement* currentScope = isSgScopeStatement(memberFunctionDeclaration->get_parent());
 
@@ -4274,6 +4303,43 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                ROSE_ASSERT(memberFunctionDeclaration->get_type()->get_return_type() != NULL);
                SgType* returnType = memberFunctionDeclaration->get_type()->get_return_type();
                ROSE_ASSERT(returnType != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case SgMemberFunctionDeclaration: returnType = %p = %s \n",returnType,returnType->class_name().c_str());
+               SgTemplateType* template_returnType = isSgTemplateType(returnType);
+               if (template_returnType != NULL)
+                  {
+                    printf ("template_returnType                                    = %p \n",template_returnType);
+                    printf ("template_returnType->get_name()                        = %s \n",template_returnType->get_name().str());
+                    printf ("template_returnType->get_template_parameter_position() = %d \n",template_returnType->get_template_parameter_position());
+
+                  }
+               printf ("   --- memberFunctionDeclaration->get_firstNondefiningDeclaration() = %p = %s \n",memberFunctionDeclaration->get_firstNondefiningDeclaration(),memberFunctionDeclaration->get_firstNondefiningDeclaration()->class_name().c_str());
+               if (memberFunctionDeclaration->get_definingDeclaration() != NULL)
+                  {
+                    printf ("   --- memberFunctionDeclaration->get_definingDeclaration() = %p = %s \n",memberFunctionDeclaration->get_definingDeclaration(),memberFunctionDeclaration->get_definingDeclaration()->class_name().c_str());
+                  }
+               printf ("memberFunctionDeclaration->get_type() = %p = %s \n",memberFunctionDeclaration->get_type(),memberFunctionDeclaration->get_type()->class_name().c_str());
+#if 1
+               if (isSgTemplateMemberFunctionDeclaration(memberFunctionDeclaration) != NULL)
+                  {
+                    printf ("Exiting as a test: memberFunctionDeclaration = %p = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->get_name().str());
+                 // ROSE_ASSERT(false);
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                  }
+#endif
+#endif
+
                SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(returnType);
                if (declaration != NULL)
                   {
@@ -4303,6 +4369,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // as the scope of the function declaration.  However, the analysis should work and determin that the 
             // required name qualification length is zero.
                printf ("I would like to not have to have this SgMemberFunctionDeclaration logic, we should get the name qualification correct more directly. \n");
+               printf ("   --- memberFunctionDeclaration->get_scope() = %p = %s \n",memberFunctionDeclaration->get_scope(),memberFunctionDeclaration->get_scope()->class_name().c_str());
+               printf ("   --- currentScope                           = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
                if (currentScope != memberFunctionDeclaration->get_scope())
                   {
@@ -4317,9 +4385,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
+                 // DQ (9/7/2014): This branch is taken by the non-defining template member functions defined outside of their 
+                 // associated template class declarations. There are also other cases where this branch is taken.
+
                  // Don't know what test code exercises this case (see test2005_73.C).
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through predicate (currentScope != memberFunctionDeclaration->get_scope()), not clear why! \n");
+                    printf ("   --- memberFunctionDeclaration->get_scope() = %p = %s \n",memberFunctionDeclaration->get_scope(),memberFunctionDeclaration->get_scope()->class_name().c_str());
+                    printf ("   --- currentScope                           = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
                  // ROSE_ASSERT(false);
                   }
@@ -6111,6 +6184,47 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 
      string qualifier = setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
+  // DQ (9/7/2014): Added suppor for where this is a template member or non-member function declaration and we need to genrate the name with the associated template header.
+     string template_header;
+     SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(functionDeclaration);
+     SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(functionDeclaration);
+     bool buildTemplateHeaderString = (templateFunctionDeclaration != NULL || templateMemberFunctionDeclaration != NULL);
+     if (buildTemplateHeaderString == true)
+        {
+       // DQ (9/7/2014): First idea, but not likely to work...and too complex.
+       // Note that another aspect of this implementation might be that we save a set of template class 
+       // declarations so that we can match types in the function's parameter list against the template class declaration 
+       // set so that we know when to build function parameter types as template types vs. template instantiation types.
+       // This would require that we save a more complex data structure than a simple string.  It is also not clear if
+       // all references to a template class instantiation could be assumed to be references to it's template declaration?
+       // Or maybe the problem is that there is some other function parameter lis that we need to consult.
+
+       // DQ (9/7/2014): Better:
+       // A better solution would be to make sure that we generate type in the EDG/ROSE translation using the template 
+       // function's paramter list associated with the first non-defining declaration (instead of the one being generated
+       // as part of building the defining declaration (which is using the same a_routine_ptr as that used to build the 
+       // template instantiation.  As a result we a mixing the types in the defining template declaration with that of the
+       // defining template instantiation (which is always wrong).  So the simple solution is to just use the types from
+       // the non-defining template member or non-member function declaration.  The same should apply to the function 
+       // return type.  This is the simplest solution to date.
+
+       // DQ (9/8/2014): The best solution was to translate the defining non-template function declarations when we saw them
+       // as defining declarations, but only put the non-defining declaration into the class template (to match the normalization
+       // done by EDG) and then attach the defining template declaration ahead of the first associated template instantiation.
+       // This appears to work well and will soon be evaluated for further tests.
+#if 0
+          printf ("WARNING: technical problem with function paramter types of template functions (should maybe not be template instantiations) \n");
+#endif
+          template_header = setTemplateHeaderNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired);
+#if 0
+          printf ("In NameQualificationTraversal::setNameQualification(): qualifier = %s template_header = %s \n",qualifier.c_str(),template_header.c_str());
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_declarationModifier().isFriend() = %s \n",functionDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
      printf ("In NameQualificationTraversal::setNameQualification(): outputNameQualificationLength                             = %d \n",outputNameQualificationLength);
@@ -6161,7 +6275,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
         }
        else
         {
-       // If it already existes then overwrite the existing information.
+       // If it already exists then overwrite the existing information.
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
@@ -6185,6 +6299,50 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 #endif
              }
         }
+
+     if (buildTemplateHeaderString == true)
+        {
+       // Add the template header string to a new map.
+#if 0
+          printf ("Add the template header string to a new map: template_header = %s \n",template_header.c_str());
+#endif
+
+          if (qualifiedNameMapForTemplateHeaders.find(functionDeclaration) == qualifiedNameMapForTemplateHeaders.end())
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("Inserting qualifier for template header = %s into list at IR node = %p = %s \n",template_header.c_str(),functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
+               qualifiedNameMapForTemplateHeaders.insert(std::pair<SgNode*,std::string>(functionDeclaration,template_header));
+             }
+            else
+             {
+            // If it already exists then overwrite the existing information.
+               std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTemplateHeaders.find(functionDeclaration);
+               ROSE_ASSERT (i != qualifiedNameMapForTemplateHeaders.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               string previous_template_header = i->second.c_str();
+               printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previous_template_header.c_str(),template_header.c_str());
+#endif
+               if (i->second != template_header)
+                  {
+                    i->second = template_header;
+#if 1
+                 // DQ (9/7/2014): Make this an error.
+                    printf ("Error: name in qualifiedNameMapForTemplateHeaders already exists and is different... \n");
+                    ROSE_ASSERT(false);
+#else
+                 // DQ (9/7/2014): Let's not alow this.
+                    printf ("WARNING: name in qualifiedNameMapForTemplateHeaders already exists and is different... (reset) \n");
+#endif
+                  }
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
 
   // printf ("****************** DONE ******************** \n\n");
    }
@@ -6604,7 +6762,26 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
         }
        else
         {
-#if 1
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(variableDeclaration);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+               printf ("WARNING: name in qualifiedNameMapForNames already exists and is different... \n");
+#endif
+            // ROSE_ASSERT(false);
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
 #endif
@@ -7161,6 +7338,111 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                               skip_over_scope = true;
                             }
                        }
+                      else
+                       {
+                      // DQ (9/7/2014): Added case for template class definitions (which we were not using and thus 
+                      // it was not a problem that we didn't compute them quite right).  These were being computed
+                      // as "class-name::class-name", but we need then to be computed to be:
+                      // "class-name<template-parameter>::class-name<template-parameter>" instead.
+                      // Other logic will have to add the template header where these are used (not clear how to 
+                      // do that if we don't do it here).
+                         SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
+                         if (templateClassDefinition != NULL)
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                              printf ("In NameQualificationTraversal::setNameQualificationSupport(): Found SgTemplateClassDefinition: templateClassDefinition = %p = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
+#endif
+                              SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
+                              ROSE_ASSERT(templateClassDeclaration != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                           // This is the normalized name (without name qualification for internal template arguments)
+                              printf ("In NameQualificationTraversal::setNameQualificationSupport(): templateClassDeclaration->get_name()          = %s \n",templateClassDeclaration->get_name().str());
+
+                           // This is the name of the template (without and internal template arguments)
+                              printf ("In NameQualificationTraversal::setNameQualificationSupport(): templateClassDeclaration->get_templateName() = %s \n",templateClassDeclaration->get_templateName().str());
+#endif
+
+                              SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
+                              ROSE_ASSERT (unparseInfoPointer != NULL);
+                              unparseInfoPointer->set_outputCompilerGeneratedStatements();
+
+                           // templateClassDeclaration->get_file_info()->display("SgTemplateInstantiationDecl trying to generate the qualified name: debug");
+
+                              string template_name = templateClassDeclaration->get_templateName();
+
+                           // DQ (9/12/2014): If we have template specialization arguments then we wnat to use these instead of the template parameters (I think).
+                           // See test2014_222.C for an example.
+                              SgTemplateArgumentPtrList & templateSpecializationArgumentList = templateClassDeclaration->get_templateSpecializationArguments();
+#if 0
+                              printf ("templateSpecializationArgumentList.size() = %zu \n",templateSpecializationArgumentList.size());
+                              printf ("specialization = %d \n",templateClassDeclaration->get_specialization());
+#endif
+                              if (templateSpecializationArgumentList.empty() == false)
+                                 {
+                                // DQ (9/13/2014): I have build overloaded versions of globalUnparseToString() to handle that case of SgTemplateArgumentPtrList.
+                                   string template_specialization_argument_list_string = globalUnparseToString(&templateSpecializationArgumentList,unparseInfoPointer);
+#if 0
+                                   printf ("template_specialization_argument_list_string = %s \n",template_specialization_argument_list_string.c_str());
+#endif
+                                   template_name += template_specialization_argument_list_string;
+                                 }
+                                else
+                                 {
+
+                           // ROSE_ASSERT(templateSpecializationArgumentList.size() == 0);
+                           // if (templateSpecializationArgumentList.empty() == true)
+
+                           // DQ (9/9/2014): Modified to support empty name template parameter lists as what appear if none are present 
+                           // (and this is a non-template function in a template class which we consider to be a template function 
+                           // because it can be instantiated).
+                              SgTemplateParameterPtrList & templateParameterList = templateClassDeclaration->get_templateParameters();
+                              if (templateParameterList.empty() == false)
+                                 {
+#if 1
+                                // DQ (9/13/2014): I have build overloaded versions of globalUnparseToString() to handle that case of SgTemplateParameterPtrList.
+                                   string template_parameter_list_string = globalUnparseToString(&templateParameterList,unparseInfoPointer);
+                                   template_name += template_parameter_list_string;
+#else
+                                   template_name += "< ";
+                                // printf ("START: template_name = %s \n",template_name.c_str());
+                                   SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+
+#error "DEAD CODE!"
+
+                                   while (i != templateParameterList.end())
+                                      {
+                                        SgTemplateParameter* templateParameter = *i;
+                                        ROSE_ASSERT(templateParameter != NULL);
+
+                                        string template_parameter_name = globalUnparseToString(templateParameter,unparseInfoPointer);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+                                        printf ("In NameQualificationTraversal::setNameQualificationSupport(): templateParameter = %p template_parameter_name (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name.c_str());
+#endif
+                                        template_name += "/* Is this a pointer? */";
+                                        template_name += template_parameter_name;
+                                        i++;
+
+                                        if (i != templateParameterList.end())
+                                             template_name += ",";
+                                      }
+
+                                   template_name += "> ";
+#endif
+                                 }
+                                 }
+
+                              scope_name = template_name;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                              printf ("setNameQualificationSupport(): case of SgTemplateClassDefinition: scope_name = %s \n",scope_name.c_str());
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
                   }
              }
 
@@ -7179,7 +7461,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                scope_name = "::";
              }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           printf ("In NameQualificationTraversal::setNameQualificationSupport(): scope_name = %s skip_over_scope = %s \n",scope_name.c_str(),skip_over_scope ? "true" : "false");
 #endif
 
@@ -7222,8 +7504,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      printf ("In NameQualificationTraversal::setNameQualificationSupport(): After loop over name qualifiction depth: inputNameQualificationLength = %d \n",inputNameQualificationLength);
 #endif
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("In NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     printf ("Leaving NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",
           outputGlobalQualification ? "true" : "false",output_amountOfNameQualificationRequired,qualifierString.c_str());
 #endif
 
@@ -7244,6 +7526,458 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
      return qualifierString;
    }
+
+
+string
+NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength )
+   {
+  // DQ (9/7/2014): This function generates a string that is used with name qualification of template declarations.
+  // For example:
+  //      template < typename T >
+  //      template < typename S >
+  //      void X<T>::A<S>::foobar (int x) { int a_value; }
+  // Requires the template header string: "template < typename T > template < typename S >"
+  // in addition to the usual name qualification (which here is in terms of template parameters 
+  // instead of template arguments (as in a template instantiation), namely "X<T>::A<S>::").  
+  // This new support for template headers also requires a new map of names to template declarations.
+
+  // This is lower level support for the different overloaded setNameQualification() functions.
+  // This function builds up the qualified name as a string and then returns it to be used in 
+  // either the map to names or the map to types (two different hash maps).
+     string accumulated_template_header_name;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     printf ("In NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
+#endif
+
+     for (int i = 0; i < inputNameQualificationLength; i++)
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("   --- In loop: i = %d scope = %p = %s = %s \n",i,scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+#endif
+          string template_header_name;
+
+       // DQ (9/7/2014): Added case for template class definitions (which we were not using and thus 
+       // it was not a problem that we didn't compute them quite right).  These were being computed
+       // as "class-name::class-name", but we need then to be computed to be:
+       // "class-name<template-parameter>::class-name<template-parameter>" instead.
+       // Other logic will have to add the template header where these are used (not clear how to 
+       // do that if we don't do it here).
+          SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
+          if (templateClassDefinition != NULL)
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("Found SgTemplateClassDefinition: templateClassDefinition = %p = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
+#endif
+               SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
+               ROSE_ASSERT(templateClassDeclaration != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+            // This is the normalized name (without name qualification for internal template arguments)
+               printf ("templateClassDeclaration->get_name()          = %s \n",templateClassDeclaration->get_name().str());
+
+            // This is the name of the template (without and internal template arguments)
+               printf ("templateClassDeclaration->get_templateName() = %s \n",templateClassDeclaration->get_templateName().str());
+#endif
+#if 0
+               SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
+               ROSE_ASSERT (unparseInfoPointer != NULL);
+               unparseInfoPointer->set_outputCompilerGeneratedStatements();
+#endif
+            // templateClassDeclaration->get_file_info()->display("SgTemplateInstantiationDecl trying to generate the qualified name: debug");
+
+               SgTemplateParameterPtrList & templateParameterList = templateClassDeclaration->get_templateParameters();
+               if (templateParameterList.empty() == false)
+                  {
+            // string template_name = templateClassDeclaration->get_templateName();
+
+#if 1
+               string template_name = buildTemplateHeaderString(templateParameterList);
+#else
+               string template_name = "template < ";
+            // printf ("START: template_name = %s \n",template_name.c_str());
+               SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+               while (i != templateParameterList.end())
+                  {
+
+#error "DEAD CODE!"
+
+#if 0
+                    printf ("In NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(): Check for the type of the template parameters (could be non-type, etc.) \n");
+#endif
+                    SgTemplateParameter* templateParameter = *i;
+                    ROSE_ASSERT(templateParameter != NULL);
+
+#error "DEAD CODE!"
+
+                 // DQ (9/10/2014): We only want to output the "typename" when it is required (and exactly when it is required is not clear).
+                 // Note that in C++ using "class" or "typename" is equivalent.
+                 // template_name += "typename ";
+                    switch(templateParameter->get_parameterType())
+                       {
+                      // Only type parameters should require "typename" (but not if the type was explicit).
+                         case SgTemplateParameter::type_parameter:
+                            {
+                           // DQ (9/10/2014): Added support for case SgTemplateParameter::type_parameter.
+                              SgType* type = templateParameter->get_type();
+                              ROSE_ASSERT(type != NULL);
+#if 0
+                              printf ("In NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(): case SgTemplateParameter::type_parameter: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                           // If the type was explicit then don't output a redundant "typename".
+                              SgTemplateType* templateType = isSgTemplateType(type);
+                              if (templateType == NULL)
+                                 {
+#error "DEAD CODE!"
+
+#if 0
+                                // This might tell us when to use "class: instead of "typename" but since they are equivalent we can prefer to output "typename".
+                                   SgClassType* classType = isSgClassType(type);
+                                   if (classType != NULL)
+                                      {
+                                        string name = classType->get_name();
+                                        curprint(name);
+                                      }
+                                     else
+                                      {
+                                        SgUnparse_Info ninfo(info);
+                                        unp->u_type->unparseType(type,ninfo);
+                                      }
+#endif
+                                 }
+                                else
+                                 {
+#error "DEAD CODE!"
+
+                                   template_name += "typename ";
+#if 0
+                                   string name = templateType->get_name();
+#if 0
+                                   printf ("In NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
+#endif
+                                // unp->u_exprStmt->curprint(" typename ");
+                                   curprint(name);
+#endif
+                                 }
+
+                              break;
+                            }
+
+#error "DEAD CODE!"
+
+                      // Non-type parameters should not require "typename".
+                         case SgTemplateParameter::nontype_parameter:
+                            {
+                              if (templateParameter->get_expression() != NULL)
+                                 {
+                                // unp->u_exprStmt->unparseExpression(templateParameter->get_expression(),info);
+                                 }
+                                else
+                                 {
+                                   if (templateParameter->get_initializedName() == NULL)
+                                      {
+                                     // Not clear what this is?
+                                      }
+                                   ROSE_ASSERT(templateParameter->get_initializedName() != NULL);
+
+#error "DEAD CODE!"
+                                   SgType* type = templateParameter->get_initializedName()->get_type();
+                                   ROSE_ASSERT(type != NULL);
+
+                                // unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                                   SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
+                                   ROSE_ASSERT (unparseInfoPointer != NULL);
+                                   unparseInfoPointer->set_outputCompilerGeneratedStatements();
+
+                                   string template_parameter_name = globalUnparseToString(type,unparseInfoPointer);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                                   printf ("templateParameter = %p template_parameter_name (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name.c_str());
+#endif
+                                // DQ (9/11/2014): Need to add a space.
+                                   template_parameter_name += " ";
+
+                                   template_name += template_parameter_name;
+                                }
+                              break;
+                            }
+
+#error "DEAD CODE!"
+
+                         case SgTemplateParameter::template_parameter:
+                            {
+                              printf ("setTemplateHeaderNameQualificationSupport(): case SgTemplateParameter::template_parameter: Sorry, not implemented (ignored) \n");
+
+                              ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
+                              SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
+                              ROSE_ASSERT(templateDeclaration != NULL);
+
+                              SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+                              SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+                              curprint(" template < ");
+                              while (i != templateParameterList.end())
+                                 {
+                                   SgUnparse_Info newInfo(info);
+                                   curprint(" typename ");
+                                // unparseTemplateParameter(*i,newInfo);
+                                // curprint(" SgTemplateDeclaration_name ");
+
+                                   i++;
+
+                                   if (i != templateParameterList.end())
+                                        curprint(",");
+                                 }
+
+#error "DEAD CODE!"
+
+                              curprint(" > ");
+                              curprint(templateDeclaration->get_name());
+#if 0
+                              ROSE_ASSERT(false);
+#endif
+                              break;
+                            }
+
+                         default:
+                            {
+                              printf ("Error: setTemplateHeaderNameQualificationSupport(): default reached \n");
+                              ROSE_ASSERT(false);
+                              break;
+                            }
+                       }
+
+                 // Maybe the unparser support should optionally insert the "typename" or other parameter kind support.
+                    string template_parameter_name = globalUnparseToString(templateParameter,unparseInfoPointer);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("templateParameter = %p template_parameter_name (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name.c_str());
+#endif
+                    template_name += template_parameter_name;
+                    i++;
+
+                    if (i != templateParameterList.end())
+                         template_name += ",";
+                  }
+
+#error "DEAD CODE!"
+
+               template_name += "> ";
+#endif
+               template_header_name = template_name;
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(): template_header_name = %s accumulated_template_header_name = %s \n",template_header_name.c_str(),accumulated_template_header_name.c_str());
+#endif
+          accumulated_template_header_name = template_header_name + accumulated_template_header_name;
+
+       // We have to loop over scopes that are not named scopes!
+          scope = scope->get_scope();
+        }
+
+     ROSE_ASSERT(accumulated_template_header_name.substr(0,2) != "0x");
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     printf ("In NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(): accumulated_template_header_name = %s \n",accumulated_template_header_name.c_str());
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return accumulated_template_header_name;
+   }
+
+ 
+string
+NameQualificationTraversal::buildTemplateHeaderString ( SgTemplateParameterPtrList & templateParameterList )
+   {
+     SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
+     ROSE_ASSERT (unparseInfoPointer != NULL);
+     unparseInfoPointer->set_outputCompilerGeneratedStatements();
+
+#if 0
+     printf ("In NameQualificationTraversal::buildTemplateHeaderString(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+
+     string template_name = "template < ";
+  // printf ("START: template_name = %s \n",template_name.c_str());
+     SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+     while (i != templateParameterList.end())
+        {
+#if 0
+          printf ("In NameQualificationTraversal::buildTemplateHeaderString(): Check for the type of the template parameters (could be non-type, etc.) \n");
+#endif
+          SgTemplateParameter* templateParameter = *i;
+          ROSE_ASSERT(templateParameter != NULL);
+
+       // Maybe the unparser support should optionally insert the "typename" or other parameter kind support.
+          string template_parameter_name = globalUnparseToString(templateParameter,unparseInfoPointer);
+
+          bool template_parameter_name_has_been_output = false;
+
+       // DQ (9/10/2014): We only want to output the "typename" when it is required (and exactly when it is required is not clear).
+       // Note that in C++ using "class" or "typename" is equivalent.
+       // template_name += "typename ";
+          switch(templateParameter->get_parameterType())
+             {
+            // Only type parameters should require "typename" (but not if the type was explicit).
+               case SgTemplateParameter::type_parameter:
+                  {
+                 // DQ (9/10/2014): Added support for case SgTemplateParameter::type_parameter.
+                    SgType* type = templateParameter->get_type();
+                    ROSE_ASSERT(type != NULL);
+#if 0
+                    printf ("In NameQualificationTraversal::buildTemplateHeaderString(): case SgTemplateParameter::type_parameter: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // If the type was explicit then don't output a redundant "typename".
+                    SgTemplateType* templateType = isSgTemplateType(type);
+                    if (templateType == NULL)
+                       {
+                      // This might tell us when to use "class: instead of "typename" but since they are equivalent we can prefer to output "typename".
+                         SgClassType* classType = isSgClassType(type);
+                         if (classType != NULL)
+                            {
+                           // DQ (9/13/2014): See test2014_224.C for where this is required.
+                              template_name += "typename ";
+                           // string name = classType->get_name();
+                           // curprint(name);
+                            }
+                           else
+                            {
+                           // SgUnparse_Info ninfo(info);
+                           // unp->u_type->unparseType(type,ninfo);
+                            }
+                       }
+                      else
+                       {
+                         template_name += "typename ";
+#if 0
+                         string name = templateType->get_name();
+#if 0
+                         printf ("In NameQualificationTraversal::buildTemplateHeaderString(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
+#endif
+                      // unp->u_exprStmt->curprint(" typename ");
+                         curprint(name);
+#endif
+                       }
+
+                    break;
+                  }
+
+            // Non-type parameters should not require "typename".
+               case SgTemplateParameter::nontype_parameter:
+                  {
+                    if (templateParameter->get_expression() != NULL)
+                       {
+                      // unp->u_exprStmt->unparseExpression(templateParameter->get_expression(),info);
+                       }
+                      else
+                       {
+                         if (templateParameter->get_initializedName() == NULL)
+                            {
+                           // Not clear what this is?
+                            }
+                         ROSE_ASSERT(templateParameter->get_initializedName() != NULL);
+
+                         SgType* type = templateParameter->get_initializedName()->get_type();
+                         ROSE_ASSERT(type != NULL);
+#if 0
+                         printf ("In NameQualificationTraversal::buildTemplateHeaderString(): case SgTemplateParameter::nontype_parameter: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                      // unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                         SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
+                         ROSE_ASSERT (unparseInfoPointer != NULL);
+                         unparseInfoPointer->set_outputCompilerGeneratedStatements();
+
+                         unparseInfoPointer->set_isTypeFirstPart();
+
+                         string template_parameter_name_1stpart = globalUnparseToString(type,unparseInfoPointer);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                         printf ("case SgTemplateParameter::nontype_parameter: templateParameter = %p template_parameter_name_1stpart (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name_1stpart.c_str());
+#endif
+                         unparseInfoPointer->unset_isTypeFirstPart();
+
+                      // DQ (9/11/2014): Need to add a space.
+                         template_parameter_name_1stpart += " ";
+
+                         template_name += template_parameter_name_1stpart;
+
+                      // Put out the template parameter name.
+                         template_name += template_parameter_name;
+
+                         template_parameter_name_has_been_output = true;
+
+                         unparseInfoPointer->set_isTypeSecondPart();
+
+                      // Output the second part of the type.
+                         string template_parameter_name_2ndpart = globalUnparseToString(type,unparseInfoPointer);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                         printf ("case SgTemplateParameter::nontype_parameter: templateParameter = %p template_parameter_name_2ndpart (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name_2ndpart.c_str());
+#endif
+                         template_name += template_parameter_name_2ndpart;
+
+                      // This is not really required since the SgUnparse_Info object will not be used further.
+                         unparseInfoPointer->unset_isTypeSecondPart();
+                       }
+                    break;
+                  }
+
+               case SgTemplateParameter::template_parameter:
+                  {
+                    ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
+                    SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
+                    ROSE_ASSERT(templateDeclaration != NULL);
+
+                    SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+
+                    template_name += buildTemplateHeaderString(templateParameterList);
+
+                 // Not clear if this should always be marked as "class".
+                    template_name += "class ";
+#if 0
+                    printf ("buildTemplateHeaderString(): case SgTemplateParameter::template_parameter: Sorry, not implemented (ignored) \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("Error: buildTemplateHeaderString(): default reached \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+             }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          printf ("templateParameter = %p template_parameter_name (globalUnparseToString()) = %s \n",templateParameter,template_parameter_name.c_str());
+#endif
+       // template_name += template_parameter_name;
+          if (template_parameter_name_has_been_output == false)
+             {
+               template_name += template_parameter_name;
+             }
+          i++;
+
+          if (i != templateParameterList.end())
+               template_name += ",";
+        }
+
+     template_name += " > ";
+
+#if 0
+     printf ("Leaving buildTemplateHeaderString(): template_name = %s \n",template_name.c_str());
+#endif
+
+     return template_name;
+   }
+
 
 
 // DQ (3/31/2014): Adding support for global qualifiction.

@@ -1459,8 +1459,13 @@ ROSE_DLL_API size_t numberOfNodes();
 ROSE_DLL_API size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
-//     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)
 ROSE_DLL_API std::string globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+
+// DQ: These functions are used by soem specific STL containers to connect the unparser (in ROSE) to the AST (mostly for name qualification).
+// DQ (9/13/2014): Added support for more general unparsing of STL containers of IR nodes (at least these).
+ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateArgumentPtrList* templateArgumentList, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+
 
 // MS 2002: global type
 /*! \brief Access to C++ Run Time Information (RTI)
@@ -1884,6 +1889,23 @@ HEADER_START
        */
           static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
 
+      /*! \brief Access function for name qualification support (for template headers in template declarations).
+
+          This name is stored with reference to where the template declaration is used (as required) instead
+          of with the IR node (where it could be incorrect).  This design allows it to be computed as needed.
+          Note that template headers are the substrings "template<typename T>" that apepar in header declarations.
+          These can be repeated as required for deeply nested templated classes and thus are associated with
+          name qualification of template declarations (along with the more common form of name qualication
+          that also applies to template declarations).
+       */
+          static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTemplateHeaders();
+
+      /*! \brief Access function for name qualification support (for template headers in template declarations).
+
+          See documentation in get_globalQualifiedNameMapForTemplateHeaders() (above).
+       */
+          static void set_globalQualifiedNameMapForTemplateHeaders ( const std::map<SgNode*,std::string> & X );
+
       /*! \brief Access function for name qualification support (for names of types).
 
           This type name is stored with reference to where the type is used (as required) instead
@@ -2252,6 +2274,7 @@ std::map<std::string,int> SgNode::p_shortMangledNameCache;
 // qualified name support.
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
+std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
 std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 
 // DQ (7/22/2011): array dimensions may include expressions that require name qualification.
@@ -2423,6 +2446,20 @@ void
 SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
    {
      p_globalQualifiedNameMapForTypes = X;
+   }
+
+// DQ (5/28/2011): Added support for holding the name qualification map.
+std::map<SgNode*,std::string> &
+SgNode::get_globalQualifiedNameMapForTemplateHeaders()
+   {
+     return p_globalQualifiedNameMapForTemplateHeaders;
+   }
+
+// DQ (5/28/2011): Added support for holding the name qualification map.
+void
+SgNode::set_globalQualifiedNameMapForTemplateHeaders(const std::map<SgNode*,std::string> & X)
+   {
+     p_globalQualifiedNameMapForTemplateHeaders = X;
    }
 
 // DQ (6/3/2011): Added support for holding the map of type names that require qualification and at this position dependent.

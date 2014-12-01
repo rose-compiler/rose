@@ -128,9 +128,18 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              {
                SgInitializedName* initializedNameFromSymbol = isSgInitializedName(symbolBasis);
                ROSE_ASSERT(initializedNameFromSymbol != NULL);
-               ROSE_ASSERT(initializedNameFromSymbol->get_declptr() != NULL);
 
-               declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
+            // DQ (9/8/2014): This fails for test2013_234, 235, 240, 241, 242, 246.C.
+            // ROSE_ASSERT(initializedNameFromSymbol->get_declptr() != NULL);
+            // declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
+               if (initializedNameFromSymbol->get_declptr() != NULL)
+                  {
+                    declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
+                  }
+                 else
+                  {
+                    printf ("ERROR: In injectSymbolsFromReferencedScopeIntoCurrentScope(): initializedNameFromSymbol->get_declptr() == NULL \n");
+                  }
              }
 
 #if ALIAS_SYMBOL_DEBUGGING

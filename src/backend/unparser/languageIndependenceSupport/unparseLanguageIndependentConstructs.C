@@ -356,7 +356,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
      if (declarationStatement != NULL && statementInFile == false && stmt->get_file_info()->isFrontendSpecific() == false)
         {
-          curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " (skipped) */ \n");
+          curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (skipped) */ \n");
         }
 #endif
 
