@@ -8,9 +8,34 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+/** Function call information.
+ *
+ *  This class provides methods that operate on a function call graph, such as constructing a function call graph from a
+ *  control flow graph. The graph vertices are function pointers (Function::Ptr) and the edges contain information about the
+ *  type of inter-function edge (function call, function transfer, etc) and the number of such edges.  Function call graphs can
+ *  be built so that inter-function control transfer is represented by its own edge, or so that multiple transfers share an
+ *  edge. */
 class FunctionCallGraph {
 public:
-    typedef Sawyer::Container::Graph<Function::Ptr, size_t> Graph;
+    /** Information about each edge in the call graph. */
+    class Edge {
+        friend class FunctionCallGraph;
+        EdgeType type_;
+        size_t count_;
+    public:
+        explicit Edge(EdgeType type): type_(type), count_(1) {}
+
+        /** Type of edge. Edge types @ref E_FUNCTION_CALL and @ref E_FUNCTION_XFER are supported. */
+        EdgeType type() const { return type_; }
+
+        /** Number of inter-function control flow edges represented by this edge. */
+        size_t count() const { return count_; }
+    };
+    
+    /** Function call graph. */
+    typedef Sawyer::Container::Graph<Function::Ptr, Edge> Graph;
+
+    /** Maps function address to function call graph vertex. */
     typedef Sawyer::Container::Map<rose_addr_t, Graph::VertexNodeIterator> Index;
 
 private:
@@ -18,10 +43,19 @@ private:
     Index index_;
 
 public:
+    /** Underlying function call graph.
+     *
+     *  This returns the Sawyer::Container::Graph representing inter-function edges. It is read-only since modifying the graph
+     *  must be done in conjunction with updating the function-to-vertex index. */
     const Graph& graph() const { return graph_; }
+
+    /** Function-to-vertex index.
+     *
+     *  Returns the index mapping function addresses to function call graph vertices. The index is read-only since updating the
+     *  index must be done in conjunction with updating the graph. */
     const Index& index() const { return index_; }
 
-    /** Constructs an empty graph. */
+    /** Constructs an empty function call graph. */
     FunctionCallGraph() {}
 
     /** Copy constructor. */
@@ -39,15 +73,9 @@ public:
     Graph::ConstVertexNodeIterator findFunction(const Function::Ptr &function) const {
         return function ? findFunction(function->address()) : graph_.vertices().end();
     }
-    Graph::VertexNodeIterator findFunction(const Function::Ptr &function) {
-        return function ? findFunction(function->address()) : graph_.vertices().end();
-    }
     Graph::ConstVertexNodeIterator findFunction(rose_addr_t entryVa) const {
         Index::ConstValueIterator found = index_.find(entryVa);
         return found==index_.values().end() ? graph_.vertices().end() : Graph::ConstVertexNodeIterator(*found);
-    }
-    Graph::VertexNodeIterator findFunction(rose_addr_t entryVa) {
-        return index_.getOptional(entryVa).orElse(graph_.vertices().end());
     }
     /** @} */
 
@@ -69,20 +97,23 @@ public:
      *
      *  Inserts the specified function into the call graph if it is not a member of the call graph, otherwise does nothing. In
      *  any case, it returns the vertex for the function. */
-    Graph::VertexNodeIterator insert(const Function::Ptr &function);
+    Graph::VertexNodeIterator insertFunction(const Function::Ptr &function);
 
     /** Insert a call edge.
      *
-     *  Inserts an edge representing a call from source (caller) to target (callee).  If such an edge is already present in the
-     *  call graph, then the existing edge's counter is incremented; the graph doesn't actually store parallel edges.
+     *  Inserts an edge representing a call from source (caller) to target (callee). The @p type can be @ref E_FUNCTION_CALL or
+     *  @ref E_FUNCTION_XFER. If @p allowParallelEdges is false and such an edge is already present in the graph, then the
+     *  existing edge's counter is incremented rather than adding a new parallel edge.
      *
      *  Returns the edge that was inserted or incremented.
      *
      * @{ */
-    Graph::EdgeNodeIterator insert(const Function::Ptr &source, const Function::Ptr &target) {
-        return insert(insert(source), insert(target));
+    Graph::EdgeNodeIterator insertCall(const Function::Ptr &source, const Function::Ptr &target,
+                                       EdgeType type = E_FUNCTION_CALL, bool allowParallelEdges = true) {
+        return insertCall(insertFunction(source), insertFunction(target), type, allowParallelEdges);
     }
-    Graph::EdgeNodeIterator insert(const Graph::VertexNodeIterator &source, const Graph::VertexNodeIterator &target);
+    Graph::EdgeNodeIterator insertCall(const Graph::VertexNodeIterator &source, const Graph::VertexNodeIterator &target,
+                                       EdgeType type = E_FUNCTION_CALL, bool allowParallelEdges = true);
     /** @} */
     
     /** List of all functions that call the specified function.
@@ -98,7 +129,7 @@ public:
 
     /** Number of functions that call the specified function.
      *
-     *  This returns the same value as <code>cg.callers(f).size()</code> but is slightly faster.
+     *  This is the number of distinct functions that call the specified @p target function.
      *
      * @{ */
     size_t nCallers(const Function::Ptr &target) const {
@@ -121,7 +152,7 @@ public:
         
     /** Number of functions that the specified function calls.
      *
-     *  This returns the same value as <code>cg.callees(f).size()</code> but is slightly faster.
+     *  This is the number of distinct functions called from the specified @p source function.
      *
      * @{ */
     size_t nCallees(const Function::Ptr &source) const {
@@ -133,7 +164,7 @@ public:
     /** Total number of calls to a function.
      *
      *  Returns the total number of calls to the specified function, counting each call when a single function calls more than
-     *  once.
+     *  once.  I.e., it is the sum of the @c count fields of all the incoming edges for @p target.
      *
      * @{ */
     size_t nCallsIn(const Function::Ptr &target) const {
@@ -145,7 +176,7 @@ public:
     /** Total number of calls from a function.
      *
      *  Returns the total number of calls from the specified function, counting each call when a single function is called more
-     *  than once.
+     *  than once.  I.e., it is the sum of the @c count fields of all the outgoing edges for @p source.
      *
      * @{ */
     size_t nCallsOut(const Function::Ptr &source) const {
@@ -155,6 +186,8 @@ public:
     /** @} */
 
     /** Number of calls between two specific functions.
+     *
+     *  This is the sum of the @c count fields for all edges between @p source and @p target.
      *
      * @{ */
     size_t nCalls(const Function::Ptr &source, const Function::Ptr &target) const {

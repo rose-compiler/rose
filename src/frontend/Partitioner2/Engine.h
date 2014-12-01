@@ -269,6 +269,13 @@ public:
      *  as inter-function edges that are not function call edges. */
     virtual std::vector<Function::Ptr> discoverFunctions(Partitioner&);
 
+    /** Runs various analysis passes.
+     *
+     *  Runs each analysis over all functions to ensure that results are cached.  This should typically be done after functions
+     *  are discovered and before the final AST is generated, otherwise the AST will not contain cached results for functions
+     *  and blocks for which an analysis was not performed. */
+    virtual void updateAnalysisResults(Partitioner&);
+
     /** Runs post-partitioning fixups.
      *
      *  This method is normally run after the CFG/AUM is built. It does things like give names to some functions. The binary

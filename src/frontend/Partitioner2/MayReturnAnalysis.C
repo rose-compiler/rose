@@ -442,6 +442,38 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
     }
 }
 
+Sawyer::Optional<bool>
+Partitioner::functionOptionalMayReturn(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    ControlFlowGraph::ConstVertexNodeIterator entryVertex = findPlaceholder(function->address());
+    if (entryVertex != cfg_.vertices().end() && entryVertex->value().type() == V_BASIC_BLOCK)
+        return basicBlockOptionalMayReturn(entryVertex);
+    return Sawyer::Nothing();
+}
+
+void
+Partitioner::allFunctionMayReturn() const {
+    using namespace Sawyer::Container::Algorithm;
+    FunctionCallGraph cg = functionCallGraph();
+    size_t nFunctions = cg.graph().nVertices();
+    std::vector<bool> visited(nFunctions, false);
+    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
+        if (!visited[cgVertexId]) {
+            typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
+            for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
+                if (t.event() == ENTER_VERTEX) {
+                    if (visited[t.vertex()->id()])
+                        t.skipChildren();
+                } else {
+                    ASSERT_require(t.event() == LEAVE_VERTEX);
+                    functionOptionalMayReturn(t.vertex()->value());
+                    visited[t.vertex()->id()] = true;
+                }
+            }
+        }
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace
