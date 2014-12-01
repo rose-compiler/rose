@@ -88,7 +88,8 @@ AsmUnparser::init()
         .append(&insnFuncEntry)                 /* used only for ORGANIZED_BY_ADDRESS */
         //.append(&insnAddress)                 /* Using insnRawBytes instead, which also prints addresses. */
         .append(&insnRawBytes)
-        .append(&insnBlockEntry);               /* used only for ORGANIZED_BY_ADDRESS */
+        .append(&insnBlockEntry)                /* used only for ORGANIZED_BY_ADDRESS */
+        .append(&insnStackDelta);
     insn_callbacks.unparse
         .append(&insnBody);
     insn_callbacks.post
@@ -105,6 +106,7 @@ AsmUnparser::init()
     basicblock_callbacks.unparse
         .append(&basicBlockBody);               /* used only for ORGANIZED_BY_AST */
     basicblock_callbacks.post
+        .append(&basicBlockOutgoingStackDelta)
         .append(&basicBlockSuccessors)
         .append(&basicBlockLineTermination)
         .append(&basicBlockCleanup);
@@ -600,6 +602,20 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
 }
 
 bool
+AsmUnparser::InsnStackDelta::operator()(bool enabled, const InsnArgs &args) {
+    static const int deltaWidth = 2;                    // min column width for delta digits
+    if (enabled) {
+        int64_t delta = args.insn->get_stackDelta();
+        if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
+            mfprintf(args.output)("<sp%+-*"PRId64">", deltaWidth+1, delta);
+        } else {
+            args.output <<std::string(deltaWidth+5, ' ');
+        }
+    }
+    return enabled;
+}
+
+bool
 AsmUnparser::InsnBody::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled)
@@ -735,6 +751,19 @@ AsmUnparser::BasicBlockBody::operator()(bool enabled, const BasicBlockArgs &args
     if (enabled && ORGANIZED_BY_AST==args.unparser->get_organization()) {
         for (size_t i=0; i<args.insns.size(); i++)
             args.unparser->unparse_insn(enabled, args.output, args.insns[i], i);
+    }
+    return enabled;
+}
+
+bool
+AsmUnparser::BasicBlockOutgoingStackDelta::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled) {
+        int64_t n = args.block->get_stackDeltaOut();
+        if (n != SgAsmInstruction::INVALID_STACK_DELTA) {
+            args.output <<args.unparser->line_prefix();
+            mfprintf(args.output)("Outgoing stack delta: %+"PRId64"\n", n);
+        }
     }
     return enabled;
 }
@@ -1157,9 +1186,14 @@ AsmUnparser::FunctionAttributes::operator()(bool enabled, const FunctionArgs &ar
                 // the usual cases, don't say anything, assume function might return
                 break;
             case SgAsmFunction::RET_NEVER: {
-                args.output <<args.unparser->line_prefix() <<"Function does not return to caller." <<std::endl;
+                args.output <<args.unparser->line_prefix() <<"Function does not return to caller.\n";
                 break;
             }
+        }
+
+        if (args.func->get_stackDelta() != SgAsmInstruction::INVALID_STACK_DELTA) {
+            args.output <<args.unparser->line_prefix();
+            mfprintf(args.output)("Function stack delta: %+"PRId64"\n", args.func->get_stackDelta());
         }
     }
     return enabled;
