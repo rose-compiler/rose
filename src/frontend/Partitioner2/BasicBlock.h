@@ -65,7 +65,6 @@ private:
     // The following members are caches either because their value is seldom needed and expensive to compute, or because
     // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the
     // most sense to store it here. Make sure clearCache() resets these to initial values.
-    // FIXME[Robb P. Matzke 2014-08-13]: eventually we may want to support user-defined cache entries
     Sawyer::Cached<Successors> successors_;             // control flow successors out of final instruction
     Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?

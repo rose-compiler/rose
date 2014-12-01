@@ -804,9 +804,9 @@ public:
     /** Return the stack delta expression.
      *
      *  The stack delta is the value of the stack pointer register at the entrance to the specified block minus the stack delta
-     *  at the entry point of the function.  The function entry point stack delta is usually -4 or -8 to represent the return
-     *  address pushed onto the stack by the function call on a 32- or 64-bit machine with a downward-growing stack.  The stack
-     *  delta can be four different kinds of values:
+     *  at the entry point of the function.  The function entry point stack delta is zero; the return address pushed onto the
+     *  stack by the caller is attributed to the caller, not the callee, although the callee pops it from the stack when
+     *  returning. The stack delta can be four different kinds of values:
      *
      *  @li Never-computed is indicated by the basic block not caching any value for the stack delta.  This method will always
      *      attempt to compute a stack delta if none is cached in the basic block.
@@ -1291,20 +1291,24 @@ public:
     /** Returns a function call graph. */
     FunctionCallGraph functionCallGraph() const;
 
-    /** Stack delta analysis.
+    /** Stack delta analysis for one function.
      *
-     *  Computes stack deltas if possible at each basic block within the specified function.  The entry block of the function
-     *  is assumed to have a delta which is the negative return address size (representing a return address pushed onto the
-     *  downward-growing stack by the caller), and each basic block reachable from the entry block is given an incoming stack
-     *  delta according to a simple data flow analysis.
+     *  Computes stack deltas if possible at each basic block within the specified function.  The algorithm starts at the
+     *  function's entry block with an incoming stack delta of zero, and performs a dataflow anysis following a control flow
+     *  graph that contains those vertices reachable from the entry block by following only intra-function edges.  Each such
+     *  vertex is given an incoming and outgoing stack delta.
      *
      *  If the function appears to make reasonable use of the stack then an overall stack delta is returned. This is the delta
-     *  resulting from the final function return blocks.  Otherwise a null expression is returned.
+     *  resulting from the final function return blocks.  Otherwise a null expression is returned.  The result is cached in the
+     *  Function::stackDelta property.
      *
      *  Since this analysis is based on data flow, which is based on a control flow graph, the function must be attached to the
      *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.  Also, the @ref basicBlockStackDelta method must be
      *  non-null for each reachable block in the function. */
     BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const;
+
+    /** Stack delta analysis for all functions. */
+    void allFunctionStackDelta() const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
