@@ -101,6 +101,8 @@ HEADER_INTERPRETATION_END
 
 HEADER_BINARY_INSTRUCTION_START
         public:
+		static const int64_t INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
+
                 SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
