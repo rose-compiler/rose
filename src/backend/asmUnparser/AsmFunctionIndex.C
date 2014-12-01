@@ -313,7 +313,13 @@ bool
 AsmFunctionIndex::MayReturnCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        std::string value = stringifySgAsmFunctionMayReturn(args.func->get_may_return(), "RET_");
+        std::string value;
+        switch (args.func->get_may_return()) {
+            case SgAsmFunction::RET_UNKNOWN:   value = "";       break;
+            case SgAsmFunction::RET_NEVER:     value = "no";     break;
+            case SgAsmFunction::RET_SOMETIMES: value = "yes";    break;
+            case SgAsmFunction::RET_ALWAYS:    value = "always"; break;
+        }
         args.output <<data_prefix <<std::setw(width) <<boost::to_lower_copy(value);
     }
     return enabled;
