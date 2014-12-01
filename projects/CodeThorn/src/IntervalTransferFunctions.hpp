@@ -5,7 +5,7 @@
 #include "IntervalLattice.h"
 #include "AbstractEvaluator.hpp"
 
-class IntervalTransferFunctions : public DFTransferFunctions<IntervalLattice> {
+class IntervalTransferFunctions : public DFTransferFunctions<IntervalLattice<int> > {
 public:
   IntervalTransferFunctions();
   ~IntervalTransferFunctions();

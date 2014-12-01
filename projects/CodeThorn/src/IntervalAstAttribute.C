@@ -15,7 +15,7 @@ string IntervalAstAttribute::toString() {
   return ss.str();
 }
 
-IntervalAstAttribute::IntervalAstAttribute(IntervalLattice* elem):_elem(elem) {
+IntervalAstAttribute::IntervalAstAttribute(IntervalLattice<int>* elem):_elem(elem) {
 }
 bool IntervalAstAttribute::isBottomElement() {
   return _elem->isBot();

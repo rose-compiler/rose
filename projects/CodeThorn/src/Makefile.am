@@ -207,7 +207,11 @@ rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C Lan
   VariableIdUtils.C \
   VariableIdUtils.h \
   addressTakenAnalysis.C \
-  addressTakenAnalysis.h
+  addressTakenAnalysis.h 
+#  IntervalAnalyzer.h \
+  IntervalAnalyzer.C \
+  IntervalTransferFunctions.hpp \
+  IntervalTransferFunctions.C
 
 woodpecker_LDADD = -lrose
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDTransferFunctions.hpp RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \

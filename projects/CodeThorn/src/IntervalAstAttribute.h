@@ -16,17 +16,13 @@ class IntervalAstAttribute : public IntervalAstAttributeInterface {
   virtual bool isBottomElement();
   virtual VariableIdSet allVariableIds();
   virtual LabelSet allLabels();
-  virtual LabelSet definitionsOfVariableId(VariableId varId);
-  virtual VariableIdSet variableIdsOfDefinition(Label def);
-  virtual iterator begin();
-  virtual iterator end();
   virtual ~IntervalAstAttribute();
  public:
-  IntervalAstAttribute(IntervalLattice* elem);
+  IntervalAstAttribute(IntervalLattice<int>* elem);
   void toStream(ostream& os, VariableIdMapping* vim);
   string toString();
  private:
-  IntervalLattice* _elem;
+  IntervalLattice<int>* _elem;
 };
 
 #endif
