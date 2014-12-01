@@ -3876,6 +3876,12 @@ Rose::Frontend::RunSerial(SgProject* project)
           }
           else
           {
+#if 0
+           // DQ (9/5/2014): I sometimes need to avoid the try catch mechanism for debugging 
+           // (allows better use of gdb since traces on exceptions are not supported).
+              printf ("In Rose::Frontend::RunSerial(): Skipping try...catch mechanism in call to file->runFrontend(status_of_file); \n");
+              file->runFrontend(status_of_file);
+#else
               try
               {
                   //-----------------------------------------------------------
@@ -3911,6 +3917,7 @@ Rose::Frontend::RunSerial(SgProject* project)
                       throw;
                   }
               }
+#endif
           }
       }//BOOST_FOREACH
   }//all_files->callFrontEnd

@@ -645,7 +645,21 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                             }
 
                       // Must reset the parent (semantics of AST copy), but this will be done by reset
-                         ROSE_ASSERT(this->get_definingDeclaration()->get_parent() != NULL);
+
+                      // DQ (9/10/2014): The new support for template function handling causes some template to be saved and there parent pointers not set until later.
+                      // This is likely why this is failing (see copytest2007_40.C).
+                      // ROSE_ASSERT(this->get_definingDeclaration()->get_parent() != NULL);
+                         if (this->get_definingDeclaration()->get_parent() == NULL)
+                            {
+                              if (isSgTemplateFunctionDeclaration(this->get_definingDeclaration()) != NULL || isSgTemplateMemberFunctionDeclaration(this->get_definingDeclaration()) != NULL)
+                                 {
+                                   printf ("Warning: (inner scope) this->get_definingDeclaration()->get_parent() == NULL (OK for some SgTemplateFunctionDeclaration and SgTemplateMemberFunctionDeclaration) \n");
+                                 }
+                                else
+                                 {
+                                   ROSE_ASSERT(this->get_definingDeclaration()->get_parent() != NULL);
+                                 }
+                            }
                          copyOfDefiningDeclarationNode->set_parent(this->get_definingDeclaration()->get_parent());
 #if 0
                          printf ("Exiting before recursive call to copy as a test! \n");
@@ -661,8 +675,13 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 #endif
                        }
 
+                 // DQ (9/10/2014): See not above.
                  // DQ (2/20/2009): Added assertion!
-                    ROSE_ASSERT(copyOfDefiningDeclarationNode->get_parent() != NULL);
+                 // ROSE_ASSERT(copyOfDefiningDeclarationNode->get_parent() != NULL);
+                    if (copyOfDefiningDeclarationNode->get_parent() == NULL)
+                       {
+                         printf ("Warning: (outer scope) this->get_definingDeclaration()->get_parent() == NULL (OK for some SgTemplateFunctionDeclaration and SgTemplateMemberFunctionDeclaration) \n");
+                       }
 
                  // copyOfDefiningDeclaration = isSgDeclarationStatement(copyOfDefiningDeclarationNode);
                   }

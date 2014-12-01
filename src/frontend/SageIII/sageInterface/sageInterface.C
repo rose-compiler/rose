@@ -174,7 +174,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
 #endif
                  // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
@@ -191,7 +191,14 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // It allows a boost issue specific to a revisited SgTypedefDeclaration pass, but I still
                  // don't understand the problem.  so this needs a better fix.
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL);
-                    ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+                 // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+                    bool isInTemplateDeclaration = ( (isSgTemplateClassDefinition(decl->get_parent()) != NULL) ||
+                                                     (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) || 
+                                                     (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) || 
+                                                     (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) || 
+                                                     (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
+
+                    ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
 #endif
 
                     if (ignore_error == true)
@@ -440,6 +447,16 @@ SageInterface::buildDeclarationSets(SgNode* n)
      return declarationSet;
    }
 
+//By default ASSERT should block the execution to find issues.
+//But some users want to keep the tool going even when some assertion fails. 
+//This is only supported by SageInterface::moveDeclarationToInnermostScope() and associated functions for now
+bool SageInterface::tool_keep_going = false;
+
+// Like any other compiler-based tools. We do things conservatively by default.
+// Declarations with initializers will not be moved
+// if it is set to false.  Declaration with initializers will be moved, 
+// sends out warning if it crosses a loop boundaries in between. 
+bool SageInterface::decl_mover_conservative = true;
 
 int SageInterface::gensym_counter = 0;
 // DQ: 09/23/03
@@ -461,7 +478,7 @@ string getVariantName ( VariantT v )
 bool
 SageInterface::hasTemplateSyntax( const SgName & name )
    {
-  // DQ (6/7/2012): This refactors the test for template instantation syntax in names used for classes, member functions, and functions
+  // DQ (6/7/2012): This refactors the test for template instantiation syntax in names used for classes, member functions, and functions
      bool usingTemplateSyntax = false;
      string nameString = name.getString();
 
@@ -6497,8 +6514,15 @@ SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scop
 
 SgNode * SageInterface::deepCopyNode (const SgNode* n)
 {
+  SgNode* rt = NULL;
   SgTreeCopy g_treeCopy; // should use a copy object each time of usage!
-  return n ? n->copy (g_treeCopy) : 0;
+  if (n!= NULL)
+  {
+     rt = n->copy (g_treeCopy);
+     SageInterface::setSourcePositionForTransformation (rt);
+  }
+  //  return n ? n->copy (g_treeCopy) : 0;
+  return rt;
 }
 
 // by Jeremiah
@@ -9032,6 +9056,28 @@ bool SageInterface::isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree
   return result;
 }
 
+//! Check if a for loop uses C99 style initialization statement with multiple expressions like for (int i=0, j=0; ..) or for (i=0,j=0;...)
+/*!
+   for (int i=0, j=0; ..) is stored as two variable declarations under SgForInitStatement's init_stmt member
+   for (i=0,j=0;...) is stored as a single expression statement, with comma expression (i=0,j=0).
+*/
+bool SageInterface::hasMultipleInitStatmentsOrExpressions (SgForStatement* loop)
+{
+  ROSE_ASSERT (loop !=NULL);
+  SgStatementPtrList& stmt_list = loop->get_init_stmt();
+  if (stmt_list.size() >1) return true; // two var decl statements
+  if (stmt_list.size() == 0) return false;
+
+  // single statement, but with comma expression (i=0, j=0)
+  SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
+  ROSE_ASSERT (exp_stmt != NULL);
+  if (isSgCommaOpExp (exp_stmt->get_expression()) ) 
+  {
+     return true;
+  }
+
+    return false;
+}
 //! Get Fortran Do loop's key features
 bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/)
 {
@@ -9556,6 +9602,52 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
    }
   }
 
+//! Merge a variable assignment statement into a matching variable declaration statement
+/*!
+ *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
+ *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
+ */
+bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt= true;
+  ROSE_ASSERT(decl != NULL);   
+  ROSE_ASSERT(assign_stmt != NULL);   
+
+  // Sanity check of assign statement: must be a form of var = xxx; 
+  SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
+  if (assign_op == NULL) 
+    return false;
+  SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
+  if (assign_op_var == NULL) return false;
+
+  // Sanity check of the variable declaration: it should not have an existing initializer
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
+  if (decl_var->get_initptr()!= NULL ) return false;
+
+  // check if two variables match
+  // In translation, it is possible the declaration has not yet been inserted into its scope.
+  // finding its symbol can return NULL.
+  // But we still want to do the merge.
+  SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
+  if (decl_var_symbol!=NULL)
+  {
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+  }
+  else
+  { // fallback to comparing variable names instead
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+  }
+
+  // Everything looks fine now. Do the merge.
+  SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+  SageInterface::deepDelete (assign_stmt);
+  SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
+  decl_var->set_initptr(initor);
+  initor->set_parent(decl_var);  
+
+  return rt;
+}
+
 namespace SageInterface { // A few internal helper classes
 
 class AndOpGenerator: public StatementGenerator
@@ -10068,7 +10160,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
                   {
                     if (isSgTemplateInstantiationDecl(classDeclaration) != NULL)
                        {
-#if 1
+// DQ (9/13/2014): Clean up this output when not printing developer warnings.
+// #if 1
+#if PRINT_DEVELOPER_WARNINGS
                          printf ("RARE ISSUE #1: In SageInterface::appendStatement(): This template instantiation has previously been added to the scope, so avoid doing so again (see test2013_198.C): classDeclaration = %p = %s scope = %p = %s \n",
                               classDeclaration,classDeclaration->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
@@ -18737,6 +18831,7 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)/
   return scope_tree; 
 }  
 
+//Note: this function is no longer used by decl move tool: we use copy and insert instead to support moving to multiple scopes
 //! Move a variable declaration from its original scope to a new scope, assuming original scope != target_scope
 void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope)
 {
@@ -18833,7 +18928,35 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   // This is difficult since C++ variables have namespaces
   // Details are in SageInterface::fixVariableDeclaration()
   ROSE_ASSERT (target_scope->symbol_exists(sym));
-#endif     
+#endif   
+
+#if 0
+// send out warning info if there is a for loop between declaration's scope and the target scope
+// a declaration is moved across the loop boundary.
+   SgScopeStatement* top_scope = decl->get_scope();
+   SgScopeStatement* bottom_scope = target_scope; 
+   if (SageInterface::isAncestor (top_scope, bottom_scope))
+   {
+     do {
+       bottom_scope = bottom_scope->get_scope();
+       if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
+       {
+         cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+         cout<<"The declaration in question has the following file info:"<<endl;
+         decl->get_file_info()->display();
+       }
+
+     } while (top_scope!=bottom_scope);
+   }
+   else
+   {
+     if (!SageInterface::tool_keep_going)
+     {
+       cerr<<"Error. declaration scope is not an ancestor scope of the target scope"<<endl;
+       ROSE_ASSERT (false);
+     }
+   }  
+#endif
 
 }
 
@@ -18853,6 +18976,37 @@ void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVaria
     if (vRef->get_symbol() == old_sym)
       vRef->set_symbol(new_sym);
   }
+}
+
+static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bottom_scope)
+{
+  bool rt = false;
+  ROSE_ASSERT (top_scope && bottom_scope);
+  if (SageInterface::isAncestor (top_scope, bottom_scope))
+  {
+    do {
+      bottom_scope = bottom_scope->get_scope(); // current bottom does not cout, we may move to the loop header
+      if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
+      {
+        rt = true;
+//        if (debug)
+        {
+          cout<<"Found a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+//          cout<<"The declaration in question has the following file info:"<<endl;
+        }
+//        decl->get_file_info()->display();
+      }
+    } while (top_scope!=bottom_scope);
+  }
+  else
+  {
+    if (!SageInterface::tool_keep_going)
+    {
+      cerr<<"Error. declaration scope is not an ancestor scope of the target scope"<<endl;
+      ROSE_ASSERT (false);
+    }
+  }
+  return rt;
 }
 
 // Move a single declaration into multiple scopes. 
@@ -18879,6 +19033,15 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
   {
      return;
   }
+
+#if 0 //TODO: this is tricky, we have to modify the scope tree to backtrack this. 
+  // For aggressive mode, skip moving if the move will cross some boundaries
+  for (size_t i = 0; i< scopes.size(); i++)
+  {
+    SgScopeStatement* target_scope = scopes[i]; 
+    ROSE_ASSERT (target_scope != decl->get_scope());
+  } 
+#endif
 
   for (size_t i = 0; i< scopes.size(); i++)
   {
@@ -18908,7 +19071,7 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
           {
             if (i_name == NULL)
             {
-              cerr<<"Warning: in moveVariableDeclaration(): targe_scope is a for loop with unrecognized index variable. Skipping it ..."<<endl;
+              cerr<<"Warning: in moveVariableDeclaration(): target_scope is a for loop with unrecognized index variable. Skipping it ..."<<endl;
               break;
             }
             // we move int i; to be for (int i=0; ...);
@@ -18918,37 +19081,37 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
             // We don't yet handle more complex cases
             if (stmt_list.size() !=1)
             {
+              // TODO, how to handle two variable declaration?  I think this cannot happen in this context
+              // find the inner most used scope of variable a.  It cannot be declaration of a. 
               cerr<<"Error in moveVariableDeclaration(): only single init statement is handled for SgForStatement now."<<endl;
               ROSE_ASSERT (stmt_list.size() ==1);
             }
             SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
             ROSE_ASSERT (exp_stmt != NULL);
             SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
+
+            if (assign_op != NULL)
+            {
+              ROSE_ASSERT (assign_op != NULL);
+              stmt_list.clear();
+
+              SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
+              // insert the merged decl into the list, TODO preserve the order in the list
+              stmt_list.insert (stmt_list.begin(),  decl_copy);
+              decl_copy->set_parent(stmt->get_for_init_stmt());
+              ROSE_ASSERT (decl_copy->get_parent() != NULL); 
+            }
+
             // TODO: it can be SgCommanOpExp
             if (isSgCommaOpExp (exp_stmt->get_expression()) )
             {
                cerr<<"Error in moveVariableDeclaration(), multiple expressions in for-condition is not supported now. "<<endl;
-               ROSE_ASSERT (assign_op != NULL);
+               if (SageInterface::tool_keep_going) 
+                 break;
+               else  
+                 ROSE_ASSERT (assign_op != NULL);
             } 
-            ROSE_ASSERT (assign_op != NULL);
-
-            // remove the existing i=0; preserve its right hand operand
-            SgExpression * rhs = SageInterface::copyExpression(assign_op->get_rhs_operand());
-            stmt_list.clear();
-            SageInterface::deepDelete (exp_stmt);
-
-            // modify the decl's rhs to be the new one
-            SgInitializedName * copy_name = SageInterface::getFirstInitializedName (decl_copy);
-            SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs);
-            if (copy_name->get_initptr() != NULL)
-              SageInterface::deepDelete (copy_name->get_initptr());
-            copy_name->set_initptr(initor);
-            initor->set_parent(copy_name);
-            // insert the merged decl into the list, TODO preserve the order in the list
-            stmt_list.insert (stmt_list.begin(),  decl_copy);
-            decl_copy->set_parent(stmt->get_for_init_stmt());
-            ROSE_ASSERT (decl_copy->get_parent() != NULL); 
-          } //
+         } //
           else 
           {
             SgBasicBlock* loop_body = SageInterface::ensureBasicBlockAsBodyOfFor (stmt);
@@ -19005,11 +19168,42 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
     // Details are in SageInterface::fixVariableDeclaration()
     ROSE_ASSERT (adjusted_scope->symbol_exists(new_sym));
 #endif     
+   
 
 #if 1 
     // replace variable references
     SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
 #endif 
+
+   //SageInterface::setSourcePositionForTransformation (decl_copy);
+#if 1
+// send out warning info if there is a for loop between declaration's scope and the target scope
+// a declaration is moved across the loop boundary.
+   SgScopeStatement* top_scope = orig_scope;
+   SgScopeStatement* bottom_scope = target_scope;
+   if (SageInterface::isAncestor (top_scope, bottom_scope))
+   {
+     do {
+       bottom_scope = bottom_scope->get_scope();
+       if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
+       {
+         cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+         cout<<"The declaration in question has the following file info:"<<endl;
+         decl->get_file_info()->display();
+       }
+
+     } while (top_scope!=bottom_scope);
+   }
+   else
+   {
+     if (!SageInterface::tool_keep_going)
+     {
+       cerr<<"Error. declaration scope is not an ancestor scope of the target scope"<<endl;
+       ROSE_ASSERT (false);
+     }
+   }
+#endif
+
   } //end for all scopes
 
   // remove the original declaration , must use false to turn of auto-relocate comments
@@ -19079,6 +19273,21 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
   //All other cases, we conservatively assume the variable is live in for the scope
   return true; 
 }
+
+//! A helper function to check if there is a target scope which is a for loop with complex init_stmt list
+static SgForStatement* hasALoopWithComplexInitStmt( std::vector <SgScopeStatement *> &target_scopes)
+{
+
+   for (size_t i= 0; i< target_scopes.size(); i++)
+   {
+     SgScopeStatement* current_scope = target_scopes[i];
+     if (SgForStatement* for_loop = isSgForStatement (current_scope))
+       if (SageInterface::hasMultipleInitStatmentsOrExpressions (for_loop))
+         return for_loop;
+    }
+  return NULL;
+}
+
 
 bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, bool debug = false)
 {
@@ -19168,7 +19377,21 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
 
   if (target_scopes.size()>0)
   {
-    moveVariableDeclaration (decl, target_scopes);
+    // ignore complex for init stmt for now 
+    SgForStatement* bad_loop = hasALoopWithComplexInitStmt (target_scopes);
+    if (bad_loop != NULL)
+    {
+      cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
+      cerr<<"Variable declaration in question is:"<<endl;
+      decl->get_file_info()->display();
+      cerr<<"Loop scope with complex init stmt is:"<<endl;
+      bad_loop->get_file_info()->display();
+      if (!tool_keep_going )
+        ROSE_ASSERT (false);
+    }
+    else
+      moveVariableDeclaration (decl, target_scopes);
+
     scope_tree->deep_delete_children ();
     delete scope_tree;
     return true;
@@ -19180,7 +19403,6 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
     return false;  
   }
 }
-
 
 class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterface::const_int_expr_t> {
  public:

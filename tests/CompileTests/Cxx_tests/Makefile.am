@@ -212,6 +212,54 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_183.C \
    test2014_184.C \
    test2014_185.C \
+   test2014_186.C \
+   test2014_187.C \
+   test2014_187_work_around.C \
+   test2014_188.C \
+   test2014_189.C \
+   test2014_190.C \
+   test2014_191.C \
+   test2014_192.C \
+   test2014_193.C \
+   test2014_194.C \
+   test2014_195.C \
+   test2014_196.C \
+   test2014_197.C \
+   test2014_198.C \
+   test2014_199.C \
+   test2014_200.C \
+   test2014_201.C \
+   test2014_202.C \
+   test2014_203.C \
+   test2014_204.C \
+   test2014_205.C \
+   test2014_206.C \
+   test2014_207.C \
+   test2014_208.C \
+   test2014_209.C \
+   test2014_210.C \
+   test2014_211.C \
+   test2014_212.C \
+   test2014_215.C \
+   test2014_216.C \
+   test2014_217.C \
+   test2014_218.C \
+   test2014_219.C \
+   test2014_220.C \
+   test2014_221.C \
+   test2014_222.C \
+   test2014_223.C \
+   test2014_224.C \
+   test2014_225.C \
+   test2014_226.C \
+   test2014_226.C \
+   test2014_226.C \
+   test2014_226.C \
+   test2014_230.C \
+   test2014_231.C \
+   test2014_232.C \
+   test2014_233.C \
+   test2014_234.C \
    lulesh.C \
    luleshTALC.C
 

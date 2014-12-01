@@ -4390,6 +4390,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
 #if 0
      printf ("In buildDefiningFunctionDeclaration_T(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
+     printf ("In buildDefiningFunctionDeclaration_T(): buildTemplateDeclaration   = %s \n",buildTemplateDeclaration ? "true" : "false");
 #endif
 
   // DQ (8/11/2013): Check that the template argument lists are consistant.  The templateArgumentsList can then be considered redundant if this works.
@@ -12272,7 +12273,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
             // This must be a valid SgTemplateClassDefinition.
                defdecl = isSgTemplateClassDeclaration(nonDefiningDecl->get_definingDeclaration());
                ROSE_ASSERT(defdecl != NULL);
-#if 1
+#if 0
                printf ("In buildTemplateClassDeclaration_nfi(): Reusing the defining declaration previously build: defdecl = %p = %s \n",defdecl,defdecl->get_name().str());
 #endif
              }
@@ -12621,7 +12622,9 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // ROSE_ASSERT(defdecl->get_parent() == NULL);
      if (defdecl->get_parent() != NULL)
         {
+#if PRINT_DEVELOPER_WARNINGS
           printf ("WARNING: the parent will have been set if the defining declaration was found and reused! defdecl = %p = %s \n",defdecl,defdecl->class_name().c_str());
+#endif
         }
 
   // DQ (9/12/2012): Test that the templateName is set (name without template specialization parameters).

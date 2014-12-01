@@ -373,6 +373,10 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (9/7/2014): Added support for template headers as part of name qualification.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent 
   // upon the location where they are referenced.  This map stored the generated names of such types
   // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name 

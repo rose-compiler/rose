@@ -161,9 +161,11 @@ generatedCodeExamples = \
   rose_inputmoveDeclarationToInnermostScope_6.C \
   rose_inputmoveDeclarationToInnermostScope_7.C \
   rose_inputmoveDeclarationToInnermostScope_8.C \
+  rose_inputmoveDeclarationToInnermostScope_9.C \
   buildJavaPackage.passed 
 
-test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C
+test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C rose_inputmoveDeclarationToInnermostScope_9.C
+
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -508,7 +510,7 @@ rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostSc
 rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:aggressive" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
@@ -523,6 +525,14 @@ rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostSc
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
 		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+# test keep going first
+rose_inputmoveDeclarationToInnermostScope_9.C: inputmoveDeclarationToInnermostScope_9.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 

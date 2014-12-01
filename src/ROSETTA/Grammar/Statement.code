@@ -1450,6 +1450,9 @@ HEADER_LIST_DECLARATIONS
        // that only the qualified name would distinguish them).
           virtual SgName get_qualified_name() const;
 
+       // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
+          SgName get_template_header() const;
+
      protected:
           virtual bool replace_child(SgStatement *,SgStatement *,
                                          bool extractListFromBasicBlock = false);
@@ -10674,6 +10677,29 @@ SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
   // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
+   }
+
+SgName
+SgFunctionDeclaration::get_template_header() const
+   {
+  // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
+
+     SgName template_header;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTemplateHeaders().find(const_cast<SgFunctionDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTemplateHeaders().end())
+        {
+          template_header = i->second;
+#if 0
+          printf ("Found a valid template header : template_header %s \n",template_header.str());
+#endif
+        }
+#if 0
+     printf ("template_header for SgFunctionDeclaration = %p = %s = %s \n",this,class_name().c_str(),template_header.str());
+#endif
+
+     return template_header;
    }
 
 
