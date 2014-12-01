@@ -5,8 +5,11 @@
 
 #include "AsmFunctionIndex.h"
 #include "stringify.h"
+#include "Diagnostics.h"
 
 #include <boost/shared_ptr.hpp>
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -37,7 +40,9 @@ AsmFunctionIndex::init()
         .append(&sizeInsnsCallback)
         .append(&sizeBytesCallback)
         .append(&reasonCallback)
-        .append(&callingConventionCallback)
+        //.append(&callingConventionCallback) //nothing in ROSE sets this; its always unknown currently [2014-11-24]
+        .append(&mayReturnCallback)
+        .append(&stackDeltaCallback)
         .append(&nameCallback)
         .append(&footnotesCallback)
         ;
@@ -301,6 +306,51 @@ AsmFunctionIndex::CallingConventionCallback::operator()(bool enabled, const Data
     if (enabled)
         args.output <<data_prefix
                     <<std::setw(width) <<stringifySgAsmFunction_function_kind_enum(args.func->get_function_kind(), "e_");
+    return enabled;
+}
+
+bool
+AsmFunctionIndex::MayReturnCallback::operator()(bool enabled, const DataArgs &args)
+{
+    if (enabled) {
+        std::string value = stringifySgAsmFunctionMayReturn(args.func->get_may_return(), "RET_");
+        args.output <<data_prefix <<std::setw(width) <<boost::to_lower_copy(value);
+    }
+    return enabled;
+}
+
+bool
+AsmFunctionIndex::StackDeltaCallback::operator()(bool enabled, const HeadingArgs &args)
+{
+    if (enabled) {
+        if (args.sep) {
+            args.output <<separator_prefix <<std::setw(width) <<std::string(width, args.sep);
+        } else {
+            std::string s = "This is the concrete change in the stack pointer from when the function is entered to\n"
+                            "when it returns.  The initial pointer is assumed to be zero, thus not counting the\n"
+                            "return address or function arguments pushed onto the stack by the caller.  The final\n"
+                            "stack pointer is obtained immediately after the return and is adjusted for popping the\n"
+                            "return address from the stack for architectures that use that method of returning, and\n"
+                            "counting any function arguments popped by the callee (common on Microsoft Windows).\n";
+            size_t footnote = args.footnotes->add_footnote(s);
+            args.output <<header_prefix <<center(name+"("+args.footnotes->get_footnote_name(footnote)+")", width);
+        }
+    }
+    return enabled;
+}
+
+bool
+AsmFunctionIndex::StackDeltaCallback::operator()(bool enabled, const DataArgs &args)
+{
+    if (enabled) {
+        args.output <<data_prefix;
+        int64_t delta = args.func->get_stackDelta();
+        if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
+            mfprintf(args.output)("%+*"PRId64, (int)width, delta);
+        } else {
+            args.output <<std::setw(width) <<"";
+        }
+    }
     return enabled;
 }
 
