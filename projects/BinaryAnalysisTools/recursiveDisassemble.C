@@ -1,11 +1,13 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
+#include <rose_strtoull.h>
 #include <AsmFunctionIndex.h>
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
 #include <BinaryLoader.h>
 #include <Disassembler.h>
 #include <Partitioner2/Engine.h>
+#include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/Utility.h>
@@ -48,6 +50,7 @@ struct Settings {
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
+    bool doPostAnalysis;                                // perform post-partitioning analysis phase?
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
@@ -59,12 +62,21 @@ struct Settings {
     bool doListUnused;                                  // list unused addresses
     bool assumeFunctionsReturn;                         // do functions usually return to their caller?
     std::vector<std::string> triggers;                  // debugging aids
+    std::string gvBaseName;                             // base name for GraphViz files
+    bool gvUseFunctionSubgraphs;                        // use subgraphs in GraphViz files?
+    bool gvShowInstructions;                            // show disassembled instructions in GraphViz files?
+    bool gvShowFunctionReturns;                         // show edges from function return to indeterminate?
+    std::vector<std::string> gvCfgFunctions;            // produce CFG dot files for these functions
+    bool gvCfgGlobal;                                   // produce GraphViz file containing a global CFG?
+    AddressInterval gvCfgInterval;                      // show part of the global CFG
+    bool gvCallGraph;                                   // produce a function call graph?
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true), doListCfg(false),
-          doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
-          doListInstructionAddresses(false), doShowMap(false), doShowStats(false), doListUnused(false),
-          assumeFunctionsReturn(true) {}
+          findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true),
+          doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false),
+          doListFunctionAddresses(false), doListInstructionAddresses(false), doShowMap(false), doShowStats(false),
+          doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true), gvShowInstructions(true),
+          gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
 };
 
 // Describe and parse the command-line
@@ -191,6 +203,18 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "return to their caller or never return.  The default is that they " +
                     std::string(settings.assumeFunctionsReturn?"may":"never") + " return."));
 
+    dis.insert(Switch("post-analysis")
+               .intrinsicValue(true, settings.doPostAnalysis)
+               .doc("Run all post-partitioning analysis functions.  For instance, calculate stack deltas for each "
+                    "instruction, and may-return analysis for each function.  Some of these phases will only work if "
+                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
+                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
+                    "default is to " + std::string(settings.doPostAnalysis?"":"not ") + "perform the post analysis phase."));
+    dis.insert(Switch("no-post-analysis")
+               .key("post-analysis")
+               .intrinsicValue(false, settings.doPostAnalysis)
+               .hidden(true));
+
     // Switches for output
     SwitchGroup out("Output switches");
     out.insert(Switch("list-asm")
@@ -278,6 +302,88 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(false, settings.doShowStats)
                .hidden(true));
 
+    // Switches controlling GraphViz output
+    SwitchGroup dot("Graphviz switches");
+    dot.insert(Switch("gv-basename")
+               .argument("path", anyParser(settings.gvBaseName))
+               .doc("Base name for GraphViz dot files.  The full name is created by appending details about what is "
+                    "contained in the file.  For instance, a control flow graph for the function \"main\" has the "
+                    "string \"cfg-main.dot\" appended.  The default is \"" + settings.gvBaseName + "\"."));
+
+    dot.insert(Switch("gv-subgraphs")
+               .intrinsicValue(true, settings.gvUseFunctionSubgraphs)
+               .doc("Organize GraphViz output into subgraphs, one per function.  The @s{no-gv-subgraphs} switch disables "
+                    "subgraphs. The default is to " + std::string(settings.gvUseFunctionSubgraphs?"":"not ") + "emit "
+                    "subgraphs for those GraphViz files where it makes sense."));
+    dot.insert(Switch("no-gv-subgraphs")
+               .key("gv-subgraphs")
+               .intrinsicValue(false, settings.gvUseFunctionSubgraphs)
+               .hidden(true));
+
+    dot.insert(Switch("gv-show-insns")
+               .intrinsicValue(true, settings.gvShowInstructions)
+               .doc("Show disassembled instructions in the GraphViz output rather than only starting addresses. Emitting "
+                    "just addresses makes the GraphViz files much smaller but requires a separate assembly listing to "
+                    "interpret the graphs.  The @s{no-gv-show-instructions} causes only addresses to be emitted.  The "
+                    "default is to emit " + std::string(settings.gvShowInstructions?"instructions":"only addresses") + "."));
+    dot.insert(Switch("no-gv-show-insns")
+               .key("gv-show-insns")
+               .intrinsicValue(false, settings.gvShowInstructions)
+               .hidden(true));
+
+    dot.insert(Switch("gv-show-funcret")
+               .intrinsicValue(true, settings.gvShowFunctionReturns)
+               .doc("Show the function return edges in control flow graphs. These are the edges originating at a basic block "
+                    "that serves as a function return and usually lead to the indeterminate vertex.  Including them in "
+                    "multi-function graphs makes the graphs more complicated than they need to be for visualization. The "
+                    "@s{no-gv-show-funcret} switch disables these edges. The default is to " +
+                    std::string(settings.gvShowFunctionReturns?"":"not ") + "show these edges."));
+    dot.insert(Switch("no-gv-show-funcret")
+               .key("gv-show-funcret")
+               .intrinsicValue(false, settings.gvShowFunctionReturns)
+               .hidden(true));
+
+    dot.insert(Switch("gv-cfg-function")
+               .argument("name", listParser(anyParser(settings.gvCfgFunctions)))
+               .explosiveLists(true)
+               .whichValue(SAVE_ALL)
+               .doc("Emits a function control flow graph. The @v{name} can be the name of a function as a string, the "
+                    "entry address for the function as an decimal, octal, or hexadecimal number, or the string \"all\" "
+                    "(they are matched in that order).  One file will be created for each output and the name of the file "
+                    "is constructed by appending the following hyphen-separated parts to the GraphViz base name specified "
+                    "with @s{gv-basename}: the string \"cfg\", the hexadecimal entry address for the function, the name "
+                    "of the function with special characters replaced by underscores, and the string \".dot\".  This switch "
+                    "may occur multiple times or multiple @v{name} values may be separated by commas."));
+
+    dot.insert(Switch("gv-cfg-global")
+               .intrinsicValue(true, settings.gvCfgGlobal)
+               .doc("Emits a global control flow graph saving it in a file whose name is the @s{gv-basename} suffixed with "
+                    "the string \"cfg-global.dot\". The @s{no-gv-cfg-global} switch disables this. The default is to " +
+                    std::string(settings.gvCfgGlobal?"":"not ") + "produce this file."));
+    dot.insert(Switch("no-gv-cfg-global")
+               .key("gv-cfg-global")
+               .intrinsicValue(false, settings.gvCfgGlobal)
+               .hidden(true));
+
+    dot.insert(Switch("gv-cfg-interval")
+               .argument("interval", P2::addressIntervalParser(settings.gvCfgInterval))
+               .doc("Emits a control flow graph for those basic blocks that begin within the specified interval. " +
+                    P2::AddressIntervalParser::docString() + " The name of the GraphViz file will be the prefix "
+                    "specified via @s{gv-basename} followed by the following hyphen-separated components: "
+                    "the string \"cfg\", the interval starting address in hexadecimal, and the interval inclusive final "
+                    "address in hexadecimal. The extension \".dot\" is appended."));
+
+    dot.insert(Switch("gv-call-graph")
+               .intrinsicValue(true, settings.gvCallGraph)
+               .doc("Emit a function call graph to the GraphViz file whose name is specified by the @s{gv-basename} prefix "
+                    "followed by the string \"cg.dot\". The @s{no-gv-call-graph} switch disables this output. The default "
+                    "is to " + std::string(settings.gvCallGraph?"":"not ") + "produce this file.\n"));
+    dot.insert(Switch("no-gv-call-graph")
+               .key("gv-call-graph")
+               .intrinsicValue(false, settings.gvCallGraph)
+               .hidden(true));
+
+    // Switches for debugging
     SwitchGroup dbg("Debugging switches");
     dbg.insert(Switch("trigger")
                .argument("what", anyParser(settings.triggers))
@@ -313,7 +419,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     ));
     
 
-    return parser.with(gen).with(dis).with(out).with(dbg).parse(argc, argv).apply();
+    return parser.with(gen).with(dis).with(out).with(dot).with(dbg).parse(argc, argv).apply();
 }
 
 
@@ -384,6 +490,150 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
     BOOST_FOREACH (rose_addr_t entryVa, targets) {
         P2::Function::Ptr function = P2::Function::instance(entryVa, SgAsmFunction::FUNC_CALL_INSN);
         partitioner.attachOrMergeFunction(function);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      GraphViz output
+//
+// These functions are for producing GraphViz output for things like control flow graphs.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Replaces characters that can't appear in a file name component with underscores.  If the whole return string would be
+// underscores then return the empty string instead.
+static std::string
+escapeFileNameComponent(const std::string &s) {
+    std::string retval;
+    bool hasNonUnderscore = false;
+    BOOST_FOREACH (char ch, s) {
+        if (isalnum(ch) || strchr("@$%=+:,.", ch)) {
+            retval += ch;
+            hasNonUnderscore = true;
+        } else {
+            retval += '_';
+        }
+    }
+    return hasNonUnderscore ? retval : std::string();
+}
+
+static std::string
+makeGraphVizFileName(const std::string &prefix, const std::string &p1, const P2::Function::Ptr &function) {
+    std::vector<std::string> parts;
+    parts.push_back(p1);
+    parts.push_back(StringUtility::addrToString(function->address()).substr(2));
+    parts.push_back(escapeFileNameComponent(function->name()));
+    parts.erase(std::remove(parts.begin(), parts.end(), std::string()), parts.end());
+    return prefix + StringUtility::join("-", parts) + ".dot";
+}
+
+static std::string
+makeGraphVizFileName(const std::string &prefix, const std::string &p1, const AddressInterval &interval) {
+    std::vector<std::string> parts;
+    if (!p1.empty())
+        parts.push_back(p1);
+    parts.push_back(StringUtility::addrToString(interval.least()).substr(2));
+    parts.push_back(StringUtility::addrToString(interval.greatest()).substr(2));
+    return prefix + StringUtility::join("-", parts) + ".dot";
+}
+
+static void
+emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settings) {
+    // Get a list of functions that need to be emitted so that we don't produce multiple files per function.
+    std::set<P2::Function::Ptr> selectedFunctions;
+    if (!settings.gvCfgFunctions.empty()) {
+        std::vector<P2::Function::Ptr> allFunctions = partitioner.functions();
+        BOOST_FOREACH (const std::string &specified, settings.gvCfgFunctions) {
+            bool inserted = false;
+            BOOST_FOREACH (const P2::Function::Ptr &function, allFunctions) {
+                if (function->name() == specified) {
+                    selectedFunctions.insert(function);
+                    inserted = true;
+                    break;
+                }
+            }
+            if (!inserted) {
+                errno = 0;
+                const char *s = specified.c_str();
+                char *rest = NULL;
+                rose_addr_t specifiedVa = rose_strtoull(s, &rest, 0);
+                if (0==errno && *rest=='\0') {
+                    BOOST_FOREACH (const P2::Function::Ptr &function, allFunctions) {
+                        if (function->address() == specifiedVa) {
+                            selectedFunctions.insert(function);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!inserted && specified=="all") {
+                selectedFunctions.insert(allFunctions.begin(), allFunctions.end());
+                break;
+            }
+            if (!inserted)
+                mlog[WARN] <<"no such function for CFG: " <<specified <<"\n";
+        }
+    }
+    
+    BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions) {
+        std::string fileName = makeGraphVizFileName(settings.gvBaseName, "cfg", function);
+        std::ofstream out(fileName.c_str());
+        if (out.fail()) {
+            mlog[ERROR] <<"cannot write to CFG file \"" <<fileName <<"\"\n";
+        } else {
+            mlog[INFO] <<"generating CFG GraphViz file: " <<fileName <<"\n";
+            P2::GraphViz gv;
+            gv.useFunctionSubgraphs(false);             // since we're dumping only one function
+            gv.showInstructions(settings.gvShowInstructions);
+            gv.showReturnEdges(settings.gvShowFunctionReturns);
+            gv.showNeighbors(true);
+            gv.dumpCfgFunction(out, partitioner, function);
+        }
+    }
+
+    if (settings.gvCfgGlobal) {
+        std::string fileName = settings.gvBaseName + "cfg-global.dot";
+        std::ofstream out(fileName.c_str());
+        if (out.fail()) {
+            mlog[ERROR] <<"cannot write to CFG file \"" <<fileName <<"\"\n";
+        } else {
+            mlog[INFO] <<"generating CFG GraphViz file: " <<fileName <<"\n";
+            P2::GraphViz gv;
+            gv.useFunctionSubgraphs(settings.gvUseFunctionSubgraphs);
+            gv.showInstructions(settings.gvShowInstructions);
+            gv.showReturnEdges(settings.gvShowFunctionReturns);
+            gv.dumpCfgAll(out, partitioner);
+        }
+    }
+
+    if (!settings.gvCfgInterval.isEmpty()) {
+        std::string fileName = makeGraphVizFileName(settings.gvBaseName, "cfg", settings.gvCfgInterval);
+        std::ofstream out(fileName.c_str());
+        if (out.fail()) {
+            mlog[ERROR] <<"cannot write to CFG file \"" <<fileName <<"\"\n";
+        } else {
+            mlog[INFO] <<"generating CFG GraphViz file: " <<fileName <<"\n";
+            P2::GraphViz gv;
+            gv.useFunctionSubgraphs(settings.gvUseFunctionSubgraphs);
+            gv.showInstructions(settings.gvShowInstructions);
+            gv.showReturnEdges(settings.gvShowFunctionReturns);
+            gv.dumpCfgInterval(out, partitioner, settings.gvCfgInterval);
+        }
+    }
+}
+
+static void
+emitFunctionCallGraph(const P2::Partitioner &partitioner, const Settings &settings) {
+    if (!settings.gvCallGraph)
+        return;
+    std::string fileName = settings.gvBaseName + "cg.dot";
+    std::ofstream out(fileName.c_str());
+    if (out.fail()) {
+        mlog[ERROR] <<"cannot write to CG file \"" <<fileName <<"\"\n";
+    } else {
+        mlog[INFO] <<"generating call graph: " <<fileName <<"\n";
+        P2::GraphViz gv;
+        gv.dumpCallGraph(out, partitioner);
     }
 }
 
@@ -518,8 +768,11 @@ int main(int argc, char *argv[]) {
     engine.postPartitionFixups(partitioner, interp);
 
     // Analyze each basic block and function and cache results.  We do this before listing the CFG or building the AST.
-    engine.updateAnalysisResults(partitioner);
-
+    if (settings.doPostAnalysis) {
+        mlog[INFO] <<"running all post analysis phases\n";
+        engine.updateAnalysisResults(partitioner);
+    }
+    
     info <<"; completed in " <<partitionTime <<" seconds.\n";
     SgAsmBlock *globalBlock = NULL;
 
@@ -545,6 +798,9 @@ int main(int argc, char *argv[]) {
         std::cout <<"Final control flow graph:\n";
         partitioner.dumpCfg(std::cout, "  ", true);
     }
+
+    emitControlFlowGraphs(partitioner, settings);
+    emitFunctionCallGraph(partitioner, settings);
 
     if (settings.doListFunctions) {
         if (!globalBlock)
