@@ -6262,6 +6262,10 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseLabelStmt(): scope = %p \n",scope);
+     if (scope != NULL)
+        {
+          printf ("In unparseLabelStmt(): scope = %p = %s \n",scope,scope->class_name().c_str());
+        }
 #endif
 
      bool allocatedStatementList = false;
