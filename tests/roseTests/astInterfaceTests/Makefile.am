@@ -150,18 +150,34 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
-  rose_inputmoveDeclarationToInnermostScope_1.C \
-  rose_inputmoveDeclarationToInnermostScope_2.C \
-  rose_inputmoveDeclarationToInnermostScope_3.C \
-  rose_inputmoveDeclarationToInnermostScope_4.C \
-  rose_inputmoveDeclarationToInnermostScope_5.C \
-  rose_inputmoveDeclarationToInnermostScope_6.C \
-  rose_inputmoveDeclarationToInnermostScope_7.C \
-  rose_inputmoveDeclarationToInnermostScope_8.C \
-  rose_inputmoveDeclarationToInnermostScope_9.C \
   buildJavaPackage.passed 
 
-test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C rose_inputmoveDeclarationToInnermostScope_9.C
+MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
+  inputmoveDeclarationToInnermostScope_1.C \
+  inputmoveDeclarationToInnermostScope_2.C \
+  inputmoveDeclarationToInnermostScope_3.C \
+  inputmoveDeclarationToInnermostScope_4.C \
+  inputmoveDeclarationToInnermostScope_5.C \
+  inputmoveDeclarationToInnermostScope_6.C \
+  inputmoveDeclarationToInnermostScope_7.C \
+  inputmoveDeclarationToInnermostScope_8.C \
+  inputmoveDeclarationToInnermostScope_9.C 
+
+MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = \
+    inputmoveDeclarationToInnermostScope_10.C
+
+PASSING_MOVE_DECLS_TESTCODES_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS})
+
+REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
+MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+DIFF=diff
+$(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; xit 1; fi
+
+test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+
+move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -532,6 +548,14 @@ rose_inputmoveDeclarationToInnermostScope_9.C: inputmoveDeclarationToInnermostSc
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
+rose_inputmoveDeclarationToInnermostScope_10.C: inputmoveDeclarationToInnermostScope_10.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+
 
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
@@ -632,9 +656,12 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(generatedCodeExamples)
+check-local: $(generatedCodeExamples) move_decls_diff_check
 
 clean-local:
-	rm -f $(generatedCodeExamples) *.dot
+	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	rm -f $(addsuffix .passed, $(generatedCodeExamples))
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
+	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
