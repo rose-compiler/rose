@@ -118,7 +118,7 @@ class BreadthFirstTraversalTag {};
  *  to get information about why and where the traversal stopped.  The @ref isAtEnd method will indicate whether the traversal
  *  is completed.
  *
- *  The following subclasses are implemented. There names follow the pattern @em Order, @em
+ *  The following subclasses are implemented. Their names follow the pattern @em Order, @em
  *  Direction, @em Visiter. For instance "DepthFirstForwardEdgeTraversal" visits nodes in a "DepthFirst" order, follows edges
  *  in their natural forward direction (from source to target), stops only at @ref ENTER_EDGE events, and returns edges
  *  when dereferenced.  The orders are "DepthFirst" or "BreadthFirst".  The directions are "Forward" and "Reverse". The
@@ -254,6 +254,52 @@ class BreadthFirstTraversalTag {};
  *          }
  *      }
  *  }
+ * @endcode
+ *
+ *  The following example shows one way to construct a new graph from an existing graph.  Although graphs can be copy
+ *  constructed from related graphs as long as the destination graph's vertices and edges can be copy constructed from the
+ *  source graph's vertices and edges, this is not always the situation encountered. One often needs to construct a new graph
+ *  whose edges and vertices cannot be copy constructed, where certain edges or vertices should not be copied, or where certain
+ *  extra vertices or edges need to be inserted.  A combination of traversal and vertex lookup tables can be convenient in this
+ *  situation.  For instance, consider a program control flow graph (CFG) where each vertex represents a sequence of machine
+ *  instructions and each edge is a possible transfer of control.  Assume that the source graph has three edge types: INTERFUNC
+ *  is an inter-function edge such as a function call, INTRAFUNC are function-internal edges, and ADJUST is a special kind of
+ *  INTRAFUNC edge.  We want to create a new graph that contains only vertices that belong to a single function, and any ADJUST
+ *  edge in the source should result in an edge-vertex-edge in the destination where the vertex is marked as ADJUST. The
+ *  destination graph edges carry no information and thus cannot be copy-constructed from the source graph's edges.
+ *
+ * @code
+ *   typedef Graph<CfgVertex, CfgEdge> Cfg;
+ *   typedef Graph<DfVertex> DfCfg;
+ *   typedef DepthFirstGraphTraversal<Cfg> Traversal;
+ *
+ *   Cfg cfg = ...;
+ *   Cfg::VertexNodeIterator startVertex = ...;
+ *
+ *   DfCfg dfCfg;
+ *   Map<size_t, DfCfg::VertexNodeIterator> vmap;
+ *   
+ *   for (Traversal t(cfg, startVertex, ENTER_EVENTS|LEAVE_EDGE); t; ++t) {
+ *       if (t.event() == ENTER_VERTEX) {
+ *           // Insert each vertex before we visit any edge going into that vertex
+ *           DfCfg::VertexNodeIterator v = dfCfg.insertVertex(NORMAL);
+ *           vmap.insert(t.vertex()->id(), v);
+ *       } else if (t.event() == ENTER_EDGE && t.edge()->value().type() == INTERFUNC) {
+ *           // Don't traverse edges that cross function boundaries
+ *           t.skipChildren();
+ *       } else if (vmap.exists(t.edge()->source()->id()) && vmap.exists(t.edge()->target()->id())) {
+ *           // Insert an edge provided we have both of its endpoints
+ *           DfCfg::VertexNodeIterator source = vmap[t.edge()->source()->id()];
+ *           DfCfg::VertexNodeIterator target = vmap[t.edge()->target()->id()];
+ *           if (t.edge()->value().type() == ADJUST) {
+ *               DfCfg::VertexNodeIterator v = dfCfg.insertVertex(ADJUST);
+ *               dfCfg.insertEdge(source, v);
+ *               dfCfg.insertEdge(v,target);
+ *           } else {
+ *               dfCfg.insertEdge(source,target);
+ *           }
+ *       }
+ *   }
  * @endcode */
 template<class Graph, class Order=DepthFirstTraversalTag, class Direction=ForwardTraversalTag>
 class GraphTraversal {
