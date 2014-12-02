@@ -10,29 +10,47 @@ namespace Partitioner2 {
 
 class GraphViz {
 public:
+    struct HsvColor;
+
     struct RgbColor {
-        double r, g, b;
-        RgbColor(double red, double green, double blue)
-            : r(red), g(green), b(blue) {}
-        RgbColor(uint8_t red, uint8_t green, uint8_t blue)
-            : r(red/255.0), g(green/255.0), b(blue/255.0) {}
-        std::string toString() const;
+        double r, g, b;                                 // assume alpha is always 1.0
+        RgbColor(double r, double g, double b): r(r), g(g), b(b) {}
+        RgbColor(uint8_t r, uint8_t g, uint8_t b): r(r/255.0), g(g/255.0), b(b/255.0) {}
+        RgbColor(const HsvColor&);                      // implicit
+        std::string toString() const;                   // returns HTML color spec like #56abff
+        RgbColor invert() const;                        // invert value in HSV space
     };
 
+    struct HsvColor {
+        double h, s, v;                                 // always in the range [0..1]
+        HsvColor(double h, double s, double v): h(h), s(s), v(v) {}
+        HsvColor(const RgbColor&);                      // implicit
+        std::string toString() const;                   // returns HTML color spec like #56abff
+        HsvColor invert() const;                        // invert value without changing hue or saturation
+    };
+    
 private:
     typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexNodeIterator, size_t> VMap;
-    VMap vmap_;                                         // maps CFG vertices to GraphViz vertex IDs
     std::vector<bool> selected_;                        // which vertices to select for output
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
     bool showNeighbors_;                                // show neighbors for un-selected vertices?
-    RgbColor subgraphColor_;                            // color for function subgraphs
+    HsvColor subgraphColor_;                            // background color for function subgraphs
+    HsvColor funcEnterColor_;                           // background color for function entrance blocks
+    HsvColor funcReturnColor_;                          // background color for function return blocks
+    HsvColor warningColor_;                             // background color for special nodes and warnings
+
+    mutable VMap vmap_;                                 // maps CFG vertices to GraphViz vertex IDs (modified when dumping)
 
 public:
     GraphViz()
         : useFunctionSubgraphs_(true), showReturnEdges_(true), showInstructions_(false), showNeighbors_(true),
-          subgraphColor_(0.9, 0.9, 0.9) {}
+          subgraphColor_(0, 0, 0.95),                   // light grey
+          funcEnterColor_(0.33, 1.0, 0.9),              // light green
+          funcReturnColor_(0.67, 1.0, 0.9),             // light blue
+          warningColor_(0, 1.0, 0.80)                   // light red
+        {}
 
     /** Property: use function subgraphs.
      *
@@ -96,18 +114,42 @@ public:
     /** Property: color to use for function subgraph background.
      *
      * @{ */
-    RgbColor subgraphColor() const { return subgraphColor_; }
-    void subgraphColor(const RgbColor &bg) { subgraphColor_ = bg; }
+    const HsvColor& subgraphColor() const { return subgraphColor_; }
+    void subgraphColor(const HsvColor &bg) { subgraphColor_ = bg; }
+    /** @} */
+
+    /** Property: color to use for background of function entrance nodes.
+     *
+     *  Edges to these nodes are created by converting the background color to a foreground color by inverting the value
+     *  in HSV space (keeping the same hue and saturation).
+     *
+     * @{ */
+    const HsvColor& funcEnterColor() const { return funcEnterColor_; }
+    void funcEnterColor(const HsvColor &bg) { funcEnterColor_ = bg; }
+    /** @} */
+
+    /** Property: color to use for background of function return nodes.
+     *
+     * @{ */
+    const HsvColor& funcReturnColor() const { return funcReturnColor_; }
+    void funcReturnColor(const HsvColor &bg) { funcReturnColor_ = bg; }
+    /** @} */
+
+    /** Property: color to use for background of special nodes and for warnings.
+     *
+     * @{ */
+    const HsvColor& warningColor() const { return warningColor_; }
+    void warningColor(const HsvColor &bg) { warningColor_ = bg; }
     /** @} */
 
     /** Dump entire control flow graph.
      *
      *  If a vertex selection vector has been supplied (i.e., @ref selected returns a non-empty vector) then only those
      *  vertices that are selected will be emitted, and their neighbors if the @ref showNeighbors property is set. */
-    void dumpCfgAll(std::ostream&, const Partitioner&);
+    void dumpCfgAll(std::ostream&, const Partitioner&) const;
 
     /** Dump control flow graph for one function. */
-    void dumpCfgFunction(std::ostream&, const Partitioner&, const Function::Ptr&);
+    void dumpCfgFunction(std::ostream&, const Partitioner&, const Function::Ptr&) const;
 
     /** Dump vertices having certain addresses.
      *
@@ -120,27 +162,27 @@ public:
     /** Dump function call graph.
      *
      *  Produces a function call graph by emitting a GraphViz dot file to the specified stream. */
-    void dumpCallGraph(std::ostream&, const Partitioner&);
+    void dumpCallGraph(std::ostream&, const Partitioner&) const;
 
 protected:
     static std::string labelEscape(const std::string&);
 
-    virtual std::string vertexLabel(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&);
-    virtual std::string vertexLabelSimple(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&);
-    virtual std::string vertexAttributes(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&);
-    virtual size_t dumpVertex(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&);
+    virtual std::string vertexLabel(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+    virtual std::string vertexLabelSimple(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+    virtual std::string vertexAttributes(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+    virtual size_t dumpVertex(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
-    virtual std::string edgeLabel(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&);
-    virtual std::string edgeAttributes(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&);
-    virtual bool dumpEdge(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&);
+    virtual std::string edgeLabel(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+    virtual std::string edgeAttributes(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+    virtual bool dumpEdge(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
 
-    virtual std::string functionLabel(const Partitioner&, const Function::Ptr&);
-    virtual std::string functionAttributes(const Partitioner&, const Function::Ptr&);
-    virtual size_t dumpFunctionInfo(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&);
+    virtual std::string functionLabel(const Partitioner&, const Function::Ptr&) const;
+    virtual std::string functionAttributes(const Partitioner&, const Function::Ptr&) const;
+    virtual size_t dumpFunctionInfo(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
-    virtual void dumpFunctionCallees(std::ostream&, const Partitioner&, const Function::Ptr &);
-    virtual void dumpIntraFunction(std::ostream&, const Partitioner&, const Function::Ptr&);
-    virtual void dumpInterFunctionEdges(std::ostream&, const Partitioner&, const Function::Ptr&);
+    virtual void dumpFunctionCallees(std::ostream&, const Partitioner&, const Function::Ptr &) const;
+    virtual void dumpIntraFunction(std::ostream&, const Partitioner&, const Function::Ptr&) const;
+    virtual void dumpInterFunctionEdges(std::ostream&, const Partitioner&, const Function::Ptr&) const;
     
 };
 
