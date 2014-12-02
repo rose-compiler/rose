@@ -742,7 +742,7 @@ createSourceVectorsRespectingFunctionBoundaries(SgNode* top, size_t minTokens, s
 
         cmd1->bind(0, functionId);
         cmd1->bind(1, specimen_id);
-        cmd1->bind(2, (*fi)->get_mangled_name() );
+        cmd1->bind(2, (*fi)->get_declaration()->get_name() );
         cmd1->bind(3, (*fi)->get_file_info()->get_line());
         cmd1->bind(4, num_successors );
         cmd1->bind(5, num_successors);
