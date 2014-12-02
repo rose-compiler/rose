@@ -18,6 +18,7 @@ libPartitioner_la_SOURCES =			\
 	Exception.C				\
 	Function.C				\
 	FunctionCallGraph.C			\
+	GraphViz.C				\
 	InstructionProvider.C			\
 	MayReturnAnalysis.C			\
 	Modules.C				\

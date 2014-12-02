@@ -3,6 +3,7 @@
 
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/Exception.h>
+#include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Utility.h>
 
 #include "AsmUnparser_compat.h"
@@ -1450,95 +1451,15 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
     }
 }
 
-// class method
-std::string
-Partitioner::cfgGraphVizVertex(const ControlFlowGraph::VertexNode &vertex, const std::string &attrs) {
-    std::string s = StringUtility::numberToString(vertex.id());
-    switch (vertex.value().type()) {
-        case V_UNDISCOVERED:
-            s += " [ label=\"undiscovered\" ];\n";
-            break;
-        case V_INDETERMINATE:
-            s += " [ label=\"indeterminate\" ];\n";
-            break;
-        case V_NONEXISTING:
-            s += " [ label=\"nonexisting\" ];\n";
-            break;
-        case V_BASIC_BLOCK:
-            s += " [ label=\"" + StringUtility::addrToString(vertex.value().address());
-            if (BasicBlock::Ptr bb = vertex.value().bblock())
-                s += "\\n" + StringUtility::addrToString(bb->fallthroughVa()-1);
-            s += "\" " + attrs + "];\n";
-            break;
-    }
-    return s;
-}
-            
 void
 Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
                          bool showNeighbors) const {
-    out <<"digraph {\n";
-
-    // Emit those vertices that we want to include in the output
-    std::set<size_t> selected;
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
-        if (vertex.value().type()==V_BASIC_BLOCK && restrict.isContaining(vertex.value().address())) {
-            out <<cfgGraphVizVertex(vertex);
-            selected.insert(vertex.id());
-        }
-    }
-
-    // Edges, and additional vertices outside our range
-    std::set<size_t> seen = selected;
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, cfg_.edges()) {
-        const ControlFlowGraph::VertexNode &source = *edge.source();
-        const ControlFlowGraph::VertexNode &target = *edge.target();
-
-        // Should we show this edge?
-        bool sourceSelected = selected.find(source.id()) != selected.end();
-        bool targetSelected = selected.find(target.id()) != selected.end();
-        if (!sourceSelected && !targetSelected)
-            continue;
-        if (!showNeighbors && (!sourceSelected || !targetSelected))
-            continue;
-
-        // Create the source vertex if we haven't already
-        if (seen.find(source.id()) == seen.end()) {
-            out <<cfgGraphVizVertex(source, "shape=plaintext style=filled fillcolor=yellow");
-            seen.insert(source.id());
-        }
-
-        // Create the destination vertex if we haven't already
-        if (seen.find(target.id()) == seen.end()) {
-            out <<cfgGraphVizVertex(target, "shape=plaintext style=filled fillcolor=yellow");
-            seen.insert(target.id());
-        }
-
-        // The edge
-        std::string edgeAttrs;
-        switch (edge.value().type()) {
-            case E_NORMAL:
-                break;
-            case E_FUNCTION_CALL:
-                edgeAttrs = "label=\"call\"";
-                break;
-            case E_FUNCTION_XFER:
-                edgeAttrs = "label=\"fxfer\"";
-                break;
-            case E_FUNCTION_RETURN:
-                edgeAttrs = "label=\"ret\"";
-                break;
-            case E_CALL_RETURN:
-                edgeAttrs = "label=\"cret\"";
-                break;
-        }
-        out <<source.id() <<" -> " <<target.id();
-        if (!edgeAttrs.empty())
-            out <<" [" + edgeAttrs + "]";
-        out <<";\n";
-    }
-
-    out <<"}\n";
+    GraphViz gv;
+    gv.useFunctionSubgraphs(true);
+    gv.showReturnEdges(false);
+    gv.showInstructions(true);
+    gv.showNeighbors(showNeighbors);
+    gv.dumpCfgInterval(out, *this, restrict);
 }
 
 std::vector<Function::Ptr>

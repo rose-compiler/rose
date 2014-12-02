@@ -1476,10 +1476,15 @@ public:
 
     /** Output CFG as GraphViz.
      *
-     *  Emits all vertices whose starting address falls within the specified address interval, and all vertices that are
-     *  reachable forward or backward by a single edge from those vertices.
+     *  This is a wrapper around the GraphViz class. It emits a graph with function subgraphs for the vertices that are
+     *  selected by the @p restrict parameter.
      *
-     *  If @p showNeighbors is false then only edges whose source and target are both selected vertices are shown. */
+     *  If @p showNeighbors is false then only edges whose source and target are both selected vertices are shown, otherwise
+     *  edges that go from a selected vertex to an unselected vertex are also emitted, with the target vertex having
+     *  abbreviated information in the GraphViz output.
+     *
+     *  This is only a simple wrapper around @ref GraphViz::dumpInterval. That API has many more options than are presented by
+     *  this method. */
     void cfgGraphViz(std::ostream&, const AddressInterval &restrict = AddressInterval::whole(),
                      bool showNeighbors=true) const;
 
@@ -1627,9 +1632,6 @@ private:
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
     virtual void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
-
-    // String for a vertex in a GraphViz file. The attrs are only added for basic block vertices.
-    static std::string cfgGraphVizVertex(const ControlFlowGraph::VertexNode&, const std::string &attrs="");
 };
 
 } // namespace
