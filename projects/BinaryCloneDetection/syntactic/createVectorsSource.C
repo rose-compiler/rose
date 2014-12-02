@@ -94,6 +94,8 @@ static const char* OPTION_MINTOKENS = "*clone:minTokens";
 
 static const char* OPTION_STRIDE    = "*clone:stride";
 
+static const char* OPTION_WINDOWSIZE    = "*clone:window";
+
 static const char* OPTION_DATABASE    = "*clone:database";
 
 
@@ -158,7 +160,8 @@ int main( int argc, char * argv[] ) {
 
        //stride
        int stride = 0;
-
+       int windowSize = 0;
+	
        //min number of tokens before writing out
        int minTokens = 0;
 
@@ -216,6 +219,24 @@ int main( int argc, char * argv[] ) {
 
 	}
 
+
+	//Find the windowSize
+	raw_conf_filename.clear();
+	getRoseOptionValues (argvList, OPTION_WINDOWSIZE, raw_conf_filename);
+
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:window $integer" << std::endl;
+		exit(1);
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			windowSize = atoi(raw_conf_filename[i].c_str());
+		}
+
+	}
+
+
+
 	//Find the stride
 	raw_conf_filename.clear();
 	getRoseOptionValues (argvList, OPTION_STRIDE, raw_conf_filename);
@@ -253,8 +274,7 @@ int main( int argc, char * argv[] ) {
 
         SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
  
-        int windowSize = 5;
-	// Save parameters in the database; or check against existing parameters
+        // Save parameters in the database; or check against existing parameters
 	if (0 == tx->statement("select count(*) from run_parameters")->execute_int()) {
 		if ((size_t)-1 == stride || (size_t)-1 == windowSize) {
 			std::cerr <<argv <<": stride and window size must be specified\n";
