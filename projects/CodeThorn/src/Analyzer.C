@@ -216,6 +216,7 @@ void Analyzer::runSolver() {
   case 5: runSolver5();break;
   case 6: runSolver6();break;
   case 7: runSolver7();break;
+  case 8: runSolver8();break;
   default: assert(0);
   }
 }
@@ -292,7 +293,7 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
 void Analyzer::printStatusMessage(bool forceDisplay) {
   // forceDisplay currently only turns on or off
   
-  // report we are alife
+  // report we are alive
   stringstream ss;
   if(forceDisplay) {
     ss <<color("white")<<"Number of pstates/estates/trans/csets/wl/iter: ";
@@ -1206,7 +1207,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         if(_inputSequenceIterator!=_inputSequence.end()) {
           newValue=*_inputSequenceIterator;
           ++_inputSequenceIterator;
-          cout<<"INFO: input sequence value: "<<newValue<<endl;
+          //cout<<"INFO: input sequence value: "<<newValue<<endl;
         } else {
           return resList; // return no state (this ends the analysis)
         }
@@ -3137,6 +3138,89 @@ void Analyzer::runSolver7() {
   cout << "analysis finished (worklist is empty)."<<endl;
 }
 
+// solver 8 is used to analyze traces of consecutively added input sequences 
+void Analyzer::runSolver8() {
+  //flow.boostify();
+  int workers = 1; //only one thread
+#ifdef RERS_SPECIALIZATION  
+  //initialize the global variable arrays in the linked binary version of the RERS problem
+  if(boolOptions["rers-binary"]) {
+    //cout << "DEBUG: init of globals with arrays for "<< workers << " threads. " << endl;
+    RERS_Problem::rersGlobalVarsArrayInit(workers);
+  }
+#endif
+  //cout <<"STATUS: Running parallel solver 8 with "<<workers<<" thread (more not allowed)."<<endl;
+  while(!isEmptyWorkList()) {
+    bool oneSuccessorOnly=false;
+    EState newEStateBackupForOneSuccessorOnly;
+    const EState* currentEStatePtr;
+    if (!isEmptyWorkList()) {
+      currentEStatePtr=popWorkList();
+    } else {
+      assert(0); // there should always be exactly one element in the worklist at this point
+    }
+    assert(currentEStatePtr);
+
+    shortcut:      
+      if(variableValueMonitor.isActive()) {
+        variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
+      }
+    
+    Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+    oneSuccessorOnly=(edgeSet.size()==1);
+    for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+      Edge e=*i;
+      list<EState> newEStateList;
+      newEStateList=transferFunction(e,currentEStatePtr);
+      // solver 8: keep track of the input state where the input sequence ran out of elements (where solver8 stops)
+      if (newEStateList.size()== 0) {
+        if(e.isType(EDGE_EXTERNAL)) {
+          SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(e.source);
+          InputOutput newio;
+          Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
+          VariableId varId;
+          if(getLabeler()->isStdInLabel(lab,&varId)) {
+            _estateBeforeMissingInput = currentEStatePtr; //store the state where input was missing in member variable
+          }
+        }
+      }
+      oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
+      // solver 8: only traces allowed (no branching)
+      assert(newEStateList.size()<=1);
+      for(list<EState>::iterator nesListIter=newEStateList.begin();
+          nesListIter!=newEStateList.end();
+          ++nesListIter) {
+        // newEstate is passed by value (not created yet)
+        EState newEState=*nesListIter;
+        assert(newEState.label()!=Labeler::NO_LABEL);
+
+        if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+          if(oneSuccessorOnly && _minimizeStates && (newEState.io.isNonIO())) {
+            newEStateBackupForOneSuccessorOnly=newEState;
+            currentEStatePtr=&newEStateBackupForOneSuccessorOnly;
+            goto shortcut;
+          }
+          HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+          const EState* newEStatePtr=pres.second;
+          if (true)//simply continue analysing until the input sequence runs out
+            addToWorkList(newEStatePtr);          
+          recordTransition(currentEStatePtr,e,newEStatePtr);
+        }
+        if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+          // failed-assert end-state: do not add to work list but do add it to the transition graph
+          const EState* newEStatePtr;
+          newEStatePtr=processNewOrExisting(newEState);
+          recordTransition(currentEStatePtr,e,newEStatePtr);
+        }
+      }  // all successor states of transfer function
+    } // all outgoing edges in CFG
+  } // while worklist is not empty
+
+  //the result of the analysis is just a concrete trace on the original program
+  transitionGraph.setIsPrecise(true);
+  transitionGraph.setIsComplete(false);
+}
+      
 int Analyzer::extractAssertionTraces() {
   int maxInputTraceLength = -1;
   for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {
@@ -3323,4 +3407,71 @@ int Analyzer::inputSequenceLength(const EState* target) {
     run = reverseInOutSequenceDijkstra(target, transitionGraph.getStartEState());
   }
   return run.size();
+}
+
+void Analyzer::reduceToObservableBehavior() {
+  EStatePtrSet states=transitionGraph.estateSet();
+  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());  
+  // iterate over all states, reduce those that are neither the start state nor contain input/output/error behavior
+  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
+    if( (*i) != transitionGraph.getStartEState() ) {
+      if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO() || (*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ) {
+	transitionGraph.reduceEState2(*i);
+      }
+    }
+  }
+}
+
+void Analyzer::storeStgBackup() {
+  backupTransitionGraph = transitionGraph;
+}
+
+void Analyzer::swapStgWithBackup() {
+  TransitionGraph tTemp = transitionGraph;
+  transitionGraph = backupTransitionGraph;
+  backupTransitionGraph = tTemp;
+}
+
+void Analyzer::resetAnalyzerToSolver8(EState* startEState) {
+  assert(startEState);
+  //set attributes specific to solver 8
+  _numberOfThreadsToUse = 1;
+  _solver = 8;
+  _maxTransitions = -1,
+  _maxTransitionsForcedTop = -1;
+  _topifyModeActive = false;
+  _numberOfThreadsToUse = 1;
+
+  //reset internal data structures
+  EStateSet newEStateSet;
+  estateSet = newEStateSet;
+  PStateSet newPStateSet;
+  pstateSet = newPStateSet;
+  EStateWorkList newEStateWorkList;
+  estateWorkList = newEStateWorkList;
+  TransitionGraph newTransitionGraph;
+  transitionGraph = newTransitionGraph;
+  Label startLabel=cfanalyzer->getLabel(startFunRoot);
+  transitionGraph.setStartLabel(startLabel);
+  list<int> newInputSequence;
+  _inputSequence = newInputSequence;
+  resetInputSequenceIterator();
+#ifndef USE_CUSTOM_HSET
+  estateSet.max_load_factor(0.7);
+  pstateSet.max_load_factor(0.7);
+  constraintSetMaintainer.max_load_factor(0.7);
+#endif
+  // initialize worklist
+  const EState* currentEState=processNew(*startEState);
+  assert(currentEState);
+  variableValueMonitor.init(currentEState);
+  addToWorkList(currentEState);
+  //cout << "RESET: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+  //cout << "RESET: reset to solver 8 finished."<<endl;
+}
+
+void Analyzer::continueAnalysisFrom(EState * newStartEState) {
+        assert(newStartEState);
+	addToWorkList(newStartEState);
+	runSolver();
 }

@@ -26,6 +26,7 @@
 #include "AstMatching.h"
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
+#include "CounterexampleAnalyzer.h"
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 
@@ -1361,6 +1362,7 @@ int main( int argc, char * argv[] ) {
     ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
     ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
+    ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
     ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
@@ -1444,12 +1446,22 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
   boolOptions.registerOption("counterexamples-with-output",false);
+  boolOptions.registerOption("check-ltl-counterexamples",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
 
   boolOptions.registerOption("minimize-states",false);
 
   boolOptions.processOptions();
+
+  if (boolOptions["counterexamples-with-output"]) {
+    boolOptions.registerOption("with-ltl-counterexamples",true);
+  }
+
+  if (boolOptions["check-ltl-counterexamples"]) {
+    boolOptions.registerOption("with-ltl-counterexamples",true);
+    boolOptions.registerOption("counterexamples-with-output",true);
+  }
 
   if(boolOptions["print-all-options"]) {
     cout<<boolOptions.toString(); // prints all bool options
@@ -2023,6 +2035,28 @@ int main( int argc, char * argv[] ) {
     spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample);
     spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
     PropertyValueTable* ltlResults = spotConnection.getLtlResults();
+
+    if (boolOptions["check-ltl-counterexamples"]) {
+      cout << "STATUS: checking for spurious counterexamples..."<<endl;
+      CounterexampleAnalyzer ceAnalyzer(analyzer);
+      for (unsigned int i = 0; i < ltlResults->size(); i++) {
+        //only check counterexamples
+        if (ltlResults->getPropertyValue(i) == PROPERTY_VALUE_NO) {
+          std::string counterexample = ltlResults->getCounterexample(i);
+          CEAnalysisResult ceAnalysisResult = ceAnalyzer.analyzeCounterexample(counterexample);
+          if (ceAnalysisResult.analysisResult == CE_TYPE_SPURIOUS) {
+            //reset property to unknown
+            ltlResults->setCounterexample(i, "");
+            ltlResults->setPropertyValue(i, PROPERTY_VALUE_UNKNOWN);
+            cout << "INFO: property " << i << " was reset to unknown (spurious counterexample)." << endl;
+          } else if (ceAnalysisResult.analysisResult == CE_TYPE_REAL) {
+            //cout << "DEBUG: counterexample is a real counterexample! success" << endl;
+          }
+        }
+      }
+      cout << "STATUS: counterexample check done."<<endl;
+    }
+
     ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
     cout << "=============================================================="<<endl;
     ltlResults->printResultsStatistics();

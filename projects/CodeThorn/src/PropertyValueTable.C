@@ -80,9 +80,19 @@ void PropertyValueTable::setPropertyValue(size_t num, PropertyValue value) {
   _propertyValueTable[num]=value;
 }
 
+void PropertyValueTable::setCounterexample(size_t num, string ce) {
+  assert(num>=0 && num<_propertyValueTable.size());
+  _counterexamples[num] = ce;
+}
+
 PropertyValue PropertyValueTable::getPropertyValue(size_t num) {
   assert(num>=0 && num<_propertyValueTable.size());
   return _propertyValueTable[num];
+}
+
+std::string PropertyValueTable::getCounterexample(size_t num) {
+  assert(num>=0 && num<_propertyValueTable.size());
+  return _counterexamples[num];
 }
 
 std::list<int>* PropertyValueTable::getPropertyNumbers(PropertyValue value) {

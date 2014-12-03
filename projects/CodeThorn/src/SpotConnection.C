@@ -77,7 +77,15 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
           }
           delete pCounterExample;
         } else {
-          //the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
+          // old: the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
+          if (boolOptions["check-ltl-counterexamples"]) {
+            // new: register counterexample and check it later
+            ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
+            if (withCounterexample) {
+              ltlResults->strictUpdateCounterexample(i->propertyNumber, *pCounterExample);
+            }
+            delete pCounterExample;
+          }
         }
       }
     } //end of "for each unknown property" loop
