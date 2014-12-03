@@ -310,6 +310,8 @@ analyterix_SOURCES = \
   PropertyState.C \
   IntervalPropertyState.h \
   IntervalPropertyState.C \
+  NumberIntervalLattice.h \
+  NumberIntervalLattice.C \
   analyterix.C
 
 reverser_LDADD = -lrose

@@ -260,8 +260,6 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
   }
 }
 
-#include "IntervalLattice.h"
-
 #include "PropertyState.h"
 #include "IntervalPropertyState.h"
 

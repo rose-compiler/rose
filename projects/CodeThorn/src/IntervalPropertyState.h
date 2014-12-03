@@ -3,7 +3,7 @@
 
 #include "sage3basic.h"
 #include "VariableIdMapping.h"
-#include "IntervalLattice.h"
+#include "NumberIntervalLattice.h"
 #include "PropertyState.h"
 #include <iostream>
 
@@ -21,7 +21,7 @@ public:
   // adds array elements for indices 0 to number-1
   void addArrayElements(VariableId,int number);
 #endif
-  map<VariableId,IntervalLattice<int> > intervals;
+  map<VariableId,NumberIntervalLattice > intervals;
 };
 
 #endif

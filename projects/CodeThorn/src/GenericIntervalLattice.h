@@ -1,5 +1,5 @@
-#ifndef INTERVALLATTICE_H
-#define INTERVALLATTICE_H
+#ifndef GENERICINTERVALLATTICE_H
+#define GENERICINTERVALLATTICE_H
 
 #include <algorithm>
 #include <iostream>
@@ -19,19 +19,19 @@
 typedef CodeThorn::AType::BoolLattice BoolLatticeType;
 
 template<typename Type>
-class IntervalLattice {
+class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
  public:
- IntervalLattice() { setTop();}
- IntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {} 
-  static IntervalLattice highInfInterval(Type left) {
-    IntervalLattice t;
+ GenericIntervalLattice() { setTop();}
+ GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {} 
+  static GenericIntervalLattice highInfInterval(Type left) {
+    GenericIntervalLattice t;
     t.setIsLowInf(false);
     t._low=left;
     return t;
   }
-  static IntervalLattice lowInfInterval(Type right) {
-    IntervalLattice t;
+  static GenericIntervalLattice lowInfInterval(Type right) {
+    GenericIntervalLattice t;
     t.setIsHighInf(false);
     t._high=right;
     return t;
@@ -91,7 +91,7 @@ class IntervalLattice {
     _low=val;
     unifyEmptyInterval();
   }
-  void setHigh(bool val) {
+  void setHigh(Type val) {
     setIsHighInf(false);
     _high=val;
     unifyEmptyInterval();
@@ -108,13 +108,13 @@ class IntervalLattice {
   Type getHigh() { assert(!isHighInf()); return _high; }
 
 
-  static bool haveOverlap(IntervalLattice l1, IntervalLattice l2) {
+  static bool haveOverlap(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     return !meet(l1,l2).isEmpty();
   }
   
 
   // checks whether interval l1 is a subinterval of l2
-  static bool isSubIntervalOf(IntervalLattice l1, IntervalLattice l2) {
+  static bool isSubIntervalOf(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     if(l1.isEmpty())
       return true;
     else if(l2.isEmpty())
@@ -129,53 +129,53 @@ class IntervalLattice {
     assert(0);
   }
 
-  static IntervalLattice top() {
-    IntervalLattice t;
+  static GenericIntervalLattice top() {
+    GenericIntervalLattice t;
     t.setTop();
     return t;
   }
-  static IntervalLattice bot() {
-    IntervalLattice t;
+  static GenericIntervalLattice bot() {
+    GenericIntervalLattice t;
     t.setBot();
     return t;
   }
-  static IntervalLattice join(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice join(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.join(l2);
     return l3;
   }
-  static IntervalLattice meet(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice meet(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.meet(l2);
     return l3;
   }
-  static IntervalLattice arithAdd(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice arithAdd(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.arithAdd(l2);
     return l3;
   }
-  static IntervalLattice arithSub(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice arithSub(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.arithSub(l2);
     return l3;
   }
-  static IntervalLattice arithMul(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice arithMul(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.arithMul(l2);
     return l3;
   }
-  static IntervalLattice arithDiv(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice arithDiv(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.arithDiv(l2);
     return l3;
   }
-  static IntervalLattice arithMod(IntervalLattice l1, IntervalLattice l2) {
-    IntervalLattice l3=l1;
+  static GenericIntervalLattice arithMod(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
     l3.arithMod(l2);
     return l3;
   }
 
-  void meet(IntervalLattice other) {
+  void meet(GenericIntervalLattice other) {
     // 1. handle lower bounds
     if(isLowInf() && other.isLowInf()) {
       // OK
@@ -202,7 +202,7 @@ class IntervalLattice {
     unifyEmptyInterval();
   }
 
-  void join(IntervalLattice other) {
+  void join(GenericIntervalLattice other) {
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
     } else {
@@ -239,7 +239,7 @@ class IntervalLattice {
   bool operationOnBot() {
     return isBot();
   }
-  bool binaryOperationOnBot(IntervalLattice other) {
+  bool binaryOperationOnBot(GenericIntervalLattice other) {
     if(isBot()||other.isBot()) {
       setBot();
       return true;
@@ -294,7 +294,7 @@ class IntervalLattice {
   }
 
   // [a,b]+[c,d]=[a+c,b+d]
-  void arithAdd(IntervalLattice other) {
+  void arithAdd(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other))
       return;
     if(!isLowInf() && !other.isLowInf())
@@ -308,7 +308,7 @@ class IntervalLattice {
   }
 
   // [a,b]-[c,d]=[a-d,b-c]
-  void arithSub(IntervalLattice other) {
+  void arithSub(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other))
       return;
     if(!isLowInf() && !other.isHighInf())
@@ -322,7 +322,7 @@ class IntervalLattice {
   }
 
   // [a,b]*[c,d]=[a*c,b*d]
-  void arithMul(IntervalLattice other) {
+  void arithMul(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other))
       return;
     if(!isLowInf() && !other.isLowInf())
@@ -336,7 +336,7 @@ class IntervalLattice {
   }
 
   // [a,b]/[c,d]=[a/d,b/c]
-  void arithDiv(IntervalLattice other) {
+  void arithDiv(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other))
       return;
     if(!isLowInf() && !other.isHighInf())
@@ -350,7 +350,7 @@ class IntervalLattice {
   }
 
   // [a,b]%[c,d]=[a%d,b%c]
-  void arithMod(IntervalLattice other) {
+  void arithMod(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other))
       return;
     if(!isLowInf() && !other.isHighInf())
@@ -362,7 +362,7 @@ class IntervalLattice {
     if(isHighInf()||other.isLowInf())
       setIsHighInf(true);
   }
-  static BoolLatticeType isEqual(IntervalLattice l1, IntervalLattice l2) {
+  static BoolLatticeType isEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     if(l1.isConst()&&l2.isConst()) {
       return BoolLatticeType(l1.getConst()==l2.getConst());
     }
@@ -374,7 +374,7 @@ class IntervalLattice {
       return BoolLatticeType(BoolLatticeType(false));
     }
   }
-  static BoolLatticeType isSmaller(IntervalLattice l1, IntervalLattice l2) {
+  static BoolLatticeType isSmaller(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     // 0. handle special case when both intervals are of length 1
     // 1. check for overlap (if yes, we do not know)
     // 2. if no overlap check bounds    
@@ -390,10 +390,10 @@ class IntervalLattice {
 	return BoolLatticeType(false);
     }
   }
-  BoolLatticeType isSmallerOrEqual(IntervalLattice l1, IntervalLattice l2) {
+  BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     return isSmaller(l1,l2)||isEqual(l1,l2);
   }
-  bool operator=(IntervalLattice l2) {
+  bool operator=(GenericIntervalLattice l2) {
     return (isTop() && l2.isTop())
     || (isBot() && l2.isTop())
     || (getLow()==l2.getLow() && getHigh()==l2.getHigh())
@@ -411,7 +411,8 @@ class IntervalLattice {
     if(!isLowInf()&&!isHighInf()&&_low>_high)
       setEmpty();
   }
- private:
+  //protected:
+ protected:
   Type _low;
   Type _high;
   bool _isLowInf;

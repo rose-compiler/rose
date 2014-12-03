@@ -15,7 +15,7 @@ void IntervalPropertyState::combine(PropertyState* other){
 
 // adds integer variable
 void IntervalPropertyState::addVariable(VariableId varId) {
-  intervals[varId]=IntervalLattice<int>();
+  intervals[varId]=NumberIntervalLattice();
 }
 
 #if 0
