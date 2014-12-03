@@ -18986,11 +18986,9 @@ static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bot
 
 // A helper function to process target scopes
 // if a target scope is a if statement, we grab the true and false body scopes as the new target scopes and remove the if-stmt scope from the original scope vector.
-// We also mark the two body scopes so the duplicated variable declarations in them will be added into a worklist to be considered further. 
-std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatement*> scopes, std::set<SgScopeStatement*>& todo_scopes)
+std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatement*> scopes)
 {
   std::vector <SgScopeStatement*> processed_scopes; 
-  todo_scopes.clear();
   for (size_t i = 0; i< scopes.size(); i++)
   {
     SgScopeStatement* target_scope = scopes[i];
@@ -19001,7 +18999,6 @@ std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatemen
           SageInterface::ensureBasicBlockAsTrueBodyOfIf (if_stmt);
           SgScopeStatement* true_body = isSgScopeStatement(if_stmt->get_true_body());
           processed_scopes.push_back (true_body);
-          todo_scopes.insert(true_body);
         }
 
         if (if_stmt->get_false_body())
@@ -19009,7 +19006,6 @@ std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatemen
           SageInterface::ensureBasicBlockAsFalseBodyOfIf (if_stmt);
           SgScopeStatement* false_body = isSgScopeStatement(if_stmt->get_false_body());
           processed_scopes.push_back (false_body);
-          todo_scopes.insert(false_body);
         }
     }
     else
@@ -19045,8 +19041,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
      return;
   }
 
-  std::set<SgScopeStatement*> todo_scopes;
-  scopes = processTargetScopes(scopes, todo_scopes);
+  scopes = processTargetScopes(scopes);
 
 #if 0 //TODO: this is tricky, we have to modify the scope tree to backtrack this. 
   // For aggressive mode, skip moving if the move will cross some boundaries
@@ -19195,9 +19190,11 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
 #endif 
 
+// No need to check how the target scopes are identified.
+// I treat them all the same. All newly inserted variables will be added into the worklist for further consideration!
     // add declarations into the worklist if the target scope is a marked true/false body of a if-stmt.
     // Note: not all bodies should be added. Only consider the marked scopes!!
-   if (todo_scopes.find(target_scope) != todo_scopes.end()) 
+//   if (todo_scopes.find(target_scope) != todo_scopes.end()) 
    {
      worklist.push(decl_copy);
    }
