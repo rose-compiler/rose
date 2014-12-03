@@ -128,15 +128,19 @@ if ROSE_WITH_ATERM
 # The Stratego and A-Term support is outside of ROSE
 # This needs a configure flag so that the location outside 
 # of ROSE can be easily specificed at configure time.
-ATERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
-ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
+# ATERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
+# ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
+# ATERM_INCLUDE = $(ROSE_ATERM_INCLUDE)
+# ATERM_LIB_DIR = $(ROSE_ATERM_LIBS)
 endif
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
+# INCLUDES = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
+INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
+# testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
+testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt input_codes inputFile.C tests.tex
 
