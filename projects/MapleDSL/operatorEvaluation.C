@@ -1,6 +1,8 @@
 
 #include "rose.h"
 
+#include "rose_config.h"
+
 // This code will make calls to the finite state machine representing the stencil 
 // so that we can execute events and accumulate state (and then read the state as
 // and intermediate form for the stencil (maybe saved as an attribute).  This data
@@ -603,6 +605,7 @@ OperatorEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Oper
                return_synthesizedAttribute.operatorApplicationOperand = NULL;
                return_synthesizedAttribute.operatorApplication        = OperatorFSM();
 
+#ifdef USE_ROSE_MAPLE_SUPPORT
             // Call Maple using the generateed code.
                StencilOperator stencil = callMaple(generatedCode);
 
@@ -617,6 +620,11 @@ OperatorEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Oper
                ROSE_ASSERT(rhs != NULL);
 
                generateStencilCode(stencil,lhs,rhs);
+#else
+               printf ("\n\n******************************************************************************************************************** \n");
+               printf ("NOTE: Maple DSL not configured in ROSE to use Maple Library (requires installation via ROSE configure command line) \n");
+               printf ("******************************************************************************************************************** \n\n\n");
+#endif
 
             // Mark that a transformation was done.
                return_synthesizedAttribute.set_operatorTransformed(true);
