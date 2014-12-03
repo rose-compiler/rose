@@ -16,6 +16,7 @@ RDLattice::RDLattice() {
   * \date 2013.
  */
 void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
+  ROSE_ASSERT(vim);
   if(isBot()) {
     os<<"bot";
   } else {

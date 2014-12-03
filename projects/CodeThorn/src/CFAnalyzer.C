@@ -404,6 +404,7 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
+    cout<<"Checking label: "<<(*i)<<" node: "<<getNode(*i)<<" code:"<<getNode(*i)->unparseToString()<<endl;
     if(isSgBasicBlock(getNode(*i))) {
 #if 1
       cnt+=reduceNode(flow,*i);

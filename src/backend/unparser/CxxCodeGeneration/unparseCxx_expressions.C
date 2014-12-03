@@ -3537,7 +3537,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
      string functionNameString = operatorExp->get_name();
      curprint(functionNameString);
 
-#if 1
+#if 0
      printf ("In unparseTypeTraitBuiltinExp(): functionNameString = %s expr = %p = %s \n",functionNameString.c_str(),expr,expr->class_name().c_str());
 #endif
 
@@ -3548,7 +3548,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
      curprint("(");
      while (operand != list.end())
         {
-#if 1
+#if 0
           printf ("   --- TOP operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
 #endif
 #if 0
@@ -3562,7 +3562,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 
           SgType*       type       = isSgType(*operand);
           SgExpression* expression = isSgExpression(*operand);
-#if 1
+#if 0
           printf ("   --- operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
 #endif
        // DQ (7/13/2013): Build a new SgUnparse_Info so that we can skip passing on any existing referenceNode for name qualification.
@@ -5860,8 +5860,17 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
 
   // Note that the g++ compiler might not be named "g++", it is not clear how to handle this case.
      string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-#ifndef _MSC_VER
-     if (backEndCompiler == "g++")
+
+     bool usingGxx = false;
+     #ifdef USE_CMAKE
+       #ifdef CMAKE_COMPILER_IS_GNUCXX
+         usingGxx = true;
+       #endif
+     #else
+       usingGxx = (backEndCompiler == "g++");
+     #endif
+
+     if (usingGxx)
         {
        // Now check the version of the identified GNU g++ compiler.
           if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
@@ -5888,9 +5897,6 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
                   }
              }
         }
-#else
-  // DQ (2/21/2014): Not clear if this is a similar compiler specific bug to address for Visual MSC++.
-#endif
 
      return nameQualifier;
    }

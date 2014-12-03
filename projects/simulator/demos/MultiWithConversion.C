@@ -33,12 +33,12 @@ public:
     // For simplicity, all threads, processes, and simulators will share the same SemanticController object.  This means that
     // things probably won't work correctly when analyzing a multi-threaded specimen, but it keeps this demo more
     // understandable.
-    virtual SemanticController *clone() /*override*/ { return this; }
+    virtual SemanticController *clone() ROSE_OVERRIDE { return this; }
 
     // Gets called before the simulator executes each instruction.  All this does is watch what instructions are being executed
     // and when we hit the right one, enable all our sub-domains and branch to the target virtual address (i.e., "arbitrary
     // offset").  Only do it once.
-    virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+    virtual bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
         if (enabled && armed && !triggered && args.insn->get_address()==trigger_va) {
             args.thread->policy.trigger(target_va);
             triggered = true;

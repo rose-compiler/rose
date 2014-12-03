@@ -13,6 +13,19 @@
 namespace Sawyer {
 namespace Container {
 
+/** Traits for indexed lists. */
+template<class T>
+struct IndexedListTraits {
+    typedef typename T::NodeIterator NodeIterator;
+    typedef typename T::ValueIterator ValueIterator;
+};
+
+template<class T>
+struct IndexedListTraits<const T> {
+    typedef typename T::ConstNodeIterator NodeIterator;
+    typedef typename T::ConstValueIterator ValueIterator;
+};
+
 /** Doubly-linked list with constant-time indexing.
  *
  *  This container is a hybrid of a doubly-linked list and a vector, having these features:

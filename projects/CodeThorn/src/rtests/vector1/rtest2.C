@@ -20,3 +20,8 @@ void func() {
   x=0;
   a[1]+=a[x++];
 }
+
+int main() {
+  func();
+  return 0;
+}

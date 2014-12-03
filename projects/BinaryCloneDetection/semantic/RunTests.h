@@ -1,7 +1,8 @@
 #ifndef ROSE_CloneDetection_RunTests_H
 #define ROSE_CloneDetection_RunTests_H
 
-#include "sage3basic.h"
+#include "rose.h"
+
 #include "CloneDetectionLib.h"
 #include "rose_getline.h"
 #include "vectorCompression.h"

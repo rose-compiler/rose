@@ -4735,6 +4735,9 @@ HEADER_INITIALIZED_NAME_START
                SgInitializedName *prev_decl_item = 0 );
 #endif
 
+       // DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
+          SgInitializedName() ROSE_DEPRECATED_FUNCTION;
+
           SgInitializedName(const SgInitializedName& ptr);
 
           SgInitializedName& operator= (const SgInitializedName& ptr);
@@ -10913,6 +10916,13 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
      return symbol;
    }
 
+// DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
+SgInitializedName::SgInitializedName()
+   : p_name(""), p_typeptr(NULL), p_initptr(NULL), p_prev_decl_item(NULL), p_is_initializer(false), p_declptr(NULL), p_scope(NULL)
+   {
+  // This constructor has been added to support the previous API, I would like to depricate it.
+   }
+
 #if 0
 SgInitializedName::~SgInitializedName() 
    {
@@ -15562,7 +15572,8 @@ SgProject::initialization()
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
-
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     p_appendPID = false;
   // ZG (5/27/2014): This was uninitialized on Windows, so adding it here.
      p_globalScopeAcrossFiles = NULL;
    }
@@ -16480,6 +16491,8 @@ SgProject::display ( const std::string & label ) const
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      printf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     printf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)
@@ -17810,10 +17823,12 @@ SgUnparse_Info::dec_nestingLevel() {
 SOURCE_UNPARSE_INFO_END
 
 HEADER_TYPEDEF_SEQ_START         
-      //! Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      //! This is the const STL container access function for the STL list of typedef types using the type pointing to this SgTypedefSeq.
           const SgTypePtrList & get_typedefs() const;
 
-      //! Get the list of input types (types of the parameters list) to this function type
+      // Get the list of input types (types of the parameters list) to this function type
+      //! This is the non-const STL container access function for the STL list of typedef types using the type pointing to this SgTypedefSeq.
           SgTypePtrList & get_typedefs();
 
       //! Append new typedef to typedef type list

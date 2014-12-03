@@ -19,7 +19,7 @@ DFAnalyzer<LatticeType>::DFAnalyzer():
   _cfanalyzer(0),
   _numberOfLabels(0),
   _preInfoIsValid(false),
-  _solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD)
+  _transferFunctions(0)
 {}
 
 template<typename LatticeType>
@@ -50,6 +50,7 @@ template<typename LatticeType>
 void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
+
 template<typename LatticeType>
 LatticeType DFAnalyzer<LatticeType>::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
@@ -164,6 +165,15 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
 #endif
 }
 
+
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::initializeTransferFunctions() {
+  ROSE_ASSERT(_transferFunctions);
+  ROSE_ASSERT(_labeler);
+  _transferFunctions->setLabeler(_labeler);
+  _transferFunctions->setVariableIdMapping(&_variableIdMapping);
+}
+
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
@@ -180,43 +190,14 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
 }
 
-// runs until worklist is empty
-template<typename LatticeType>
-void
-DFAnalyzer<LatticeType>::solveAlgorithm1() {
-  cout<<"INFO: solver (label-out-algorithm1) started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
-  while(!_workList.isEmpty()) {
-    Label lab=_workList.take();
-    //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
-    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    LatticeType inInfo;
-    computePreInfo(lab,inInfo);
-    
-    LatticeType newInfo=transfer(lab,inInfo);
-    //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    if(!newInfo.approximatedBy(_analyzerData[lab])) {
-      _analyzerData[lab].combine(newInfo);
-      LabelSet succ;
-      succ=_flow.succ(lab);
-      _workList.add(succ);
-    } else {
-      // no new information was computed. Nothing to do.
-    }
-  }
-  cout<<"INFO: solver (label-out-algorithm1) finished."<<endl;
-}
+
 
 // runs until worklist is empty
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
-  switch(_solverMode) {
-  case SOLVERMODE_STANDARD: solveAlgorithm1();break;
-  case SOLVERMODE_DYNAMICLOOPFIXPOINTS: solveAlgorithm2();break;
-  default: cerr<<"Error: improper solver mode."<<endl; 
-    exit(1);
-  }
+  DFSolver1<LatticeType> dfSolver1(_workList,_analyzerDataPreInfo,_analyzerData,_initialElement,_flow,*_transferFunctions) ;
+  dfSolver1.runSolver();
   _preInfoIsValid=false;
 }
 template<typename LatticeType>
@@ -229,46 +210,12 @@ DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
   }
 }
 
-// runs until worklist is empty
 template<typename LatticeType>
-void
-DFAnalyzer<LatticeType>::solveAlgorithm2() {
-  cout<<"INFO: solver started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
-  while(!_workList.isEmpty()) {
-    Label lab=_workList.take();
-    //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
-    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-
-    LatticeType inInfo;
-    computePreInfo(lab,inInfo);
-    LatticeType newInfo=transfer(lab,inInfo);
-    //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));
-    if(!newInfo.approximatedBy(_analyzerData[lab])) {
-      _analyzerData[lab].combine(newInfo);
-      // semantic propagation: if node[l] is a condition of a loop only propagate on the true branch
-      LabelSet succ;
-      {
-        if(isLoopCondition) {
-          succ=_flow.outEdgesOfType(lab,EDGE_TRUE).targetLabels();
-        } else {
-          succ=_flow.succ(lab);
-        }
-      }
-      _workList.add(succ);
-    } else {
-      // no new information was computed. Nothing to do (except for the case it is a loop-condition of a loop for which we may have found a fix-point)
-      if(isLoopCondition) {
-        LabelSet succ=_flow.outEdgesOfType(lab,EDGE_FALSE).targetLabels();
-        _workList.add(succ);
-      } else {
-        // nothing to add
-      }
-    }
-  }
-  cout<<"INFO: solver finished."<<endl;
+DFAstAttribute* DFAnalyzer<LatticeType>::createDFAstAttribute(LatticeType* elem) {
+  // elem ignored in default function
+  return new DFAstAttribute();
 }
+
 // runs until worklist is empty
 template<typename LatticeType>
 void
@@ -291,7 +238,8 @@ DFAnalyzer<LatticeType>::run() {
 template<typename LatticeType>
 LatticeType
 DFAnalyzer<LatticeType>::transfer(Label lab, LatticeType element) {
-  return element;
+  ROSE_ASSERT(_transferFunctions);
+  return _transferFunctions->transfer(lab,element);
 }
 
 template<typename LatticeType>
@@ -308,7 +256,7 @@ DFAnalyzer<LatticeType>::getResultAccess() {
 using std::string;
 
 #include <sstream>
-
+#if 0
 template<typename LatticeType>
 void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
   size_t lab=0;
@@ -316,7 +264,7 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
       i!=_analyzerData.end();
       ++i) {
     std::stringstream ss;
-    (&(*i))->toStream(ss);
+    (&(*i))->toStream(ss,&_variableIdMapping);
     //std::cout<<ss.str();
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
     _labeler->getNode(lab)->setAttribute(attributeName,new GeneralResultAttribute(ss.str()));
@@ -324,7 +272,7 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
   }
 
 }
-
+#endif
 template<typename LatticeType>
 CFAnalyzer* DFAnalyzer<LatticeType>::getCFAnalyzer() {
   return _cfanalyzer;
@@ -339,5 +287,69 @@ template<typename LatticeType>
 VariableIdMapping* DFAnalyzer<LatticeType>::getVariableIdMapping() {
   return &_variableIdMapping;
 }
+
+#if 0
+template<typename LatticeType>
+CodeThorn::DFAnalyzer::iterator CodeThorn::DFAnalyzer<LatticeType>::begin() {
+  return _analyzerData.begin();
+}
+  
+template<typename LatticeType>
+DFAnalyzer::iterator CodeThorn::DFAnalyzer<LatticeType>::end() {
+  return _analyzerData.end();
+}
+
+template<typename LatticeType>
+size_t DFAnalyzer<LatticeType>::size() {
+  return _analyzerData.size();
+}
+#endif // begin/end
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachInfoToAst(string attributeName,bool inInfo) {
+  if(inInfo && !_preInfoIsValid)
+    computeAllPreInfo();
+  LabelSet labelSet=_flow.nodeLabels();
+  for(LabelSet::iterator i=labelSet.begin();
+      i!=labelSet.end();
+      ++i) {
+    ROSE_ASSERT(*i<_analyzerData.size());
+    // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
+    if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
+      if(*i >=0 ) {
+        if(inInfo)
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPreInfo[*i]));
+        else
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerData[*i]));
+      }
+  }
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachInInfoToAst(string attributeName) {
+  if(!_preInfoIsValid)
+    computeAllPreInfo();
+  attachInfoToAst(attributeName,true);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachOutInfoToAst(string attributeName) {
+  attachInfoToAst(attributeName,false);
+}
+
+
+
 
 #endif

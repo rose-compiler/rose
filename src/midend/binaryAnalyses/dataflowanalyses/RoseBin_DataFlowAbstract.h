@@ -134,7 +134,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   int getUsageSize() { return usetable.size();}
 
   int64_t check_isRegister(SgGraphNode* node,
-                           SgAsmx86Instruction* inst,
+                           SgAsmX86Instruction* inst,
                            std::pair<X86RegisterClass, int> codeSearch,
                            bool rightSide,
                            std::vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
@@ -142,7 +142,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
 
 
-  int64_t check_isLeftSideRegister(SgAsmx86Instruction* inst,
+  int64_t check_isLeftSideRegister(SgAsmX86Instruction* inst,
                                    std::pair<X86RegisterClass, int>  codeSearch);
 
   uint64_t getValueInExpression(SgAsmValueExpression* valExp);
@@ -155,17 +155,17 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
 
   std::pair<X86RegisterClass, int>
-    check_isRegister(SgGraphNode* node, SgAsmx86Instruction* inst,
+    check_isRegister(SgGraphNode* node, SgAsmX86Instruction* inst,
                      bool rightSide, bool& memoryReference, bool& registerReference );
 
-  SgAsmExpression* getOperand(SgAsmx86Instruction* inst,
+  SgAsmExpression* getOperand(SgAsmX86Instruction* inst,
                                                 bool rightSide );
 
   uint64_t getValueInMemoryRefExp(SgAsmExpression* ref);
 
-  bool isInstructionAlteringOneRegister(SgAsmx86Instruction* inst);
+  bool isInstructionAlteringOneRegister(SgAsmX86Instruction* inst);
   bool altersMultipleRegisters(std::vector<std::pair<X86RegisterClass, int> >& codes,
-                              SgAsmx86Instruction* inst);
+                              SgAsmX86Instruction* inst);
 
   bool sameParents(SgGraphNode* node, SgGraphNode* next);
 
@@ -184,7 +184,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
     const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* > &
     getUseMultiMapFor(SgGraphNode* node);
 
-    uint64_t getValueOfInstr( SgAsmx86Instruction* inst,  bool rightSide );
+    uint64_t getValueOfInstr( SgAsmX86Instruction* inst,  bool rightSide );
 
 
   RoseBin_Variable* createVariable(uint64_t position,

@@ -53,7 +53,7 @@ bool
 PltEntryMatcher::match(const Partitioner *partitioner, rose_addr_t anchor) {
     nBytesMatched_ = 0;
     SgAsmInstruction *insn = partitioner->discoverInstruction(anchor);
-    SgAsmx86Instruction *insnX86 = isSgAsmx86Instruction(insn);
+    SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn);
 
     // FIXME[Robb P. Matzke 2014-08-23]: Only i386 is supported for now
     static bool warned = false;
@@ -152,6 +152,13 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
         // FIXME[Robb P. Matzke 2014-08-23]: we can assume that some functions don't ever return, or they return to the call
         // site: abort, execl, execlp, execv, execvp, exit, _exit, fexecve, longjmp, __longjmp, siglongjmp.
     }
+
+    // The first entry of the .plt section is the call to the function that resolves dynamic links
+    Function::Ptr linkerTrampoline = Function::instance(plt->get_mapped_actual_va(), "DYNAMIC_LINKER_TRAMPOLINE",
+                                                        SgAsmFunction::FUNC_IMPORT);
+    if (insertUnique(functions, linkerTrampoline, sortFunctionsByAddress))
+        ++nInserted;
+
     return nInserted;
 }
 

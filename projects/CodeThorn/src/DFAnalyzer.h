@@ -11,8 +11,11 @@
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
+#include "DFTransferFunctions.hpp"
 #include <set>
 #include <string>
+#include "DFSolver1.h"
+#include "DFAstAttribute.h"
 
 namespace CodeThorn {
 
@@ -24,10 +27,10 @@ template<typename LatticeType>
 class DFAnalyzer {
  public:
   DFAnalyzer();
-  enum SolverMode { SOLVERMODE_STANDARD, SOLVERMODE_DYNAMICLOOPFIXPOINTS };
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   virtual LatticeType initializeGlobalVariables(SgProject* root);
+  virtual void initializeTransferFunctions();
   void determineExtremalLabels(SgNode*);
   void run();
 
@@ -35,14 +38,19 @@ class DFAnalyzer {
   typedef vector<LatticeType> AnalyzerData;
   typedef vector<LatticeType> ResultAccess;
   ResultAccess& getResultAccess();
+#if 0
   void attachResultsToAst(string);
+#endif
   Labeler* getLabeler();
   CFAnalyzer* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
-  void setSolverMode(SolverMode);
   LatticeType getPreInfo(Label lab);
   LatticeType getPostInfo(Label lab);
+  void attachInInfoToAst(string attributeName);
+  void attachOutInfoToAst(string attributeName);
+
+  void attachInfoToAst(string attributeName,bool inInfo);
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();
@@ -57,14 +65,23 @@ class DFAnalyzer {
   vector<LatticeType> _analyzerData;
   WorkListSeq<Label> _workList;
   LatticeType _initialElement;
+
+
+  //typedef AnalyzerData::iterator iterator;
+  typedef typename AnalyzerData::iterator iterator;
+#if 0
+  iterator begin();
+  iterator end();
+  size_t size();
+#endif
+
  protected:
+  virtual DFAstAttribute* createDFAstAttribute(LatticeType*);
   bool _preInfoIsValid;
   void computeAllPreInfo();
+  DFTransferFunctions<LatticeType>* _transferFunctions;
  private:
-  void solveAlgorithm1();
-  void solveAlgorithm2();
   void computePreInfo(Label lab,LatticeType& info);
-  SolverMode _solverMode;
 };
 
 } // end of namespace

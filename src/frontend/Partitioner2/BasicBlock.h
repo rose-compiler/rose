@@ -1,6 +1,7 @@
 #ifndef ROSE_Partitioner2_BasicBlock_H
 #define ROSE_Partitioner2_BasicBlock_H
 
+#include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
@@ -27,7 +28,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
-class BasicBlock: public Sawyer::SharedObject {
+class BasicBlock: public Sawyer::SharedObject, public Attribute::StoredValues {
 public:
     /** Shared pointer to a basic block. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
@@ -68,12 +69,14 @@ private:
     Sawyer::Cached<Successors> successors_;             // control flow successors out of final instruction
     Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
+    Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
     Sawyer::Cached<BaseSemantics::SValuePtr> stackDelta_;// change in stack pointer from beginning to end of block
 
     void clearCache() const {
         successors_.clear();
         ghostSuccessors_.clear();
         isFunctionCall_.clear();
+        isFunctionReturn_.clear();
         stackDelta_.clear();
     }
 
@@ -160,7 +163,7 @@ public:
      *  Instructions are returned in the order they would be executed (i.e., the order they were added to the block).
      *  Blocks in the undiscovered and not-existing states never have instructions (they return an empty vector); blocks in
      *  the incomplete and complete states always return at least one instruction. */
-    const std::vector<SgAsmInstruction*> instructions() const { return insns_; }
+    const std::vector<SgAsmInstruction*>& instructions() const { return insns_; }
 
     /** Append an instruction to a basic block.
      *
@@ -279,6 +282,13 @@ public:
      *  with a specific CALL instruction, nor are all CALL instructions actually function calls.  This property is
      *  typically computed in the partitioner and cached in the basic block. */
     const Sawyer::Cached<bool>& isFunctionCall() const { return isFunctionCall_; }
+
+    /** Is a function return?
+     *
+     *  This property indicates whether the basic block appears to be a return from a function call.  A block is a return from
+     *  a function call if, after the block is executed, the instruction pointer contains the value stored in memory one past
+     *  the top of the stack. */
+    const Sawyer::Cached<bool>& isFunctionReturn() const { return isFunctionReturn_; }
 
     /** Stack delta.
      *

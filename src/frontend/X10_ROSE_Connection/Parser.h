@@ -306,10 +306,10 @@ JNIEXPORT void JNICALL cactionMessageSend
 
 /*
  * Method:    cactionMessageSendEnd
- * Signature: (ZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IIILX10Token;)V
+ * Signature: (ZZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;IIILjava/lang/Object;LX10Token;)V
  */
 JNIEXPORT void JNICALL cactionMessageSendEnd
-  (JNIEnv *, jclass, jboolean, jboolean, jstring, jstring, jstring, jint, jint, jint, jobject);
+  (JNIEnv *, jclass, jboolean, jboolean, jstring, jstring, jstring, jint, jint, jint, jobject, jobject);
 
 /*
  * Method:    cactionStringLiteral
@@ -1121,7 +1121,7 @@ JNIEXPORT void JNICALL cactionBuildTypeParameterSupport
  * Signature: (Ljava/lang/String;Ljava/lang/String;LX10Token;)V
  */
 JNIEXPORT void JNICALL cactionUpdatePushMethodParameterScope
-  (JNIEnv *, jclass, jstring, jstring, jobject);
+  (JNIEnv *, jclass, jint, jobject);
 
 /*
  * Method:    cactionUpdateTypeParameterSupport
@@ -1142,7 +1142,11 @@ JNIEXPORT void JNICALL cactionUpdatePopMethodParameterScope
  * Signature: (IZILX10Token;)V
  */
 JNIEXPORT void JNICALL cactionBuildClassExtendsAndImplementsSupport
+#if 0
   (JNIEnv *, jclass, jint, jboolean, jint, jobject);
+#else
+  (JNIEnv *, jclass, jint, jobjectArray, jboolean, jstring, jint, jobjectArray, jobject);
+#endif
 
 /*
  * Method:    cactionBuildClassSupportEnd

@@ -24,9 +24,9 @@ std::string ComplexityMetric::getDescription() {
 
 void
 ComplexityMetric::visit(SgNode* node) {
-  if (!isSgAsmx86Instruction(node))
+  if (!isSgAsmX86Instruction(node))
     return;
-  SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+  SgAsmX86Instruction* inst = isSgAsmX86Instruction(node);
   if (inst->get_kind() == x86_jmp ||
       inst->get_kind() == x86_farjmp ||
       x86InstructionIsConditionalFlagControlTransfer(inst) ||

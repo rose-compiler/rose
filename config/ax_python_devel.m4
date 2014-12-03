@@ -93,7 +93,7 @@ AC_DEFUN([AX_PYTHON_DEVEL],[
     # determine if python is the right version
     #
 	AC_MSG_CHECKING([for a version of Python >= $1, < $2])
-	ac_python_version=`$PYTHON -c "import sys; print sys.version.split()[[0]]"`
+	ac_python_version=`$PYTHON -c "import sys; print(sys.version.split()[[0]])"`
 	ac_supports_python_ver=`$PYTHON -c "print ('$1' <= '$ac_python_version' < '$2')"`
 	if test "$ac_supports_python_ver" = "True"; then
         AC_MSG_RESULT([yes ($ac_python_version)])

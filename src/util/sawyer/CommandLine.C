@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
+#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
@@ -1081,6 +1082,13 @@ SwitchGroup::insert(const Switch &sw) {
     return *this;
 }
 
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::insert(const SwitchGroup &other) {
+    BOOST_FOREACH (const Switch &sw, other.switches_)
+        switches_.push_back(sw);
+    return *this;
+}
+
 SAWYER_EXPORT bool
 SwitchGroup::nameExists(const std::string &s) {
     for (size_t i=0; i<switches_.size(); ++i) {
@@ -1600,7 +1608,7 @@ Parser::parseShortSwitch(Cursor &cursor, ParsedValues &parsedValues,
             }
         }
     }
-    return false;
+    return NULL;
 }
     
 SAWYER_EXPORT bool
@@ -1868,92 +1876,94 @@ public:
     }
 };
 
-template<typename Pair>
-static bool sortPairByFirst(const Pair &a, const Pair &b) {
-    return a.first < b.first;
+struct SwitchDoc {
+    std::string sortMajor, sortMinor;                   // sorting keys
+    std::string groupKey;
+    std::string docString;
+    SwitchDoc(const std::string &sortMajor, const std::string &sortMinor, const std::string &groupKey,
+              const std::string &docString)
+        : sortMajor(sortMajor), sortMinor(sortMinor), groupKey(groupKey), docString(docString) {}
+};
+
+static bool
+sortSwitchDoc(const SwitchDoc &a, const SwitchDoc &b) {
+    if (a.sortMajor != b.sortMajor)
+        return a.sortMajor < b.sortMajor;
+    return a.sortMinor < b.sortMinor;
+}
+
+static std::string
+nextSortKey() {
+    static size_t ncalls = 0;
+    static char buf[9];
+    for (size_t i=sizeof(buf)-1, n=ncalls++; i>0; --i, n/=26)
+        buf[i-1] = 'a' + (n % 26);
+    buf[sizeof(buf)-1] = '\0';
+    return buf;
 }
 
 // Returns documentation for all the switches
 SAWYER_EXPORT std::string
 Parser::docForSwitches() const {
-    typedef std::pair<std::string /*switchKey*/, const Switch*> KeySwitchPair;
-    typedef std::vector<KeySwitchPair> KeySwitchPairs;
-    typedef Container::Map<std::string /*groupKey*/, KeySwitchPairs> GroupSwitches;
-    typedef Container::Map<std::string /*groupKey*/, SortOrder> GroupSortOrders;
-    typedef Container::Map<std::string /*groupKey*/, std::vector<std::string> > GroupDocumentation;
-
-    // Partition documented switches according to their groups' keys
-    StringStringMap groupTitles;
-    GroupSwitches groupSwitches;
-    GroupSortOrders groupSortOrders;
-    GroupDocumentation groupDocumentation;
+    // Accumulate and sort documentation for each switch
+    Container::Map<std::string /*groupkey*/, std::string /*description*/> groupDescriptions;
+    Container::Map<std::string /*groupkey*/, std::string /*title*/> groupTitles;
+    std::string notDocumented = "Not documented.";
+    std::vector<SwitchDoc> switchDocs;
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
         std::string groupKey = sg.docKey().empty() ? boost::to_lower_copy(sg.name()) : sg.docKey();
-        groupTitles.insert(groupKey, sg.name());
-        groupSortOrders.insert(groupKey, sg.switchOrder());
-        if (!sg.doc().empty())
-            groupDocumentation.insertMaybeDefault(groupKey).push_back(sg.doc());
+        std::string sortMajor;
+        switch (switchGroupOrder_) {
+            case DOCKEY_ORDER:          sortMajor = groupKey;           break;
+            case INSERTION_ORDER:       sortMajor = nextSortKey();      break;
+        }
+
+        // Switch group title and doc string. When multiple groups have the same key, the title is the name of the first such
+        // group and the doc string is the concatenation from all such groups.
+        if (!sg.name().empty())
+            groupTitles.insertMaybe(groupKey, sg.name());
+        if (!sg.doc().empty()) {
+            std::string s = groupDescriptions.getOptional(groupKey).orDefault();
+            s += (s.empty() ? "" : "\n\n") + sg.doc();
+            groupDescriptions.insert(groupKey, s);
+        }
+        
+        // Accumulate doc strings for the switches in this group.
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
-            if (!sw.hidden()) {
-                std::string switchKey = sw.docKey();    // never empty
-                groupSwitches.insertMaybeDefault(groupKey).push_back(KeySwitchPair(switchKey, &sw));
+            if (sw.hidden())
+                continue;
+            std::string switchKey = sw.docKey().empty() ? boost::to_lower_copy(sw.key()) : sw.docKey();
+            std::string sortMinor;
+            switch (sg.switchOrder()) {
+                case DOCKEY_ORDER:      sortMinor = switchKey;          break;
+                case INSERTION_ORDER:   sortMinor = nextSortKey();      break;
             }
+            std::string markup = "@named{" + sw.synopsis() + "}{" + (sw.doc().empty() ? notDocumented : sw.doc()) + "}\n";
+            switchDocs.push_back(SwitchDoc(sortMajor, sortMinor, groupKey, markup));
         }
     }
-
-    // Sort the switches in each group.
-    BOOST_FOREACH (GroupSwitches::Node &node, groupSwitches.nodes()) {
-        switch (groupSortOrders[node.key()]) {
-            case DOCKEY_ORDER:
-                std::sort(node.value().begin(), node.value().end(), sortPairByFirst<KeySwitchPair>);
-                break;
-            case INSERTION_ORDER:
-                break;
-        }
-    }
+    std::sort(switchDocs.begin(), switchDocs.end(), sortSwitchDoc);
     
-    // Generate the documentation string
-    std::string retval, notDocumented("Not documented.");
-    switch (switchGroupOrder_) {
-        case DOCKEY_ORDER: {
-            BOOST_FOREACH (GroupSwitches::Node &sgNode, groupSwitches.nodes()) {
-                const std::string &groupTitle = groupTitles.getOrDefault(sgNode.key());
-                if (!groupTitle.empty())
-                    retval += "@section{" + groupTitle + "}{";
-                retval += boost::join(groupDocumentation.getOrDefault(sgNode.key()), "\n\n");
-                BOOST_FOREACH (KeySwitchPair &swPair, sgNode.value()) {
-                    std::string synopsis = swPair.second->synopsis();
-                    const std::string &doc = swPair.second->doc();
-                    retval += "@named{" + synopsis + "}{" + (doc.empty() ? notDocumented : doc) + "}\n";
-                }
-                if (!groupTitle.empty())
-                    retval += "}\n";
+    // Generate the result
+    std::string result, prevGroupKey, closeSection;
+    BOOST_FOREACH (const SwitchDoc &switchDoc, switchDocs) {
+        if (switchDoc.groupKey != prevGroupKey) {
+            std::string groupTitle = groupTitles.getOptional(switchDoc.groupKey).orElse("");
+            std::string groupDesc = groupDescriptions.getOptional(switchDoc.groupKey).orElse("");
+            result += closeSection;
+            if (!groupTitle.empty()) {
+                result += "@section{" + groupTitle + "}{";
+                closeSection = "}\n";
+            } else {
+                closeSection = "";
             }
-            break;
+            result += groupDesc + "\n\n";
+            prevGroupKey = switchDoc.groupKey;
         }
-
-        case INSERTION_ORDER: {
-            std::set<std::string> sgKeysSeen;
-            BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
-                std::string groupKey = sg.docKey().empty() ? boost::to_lower_copy(sg.name()) : sg.docKey();
-                if (sgKeysSeen.insert(groupKey).second) {
-                    const std::string &groupTitle = groupTitles.getOrDefault(groupKey);
-                    if (!groupTitle.empty())
-                        retval += "@section{" + groupTitle + "}{";
-                    retval += boost::join(groupDocumentation.getOrDefault(groupKey), "\n\n");
-                    BOOST_FOREACH (KeySwitchPair &swPair, groupSwitches[groupKey]) {
-                        std::string synopsis = swPair.second->synopsis();
-                        const std::string &doc = swPair.second->doc();
-                        retval += "@named{" + synopsis + "}{" + (doc.empty() ? notDocumented : doc) + "}\n";
-                    }
-                    if (!groupTitle.empty())
-                        retval += "}\n";
-                }
-            }
-            break;
-        }
+        result += switchDoc.docString;
     }
-    return retval;
+    result += closeSection;
+    return result;
 }
 
 SAWYER_EXPORT std::string
@@ -1967,7 +1977,7 @@ Parser::docForSection(const std::string &sectionName) const {
     } else if (0==docKey.compare("synopsis")) {
         if (doc.empty())
             doc = programName() + " [@v{switches}...]\n";
-    } else if (0==docKey.compare("options")) {
+    } else if (0==docKey.compare("switches")) {
         doc += "\n\n" + docForSwitches();
     } else if (0==docKey.compare("see also")) {
         doc += "\n\n@seeAlso";
@@ -2006,11 +2016,11 @@ Parser::documentationMarkup() const {
     std::string doc = "@section{Name}{" + docForSection("name") + "}\n" +
                       "@section{Synopsis}{" + docForSection("synopsis") + "}\n" +
                       "@section{Description}{" + docForSection("description") + "}\n" +
-                      "@section{Options}{" + docForSection("options") + "}\n";
+                      "@section{Switches}{" + docForSection("switches") + "}\n";
     created.insert("name");
     created.insert("synopsis");
     created.insert("description");
-    created.insert("options");
+    created.insert("switches");
 
     // Append user-defined sections
     BOOST_FOREACH (const std::string &sectionName, sectionOrder_.values()) {

@@ -11,10 +11,12 @@
 #include "DFAnalyzer.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
+#include "DFAstAttribute.h"
 
 using namespace std;
 using namespace CodeThorn;
 
+#include "RDTransferFunctions.hpp"
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -22,23 +24,9 @@ using namespace CodeThorn;
 class RDAnalyzer : public DFAnalyzer<RDLattice> {
  public:
   RDAnalyzer();
-  void attachInInfoToAst(string attributeName);
-  void attachOutInfoToAst(string attributeName);
-  RDLattice transfer(Label lab, RDLattice element);
-
-  typedef AnalyzerData::iterator iterator;
-  iterator begin();
-  iterator end();
-  size_t size();
-
- private:
-  void attachInfoToAst(string attributeName,bool isInInfo);
-  void transferExpression(Label label, SgExpression* expr, RDLattice& element);
-  void transferDeclaration(Label label, SgVariableDeclaration* decl, RDLattice& element);
-  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, RDLattice& element);
-  void transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element);
-  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element);
-  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, RDLattice& element);
+  ~RDAnalyzer();
+ protected:
+  virtual DFAstAttribute* createDFAstAttribute(RDLattice* elem);
 };
 
 #endif

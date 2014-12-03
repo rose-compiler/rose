@@ -16,7 +16,7 @@ public:
         traverse(ast, preorder);
     }
     void visit(SgNode *node) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(node);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(node);
         if (insn)
             insns[insn->get_address()] = insn;
     }
@@ -38,7 +38,7 @@ assemble_all(SgAsmInterpretation *interp)
          * We're leaving this implementation for later. For now, just assume that instructions don't move in memory. */
         rose_addr_t new_va = original_va;
 
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(ii->second);
         ROSE_ASSERT(insn!=NULL);
         SgUnsignedCharList machine_code;
         try {

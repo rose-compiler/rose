@@ -1,7 +1,9 @@
 #include <sawyer/Message.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>
 #include <boost/foreach.hpp>
 #include <cerrno>
@@ -46,6 +48,7 @@ stringifyImportance(Importance importance) {
         case DEBUG: return "DEBUG";
         case TRACE: return "TRACE";
         case WHERE: return "WHERE";
+        case MARCH: return "MARCH";
         case INFO:  return "INFO";
         case WARN:  return "WARN";
         case ERROR: return "ERROR";
@@ -141,6 +144,7 @@ ColorSet::fullColor() {
     cs[DEBUG] = ColorSpec(COLOR_DEFAULT, COLOR_DEFAULT, false);
     cs[TRACE] = ColorSpec(COLOR_CYAN,    COLOR_DEFAULT, false);
     cs[WHERE] = ColorSpec(COLOR_CYAN,    COLOR_DEFAULT, false);
+    cs[MARCH] = ColorSpec(COLOR_GREEN,   COLOR_DEFAULT, false);
     cs[INFO]  = ColorSpec(COLOR_GREEN,   COLOR_DEFAULT, false);
     cs[WARN]  = ColorSpec(COLOR_YELLOW,  COLOR_DEFAULT, false);
     cs[ERROR] = ColorSpec(COLOR_RED,     COLOR_DEFAULT, false);
@@ -432,14 +436,20 @@ void HighWater::emitted(const Mesg &mesg, const MesgProps &props) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Gang::GangMap Gang::gangs_;
+// This is a pointer so that it doesn't depend on order of global variable initialization. We'll allocate it the first time we
+// need it.
+Gang::GangMap *Gang::gangs_ = NULL;
 
 GangPtr Gang::instanceForId(int id) {
-    return gangs_.insertMaybe(id, Gang::instance());
+    if (!gangs_)
+        gangs_ = new GangMap;
+    return gangs_->insertMaybe(id, Gang::instance());
 }
 
 void Gang::removeInstance(int id) {
-    gangs_.erase(id);
+    if (!gangs_)
+        gangs_ = new GangMap;
+    gangs_->erase(id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -740,6 +750,7 @@ SyslogSink::post(const Mesg &mesg, const MesgProps &props) {
             case DEBUG: priority = LOG_DEBUG;   break;
             case TRACE: priority = LOG_DEBUG;   break;
             case WHERE: priority = LOG_DEBUG;   break;
+            case MARCH: priority = LOG_DEBUG;   break;
             case INFO:  priority = LOG_INFO;    break;
             case WARN:  priority = LOG_WARNING; break;
             case ERROR: priority = LOG_ERR;     break;
@@ -947,16 +958,27 @@ Facility::initStreams(const DestinationPtr &destination) {
     return *this;
 }
 
+SAWYER_EXPORT Facility&
+Facility::renameStreams(const std::string &name) {
+    for (size_t i=0; i<streams_.size(); ++i)
+        streams_[i]->facilityName(name.empty() ? name_ : name);
+    return *this;
+}
+
 SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
-    if ((size_t)imp>=streams_.size() || NULL==streams_[imp]) {
+    if ((size_t)imp>=streams_.size() || NULL==streams_[imp].get()) {
         // If you're looking at this line in a debugger it's probably because you're trying to use a Stream from a
         // default-constructed Facility.  Facilities that are allocated statically and/or at global scope should probably
         // either be constructed with Facility(const std::string&) or initialized by assigning some other facility to them.
         // Another possibility is that you provided Sawyer::Message::merr as the destination before libsawyer had a chance to
         // initialize that global variable. You can work around that problem by calling Sawyer::initializeLibrary() first.
+        //
+        // ROSE users: librose does not currently (2014-09-09) initialize libsawyer until the ROSE frontend() is called. If
+        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by
+        // invoking rose::Diagnostics::initialize() early in "main".
         throw std::runtime_error("stream " + stringifyImportance(imp) +
                                  (name_.empty() ? std::string() : " in facility \"" + name_ + "\"") +
                                  " is not initialized yet");
@@ -968,6 +990,18 @@ Facility::get(Importance imp) {
 
 SAWYER_EXPORT Facilities&
 Facilities::impset(Importance imp, bool enabled) {
+    if (!impsetInitialized_) {
+#if 0 // these are typically too verbose for end users
+        impset_.insert(DEBUG);
+        impset_.insert(TRACE);
+        impset_.insert(WHERE);
+#endif
+        impset_.insert(MARCH);
+        impset_.insert(INFO);
+        impset_.insert(WARN);
+        impset_.insert(ERROR);
+        impset_.insert(FATAL);
+    }
     if (enabled) {
         impset_.insert(imp);
     } else {
@@ -1008,14 +1042,12 @@ Facilities::insert(Facility &facility, std::string name) {
 
 SAWYER_EXPORT Facilities&
 Facilities::insertAndAdjust(Facility &facility, std::string name) {
-    ImportanceSet imps = impset_;
     insert(facility, name); // throws
 
     // Now that the facility has been successfully inserted...
-    impset_ = imps;
     for (int i=0; i<N_IMPORTANCE; ++i) {
         Importance mi = (Importance)i;
-        facility[mi].enable(imps.find(mi)!=imps.end());
+        facility[mi].enable(impset_.find(mi)!=impset_.end());
     }
     return *this;
 }
@@ -1169,15 +1201,14 @@ Facilities::parseRelation(const char *&str) {
 // On failure, returns "" and str is unchanged
 SAWYER_EXPORT std::string
 Facilities::parseImportanceName(const char *&str) {
-    static const char *words[] = {"all", "none", "debug", "trace", "where", "info", "warn", "error", "fatal",
-                                  "ALL", "NONE", "DEBUG", "TRACE", "WHERE", "INFO", "WARN", "ERROR", "FATAL"};
+    static const char *words[] = {"all", "none", "debug", "trace", "where", "march", "info", "warn", "error", "fatal"};
     static const size_t nwords = sizeof(words)/sizeof(words[0]);
 
     const char *s = str;
     while (isspace(*s)) ++s;
     for (size_t i=0; i<nwords; ++i) {
         size_t n = strlen(words[i]);
-        if (0==strncmp(s, words[i], n) && !isalnum(s[n]) && '_'!=s[n]) {
+        if (boost::iequals(std::string(s).substr(0, n), std::string(words[i]).substr(0, n)) && '_'!=s[n]) {
             str += (s-str) + n;
             return words[i];
         }
@@ -1187,26 +1218,23 @@ Facilities::parseImportanceName(const char *&str) {
 
 SAWYER_EXPORT Importance
 Facilities::importanceFromString(const std::string &str) {
-    if (0==str.compare("debug") || 0==str.compare("DEBUG"))
+    if (boost::iequals(str, "debug"))
         return DEBUG;
-    if (0==str.compare("trace") || 0==str.compare("TRACE"))
+    if (boost::iequals(str, "trace"))
         return TRACE;
-    if (0==str.compare("where") || 0==str.compare("WHERE"))
+    if (boost::iequals(str, "where"))
         return WHERE;
-    if (0==str.compare("info")  || 0==str.compare("INFO"))
+    if (boost::iequals(str, "march"))
+        return MARCH;
+    if (boost::iequals(str, "info"))
         return INFO;
-    if (0==str.compare("warn")  || 0==str.compare("WARN"))
+    if (boost::iequals(str, "warn"))
         return WARN;
-    if (0==str.compare("error") || 0==str.compare("ERROR"))
+    if (boost::iequals(str, "error"))
         return ERROR;
-    if (0==str.compare("fatal") || 0==str.compare("FATAL"))
+    if (boost::iequals(str, "fatal"))
         return FATAL;
-    abort();
-#ifdef _MSC_VER
-    // Microsoft's C++ compiler thinks that abort() can return; this extraneous return shuts up the warning and is
-    // protected from other compilers that may complain that this statement is unreachable.
-    return FATAL;
-#endif
+    return N_IMPORTANCE;                                // error
 }
 
 // parses a StreamControlList. On success, returns a non-empty vector and adjust 'str' to point to the next character after the
@@ -1241,25 +1269,27 @@ Facilities::parseImportanceList(const std::string &facilityName, const char *&st
         const char *importanceStart = s;
         std::string importance = parseImportanceName(s);
         if (importance.empty()) {
-            if (!enablement.empty() || !relation.empty())
+            if (!enablement.empty() || !relation.empty() || (isalpha(s[0]) && !retval.empty()))
                 throw ControlError("message importance level expected", importanceStart);
             s = elmtStart;
             break;
         }
 
         ControlTerm term(facilityName, enablement.compare("!")!=0);
-        if (0==importance.compare("all") || 0==importance.compare("none")) {
+        if (boost::iequals(importance, "all") || boost::iequals(importance, "none")) {
             if (!enablement.empty())
                 throw ControlError("'"+importance+"' cannot be preceded by '"+enablement+"'", enablementStart);
             if (!relation.empty())
                 throw ControlError("'"+importance+"' cannot be preceded by '"+relation+"'", relationStart);
             term.lo = DEBUG;
             term.hi = FATAL;
-            term.enable = 0!=importance.compare("none");
+            term.enable = !boost::iequals(importance, "none");
         } else {
             Importance imp = importanceFromString(importance);
+            if (N_IMPORTANCE==imp)
+                throw ControlError("'"+importance+"' is not a valid importance", relationStart);
             if (relation.empty()) {
-                term.lo = term.hi = importanceFromString(importance);
+                term.lo = term.hi = imp;
             } else if (relation[0]=='<') {
                 term.lo = DEBUG;
                 term.hi = imp;
@@ -1360,13 +1390,23 @@ Facilities::control(const std::string &ss) {
     return ""; // no errors
 }
 
+SAWYER_EXPORT std::vector<std::string>
+Facilities::facilityNames() const {
+    std::vector<std::string> allNames;
+    BOOST_FOREACH (const std::string &name, facilities_.keys())
+        allNames.push_back(name);
+    return allNames;
+}
+
 SAWYER_EXPORT void
 Facilities::print(std::ostream &log) const {
-    for (int i=0; i<N_IMPORTANCE; ++i) {
-        Importance mi = (Importance)i;
-        log <<(impset_.find(mi)==impset_.end() ? '-' : (mi==WHERE?'H':stringifyImportance(mi)[0]));
+    if (impsetInitialized_) {
+        for (int i=0; i<N_IMPORTANCE; ++i) {
+            Importance mi = (Importance)i;
+            log <<(impset_.find(mi)==impset_.end() ? '-' : (mi==WHERE?'H':stringifyImportance(mi)[0]));
+        }
+        log <<" default enabled levels\n";
     }
-    log <<" default enabled levels\n";
 
     if (facilities_.isEmpty()) {
         log <<"no message facilities registered\n";
@@ -1387,11 +1427,11 @@ Facilities::print(std::ostream &log) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SAWYER_EXPORT DestinationPtr merr;
-SAWYER_EXPORT Facility mlog("sawyer");
-SAWYER_EXPORT Facilities mfacilities;
+SAWYER_EXPORT DestinationPtr merr SAWYER_STATIC_INIT;
+SAWYER_EXPORT Facility mlog SAWYER_STATIC_INIT ("sawyer");
+SAWYER_EXPORT Facilities mfacilities SAWYER_STATIC_INIT;
 SAWYER_EXPORT bool isInitialized;
-SAWYER_EXPORT SProxy assertionStream;
+SAWYER_EXPORT SProxy assertionStream SAWYER_STATIC_INIT;
 
 SAWYER_EXPORT bool
 initializeLibrary() {
@@ -1399,6 +1439,11 @@ initializeLibrary() {
         isInitialized = true;
         merr = FdSink::instance(2);
         mlog = Facility("", merr);
+        mlog[DEBUG].disable();
+        mlog[TRACE].disable();
+        mlog[WHERE].disable();
+        mlog[MARCH].disable();
+        mlog[INFO ].disable();
         mfacilities.insert(mlog, "sawyer");
     }
     return true;

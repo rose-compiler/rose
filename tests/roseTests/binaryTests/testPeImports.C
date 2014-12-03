@@ -45,10 +45,9 @@ struct show_hnt_addresses: public AstSimpleProcessing {
     void visit(SgNode *node) {
         SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
         if (idir) {
-            ExtentMap hnt_extent;
+            AddressIntervalSet hnt_extent;
             size_t hnt_nentries = idir->hintname_table_extent(hnt_extent);
-            o <<idir->get_dll_name()->get_string(true)
-              <<" hint/name table has " <<hnt_nentries <<(1==hnt_nentries?" entry":" entries");
+            o <<idir->get_dll_name()->get_string(true) <<" hint/name table has " <<StringUtility::plural(hnt_nentries, "entries");
             if (hnt_nentries>0)
                 o <<" at virtual addresses: " <<hnt_extent;
             o <<std::endl;

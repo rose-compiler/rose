@@ -70,7 +70,8 @@ public:
     class Node: private std::pair<const Key, Value> {
         // This class MUST BE binary compatible with its super class (see NodeIterator::operator* below)
     public:
-        Node(const std::pair<const Key, Value> &pair): std::pair<const Key, Value>(pair) {}
+        explicit Node(const std::pair<const Key, Value> &pair): std::pair<const Key, Value>(pair) {}
+        Node(const Key &key, Value &value): std::pair<const Key, Value>(key, value) {}
     public:
         /** Key part of key/value node.
          *

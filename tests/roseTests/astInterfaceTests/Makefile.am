@@ -3,13 +3,16 @@
 #-------------------------------------------------------------
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# JP (10/3/14): Added the unit tests subdirectory to be built.
+SUBDIR = typeEquivalenceTests unitTests 
+
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 INCLUDES =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsing
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsing moveDeclarationToInnermostScope
 
 #not for installation
 noinst_PROGRAMS = \
@@ -28,7 +31,7 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage createAbstractHandles
+    buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -87,7 +90,7 @@ deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 loopCollapsing_SOURCES                    = loopCollapsing.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
-
+moveDeclarationToInnermostScope_SOURCES   = moveDeclarationToInnermostScope.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -150,8 +153,17 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
+  rose_inputmoveDeclarationToInnermostScope_1.C \
+  rose_inputmoveDeclarationToInnermostScope_2.C \
+  rose_inputmoveDeclarationToInnermostScope_3.C \
+  rose_inputmoveDeclarationToInnermostScope_4.C \
+  rose_inputmoveDeclarationToInnermostScope_5.C \
+  rose_inputmoveDeclarationToInnermostScope_6.C \
+  rose_inputmoveDeclarationToInnermostScope_7.C \
+  rose_inputmoveDeclarationToInnermostScope_8.C \
   buildJavaPackage.passed 
 
+test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -458,6 +470,63 @@ rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 		$(srcdir)/astInterface.conf $@.passed
 endif
 
+rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug"  \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_3.C: inputmoveDeclarationToInnermostScope_3.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_4.C: inputmoveDeclarationToInnermostScope_4.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostScope_5.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostScope_7.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostScope_8.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
 	@$(RTH_RUN) \
@@ -553,12 +622,16 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildJavaPackage.C inputloopCollapsing_1.C
 
 
+# JP (10/4/14): Added the unit tests
+unit-tests:
+	$(MAKE) check-local -C unitTests
+
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(generatedCodeExamples)
+check-local: $(generatedCodeExamples) unit-tests
 
 clean-local:
-	rm -f $(generatedCodeExamples)
+	rm -f $(generatedCodeExamples) *.dot
 	rm -f $(addsuffix .passed, $(generatedCodeExamples))
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))

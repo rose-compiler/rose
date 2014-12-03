@@ -33,7 +33,7 @@ using namespace __gnu_cxx;
 // ----------------------------------------------------------------------------------------------
 enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
 static const size_t numberOfInstructionKinds = x86_last_instruction;
-inline size_t getInstructionKind(SgAsmx86Instruction* insn) {return insn->get_kind();}
+inline size_t getInstructionKind(SgAsmX86Instruction* insn) {return insn->get_kind();}
 
 inline ExpressionCategory getCategory(SgAsmExpression* e) {
   if (isSgAsmValueExpression(e)) {
@@ -77,11 +77,11 @@ inline void* unparseAndIntern(SgAsmExpression* e) {
   }
 }
  
-void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
-		    std::vector<SgAsmx86Instruction*>::iterator end, map<SgAsmExpression*, size_t> numbers[3]) {
+void numberOperands(std::vector<SgAsmX86Instruction*>::iterator beg,
+		    std::vector<SgAsmX86Instruction*>::iterator end, map<SgAsmExpression*, size_t> numbers[3]) {
   map<void*, size_t> stringNumbers[3];
   for (; beg != end; ++beg) {
-    SgAsmx86Instruction* insn = *beg;
+    SgAsmX86Instruction* insn = *beg;
     const SgAsmExpressionPtrList& operands = getOperands(insn);
     //size_t operandCount = operands.size();
     for (size_t j = 0; j < operands.size(); ++j) {
@@ -181,7 +181,7 @@ BinQSupport::resolveValue(SgAsmValueExpression* leftVal) {
 
 
 rose_addr_t 
-BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
+BinQSupport::evaluateMemoryExpression(SgAsmX86Instruction* destInst,
 				      SgAsmMemoryReferenceExpression* mem) {
   rose_addr_t resolveAddr=0;
   SgAsmExpression* exprOffset = mem->get_address();
@@ -312,7 +312,7 @@ BinQSupport::checkIfValidAddress(rose_addr_t next_addr, SgAsmInstruction* inst) 
     SgAsmInstruction* nextStmt=getNextStmt(inst);
     //cerr << "IDA found next : " << nextStmt << endl;
     if (nextStmt) {
-      SgAsmx86Instruction* instN = isSgAsmx86Instruction(nextStmt);
+      SgAsmX86Instruction* instN = isSgAsmX86Instruction(nextStmt);
       if (instN)
 	next_addr = instN->get_address();
     }
@@ -346,15 +346,15 @@ BinQSupport::getPrevStmt(SgAsmInstruction* inst) {
   return nextStmt;
 }
 
-SgAsmx86Instruction*
+SgAsmX86Instruction*
 BinQSupport::checkIfValidPredecessor(rose_addr_t next_addr, SgAsmInstruction* inst) {
-  SgAsmx86Instruction* ninst = isSgAsmx86Instruction(inst);
+  SgAsmX86Instruction* ninst = isSgAsmX86Instruction(inst);
   if (next_addr==inst->get_address()) {
     // cant proceed to next address
     SgAsmInstruction* nextStmt=getPrevStmt(inst);
     //cerr << "IDA found next : " << nextStmt << endl;
     if (nextStmt) {
-      SgAsmx86Instruction* instN = isSgAsmx86Instruction(nextStmt);
+      SgAsmX86Instruction* instN = isSgAsmX86Instruction(nextStmt);
       if (instN) {
 	next_addr = instN->get_address();
 	ninst=instN;

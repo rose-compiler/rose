@@ -423,7 +423,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
 
   if (RoseBin_support::DEBUG_MODE())
     cout << " .. running DefUseAnalysis on Node : " << name << endl;
-  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* asmNode = isSgAsmX86Instruction(node->get_SgNode());
   if (asmNode) {
     // find out if instruction is a definition (altering instruction)
     vector<std::pair<X86RegisterClass, int> > codes;

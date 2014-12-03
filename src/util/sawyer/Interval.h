@@ -172,12 +172,18 @@ public:
 
     /** Intersection.
      *
-     *  Returns an interval which is the intersection of this interval with another. */
+     *  Returns an interval which is the intersection of this interval with another.
+     *
+     * @{ */
     Interval intersection(const Interval &other) const {
         if (isEmpty() || other.isEmpty() || greatest()<other.least() || least()>other.greatest())
             return Interval();
         return Interval::hull(std::max(least(), other.least()), std::min(greatest(), other.greatest()));
     }
+    Interval operator&(const Interval &other) const {
+        return intersection(other);
+    }
+    /** @} */
 
     /** Hull.
      *
@@ -240,7 +246,28 @@ public:
             return hull(right);
         }
     }
-    
+
+    // The following trickery is to allow things like "if (x)" to work but without having an implicit
+    // conversion to bool which would cause no end of other problems.  This is fixed in C++11
+private:
+    typedef void(Interval::*unspecified_bool)() const;
+    void this_type_does_not_support_comparisons() const {}
+public:
+    /** Type for Boolean context.
+     *
+     *  Implicit conversion to a type that can be used in a boolean context such as an <code>if</code> or <code>while</code>
+     *  statement.  For instance:
+     *
+     * @code
+     *  if (Interval<unsigned> x = doSomething(...)) {
+     *     // this is reached only if x is non-empty
+     *  }
+     * @endcode
+     *
+     *  The inteval evaluates to true if it is non-empty, and false if it is empty. */
+    operator unspecified_bool() const {
+        return isEmpty() ? 0 : &Interval::this_type_does_not_support_comparisons;
+    }
 };
 
 } // namespace

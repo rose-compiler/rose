@@ -34,6 +34,15 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
+#   libroseExperimentalOpenFortranParserlibraries =
+#   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
+#   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+else
+   libroseExperimentalOpenFortranParserlibraries =
+endif
+
 # DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
 # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
 libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
@@ -115,6 +124,7 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
    $(librosePythonlibraries) \
@@ -201,7 +211,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_WAVE_LIB) \
           -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) 
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
 endif
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell

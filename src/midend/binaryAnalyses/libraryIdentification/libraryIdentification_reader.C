@@ -1,7 +1,6 @@
-
 // Support for reading a binary and comparing its functions to a database.
 
-#include <rose.h>
+#include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include <libraryIdentification.h>
 

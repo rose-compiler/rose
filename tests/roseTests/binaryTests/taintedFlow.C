@@ -79,6 +79,7 @@
 #include <sawyer/Map.h>
 #include <sawyer/Message.h>
 
+using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
@@ -230,6 +231,7 @@ int main(int argc, char *argv[])
 
     // Describe the command-line
     using namespace Sawyer::CommandLine;
+    SwitchGroup generic = CommandlineProcessing::genericSwitches();
     SwitchGroup switches("Tainted flow switches");
     std::vector<rose_addr_t> functionAddresses;
     switches.insert(Switch("address")
@@ -248,9 +250,6 @@ int main(int argc, char *argv[])
                          "less able to determine when global variables and local variables are distinct because it "
                          "reasons that a stack-offset expression could be equal to some arbitrary constant.  The @v{mode} "
                          "can be the word \"under\" (the default) or \"over\"."));
-    switches.insert(Switch("help", 'h')
-                    .action(showHelpAndExit(0))
-                    .doc("Emits the documentation for these switches and then exits."));
     bool useInstructions = false;
     switches.insert(Switch("instructions")
                     .intrinsicValue(true, useInstructions)
@@ -263,20 +262,12 @@ int main(int argc, char *argv[])
                     .whichValue(SAVE_ONE)               // blocks and instructions are mutually exclusive
                     .intrinsicValue(false, useInstructions)
                     .hidden(true));
-    switches.insert(Switch("log", 'L')
-                    .action(Sawyer::CommandLine::configureDiagnostics("log", rose::Diagnostics::mfacilities))
-                    .argument("logspec")
-                    .whichValue(Sawyer::CommandLine::SAVE_ALL)
-                    .doc("Controls diagnostic logging.  Invoke with \"@s{log}=help\" for more information."));
     std::vector<std::string> functionNameRegexList;
     switches.insert(Switch("names")
                     .whichValue(SAVE_ALL)
                     .argument("regex", anyParser(functionNameRegexList))
                     .doc("Specifies a regular expression for function names that will be analyzed.  If more than one regular "
                          "expression is given then a function is analyzed if it's name matches any of the expressions."));
-    switches.insert(Switch("version", 'V')
-                    .action(showVersionAndExit(version_message(), 0))
-                    .doc("Shows version information for various ROSE components and then exits."));
 
     Sawyer::CommandLine::Parser cmdline_parser;
     cmdline_parser.errorStream(mlog[FATAL]);
@@ -298,7 +289,7 @@ int main(int argc, char *argv[])
                        "\"@prop{programName} -- -rose:help @v{specimen}\").");
 
     // Parse the command line.
-    ParserResult cmdline = cmdline_parser.with(switches).parse(argc, argv).apply();
+    ParserResult cmdline = cmdline_parser.with(generic).with(switches).parse(argc, argv).apply();
     
     // Parse the binary container (ELF, PE, etc) and disassemble instructions using the default disassembler.  Organize
     // (partition) the instructions into basic blocks and functions using the default partitioner.  The disassembler and
