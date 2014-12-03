@@ -1465,6 +1465,10 @@ HEADER_LIST_DECLARATIONS
       //! This function generates the qualified name prefix to be used with the return type.
           SgName get_qualified_name_prefix_for_return_type() const;
 
+       // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
+          static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
+
+
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
 HEADER_FUNCTION_PARAMETER_LIST_START
@@ -2258,6 +2262,14 @@ HEADER_CASE_OPTION_STATEMENT_START
 
 HEADER_CASE_OPTION_STATEMENT_END
 
+HEADER_ASYNC_STATEMENT_START
+HEADER_ASYNC_STATEMENT_END
+
+HEADER_FINISH_STATEMENT_START
+HEADER_FINISH_STATEMENT_END
+
+HEADER_AT_STATEMENT_START
+HEADER_AT_STATEMENT_END
 
 HEADER_TRY_STATEMENT_START
 
@@ -2722,6 +2734,9 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
        // to it being a part of a template.
           void set_definition( SgTemplateInstantiationDefn* definition );
 
+       // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+          void set_definition( SgClassDefinition* definition );
+
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
@@ -2854,7 +2869,10 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
        // DQ (12/28/2011): We need a constructor similar to the base class.
           $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 
-#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
+// files generated from this file.  This change was required to support the ATerm libraries.
+// #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+#ifdef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
@@ -12303,14 +12321,23 @@ SgVariableDeclaration::set_baseTypeDefiningDeclaration(SgDeclarationStatement* d
   // defining declaration in a SgVariableDeclaration (if such a thing is defined).  An example of where this
   // happens is in: "struct { int x; } y;", here the structure declaration is in the variable declaration for "y".
 
-     ROSE_ASSERT(d != NULL);
+  // DQ (10/11/2014): We need to handle the case where the input in NULL, required for more general processing 
+  // for ROSETTA generated ATerm support.
+  // ROSE_ASSERT(d != NULL);
+     if (d != NULL)
+        {
+          p_baseTypeDefiningDeclaration = d;
+          ROSE_ASSERT(p_baseTypeDefiningDeclaration != NULL);
 
-     p_baseTypeDefiningDeclaration = d;
-     ROSE_ASSERT(p_baseTypeDefiningDeclaration != NULL);
-
-  // Mark the p_variableDeclarationContainsBaseTypeDefiningDeclaration as true so that the p_baseTypeDefiningDeclaration
-  // declaration will be used (by compute_baseTypeDefiningDeclaration()).
-     set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+       // Mark the p_variableDeclarationContainsBaseTypeDefiningDeclaration as true so that the p_baseTypeDefiningDeclaration
+       // declaration will be used (by compute_baseTypeDefiningDeclaration()).
+          set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+        }
+       else
+        {
+          p_baseTypeDefiningDeclaration = NULL;
+          set_variableDeclarationContainsBaseTypeDefiningDeclaration(false);
+        }
    }
 
 
@@ -12985,6 +13012,19 @@ SgTemplateInstantiationDecl::set_definition( SgTemplateInstantiationDefn* defini
    }
 
 void
+SgTemplateInstantiationDecl::set_definition( SgClassDefinition* definition )
+   {
+  // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+  // We need a way for the automatically generated code to set the 
+  // definition data member in the base class.
+
+  // DQ (10/10/2014): Make sure that this is a SgTemplateInstantiationDefn (or NULL).
+     ROSE_ASSERT(definition == NULL || isSgTemplateInstantiationDefn(definition) != NULL);
+
+     SgClassDeclaration::set_definition(definition);
+   }
+
+void
 SgTemplateInstantiationDecl::resetTemplateName ()
    {
   // local version of function to support generation of template names
@@ -13107,7 +13147,12 @@ SgTemplateInstantiationFunctionDecl::get_symbol_from_symbol_table() const
 
 // DQ (11/27/2011): Adding support to hold the template declarations in the AST.
 SgTemplateInstantiationFunctionDecl::SgTemplateInstantiationFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
+#if 0
+// DQ (10/11/2014): Marking SgFunctionParameterList as a constructor parameter to support aterm to AST generation.
+// : SgFunctionDeclaration(name, NULL, type, definition)
+#else
    : SgFunctionDeclaration(name, type, definition)
+#endif
    {
   // Custom constructor to support same interface and allow for a templated function to to build SgFunctionDeclaration, 
   // SgTemplateInstantiationFunctionDecl, SgMemberFunctionDeclaration, and SgTemplateInstantiationMemberFunctionDecl.
@@ -13235,7 +13280,12 @@ SgTemplateInstantiationMemberFunctionDecl::get_symbol_from_symbol_table() const
 
 // DQ (11/27/2011): Adding support to hold the template declarations in the AST.
 SgTemplateInstantiationMemberFunctionDecl::SgTemplateInstantiationMemberFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
+#if 0
+// DQ (10/11/2014): Marking SgFunctionParameterList as a constructor parameter to support aterm to AST generation.
+// : SgMemberFunctionDeclaration(name, NULL, type, definition)
+#else
    : SgMemberFunctionDeclaration(name, type, definition)
+#endif
    {
   // Custom constructor to support same interface and allow for a templated function to to build SgMemberFunctionDeclaration, 
   // SgTemplateInstantiationMemberFunctionDecl, SgFunctionDeclaration, and SgTemplateInstantiationFunctionDecl.
@@ -14192,6 +14242,32 @@ SgCaseOptionStmt::replace_child(SgStatement *target,SgStatement *newstmt,
 
 SOURCE_CASE_OPTION_STATEMENT_END
 
+SOURCE_ASYNC_STATEMENT_START
+
+void
+SgAsyncStmt::post_construction_initialization() 
+   {
+   }
+
+SOURCE_ASYNC_STATEMENT_END
+
+SOURCE_FINISH_STATEMENT_START
+
+void
+SgFinishStmt::post_construction_initialization() 
+   {
+   }
+
+SOURCE_FINISH_STATEMENT_END
+
+SOURCE_AT_STATEMENT_START
+
+void
+SgAtStmt::post_construction_initialization()
+       {
+       }
+
+SOURCE_AT_STATEMENT_END
 
 SOURCE_TRY_STATEMENT_START
 

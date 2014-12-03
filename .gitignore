@@ -43,6 +43,16 @@ GTAGS
 /config/support-projects.m4
 /config/test-driver
 
+# Eclipse project files
+.cproject
+.project
+.settings
+
+# Eclipse project files
+.cproject
+.project
+.settings
+
 # OS X Finder files
 .DS_Store
 

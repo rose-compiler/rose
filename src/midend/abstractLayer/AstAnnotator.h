@@ -17,6 +17,7 @@ using std::string;
 class AstAnnotator {
  public:
   AstAnnotator(Labeler* labeler);
+  AstAnnotator(Labeler* labeler, VariableIdMapping* variableIdMapping);
   // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
   void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName);
   void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName);
@@ -25,6 +26,7 @@ class AstAnnotator {
   void annotateAstAttributesAsComments(SgNode* node, string attributeName, PreprocessingInfo::RelativePositionType posSpecifier);
   void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
   Labeler* _labeler;
+  VariableIdMapping* _variableIdMapping;
 };
 
 #endif

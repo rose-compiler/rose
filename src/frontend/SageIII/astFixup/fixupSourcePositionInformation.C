@@ -666,7 +666,12 @@ FixupSourcePositionConstructs::visit(SgNode* node)
 
   // DQ (10/27/2007): Added as a test!
      SgLocatedNode* locatedNode = isSgLocatedNode(node);
-     if (locatedNode != NULL)
+
+     SgUntypedNode* untypedNode = isSgUntypedNode(node);
+
+  // DQ (9/15/2014): Skip checking of parent pointers here for SgUntypedNode IR nodes (handle this case seperately).
+  // if (locatedNode != NULL)
+     if (locatedNode != NULL && untypedNode == NULL)
         {
 #if 0
           if (isSgExprStatement(locatedNode) != NULL)

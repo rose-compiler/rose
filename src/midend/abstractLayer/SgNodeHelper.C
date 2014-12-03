@@ -271,8 +271,9 @@ bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
   SgInitializer* initializer=initName->get_initializer();
+  // check if it is a declaration without initializer
   if(!initializer)
-    throw "Error: AST structure failure: no initializer for initialized name.";
+    return 0;
   if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
     SgExpression* expr=assignInitializer->get_operand_i();
     return expr;

@@ -245,7 +245,7 @@ SgAsmUnaryPlus
 SgAsmUnaryRrx
 SgAsmValueExpression
 SgAsmVectorType
-SgAsmx86Instruction
+SgAsmX86Instruction
 SgAsmBinaryAddressSymbol
 SgAsmBinaryDataSymbol
 SgAssertStmt
@@ -782,3 +782,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgAsyncStmt
+SgFinishStmt
+SgAtStmt
+SgHereExp
