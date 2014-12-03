@@ -10304,8 +10304,9 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      printf ("In SageInterface::insertStatement(): insert newStmt = %p = %s before/after targetStmt = %p = %s \n",newStmt,newStmt->class_name().c_str(),targetStmt,targetStmt->class_name().c_str());
 #endif
 
-     SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(targetStmt);
-     ROSE_ASSERT(functionDefinition != NULL);
+  // DQ (12/2/2014): Not sure why this was here in the first place (likely debugging code from the fix for the SgLableStatement insertion.
+  // SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(targetStmt);
+  // ROSE_ASSERT(functionDefinition != NULL);
 
   // Liao 3/2/2012. The semantics of ensureBasicBlockAsParent() are messy. input targetStmt may be
   // returned as it is if it is already a basic block as a body of if/while/catch/ etc.
