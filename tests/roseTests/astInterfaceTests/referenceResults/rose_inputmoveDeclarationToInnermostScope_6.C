@@ -2,8 +2,8 @@
 
 void foo(int value,int *first,int *last)
 {
+  const int tmp = value;
   for (; first != last; ++first) {
-    const int tmp = value;
      *first = tmp;
   }
 //test if false body is not created.
