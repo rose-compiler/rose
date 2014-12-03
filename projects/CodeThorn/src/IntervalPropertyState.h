@@ -1,7 +1,6 @@
 #ifndef INTERVAL_PROPERTY_STATE_H
 #define INTERVAL_PROPERTY_STATE_H
 
-#include "sage3basic.h"
 #include "VariableIdMapping.h"
 #include "NumberIntervalLattice.h"
 #include "PropertyState.h"

@@ -7,6 +7,7 @@ using namespace CodeThorn;
 
 #include "IntervalTransferFunctions.hpp"
 #include "AnalysisAbstractionLayer.h"
+#include "AbstractEvaluator.hpp"
 
 IntervalTransferFunctions::IntervalTransferFunctions() {
   cppExprEvaluator=0;

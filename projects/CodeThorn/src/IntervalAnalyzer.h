@@ -12,6 +12,7 @@
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
+#include "IntervalPropertyState.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -21,12 +22,12 @@ using namespace CodeThorn;
   * \author Markus Schordan
   * \date 2013.
  */
-class IntervalAnalyzer : public DFAnalyzer<RDLattice> {
+class IntervalAnalyzer : public DFAnalyzer<IntervalPropertyState> {
  public:
   IntervalAnalyzer();
   ~IntervalAnalyzer();
  protected:
-  virtual DFAstAttribute* createDFAstAttribute(RDLattice* elem);
+  virtual DFAstAttribute* createDFAstAttribute(IntervalPropertyState* elem);
 };
 
 #endif

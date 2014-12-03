@@ -7,6 +7,7 @@
 #ifndef DFANALYZER_C
 #define DFANALYZER_C
 
+#include "sage3basic.h"
 #include "DFAnalyzer.h"
 #include "AnalysisAbstractionLayer.h"
 #include "GeneralResultAttribute.h"

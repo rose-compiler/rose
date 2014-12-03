@@ -207,8 +207,10 @@ rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C Lan
   VariableIdUtils.C \
   VariableIdUtils.h \
   addressTakenAnalysis.C \
-  addressTakenAnalysis.h 
-#  IntervalAnalyzer.h \
+  addressTakenAnalysis.h
+#  IntervalPropertyState.h \
+  IntervalPropertyState.C \
+  IntervalAnalyzer.h \
   IntervalAnalyzer.C \
   IntervalTransferFunctions.hpp \
   IntervalTransferFunctions.C
@@ -308,10 +310,6 @@ analyterix_SOURCES = \
   GeneralAnalyzer.C \
   PropertyState.h \
   PropertyState.C \
-  IntervalPropertyState.h \
-  IntervalPropertyState.C \
-  NumberIntervalLattice.h \
-  NumberIntervalLattice.C \
   analyterix.C
 
 reverser_LDADD = -lrose
