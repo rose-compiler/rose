@@ -18950,6 +18950,7 @@ void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVaria
   }
 }
 
+#if 0
 static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bottom_scope)
 {
   bool rt = false;
@@ -18981,6 +18982,44 @@ static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bot
   return rt;
 }
 
+#endif
+
+// A helper function to process target scopes
+// if a target scope is a if statement, we grab the true and false body scopes as the new target scopes and remove the if-stmt scope from the original scope vector.
+// We also mark the two body scopes so the duplicated variable declarations in them will be added into a worklist to be considered further. 
+std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatement*> scopes, std::set<SgScopeStatement*>& todo_scopes)
+{
+  std::vector <SgScopeStatement*> processed_scopes; 
+  todo_scopes.clear();
+  for (size_t i = 0; i< scopes.size(); i++)
+  {
+    SgScopeStatement* target_scope = scopes[i];
+    if (SgIfStmt* if_stmt = isSgIfStmt (target_scope))
+    {
+        if (if_stmt->get_true_body())     
+        {
+          SageInterface::ensureBasicBlockAsTrueBodyOfIf (if_stmt);
+          SgScopeStatement* true_body = isSgScopeStatement(if_stmt->get_true_body());
+          processed_scopes.push_back (true_body);
+          todo_scopes.insert(true_body);
+        }
+
+        if (if_stmt->get_false_body())
+        {
+          SageInterface::ensureBasicBlockAsFalseBodyOfIf (if_stmt);
+          SgScopeStatement* false_body = isSgScopeStatement(if_stmt->get_false_body());
+          processed_scopes.push_back (false_body);
+          todo_scopes.insert(false_body);
+        }
+    }
+    else
+    {
+      processed_scopes.push_back(target_scope);
+    }
+  }
+  return processed_scopes;
+}
+
 // Move a single declaration into multiple scopes. 
 // For each target scope:
 // 1. Copy the decl to be local decl , 
@@ -18989,7 +19028,7 @@ static bool hasLoopInBetween (SgScopeStatement* top_scope, SgScopeStatement* bot
 // Finally, erase the original decl 
 //
 // if the target scope is a For loop && the variable is index variable,  merge the decl to be for( int i=.., ...).
-void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes)
+void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::queue<SgVariableDeclaration*> &worklist)
 {
   ROSE_ASSERT (decl!= NULL);
   ROSE_ASSERT (scopes.size() != 0);
@@ -19005,6 +19044,9 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
   {
      return;
   }
+
+  std::set<SgScopeStatement*> todo_scopes;
+  scopes = processTargetScopes(scopes, todo_scopes);
 
 #if 0 //TODO: this is tricky, we have to modify the scope tree to backtrack this. 
   // For aggressive mode, skip moving if the move will cross some boundaries
@@ -19090,6 +19132,14 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
           }
           break;
         }
+      // we duplicate and insert the declaration into true (and false) body, if the body exists
+      // The two duplicated declarations are added into the  work list to be processed later on
+      case V_SgIfStmt: 
+        {
+          cerr<<"if statement @ line"<< target_scope->get_file_info()->get_line()<< " should not show up in target scope vector after processTargetScopes()"<<endl;
+          ROSE_ASSERT (false);
+          break;
+        }
       /*
        *We don't try to merge a variable decl into the conditional of a while statement
        * The reason is that often the declaration has an initializer , which must be preserved.
@@ -19144,6 +19194,13 @@ void moveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeSt
     // replace variable references
     SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
 #endif 
+
+    // add declarations into the worklist if the target scope is a marked true/false body of a if-stmt.
+    // Note: not all bodies should be added. Only consider the marked scopes!!
+   if (todo_scopes.find(target_scope) != todo_scopes.end()) 
+   {
+     worklist.push(decl_copy);
+   }
 
    //SageInterface::setSourcePositionForTransformation (decl_copy);
 #if 1
@@ -19259,7 +19316,7 @@ static SgForStatement* hasALoopWithComplexInitStmt( std::vector <SgScopeStatemen
 }
 
 
-bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, bool debug = false)
+bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, std::queue<SgVariableDeclaration*> &worklist, bool debug = false)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
   ROSE_ASSERT (decl != NULL);
@@ -19331,7 +19388,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
     else // we still have to move it to the innermost common scope
     {
       SgScopeStatement* bottom_scope = first_branch_node->scope;
-#if 1
+#if 0 // We no longer do the adjustment here. We delay the logic in the insertion logic. And generate two additional declarations to be considered later on
       // special adjustment here for if-stmt as the single bottom scope  to be inserted into the var decl.
       // we should adjust here, not any other places !!
       // TODO may have to include other special stmt like while?
@@ -19360,7 +19417,7 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
         ROSE_ASSERT (false);
     }
     else
-      moveVariableDeclaration (decl, target_scopes);
+      copyMoveVariableDeclaration (decl, target_scopes, worklist);
     scope_tree->deep_delete_children ();
     delete scope_tree;
     return true;

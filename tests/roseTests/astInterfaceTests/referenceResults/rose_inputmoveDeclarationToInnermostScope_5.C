@@ -157,11 +157,12 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
 // variable is used in both true and false body.
 // Naive analysis will find if-stmt is the inner-most common scope.
 {
-    int blockx;
     if (loSt) {
+      int blockx;
       blockx++;
     }
     else {
+      int blockx;
       blockx--;
     }
   }

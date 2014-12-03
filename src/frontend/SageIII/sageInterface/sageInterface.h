@@ -27,6 +27,7 @@ SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, S
 #include "ClassHierarchyGraph.h"
 #endif
 
+#include <queue> // used for a worklist of declarations to be moved by moveDeclarationToInnermostScope
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
 ROSE_DLL_API std::string getVariantName (VariantT v);
@@ -2050,8 +2051,8 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 // DQ (6/7/2012): Unclear where this function should go...
   bool hasTemplateSyntax( const SgName & name );
 
-//! Move a declaration to a scope which is the closest to the declaration's use places
-bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*= false */);
+//! Move a declaration to a scope which is the closest to the declaration's use places. It may generate new declarations to be considered later on so worklist is used.
+bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
 
 #if 0
 

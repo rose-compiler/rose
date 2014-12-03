@@ -161,10 +161,10 @@ MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
   inputmoveDeclarationToInnermostScope_6.C \
   inputmoveDeclarationToInnermostScope_7.C \
   inputmoveDeclarationToInnermostScope_8.C \
-  inputmoveDeclarationToInnermostScope_9.C 
+  inputmoveDeclarationToInnermostScope_9.C \
+  inputmoveDeclarationToInnermostScope_10.C
 
-MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = \
-    inputmoveDeclarationToInnermostScope_10.C
+MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = 
 
 PASSING_MOVE_DECLS_TESTCODES_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS})
 
@@ -551,7 +551,7 @@ rose_inputmoveDeclarationToInnermostScope_9.C: inputmoveDeclarationToInnermostSc
 rose_inputmoveDeclarationToInnermostScope_10.C: inputmoveDeclarationToInnermostScope_10.C moveDeclarationToInnermostScope
 	@$(RTH_RUN) \
 		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 

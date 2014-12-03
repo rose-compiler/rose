@@ -26,11 +26,12 @@ void foo(int cond,int *blockx,int loSt)
 // But not eligible to move into two bodies
 // Naive analysis will find if-stmt is the inner-most common scope.
 {
-    int blockx;
     if (loSt) {
+      int blockx;
       blockx++;
     }
     else {
+      int blockx;
       blockx--;
     }
   }

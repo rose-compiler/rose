@@ -33,10 +33,25 @@ class visitorTraversal : public AstSimpleProcessing
         Rose_STL_Container<SgNode*> var_decls= NodeQuery::querySubTree(body,V_SgVariableDeclaration);
         if (debug )
           cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
+
+        std::queue<SgVariableDeclaration* > worklist;
+
         for (size_t i=0; i< var_decls.size(); i++)
         {
           SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
           ROSE_ASSERT(decl!= NULL);
+          worklist.push(decl);
+        }
+
+       // using a worklist instead of a fixed vector, since we will iteratively consider declarations added in the process.
+       // e.g. we insert a declaration into the true/false bodies of if statement if a target scope is a if statement.
+       // These two inserted declarations will be further considered.
+         while (!worklist.empty())
+        {    
+          SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.front());
+          ROSE_ASSERT(decl!= NULL);
+          worklist.pop();
+
           bool result=false;
           if (SageInterface::isStatic(decl))
           {
@@ -67,7 +82,7 @@ class visitorTraversal : public AstSimpleProcessing
               if (debug)
                  cout<<"Using conservative moving for decl .."<<endl;
               if (null_or_literal_initializer)   
-                result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+                result = SageInterface::moveDeclarationToInnermostScope(decl, worklist, debug);
               else
               {
                 if (debug)
@@ -79,7 +94,7 @@ class visitorTraversal : public AstSimpleProcessing
 
               if (debug)
                  cout<<"Using aggressive moving for decl .."<<endl;
-              result = SageInterface::moveDeclarationToInnermostScope(decl, debug);
+              result = SageInterface::moveDeclarationToInnermostScope(decl, worklist, debug);
             }
           }
         }
