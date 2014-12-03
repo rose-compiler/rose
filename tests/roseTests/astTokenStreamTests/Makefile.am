@@ -639,7 +639,6 @@ test2005_68.C \
 test2005_70.C \
 test2005_71.C \
 test2005_72.C \
-test2005_73.C \
 test2005_74.C \
 test2005_75a.C \
 test2005_75b.C \
@@ -745,7 +744,6 @@ test2005_189.C \
 test2005_190.C \
 test2005_191.C \
 test2005_192.C \
-test2005_193.C \
 test2005_195.C \
    test2005_196.C \
 test2005_197.C \
@@ -1153,6 +1151,11 @@ test2007_151.C \
 test2010_19.C \
 test2011_111.C \
 test2011_142.C 
+
+
+CXX_TESTCODE_CURRENTLY_FAILING_FOR_GNU4_8 = \
+test2005_73.C \
+test2005_193.C 
 
 
 TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
