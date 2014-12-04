@@ -1,4 +1,6 @@
 /*
+ * By Chunhua "Leo" Liao, 9/3/2014
+ *
  * A tool to move declarations into innermost scopes when applicable.
  *  On the request from Jeff Keasler, we provide this transformation:
  *  For a declaration, find the innermost scope we can move it into, without breaking the code's original semantics
@@ -67,7 +69,6 @@
  *
  *  //TODO optimize efficiency for multiple declarations
  * //TODO move to a separated source file or even namespace
- * by Chunhua "Leo" Liao, 9/3/2014
 */
 #include "rose.h"
 #include "transformationTracking.h"
@@ -1061,8 +1062,10 @@ bool moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, std::q
       decl->get_file_info()->display();
       cerr<<"Loop scope with complex init stmt is:"<<endl;
       bad_loop->get_file_info()->display();
+#if 0  // We no longer assert this since the complex loops are out of our scope. Users will make sure their loops are canonical.
       if (!tool_keep_going )
         ROSE_ASSERT (false);
+#endif 
     }
     else
       copyMoveVariableDeclaration (decl, target_scopes, worklist);

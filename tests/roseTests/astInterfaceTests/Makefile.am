@@ -162,11 +162,11 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_5.C \
   inputmoveDeclarationToInnermostScope_6.C \
   inputmoveDeclarationToInnermostScope_7.C \
-  inputmoveDeclarationToInnermostScope_8.C
-
-MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = \
+  inputmoveDeclarationToInnermostScope_8.C \
   inputmoveDeclarationToInnermostScope_9.C \
   inputmoveDeclarationToInnermostScope_10.C
+
+MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
  
 MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
