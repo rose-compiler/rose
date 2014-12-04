@@ -1,15 +1,16 @@
 #ifndef DOMAIN_HPP
 #define DOMAIN_HPP
 
-template<typename AbstractValue>
+#include "NumberIntervalLattice.h"
+
 class Domain {
 public:
-  virtual AbstractValue add(AbstractValue& e1, AbstractValue& e2)=0;
-  virtual AbstractValue sub(AbstractValue& e1, AbstractValue& e2)=0;
-  virtual AbstractValue mul(AbstractValue& e1, AbstractValue& e2)=0;
-  virtual AbstractValue div(AbstractValue& e1, AbstractValue& e2)=0;
-  virtual AbstractValue neg(AbstractValue& e2)=0;
-  virtual AbstractValue intValue(AbstractValue& e0)=0;
+  virtual NumberIntervalLattice add(NumberIntervalLattice& e1, NumberIntervalLattice& e2)=0;
+  virtual NumberIntervalLattice sub(NumberIntervalLattice& e1, NumberIntervalLattice& e2)=0;
+  virtual NumberIntervalLattice mul(NumberIntervalLattice& e1, NumberIntervalLattice& e2)=0;
+  virtual NumberIntervalLattice div(NumberIntervalLattice& e1, NumberIntervalLattice& e2)=0;
+  virtual NumberIntervalLattice neg(NumberIntervalLattice& e2)=0;
+  virtual NumberIntervalLattice intValue(NumberIntervalLattice& e0)=0;
 };
 
 #endif

@@ -9,8 +9,8 @@ class PropertyState {
  public:
   PropertyState();
   virtual void toStream(ostream& os, VariableIdMapping* vim=0);
-  virtual bool approximatedBy(PropertyState* other);
-  virtual void combine(PropertyState* other);
+  virtual bool approximatedBy(PropertyState& other);
+  virtual void combine(PropertyState& other);
 };
 
 #endif

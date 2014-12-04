@@ -16,8 +16,8 @@ DFTransferFunctions<LatticeType>::DFTransferFunctions():_labeler(0),_variableIdM
 
 template<typename LatticeType>
 LatticeType DFTransferFunctions<LatticeType>::transfer(Label lab, LatticeType element) {
-  if(element.isBot())
-    element.setEmptySet();
+  //  if(element.isBot())
+  //  element.setEmptySet();
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
   

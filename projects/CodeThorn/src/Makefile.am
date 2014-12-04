@@ -186,8 +186,7 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C DFTransferFunctions.h DFTransferFunctions.C RDTransferfunctions.hpp RDTransferFunctions.C   DFSolver1.h \
-  DFSolver1.C \
+rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C DFTransferFunctions.h DFTransferFunctions.C RDTransferfunctions.hpp RDTransferFunctions.C \
 rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
@@ -209,11 +208,23 @@ rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C Lan
   VariableIdUtils.C \
   VariableIdUtils.h \
   addressTakenAnalysis.C \
-  addressTakenAnalysis.h 
-#  IntervalAnalyzer.h \
+  addressTakenAnalysis.h \
+  PropertyState.h \
+  PropertyState.C \
+  IntervalAstAttribute.h \
+  IntervalAstAttribute.C \
+  IntervalPropertyState.h \
+  IntervalPropertyState.C \
+  IntervalAnalyzer.h \
   IntervalAnalyzer.C \
   IntervalTransferFunctions.hpp \
-  IntervalTransferFunctions.C
+  IntervalTransferFunctions.C \
+  IntervalAstAttributeInterface.h \
+  IntervalAstAttributeInterface.C \
+  DFSolver1.h \
+  DFSolver1.C \
+  NumberIntervalLattice.h \
+  NumberIntervalLattice.C
 
 woodpecker_LDADD = -lrose
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDTransferFunctions.hpp RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -304,17 +315,15 @@ analyterix_SOURCES = \
   PropertyValueTable.C \
   GeneralResultAttribute.h \
   GeneralResultAttribute.C \
-  GeneralAnalyzerBase.h \
-  GeneralAnalyzerBase.C \
-  GeneralAnalyzer.h \
-  GeneralAnalyzer.C \
   PropertyState.h \
   PropertyState.C \
-  IntervalPropertyState.h \
-  IntervalPropertyState.C \
-  NumberIntervalLattice.h \
-  NumberIntervalLattice.C \
   analyterix.C
+
+#  GeneralAnalyzerBase.h \
+  GeneralAnalyzerBase.C \
+  GeneralAnalyzer.h \
+  GeneralAnalyzer.C
+
 
 reverser_LDADD = -lrose
 reverser_SOURCES = \

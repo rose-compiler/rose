@@ -5,6 +5,7 @@
 #include "IntervalAnalyzer.h"
 #include "IntervalAstAttribute.h"
 #include "IntervalTransferFunctions.hpp"
+#include "IntervalPropertyState.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -17,6 +18,6 @@ IntervalAnalyzer::~IntervalAnalyzer() {
   delete _transferFunctions;
 }
 
-DFAstAttribute* IntervalAnalyzer::createDFAstAttribute(IntervalLattice* elem) {
+DFAstAttribute* IntervalAnalyzer::createDFAstAttribute(IntervalPropertyState* elem) {
   return new IntervalAstAttribute(elem);
 }

@@ -15,7 +15,7 @@ string IntervalAstAttribute::toString() {
   return ss.str();
 }
 
-IntervalAstAttribute::IntervalAstAttribute(IntervalLattice<int>* elem):_elem(elem) {
+IntervalAstAttribute::IntervalAstAttribute(IntervalPropertyState* elem):_elem(elem) {
 }
 bool IntervalAstAttribute::isBottomElement() {
   return _elem->isBot();
@@ -23,17 +23,21 @@ bool IntervalAstAttribute::isBottomElement() {
 VariableIdSet IntervalAstAttribute::allVariableIds() {
   VariableIdSet set;
   for(IntervalAstAttribute::iterator i=begin();i!=end();++i) {
-    set.insert((*i).second);
+    set.insert((*i).first);
   }
   return set;
 }
+
+#if 1
 IntervalAstAttribute::iterator
 IntervalAstAttribute::begin() {
-  return _elem->begin();
+  return _elem->intervals.begin();
 }
 IntervalAstAttribute::iterator
 IntervalAstAttribute::end() {
-  return _elem->end();
+  return _elem->intervals.end();
 }
-IntervalAstAttribute::~RDAstAttribute() {
+#endif
+
+IntervalAstAttribute::~IntervalAstAttribute() {
 }

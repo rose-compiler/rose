@@ -272,13 +272,17 @@ public:
 
 void generalAnalysis(SgProject* root) {
   cout<<"STATUS: general analysis started."<<endl;
+  cout<<"general Analysis not supported yet. Exiting."<<endl;
+  exit(1);
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
 
   GeneralAnalyzer* generalAnalyzer=new GeneralAnalyzer();
+#if 0
   IntervalPropertyStateFactory* factory=new IntervalPropertyStateFactory();
   generalAnalyzer->setFactory(factory);
   generalAnalyzer->initialize(root);
+#endif
 #if 0
   generalAnalyzer->initializeGlobalVariables(root);
 
