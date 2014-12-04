@@ -153,18 +153,47 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
-  rose_inputmoveDeclarationToInnermostScope_1.C \
-  rose_inputmoveDeclarationToInnermostScope_2.C \
-  rose_inputmoveDeclarationToInnermostScope_3.C \
-  rose_inputmoveDeclarationToInnermostScope_4.C \
-  rose_inputmoveDeclarationToInnermostScope_5.C \
-  rose_inputmoveDeclarationToInnermostScope_6.C \
-  rose_inputmoveDeclarationToInnermostScope_7.C \
-  rose_inputmoveDeclarationToInnermostScope_8.C \
-  rose_inputmoveDeclarationToInnermostScope_9.C \
   buildJavaPackage.passed 
 
-test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C rose_inputmoveDeclarationToInnermostScope_9.C
+# section for declaration moving tool
+#--------------------------------------------
+MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_1.C \
+  inputmoveDeclarationToInnermostScope_2.C \
+  inputmoveDeclarationToInnermostScope_3.C \
+  inputmoveDeclarationToInnermostScope_4.C \
+  inputmoveDeclarationToInnermostScope_5.C \
+  inputmoveDeclarationToInnermostScope_6.C \
+  inputmoveDeclarationToInnermostScope_7.C \
+  inputmoveDeclarationToInnermostScope_8.C \
+  inputmoveDeclarationToInnermostScope_9.C \
+  inputmoveDeclarationToInnermostScope_10.C
+
+MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
+ 
+MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
+  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
+  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
+
+MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = 
+
+MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
+MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+
+PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
+   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
+   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+
+REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
+MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+DIFF=diff
+$(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; xit 1; fi
+
+test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+
+move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -472,69 +501,84 @@ rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 		$(srcdir)/astInterface.conf $@.passed
 endif
 
-rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug"  \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
+# rules for declaration moving tests
+$(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug $(srcdir)/$(@:rose_%=%)
 
-rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
+$(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
-rose_inputmoveDeclarationToInnermostScope_3.C: inputmoveDeclarationToInnermostScope_3.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_4.C: inputmoveDeclarationToInnermostScope_4.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostScope_5.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:aggressive" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostScope_7.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostScope_8.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
+#rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug"  \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_3.C: inputmoveDeclarationToInnermostScope_3.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_4.C: inputmoveDeclarationToInnermostScope_4.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostScope_5.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:aggressive" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostScope_7.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostScope_8.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
 # test keep going first
-rose_inputmoveDeclarationToInnermostScope_9.C: inputmoveDeclarationToInnermostScope_9.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
+#rose_inputmoveDeclarationToInnermostScope_9.C: inputmoveDeclarationToInnermostScope_9.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
+#rose_inputmoveDeclarationToInnermostScope_10.C: inputmoveDeclarationToInnermostScope_10.C moveDeclarationToInnermostScope
+#	@$(RTH_RUN) \
+#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+#		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
+#		INPUT=$(abspath $<) \
+#		$(srcdir)/astInterface.conf $@.passed
+#
 
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
@@ -639,9 +683,12 @@ unit-tests:
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(generatedCodeExamples) unit-tests
+check-local: $(generatedCodeExamples) unit-tests move_decls_diff_check
 
 clean-local:
-	rm -f $(generatedCodeExamples) *.dot
+	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	rm -f $(addsuffix .passed, $(generatedCodeExamples))
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
+	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
