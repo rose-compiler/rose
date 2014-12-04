@@ -313,13 +313,15 @@ analyterix_SOURCES = \
   PropertyValueTable.C \
   GeneralResultAttribute.h \
   GeneralResultAttribute.C \
-  GeneralAnalyzerBase.h \
-  GeneralAnalyzerBase.C \
-  GeneralAnalyzer.h \
-  GeneralAnalyzer.C \
   PropertyState.h \
   PropertyState.C \
   analyterix.C
+
+#  GeneralAnalyzerBase.h \
+  GeneralAnalyzerBase.C \
+  GeneralAnalyzer.h \
+  GeneralAnalyzer.C
+
 
 reverser_LDADD = -lrose
 reverser_SOURCES = \
