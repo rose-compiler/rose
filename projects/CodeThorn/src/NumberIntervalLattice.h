@@ -18,6 +18,11 @@ class Number {
   bool operator>=(const Number& other) const;
   bool operator<(const Number& other) const;
   bool operator<=(const Number& other) const;
+  void operator+=(const Number& other);
+  void operator-=(const Number& other);
+  void operator*=(const Number& other);
+  void operator/=(const Number& other);
+  void operator%=(const Number& other);
   std::string toString() const;
   // TODO: artithmetic operators
  private:

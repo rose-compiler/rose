@@ -23,7 +23,7 @@ bool IntervalAstAttribute::isBottomElement() {
 VariableIdSet IntervalAstAttribute::allVariableIds() {
   VariableIdSet set;
   for(IntervalAstAttribute::iterator i=begin();i!=end();++i) {
-    set.insert((*i).second);
+    set.insert((*i).first);
   }
   return set;
 }
@@ -31,13 +31,13 @@ VariableIdSet IntervalAstAttribute::allVariableIds() {
 #if 1
 IntervalAstAttribute::iterator
 IntervalAstAttribute::begin() {
-  return _elem->begin();
+  return _elem->intervals.begin();
 }
 IntervalAstAttribute::iterator
 IntervalAstAttribute::end() {
-  return _elem->end();
+  return _elem->intervals.end();
 }
 #endif
 
-IntervalAstAttribute::~RDAstAttribute() {
+IntervalAstAttribute::~IntervalAstAttribute() {
 }

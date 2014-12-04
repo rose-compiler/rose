@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "IntervalPropertyState.h"
 
 IntervalPropertyState::IntervalPropertyState() {
@@ -6,11 +7,11 @@ IntervalPropertyState::IntervalPropertyState() {
 void IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
 }
 
-bool IntervalPropertyState::approximatedBy(PropertyState* other) {
+bool IntervalPropertyState::approximatedBy(PropertyState& other) {
   return false;
 }
 
-void IntervalPropertyState::combine(PropertyState* other){
+void IntervalPropertyState::combine(PropertyState& other){
 }
 
 // adds integer variable

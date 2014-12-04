@@ -20,6 +20,9 @@ class IntervalAstAttribute : public IntervalAstAttributeInterface {
   IntervalAstAttribute(IntervalPropertyState* elem);
   void toStream(ostream& os, VariableIdMapping* vim);
   string toString();
+  typedef IntervalPropertyState::IntervalMapType::iterator iterator;
+  iterator begin();
+  iterator end();
  private:
   IntervalPropertyState* _elem;
 };

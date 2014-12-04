@@ -23,6 +23,7 @@ class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
  public:
  GenericIntervalLattice() { setTop();}
+ GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false) {} 
  GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {} 
   static GenericIntervalLattice highInfInterval(Type left) {
     GenericIntervalLattice t;
