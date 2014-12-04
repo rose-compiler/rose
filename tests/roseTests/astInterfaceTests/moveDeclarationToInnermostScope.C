@@ -1,7 +1,73 @@
 /*
-A tool to move declarations into innermost scopes when applicable.
+ * A tool to move declarations into innermost scopes when applicable.
+ *  On the request from Jeff Keasler, we provide this transformation:
+ *  For a declaration, find the innermost scope we can move it into, without breaking the code's original semantics
+ *  For a single use place, move to the innermost scope.
+ *  For the case of multiple uses, we may need to duplicate the declarations and move to two scopes if there is no variable reuse in between, 
+ *    otherwise, we move the declaration into the innermost common scope of the multiple uses. 
+ * ********************************************************************************************** 
+ *  User instructions: 
+ *
+ * The translator accepts a debugging option "-rose:debug", which is turned on by default in the testing.  
+ * Some dot graph files will be generated for scope trees of variables for debugging purpose.
 
-by Chunhua "Leo" Liao, 9/3/2014
+ * -rose:keep_going  will ignore assertions as much as possible (currently on skip the assertion on complex for loop initialization statement list).
+ *   Without this option, the tool will stop on assertion failures. 
+
+ * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
+ *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
+ *  without an initializer or with a literal initializer  to be safe.
+ * ********************************************************************************************** 
+ *  Internals: (For people who are interested in how this tool works internally) 
+ *
+ *  Data structure: we maintain a scope tree, in which each node is 
+ *     a scope 1) defining or 2) use the variable, or 3) is live in between .
+ *  Several implementation choices for storing the tree
+ *  1) The scope tree reuses the AST. AST attribute is used to store extra information  
+ *  2) A dedicated scope tree independent from AST. 
+ *  3) Storing individual scope chains (paths) in the tree
+ *     hard to maintain consistency if we trim paths, hard to debug.
+ *
+ *  For efficiency, we save only a single scope node  if there are multiple uses in the same scope. 
+ *  Also for two use scopes with enclosing relationship, we only store the outer scope in the scope tree and trim the rest. 
+ *
+ *  Algorithm:
+ *    Save the scope of the declaration int DS
+ *    Step 1: create a scope tree first, with trimming 
+ *    Pre-order traversal to find all references to the declaration
+ *    For each reference place
+ *    {
+ *       back track all its scopes until we reach DS
+ *       if DS == US, nothing can be done to move the declaration, stop. 
+ *       all scopes tracked are formed into a scope chain (a vector: US .. DS).
+ *
+ *       create a scope node of use type, called US.
+ *       For all scopes in between, create nodes named intermediate scope or IS. 
+ *       Add Ds-IS1-IS2..-US (reverse order of the scope chain) into the scope tree, consider consolidating overlapped scope chains;
+ *          1) if an intermediate scope is equal to a use scope of another scope chain; stop add the rest of this chain. 
+ *          2) if we are adding a use scope into the scope tree, but the same scope is already added by a intermediate scope from anther chain
+ *             we mark the  existing scope node as a use scope, and remove its children from the scope tree.
+ *    }
+ *
+ *    Step 2: find the scopes to move the declaration into
+ *    find the innermost scope containing all paths to leaves: innerscope: single parent, multiple children
+ *    count the number of children of innerscope: 
+ *      if this is only one leaf: move the declaration to the innermost scope
+ *      if there are two scopes: 
+ *          not liveout for the variable in question?  duplicate the declaration and move to each scope chain. 
+ *          if yes liveout in between two scopes.  no duplication, move the declaration to innerscope
+ *
+ *  Iterative moving process: 
+ *
+ *   For duplicated declarations inserted into inner scopes, we have to consider if they can be moved further.
+ *     So we use a worklist to store all variable declarations to be considered.
+ *     The worklist is initialized with original declarations in the code.
+ *     New declarations are added into the worklist during the duplication/insertion process.
+ *     The entire process terminate when the worklist becomes empty.      
+ *
+ *  //TODO optimize efficiency for multiple declarations
+ * //TODO move to a separated source file or even namespace
+ * by Chunhua "Leo" Liao, 9/3/2014
 */
 #include "rose.h"
 #include "transformationTracking.h"
@@ -10,7 +76,7 @@ by Chunhua "Leo" Liao, 9/3/2014
 using namespace std;
 bool debug = false;
 
-//! An internal flag to control SageInterface::moveDeclarationToInnermostScope
+//! An internal flag to control moveDeclarationToInnermostScope
 // Users want to see the tool working by default
 extern bool tool_keep_going;
 // Users want to see conservative and aggressive moving
@@ -21,7 +87,7 @@ bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, std::queue<Sg
 
 //By default ASSERT should block the execution to find issues.
 //But some users want to keep the tool going even when some assertion fails. 
-//This is only supported by SageInterface::moveDeclarationToInnermostScope() and associated functions for now
+//This is only supported by moveDeclarationToInnermostScope() and associated functions for now
 bool tool_keep_going = false;
 
 // Like any other compiler-based tools. We do things conservatively by default.
@@ -169,63 +235,7 @@ int main(int argc, char * argv[])
 }
 
 
-
-//! Move a declaration to a scope which is the closest to the declaration's use places
-/*  On the request from Jeff Keasler, we provide this transformation:
- *  For a declaration, find the innermost scope we can move it into, without breaking the code's original semantics
- *  For a single use place, move to the innermost scope.
- *  For the case of multiple uses, we may need to duplicate the declarations and move to two scopes if there is no variable reuse in between, 
- *    otherwise, we move the declaration into the innermost common scope of the multiple uses. 
- *  
- *  Data structure: we maintain a scope tree, in which each node is 
- *     a scope 1) defining or 2) use the variable, or 3) is live in between .
- *  Several implementation choices for storing the tree
- *  1) The scope tree reuses the AST. AST attribute is used to store extra information  
- *  2) A dedicated scope tree independent from AST. 
- *  3) Storing individual scope chains (paths) in the tree
- *     hard to maintain consistency if we trim paths, hard to debug.
- *
- *  For efficiency, we save only a single scope node  if there are multiple uses in the same scope. 
- *  Also for two use scopes with enclosing relationship, we only store the outer scope in the scope tree and trim the rest. 
- *
- *  Algorithm:
- *    Save the scope of the declaration int DS
- *    Step 1: create a scope tree first, with trimming 
- *    Pre-order traversal to find all references to the declaration
- *    For each reference place
- *    {
- *       back track all its scopes until we reach DS
- *       if DS == US, nothing can be done to move the declaration, stop. 
- *       all scopes tracked are formed into a scope chain (a vector: US .. DS).
- *
- *       create a scope node of use type, called US.
- *       For all scopes in between, create nodes named intermediate scope or IS. 
- *       Add Ds-IS1-IS2..-US (reverse order of the scope chain) into the scope tree, consider consolidating overlapped scope chains;
- *          1) if an intermediate scope is equal to a use scope of another scope chain; stop add the rest of this chain. 
- *          2) if we are adding a use scope into the scope tree, but the same scope is already added by a intermediate scope from anther chain
- *             we mark the  existing scope node as a use scope, and remove its children from the scope tree.
- *    }
- *
- *    Step 2: find the scopes to move the declaration into
- *    find the innermost scope containing all paths to leaves: innerscope: single parent, multiple children
- *    count the number of children of innerscope: 
- *      if this is only one leaf: move the declaration to the innermost scope
- *      if there are two scopes: 
- *          not liveout for the variable in question?  duplicate the declaration and move to each scope chain. 
- *          if yes liveout in between two scopes.  no duplication, move the declaration to innerscope
- *
- *  Iterative moving process: 
- *
- *   For duplicated declarations inserted into inner scopes, we have to consider if they can be moved further.
- *     So we use a worklist to store all variable declarations to be considered.
- *     The worklist is initialized with original declarations in the code.
- *     New declarations are added into the worklist during the duplication/insertion process.
- *     The entire process terminate when the worklist becomes empty.      
- *
- *  //TODO optimize efficiency for multiple declarations
- * //TODO move to a separated source file or even namespace
- * By Liao, 9/3/2014
-*/
+//==================================================================================
 
 enum ScopeType {s_decl, s_intermediate, s_use};
 class Scope_Node {
