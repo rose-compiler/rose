@@ -207,6 +207,8 @@ rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C Lan
   VariableIdUtils.h \
   addressTakenAnalysis.C \
   addressTakenAnalysis.h \
+  Lattice.h \
+  Lattice.C \
   PropertyState.h \
   PropertyState.C \
   IntervalAstAttribute.h \
