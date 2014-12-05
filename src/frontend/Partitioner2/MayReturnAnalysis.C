@@ -265,10 +265,12 @@ Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNod
 
     for (ControlFlowGraph::ConstEdgeNodeIterator edge = vertex->outEdges().begin();
          edge != vertex->outEdges().end(); ++edge) {
-
         ControlFlowGraph::ConstVertexNodeIterator successor = edge->target();
         if (mayReturnIsSignificantEdge(edge, recompute, vertexInfo)) {
             // Significant successors
+            if (edge->value().type() == E_CALL_RETURN)
+                hasCallReturnEdge = true;
+
             if (vertexInfo[successor->id()].result) {
                 return true;
             } else if (boost::logic::indeterminate(vertexInfo[successor->id()].result)) {
@@ -283,8 +285,6 @@ Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNod
             } else if (mayReturn) {
                 hasPositiveCallee = true;
             }
-        } else if (edge->value().type() == E_CALL_RETURN) {
-            hasCallReturnEdge = true;
         }
     }
 
