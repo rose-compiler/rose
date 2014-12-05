@@ -74,6 +74,7 @@
 #include "transformationTracking.h"
 #include <iostream>
 #include <queue> // used for a worklist of declarations to be moved 
+#include <map> // used to store special var reference's scope
 using namespace std;
 bool debug = false;
 
@@ -91,11 +92,17 @@ bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, std::queue<Sg
 //This is only supported by moveDeclarationToInnermostScope() and associated functions for now
 bool tool_keep_going = false;
 
+
 // Like any other compiler-based tools. We do things conservatively by default.
 // Declarations with initializers will not be moved
 // if it is set to false.  Declaration with initializers will be moved, 
 // sends out warning if it crosses a loop boundaries in between. 
 bool decl_mover_conservative = true;
+
+// store scope of var ref used in array types. There is no easy way to find it by AST traversal.
+//  e.g. double *buffer = new double[numItems] ; // numItems is referenced. But cannot get its scope. We store SgConstructorInitialzer for it to establish its scope info.
+// TODO: report this issue to Dan.
+static std::map <SgVarRefExp *, SgExpression*> specialVarRefScopeExp; 
 
 class visitorTraversal : public AstSimpleProcessing
 {
@@ -384,7 +391,36 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
     traverse_write (children[i], dotfile);
   }
 }
- 
+
+// The default NodeQuery::querySubTree() will miss variables referenced in array type's index list.
+// e.g. double *buffer = new double[numItems] ; 
+// TODO: fix the root cause of NodeQuery::querySubTree() 
+static  int collectUpArrayTypeIndexVariables (SgScopeStatement* scope, Rose_STL_Container<SgNode*> & currentVarRefList) 
+{
+  int rt = 0;
+  ROSE_ASSERT (scope != NULL);
+  Rose_STL_Container<SgNode*> constructorList= NodeQuery::querySubTree(scope, V_SgConstructorInitializer);
+  for (size_t i =0; i< constructorList.size(); i++)
+  {
+    SgConstructorInitializer * c_init = isSgConstructorInitializer (constructorList[i]);
+    if (SgArrayType* a_type = isSgArrayType(c_init->get_expression_type()))
+    {
+      Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree (a_type->get_index(),V_SgVarRefExp);
+      for (size_t j =0 ; j< varList.size(); j++)
+      {
+	SgVarRefExp* var_exp =  isSgVarRefExp(varList[j]) ;
+	if (debug)
+	{
+	  cout<<"Found a var ref in array type:"<<var_exp->get_symbol()->get_name()<<endl;
+	}
+	currentVarRefList.push_back(var_exp);
+	specialVarRefScopeExp[var_exp] = c_init ;
+	rt ++;
+      }
+    }
+  }
+  return rt; 
+}
  
 //! A helper function to skip some scopes, such as while stmt scope: special adjustment.
 // used for a variable showing up in condition expression of some statement. 
@@ -402,6 +438,11 @@ void Scope_Node::traverse_write(Scope_Node* n,std::ofstream & dotfile)
 static SgScopeStatement * getAdjustedScope(SgNode* n)
 {
   ROSE_ASSERT (n!= NULL); 
+  // link to its SgConstructorInitializer for  variable X in "= new double[X]". 
+  // TODO: report this to Dan to have a better AST to track this scope down.
+  if (isSgVarRefExp(n))
+    if (specialVarRefScopeExp[isSgVarRefExp(n)])
+      n = specialVarRefScopeExp[isSgVarRefExp(n)] ; 
   SgScopeStatement* result =  SageInterface::getScope (n);
   if (isSgWhileStmt (result) || isSgIfStmt (result) || isSgDoWhileStmt (result) || isSgSwitchStatement(result) )
     result = SageInterface::getEnclosingScope(result, false);
@@ -442,6 +483,10 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)/
   //TODO: optimize for multiple declarations, avoid redundant query
   //   We can batch-generate scope trees for all declarations within a function
   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(decl_scope, V_SgVarRefExp);
+
+// Liao, 12/5/2014, patch up the variable references for SgNewExp's SgConstructorInitializer, with ArrayType of index expression
+  collectUpArrayTypeIndexVariables (decl_scope, nodeList);
+
   std::vector  <SgVarRefExp*> var_refs; 
   bool usedInSameScope = false; // if the declared variable is also used within the same scope
   for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
