@@ -1931,7 +1931,6 @@ HEADER_TYPE_TABLE_START
 HEADER_TYPE_TABLE_END
 
 
-
 SOURCE_ATTRIBUTE_SUPPORT_START
 
 #if 0
@@ -4484,6 +4483,7 @@ HEADER_INITIALIZED_NAME_START
                e_virtual_base_class        = 1, /*!< virtual base class value */
                e_nonvirtual_base_class     = 2, /*!< nonvirtual base class value */
                e_data_member               = 3, /*!< data member value */
+               e_delegation_constructor    = 4, /*!< delegation constructor (C++11 feature) */
                e_last_preinitialization         /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -6224,6 +6224,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
                b_supressArrayBound = 46, /*!< Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax for secondary (prototype) declarations (e.g. int array[];). */
 
+            // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+               b_supressImplicitThisOperator = 47, /*!< Supress output of SgThisExp (required to support lambda function code generation). */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6468,6 +6471,11 @@ HEADER_UNPARSE_INFO_START
           bool supressArrayBound() const;
           void set_supressArrayBound();
           void unset_supressArrayBound();
+
+       // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+          bool supressImplicitThisOperator() const;
+          void set_supressImplicitThisOperator();
+          void unset_supressImplicitThisOperator();
 
 
 #if 0
@@ -7023,6 +7031,22 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (11/5/2014): Adding support for templated typedef.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+             {
+               const SgTemplateInstantiationTypedefDeclaration* templateInstantiationDeclaration = isSgTemplateInstantiationTypedefDeclaration(node); 
+               name = templateInstantiationDeclaration->get_name();
+               break;
+             }
+
+       // DQ (11/4/2014): Adding support for templated typedef.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               const SgTemplateTypedefDeclaration* templateDeclaration = isSgTemplateTypedefDeclaration(node); 
+               name = templateDeclaration->get_name();
+               break;
+             }
+
           case V_SgFunctionType:
              {
                const SgFunctionType* functionType = isSgFunctionType(node);
@@ -7043,6 +7067,10 @@ SgSymbolTable::get_name( const SgNode* node) const
                assert(false);
              }
         }
+
+#if 0
+     printf ("SgSymbolTable::get_name(SgNode*) node = %p = %s name = %s \n",node,node->class_name().c_str(),name.str());
+#endif
 
      return name;
    }
@@ -7351,7 +7379,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
           deleteList.push_back(it);
           it++;
         }
-#if 1
+#if 0
      printf ("In SgSymbolTable::remove_function_type( const SgName & name ): name = %s deleteList.size() = %zu \n",name.str(),deleteList.size());
 #endif
 
@@ -7385,7 +7413,9 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
      assert(p_table != NULL);
      assert(initializedName != NULL);
 
-  // printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
+#if 0
+     printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
+#endif
 
      SgSymbol* returnSymbol = NULL;
 
@@ -7439,7 +7469,9 @@ SgSymbolTable::find( const SgFunctionType* functionType)
      assert(p_table != NULL);
      assert(functionType != NULL);
 
-  // printf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
+#if 0
+     printf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
+#endif
 
      SgSymbol* returnSymbol = NULL;
 
@@ -7659,7 +7691,6 @@ SgSymbolTable::remove( const SgSymbol* symbol )
                                FIND FUNCTIONS
    ************************************************************************/
 
-#if 1
 // DQ (11/27/2010): Change return type to "bool".
 // DQ (2/10/2007): This is a depricated function
 // int (changed the return type)
@@ -7688,7 +7719,6 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
 
      return false;
    }
-#endif
 
 SgAliasSymbol*
 SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
@@ -8027,6 +8057,13 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
+       // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
+          case V_SgTemplateTypedefSymbol:
+             {
+               printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+               break;
+             }
+
 #if 0
        // We have to support these sorts of declarations in the name qualifiaction.
           SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
@@ -8146,6 +8183,12 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
                break;
              }
 
+       // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
+          case V_SgTemplateTypedefSymbol:
+             {
+               printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+               break;
+             }
 #if 0
        // We have to support these sorts of declarations in the name qualifiaction.
           SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
@@ -14481,11 +14524,17 @@ X aggressive
 
      p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
 
+  // DQ (11/12/2014): Previously uninitialized data members
+     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
+
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
   // DQ (1/30/2014): Support for testing of token unparsing.
      p_unparse_tokens_testing = 0;
+
+  // DQ (11/12/2014): Addded to support test modes for token unparsing.
+     p_unparse_using_leading_and_trailing_token_mappings = false;
 
   // DQ (9/26/2011): This was not initialized previosuly so I have added it.
      p_sourceFileTypeIsUnknown = false;
@@ -15087,6 +15136,9 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_unparse_tokens                       = %s \n",(p_unparse_tokens == true) ? "true" : "false");
      printf ("     p_unparse_tokens_testing               = %d \n",p_unparse_tokens_testing);
+
+  // DQ (11/12/2014): Addded to support test modes for token unparsing.
+     printf ("     p_unparse_using_leading_and_trailing_token_mappings = %s \n",(p_unparse_using_leading_and_trailing_token_mappings == true) ? "true" : "false");
 
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
@@ -17573,6 +17625,17 @@ void SgUnparse_Info::unset_supressArrayBound()
    { unsetBit(b_supressArrayBound); }
 
 
+// DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+bool SgUnparse_Info::supressImplicitThisOperator() const
+   { return checkBit(b_supressImplicitThisOperator); }
+
+void SgUnparse_Info::set_supressImplicitThisOperator()
+   { setBit(b_supressImplicitThisOperator); }
+
+void SgUnparse_Info::unset_supressImplicitThisOperator()
+   { unsetBit(b_supressImplicitThisOperator); }
+
+
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
@@ -17655,6 +17718,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
      printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
+     printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
@@ -19275,3 +19339,5 @@ SgTypeTable::lookup_type(const SgName& n)
    }
 
 SOURCE_TYPE_TABLE_END
+
+
