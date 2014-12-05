@@ -18,7 +18,7 @@
 
  * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
  *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
- *  without an initializer or with a literal initializer  to be safe.
+ *  without an initializer to be safe.
  * ********************************************************************************************** 
  *  Internals: (For people who are interested in how this tool works internally) 
  *
@@ -149,12 +149,13 @@ class visitorTraversal : public AstSimpleProcessing
           }
           else
           {
-            bool null_or_literal_initializer = false;
+            bool null_initializer = false;
             SgInitializedName* init_name = SageInterface::getFirstInitializedName (decl);
             ROSE_ASSERT (init_name!= NULL);
             SgInitializer * initor =  init_name->get_initptr();
             if (initor == NULL) 
-              null_or_literal_initializer = true;
+              null_initializer = true;
+#if 0
             else
              {
                SgAssignInitializer* assign_initor = isSgAssignInitializer (initor);
@@ -164,18 +165,18 @@ class visitorTraversal : public AstSimpleProcessing
                    null_or_literal_initializer = true;
                }
              } 
-
-            // conservative mode:  Only move declarations with no or value(literal) initializer
+#endif
+            // conservative mode:  Only move declarations with no initializer
             if (decl_mover_conservative)
             {
               if (debug)
                  cout<<"Using conservative moving for decl .."<<endl;
-              if (null_or_literal_initializer)   
+              if (null_initializer)   
                 result = moveDeclarationToInnermostScope(decl, worklist, debug);
               else
               {
                 if (debug)
-                  cout<<"Skipping a declaration since it has complex initializer .."<<endl;
+                  cout<<"Skipping a declaration since it has initializer .."<<endl;
               }
             }
             else // aggressive move
@@ -238,6 +239,10 @@ int main(int argc, char * argv[])
 
 //==================================================================================
 
+// Three types of scope fo a varialbe access
+// 1. variable is being declared.
+// 2. variable is being used: read or written 
+// 3. not either of the above cases, juse a scope in between them. 
 enum ScopeType {s_decl, s_intermediate, s_use};
 class Scope_Node {
   public: 
