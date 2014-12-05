@@ -1458,7 +1458,8 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
     gv.useFunctionSubgraphs(true);
     gv.showReturnEdges(false);
     gv.showInstructions(true);
-    gv.showNeighbors(showNeighbors);
+    gv.showInNeighbors(showNeighbors);
+    gv.showOutNeighbors(showNeighbors);
     gv.dumpCfgInterval(out, *this, restrict);
 }
 

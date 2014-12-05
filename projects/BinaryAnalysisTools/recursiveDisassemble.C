@@ -586,7 +586,8 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
             gv.useFunctionSubgraphs(false);             // since we're dumping only one function
             gv.showInstructions(settings.gvShowInstructions);
             gv.showReturnEdges(settings.gvShowFunctionReturns);
-            gv.showNeighbors(true);
+            gv.showInNeighbors(true);
+            gv.showOutNeighbors(true);
             gv.dumpCfgFunction(out, partitioner, function);
         }
     }
@@ -769,7 +770,7 @@ int main(int argc, char *argv[]) {
 
     // Analyze each basic block and function and cache results.  We do this before listing the CFG or building the AST.
     if (settings.doPostAnalysis) {
-        mlog[INFO] <<"running all post analysis phases\n";
+        mlog[INFO] <<"running all post analysis phases (--post-analysis)\n";
         engine.updateAnalysisResults(partitioner);
     }
     

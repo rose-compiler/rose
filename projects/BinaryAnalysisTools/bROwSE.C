@@ -16,6 +16,7 @@
 #include <DisassemblerM68k.h>
 #include <Partitioner2/Attribute.h>
 #include <Partitioner2/Engine.h>
+#include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
 
@@ -254,83 +255,13 @@ static boost::filesystem::path
 functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     boost::filesystem::path fileName;
     if (function && !function->attr<boost::filesystem::path>(ATTR_CFG_DOTFILE).assignTo(fileName)) {
-
-        // Write to the "dot" command, which will add layout information to our graph.
-        // FIXME[Robb P. Matzke 2014-09-10]: how to do this on Windows?
         fileName = uniquePath(".dot");
-        std::string dotCmd = "dot /proc/self/fd/0 >" + fileName.string();
-        FILE *dot = popen(dotCmd.c_str(), "w");
-        if (NULL==dot) {
-            mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
-            return boost::filesystem::path();
-        }
-
-        // Vertices
-        std::set<size_t> vertices;
-        fprintf(dot, "digraph G {\n");
-        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
-            P2::ControlFlowGraph::ConstVertexNodeIterator placeholder = partitioner.findPlaceholder(bblockVa);
-            ASSERT_require(placeholder != partitioner.cfg().vertices().end());
-            if (bblockVa == function->address()) {
-                // Entry vertex: light green
-                fprintf(dot, "%zu [ shape=plaintext, label=\"0x%08"PRIx64"\", href=\"0x%"PRIx64"\""
-                        ", style=filled, fillcolor=\"0.455,0.1,1\" ];\n",
-                        placeholder->id(), bblockVa, bblockVa);
-            } else if (0==placeholder->nInEdges()) {
-                // Non-reachable vertex: light red
-                fprintf(dot, "%zu [ shape=plaintext, label=\"0x%08"PRIx64"\", href=\"0x%"PRIx64"\""
-                        ", style=filled, fillcolor=\"0,0.051,1\" ];\n",
-                        placeholder->id(), bblockVa, bblockVa);
-            } else {
-                // Normal function vertex: no fill color
-                fprintf(dot, "%zu [ shape=plaintext, label=\"0x%08"PRIx64"\", href=\"0x%"PRIx64"\" ];\n",
-                        placeholder->id(), bblockVa, bblockVa);
-            }
-            vertices.insert(placeholder->id());
-        }
-
-        // Edges and special vertices
-        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
-            P2::ControlFlowGraph::ConstVertexNodeIterator placeholder = partitioner.findPlaceholder(bblockVa);
-            BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, placeholder->outEdges()) {
-                P2::ControlFlowGraph::ConstVertexNodeIterator target = edge.target();
-                // Vertices that weren't emitted above
-                if (vertices.find(target->id())==vertices.end()) {
-                    if (target==partitioner.undiscoveredVertex()) {
-                        fprintf(dot, "%zu [ label=\"undiscovered\" ];\n", target->id());
-                    } else if (target==partitioner.indeterminateVertex()) {
-                        fprintf(dot, "%zu [ label=\"indeterminate\" ];\n", target->id());
-                    } else if (target==partitioner.nonexistingVertex()) {
-                        fprintf(dot, "%zu [ label=\"non-existing\" ];\n", target->id());
-                    } else if (P2::Function::Ptr targetFunction = target->value().function()) {
-                        // Function call. Use the address and first few characters of the function name.
-                        std::string label = StringUtility::addrToString(targetFunction->address());
-                        if (!targetFunction->name().empty()) {
-                            if (targetFunction->name().size() > 12) {
-                                label += "\\n" + StringUtility::cEscape(targetFunction->name()).substr(0, 12) + "...";
-                            } else {
-                                label += "\\n" + StringUtility::cEscape(targetFunction->name());
-                            }
-                        }
-                        fprintf(dot, "%zu [ shape=box, label=\"%s\", href=\"0x%"PRIx64"\" ];\n",
-                                target->id(), label.c_str(), targetFunction->address());
-                    } else {
-                        // non-call, inter-function edge
-                        fprintf(dot, "%zu [ label=\"0x%08"PRIx64"\", style=filled, fillcolor=yellow ];\n",
-                                target->id(), target->value().address());
-                    }
-                    vertices.insert(target->id());
-                }
-
-                // Emit the edge
-                fprintf(dot, "%zu->%zu", placeholder->id(), target->id());
-                if (edge.value().type() == P2::E_FUNCTION_RETURN)
-                    fprintf(dot, " [ label=\"return\" ]");
-                fprintf(dot, ";\n");
-            }
-        }
-        fprintf(dot, "}\n");
-        fclose(dot); dot=NULL;
+        boost::filesystem::path tmpName = uniquePath(".dot");
+        std::ofstream out(tmpName.string().c_str());
+        P2::GraphViz().dumpCfgFunction(out, partitioner, function);
+        out.close();
+        std::string dotCmd = "dot " + tmpName.string() + " > " + fileName.string();
+        system(dotCmd.c_str());
         function->attr(ATTR_CFG_DOTFILE, fileName);
     }
     return fileName;

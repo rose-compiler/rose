@@ -35,7 +35,8 @@ private:
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
-    bool showNeighbors_;                                // show neighbors for un-selected vertices?
+    bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
+    bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
     HsvColor subgraphColor_;                            // background color for function subgraphs
     HsvColor funcEnterColor_;                           // background color for function entrance blocks
     HsvColor funcReturnColor_;                          // background color for function return blocks
@@ -45,7 +46,8 @@ private:
 
 public:
     GraphViz()
-        : useFunctionSubgraphs_(true), showReturnEdges_(true), showInstructions_(false), showNeighbors_(true),
+        : useFunctionSubgraphs_(true), showReturnEdges_(true), showInstructions_(false), showInNeighbors_(true),
+          showOutNeighbors_(true),
           subgraphColor_(0, 0, 0.95),                   // light grey
           funcEnterColor_(0.33, 1.0, 0.9),              // light green
           funcReturnColor_(0.67, 1.0, 0.9),             // light blue
@@ -90,7 +92,7 @@ public:
      *  The @ref selectAll method resets the selection vector, after which @ref selected will return an empty vector and @ref
      *  isSelected will always return true.
      *
-     * @sa showNeighbors
+     * @sa showInNeighbors @ref showOutNeighbors
      *
      * @{ */
     const std::vector<bool> selected() const { return selected_; }
@@ -100,15 +102,26 @@ public:
     void select(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&, bool selected=true);
     /** @} */
 
-    /** Property: show unselected neighbors.
+    /** Property: show unselected outgoing neighbors.
      *
      *  When true and only a subset of the vertices are selected for output, emit a placeholder vertex for edges that originate
      *  at a selected vertex and terminate at an unselected vertex. Otherwise such edges (and their target vertex) are not
      *  emitted to the GraphViz file.
      *
      * @{ */
-    bool showNeighbors() const { return showNeighbors_; }
-    void showNeighbors(bool b) { showNeighbors_ = b; }
+    bool showOutNeighbors() const { return showOutNeighbors_; }
+    void showOutNeighbors(bool b) { showOutNeighbors_ = b; }
+    /** @} */
+
+    /** Property: show unselected incoming neighbors.
+     *
+     *  When true and only a subset of the vertices are selected for output, emit a placeholder vertex for edges that originate
+     *  at an unselected vertex and terminate at a selected vertex. Otherwise such edges (and their source vertex) are not
+     *  emitted to the GraphViz file.
+     *
+     * @{ */
+    bool showInNeighbors() const { return showInNeighbors_; }
+    void showInNeighbors(bool b) { showInNeighbors_ = b; }
     /** @} */
 
     /** Property: color to use for function subgraph background.
@@ -145,7 +158,8 @@ public:
     /** Dump entire control flow graph.
      *
      *  If a vertex selection vector has been supplied (i.e., @ref selected returns a non-empty vector) then only those
-     *  vertices that are selected will be emitted, and their neighbors if the @ref showNeighbors property is set. */
+     *  vertices that are selected will be emitted, and their neighbors if the @ref showInNeighbors and/or @ref
+     *  showOutNeighbors properties is set. */
     void dumpCfgAll(std::ostream&, const Partitioner&) const;
 
     /** Dump control flow graph for one function. */
@@ -154,9 +168,9 @@ public:
     /** Dump vertices having certain addresses.
      *
      *  Produces a GraphViz file containing the basic blocks that begin within a certain address interval and optionally
-     *  abbreviated nodes for neighboring vertices depending on the @ref showNeighbors property. Upon return the list of
-     *  selected vertices returned by the @ref selected and @ref isSelected methods will be those vertices whose starting
-     *  address is within the specified interval. */
+     *  abbreviated nodes for neighboring vertices depending on the @ref showInNeighbors and @ref showOutNeighbors
+     *  properties. Upon return the list of selected vertices returned by the @ref selected and @ref isSelected methods will be
+     *  those vertices whose starting address is within the specified interval. */
     void dumpCfgInterval(std::ostream&, const Partitioner&, const AddressInterval&);
 
     /** Dump function call graph.
@@ -164,25 +178,72 @@ public:
      *  Produces a function call graph by emitting a GraphViz dot file to the specified stream. */
     void dumpCallGraph(std::ostream&, const Partitioner&) const;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Utility methods
 protected:
+    // Invalid identification number
+    static const size_t NO_ID = -1;
+
+    // Escape things that need to be escaped for GraphViz labels in double quotes.
     static std::string labelEscape(const std::string&);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Vertex methods
+protected:
+    // Complete label for vertex. May include multiple lines (such as instruction listings)
     virtual std::string vertexLabel(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+
+    // Simple, short label. Usually a single line, or maybe two but not much more.
     virtual std::string vertexLabelSimple(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+
+    // GraphViz attributes for a vertex
     virtual std::string vertexAttributes(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+
+    // Emit a single vertex if it hasn't already been emitted and if it's a selected vertex (all vertices are selected by
+    // default; see select())
     virtual size_t dumpVertex(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
+    // Emit a single vertex if it hasn't already been emitted, regardless of whether it's selected.  The vertex label will be
+    // the simple, short format.  This method is used to emit vertices that are neighbors to selected vertices.
+    virtual size_t dumpVertexInfo(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Edge methods
+protected:
+    // Label for edge.
     virtual std::string edgeLabel(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+
+    // GraphViz attributes for an edge.
     virtual std::string edgeAttributes(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+
+    // Emit an edge if the edge hasn't already been emited and if its incident vertices are already emitted.
     virtual bool dumpEdge(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Function methods
+protected:
+    // Label for function.
     virtual std::string functionLabel(const Partitioner&, const Function::Ptr&) const;
+
+    // GraphViz attributes for function vertex.
     virtual std::string functionAttributes(const Partitioner&, const Function::Ptr&) const;
+
+    // Emit a function GraphViz node unless one has already been emitted. The node is emitted regardless of whether the vertex
+    // address is selected, therefore this method can be used to emit neighbors of selected vertices.
     virtual size_t dumpFunctionInfo(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
+    // Emit GraphViz nodes and edges for functions that call the specified function.  The source vertices are the caller entry
+    // vertices (dumped with dumpFunctionInfo()) rather than the actual call sites.
+    virtual void dumpFunctionCallers(std::ostream&, const Partitioner&, const Function::Ptr &) const;
+
+    // Emit GraphViz nodes for functions that the specified function calls.  This uses dumpFunctionInfo().
     virtual void dumpFunctionCallees(std::ostream&, const Partitioner&, const Function::Ptr &) const;
+
+    // Emit selected function vertices by calling dumpVertex(). Emit intra-function edges by calling emitEdge().
     virtual void dumpIntraFunction(std::ostream&, const Partitioner&, const Function::Ptr&) const;
-    virtual void dumpInterFunctionEdges(std::ostream&, const Partitioner&, const Function::Ptr&) const;
+
+    // Emit edges that originate in the specified function but terminate outside the function.  No new vertices are created.
+    virtual void dumpInterFunctionOutEdges(std::ostream&, const Partitioner&, const Function::Ptr&) const;
     
 };
 
