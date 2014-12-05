@@ -3244,6 +3244,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
      if ( SgProject::get_verbose() > 0 )
         {
+       // DQ (12/3/2014): Note that this function fails for the Amr.cxx file in ARES.
        // Build a dot file of the AST and the token stream showing the mapping.
           Graph_TokenMappingTraversal::graph_ast_and_token_stream(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap);
         }

@@ -115,13 +115,6 @@ namespace SageInterface
   // to support analysis information without constantly modifing the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
-//! An internal flag to control SageInterface::moveDeclarationToInnermostScope
-// Users want to see the tool working by default
-ROSE_DLL_API extern bool tool_keep_going; 
-// Users want to see conservative and aggressive moving
-ROSE_DLL_API extern bool decl_mover_conservative; 
-
-
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
@@ -2053,9 +2046,6 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 // DQ (6/7/2012): Unclear where this function should go...
   bool hasTemplateSyntax( const SgName & name );
-
-//! Move a declaration to a scope which is the closest to the declaration's use places
-bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*= false */);
 
 #if 0
 
