@@ -55,6 +55,14 @@ void foo()
      Operator Lap2D_4 = dpx(dmx(a_nonlinear_coefficient_function(u)*u)) + dpy(dmy(b_nonlinear_coefficient_function(u)*u));
 #endif
 
+#if 1
+  // "c" is the wave speed.
+     double delta_t, delta_x, c;
+  // The operator returns u and v at the new time level.
+     Operator Wave_v_1 = v + delta_t * c*c * dpx(dmx(u)) + (delta_t/2)* c * delta_x * dpx(dmx(v));
+     Operator Wave_u_1 = u + delta_t * (v + delta_t/2 * c*c * dpx(dmx(u)) + (delta_t/4)* c * delta_x * dpx(dmx(v)));
+#endif
+
      GridFunction u_input,v_output;
 
   // Application of stencil on u saved in v.
