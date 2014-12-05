@@ -309,6 +309,10 @@ Grammar::setUpNodes ()
   // QY: we need a boolean flag for tracking the updates to an ast node
      Node.setDataPrototype("bool","isModified","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (12/3/2014): We need a concept of contains modified code so that we can support the unparsing from the token stream.
+     Node.setDataPrototype("bool","containsModifiedCode","= false",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
  
 #if 0
   // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store 
