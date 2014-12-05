@@ -11,6 +11,7 @@
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Utility.h>
+#include <sawyer/GraphTraversal.h>
 
 using namespace rose::Diagnostics;
 
@@ -496,10 +497,18 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
         ASSERT_not_null(args.partitioner);
         const Partitioner *p = args.partitioner;
 
-        // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
-        // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need to
-        // later add a call-return edge.
-        if (args.bblock && p->basicBlockIsFunctionCall(args.bblock)) {
+        if (args.bblock == NULL) {
+            // Basic block that is not yet discovered. We could use the special "undiscovered" CFG vertex, but there is no
+            // ordering guarantee for its incoming edges.  We want to process undiscovered vertices in a depth-first manner,
+            // which is why we maintain our own list instead.  The reason for depth-first discovery is that some analyses are
+            // recursive in nature and we want to try to have children discovered and analyzed before we try to analyze the
+            // parent.  For instance, may-return analysis for one vertex probably depends on the may-return analysis of its
+            // successors.
+            undiscovered_.pushBack(args.startVa);
+        } else if (p->basicBlockIsFunctionCall(args.bblock)) {
+            // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
+            // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need to
+            // later add a call-return edge.
             ControlFlowGraph::ConstVertexNodeIterator placeholder = p->findPlaceholder(args.startVa);
             ASSERT_require(placeholder != p->cfg().vertices().end());
             boost::logic::tribool mayReturn = hasAnyCalleeReturn(*p, placeholder);
@@ -516,6 +525,7 @@ Engine::BasicBlockWorkList::operator()(bool chain, const DetachedBasicBlock &arg
     if (chain) {
         pendingCallReturn_.erase(args.startVa);
         processedCallReturn_.erase(args.startVa);
+        undiscovered_.erase(args.startVa);
     }
     return chain;
 }
@@ -548,6 +558,7 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
         boost::logic::tribool mayReturn = hasAnyCalleeReturn(partitioner, caller);
         if (boost::logic::indeterminate(mayReturn))
             mayReturn = assumeReturns;
+
         if (mayReturn) {
             size_t nBits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
             partitioner.detachBasicBlock(bb);
@@ -568,16 +579,40 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
 // Discover a basic block's instructions for some placeholder that has no basic block yet.
 BasicBlock::Ptr
 Engine::makeNextBasicBlockFromPlaceholder(Partitioner &partitioner) {
-    ControlFlowGraph::VertexNodeIterator worklist = partitioner.undiscoveredVertex();
-    if (worklist->nInEdges() > 0) {
-        ControlFlowGraph::VertexNodeIterator placeholder = worklist->inEdges().begin()->source();
+
+    // Pick the first (as LIFO) item from the undiscovered worklist. Make sure the item is truly undiscovered
+    while (!basicBlockWorkList_->undiscovered().isEmpty()) {
+        rose_addr_t va = basicBlockWorkList_->undiscovered().popBack();
+        ControlFlowGraph::VertexNodeIterator placeholder = partitioner.findPlaceholder(va);
+        if (placeholder == partitioner.cfg().vertices().end()) {
+            mlog[WARN] <<"makeNextBasicBlockFromPlaceholder: block " <<StringUtility::addrToString(va)
+                       <<" was on the undiscovered worklist but not in the CFG\n";
+            continue;
+        }
+        ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
+        if (placeholder->value().bblock()) {
+            mlog[WARN] <<"makeNextBasicBlockFromPlacholder: block " <<StringUtility::addrToString(va)
+                       <<" was on the undiscovered worklist but is already discovered\n";
+            continue;
+        }
+        BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
+        partitioner.attachBasicBlock(placeholder, bb);
+        return bb;
+    }
+
+    // The user probably monkeyed with basic blocks without notifying this engine, so just consume a block that we don't know
+    // about. The order in which such placeholder blocks are discovered is arbitrary.
+    if (partitioner.undiscoveredVertex()->nInEdges() > 0) {
+        mlog[WARN] <<"partitioner engine undiscovered worklist is empty but CFG undiscovered vertex is not\n";
+        ControlFlowGraph::VertexNodeIterator placeholder = partitioner.undiscoveredVertex()->inEdges().begin()->source();
         ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
         BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
         partitioner.attachBasicBlock(placeholder, bb);
         return bb;
-    } else {
-        return BasicBlock::Ptr();
     }
+
+    // Nothing to discover
+    return BasicBlock::Ptr();
 }
 
 // make a new basic block for an arbitrary placeholder
@@ -592,10 +627,40 @@ Engine::makeNextBasicBlock(Partitioner &partitioner) {
     // Possibly move the old processedCallReturn items back onto the pendingCallReturn list.  The CFG possibly changed from the
     // prior call and we may be able to determine a callee's may-return analysis with certainty now.
     if (basicBlockWorkList_->pendingCallReturn().isEmpty()) {
+#if 1 // [Robb P. Matzke 2014-12-05]
         while (!basicBlockWorkList_->processedCallReturn().isEmpty()) {
             rose_addr_t va = basicBlockWorkList_->processedCallReturn().popBack();
             basicBlockWorkList_->pendingCallReturn().pushBack(va);
         }
+#else
+        // Push them onto the list so that ancestors appear before descendents, thus descendents will be popped and processed
+        // before their ancestors.
+        mlog[INFO] <<"ROBB: sorting basicBlockWorkList according to CFG:"
+                   <<" list.size=" <<basicBlockWorkList_->processedCallReturn().size()
+                   <<", graph.size=" <<partitioner.cfg().nVertices() <<"\n";
+        std::set<rose_addr_t> pending;
+        BOOST_FOREACH (rose_addr_t va, basicBlockWorkList_->processedCallReturn().items())
+            pending.insert(va);
+        using namespace Sawyer::Container::Algorithm;
+        typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> Traversal;
+        std::vector<bool> processed(partitioner.cfg().nVertices(), false);
+        for (size_t i=0; i<processed.size(); ++i) {
+            if (!processed[i]) {
+                for (Traversal t(partitioner.cfg(), partitioner.cfg().findVertex(i), LEAVE_VERTEX); t; ++t) {
+                    processed[i] = true;
+                    if (t.vertex()->value().type() == V_BASIC_BLOCK) {
+                        rose_addr_t va = t.vertex()->value().address();
+                        std::set<rose_addr_t>::iterator found = pending.find(va);
+                        if (found != pending.end()) {
+                            basicBlockWorkList_->pendingCallReturn().pushFront(va);
+                            pending.erase(found);
+                        }
+                    }
+                }
+            }
+        }
+        basicBlockWorkList_->processedCallReturn().clear();
+#endif
     }
 
     // If there's a function call that needs a new call-return edge then add such an edge, but only if we know the callee has a
