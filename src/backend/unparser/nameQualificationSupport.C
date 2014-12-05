@@ -404,6 +404,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeSignedLong:
           case V_SgTypeSignedLongLong:
 
+       // DQ (11/6/2014): Added support for C++11 rvalue references.
+          case V_SgRvalueReferenceType:
+
        // DQ (3/24/2014): Added support for 128-bit integers.
           case V_SgTypeSigned128bitInteger:
           case V_SgTypeUnsigned128bitInteger:
@@ -1165,6 +1168,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          break;
                        }
 #endif
+
+
+                 // DQ (11/10/2014): Added support for templated typedefs (and their instantiations).
+                    case V_SgTemplateTypedefDeclaration:
+                    case V_SgTemplateInstantiationTypedefDeclaration:
+
                     case V_SgTypedefDeclaration:
                        {
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
@@ -2098,6 +2107,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                               break;
                             }
+
+                      // DQ (11/10/2014): Adding support for templated typedef declarations.
+                         case V_SgTemplateTypedefSymbol:
 
                          case V_SgTypedefSymbol:
                             {
@@ -3098,10 +3110,12 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
 #if 0
           printf ("++++++++++++++++ memberFunctionNameString (globalUnparseToString()) = %s \n",memberFunctionNameString.c_str());
 #endif
+       // DQ (12/3/2014): Incremented this for ARES application files.
        // DQ (6/9/2013): I have incremented this value to suppor mangled names in the protobuf-2.5.0 application.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (memberFunctionNameString.length() > 4000)
+       // if (memberFunctionNameString.length() > 4000)
+          if (memberFunctionNameString.length() > 8000)
              {
                printf ("Error: function names should not be this long... memberFunctionNameString.length() = %zu \n",memberFunctionNameString.length());
 #if 1
@@ -4317,26 +4331,36 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // Note that test2005_63.C presents an example that triggers this case and so might be a relevant.
             // This is also the reason why test2005_73.C is failing!!!  Fix it tomorrow!!! (SgTemplateInstantiationDirectiveStatement)
                SgDeclarationStatement* currentStatement = isSgDeclarationStatement(memberFunctionDeclaration->get_parent());
-               ROSE_ASSERT(currentStatement != NULL);
-               SgScopeStatement* currentScope = isSgScopeStatement(currentStatement->get_parent());
-               if (currentScope != NULL)
+
+            // DQ (9/4/2014): Lambda functions (in SgLambdaExp) are an example where this fails.
+            // ROSE_ASSERT(currentStatement != NULL);
+               if (currentStatement != NULL)
                   {
-                    int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
+                    SgScopeStatement* currentScope = isSgScopeStatement(currentStatement->get_parent());
+                    if (currentScope != NULL)
+                       {
+                         int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                         printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-                    setNameQualification(memberFunctionDeclaration,amountOfNameQualificationRequired);
+                         setNameQualification(memberFunctionDeclaration,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+                         printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through parent SgDeclarationStatement, not clear why! \n");
+                         ROSE_ASSERT(false);
+                       }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available, not clear why! \n");
+#endif
+                 // ROSE_ASSERT(false);
                   }
                  else
                   {
-                    printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through parent SgDeclarationStatement, not clear why! \n");
-                    ROSE_ASSERT(false);
+                 // This should only be a lambda function defined in a SgLambdaExp.
+                    ROSE_ASSERT(isSgLambdaExp(memberFunctionDeclaration->get_parent()) != NULL);
                   }
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available, not clear why! \n");
-#endif
-            // ROSE_ASSERT(false);
              }
         }
 
