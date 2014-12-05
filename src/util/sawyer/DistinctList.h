@@ -63,7 +63,7 @@ public:
     /** Number of items in list.
      *
      *  Returns the total number of items in the list in constant time. */
-    bool size() const {
+    size_t size() const {
         return position_.size();
     }
 
@@ -72,6 +72,21 @@ public:
      *  Returns true if the specified item exists in the list, false if not. */
     bool exists(const Item &item) const {
         return position_.exists(item);
+    }
+
+    /** Determine the position of an item.
+     *
+     *  Returns the position of an item from the beginning of the list.  This is an O(n) operation. */
+    size_t position(const Item &item) const {
+        if (!position_.exists(item))
+            return size();
+        size_t retval = 0;
+        BOOST_FOREACH (const Item &x, items_) {
+            if (x == item)
+                return retval;
+            ++retval;
+        }
+        return retval;
     }
     
     /** Reference to item at front of list.
