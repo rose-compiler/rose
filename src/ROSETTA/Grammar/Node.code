@@ -1782,11 +1782,25 @@ HEADER_START
        */
           void set_isModified( bool isModified );
 
+      /*! \brief Many nodes can hide other AST nodes and we need to track when outer nodes contain modified nodes even if they are not themselves modified.
+
+          This flag is required to support the unparsing using the token stream.
+       */
+          void set_containsModifiedCode( bool containsModifiedCode );
+
+
       /*! \brief Acess function for isModified flag
+
           This flag records if the current IR node has been modified.  
           It is set to false after and ROSE front-end processing.
        */
           bool get_isModified() const;
+
+      /*! \brief Acess function for containsModifiedCode flag
+
+          This flag records if the current IR node has a nested AST node that is marked as being modified.
+       */
+          bool get_containsModifiedCode() const;
 
       //! All nodes in the AST contain a reference to a parent node
           void set_parent ( SgNode* parent );
@@ -2635,11 +2649,25 @@ SgNode::set_isModified ( bool isModified)
    {
      p_isModified = isModified;
    }
-                                                                                                   
+
 bool
 SgNode::get_isModified () const
    {
      return p_isModified; 
+   }                                                                                                   
+
+// DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
+void
+SgNode::set_containsModifiedCode ( bool containsModifiedCode)
+   {
+     p_containsModifiedCode = containsModifiedCode;
+   }
+
+// DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
+bool
+SgNode::get_containsModifiedCode () const
+   {
+     return p_containsModifiedCode; 
    }
                                                                                                    
 
