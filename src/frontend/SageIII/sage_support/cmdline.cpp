@@ -1326,14 +1326,22 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
               std::string include_path_no_quotes =
                   boost::replace_all_copy(include_path, "\"", "");
-              bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
-              if (false == is_directory)
-              {
-                  std::cout  << "[WARN] "
-                          << "Invalid argument to -I; path does not exist: "
+              try {
+                  bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
+                  if (false == is_directory)
+                  {
+                      std::cout  << "[WARN] "
+                              << "Invalid argument to -I; path does not exist: "
+                              << "'" << include_path_no_quotes << "'"
+                              << std::endl;
+                  }
+               } catch (const filesystem_error& ex) {
+                  std::cout  << "[ERROR] "
+                          << "Exception processing argument to -I: "
                           << "'" << include_path_no_quotes << "'"
                           << std::endl;
-              }
+                  std::cout << ex.what() << std::endl;
+               }
           }
 
        // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").

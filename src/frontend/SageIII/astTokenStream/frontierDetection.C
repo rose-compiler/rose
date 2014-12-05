@@ -641,7 +641,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
              }
             else
              {
-            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unarpsed from the token stream.
+            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unparsed from the token stream.
                SgGlobal* globalScope = isSgGlobal(n);
                if (globalScope != NULL)
                   {
@@ -1182,7 +1182,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
   // Now traverse the AST and record the linked list of nodes to be unparsed as tokens and from the AST.
-  // So that we can query next and last statements and determin if they were unparsed from the token 
+  // So that we can query next and last statements and determine if they were unparsed from the token 
   // stream or the AST.  Not clear if the edges of token-stream/AST unparsing should be unparsed from the 
   // token stream leading trailing token information or from the AST using the attached CPP info.
 
