@@ -38,8 +38,10 @@
 #include <cmath>
 #include "assert.h"
 
+#ifdef USE_OUTDATED
 #include "GeneralAnalyzerBase.h"
 #include "GeneralAnalyzer.h"
+#endif
 
 // ROSE analyses
 #include "VariableRenaming.h"
@@ -260,6 +262,7 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
   }
 }
 
+#ifdef USE_OUTDATED
 #include "PropertyState.h"
 #include "IntervalPropertyState.h"
 
@@ -278,11 +281,9 @@ void generalAnalysis(SgProject* root) {
   boolOptions.registerOption("post-semantic-fold",false); // temporary
 
   GeneralAnalyzer* generalAnalyzer=new GeneralAnalyzer();
-#if 0
   IntervalPropertyStateFactory* factory=new IntervalPropertyStateFactory();
   generalAnalyzer->setFactory(factory);
   generalAnalyzer->initialize(root);
-#endif
 #if 0
   generalAnalyzer->initializeGlobalVariables(root);
 
@@ -295,6 +296,7 @@ void generalAnalysis(SgProject* root) {
   delete generalAnalyzer;
   cout<<"STATUS: general analysis finished."<<endl;
 }
+#endif
 
 void rdAnalysis(SgProject* root) {
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -656,10 +658,12 @@ int main(int argc, char* argv[]) {
     cout<<"STATUS: Performing RD analysis."<<endl;
     rdAnalysis(root);
   }
+#ifdef USE_OUTDATED
   if(option_generalanalysis) {
     cout<<"STATUS: Performing general analysis."<<endl;
     generalAnalysis(root);
   }
+#endif
   if(option_roserdanalysis) {
       cout << "INFO: generating rose-rd dot file (1/2)."<<endl;
       VariableRenaming varRen(root);
