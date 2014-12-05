@@ -76,6 +76,7 @@
 #include <queue> // used for a worklist of declarations to be moved 
 #include <map> // used to store special var reference's scope
 using namespace std;
+using namespace SageInterface;
 bool debug = false;
 
 //! An internal flag to control moveDeclarationToInnermostScope
@@ -718,6 +719,46 @@ std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatemen
   return processed_scopes;
 }
 
+//TODO: move into SageInterface 
+//Check if a variable (symbol s) is ever referenced by a loop header, including init_stmt, test, and increment expressions.
+static bool isReferencedByLoopHeader (SgVariableSymbol* s, SgForStatement * for_loop)
+{
+  std::map<SgVariableSymbol*, bool> symbolMap; 
+  ROSE_ASSERT (s != NULL);
+  ROSE_ASSERT (for_loop != NULL);
+  if (for_loop->get_for_init_stmt()!= NULL)
+  {
+   Rose_STL_Container <SgNode*> testList = NodeQuery::querySubTree (for_loop->get_for_init_stmt(), V_SgVarRefExp);
+   for (size_t i =0; i< testList.size(); i++)
+   {
+     SgVarRefExp * var_ref = isSgVarRefExp (testList[i]);
+     symbolMap[var_ref->get_symbol()] = true; 
+   }
+  }
+
+  if (for_loop->get_test()!= NULL)
+  {
+   Rose_STL_Container <SgNode*> testList = NodeQuery::querySubTree (for_loop->get_test(), V_SgVarRefExp);
+   for (size_t i =0; i< testList.size(); i++)
+   {
+     SgVarRefExp * var_ref = isSgVarRefExp (testList[i]);
+     symbolMap[var_ref->get_symbol()] = true; 
+   }
+  }
+
+
+  if (for_loop->get_increment()!= NULL)
+  {
+   Rose_STL_Container <SgNode*> testList = NodeQuery::querySubTree (for_loop->get_increment(), V_SgVarRefExp);
+   for (size_t i =0; i< testList.size(); i++)
+   {
+     SgVarRefExp * var_ref = isSgVarRefExp (testList[i]);
+     symbolMap[var_ref->get_symbol()] = true; 
+   }
+  }
+  return symbolMap[s]; 
+}
+
 // Move a single declaration into multiple scopes. 
 // For each target scope:
 // 1. Copy the decl to be local decl , 
@@ -778,7 +819,8 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
           SgForStatement* stmt = isSgForStatement (target_scope);
           ROSE_ASSERT (stmt != NULL);
           // target scope is a for loop and the declaration declares its index variable.
-          if (i_name == SageInterface::getLoopIndexVariable (stmt))
+	  // A better condition is if the variable declared is referenced in the for header, we should insert the decl into the header.
+          if (i_name == SageInterface::getLoopIndexVariable (stmt)) 
           {
             if (i_name == NULL)
             {
@@ -801,17 +843,19 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
             ROSE_ASSERT (exp_stmt != NULL);
             SgAssignOp* assign_op = isSgAssignOp(exp_stmt->get_expression());
             if (assign_op != NULL)
-            {
-              ROSE_ASSERT (assign_op != NULL);
-              stmt_list.clear();
+	    {
+	      ROSE_ASSERT (assign_op != NULL);
+	      stmt_list.clear();
 
-              SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
-              // insert the merged decl into the list, TODO preserve the order in the list
-              stmt_list.insert (stmt_list.begin(),  decl_copy);
-              decl_copy->set_parent(stmt->get_for_init_stmt());
-              ROSE_ASSERT (decl_copy->get_parent() != NULL); 
-            }
-            // TODO: it can be SgCommanOpExp
+	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
+	      // insert the merged decl into the list, TODO preserve the order in the list
+	      // else other cases: we simply preprent decl_copy tothe front of init_stmt
+	      stmt_list.insert (stmt_list.begin(),  decl_copy);
+	      decl_copy->set_parent(stmt->get_for_init_stmt());
+	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
+
+	    }
+	    // TODO: it can be SgCommanOpExp
             if (isSgCommaOpExp (exp_stmt->get_expression()) )
             {
                cerr<<"Error in moveVariableDeclaration(), multiple expressions in for-condition is not supported now. "<<endl;
@@ -821,7 +865,15 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
                  ROSE_ASSERT (assign_op != NULL);
             } 
          } //
-          else 
+          else if (isReferencedByLoopHeader (sym ,stmt)) 
+	  {
+	    cerr<<"Error in moveVariableDeclaration(), A variable declaration is referenced in the loop header. But it is not loop index. It is a bad loop form and should be skipped long time ago. "<<endl;
+	    if (tool_keep_going)
+	      break;
+	    else
+	      ROSE_ASSERT (false);
+	  }
+	  else // now, the declared variable is not loop index and not referenced in the header. We can safely move it into the loop body
           {
             SgBasicBlock* loop_body = SageInterface::ensureBasicBlockAsBodyOfFor (stmt);
             adjusted_scope = loop_body;
@@ -898,6 +950,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     // Note: not all bodies should be added. Only consider the marked scopes!!
 //   if (todo_scopes.find(target_scope) != todo_scopes.end()) 
    {
+     ROSE_ASSERT (decl_copy->get_parent() != NULL);
      worklist.push(decl_copy);
    }
 
@@ -1001,15 +1054,30 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
 }
 
 //! A helper function to check if there is a target scope which is a for loop with complex init_stmt list
-static SgForStatement* hasALoopWithComplexInitStmt( std::vector <SgScopeStatement *> &target_scopes)
+static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl, std::vector <SgScopeStatement *> &target_scopes)
 {
+  ROSE_ASSERT (decl != NULL);
+  SgInitializedName* i_name = getFirstInitializedName (decl);
+  SgVariableSymbol * sym = getFirstVarSym (decl);
+  ROSE_ASSERT (i_name != NULL);
+  ROSE_ASSERT (sym != NULL);
 
    for (size_t i= 0; i< target_scopes.size(); i++)
    {
      SgScopeStatement* current_scope = target_scopes[i];
      if (SgForStatement* for_loop = isSgForStatement (current_scope))
+     {
+       // multiple init statements or expressions
        if (SageInterface::hasMultipleInitStatmentsOrExpressions (for_loop))
          return for_loop;
+       else 
+      {  // single init, but cannot match loop index,  and the variable is referenced in the loop header
+         // We cannot insert into the init stmt list since it will cause compilation error. e.g. inputmoveDeclarationToInnermostScope_13.C
+         // We cannoit move into the loop body neither since it is referenced in the loop header.
+         if (i_name != getLoopIndexVariable (for_loop) && isReferencedByLoopHeader (sym, for_loop))
+           return for_loop; 
+      }
+     }
     }
   return NULL;
 }
@@ -1104,7 +1172,7 @@ bool moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, std::q
   if (target_scopes.size()>0)
   {
     // ignore complex for init stmt for now 
-    SgForStatement* bad_loop = hasALoopWithComplexInitStmt (target_scopes);
+    SgForStatement* bad_loop = hasALoopWithComplexInitStmt (decl, target_scopes);
     if (bad_loop != NULL)
     {
       cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
