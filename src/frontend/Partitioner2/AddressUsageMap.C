@@ -353,42 +353,12 @@ AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     AddressInterval interval = AddressInterval::baseSize(odb.dataBlock()->address(), odb.dataBlock()->size());
     Map adjustment;
     adjustment.insert(interval, AddressUsers(odb));
-#if 0 // DEBUGGING [Robb P. Matzke 2014-10-08]
-    std::cerr <<"ROBB: insertDataBlock " <<StringUtility::addrToString(odb.dataBlock()->address())
-              <<" + " <<StringUtility::plural(odb.dataBlock()->size(), "bytes")
-              <<" at [" <<StringUtility::addrToString(odb.dataBlock()->extent().least())
-              <<", " <<StringUtility::addrToString(odb.dataBlock()->extent().greatest()) <<"]\n";
-    std::cerr <<"  Data blocks before insertion:\n";
-    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
-        const AddressUsers users = node.value().select(AddressUsers::selectDataBlocks);
-        if (!users.isEmpty()) {
-            std::cerr <<"    [" <<StringUtility::addrToString(node.key().least())
-                      <<", " <<StringUtility::addrToString(node.key().greatest()) <<"]"
-                      <<" users = " <<users <<"\n";
-        }
-    }
-#endif
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
-#if 0 // DEBUGGING [Robb P. Matzke 2014-10-08]
-        std::cerr <<"  data block overlaps users at [" <<StringUtility::addrToString(node.key().least())
-                  <<", " <<StringUtility::addrToString(node.key().greatest()) <<"]: " <<node.value() <<"\n";
-#endif
         AddressUsers newUsers = node.value();
         newUsers.insertDataBlock(odb);
         adjustment.insert(interval.intersection(node.key()), newUsers);
     }
     map_.insertMultiple(adjustment);
-#if 0 // DEBUGGING [Robb P. Matzke 2014-10-08]
-    std::cerr <<"  Data blocks after insertion:\n";
-    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
-        const AddressUsers users = node.value().select(AddressUsers::selectDataBlocks);
-        if (!users.isEmpty()) {
-            std::cerr <<"    [" <<StringUtility::addrToString(node.key().least())
-                      <<", " <<StringUtility::addrToString(node.key().greatest()) <<"]"
-                      <<" users = " <<users <<"\n";
-        }
-    }
-#endif
 }
 
 void
