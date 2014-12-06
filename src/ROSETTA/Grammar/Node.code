@@ -1786,7 +1786,7 @@ HEADER_START
 
           This flag is required to support the unparsing using the token stream.
        */
-          void set_containsModifiedCode( bool containsModifiedCode );
+          void set_containsTransformation( bool containsTransformation );
 
 
       /*! \brief Acess function for isModified flag
@@ -1796,11 +1796,11 @@ HEADER_START
        */
           bool get_isModified() const;
 
-      /*! \brief Acess function for containsModifiedCode flag
+      /*! \brief Acess function for containsTransformation flag
 
           This flag records if the current IR node has a nested AST node that is marked as being modified.
        */
-          bool get_containsModifiedCode() const;
+          bool get_containsTransformation() const;
 
       //! All nodes in the AST contain a reference to a parent node
           void set_parent ( SgNode* parent );
@@ -2658,16 +2658,16 @@ SgNode::get_isModified () const
 
 // DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
 void
-SgNode::set_containsModifiedCode ( bool containsModifiedCode)
+SgNode::set_containsTransformation ( bool containsTransformation)
    {
-     p_containsModifiedCode = containsModifiedCode;
+     p_containsTransformation = containsTransformation;
    }
 
 // DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
 bool
-SgNode::get_containsModifiedCode () const
+SgNode::get_containsTransformation () const
    {
-     return p_containsModifiedCode; 
+     return p_containsTransformation; 
    }
                                                                                                    
 

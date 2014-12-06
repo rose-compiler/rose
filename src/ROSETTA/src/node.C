@@ -311,7 +311,7 @@ Grammar::setUpNodes ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (12/3/2014): We need a concept of contains modified code so that we can support the unparsing from the token stream.
-     Node.setDataPrototype("bool","containsModifiedCode","= false",
+     Node.setDataPrototype("bool","containsTransformation","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
  
 #if 0

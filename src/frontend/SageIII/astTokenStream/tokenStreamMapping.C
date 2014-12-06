@@ -3159,6 +3159,22 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
 void
 buildTokenStreamMapping(SgSourceFile* sourceFile)
    {
+#if 1
+     printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+  // Note that we first detect the frontier.
+     simpleFrontierDetectionForTokenStreamMapping(sourceFile);
+
+#if 1
+     printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
 #if 0
      printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
@@ -3328,7 +3344,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
 #if 0
-     printf ("In frontierDetectionForTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+     printf ("In buildTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
 #endif
 
      ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
@@ -3357,7 +3373,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
           if (j != tokenSequenceEndMap.end())
              {
 #if 0
-               printf ("In frontierDetectionForTokenStreamMapping(): Found associated tokenStreamSequence for statement = %p = %s \n",statement,statement->class_name().c_str());
+               printf ("In buildTokenStreamMapping(): Found associated tokenStreamSequence for statement = %p = %s \n",statement,statement->class_name().c_str());
 #endif
                i->second->redundant_token_subsequence = true;
                token_unparse_frontier_map[j->second]->redundant_token_subsequence = true;
