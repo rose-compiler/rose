@@ -18,7 +18,7 @@
 
  * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
  *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
- *  without an initializer or with a literal initializer  to be safe.
+ *  without an initializer to be safe.
  * ********************************************************************************************** 
  *  Internals: (For people who are interested in how this tool works internally) 
  *
@@ -74,6 +74,7 @@
 #include "transformationTracking.h"
 #include <iostream>
 #include <queue> // used for a worklist of declarations to be moved 
+#include <boost/foreach.hpp>
 using namespace std;
 bool debug = false;
 
@@ -149,12 +150,13 @@ class visitorTraversal : public AstSimpleProcessing
           }
           else
           {
-            bool null_or_literal_initializer = false;
+            bool null_initializer = false;
             SgInitializedName* init_name = SageInterface::getFirstInitializedName (decl);
             ROSE_ASSERT (init_name!= NULL);
             SgInitializer * initor =  init_name->get_initptr();
             if (initor == NULL) 
-              null_or_literal_initializer = true;
+              null_initializer = true;
+#if 0
             else
              {
                SgAssignInitializer* assign_initor = isSgAssignInitializer (initor);
@@ -164,18 +166,18 @@ class visitorTraversal : public AstSimpleProcessing
                    null_or_literal_initializer = true;
                }
              } 
-
-            // conservative mode:  Only move declarations with no or value(literal) initializer
+#endif
+            // conservative mode:  Only move declarations with no initializer
             if (decl_mover_conservative)
             {
               if (debug)
                  cout<<"Using conservative moving for decl .."<<endl;
-              if (null_or_literal_initializer)   
+              if (null_initializer)   
                 result = moveDeclarationToInnermostScope(decl, worklist, debug);
               else
               {
                 if (debug)
-                  cout<<"Skipping a declaration since it has complex initializer .."<<endl;
+                  cout<<"Skipping a declaration since it has initializer .."<<endl;
               }
             }
             else // aggressive move
@@ -191,6 +193,15 @@ class visitorTraversal : public AstSimpleProcessing
     } // end visit()
 };
 
+// TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
+std::vector<std::string>
+GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
+{
+  std::vector<std::string> filenames =
+      CommandlineProcessing::generateSourceFilenames(argv, false);
+  return filenames;
+}
+
 int main(int argc, char * argv[])
 
 {
@@ -200,6 +211,19 @@ int main(int argc, char * argv[])
   {
     debug = true;
     cout<<"Turing on debugging model..."<<endl;
+  }
+
+  // TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
+  if (CommandlineProcessing::isOption (argvList,"--list-filenames","",true))
+  {
+      std::vector<std::string> filenames =
+          GetSourceFilenamesFromCommandline(
+    	  std::vector<std::string>(argv, argv + argc));
+      BOOST_FOREACH(std::string filename, filenames)
+      {
+          std::cout << filename << std::endl;
+      }
+      return 0;
   }
 
   // We don't remove this option since it is used later by other logic
@@ -239,6 +263,10 @@ int main(int argc, char * argv[])
 
 //==================================================================================
 
+// Three types of scope fo a varialbe access
+// 1. variable is being declared.
+// 2. variable is being used: read or written 
+// 3. not either of the above cases, juse a scope in between them. 
 enum ScopeType {s_decl, s_intermediate, s_use};
 class Scope_Node {
   public: 
