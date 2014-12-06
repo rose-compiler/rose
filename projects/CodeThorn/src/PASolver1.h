@@ -22,8 +22,8 @@ class PASolver1 {
 	   );
   virtual void runSolver();
 
- protected:
   void computePreInfo(Label lab,Lattice& inInfo);
+ protected:
   WorkListSeq<Label>& _workList;
   std::vector<Lattice*>& _analyzerDataPreInfo;
   std::vector<Lattice*>& _analyzerDataPostInfo;

@@ -8,7 +8,7 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
 if ROSE_APPROVED_PYTHON_VERSION
 
-bin_PROGRAMS = codethorn matcher_demo varwatch woodpecker analyterix reverser
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 

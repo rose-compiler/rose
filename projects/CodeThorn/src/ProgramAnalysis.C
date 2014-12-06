@@ -39,13 +39,13 @@ Lattice* ProgramAnalysis::getPostInfo(Label lab) {
 void ProgramAnalysis::computeAllPreInfo() {
   for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
     Lattice* le=_initialElementFactory->create();
-    computePreInfo(lab,le);
+    _solver->computePreInfo(lab,*le);
     _analyzerDataPreInfo[lab]=le;
   }
   _preInfoIsValid=true;
 }
 
-void setInitialElementFactory(PropertyStateFactory* pf) {
+void ProgramAnalysis::setInitialElementFactory(PropertyStateFactory* pf) {
   _initialElementFactory=pf;
 }
 
@@ -67,7 +67,7 @@ void ProgramAnalysis::initializeGlobalVariables(SgProject* root) {
   list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end())
-      transfer(_labeler->getLabel(*i),*elem);
+      _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
   }
   cout << "INIT: initial element: ";
   elem->toStream(cout,&_variableIdMapping);
@@ -107,7 +107,8 @@ ProgramAnalysis::initialize(SgProject* root) {
     cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPostInfo.size()<< " labels."<<endl;
-  cout << initializeSolver();
+  initializeSolver();
+  cout << "STATUS: initialized solver."<<endl;
 
 
 #if 0
@@ -204,16 +205,6 @@ ProgramAnalysis::solve() {
   _preInfoIsValid=false;
 }
 
-
-void
-ProgramAnalysis::computePreInfo(Label lab,Lattice* inInfo) {
-  LabelSet pred=_flow.pred(lab);
-  for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo->combine(_analyzerDataPostInfo[*i]);
-  }
-}
-
-
 DFAstAttribute* ProgramAnalysis::createDFAstAttribute(Lattice* elem) {
   // elem ignored in default function
   return new DFAstAttribute();
@@ -226,8 +217,9 @@ ProgramAnalysis::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     cout << "Initializing "<<*i<<" with ";
-    _analyzerDataPostInfo[*i]=transfer(*i,_initialElement);
-    _analyzerDataPostInfo[*i].toStream(cout,&_variableIdMapping);
+    _analyzerDataPostInfo[*i]=_initialElementFactory->create();
+    _transferFunctions->transfer(*i,*_analyzerDataPostInfo[*i]);
+    _analyzerDataPostInfo[*i]->toStream(cout,&_variableIdMapping);
     cout<<endl;
     LabelSet initsucc=_flow.succ(*i);
     for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
@@ -238,13 +230,6 @@ ProgramAnalysis::run() {
 }
 
 // default identity function
-
-void
-ProgramAnalysis::transfer(Label lab, Lattice* element) {
-  ROSE_ASSERT(_transferFunctions);
-  return _transferFunctions->transfer(lab,*element);
-}
-
 
 ProgramAnalysis::ResultAccess&
 ProgramAnalysis::getResultAccess() {
@@ -325,9 +310,9 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
     if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
       if(*i >=0 ) {
         if(inInfo)
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPreInfo[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPreInfo[*i]));
         else
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPostInfo[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPostInfo[*i]));
       }
   }
 }

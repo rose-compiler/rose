@@ -55,7 +55,6 @@ class ProgramAnalysis {
 
   void attachInfoToAst(string attributeName,bool inInfo);
  protected:
-  virtual void transfer(Label label, Lattice& element);
   virtual void solve();
   VariableIdMapping _variableIdMapping;
   Labeler* _labeler;
@@ -82,10 +81,9 @@ class ProgramAnalysis {
   bool _preInfoIsValid;
   void computeAllPreInfo();
   PATransferFunctions* _transferFunctions;
-  Lattice* _initialElementFactory;
+  PropertyStateFactory* _initialElementFactory;
   PASolver1* _solver;
  private:
-  void computePreInfo(Label lab,Lattice& info);
 };
 
 } // end of namespace
