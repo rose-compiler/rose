@@ -7,7 +7,8 @@
 // DQ (11/29/2013): Added to support marking of redundant mappings of statements to token streams.
 #include "tokenStreamMapping.h"
 
-#include "frontierDetection.h"
+// DQ (12/4/2014): This is redundant with being included in "tokenStreamMapping.h".
+// #include "frontierDetection.h"
 
 #include "previousAndNextNode.h"
 

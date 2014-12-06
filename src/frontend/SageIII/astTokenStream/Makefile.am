@@ -18,7 +18,7 @@ endif
 noinst_LTLIBRARIES = libastTokenStream.la
 
 # DQ (10/27/2013): This is the new support for token stream mapping.
-libastTokenStream_la_SOURCES = tokenStreamMapping.C frontierDetection.C previousAndNextNode.C
+libastTokenStream_la_SOURCES = tokenStreamMapping.C frontierDetection.C simpleFrontierDetection.C previousAndNextNode.C
 
 # DQ (10/27/2013): These are required for the older tests in tests/roseTests/astTokenStreamTests
 libastTokenStream_la_SOURCES += createMap.C  doCompleteMapping.C  linearizeAST.C unparseMacro.C
@@ -28,7 +28,7 @@ libastTokenStream_la_DEPENDENCIES =
 
 # Leave these header file reference in the Makefile.am (so we will pass the policy tests).
 pkginclude_HEADERS = createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h \
-   tokenStreamMapping.h frontierDetection.h previousAndNextNode.h
+   tokenStreamMapping.h frontierDetection.h simpleFrontierDetection.h previousAndNextNode.h
 
 
 

@@ -2327,9 +2327,14 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::before);
 
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
-     curprint ( string("{"));
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
+  // DQ (12/5/2014): Test for if we have unparsed partially using the token stream. 
+  // If so then we don't want to unparse this syntax, if not then we require this syntax.
+     if (info.unparsedPartiallyUsingTokenStream() == false)
+        {
+          unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
+          curprint ( string("{"));
+          unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
+        }
 
      if (basic_stmt->get_asm_function_body().empty() == false)
         {
@@ -2365,9 +2370,14 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
      unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
 
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint ( string("}"));
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+  // DQ (12/5/2014): Test for if we have unparsed partially using the token stream.
+  // If so then we don't want to unparse this syntax, if not then we require this syntax.
+     if (info.unparsedPartiallyUsingTokenStream() == false)
+        {
+          unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
+          curprint ( string("}"));
+          unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+        }
    }
 
 
@@ -3404,7 +3414,7 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
 void
 Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
+#if 1
      printf ("Inside of unparseFuncDefnStmt() \n");
      curprint("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt */ ");
 #endif
@@ -3452,7 +3462,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if (isSgTemplateInstantiationMemberFunctionDecl(declstmt) != NULL)
   //      curprint ( string("template<> ";
 
-#if 0
+#if 1
      printf ("Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt \n");
      curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt */");
 #endif
@@ -3466,13 +3476,18 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      info.set_declstatement_ptr(NULL);
      info.set_declstatement_ptr(funcdefn_stmt->get_declaration());
 
-     if (isSgMemberFunctionDeclaration(declstmt)) 
+  // DQ (12/5/2014): Test for if we have unparsed partially using the token stream.
+  // If so then we don't want to unparse this syntax, if not then we require this syntax.
+     if (info.unparsedPartiallyUsingTokenStream() == false)
         {
-          unparseMFuncDeclStmt( declstmt, info);
-        }
-       else 
-        {
-          unparseFuncDeclStmt( declstmt, info);
+          if (isSgMemberFunctionDeclaration(declstmt)) 
+             {
+               unparseMFuncDeclStmt( declstmt, info);
+             }
+            else 
+             {
+               unparseFuncDeclStmt( declstmt, info);
+             }
         }
 
   // curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: DONE calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
@@ -3483,9 +3498,9 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
   // info.unset_SkipQualifiedNames();
 
-#if 0
-     printf ("Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body \n");
-     curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body */");
+#if 1
+     printf ("Inside of Unparse_ExprStmt::unparseFuncDefnStmt: comments before the output of the function body \n");
+     curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: comments before the output of the function body */");
 #endif
 
      info.unset_SkipFunctionDefinition();
@@ -3494,6 +3509,11 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (10/20/2012): Ouput the comments and CPP directives on the function definition.
   // Note must be outside of SkipFunctionDefinition to be output.
      unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::before);
+
+#if 1
+     printf ("Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body \n");
+     curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: output the function body */");
+#endif
 
   // now the body of the function
      if (funcdefn_stmt->get_body())
@@ -4398,7 +4418,9 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Unparse any comments of directives attached to the SgCtorInitializerList
      if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
+        {
           unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
+        }
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseMFuncDeclStmt(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
@@ -4853,8 +4875,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                decl_item = *p;
                ROSE_ASSERT(decl_item != NULL);
+#if 1
+               curprint ("\n /* In unparseVarDeclStmt(): before comments for cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
+#endif
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
-#if 0
+#if 1
                printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
                curprint ("\n /* In unparseVarDeclStmt(): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
 #endif
@@ -5555,7 +5580,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
         }
 
-  // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n"));
+#if 1
+     curprint ("\n/* Handle bit fields specifiers (if any) */ \n");
+#endif
 
   // DQ (11/28/2004): Bit fields specifiers should be associated with the SgInitializedName 
   // and not the SgVariableDeclaration!  However this works because variable declarations 

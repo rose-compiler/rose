@@ -326,6 +326,15 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + name;
         }
 
+  // DQ (12/4/2014): Added support for debugging the unparsing using the token stream.
+     SgStatement* genericStatement = isSgStatement(node);
+     if (genericStatement != NULL)
+        {
+          nodelabel += string("\\n") + string("isModified = ") + string(genericStatement->get_isModified() ? "true" : "false");
+          nodelabel += string("\\n") + string("containsTransformation = ") + string(genericStatement->get_containsTransformation() ? "true" : "false");
+          nodelabel += string("\\n") + string("isTransformation = ") + string(genericStatement->isTransformation() ? "true" : "false");
+        }
+
   // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
      SgInitializedName* initializedName = isSgInitializedName(node);
      if (initializedName != NULL)

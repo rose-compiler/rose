@@ -19,6 +19,8 @@ using namespace std;
 #define OUTPUT_HIDDEN_LIST_DATA 0
 #define OUTPUT_DEBUGGING_INFORMATION 0
 
+#define HIGH_FEDELITY_TOKEN_UNPARSING 1
+
 // DQ (8/13/2007): This function was implemented by Thomas
 std::string
 UnparseLanguageIndependentConstructs::resBool(bool val) const
@@ -752,6 +754,254 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
    }
 
 
+SgStatement* getNextStatementToUnparse(SgSourceFile* sourceFile, SgStatement* stmt)
+   {
+  // DQ (12/4/2014): This function return the next AST IR node that would be called by the unparser.
+  // It is not exactly the same as the AST traversal, so it must be represented explicitly.
+  // These need not cover all IR nodes, just statements that can contain other statements.
+
+  // We might want to implement a stack so that we can push each IR node onto the stack and
+  // then us that element to at first reference the next data member and then (if it is on the 
+  // stack) access the last data member.
+
+#if 1
+     printf ("In getNextStatementToUnparse(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
+     SgStatement* nextStatement = NULL;
+
+     switch(stmt->variantT())
+        {
+          case V_SgGlobal:
+             {
+               SgGlobal* currentStatement = isSgGlobal(stmt);
+
+            // Get first statement
+               SgDeclarationStatementPtrList & declarationList = currentStatement->get_declarations();
+               if (declarationList.empty() == false)
+                  {
+                    nextStatement = declarationList[0];
+                  }
+               ROSE_ASSERT(nextStatement != NULL);
+               break;
+             }
+
+          case V_SgFunctionDeclaration:
+             {
+               SgFunctionDeclaration* currentStatement = isSgFunctionDeclaration(stmt);
+               nextStatement = currentStatement->get_definition();
+            // ROSE_ASSERT(nextStatement != NULL);
+               if (nextStatement == NULL)
+                  {
+                  }
+               ROSE_ASSERT(nextStatement != NULL);
+               break;
+             }
+
+          case V_SgFunctionDefinition:
+             {
+               SgFunctionDefinition* currentStatement = isSgFunctionDefinition(stmt);
+               nextStatement = currentStatement->get_body();
+               ROSE_ASSERT(nextStatement != NULL);
+               break;
+             }
+
+          case V_SgBasicBlock:
+             {
+               SgBasicBlock* currentStatement = isSgBasicBlock(stmt);
+               SgStatementPtrList & statementList = currentStatement->get_statements();
+               if (statementList.empty() == false)
+                  {
+                    nextStatement = statementList[0];
+                  }
+               ROSE_ASSERT(nextStatement != NULL);
+               break;
+             }
+
+          case V_SgIfStmt:
+             {
+               SgIfStmt* currentStatement = isSgIfStmt(stmt);
+               nextStatement = currentStatement->get_true_body();
+
+            // Need to handle false body.
+
+               ROSE_ASSERT(nextStatement != NULL);
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in switch: getNextStatementToUnparse(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+
+            // Find the next statement in the list.
+            // SgStatement* parentStatement = isSgStatement(stmt->get_parent());
+            // ROSE_ASSERT(parentStatement != NULL);
+               nextStatement = SageInterface::getNextStatement(stmt);
+               ROSE_ASSERT(nextStatement != NULL);
+
+               printf ("Default reached in switch: getNextStatementToUnparse(): nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+
+            // ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(nextStatement != NULL);
+
+#if 1
+     printf ("Leaving getNextStatementToUnparse(): nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+#endif
+
+     return nextStatement;
+   }
+
+
+int
+UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeContainingTransformation(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
+   {
+  // This support handles the unparsing of partial (usually leading and trailing) subsequences 
+  // of the token stream for IR nodes that are NOT a transformation, but contain a transformations 
+  // as a statement within a nested subtree.
+
+     ROSE_ASSERT(sourceFile != NULL);
+     ROSE_ASSERT(stmt != NULL);
+
+#if 1
+     printf ("In unparseStatementFromTokenStreamForNodeContainingTransformation(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
+  // Return status 1 means that this failed (so unparse from the AST).
+     int returnStatus = 1;
+
+     if ( SgProject::get_verbose() > 0 )
+        {
+          string s = "/* Unparse a partial token sequence: stmt = " + stmt->class_name() + " */ ";
+          curprint (s);
+        }
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+
+     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+
+  // This implementation uses the refactored code.
+     bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
+
+#if 1
+     printf ("In unparseStatementFromTokenStreamForNodeContainingTransformation(): unparseStatus = %s \n",unparseStatus ? "true" : "false");
+#endif
+
+  // if (canBeUnparsedFromTokenStream(sourceFile,stmt) == true)
+     if (unparseStatus == true)
+        {
+#if 0
+       // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
+          bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt);
+
+          if (redundantStatement == false)
+             {
+            // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
+               std::map<SgNode*,PreviousAndNextNodeData*> & previousAndNextFrontierDataMap = sourceFile->get_token_unparse_frontier_adjacency();
+
+               TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
+               ROSE_ASSERT(tokenSubsequence != NULL);
+
+               ROSE_ASSERT(tokenSubsequence->token_subsequence_start != -1);
+
+               ROSE_ASSERT(previousAndNextFrontierDataMap.find(stmt) != previousAndNextFrontierDataMap.end());
+               PreviousAndNextNodeData* previousAndNextFrontierData = previousAndNextFrontierDataMap[stmt];
+               ROSE_ASSERT(previousAndNextFrontierData != NULL);
+               ROSE_ASSERT(previousAndNextFrontierData->previous != NULL);
+               SgStatement* previousStatement = isSgStatement(previousAndNextFrontierData->previous);
+               ROSE_ASSERT(previousStatement != NULL);
+
+            // SgStatement* nextStatement = isSgStatement(previousAndNextFrontierData->next);
+               ROSE_ASSERT(nextStatement != NULL);
+
+               printf ("previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+               printf ("nextStatement     = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+             }
+#else
+          SgStatement* previousStatement = stmt;
+          SgStatement* nextStatement     = getNextStatementToUnparse(sourceFile,stmt);
+
+          ROSE_ASSERT(previousStatement != NULL);
+          ROSE_ASSERT(nextStatement != NULL);
+
+          printf ("Before loop test of statementFromFile(): nextStatement     = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+          while (nextStatement != NULL && statementFromFile(nextStatement, sourceFile->getFileName(), info) == false)
+             {
+               printf ("   --- (statementFromFile() == false: nextStatement     = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+               SgStatement* tmpStatement = nextStatement;
+               nextStatement = getNextStatementToUnparse(sourceFile,nextStatement);
+
+            // Make sure that we make forward progress.
+               ROSE_ASSERT(nextStatement != tmpStatement);
+             }
+
+          ROSE_ASSERT(nextStatement != NULL);
+       // printf ("statementFromFile() == false: nextStatement     = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+
+          printf ("Output the token sequence from previousStatement = %p = %s to nextStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str(),nextStatement,nextStatement->class_name().c_str());
+
+       // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
+          bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt);
+
+          if (redundantStatement == false)
+             {
+            // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
+               std::map<SgNode*,PreviousAndNextNodeData*> & previousAndNextFrontierDataMap = sourceFile->get_token_unparse_frontier_adjacency();
+
+               TokenStreamSequenceToNodeMapping* previousStatement_tokenSubsequence = tokenStreamSequenceMap[previousStatement];
+               ROSE_ASSERT(previousStatement_tokenSubsequence != NULL);
+
+               ROSE_ASSERT(previousStatement_tokenSubsequence->token_subsequence_start != -1);
+
+            // If the next statement is part of a transformation then there will not be a record of it as a token subsequence in the AST's token stream.
+               TokenStreamSequenceToNodeMapping* nextStatement_tokenSubsequence = tokenStreamSequenceMap[nextStatement];
+
+            // ROSE_ASSERT(nextStatement_tokenSubsequence != NULL);
+               if (nextStatement_tokenSubsequence != NULL)
+                  {
+                    ROSE_ASSERT(nextStatement_tokenSubsequence->token_subsequence_start != -1);
+
+                    int start = previousStatement_tokenSubsequence->token_subsequence_start;
+                    int end   = nextStatement_tokenSubsequence->token_subsequence_start;
+
+                    printf ("Iterate from start = %d to end = %d \n",start,end);
+
+                 // We don't want to unparse the token at the end.
+                    for (int j = start; j < end; j++)
+                       {
+#if 1
+                         printf ("Output leading tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                         *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                      // Note that this will interprete line endings which is not going to provide the precise token based output.
+                         curprint(tokenVector[j]->get_lexeme_string());
+#endif
+                       }
+
+                 // Return status 0 means that this worked (will cause partial unparsing via token stream to be set in SgUnparse_Info).
+                    returnStatus = 0;
+                  }
+                 else
+                  {
+                 // Return status 1 means that this failed (so unparse from the AST).
+                    returnStatus = 1;
+                  }
+             }
+#endif
+        }
+
+#if 1
+     printf ("Leaving unparseStatementFromTokenStreamForNodeContainingTransformation(): stmt = %p = %s returnStatus = %d \n",stmt,stmt->class_name().c_str(),returnStatus);
+#endif
+
+     return returnStatus;
+   }
+
+
 int
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
    {
@@ -762,7 +1012,6 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
   // DQ (1/29/2014): Control use of format mechanism to unparse the token stream vs. a higher fedelity 
   // mechanism that does not drop line endings.  The high fedelity version is just prettier, but 
   // pretty counts...
-#define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
@@ -1073,7 +1322,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      int line    = stmt->get_startOfConstruct()->get_raw_line();
      string file = stmt->get_startOfConstruct()->get_filenameString();
-     printf ("unparseStatement(): (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
+     printf ("\nunparseStatement(): (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -1167,7 +1416,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // if (!statementFromFile(stmt, getFileName(), info))
      if (statementFromFile(stmt, getFileName(), info) == false)
         {
-#if 0
+#if 1
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 #if 0
@@ -1332,9 +1581,16 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // DQ (10/30/2013): We can support the output of the statements using the token stream, it this is done then we don't output the statement as unparsed from the AST.
           bool outputStatementAsTokens = false;
 
+       // DQ (12/5/2014): For statements that contain transformations, we need to uparse the leading and 
+       // trailing parts of the statement from the token stream so that the diff is as small as possible.
+       // The records where unparsing the leading and trailing parts (or middle part in the case of a SgIfStmt)
+       // was sucessful.  In this case the unparsing of the AST should be skipped for these leading and 
+       // trailing parts of the statement.
+          bool outputPartialStatementAsTokens = false;
+
        // Get the file and check if -rose:unparse_tokens was used then we want to try to access the token stream and output this statement directly as tokens.
           SgFile* cur_file = SageInterface::getEnclosingFileNode(stmt);
-#if 0
+#if 1
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): cur_file = %p = %s \n",cur_file,cur_file->class_name().c_str());
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): cur_file->get_unparse_tokens() = %s \n",cur_file->get_unparse_tokens() ? "true" : "false");
 #endif
@@ -1377,7 +1633,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
             // bool unparseViaTokenStream = (isFrontierNode == true);
                bool unparseViaTokenStream = (isFrontierNode == true && associatedFrontierNode->unparseUsingTokenStream == true);
-#if 0
+#if 1
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): isFrontierNode = %s \n",isFrontierNode ? "true" : "false");
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): associatedFrontierNode = %p \n",associatedFrontierNode);
                if (associatedFrontierNode != NULL)
@@ -1389,7 +1645,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // Only unparse from the token stream if this was not a transformed statement.
                unparseViaTokenStream = unparseViaTokenStream && (statementTransformed == false);
 
-#if 0
+#if 1
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream == true ? "true" : "false");
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseViaTokenStream = %s \n",unparseViaTokenStream == true ? "true" : "false");
 #endif
@@ -1397,7 +1653,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // DQ (11/12/2014): Added support for unparsing the associated comments that can be attached to the first declaration in global scope.
                if (unparseViaTokenStream == true)
                   {
-#if 0
+#if 1
                     printf ("In unparseStatement(): unparseViaTokenStream == false: skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
                     printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
@@ -1417,11 +1673,57 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
 
                     int status = unparseStatementFromTokenStream(sourceFile,stmt,info,lastStatementOfGlobalScopeUnparsedUsingTokenStream);
-#if 0
+#if 1
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseStatementFromTokenStream(): status = %d \n",status);
 #endif
                  // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
                     outputStatementAsTokens = (status == 0);
+                  }
+                 else
+                  {
+                 // DQ (12/4/2014): This is a canidate for a partial unparse using the token stream.
+                 // This would be unparsed via the AST, but since it is because it contains a transformation 
+                 // rather than that it is a transformation, we should inst3ead just unpars it using the 
+                 // token stream, but in two parts.  The first part is from the start of the current AST node 
+                 // up to the start of the next AST node.  The last part will be to the end of the current
+                 // AST node (not clear how to compute the start of the last part of the token stream).
+
+                    if (stmt->get_containsTransformation() == true)
+                       {
+                      // This should not BE a transformation (else it needs to be unparsed using the AST).
+                         ROSE_ASSERT(stmt->isTransformation() == false);
+
+                         int status = unparseStatementFromTokenStreamForNodeContainingTransformation(sourceFile,stmt,info,lastStatementOfGlobalScopeUnparsedUsingTokenStream);
+#if 1
+                         printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseStatementFromTokenStreamForNodeContainingTransformation(): status = %d \n",status);
+#endif
+                      // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
+                      // outputStatementAsTokens = (status == 0);
+                         outputPartialStatementAsTokens = (status == 0);
+
+                         if (outputPartialStatementAsTokens == true)
+                            {
+                           // Mark the SgUnparse_Info object to record that the statement was partially unparsed using the token stream.
+#if 1
+                              printf ("@@@@@ Calling info.set_unparsedPartiallyUsingTokenStream() \n");
+#endif
+                              info.set_unparsedPartiallyUsingTokenStream();
+
+                           // DQ (12/5/2014): And skip output of redundant comments and CPP directives.
+                              skipOutputOfPreprocessingInfo = true;
+                            }
+                           else
+                            {
+#if 1
+                              printf ("@@@@@ Calling info.unset_unparsedPartiallyUsingTokenStream() \n");
+#endif
+                              info.unset_unparsedPartiallyUsingTokenStream();
+                            }
+#if 0
+                         printf ("This is a canidate for a partial unparse using the token stream \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
                   }
 #if 0
                printf ("Exiting as a test! \n");
@@ -1453,8 +1755,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
                if (skipOutputOfPreprocessingInfo == false)
                   {
+#if 1
+                    curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfoUsingTokenStream test 2 */ \n ");
+#endif
                  // DQ (11/13/2014): Add a new line (CR) to address when we may have unparsed the previous statement from the token stream.
                     bool unparseExtraNewLine = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+#if 1
+                    curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfoUsingTokenStream test 3 */ \n ");
+#endif
                     if (cur_file != NULL && cur_file->get_unparse_tokens() == true && unparseExtraNewLine == true)
                        {
 #if 0
@@ -1467,9 +1775,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                       // curprint ("// new line added \n  ");
                          curprint ("\n ");
                        }
-
+#if 1
+                    curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfo test 4 */ \n ");
+#endif
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+#if 1
+                    curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfo test 5 */ \n ");
+#endif
                   }
 
             // DQ (12/4/2007): Added to ROSE (was removed at some point).
@@ -1477,7 +1790,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
             // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
                unparseStatementNumbers(stmt,info);
-#if 0
+#if 1
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
                curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */ \n ");
 #endif

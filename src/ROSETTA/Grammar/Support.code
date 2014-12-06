@@ -6227,6 +6227,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
                b_supressImplicitThisOperator = 47, /*!< Supress output of SgThisExp (required to support lambda function code generation). */
 
+            // DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
+               b_unparsedPartiallyUsingTokenStream = 48, /*!< Record that the statement was partially unparsed using the token stream. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6477,6 +6480,10 @@ HEADER_UNPARSE_INFO_START
           void set_supressImplicitThisOperator();
           void unset_supressImplicitThisOperator();
 
+       // DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
+          bool unparsedPartiallyUsingTokenStream() const;
+          void set_unparsedPartiallyUsingTokenStream();
+          void unset_unparsedPartiallyUsingTokenStream();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -17635,6 +17642,16 @@ void SgUnparse_Info::set_supressImplicitThisOperator()
 void SgUnparse_Info::unset_supressImplicitThisOperator()
    { unsetBit(b_supressImplicitThisOperator); }
 
+// DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
+bool SgUnparse_Info::unparsedPartiallyUsingTokenStream() const
+   { return checkBit(b_unparsedPartiallyUsingTokenStream); }
+
+void SgUnparse_Info::set_unparsedPartiallyUsingTokenStream()
+   { setBit(b_unparsedPartiallyUsingTokenStream); }
+
+void SgUnparse_Info::unset_unparsedPartiallyUsingTokenStream()
+   { unsetBit(b_unparsedPartiallyUsingTokenStream); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -17719,6 +17736,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
      printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
      printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
+     printf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)

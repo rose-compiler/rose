@@ -381,6 +381,9 @@ class UnparseLanguageIndependentConstructs
        // int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
           int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream);
 
+       // DQ (11/4/2014): Unparse a partial sequence of tokens up to the next AST node.
+          int unparseStatementFromTokenStreamForNodeContainingTransformation(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream);
+
           bool canBeUnparsedFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
 
        // DQ (11/29/2013): Added support to detect redundant statements (e.g. variable declarations 

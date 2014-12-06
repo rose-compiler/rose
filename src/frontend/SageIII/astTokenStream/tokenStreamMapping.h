@@ -93,4 +93,8 @@ class TokenStreamSequenceToNodeMapping
 
 #include "frontierDetection.h"
 
+// DQ (12/4/2014): Added alternative form of detection where to switch 
+// between unparsing from the AST and unparsing from the token stream.
+#include "simpleFrontierDetection.h"
+
 
