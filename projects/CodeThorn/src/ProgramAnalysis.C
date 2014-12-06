@@ -11,11 +11,6 @@
 
 using namespace CodeThorn;
 
-PropertyStateFactory::PropertyStateFactory() {
-}
-
-PropertyStateFactory::~PropertyStateFactory() {
-}
 
 ProgramAnalysis::ProgramAnalysis():
   _labeler(0),
@@ -37,7 +32,7 @@ Lattice* ProgramAnalysis::getPreInfo(Label lab) {
 
 
 Lattice* ProgramAnalysis::getPostInfo(Label lab) {
-  return _analyzerData[lab];
+  return _analyzerDataPostInfo[lab];
 }
 
 
@@ -103,7 +98,7 @@ ProgramAnalysis::initialize(SgProject* root) {
     Lattice* le1=_initialElementFactory->create();
     _analyzerDataPreInfo.push_back(le1);
     Lattice* le2=_initialElementFactory->create();
-    _analyzerData.push_back(le2);
+    _analyzerDataPostInfo.push_back(le2);
   }
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
@@ -111,7 +106,9 @@ ProgramAnalysis::initialize(SgProject* root) {
     int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
-  cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerData.size()<< " labels."<<endl;
+  cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPostInfo.size()<< " labels."<<endl;
+  cout << initializeSolver();
+
 
 #if 0
   std::string functionToStartAt="main";
@@ -128,7 +125,7 @@ ProgramAnalysis::initialize(SgProject* root) {
     elab.insert(startlab);
     setExtremalLabels(elab);
     initializeGlobalVariables(root);
-    _analyzerData[startlab]=_initialElementFactory->create();
+    _analyzerDataPostInfo[startlab]=_initialElementFactory->create();
     cout << "STATUS: Initial info established at label "<<startlab<<endl;
   }
 #endif
@@ -203,8 +200,7 @@ ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {
 
 void
 ProgramAnalysis::solve() {
-  DFSolver1 dfSolver1(_workList,_analyzerDataPreInfo,_analyzerData,_initialElement,_flow,*_transferFunctions) ;
-  dfSolver1.runSolver();
+  _solver->runSolver();
   _preInfoIsValid=false;
 }
 
@@ -213,7 +209,7 @@ void
 ProgramAnalysis::computePreInfo(Label lab,Lattice* inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo->combine(_analyzerData[*i]);
+    inInfo->combine(_analyzerDataPostInfo[*i]);
   }
 }
 
@@ -230,8 +226,8 @@ ProgramAnalysis::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     cout << "Initializing "<<*i<<" with ";
-    _analyzerData[*i]=transfer(*i,_initialElement);
-    _analyzerData[*i].toStream(cout,&_variableIdMapping);
+    _analyzerDataPostInfo[*i]=transfer(*i,_initialElement);
+    _analyzerDataPostInfo[*i].toStream(cout,&_variableIdMapping);
     cout<<endl;
     LabelSet initsucc=_flow.succ(*i);
     for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
@@ -250,9 +246,9 @@ ProgramAnalysis::transfer(Label lab, Lattice* element) {
 }
 
 
-typename ProgramAnalysis::ResultAccess&
+ProgramAnalysis::ResultAccess&
 ProgramAnalysis::getResultAccess() {
-  return _analyzerData;
+  return _analyzerDataPostInfo;
 }
 
 #include <iostream>
@@ -267,8 +263,8 @@ using std::string;
 
 void ProgramAnalysis::attachResultsToAst(string attributeName) {
   size_t lab=0;
-  for(typename std::vector::iterator i=_analyzerData.begin();
-      i!=_analyzerData.end();
+  for(std::vector::iterator i=_analyzerDataPostInfo.begin();
+      i!=_analyzerDataPostInfo.end();
       ++i) {
     std::stringstream ss;
     (&(*i))->toStream(ss,&_variableIdMapping);
@@ -298,17 +294,17 @@ VariableIdMapping* ProgramAnalysis::getVariableIdMapping() {
 #if 0
 
 CodeThorn::ProgramAnalysis::iterator CodeThorn::ProgramAnalysis::begin() {
-  return _analyzerData.begin();
+  return _analyzerDataPostInfo.begin();
 }
   
 
 ProgramAnalysis::iterator CodeThorn::ProgramAnalysis::end() {
-  return _analyzerData.end();
+  return _analyzerDataPostInfo.end();
 }
 
 
 size_t ProgramAnalysis::size() {
-  return _analyzerData.size();
+  return _analyzerDataPostInfo.size();
 }
 #endif // begin/end
 
@@ -324,14 +320,14 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
       ++i) {
-    ROSE_ASSERT(*i<_analyzerData.size());
+    ROSE_ASSERT(*i<_analyzerDataPostInfo.size());
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
     if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
       if(*i >=0 ) {
         if(inInfo)
           _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPreInfo[*i]));
         else
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerData[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPostInfo[*i]));
       }
   }
 }

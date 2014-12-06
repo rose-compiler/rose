@@ -11,3 +11,9 @@ bool PropertyState::approximatedBy(PropertyState& other) {
 
 void PropertyState::combine(PropertyState& other){
 }
+
+PropertyStateFactory::PropertyStateFactory() {
+}
+
+PropertyStateFactory::~PropertyStateFactory() {
+}

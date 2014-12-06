@@ -5,32 +5,31 @@
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
 #include "Flow.h"
-#include "DFTransferFunctions.hpp"
+#include "Lattice.h"
+#include "PropertyState.h"
+#include "PATransferFunctions.h"
 
 #include <vector>
 
-template<typename LatticeType>
-class DFSolver1 {
+class PASolver1 {
  public:
-  DFSolver1(WorkListSeq<Label>& workList,
-	   std::vector<LatticeType>& analyzerDataPreInfo,
-	   std::vector<LatticeType>& analyzerDataPostInfo,
-	   PropertyStateFactory& initialElement,
+  PASolver1(WorkListSeq<Label>& workList,
+	   std::vector<Lattice*>& analyzerDataPreInfo,
+	   std::vector<Lattice*>& analyzerDataPostInfo,
+	   PropertyStateFactory& initialElementFactory,
 	   Flow& flow,
-	   DFTransferFunctions<LatticeType>& transferFunctions
+	   PATransferFunctions& transferFunctions
 	   );
   virtual void runSolver();
 
  protected:
-  void computePreInfo(Label lab,LatticeType& inInfo);
+  void computePreInfo(Label lab,Lattice& inInfo);
   WorkListSeq<Label>& _workList;
-  std::vector<LatticeType>& _analyzerDataPreInfo;
-  std::vector<LatticeType>& _analyzerDataPostInfo;
-  LatticeType& _initialElement;
+  std::vector<Lattice*>& _analyzerDataPreInfo;
+  std::vector<Lattice*>& _analyzerDataPostInfo;
+  PropertyStateFactory& _initialElementFactory;
   Flow& _flow;
-  DFTransferFunctions<LatticeType>& _transferFunctions;
+  PATransferFunctions& _transferFunctions;
 };
-
-#include "DFSolver1.C"
 
 #endif

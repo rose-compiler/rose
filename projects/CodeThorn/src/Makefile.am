@@ -8,7 +8,7 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
 if ROSE_APPROVED_PYTHON_VERSION
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
+bin_PROGRAMS = codethorn matcher_demo varwatch woodpecker analyterix reverser
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
@@ -224,7 +224,13 @@ rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C Lan
   DFSolver1.h \
   DFSolver1.C \
   NumberIntervalLattice.h \
-  NumberIntervalLattice.C
+  NumberIntervalLattice.C \
+  PASolver1.h \
+  PASolver1.C \
+  PATransferFunctions.h \
+  PATransferFunctions.C \
+  ProgramAnalysis.h \
+  ProgramAnalysis.C
 
 woodpecker_LDADD = -lrose
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDTransferFunctions.hpp RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -315,6 +321,8 @@ analyterix_SOURCES = \
   PropertyValueTable.C \
   GeneralResultAttribute.h \
   GeneralResultAttribute.C \
+  Lattice.h \
+  Lattice.C \
   PropertyState.h \
   PropertyState.C \
   analyterix.C

@@ -15,7 +15,7 @@ PASolver1::PASolver1(WorkListSeq<Label>& workList,
   _workList(workList),
   _analyzerDataPreInfo(analyzerDataPreInfo),
   _analyzerDataPostInfo(analyzerDataPostInfo),
-  _initialElement(initialElementFactory),
+  _initialElementFactory(initialElementFactory),
   _flow(flow),
   _transferFunctions(transferFunctions)
 {
@@ -25,7 +25,7 @@ void
 PASolver1::computePreInfo(Label lab,Lattice& inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo.combine(_analyzerDataPostInfo[*i]);
+    inInfo.combine(*_analyzerDataPostInfo[*i]);
   }
 }
 
@@ -39,13 +39,13 @@ PASolver1::runSolver() {
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
     // TODO: std::auto_ptr<Lattice*>/std::unique_ptr<Lattice*>
-    Lattice* info=_initialElementFactory->create();
-    computePreInfo(lab,info);
+    Lattice* info=_initialElementFactory.create();
+    computePreInfo(lab,*info);
     
     _transferFunctions.transfer(lab,*info);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    if(!info.approximatedBy(_analyzerDataPostInfo[lab])) {
-      _analyzerDataPostInfo[lab].combine(info);
+    if(!info->approximatedBy(*_analyzerDataPostInfo[lab])) {
+      _analyzerDataPostInfo[lab]->combine(*info);
       LabelSet succ;
       succ=_flow.succ(lab);
       _workList.add(succ);
