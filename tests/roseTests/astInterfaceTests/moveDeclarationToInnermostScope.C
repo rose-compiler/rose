@@ -74,6 +74,7 @@
 #include "transformationTracking.h"
 #include <iostream>
 #include <queue> // used for a worklist of declarations to be moved 
+#include <boost/foreach.hpp>
 using namespace std;
 bool debug = false;
 
@@ -192,6 +193,15 @@ class visitorTraversal : public AstSimpleProcessing
     } // end visit()
 };
 
+// TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
+std::vector<std::string>
+GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
+{
+  std::vector<std::string> filenames =
+      CommandlineProcessing::generateSourceFilenames(argv, false);
+  return filenames;
+}
+
 int main(int argc, char * argv[])
 
 {
@@ -201,6 +211,19 @@ int main(int argc, char * argv[])
   {
     debug = true;
     cout<<"Turing on debugging model..."<<endl;
+  }
+
+  // TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
+  if (CommandlineProcessing::isOption (argvList,"--list-filenames","",true))
+  {
+      std::vector<std::string> filenames =
+          GetSourceFilenamesFromCommandline(
+    	  std::vector<std::string>(argv, argv + argc));
+      BOOST_FOREACH(std::string filename, filenames)
+      {
+          std::cout << filename << std::endl;
+      }
+      return 0;
   }
 
   // We don't remove this option since it is used later by other logic
