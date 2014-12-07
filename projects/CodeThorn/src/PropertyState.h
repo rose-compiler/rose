@@ -14,4 +14,11 @@ class PropertyState : public Lattice {
   virtual void combine(PropertyState& other);
 };
 
+class PropertyStateFactory {
+ public:
+  PropertyStateFactory();
+  virtual PropertyState* create()=0;
+  virtual ~PropertyStateFactory();
+};
+
 #endif

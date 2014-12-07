@@ -25,20 +25,14 @@ namespace CodeThorn {
 
 #include "PropertyState.h"
 
-class PropertyStateFactory {
- public:
-  PropertyStateFactory();
-  virtual PropertyState* create()=0;
-  virtual ~PropertyStateFactory();
-};
-
 class ProgramAnalysis {
  public:
-  DFAnalyzer();
+  ProgramAnalysis();
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   virtual void initializeGlobalVariables(SgProject* root);
   virtual void initializeTransferFunctions();
+  virtual void initializeSolver()=0;
   void determineExtremalLabels(SgNode*);
   void run();
   PropertyState* createPropertyState();
@@ -61,7 +55,6 @@ class ProgramAnalysis {
 
   void attachInfoToAst(string attributeName,bool inInfo);
  protected:
-  virtual void transfer(Label label, Lattice& element);
   virtual void solve();
   VariableIdMapping _variableIdMapping;
   Labeler* _labeler;
@@ -71,13 +64,12 @@ class ProgramAnalysis {
   // following members are initialized by function initialize()
   long _numberOfLabels; 
   vector<Lattice*> _analyzerDataPreInfo;
-  vector<Lattice*> _analyzerData;
+  vector<Lattice*> _analyzerDataPostInfo;
   WorkListSeq<Label> _workList;
-  Lattice* _initialElementFactory;
   void setInitialElementFactory(PropertyStateFactory*);
 
   //typedef AnalyzerData::iterator iterator;
-  typedef typename AnalyzerData::iterator iterator;
+  typedef AnalyzerData::iterator iterator;
 #if 0
   iterator begin();
   iterator end();
@@ -89,8 +81,9 @@ class ProgramAnalysis {
   bool _preInfoIsValid;
   void computeAllPreInfo();
   PATransferFunctions* _transferFunctions;
+  PropertyStateFactory* _initialElementFactory;
+  PASolver1* _solver;
  private:
-  void computePreInfo(Label lab,LatticeType& info);
 };
 
 } // end of namespace

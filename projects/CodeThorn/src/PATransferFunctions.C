@@ -25,13 +25,13 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
-      return element;
+      return;
     }
   }
   if(_labeler->isFunctionCallReturnLabel(lab)) {
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
       transferFunctionCallReturn(lab, funCall, element);
-      return element;
+      return;
     }
   }
   if(_labeler->isFunctionEntryLabel(lab)) {
@@ -40,7 +40,7 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
       assert(funDef);
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       transferFunctionEntry(lab, funDef, formalParameters, element);
-      return element;
+      return;
     } else {
       ROSE_ASSERT(0);
     }
@@ -60,12 +60,13 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
       VariableIdMapping::VariableIdSet formalParams=_variableIdMapping->determineVariableIdsOfSgInitializedNames(formalParamInitNames);
       VariableIdMapping::VariableIdSet vars=localVars+formalParams;
       transferFunctionExit(lab,funDef,vars,element); // TEST ONLY
-      return element;
+      return;
     } else {
       ROSE_ASSERT(0);
     }
   }
   
+  // desugar SgExprStatement
   if(isSgExprStatement(node))
     node=SgNodeHelper::getExprStmtChild(node);
 
@@ -75,37 +76,37 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
   if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
     transferDeclaration(lab,vardecl,element);
   }
-  return element;
+  return;
 }
 
 
 void PATransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
-  // identity function
+  // default identity function
 }
   
 
 void PATransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
-  // identity function
+  // default identity function
 }
 
 
 void PATransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
-  // identity function
+  // default identity function
 }
 
 
 void PATransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
-  // identity function
+  // default identity function
 }
 
 
 void PATransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
-  // identity function
+  // default identity function
 }
 
 
 void PATransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
-  // identity function
+  // default identity function
 }
 
 #endif

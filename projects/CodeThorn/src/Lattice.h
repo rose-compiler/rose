@@ -7,9 +7,9 @@
 class Lattice {
  public:
   Lattice();
-  virtual void toStream(ostream& os, VariableIdMapping* vim=0)=0;
-  virtual bool approximatedBy(Lattice& other)=0;
-  virtual void combine(Lattice& other)=0;
+  virtual void toStream(ostream& os, VariableIdMapping* vim=0);
+  virtual bool approximatedBy(Lattice& other);
+  virtual void combine(Lattice& other);
   ~Lattice();
 };
 

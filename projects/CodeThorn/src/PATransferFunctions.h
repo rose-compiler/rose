@@ -2,6 +2,7 @@
 #define DFTRANSFERFUNCTIONS_HPP
 
 #include "Labeler.h"
+#include "Lattice.h"
 
 class Domain;
 
@@ -26,7 +27,5 @@ protected:
   VariableIdMapping* _variableIdMapping;
   Domain* _domain;
 };
-
-#include "DFTransferFunctions.C"
 
 #endif
