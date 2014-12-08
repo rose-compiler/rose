@@ -39,6 +39,12 @@ enum EdgeType {
                                                          *   most often occur as the edge leaving a thunk. */
 };
 
+/** How sure are we of something. */
+enum Confidence {
+    ASSUMED,                                            /**< The value is an assumption without any proof. */
+    PROVED,                                             /**< The value was somehow proved. */
+};
+
 class Partitioner;
 
 } // namespace

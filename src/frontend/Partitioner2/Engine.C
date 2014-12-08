@@ -555,14 +555,17 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
 
         // If the new vertex lacks a call-return edge (tested above) and its callee has positive or indeterminate may-return
         // then we may need to add a call-return edge depending on whether assumeCallReturns is true.
+        Confidence confidence = PROVED;
         boost::logic::tribool mayReturn = hasAnyCalleeReturn(partitioner, caller);
-        if (boost::logic::indeterminate(mayReturn))
+        if (boost::logic::indeterminate(mayReturn)) {
             mayReturn = assumeReturns;
+            confidence = ASSUMED;
+        }
 
         if (mayReturn) {
             size_t nBits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
             partitioner.detachBasicBlock(bb);
-            bb->insertSuccessor(bb->fallthroughVa(), nBits, E_CALL_RETURN);
+            bb->insertSuccessor(bb->fallthroughVa(), nBits, E_CALL_RETURN, confidence);
             partitioner.attachBasicBlock(caller, bb);
             return true;
         } else if (!mayReturn) {
