@@ -253,8 +253,13 @@ GraphViz::edgeLabel(const Partitioner &partitioner, const ControlFlowGraph::Cons
             if (edge->value().confidence() == ASSUMED)
                 s += "\nassumed";
             break;
-        case E_NORMAL:
+        case E_NORMAL: {
+            // Normal edges don't get labels unless its intra-function, otherwise the graphs would be too noisy.
+            if (edge->source()->value().type() == V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
+                edge->source()->value().function() != edge->target()->value().function())
+                s = "other";
             break;
+        }
     }
     return s;
 }
@@ -397,7 +402,7 @@ GraphViz::dumpFunctionCallees(std::ostream &out, const Partitioner &partitioner,
             if (t.vertex()->value().type() != V_BASIC_BLOCK) {
                 t.skipChildren();
             } else if (t.vertex()->value().function() != function) {
-                dumpVertexInfo(out, partitioner, t.vertex()); // perhaps we shouldn't emit this?
+                dumpFunctionInfo(out, partitioner, t.vertex());
                 t.skipChildren();
             }
         } else {
@@ -411,6 +416,13 @@ GraphViz::dumpFunctionCallees(std::ostream &out, const Partitioner &partitioner,
     }
 }
 
+struct CallInfo {
+    size_t nCalls;                                      // number of E_FUNCTION_CALL edges
+    size_t nTransfers;                                  // number of E_FUNCTION_XFER edges
+    size_t nOthers;                                     // number of edges with other labels
+    CallInfo(): nCalls(0), nTransfers(0), nOthers(0) {}
+};
+    
 void
 GraphViz::dumpFunctionCallers(std::ostream &out, const Partitioner &partitioner, const Function::Ptr &callee) const {
     ASSERT_not_null(callee);
@@ -422,7 +434,7 @@ GraphViz::dumpFunctionCallers(std::ostream &out, const Partitioner &partitioner,
     if (calleeId == NO_ID)
         return;
 
-    typedef Sawyer::Container::Map<size_t /*callerId*/, size_t /*ncalls*/> Calls;
+    typedef Sawyer::Container::Map<size_t /*callerId*/, CallInfo> Calls;
     Calls calls;
     for (ControlFlowGraph::ConstEdgeNodeIterator edge = calleeVertex->inEdges().begin();
          edge!=calleeVertex->inEdges().end(); ++edge) {
@@ -443,15 +455,34 @@ GraphViz::dumpFunctionCallers(std::ostream &out, const Partitioner &partitioner,
         }
 
         // Omit calls that are recursive since they'll be handled as intra-function edges
-        if (callerId != NO_ID && caller != callee)
-            ++calls.insertMaybe(callerId, 0);
+        if (callerId != NO_ID && caller != callee) {
+            CallInfo &info = calls.insertMaybeDefault(callerId);
+            switch (edge->value().type()) {
+                case E_FUNCTION_CALL:
+                    ++info.nCalls;
+                    break;
+                case E_FUNCTION_XFER:
+                    ++info.nTransfers;
+                    break;
+                default:
+                    ++info.nOthers;
+                    break;
+            }
+        }
     }
 
     // Emit edges
     BOOST_FOREACH (const Calls::Node &call, calls.nodes()) {
         size_t callerId = call.key();
-        size_t ncalls = call.value();
-        out <<callerId <<" -> " <<calleeId <<" [ label=\"" <<StringUtility::plural(ncalls, "calls") <<"\" ];\n";
+        const CallInfo &info = call.value();
+        std::string label;
+        if (info.nCalls)
+            label += StringUtility::plural(info.nCalls, "calls");
+        if (info.nTransfers)
+            label += (label.empty()?"":"\n") + StringUtility::plural(info.nTransfers, "xfers");
+        if (info.nOthers)
+            label += (label.empty()?"":"\n") + StringUtility::plural(info.nOthers, "others");
+        out <<callerId <<" -> " <<calleeId <<" [ label=\"" <<label <<"\" ];\n";
     }
 }
 
