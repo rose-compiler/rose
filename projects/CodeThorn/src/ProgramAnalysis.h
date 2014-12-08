@@ -7,13 +7,13 @@
 #ifndef PROGRAMANALYSIS_H
 #define PROGRAMANALYSIS_H
 
+#include <set>
+#include <string>
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "PATransferFunctions.h"
-#include <set>
-#include <string>
 #include "PASolver1.h"
 #include "DFAstAttribute.h"
 
@@ -78,8 +78,8 @@ class ProgramAnalysis {
 
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice*);
-  bool _preInfoIsValid;
   void computeAllPreInfo();
+  bool _preInfoIsValid;
   PATransferFunctions* _transferFunctions;
   PropertyStateFactory* _initialElementFactory;
   PASolver1* _solver;

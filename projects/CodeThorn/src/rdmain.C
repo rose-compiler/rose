@@ -9,7 +9,7 @@
 #include "RDLattice.h"
 #include "DFAnalyzer.h"
 #include "WorkList.h"
-#include "RDAnalyzer.h"
+//#include "RDAnalyzer.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"
 #include "DataDependenceVisualizer.h"
@@ -17,7 +17,10 @@
 #include "ProgramStats.h"
 #include "DFAstAttributeConversion.h"
 
-#include "DFTransferFunctions.hpp"
+//#include "DFTransferFunctions.hpp"
+
+#include "ProgramAnalysis.h"
+#include "RDAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -114,7 +117,7 @@ int main(int argc, char* argv[]) {
     boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
     
-    RDAnalyzer* rdAnalyzer=new RDAnalyzer();
+    RDAnalysis* rdAnalyzer=new RDAnalysis();
     rdAnalyzer->initialize(root);
     rdAnalyzer->initializeGlobalVariables(root);
     rdAnalyzer->initializeTransferFunctions();
