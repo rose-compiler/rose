@@ -195,6 +195,8 @@ P2::Attribute::Id ATTR_CFG_COORDS(-1);
 P2::Attribute::Id ATTR_CG(-1);
 P2::Attribute::Id ATTR_NCALLERS(-1);
 P2::Attribute::Id ATTR_NRETURNS(-1);
+P2::Attribute::Id ATTR_MAYRETURN(-1);
+P2::Attribute::Id ATTR_STACKDELTA(-1);
 
 // Context passed around to pretty much all the widgets.
 class Context {
@@ -212,6 +214,8 @@ public:
             ATTR_CG             = P2::Attribute::registerName("Function call graph");
             ATTR_NCALLERS       = P2::Attribute::registerName("Number of call sites from whence function is called");
             ATTR_NRETURNS       = P2::Attribute::registerName("Number of returning basic blocks");
+            ATTR_MAYRETURN      = P2::Attribute::registerName("May return to caller?");
+            ATTR_STACKDELTA     = P2::Attribute::registerName("Stack pointer delta");
         }
     }
 };
@@ -419,6 +423,34 @@ functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function
     return nReturns;
 }
 
+// Calculates whether a function may return to the caller and caches it in the function.  The possible values are:
+enum MayReturn { MAYRETURN_YES, MAYRETURN_NO, MAYRETURN_UNKNOWN };
+MayReturn
+functionMayReturn(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    MayReturn result = MAYRETURN_UNKNOWN;
+    if (function && !function->attr<MayReturn>(ATTR_MAYRETURN).assignTo(result)) {
+        bool mayReturn = false;
+        if (partitioner.functionOptionalMayReturn(function).assignTo(mayReturn))
+            result = mayReturn ? MAYRETURN_YES : MAYRETURN_NO;
+        function->attr(ATTR_MAYRETURN, result);
+    }
+    return result;
+}
+
+// Obtain stack delta or the special value SgAsmInstruction::INVALID_STACK_DELTA if unknown or not computed
+int64_t
+functionStackDelta(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+    int64_t result = SgAsmInstruction::INVALID_STACK_DELTA;
+    if (function && !function->attr<int64_t>(ATTR_STACKDELTA).assignTo(result)) {
+        SValuePtr delta = partitioner.functionStackDelta(function);
+        if (delta && delta->is_number() && delta->get_width()<=64)
+            result = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+        function->attr(ATTR_STACKDELTA, result);
+    }
+    return result;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Model storing a list of functions.
@@ -435,6 +467,8 @@ public:
         C_NRETURNS,                                     // how many return edges, i.e., might the function return?
         C_IMPORT,                                       // is function an import
         C_EXPORT,                                       // is function an export
+        C_MAYRETURN,                                    // may function return to its caller?
+        C_STACKDELTA,                                   // concrete stack delta
         C_NCOLS                                         // must be last
     };
 
@@ -462,14 +496,16 @@ public:
                                   int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
-                case C_ENTRY:    return Wt::WString("Entry");
-                case C_NAME:     return Wt::WString("Name");
-                case C_SIZE:     return Wt::WString("Size");
-                case C_IMPORT:   return Wt::WString("Import");
-                case C_EXPORT:   return Wt::WString("Export");
-                case C_NCALLERS: return Wt::WString("Calls");
-                case C_NRETURNS: return Wt::WString("Returns");
-                default:         return boost::any();
+                case C_ENTRY:      return Wt::WString("Entry");
+                case C_NAME:       return Wt::WString("Name");
+                case C_SIZE:       return Wt::WString("Size");
+                case C_IMPORT:     return Wt::WString("Import");
+                case C_EXPORT:     return Wt::WString("Export");
+                case C_NCALLERS:   return Wt::WString("NCalls");
+                case C_NRETURNS:   return Wt::WString("NReturns");
+                case C_MAYRETURN:  return Wt::WString("MayReturn");
+                case C_STACKDELTA: return Wt::WString("StackDelta");
+                default:           return boost::any();
             }
         }
         return boost::any();
@@ -496,6 +532,19 @@ public:
                     return functionNCallers(ctx_.partitioner, function);
                 case C_NRETURNS:
                     return functionNReturns(ctx_.partitioner, function);
+                case C_MAYRETURN:
+                    switch (functionMayReturn(ctx_.partitioner, function)) {
+                        case MAYRETURN_YES:     return Wt::WString("yes");
+                        case MAYRETURN_NO:      return Wt::WString("no");
+                        case MAYRETURN_UNKNOWN: return Wt::WString("");
+                    }
+                    ASSERT_not_reachable("invalid may-return value");
+                case C_STACKDELTA: {
+                    int64_t delta = functionStackDelta(ctx_.partitioner, function);
+                    if (delta == SgAsmInstruction::INVALID_STACK_DELTA)
+                        return Wt::WString("");
+                    return Wt::WString(boost::lexical_cast<std::string>(delta));
+                }
                 default:
                     ASSERT_not_reachable("invalid column number");
             }
@@ -553,8 +602,23 @@ public:
     static bool sortByDescendingReturns(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
         return a->attr<size_t>(ATTR_NRETURNS).orElse(0) > b->attr<size_t>(ATTR_NRETURNS).orElse(0);
     }
-
-
+    static bool sortByAscendingMayReturn(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return (a->attr<MayReturn>(ATTR_MAYRETURN).orElse(MAYRETURN_UNKNOWN) <
+                b->attr<MayReturn>(ATTR_MAYRETURN).orElse(MAYRETURN_UNKNOWN));
+    }
+    static bool sortByDescendingMayReturn(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return (a->attr<MayReturn>(ATTR_MAYRETURN).orElse(MAYRETURN_UNKNOWN) >
+                b->attr<MayReturn>(ATTR_MAYRETURN).orElse(MAYRETURN_UNKNOWN));
+    }
+    static bool sortByAscendingStackDelta(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return (a->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA) <
+                b->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA));
+    }
+    static bool sortByDescendingStackDelta(const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return (a->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA) >
+                b->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA));
+    }
+    
     void sort(int column, Wt::SortOrder order) {
         bool(*sorter)(const P2::Function::Ptr&, const P2::Function::Ptr&) = NULL;
         switch (column) {
@@ -584,6 +648,12 @@ public:
                 BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                     (void) functionNReturns(ctx_.partitioner, function); // make sure they're all cached
                 sorter = Wt::AscendingOrder==order ? sortByAscendingReturns : sortByDescendingReturns;
+                break;
+            case C_MAYRETURN:
+                sorter = Wt::AscendingOrder==order ? sortByAscendingMayReturn : sortByDescendingMayReturn;
+                break;
+            case C_STACKDELTA:
+                sorter = Wt::AscendingOrder==order ? sortByAscendingStackDelta : sortByDescendingStackDelta;
                 break;
             default:
                 ASSERT_not_reachable("invalid column number");
@@ -666,7 +736,7 @@ class WFunctionSummary: public Wt::WContainerWidget {
     P2::Function::Ptr function_;
     Wt::WTable *table_;
     Wt::WText *wName_, *wEntry_, *wBBlocks_, *wDBlocks_, *wInsns_, *wBytes_, *wDiscontig_, *wCallers_, *wCallsInto_;
-    Wt::WText *wCallees_, *wCallsOut_, *wRecursive_;
+    Wt::WText *wCallees_, *wCallsOut_, *wRecursive_, *wMayReturn_;
 public:
     static Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
         Wt::WText *wValue = new Wt::WText();
@@ -679,7 +749,7 @@ public:
     WFunctionSummary(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), table_(NULL), wName_(NULL), wEntry_(NULL), wBBlocks_(NULL), wDBlocks_(NULL),
           wInsns_(NULL), wBytes_(NULL), wDiscontig_(NULL), wCallers_(NULL), wCallsInto_(NULL), wCallees_(NULL),
-          wCallsOut_(NULL), wRecursive_(NULL) {
+          wCallsOut_(NULL), wRecursive_(NULL), wMayReturn_(NULL) {
         std::vector<Wt::WText*> fields;
         wName_      = field(fields, "Function name");
         wEntry_     = field(fields, "Primary entry virtual address");
@@ -693,6 +763,7 @@ public:
         wCallees_   = field(fields, "Number of distinct functions this function calls.");
         wCallsOut_  = field(fields, "Number of function call sites in this function");
         wRecursive_ = field(fields, "Does this function call itself directly?");
+        wMayReturn_ = field(fields, "Might this function return its caller?");
 
         table_ = new Wt::WTable(this);
         table_->setWidth("100%");
@@ -713,6 +784,7 @@ public:
             size_t nBytes = functionNBytes(ctx_.partitioner, function);
             size_t nIntervals = ctx_.partitioner.functionExtent(function).nIntervals();
             const P2::FunctionCallGraph *cg = functionCallGraph(ctx_.partitioner);
+            Sawyer::Optional<bool> optionalMayReturn = ctx_.partitioner.functionOptionalMayReturn(function);
             ASSERT_not_null(cg);
             wName_      ->setText(function->name()==""?std::string("(no name)"):function->name());
             wEntry_     ->setText("entry "+StringUtility::addrToString(function->address()));
@@ -726,6 +798,7 @@ public:
             wCallees_   ->setText(StringUtility::plural(cg->nCallees(function), "distinct callees"));
             wCallsOut_  ->setText(StringUtility::plural(cg->nCallsOut(function), "calls")+" outgoing");
             wRecursive_ ->setText(cg->nCalls(function, function)?"recursive":"non-recursive");
+            wMayReturn_ ->setText(optionalMayReturn?(*optionalMayReturn?"may return":"never returns"):"may-return is unknown");
             table_->show();
         } else {
             wName_      ->setText("");
@@ -740,6 +813,7 @@ public:
             wCallees_   ->setText("");
             wCallsOut_  ->setText("");
             wRecursive_ ->setText("");
+            wMayReturn_ ->setText("");
             table_->hide();
         }
     }
