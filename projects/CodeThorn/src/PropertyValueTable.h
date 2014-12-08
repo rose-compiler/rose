@@ -18,6 +18,7 @@ class PropertyValueTable {
   void reachable(size_t num);
   void nonReachable(size_t num);
   void setPropertyValue(size_t num, PropertyValue value);
+  void setCounterexample(size_t num, string ce);
   void updatePropertyValue(size_t num, PropertyValue value);
   void strictUpdatePropertyValue(size_t num, PropertyValue value);
   void strictUpdateCounterexample(size_t num, string ce);
@@ -25,6 +26,7 @@ class PropertyValueTable {
   //to be deleted by the calling function.
   std::list<int>* getPropertyNumbers(PropertyValue value);
   PropertyValue getPropertyValue(size_t num);
+  std::string getCounterexample(size_t num);
   void finished();
   void finishedReachability(bool isPrecise, bool isComplete);
   void convertValue(PropertyValue from, PropertyValue to);

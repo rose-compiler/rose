@@ -98,6 +98,8 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
+  CounterexampleAnalyzer.C \
+  CounterexampleAnalyzer.h \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   codethorn.h \

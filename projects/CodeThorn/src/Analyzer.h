@@ -109,6 +109,8 @@ namespace CodeThorn {
     bool isActiveGlobalTopify();
     static string nodeToString(SgNode* node);
     void initializeSolver1(std::string functionToStartAt,SgNode* root);
+    void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
+    void continueAnalysisFrom(EState* newStartEState);
     
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
@@ -149,6 +151,8 @@ namespace CodeThorn {
 
     // bypasses and removes all states that are not standard I/O states
     void removeNonIOStates();
+    // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
+    void reduceToObservableBehavior();
     // cuts off all paths in the transition graph that lead to leaves 
     // (recursively until only paths of infinite length remain)
     void pruneLeavesRec();
@@ -206,6 +210,12 @@ namespace CodeThorn {
     //less than comarisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
   public:
+    //stores a backup of the created transitionGraph
+    void storeStgBackup();
+    //load previous backup of the transitionGraph, storing the current version as a backup instead
+    void swapStgWithBackup();
+    //reset the analyzer to now use solver 8 (includes choosing solver8-specific analyzer settings)
+    void resetAnalyzerToSolver8(EState* startEState);
     //! requires init
     void runSolver1();
     void runSolver2();
@@ -214,6 +224,7 @@ namespace CodeThorn {
     void runSolver5();
     void runSolver6();
     void runSolver7();
+    void runSolver8();
     void runSolver();
     //! The analyzer requires a CFAnalyzer to obtain the ICFG.
     void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
@@ -287,7 +298,9 @@ namespace CodeThorn {
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
+    void resetToEmptyInputSequence() { _inputSequence.clear(); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
+    const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
@@ -349,6 +362,7 @@ namespace CodeThorn {
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;
     TransitionGraph transitionGraph;
+    TransitionGraph backupTransitionGraph;
     set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
     int _numberOfThreadsToUse;
@@ -364,6 +378,7 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     list<FailedAssertion> _firstAssertionOccurences;
+    const EState* _estateBeforeMissingInput;
     bool _minimizeStates;
     bool _topifyModeActive;
     int _iterations;
