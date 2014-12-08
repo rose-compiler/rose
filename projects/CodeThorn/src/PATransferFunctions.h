@@ -1,5 +1,5 @@
-#ifndef DFTRANSFERFUNCTIONS_HPP
-#define DFTRANSFERFUNCTIONS_HPP
+#ifndef PATRANSFERFUNCTIONS_H
+#define PATRANSFERFUNCTIONS_H
 
 #include "Labeler.h"
 #include "Lattice.h"

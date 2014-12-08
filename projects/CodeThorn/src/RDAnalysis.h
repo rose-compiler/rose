@@ -8,7 +8,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalyzer.h"
+#include "ProgramAnalysis.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
@@ -16,7 +16,8 @@
 using namespace std;
 using namespace CodeThorn;
 
-#include "RDTransferFunctions.hpp"
+#include "RDTransferFunctions2.h"
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

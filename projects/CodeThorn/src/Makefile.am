@@ -186,10 +186,17 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C DFTransferFunctions.h DFTransferFunctions.C RDTransferfunctions.hpp RDTransferFunctions.C \
-rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C  DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
+rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
+ CFAnalyzer.h CFAnalyzer.C \
+ RDLattice.h RDLattice.C \
+ DFTransferFunctions.h DFTransferFunctions.C \
+  RDAnalyzer.h RDAnalyzer.C \
+  LanguageRestrictor.h LanguageRestrictor.C \
+  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
+  DataDependenceVisualizer.h DataDependenceVisualizer.C \
+  RDTransferfunctions2.h RDTransferFunctions2.C \
+  AnalysisAbstractionLayer.h \
+  AnalysisAbstractionLayer.C \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
   UDAstAttribute.h                 \
@@ -232,7 +239,12 @@ rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C Lan
   PATransferFunctions.h \
   PATransferFunctions.C \
   ProgramAnalysis.h \
-  ProgramAnalysis.C
+  ProgramAnalysis.C \
+  RDAnalysis.h \
+  RDAnalysis.C \
+  rdmain.C 
+
+#  RDTransferfunctions.hpp RDTransferFunctions.C
 
 woodpecker_LDADD = -lrose
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDTransferFunctions.hpp RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
