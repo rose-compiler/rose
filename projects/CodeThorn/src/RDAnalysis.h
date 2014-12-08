@@ -18,6 +18,13 @@ using namespace CodeThorn;
 
 #include "RDTransferFunctions2.h"
 
+class RDPropertyStateFactory : public PropertyStateFactory {
+ public:
+  RDPropertyStateFactory();
+  virtual PropertyState* create();
+  virtual ~RDPropertyStateFactory();
+};
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -27,6 +34,7 @@ class RDAnalysis : public ProgramAnalysis {
   RDAnalysis();
   ~RDAnalysis();
   virtual void initializeSolver();
+  virtual void initializeExtremalValue(Lattice* element); 
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };

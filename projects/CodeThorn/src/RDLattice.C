@@ -16,7 +16,6 @@ RDLattice::RDLattice() {
   * \date 2013.
  */
 void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
-  ROSE_ASSERT(vim);
   if(isBot()) {
     os<<"bot";
   } else {
@@ -109,19 +108,30 @@ void RDLattice::setBot() {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::combine(RDLattice& b) {
-  if(b.isBot())
+void RDLattice::combine(Lattice& b) {
+  cout<<"RD-combine: "<<this->isBot()<<","<<b.isBot()<<endl;
+  RDLattice* other=dynamic_cast<RDLattice*>(&b);
+  ROSE_ASSERT(other);
+  if(b.isBot()) {
     return;
-  for(RDLattice::iterator i=b.begin();i!=b.end();++i) {
+  }
+  for(RDLattice::iterator i=other->begin();i!=other->end();++i) {
     rdSet.insert(*i);
   }
   _bot=false;
+}
+void RDLattice::combine(RDLattice& b) {
+  ROSE_ASSERT(false);
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-bool RDLattice::approximatedBy(RDLattice& b) {
+bool RDLattice::approximatedBy(Lattice& b0) {
+  RDLattice& b=dynamic_cast<RDLattice&>(b0);
+  cout<<"RDLAttice:::approximatedBy"<<endl;
+  if(isBot()&&b.isBot())
+    return true;
   if(isBot()) {
     return true;
   } else {
@@ -137,6 +147,11 @@ bool RDLattice::approximatedBy(RDLattice& b) {
       return false;
   }
   return true;
+}
+// OUTDATED
+bool RDLattice::approximatedBy(RDLattice& b0) {
+  cerr<<"RDLattice::approximatedBy(RDLattice) : outdated."<<endl;
+  exit(1);
 }
 /*! 
   * \author Markus Schordan

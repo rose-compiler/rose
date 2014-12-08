@@ -1,14 +1,15 @@
-#include "Labeler.h"
-#include "VariableIdMapping.h"
-
 #ifndef RD_LATTICE_H
 #define RD_LATTICE_H
+
+#include "Labeler.h"
+#include "VariableIdMapping.h"
+#include "Lattice.h"
 
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-class RDLattice {
+class RDLattice : public Lattice {
  public:
   typedef set<pair<Label,VariableId> >::iterator iterator;
   RDLattice();
@@ -23,8 +24,10 @@ class RDLattice {
   void toStream(ostream& os, VariableIdMapping* vim=0);
   bool exists(pair<Label,VariableId>);
   void setEmptySet();
-  void combine(RDLattice& b);
-  bool approximatedBy(RDLattice& b);
+  void combine(Lattice& b);
+  void combine(RDLattice& b);// TODO: delete
+  bool approximatedBy(Lattice& b);
+  bool approximatedBy(RDLattice& b); // TODO: delete
 
  private:
   set<pair<Label,VariableId> > rdSet;

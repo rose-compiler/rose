@@ -15,7 +15,10 @@ RDTransferFunctions::RDTransferFunctions() {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, RDLattice& element) {
+void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
+  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  ROSE_ASSERT(element1);
+  RDLattice& element=*element1;
   // update analysis information
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
@@ -42,7 +45,11 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, RDLa
   * \date 2013.
  */
 //NOTE: missing: UD must take uses in initializers into account
-void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, RDLattice& element) {
+void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
+  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  ROSE_ASSERT(element1);
+  RDLattice& element=*element1;
+
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
@@ -65,7 +72,11 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   * \author Markus Schordan
   * \date 2013.
  */
-void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,RDLattice& element) {
+void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
+  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  ROSE_ASSERT(element1);
+  RDLattice& element=*element1;
+
   // uses and defs in argument-expressions
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
     transferExpression(lab,*i,element);
@@ -75,7 +86,7 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   * \author Markus Schordan
   * \date 2013.
  */
-void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element) {
+void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element0) {
   //TODO: def in x=f(...) (not seen as assignment)
 }
 //NOTE: UD analysis must take uses of function-call arguments into account
@@ -83,7 +94,11 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallEx
   * \author Markus Schordan
   * \date 2013.
  */
-void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element) {
+void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
+  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  ROSE_ASSERT(element1);
+  RDLattice& element=*element1;
+
   // generate RDs for each parameter variable
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
@@ -101,7 +116,12 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   * \author Markus Schordan
   * \date 2013.
  */
-void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, RDLattice& element) {
+void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
+
+  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  ROSE_ASSERT(element1);
+  RDLattice& element=*element1;
+
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
     VariableId varId=*i;

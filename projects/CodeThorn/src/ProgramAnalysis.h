@@ -31,6 +31,7 @@ class ProgramAnalysis {
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   virtual void initializeGlobalVariables(SgProject* root);
+  virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver()=0;
   void determineExtremalLabels(SgNode*);
@@ -65,7 +66,7 @@ class ProgramAnalysis {
   long _numberOfLabels; 
   vector<Lattice*> _analyzerDataPreInfo;
   vector<Lattice*> _analyzerDataPostInfo;
-  WorkListSeq<Label> _workList;
+  WorkListSeq<Edge> _workList;
   void setInitialElementFactory(PropertyStateFactory*);
 
   //typedef AnalyzerData::iterator iterator;

@@ -1,5 +1,12 @@
 #include "PropertyState.h"
 
+PropertyStateFactory::PropertyStateFactory() {
+}
+
+PropertyStateFactory::~PropertyStateFactory() {
+}
+
+#if 0
 PropertyState::PropertyState() {
 }
 
@@ -11,9 +18,5 @@ bool PropertyState::approximatedBy(PropertyState& other) {
 
 void PropertyState::combine(PropertyState& other){
 }
+#endif
 
-PropertyStateFactory::PropertyStateFactory() {
-}
-
-PropertyStateFactory::~PropertyStateFactory() {
-}

@@ -21,6 +21,9 @@ ProgramAnalysis::ProgramAnalysis():
   _initialElementFactory(0)
 {}
 
+void ProgramAnalysis::initializeExtremalValue(Lattice* element) {
+  // default identity function
+}
 
 Lattice* ProgramAnalysis::getPreInfo(Label lab) {
   if(!_preInfoIsValid) {
@@ -94,6 +97,7 @@ ProgramAnalysis::initialize(SgProject* root) {
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
+  ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<_labeler->numberOfLabels();++l) {
     Lattice* le1=_initialElementFactory->create();
     _analyzerDataPreInfo.push_back(le1);
@@ -216,16 +220,25 @@ void
 ProgramAnalysis::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-    cout << "Initializing "<<*i<<" with ";
     _analyzerDataPostInfo[*i]=_initialElementFactory->create();
+    // TODO: must become a parameter ... of the RDAnalysis ...
+    initializeExtremalValue(_analyzerDataPostInfo[*i]);
     _transferFunctions->transfer(*i,*_analyzerDataPostInfo[*i]);
+    cout << "INFO: Initialized "<<*i<<" with ";
     _analyzerDataPostInfo[*i]->toStream(cout,&_variableIdMapping);
     cout<<endl;
+    Flow outEdges=_flow.outEdges(*i);
+    for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
+      _workList.add(*j);
+    }
+#if 0
     LabelSet initsucc=_flow.succ(*i);
     for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
       _workList.add(*i);
     }
+#endif
   }
+  cout<<"INFO: work list size after initialization: "<<_workList.size()<<endl;
   solve();
 }
 

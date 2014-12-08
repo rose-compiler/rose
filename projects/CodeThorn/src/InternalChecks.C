@@ -6,6 +6,8 @@
 
 #include "sage3basic.h"
 
+#define EXCLUDE_RDANALYSIS
+
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
@@ -20,7 +22,11 @@
 #include <cstring>
 #include <boost/program_options.hpp>
 #include <map>
+
+#ifndef EXCLUDE_RDANALYSIS
 #include "RDLattice.h"
+#endif
+
 #include "Miscellaneous.h"
 #include "InternalChecks.h"
 
@@ -558,6 +564,7 @@ void checkTypes() {
       cs.toStream(ssout);
       check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
     }
+#ifndef EXCLUDE_RDANALYSIS
     {
       RDLattice a;
       VariableId var1;
@@ -573,7 +580,7 @@ void checkTypes() {
       check("a ApproximatedBy b",a.approximatedBy(b)==true);
       check("not (b ApproximatedBy a)",b.approximatedBy(a)==false);
     }
-
+#endif
   } // end of stream operator checks
 }
 

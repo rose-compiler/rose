@@ -8,6 +8,9 @@ using namespace CodeThorn;
 #include "RDTransferFunctions.hpp"
 #include "AnalysisAbstractionLayer.h"
 
+#include "Labeler.h"
+#include "VariableIdMapping.h"
+
 RDTransferFunctions::RDTransferFunctions() {
 }
 
@@ -16,6 +19,7 @@ RDTransferFunctions::RDTransferFunctions() {
   * \date 2013.
  */
 void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, RDLattice& element) {
+  cout<<"DEBUG: RDTransferFunctions::transferExpression"<<endl;
   // update analysis information
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
@@ -43,6 +47,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, RDLa
  */
 //NOTE: missing: UD must take uses in initializers into account
 void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, RDLattice& element) {
+  cout<<"DEBUG: RDTransferFunctions::transferDeclaration"<<endl;
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined

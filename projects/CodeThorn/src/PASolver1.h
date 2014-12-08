@@ -13,7 +13,7 @@
 
 class PASolver1 {
  public:
-  PASolver1(WorkListSeq<Label>& workList,
+  PASolver1(WorkListSeq<Edge>& workList,
 	   std::vector<Lattice*>& analyzerDataPreInfo,
 	   std::vector<Lattice*>& analyzerDataPostInfo,
 	   PropertyStateFactory& initialElementFactory,
@@ -24,7 +24,7 @@ class PASolver1 {
 
   void computePreInfo(Label lab,Lattice& inInfo);
  protected:
-  WorkListSeq<Label>& _workList;
+  WorkListSeq<Edge>& _workList;
   std::vector<Lattice*>& _analyzerDataPreInfo;
   std::vector<Lattice*>& _analyzerDataPostInfo;
   PropertyStateFactory& _initialElementFactory;

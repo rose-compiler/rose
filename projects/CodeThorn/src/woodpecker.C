@@ -14,7 +14,7 @@
 #include "RDAnalyzer.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"
-#include "DataDependenceVisualizer.h"
+//#include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "ProgramStats.h"
 #include "CommandLineOptions.h"

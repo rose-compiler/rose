@@ -66,6 +66,8 @@ codethorn_SOURCES = \
   Timer.h                          \
   Visualizer.C                     \
   Visualizer.h                     \
+  Lattice.h \
+  Lattice.C \
   RDLattice.h                      \
   RDLattice.C                      \
   Evaluator.h                      \
@@ -245,20 +247,14 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  RDTransferfunctions.hpp RDTransferFunctions.C
 
 woodpecker_LDADD = -lrose
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDTransferFunctions.hpp RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   AType.h                          \
   AType.C                          \
-  RDTransferFunctions.hpp \
-  RDTransferFunctions.C \
-  DFTransferFunctions.hpp \
-  DFTransferFunctions.C \
-  RDAstAttribute.h         \
-  RDAstAttribute.C         \
+  CPAstAttribute.h CPAstAttribute.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
-  CPAstAttribute.h CPAstAttribute.C \
   AstTerm.h                        \
   AstTerm.C                        \
   Miscellaneous.C                  \
@@ -348,33 +344,16 @@ analyterix_SOURCES = \
 reverser_LDADD = -lrose
 reverser_SOURCES = \
   CommandLineOptions.h CommandLineOptions.C \
-  DFAstAttributeConversion.h DFAstAttributeConversion.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   CFAnalyzer.h \
   CFAnalyzer.C \
-  RDLattice.h \
-  RDLattice.C \
-  RDAnalyzer.h \
-  RDAnalyzer.C \
-  RDTransferFunctions.hpp \
-  RDTransferFunctions.C \
-  DFTransferFunctions.hpp \
-  DFTransferFunctions.C \
-  FIConstAnalysis.h FIConstAnalysis.C \
   LanguageRestrictor.h \
   LanguageRestrictor.C \
   LanguageRestrictorCollection.h \
   LanguageRestrictorCollection.C \
-  DataDependenceVisualizer.h \
-  DataDependenceVisualizer.C \
   AType.h \
   AType.C \
-  RDAstAttribute.h \
-  RDAstAttribute.C \
-  UDAstAttribute.h \
-  UDAstAttribute.C \
-  CPAstAttribute.h CPAstAttribute.C \
   AstTerm.h \
   AstTerm.C \
   Miscellaneous.C \

@@ -117,9 +117,13 @@ int main(int argc, char* argv[]) {
     boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
     
+    cout << "STATUS: creating RD analyzer."<<endl;
     RDAnalysis* rdAnalyzer=new RDAnalysis();
+    cout << "STATUS: initializing RD analyzer."<<endl;
     rdAnalyzer->initialize(root);
+    cout << "STATUS: initializing RD global variables."<<endl;
     rdAnalyzer->initializeGlobalVariables(root);
+    cout << "STATUS: initializing RD transfer functions."<<endl;
     rdAnalyzer->initializeTransferFunctions();
     
     std::string funtofind="main";

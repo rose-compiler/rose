@@ -6,6 +6,7 @@
 #include "Lattice.h"
 #include "VariableIdMapping.h"
 
+#if 0
 class PropertyState : public Lattice {
  public:
   PropertyState();
@@ -13,6 +14,9 @@ class PropertyState : public Lattice {
   virtual bool approximatedBy(PropertyState& other);
   virtual void combine(PropertyState& other);
 };
+#else
+typedef Lattice PropertyState;
+#endif
 
 class PropertyStateFactory {
  public:
