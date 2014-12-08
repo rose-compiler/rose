@@ -1,0 +1,9 @@
+* rename class ProgramAnalysis
+* remove DFAnalysis.*
+* remove DFTransferFunctions.*
+* remove DFSolver1.*
+* remove RDAnalyzer.*
+* remove RDTransferFunctions.hpp
+* remove RDTransferFunctions.C
+* remove RDTransferFunctions2::*(...,RDLattice);
+* rename RDTransferFunctions2.h/C to RDTransferFunctions.h/C
