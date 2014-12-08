@@ -380,7 +380,7 @@ Engine::makeEntryFunctions(Partitioner &partitioner, SgAsmInterpretation *interp
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
             BOOST_FOREACH (const rose_rva_t &rva, fileHeader->get_entry_rvas()) {
                 rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
-                Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_ENTRY_POINT);
+                Function::Ptr function = Function::instance(va, "_start", SgAsmFunction::FUNC_ENTRY_POINT);
                 insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
             }
         }
@@ -519,15 +519,67 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
     return chain;
 }
 
-// Remove basic block from worklist(s)
+// Remove basic block from worklist(s). We probably don't really need to erase things since the items are revalidated when
+// they're consumed from the list, and avoiding an erase will keep the list in its original order when higher level functions
+// make a minor adjustment with a detach-adjust-attach sequence.  On the other hand, perhaps such adjustments SHOULD move the
+// block to the top of the stack.
 bool
 Engine::BasicBlockWorkList::operator()(bool chain, const DetachedBasicBlock &args) {
     if (chain) {
         pendingCallReturn_.erase(args.startVa);
         processedCallReturn_.erase(args.startVa);
+        finalCallReturn_.erase(args.startVa);
         undiscovered_.erase(args.startVa);
     }
     return chain;
+}
+
+// Move pendingCallReturn items into the finalCallReturn list and (re)sort finalCallReturn items according to the CFG so that
+// descendents appear after their ancestors (i.e., descendents will be processed first since we always use popBack).  This is a
+// fairly expensive operation: O((V+E) ln N) where V and E are the number of edges in the CFG and N is the number of addresses
+// in the combined lists.
+void
+Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner) {
+    using namespace Sawyer::Container::Algorithm;       // graph traversals
+
+    if (processedCallReturn().isEmpty())
+        return;                                         // nothing to move, and finalCallReturn list was previously sorted
+
+    std::set<rose_addr_t> pending;
+    BOOST_FOREACH (rose_addr_t va, finalCallReturn_.items())
+        pending.insert(va);
+    BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
+        pending.insert(va);
+    finalCallReturn_.clear();
+    processedCallReturn_.clear();
+    
+    std::vector<bool> seen(partitioner.cfg().nVertices(), false);
+    while (!pending.empty()) {
+        rose_addr_t startVa = *pending.begin();
+        ControlFlowGraph::ConstVertexNodeIterator startVertex = partitioner.findPlaceholder(startVa);
+        if (startVertex == partitioner.cfg().vertices().end()) {
+            pending.erase(pending.begin());             // this worklist item is no longer valid
+        } else {
+            typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> Traversal;
+            for (Traversal t(partitioner.cfg(), startVertex, ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
+                if (t.event()==ENTER_VERTEX) {
+                    // No need to follow this vertex if we processed it in some previous iteration of the "while" loop
+                    if (seen[t.vertex()->id()])
+                        t.skipChildren();
+                    seen[t.vertex()->id()] = true;
+                } else if (t.vertex()->value().type() == V_BASIC_BLOCK) {
+                    rose_addr_t va = t.vertex()->value().address();
+                    std::set<rose_addr_t>::iterator found = pending.find(va);
+                    if (found != pending.end()) {
+                        finalCallReturn().pushFront(va);
+                        pending.erase(found);
+                        if (pending.empty())
+                            return;
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Return true if a new CFG edge was added.
@@ -623,80 +675,45 @@ BasicBlock::Ptr
 Engine::makeNextBasicBlock(Partitioner &partitioner) {
     ASSERT_not_null(basicBlockWorkList_);
 
-    // If there's an undiscovered basic block then discover it.
-    if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
-        return bb;
+    while (1) {
+        // If there's an undiscovered basic block then discover it.
+        if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
+            return bb;
 
-    // Possibly move the old processedCallReturn items back onto the pendingCallReturn list.  The CFG possibly changed from the
-    // prior call and we may be able to determine a callee's may-return analysis with certainty now.
-    if (basicBlockWorkList_->pendingCallReturn().isEmpty()) {
-#if 1 // [Robb P. Matzke 2014-12-05]
-        while (!basicBlockWorkList_->processedCallReturn().isEmpty()) {
-            rose_addr_t va = basicBlockWorkList_->processedCallReturn().popBack();
-            basicBlockWorkList_->pendingCallReturn().pushBack(va);
+        // If there's a function call that needs a new call-return edge then add such an edge, but only if we know the callee
+        // has a positive may-return analysis. If we don't yet know with certainty whether the call may return or will never
+        // return then move the vertex to the processedCallReturn list to save it for later (this happens as part of
+        // makeNextCallReturnEdge().
+        if (!basicBlockWorkList_->pendingCallReturn().isEmpty()) {
+            makeNextCallReturnEdge(partitioner, boost::logic::indeterminate);
+            continue;
         }
-#else
-        // Push them onto the list so that ancestors appear before descendents, thus descendents will be popped and processed
-        // before their ancestors.
-        mlog[INFO] <<"ROBB: sorting basicBlockWorkList according to CFG:"
-                   <<" list.size=" <<basicBlockWorkList_->processedCallReturn().size()
-                   <<", graph.size=" <<partitioner.cfg().nVertices() <<"\n";
-        std::set<rose_addr_t> pending;
-        BOOST_FOREACH (rose_addr_t va, basicBlockWorkList_->processedCallReturn().items())
-            pending.insert(va);
-        using namespace Sawyer::Container::Algorithm;
-        typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> Traversal;
-        std::vector<bool> processed(partitioner.cfg().nVertices(), false);
-        for (size_t i=0; i<processed.size(); ++i) {
-            if (!processed[i]) {
-                for (Traversal t(partitioner.cfg(), partitioner.cfg().findVertex(i), LEAVE_VERTEX); t; ++t) {
-                    processed[i] = true;
-                    if (t.vertex()->value().type() == V_BASIC_BLOCK) {
-                        rose_addr_t va = t.vertex()->value().address();
-                        std::set<rose_addr_t>::iterator found = pending.find(va);
-                        if (found != pending.end()) {
-                            basicBlockWorkList_->pendingCallReturn().pushFront(va);
-                            pending.erase(found);
-                        }
-                    }
-                }
+
+        // If we've previously tried to add call-return edges and failed then try again but this time assume the block
+        // may return or never returns depending on the assumeFunctionsReturn property.  We use the finalCallReturn list, which
+        // is always sorted so that descendent blocks are analyzed before their ancestors (according to the CFG as it existed
+        // when the sort was performed, and subject to tie breaking for cycles). We only re-sort the finalCallReturn list when
+        // we add something to it, and we add things in batches since the sorting is expensive.
+        if (!basicBlockWorkList_->processedCallReturn().isEmpty() || !basicBlockWorkList_->finalCallReturn().isEmpty()) {
+            ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
+            if (!basicBlockWorkList_->processedCallReturn().isEmpty())
+                basicBlockWorkList_->moveAndSortCallReturn(partitioner);
+            if (!basicBlockWorkList_->finalCallReturn().isEmpty()) { // moveAndSortCallReturn might have pruned list
+                basicBlockWorkList_->pendingCallReturn().pushBack(basicBlockWorkList_->finalCallReturn().popBack());
+                makeNextCallReturnEdge(partitioner, partitioner.assumeFunctionsReturn());
             }
+            continue;
         }
-        basicBlockWorkList_->processedCallReturn().clear();
-#endif
+
+        // Nothing to do
+        break;
     }
 
-    // If there's a function call that needs a new call-return edge then add such an edge, but only if we know the callee has a
-    // positive may-return analysis. If we don't yet know with certainty whether the call may return or will never return then
-    // move the vertex to the processedCallReturn list to save it for later (this happens as part of makeNextCallReturnEdge().
-    while (!basicBlockWorkList_->pendingCallReturn().isEmpty()) {
-        if (makeNextCallReturnEdge(partitioner, boost::logic::indeterminate)) {
-            if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
-                return bb;
-        }
-    }
-
-    // If there's a function call that might need a new call-return edge but we're not sure (i.e., the callee's may-return
-    // analysis is indeterminate) then assume such an edge is either needed or not needed based on the partitioner's @c
-    // assumeFunctionsReturn property.
-    while (!basicBlockWorkList_->processedCallReturn().isEmpty()) {
-        // Move one processed item to the pending list
-        ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
-        rose_addr_t va = basicBlockWorkList_->processedCallReturn().popFront();
-        basicBlockWorkList_->pendingCallReturn().pushBack(va);
-
-        // Process that one pending item by assuming it returns. This will return false only some sanity check prevented
-        // the new call-return edge from being inserted.
-        if (makeNextCallReturnEdge(partitioner, partitioner.assumeFunctionsReturn())) {
-            if (BasicBlock::Ptr bb = makeNextBasicBlockFromPlaceholder(partitioner))
-                return bb;
-        }
-    }
-
-    // Nothing to do!
-    ASSERT_require(partitioner.undiscoveredVertex()->nInEdges()==0);
+    // Nothing more to do; all lists are empty
+    ASSERT_require(basicBlockWorkList_->undiscovered().isEmpty());
     ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
     ASSERT_require(basicBlockWorkList_->processedCallReturn().isEmpty());
+    ASSERT_require(basicBlockWorkList_->finalCallReturn().isEmpty());
     return BasicBlock::Ptr();
 }
 
