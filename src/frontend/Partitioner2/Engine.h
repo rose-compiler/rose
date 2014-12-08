@@ -47,7 +47,8 @@ class Engine {
     private:
         Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
         Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
-        Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered list (last-in-first-out)
+        Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminated call sites awaiting final analysis
+        Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
         static Ptr instance() { return Ptr(new BasicBlockWorkList); }
@@ -55,7 +56,9 @@ class Engine {
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
         Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
         Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
+        Sawyer::Container::DistinctList<rose_addr_t>& finalCallReturn() { return finalCallReturn_; }
         Sawyer::Container::DistinctList<rose_addr_t>& undiscovered() { return undiscovered_; }
+        void moveAndSortCallReturn(const Partitioner&);
     };
 
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
