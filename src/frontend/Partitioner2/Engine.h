@@ -404,6 +404,17 @@ public:
      *  vector. */
     virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
 
+    /** Scan read-only data to find addresses.
+     *
+     *  Scans read-only data beginning at the specified address in order to find pointers to code, and makes a new function at
+     *  when found.  The pointer must be word aligned and located in memory that's mapped read-only (not writable and not
+     *  executable), and it must not point to an unknown instruction or an instruction that overlaps with any instruction
+     *  that's already in the CFG/AUM.
+     *
+     *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
+     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
+    virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Methods that adjust existing functions

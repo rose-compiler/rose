@@ -316,6 +316,7 @@ Engine::discoverBasicBlocks(Partitioner &partitioner) {
 std::vector<Function::Ptr>
 Engine::discoverFunctions(Partitioner &partitioner) {
     rose_addr_t nextPrologueVa = 0;                     // where to search for function prologues
+    rose_addr_t nextReadAddr = 0;                       // where to look for read-only function addresses
 
     while (1) {
         // Find as many basic blocks as possible by recursively following the CFG as we build it.
@@ -329,6 +330,12 @@ Engine::discoverFunctions(Partitioner &partitioner) {
             continue;
         }
 
+        // Try looking for a code address mentioned in read-only memory
+        if (Function::Ptr function = makeNextDataReferencedFunction(partitioner, nextReadAddr /*in,out*/)) {
+            partitioner.attachFunction(function);
+            continue;
+        }
+        
         // Nothing more to do
         break;
     }
@@ -456,6 +463,71 @@ Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) 
     }
     return functions;
 }
+
+// Increment the address as far as possible while avoiding overflow.
+static rose_addr_t
+incrementAddress(rose_addr_t va, rose_addr_t amount, rose_addr_t maxaddr) {
+    if (maxaddr - va < amount)
+        return maxaddr;
+    return va + amount;
+}
+
+// Scans read-only data looking for pointers to code and makes a function at each.
+Function::Ptr
+Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr_t &readVa /*in,out*/) {
+    const rose_addr_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    ASSERT_require2(wordSize>0 && wordSize<=8, StringUtility::numberToString(wordSize)+"-byte words not implemented yet");
+    const rose_addr_t maxaddr = partitioner.memoryMap().hull().greatest();
+
+    while (readVa < maxaddr &&
+           partitioner.memoryMap()
+           .atOrAfter(readVa)
+           .require(MemoryMap::READABLE).prohibit(MemoryMap::EXECUTABLE|MemoryMap::WRITABLE)
+           .next().assignTo(readVa)) {
+
+        // Addresses must be aligned on a word boundary
+        if (rose_addr_t misaligned = readVa % wordSize) {
+            readVa = incrementAddress(readVa, wordSize-misaligned, maxaddr);
+            continue;
+        }
+
+        // Convert raw memory to native address
+        // FIXME[Robb P. Matzke 2014-12-08]: assuming little endian
+        ASSERT_require(wordSize<=8);
+        uint8_t raw[8];
+        if (partitioner.memoryMap().at(readVa).limit(wordSize)
+            .require(MemoryMap::READABLE).prohibit(MemoryMap::EXECUTABLE|MemoryMap::WRITABLE)
+            .read(raw).size()!=wordSize) {
+            readVa = incrementAddress(readVa, wordSize, maxaddr);
+            continue;
+        }
+        rose_addr_t targetVa = 0;
+        for (size_t i=0; i<wordSize; ++i)
+            targetVa |= raw[i] << (8*i);
+
+        // Sanity checks
+        SgAsmInstruction *insn = partitioner.discoverInstruction(targetVa);
+        if (!insn || insn->isUnknown()) {
+            readVa = incrementAddress(readVa, wordSize, maxaddr);
+            continue;                                   // no instruction
+        }
+        AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
+        if (!partitioner.instructionsOverlapping(insnInterval).empty()) {
+            readVa = incrementAddress(readVa, wordSize, maxaddr);
+            continue;                                   // would overlap with existing instruction
+        }
+        
+        // All seems okay, so make a function there
+        // FIXME[Robb P. Matzke 2014-12-08]: USERDEF is not the best, most descriptive reason, but it's what we have for now
+        mlog[INFO] <<"possible code address " <<StringUtility::addrToString(targetVa)
+                   <<" found at read-only address " <<StringUtility::addrToString(readVa) <<"\n";
+        readVa = incrementAddress(readVa, wordSize, maxaddr);
+        return Function::instance(targetVa, SgAsmFunction::FUNC_USERDEF);
+    }
+    readVa = maxaddr;
+    return Function::Ptr();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Basic-blocks
